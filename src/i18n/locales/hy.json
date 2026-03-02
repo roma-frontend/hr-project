@@ -573,10 +573,18 @@
     "allRoles": "Բոլոր դերերը",
     "allDepartments": "Բոլոր բաժինները",
     "allTypes": "Բոլոր տեսակները",
+    "allStatuss": "Բոլոր կարգավիճակները",
     "backToEmployees": "Վերադառնալ աշխատակիցներին",
     "employeeNotFound": "Աշխատակիցը չի գտնվել",
     "employeeNotFoundDesc": "Ձեր փնտրած աշխատակիցը գոյություն չունի կամ հեռացվել է:",
     "employee": "Աշխատակից",
+    "filter_admin": "Ադմին",
+    "filter_supervisor": "Վերահսկող",
+    "filter_employee": "Աշխատակից",
+    "filter_staff": "Անձնակազմ",
+    "filter_contractor": "Կապալառու",
+    "filter_active": "Ակտիվ",
+    "filter_inactive": "Անակտիվ",
     "department": "Բաժին",
     "position": "Պաշտոն",
     "role": "Դեր"
@@ -1119,6 +1127,21 @@
     "projects": "Նախագծեր",
     "employeeType": "Աշխատակցի տեսակ"
   },
+  "modals": {
+    "addEmployee": {
+      "title": "Ավելացնել նոր աշխատակից",
+      "description": "Լրացրեք աշխատակցի տեղեկությունները ստորև",
+      "nameRequired": "Անունը պարտադիր է",
+      "emailRequired": "Էլ. փոստը պարտադիր է",
+      "invalidEmail": "Անվավեր էլ. փոստի հասցե",
+      "departmentRequired": "Բաժինը պարտադիր է",
+      "positionRequired": "Պաշտոնը պարտադիր է",
+      "employeeAddedSuccess": "Աշխատակիցը հաջողությամբ ավելացվել է",
+      "failedToAdd": "Չհաջողվեց ավելացնել աշխատակիցին",
+      "addingEmployee": "Ավելացվում է...",
+      "addEmployeeButton": "Ավելացնել աշխատակից"
+    }
+  },
   "employeeInfo": {
     "email": "Էլ. փոստ",
     "phone": "Հեռախոս",
@@ -1253,6 +1276,8 @@
     "sending": "Ուղարկվում է...",
     "success": "Հաջողություն",
     "error": "Սխալ",
+    "backToHome": "Վերադառնալ գլխավոր էջ",
+    "loadingFromConvex": "Տվյալները բեռնվում են...",
     "warning": "Զգուշացում",
     "info": "Տեղեկություն",
     "confirm": "Հաստատեք",
