@@ -95,6 +95,8 @@ export function useAuthSync() {
                 
                 if (response.ok) {
                   console.log("[useAuthSync] ✅ Server session created!");
+                  // Wait a moment to ensure everything is synced
+                  await new Promise(resolve => setTimeout(resolve, 500));
                   // Redirect to dashboard only if not already there
                   if (window.location.pathname !== '/dashboard') {
                     window.location.href = '/dashboard';
