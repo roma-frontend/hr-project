@@ -5,7 +5,7 @@ import { convexAuth } from "@convex-dev/auth/server";
 
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
-export const { auth, signIn, signOut, store } = convexAuth({
+const { auth, signIn, signOut, store } = convexAuth({
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -83,3 +83,5 @@ export const { auth, signIn, signOut, store } = convexAuth({
     },
   },
 });
+
+export default auth;
