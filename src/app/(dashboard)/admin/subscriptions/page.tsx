@@ -26,16 +26,17 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
 
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 export default function SubscriptionsManagementPage() {
-  const { user, isLoaded } = useUser();
   const subscriptions = useQuery(api.subscriptions_admin.listAllWithUsers);
   const allOrganizations = useQuery(api.organizations.listAll);
   const createManual = useMutation(api.subscriptions_admin.createManualSubscription);
   const cancelSub = useMutation(api.subscriptions_admin.cancelSubscription);
+  
+  // Get current user from Convex Auth
+  const currentUser = useQuery(api.users.getCurrentUser);
 
   const [showForm, setShowForm] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState("");
@@ -45,10 +46,10 @@ export default function SubscriptionsManagementPage() {
   const [loading, setLoading] = useState(false);
   
   // Check if user is superadmin
-  const isSuperAdmin = user?.primaryEmailAddress?.emailAddress?.toLowerCase() === SUPERADMIN_EMAIL;
+  const isSuperAdmin = currentUser?.email?.toLowerCase() === SUPERADMIN_EMAIL;
   
   // Wait for user to load
-  if (!isLoaded) {
+  if (currentUser === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div>Loading...</div>
@@ -57,7 +58,7 @@ export default function SubscriptionsManagementPage() {
   }
   
   // If not superadmin, show access denied
-  if (!isSuperAdmin) {
+  if (!currentUser || !isSuperAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md">
