@@ -11,7 +11,6 @@ import { loginAction } from "@/actions/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { WebAuthnButton } from "@/components/auth/WebAuthnButton";
 import { FaceLogin } from "@/components/auth/FaceLogin";
-import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { toast } from "sonner";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { loginTourSteps } from "@/components/onboarding/loginTourSteps";
@@ -169,20 +168,6 @@ export default function LoginPage() {
           {/* Email Login */}
           {loginMode === "email" && (
             <>
-              {/* OAuth Buttons */}
-              <div className="mb-6">
-                <OAuthButtons />
-              </div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-                  {t('auth.orContinueWith')}
-                </span>
-                <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-              </div>
-
               {/* WebAuthn */}
               <div id="biometric-login" className="mb-6">
                 <WebAuthnButton mode="login" onSuccess={handleWebAuthnSuccess} />
@@ -192,7 +177,7 @@ export default function LoginPage() {
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                 <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-                  or use email
+                  {t('auth.orContinueWith')}
                 </span>
                 <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
               </div>
