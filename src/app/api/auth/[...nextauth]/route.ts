@@ -11,14 +11,21 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Here you can integrate with your Convex backend
-      // to create/update user in your database
+      // OAuth sign in successful
+      // User will be created/updated in Convex via client-side hook
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // After successful sign in, redirect to dashboard
+      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      return `${baseUrl}/dashboard`;
+    },
     async session({ session, token }) {
-      // Add user ID to session
+      // Add user info to session
       if (session.user) {
         session.user.id = token.sub!;
+        session.user.email = token.email!;
       }
       return session;
     },
