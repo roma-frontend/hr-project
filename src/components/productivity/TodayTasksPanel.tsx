@@ -5,7 +5,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { CheckCircle2, Circle, Clock, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, AlertCircle } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 
 export function TodayTasksPanel() {

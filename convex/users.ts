@@ -45,16 +45,29 @@ export const getAllUsers = query({
 // GET CURRENT USER — for client-side auth state
 // ─────────────────────────────────────────────────────────────────────────────
 export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    email: v.optional(v.string()),
+  },
+  handler: async (ctx, { email }) => {
+    console.log("[getCurrentUser] Called with email:", email);
+    
+    // Try to get identity from Convex auth first
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity?.email) return null;
+    console.log("[getCurrentUser] Identity:", identity);
+    
+    const userEmail = identity?.email || email;
+    
+    if (!userEmail) {
+      console.log("[getCurrentUser] No identity or email");
+      return null;
+    }
     
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .withIndex("by_email", (q) => q.eq("email", userEmail.toLowerCase()))
       .first();
     
+    console.log("[getCurrentUser] Found user:", user);
     return user;
   },
 });
@@ -69,6 +82,7 @@ export const createOAuthUser = mutation({
     avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, { email, name, avatarUrl }) => {
+    console.log("[createOAuthUser] Called with:", { email, name, avatarUrl });
     const emailLower = email.toLowerCase().trim();
     
     // Check if user already exists
@@ -77,11 +91,29 @@ export const createOAuthUser = mutation({
       .withIndex("by_email", (q) => q.eq("email", emailLower))
       .first();
     
+    console.log("[createOAuthUser] Existing user:", existing);
+    
     if (existing) {
+      console.log("[createOAuthUser] User exists, updating avatar and name if needed");
+      const updates: any = {};
+      
       // Update avatar if provided
       if (avatarUrl && !existing.avatarUrl) {
-        await ctx.db.patch(existing._id, { avatarUrl, updatedAt: Date.now() });
+        updates.avatarUrl = avatarUrl;
       }
+      
+      // Also update name if it's different
+      if (name && name !== existing.name) {
+        console.log("[createOAuthUser] Updating name from", existing.name, "to", name);
+        updates.name = name;
+      }
+      
+      // Apply updates if any
+      if (Object.keys(updates).length > 0) {
+        await ctx.db.patch(existing._id, updates);
+        console.log("[createOAuthUser] Updated user with:", updates);
+      }
+      
       return existing._id;
     }
     
@@ -97,28 +129,49 @@ export const createOAuthUser = mutation({
     
     const organizationId = allOrgs[0]._id;
     
+    // Check if user is first member of the org (becomes admin)
+    const orgMembers = await ctx.db
+      .query("users")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .collect();
+    
+    const isFirstMember = orgMembers.length === 0;
+    const role = isSuperAdmin ? "superadmin" : (isFirstMember ? "admin" : "employee");
+    
+    // OAuth users are auto-approved (trusted authentication)
+    const isApproved = true;
+    
     // Create new OAuth user
+    console.log("[createOAuthUser] Creating new user with:", {
+      organizationId,
+      name,
+      email: emailLower,
+      role,
+      isSuperAdmin,
+      isFirstMember,
+    });
+    
     const userId = await ctx.db.insert("users", {
       organizationId,
       name,
       email: emailLower,
       passwordHash: "", // OAuth users don't have password
-      role: isSuperAdmin ? "superadmin" : "employee",
+      role,
       employeeType: "full_time",
-      department: isSuperAdmin ? "Management" : undefined,
-      position: isSuperAdmin ? "Administrator" : undefined,
+      department: (isSuperAdmin || isFirstMember) ? "Management" : undefined,
+      position: (isSuperAdmin || isFirstMember) ? "Administrator" : undefined,
       isActive: true,
-      isApproved: isSuperAdmin, // Superadmin auto-approved
-      approvedAt: isSuperAdmin ? Date.now() : undefined,
+      isApproved,
+      approvedAt: Date.now(),
       travelAllowance: 20000,
       paidLeaveBalance: 24,
       sickLeaveBalance: 10,
       familyLeaveBalance: 5,
       createdAt: Date.now(),
-      updatedAt: Date.now(),
       avatarUrl,
     });
     
+    console.log("[createOAuthUser] ✅ User created with ID:", userId);
     return userId;
   },
 });
@@ -751,6 +804,191 @@ export const deleteAvatar = mutation({
       avatarUrl: undefined 
     });
     
+    return userId;
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FACE ID SECURITY MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Record Face ID attempt (success or failure)
+export const recordFaceIdAttempt = mutation({
+  args: {
+    email: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+    success: v.boolean(),
+  },
+  handler: async (ctx, { email, userId, success }) => {
+    // Find user by email or userId
+    let user;
+    if (userId) {
+      user = await ctx.db.get(userId);
+    } else if (email) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+        .first();
+    } else {
+      throw new Error("Either email or userId must be provided");
+    }
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (success) {
+      // Successful login - reset failed attempts
+      await ctx.db.patch(user._id, {
+        faceIdFailedAttempts: 0,
+        faceIdLastAttempt: Date.now(),
+        faceIdBlocked: false,
+      });
+      return { blocked: false, attempts: 0, email: user.email };
+    } else {
+      // Failed attempt - increment counter
+      const currentAttempts = (user.faceIdFailedAttempts || 0) + 1;
+      const isBlocked = currentAttempts >= 3;
+
+      await ctx.db.patch(user._id, {
+        faceIdFailedAttempts: currentAttempts,
+        faceIdLastAttempt: Date.now(),
+        faceIdBlocked: isBlocked,
+        faceIdBlockedAt: isBlocked ? Date.now() : undefined,
+      });
+
+      // Create audit log for security tracking
+      await ctx.db.insert("auditLogs", {
+        organizationId: user.organizationId,
+        userId: user._id,
+        action: "face_id_failed_attempt",
+        details: `Failed Face ID attempt ${currentAttempts}/3`,
+        createdAt: Date.now(),
+      });
+
+      if (isBlocked) {
+        // Send notification about blocked Face ID
+        await ctx.db.insert("notifications", {
+          organizationId: user.organizationId,
+          userId: user._id,
+          type: "system",
+          title: "🚫 Face ID Blocked",
+          message: "Your Face ID has been blocked due to too many failed attempts. Please use email/password login.",
+          isRead: false,
+          createdAt: Date.now(),
+        });
+      }
+
+      return { blocked: isBlocked, attempts: currentAttempts, email: user.email };
+    }
+  },
+});
+
+// Check if Face ID is blocked for user
+export const checkFaceIdStatus = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+      .first();
+    
+    if (!user) {
+      return { blocked: false, attempts: 0 };
+    }
+
+    return {
+      blocked: user.faceIdBlocked || false,
+      attempts: user.faceIdFailedAttempts || 0,
+      blockedAt: user.faceIdBlockedAt,
+      lastAttempt: user.faceIdLastAttempt,
+    };
+  },
+});
+
+// Unblock Face ID (Admin only)
+export const unblockFaceId = mutation({
+  args: {
+    adminId: v.id("users"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { adminId, userId }) => {
+    const admin = await requireAdmin(ctx, adminId);
+    const user = await ctx.db.get(userId);
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Verify same organization (unless superadmin)
+    if (
+      admin.organizationId !== user.organizationId &&
+      admin.email.toLowerCase() !== "romangulanyan@gmail.com"
+    ) {
+      throw new Error("Access denied: cannot unblock users from another organization");
+    }
+
+    await ctx.db.patch(userId, {
+      faceIdBlocked: false,
+      faceIdFailedAttempts: 0,
+      faceIdBlockedAt: undefined,
+    });
+
+    // Create audit log
+    await ctx.db.insert("auditLogs", {
+      organizationId: user.organizationId,
+      userId: admin._id,
+      action: "face_id_unblocked",
+      target: user.email,
+      details: `Face ID unblocked by ${admin.name} for ${user.name}`,
+      createdAt: Date.now(),
+    });
+
+    // Notify user
+    await ctx.db.insert("notifications", {
+      organizationId: user.organizationId,
+      userId,
+      type: "system",
+      title: "✅ Face ID Unlocked",
+      message: `Your Face ID has been unlocked by ${admin.name}. You can try again.`,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+
+    return userId;
+  },
+});
+
+// Auto-unblock Face ID after successful email/password login
+export const autoUnblockFaceId = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const user = await ctx.db.get(userId);
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Only unblock if it was blocked
+    if (user.faceIdBlocked) {
+      await ctx.db.patch(userId, {
+        faceIdBlocked: false,
+        faceIdFailedAttempts: 0,
+        faceIdBlockedAt: undefined,
+      });
+
+      // Notify user
+      await ctx.db.insert("notifications", {
+        organizationId: user.organizationId,
+        userId,
+        type: "system",
+        title: "✅ Face ID Automatically Unlocked",
+        message: "Your Face ID has been automatically unlocked after successful password login.",
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
+
     return userId;
   },
 });

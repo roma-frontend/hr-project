@@ -137,6 +137,10 @@ export default defineSchema({
     faceDescriptor: v.optional(v.array(v.number())),
     faceImageUrl: v.optional(v.string()),
     faceRegisteredAt: v.optional(v.number()),
+    faceIdBlocked: v.optional(v.boolean()),
+    faceIdBlockedAt: v.optional(v.number()),
+    faceIdFailedAttempts: v.optional(v.number()),
+    faceIdLastAttempt: v.optional(v.number()),
     // Password Reset
     resetPasswordToken: v.optional(v.string()),
     resetPasswordExpiry: v.optional(v.number()),

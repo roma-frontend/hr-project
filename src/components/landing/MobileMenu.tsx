@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from "react-i18next";
 import { X, Home, Sparkles, BarChart3, DollarSign, MessageCircle, LogIn, Rocket } from 'lucide-react';
 import Link from 'next/link';
@@ -22,22 +23,25 @@ const menuItemsConfig = [
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // Lock body scroll when menu open - with proper positioning
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll when menu open - simple approach
   useEffect(() => {
     if (isOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+      // Just prevent body scrolling without changing position
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
       
       return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
       };
     }
   }, [isOpen]);
@@ -64,7 +68,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     }, 300);
   };
 
-  return (
+  if (!mounted) return null;
+
+  const menuContent = (
     <>
       {/* Backdrop with blur */}
       <div
@@ -81,8 +87,10 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Modern Slide-in Panel */}
       <div
         ref={menuRef}
-        className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[320px] z-[110] lg:hidden shadow-2xl flex flex-col"
+        className="fixed top-0 right-0 w-[85%] max-w-[320px] z-[110] lg:hidden shadow-2xl flex flex-col"
         style={{
+          height: '100vh',
+          maxHeight: '100vh',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
           backgroundColor: 'var(--background)',
@@ -147,7 +155,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           aria-label="Mobile navigation"
           style={{ minHeight: 0 }}
         >
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
             {menuItemsConfig.map((item, index) => {
               const Icon = item.icon;
               return (
@@ -155,13 +163,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   key={item.key}
                   href={item.href}
                   onClick={(e) => handleNavigate(e, item.href)}
-                  className="group flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden"
-                  style={{
-                    opacity: isOpen ? 1 : 0,
-                    transform: isOpen ? 'translateX(0)' : 'translateX(30px)',
-                    transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.1 + index * 0.06}s`,
-                    color: 'var(--landing-text-secondary)',
-                  }}
+                  className="group flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 relative"
                 >
                   {/* Hover background effect */}
                   <div 
@@ -175,8 +177,9 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   <div 
                     className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 shadow-sm"
                     style={{ 
-                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.1))',
-                      border: '1px solid var(--landing-card-border)'
+                      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(59, 130, 246, 0.1))',
+                      border: '1px solid var(--landing-card-border)',
+                      backdropFilter: 'blur(8px)',
                     }}
                   >
                     <Icon size={20} style={{ color: 'var(--primary)' }} />
@@ -202,20 +205,32 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             })}
           </div>
 
-          {/* Footer with CTAs - Inside scrollable area */}
+          {/* Language Switcher inside scrollable area */}
           <div 
-            className="space-y-4 pt-6 pb-6 border-t mt-6"
+            className="pt-6 pb-2 border-t mt-6"
             style={{
               borderColor: 'var(--landing-card-border)',
             }}
           >
-          {/* Language Switcher */}
-          <div className="flex justify-center pb-2">
-            <LanguageSwitcher />
+            <div className="flex justify-center">
+              <LanguageSwitcher />
+            </div>
           </div>
+        </nav>
 
+        {/* Footer with CTAs - OUTSIDE scrollable area, always visible */}
+        <div 
+          className="px-4 pb-6 pt-4 space-y-3 border-t"
+          style={{
+            borderColor: 'rgba(209, 213, 219, 0.3)',
+            backgroundColor: 'var(--background)',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 10,
+          }}
+        >
           {/* Sign In Button */}
-          <Link href="/login" onClick={onClose}>
+          <Link href="/login" onClick={onClose} className="block">
             <button 
               className="w-full px-5 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group border"
               style={{
@@ -230,13 +245,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </Link>
 
           {/* Get Started Button */}
-          <Link href="/register" onClick={onClose}>
+          <Link href="/register" onClick={onClose} className="block">
             <button 
               className="w-full px-5 py-3.5 rounded-xl font-bold transition-all duration-200 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 group relative overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
                 color: '#ffffff',
                 boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+                border: 'none',
               }}
             >
               {/* Shine effect */}
@@ -251,8 +267,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <span>{t('landing.getStartedFree')}</span>
             </button>
           </Link>
-          </div>
-        </nav>
+        </div>
 
         {/* Custom Scrollbar */}
         <style jsx>{`
@@ -273,4 +288,6 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       </div>
     </>
   );
+
+  return createPortal(menuContent, document.body);
 }

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';;
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import {
   Building2,
   User,
@@ -15,7 +16,6 @@ import {
   Briefcase,
   Eye,
   EyeOff,
-  Loader2,
   ArrowLeft,
   CheckCircle2,
   AlertCircle,
@@ -501,7 +501,7 @@ export default function RequestOrgPage() {
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Submitting request...
+                  <ShieldLoader size="xs" variant="inline" className="mr-2" /> Submitting request...
                 </>
               ) : (
                 <>

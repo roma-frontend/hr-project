@@ -261,8 +261,19 @@ export const login = mutation({
       lastLoginAt: Date.now(),
     });
 
+    const userData = safeUser(user as Parameters<typeof safeUser>[0]);
     return {
-      ...safeUser(user as Parameters<typeof safeUser>[0]),
+      userId: userData.userId,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      organizationId: userData.organizationId,
+      department: userData.department,
+      position: userData.position,
+      employeeType: userData.employeeType,
+      avatarUrl: userData.avatarUrl,
+      travelAllowance: userData.travelAllowance,
+      isApproved: userData.isApproved,
       organizationName: org?.name || null,
       organizationSlug: org?.slug || null,
       organizationPlan: org?.plan || null,

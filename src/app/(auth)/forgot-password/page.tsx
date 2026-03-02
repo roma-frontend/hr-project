@@ -3,7 +3,8 @@
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Loader2, AlertCircle, Building2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, AlertCircle, Building2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { useTranslation } from "react-i18next";
 
 export default function ForgotPasswordPage() {
@@ -136,7 +137,7 @@ export default function ForgotPasswordPage() {
                     style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
                   >
                     {isPending ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> {t('auth.sending')}</>
+                      <><ShieldLoader size="xs" variant="inline" className="mr-2" /> {t('auth.sending')}</>
                     ) : (
                       t('auth.sendResetLink')
                     )}

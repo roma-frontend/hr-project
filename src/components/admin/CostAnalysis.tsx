@@ -6,7 +6,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Loader2 } from "lucide-react";
+import { DollarSign } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 export default function CostAnalysis() {
   
@@ -19,7 +20,7 @@ const [period, setPeriod] = useState<"month" | "quarter" | "year">("month");
     return (
       <Card className="border-[var(--border)]">
         <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-secondary)]" />
+          <ShieldLoader size="lg" />
         </CardContent>
       </Card>
     );

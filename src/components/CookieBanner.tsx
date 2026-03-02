@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useCookieConsent } from "@/store/cookieConsentStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Cookie, Settings, Shield, BarChart3, Target, Palette } from "lucide-react";
@@ -24,17 +25,23 @@ export default function CookieBanner() {
     return null;
   }
 
-  return (
+  const bannerContent = (
     <AnimatePresence>
       <motion.div
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 50, opacity: 0 }}
+        exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="w-full max-w-5xl mx-auto px-4 mt-8"
+        className="fixed bottom-0 left-0 right-0 z-[120] p-4 sm:p-6"
+        style={{ pointerEvents: 'none' }}
       >
-        <div className="mx-auto max-w-7xl">
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)]/95 shadow-2xl backdrop-blur-xl">
+        <div style={{ pointerEvents: 'auto' }}>
+          <div className="mx-auto max-w-6xl">
+            <div className="relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-xl" style={{ 
+              borderColor: 'var(--landing-card-border)',
+              backgroundColor: 'var(--background)',
+              boxShadow: '0 -10px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.1)'
+            }}>
             {/* Decorative gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#2563eb]/10 via-transparent to-[#0ea5e9]/10" />
 
@@ -126,8 +133,11 @@ export default function CookieBanner() {
             </div>
           </div>
         </div>
+        </div>
       </motion.div>
     </AnimatePresence>
   );
+
+  return createPortal(bannerContent, document.body);
 }
 

@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 export function GoogleSignInButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export function GoogleSignInButton() {
       }}
     >
       {isLoading ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
+        <ShieldLoader size="sm" variant="inline" />
       ) : (
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path

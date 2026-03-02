@@ -6,7 +6,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react"
 import { useTranslation } from 'react-i18next';;
-import { Building2, Save, ArrowLeft, Loader2 } from "lucide-react";
+import { Building2, Save, ArrowLeft } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -59,7 +60,7 @@ export default function EditOrganizationPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -81,7 +82,7 @@ export default function EditOrganizationPage() {
   if (organizations === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -320,7 +321,7 @@ export default function EditOrganizationPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <ShieldLoader size="xs" variant="inline" />
                   {t('buttons.saving')}
                 </>
               ) : (

@@ -6,8 +6,9 @@ import React, { useState, useTransition, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import {
-  Eye, EyeOff, Mail, Lock, User, Phone, Loader2, AlertCircle,
+  Eye, EyeOff, Mail, Lock, User, Phone, AlertCircle,
   Building2, CheckCircle2, Search, ChevronRight, ArrowLeft, X,
   Sparkles, Users,
 } from "lucide-react";
@@ -146,7 +147,7 @@ function OrgSearch({
           >
             {results === undefined ? (
               <div className="flex items-center gap-2 p-3 text-sm text-[var(--text-muted)]">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
                 Searching…
               </div>
             ) : results.length === 0 ? (
@@ -536,7 +537,7 @@ export default function RegisterPage() {
                   style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
                 >
                   {isPending ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Creating account…</>
+                    <><ShieldLoader size="xs" variant="inline" className="mr-2" /> Creating account…</>
                   ) : (
                     "Request to Join"
                   )}

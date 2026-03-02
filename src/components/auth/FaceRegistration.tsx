@@ -6,7 +6,8 @@ import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Camera, CheckCircle, XCircle } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { detectFace, loadFaceApiModels, createCanvasFromVideo, canvasToBlob } from "@/lib/faceApi";
 import { uploadAvatarToCloudinary } from "@/actions/cloudinary";
@@ -381,7 +382,7 @@ userId, onSuccess, onCancel }: FaceRegistrationProps) {
               >
                 {isProcessing ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <ShieldLoader size="xs" variant="inline" className="mr-2" />
                     Processing...
                   </>
                 ) : (

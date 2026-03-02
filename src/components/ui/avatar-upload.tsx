@@ -3,7 +3,8 @@
 import { useTranslation } from "react-i18next";
 import React, { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Loader2, X, User } from "lucide-react";
+import { Camera, X, User } from "lucide-react";
+import { ShieldLoader } from "./ShieldLoader";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { uploadAvatarToCloudinary } from "@/actions/cloudinary";
@@ -184,7 +185,7 @@ userId,
               className="absolute inset-0 flex items-center justify-center rounded-full"
               style={{ background: "rgba(0,0,0,0.6)" }}
             >
-              <Loader2 className="w-1/3 h-1/3 text-white animate-spin" />
+              <ShieldLoader size="md" variant="inline" className="text-white" />
             </motion.div>
           )}
         </AnimatePresence>

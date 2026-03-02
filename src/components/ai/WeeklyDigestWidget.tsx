@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next';;
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, RefreshCw, X, Loader2, BarChart3, Clock, Users, AlertTriangle } from 'lucide-react';
+import { Sparkles, RefreshCw, X, BarChart3, Clock, Users, AlertTriangle } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -167,7 +168,7 @@ export default function WeeklyDigestWidget() {
                   size="sm"
                   className="bg-gradient-to-r from-[#2563eb] to-[#0ea5e9] text-white hover:opacity-90"
                 >
-                  {loading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  {loading ? <ShieldLoader size="xs" variant="inline" className="mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
                   Refresh
                 </Button>
               </div>

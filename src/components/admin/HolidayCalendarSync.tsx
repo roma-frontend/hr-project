@@ -7,7 +7,8 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Download, Loader2, ExternalLink, CheckCircle2, Lock } from "lucide-react";
+import { Calendar, Download, ExternalLink, CheckCircle2, Lock } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { generateICalendar, downloadICalFile, getGoogleCalendarAuthUrl, getOutlookAuthUrl } from "@/lib/calendar-sync";
 import { useUpgradeModal } from "@/components/subscription/PlanGate";
@@ -154,7 +155,7 @@ const [isExporting, setIsExporting] = useState(false);
     return (
       <Card className="border-[var(--border)]">
         <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-secondary)]" />
+          <ShieldLoader size="lg" />
         </CardContent>
       </Card>
     );
@@ -192,7 +193,7 @@ const [isExporting, setIsExporting] = useState(false);
             variant="outline"
           >
             {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" className="mr-2" />
             ) : (
               <Download className="mr-2 h-4 w-4" />
             )}
@@ -217,7 +218,7 @@ const [isExporting, setIsExporting] = useState(false);
               disabled={isSyncingGoogle || calendarData.length === 0}
             >
               {isSyncingGoogle ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" className="mr-2" />
               ) : !hasCalendarSync ? (
                 <Lock className="mr-2 h-4 w-4 text-[var(--text-muted)]" />
               ) : googleConnected ? (
@@ -263,7 +264,7 @@ const [isExporting, setIsExporting] = useState(false);
               disabled={isSyncingOutlook || calendarData.length === 0}
             >
               {isSyncingOutlook ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" className="mr-2" />
               ) : !hasCalendarSync ? (
                 <Lock className="mr-2 h-4 w-4 text-[var(--text-muted)]" />
               ) : outlookConnected ? (

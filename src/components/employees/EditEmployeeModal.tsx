@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Save, Loader2, User, Mail, Phone, Briefcase, Building2, Shield } from "lucide-react";
+import { X, Save, User, Mail, Phone, Briefcase, Building2, Shield } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -342,7 +343,7 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
                 className="px-6 py-2 rounded-xl text-sm font-semibold text-white flex items-center gap-2 disabled:opacity-70"
                 style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {loading ? <ShieldLoader size="xs" variant="inline" /> : <Save className="w-4 h-4" />}
                 {t('modals.editEmployee.saveChanges')}
               </button>
             </div>

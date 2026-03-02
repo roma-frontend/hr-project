@@ -15,6 +15,15 @@ export const authOptions: NextAuthOptions = {
       // User will be created/updated in Convex via client-side hook
       return true;
     },
+    async jwt({ token, user, account, profile }) {
+      // Persist user data to token on first sign in
+      if (user) {
+        token.name = user.name;
+        token.email = user.email;
+        token.picture = user.image;
+      }
+      return token;
+    },
     async redirect({ url, baseUrl }) {
       // After successful sign in, redirect to dashboard
       if (url.startsWith(baseUrl)) return url;
@@ -26,6 +35,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.sub!;
         session.user.email = token.email!;
+        session.user.name = token.name || token.email!.split("@")[0];
+        session.user.image = token.picture as string | undefined;
       }
       return session;
     },

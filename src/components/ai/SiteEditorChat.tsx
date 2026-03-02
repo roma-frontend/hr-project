@@ -10,9 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { useSubscription } from "@/hooks/useSubscription";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import {
   Send,
-  Loader2,
   Sparkles,
   Code2,
   Palette,
@@ -376,7 +376,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
                     {msg.content || (
                       <span className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <ShieldLoader size="xs" variant="inline" />
                         AI читает файлы и применяет изменения…
                       </span>
                     )}
@@ -410,7 +410,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                               onClick={() => handleRollback(af.filePath, af.timestamp)}
                             >
                               {isRollingThisBack ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <ShieldLoader size="xs" variant="inline" />
                               ) : (
                                 <>
                                   <Undo2 className="h-3 w-3 mr-1" />
@@ -464,7 +464,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
               className="h-[60px] w-[60px]"
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <ShieldLoader size="sm" variant="inline" />
               ) : (
                 <Send className="h-5 w-5" />
               )}
@@ -521,7 +521,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                       onClick={() => handleRollback(b.originalPath, b.timestamp)}
                     >
                       {isRollingThisBack ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <ShieldLoader size="xs" variant="inline" />
                       ) : (
                         <>
                           <Undo2 className="h-3 w-3 mr-1" />

@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Fingerprint, Loader2 } from "lucide-react";
+import { Fingerprint } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 
 interface WebAuthnButtonProps {
@@ -156,7 +157,7 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
       }}
     >
       {loading ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
+        <ShieldLoader size="sm" variant="inline" />
       ) : (
         <Fingerprint className="w-5 h-5" />
       )}

@@ -6,7 +6,8 @@ import React, { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, Loader2, Fingerprint, AlertCircle, Building2, ScanFace } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Fingerprint, AlertCircle, Building2, ScanFace } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { loginAction } from "@/actions/auth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { WebAuthnButton } from "@/components/auth/WebAuthnButton";
@@ -33,12 +34,20 @@ export default function LoginPage() {
   // Check if OAuth sync is in progress OR redirecting
   const isOAuthSyncing = (status === "authenticated" && !isAuthenticated) || isRedirecting;
   
-  // Detect when auth completes and set redirecting state
+  // Detect when auth completes and redirect
   useEffect(() => {
     if (status === "authenticated" && isAuthenticated && !isRedirecting) {
       setIsRedirecting(true);
+      
+      // Получаем параметр from из URL
+      const params = new URLSearchParams(window.location.search);
+      const from = params.get('from');
+      
+      // Редиректим на нужную страницу
+      const destination = from && from.startsWith('/') ? from : '/dashboard';
+      router.push(destination);
     }
-  }, [status, isAuthenticated, isRedirecting]);
+  }, [status, isAuthenticated, isRedirecting, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,7 +329,7 @@ export default function LoginPage() {
               style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
             >
               {isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> {t('auth.signingIn')}</>
+                <><ShieldLoader size="xs" variant="inline" className="mr-2" /> {t('auth.signingIn')}</>
               ) : (
                 t('auth.signIn')
               )}

@@ -4,28 +4,132 @@ import { cookies } from "next/headers";
 import { signJWT, verifyJWT } from "@/lib/jwt";
 import { log } from "@/lib/logger";
 
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
+
+if (!CONVEX_URL) {
+  console.error('❌ NEXT_PUBLIC_CONVEX_URL is not set!');
+  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('CONVEX')));
+  throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not set');
+}
+
+console.log('✅ CONVEX_URL loaded:', CONVEX_URL);
 
 async function convexMutation(name: string, args: Record<string, unknown>) {
-  const res = await fetch(`${CONVEX_URL}/api/mutation`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: name, args }),
-  });
-  const data = await res.json();
-  if (data.status === "error") throw new Error(data.errorMessage ?? "Convex error");
-  return data.value;
+  try {
+    log.debug('convexMutation called', { name, CONVEX_URL });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const url = `${CONVEX_URL}/api/mutation`;
+    const payload = { path: name, args };
+    
+    log.debug('Fetching Convex mutation', { url, payload: JSON.stringify(payload).substring(0, 200) });
+    
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    
+    clearTimeout(timeoutId);
+    
+    log.debug('convexMutation response received', { 
+      status: res.status, 
+      ok: res.ok,
+      statusText: res.statusText 
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+    }
+    
+    const data = await res.json();
+    log.debug('convexMutation data parsed', { 
+      status: data.status,
+      hasValue: !!data.value,
+      valueType: typeof data.value
+    });
+    
+    if (data.status === "error") throw new Error(data.errorMessage ?? "Convex error");
+    
+    // Log the actual value being returned for debugging
+    log.debug('convexMutation returning value', { 
+      valueKeys: data.value ? Object.keys(data.value) : null
+    });
+    
+    return data.value;
+  } catch (error: any) {
+    log.error('convexMutation failed', error, { 
+      name, 
+      CONVEX_URL,
+      errorMessage: error?.message,
+      errorType: error?.name 
+    });
+    
+    // Provide better error messages
+    if (error?.name === 'AbortError') {
+      throw new Error('Request timeout - server is not responding');
+    } else if (error?.message?.includes('fetch')) {
+      throw new Error('Network error - cannot reach Convex server');
+    }
+    
+    throw error;
+  }
 }
 
 async function convexQuery(name: string, args: Record<string, unknown>) {
-  const res = await fetch(`${CONVEX_URL}/api/query`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ path: name, args }),
-  });
-  const data = await res.json();
-  if (data.status === "error") throw new Error(data.errorMessage ?? "Convex error");
-  return data.value;
+  try {
+    log.debug('convexQuery called', { name, CONVEX_URL });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const res = await fetch(`${CONVEX_URL}/api/query`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: name, args }),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    
+    clearTimeout(timeoutId);
+    
+    log.debug('convexQuery response received', { 
+      status: res.status, 
+      ok: res.ok,
+      statusText: res.statusText 
+    });
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status} ${res.statusText}`);
+    }
+    
+    const data = await res.json();
+    log.debug('convexQuery data parsed', { status: data.status });
+    
+    if (data.status === "error") throw new Error(data.errorMessage ?? "Convex error");
+    return data.value;
+  } catch (error: any) {
+    log.error('convexQuery failed', error, { 
+      name, 
+      CONVEX_URL,
+      errorMessage: error?.message,
+      errorType: error?.name 
+    });
+    
+    // Provide better error messages
+    if (error?.name === 'AbortError') {
+      throw new Error('Request timeout - server is not responding');
+    } else if (error?.message?.includes('fetch')) {
+      throw new Error('Network error - cannot reach Convex server');
+    }
+    
+    throw error;
+  }
 }
 
 export async function registerAction(formData: FormData) {
@@ -169,18 +273,36 @@ export async function loginAction(formData: FormData | { email: string; password
 
     log.api.call('POST', 'auth:login', { email, isFaceLogin });
     
-    const result = await convexMutation("auth:login", {
-      email,
-      password: password || "", // Empty password for Face ID login
-      sessionToken,
-      sessionExpiry,
-      isFaceLogin, // Pass Face ID login flag
-    });
-    
-    log.api.response('POST', 'auth:login', 200, { 
-      userId: result.userId,
-      role: result.role
-    });
+    let result;
+    try {
+      result = await convexMutation("auth:login", {
+        email,
+        password: password || "", // Empty password for Face ID login
+        sessionToken,
+        sessionExpiry,
+        isFaceLogin, // Pass Face ID login flag
+      });
+      
+      log.debug('Raw Convex login result', { 
+        result,
+        keys: Object.keys(result),
+        types: Object.fromEntries(Object.entries(result).map(([k, v]) => [k, typeof v]))
+      });
+      
+      log.api.response('POST', 'auth:login', 200, { 
+        userId: result.userId,
+        role: result.role
+      });
+    } catch (convexError: any) {
+      log.error('Convex auth:login mutation failed', convexError, {
+        email,
+        isFaceLogin,
+        errorMessage: convexError?.message,
+        errorName: convexError?.name
+      });
+      // Re-throw with a cleaner message
+      throw new Error(convexError?.message || 'Authentication failed');
+    }
 
     log.debug('Creating JWT token', { userId: result.userId });
     
@@ -222,20 +344,30 @@ export async function loginAction(formData: FormData | { email: string; password
       isFaceLogin
     });
     
+    // Auto-unlock Face ID after successful email/password login
+    if (!isFaceLogin) {
+      try {
+        log.debug('Auto-unlocking Face ID after password login', { userId: result.userId });
+        await convexMutation("users:autoUnblockFaceId", {
+          userId: result.userId,
+        });
+        log.info('Face ID auto-unlocked successfully', { userId: result.userId });
+      } catch (error) {
+        log.error('Failed to auto-unlock Face ID', { 
+          userId: result.userId, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+        // Don't fail login if Face ID unlock fails
+      }
+    }
+    
     endTimer();
 
-    return {
-      success: true,
-      userId: result.userId,
-      name: result.name,
-      email: result.email,
-      role: result.role,
-      department: result.department,
-      position: result.position,
-      employeeType: result.employeeType,
-      avatar: result.avatarUrl,
-      travelAllowance: result.travelAllowance,
-    };
+    // Return ONLY success flag to avoid serialization issues
+    // The client will get user data from the JWT cookie via getSessionAction
+    log.debug('Login successful, cookies set');
+    
+    return { success: true };
   } catch (error: any) {
     log.error('Login action failed', error, {
       action: 'login',

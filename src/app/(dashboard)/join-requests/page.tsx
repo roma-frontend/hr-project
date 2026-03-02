@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next';;
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, CheckCircle2, XCircle, Clock, Search,
-  Mail, Calendar, Loader2, AlertCircle, Link2,
+  Mail, Calendar, AlertCircle, Link2,
   Copy, Check, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -149,7 +150,7 @@ export default function JoinRequestsPage() {
             disabled={generatingLink}
             className="gap-1.5"
           >
-            {generatingLink ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+            {generatingLink ? <ShieldLoader size="xs" variant="inline" /> : <Link2 className="w-4 h-4" />}
             Generate Invite Link
           </Button>
           {inviteLink && (
@@ -198,8 +199,7 @@ export default function JoinRequestsPage() {
       {/* Request cards */}
       {requests === undefined ? (
         <div className="flex items-center justify-center py-16 gap-2 text-[var(--text-muted)]">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Loading requests…
+          <ShieldLoader size="md" message="Loading requests…" />
         </div>
       ) : filtered.length === 0 ? (
         <Card>
@@ -265,7 +265,7 @@ export default function JoinRequestsPage() {
                                   onClick={() => handleReject(req._id as Id<"organizationInvites">)}
                                   disabled={rejecting === req._id}
                                 >
-                                  {rejecting === req._id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm"}
+                                  {rejecting === req._id ? <ShieldLoader size="xs" variant="inline" /> : "Confirm"}
                                 </Button>
                                 <Button size="sm" variant="ghost" onClick={() => setRejectingId(null)}>{t('common.cancel')}</Button>
                               </div>
@@ -286,7 +286,7 @@ export default function JoinRequestsPage() {
                                   disabled={approving === req._id}
                                 >
                                   {approving === req._id ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <ShieldLoader size="xs" variant="inline" />
                                   ) : (
                                     <CheckCircle2 className="w-3.5 h-3.5" />
                                   )}

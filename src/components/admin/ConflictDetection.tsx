@@ -5,7 +5,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Loader2, Users } from "lucide-react";
+import { AlertTriangle, Users } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 export default function ConflictDetection() {
   
@@ -16,7 +17,7 @@ const conflicts = useQuery(api.admin.detectConflicts);
     return (
       <Card className="border-[var(--border)]">
         <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-secondary)]" />
+          <ShieldLoader size="lg" />
         </CardContent>
       </Card>
     );

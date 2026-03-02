@@ -6,7 +6,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2, Users, CheckCircle, XCircle, Edit, Loader2 } from "lucide-react";
+import { Building2, Users, CheckCircle, XCircle, Edit } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { motion } from "framer-motion";
 
 export default function OrganizationsPage() {
@@ -29,7 +30,7 @@ export default function OrganizationsPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -51,7 +52,7 @@ export default function OrganizationsPage() {
   if (organizations === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }

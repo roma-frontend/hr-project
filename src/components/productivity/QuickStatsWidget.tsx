@@ -5,7 +5,8 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { Clock, CheckCircle2, Calendar, TrendingUp, Loader2 } from "lucide-react";
+import { Clock, CheckCircle2, Calendar, TrendingUp } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 export function QuickStatsWidget() {
   
@@ -19,7 +20,7 @@ const { user } = useAuthStore();
   if (!stats) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-[var(--text-muted)]" />
+        <ShieldLoader size="md" />
       </div>
     );
   }

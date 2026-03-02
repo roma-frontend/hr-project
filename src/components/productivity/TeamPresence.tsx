@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Users, Loader2 } from "lucide-react";
+import { Users } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const PRESENCE_CONFIG = {
@@ -27,7 +28,7 @@ export function TeamPresence() {
   if (!teamMembers) {
     return (
       <div className="flex items-center justify-center py-6">
-        <Loader2 className="w-4 h-4 animate-spin text-[var(--text-muted)]" />
+        <ShieldLoader size="sm" />
       </div>
     );
   }

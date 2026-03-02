@@ -1,22 +1,23 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Camera, CheckCircle, XCircle, Loader2, ScanFace } from "lucide-react";
+import { Camera, CheckCircle, XCircle, ScanFace } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { detectFace, loadFaceApiModels, findBestMatch, isFaceMatch } from "@/lib/faceApi";
 import { useAuthStore } from "@/store/useAuthStore";
-import { loginAction } from "@/actions/auth";
+// Removed loginAction import - using API route instead
 import { useRouter } from "next/navigation";
 
 export function FaceLogin() {
   
   const { t } = useTranslation();
-const router = useRouter();
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,10 +27,30 @@ const router = useRouter();
   const [matchedUser, setMatchedUser] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>("");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [scanningProgress, setScanningProgress] = useState(0);
+  const [detectionQuality, setDetectionQuality] = useState<"poor" | "good" | "excellent">("poor");
+  const [autoLoginTriggered, setAutoLoginTriggered] = useState(false);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
   const setUser = useAuthStore((state) => state.setUser);
   const allFaceDescriptors = useQuery(api.faceRecognition.getAllFaceDescriptors);
   const verifyFaceLogin = useMutation(api.faceRecognition.verifyFaceLogin);
+  const recordFaceIdAttempt = useMutation(api.users.recordFaceIdAttempt);
+  const checkFaceIdStatus = useQuery(api.users.checkFaceIdStatus, 
+    matchedUser ? { email: matchedUser } : "skip"
+  );
+
+  // Debug: Log face descriptors count
+  useEffect(() => {
+    if (allFaceDescriptors !== undefined) {
+      console.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
+      if (allFaceDescriptors.length === 0) {
+        console.warn("⚠️ No registered faces in the database");
+      }
+    }
+  }, [allFaceDescriptors]);
 
   useEffect(() => {
     // Load models on mount
@@ -63,6 +84,14 @@ const router = useRouter();
   }, [stream]);
 
   const startWebcam = async () => {
+    // Проверка блокировки перед запуском камеры
+    if (isBlocked) {
+      toast.error("Face ID is blocked. Please use email/password login.", {
+        duration: 5000,
+      });
+      return;
+    }
+
     try {
       // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -88,6 +117,12 @@ const router = useRouter();
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       
       console.log("✅ Camera access granted");
+      console.log("📹 Media stream tracks:", mediaStream.getTracks().map(t => ({
+        kind: t.kind,
+        label: t.label,
+        enabled: t.enabled,
+        readyState: t.readyState
+      })));
       
       // Set state to trigger video element rendering
       setStream(mediaStream);
@@ -167,19 +202,46 @@ const router = useRouter();
       }, 1000);
     } catch (error: any) {
       console.error("❌ Error accessing webcam:", error);
+      console.error("Error details:", {
+        name: error?.name,
+        message: error?.message,
+        constraint: error?.constraint,
+        stack: error?.stack
+      });
       
       // Reset state on error
       setIsWebcamActive(false);
       setStream(null);
       
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-        toast.error("Camera permission denied. Please allow camera access in your browser settings.");
+        toast.error("Camera permission denied. Please allow camera access in your browser settings.", {
+          duration: 6000,
+          description: "Click the lock icon in the address bar and allow camera access."
+        });
       } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
         toast.error("No camera found. Please connect a camera and try again.");
       } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
-        toast.error("Camera is already in use by another application.");
+        toast.error("Camera is already in use by another application. Please close other apps using the camera.");
+      } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+        console.log("🔄 Camera constraint error, retrying with basic settings...");
+        toast.error("Selected camera doesn't support required settings. Trying basic settings...");
+        
+        // Retry with minimal constraints
+        try {
+          const basicStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" }
+          });
+          setStream(basicStream);
+          setIsWebcamActive(true);
+          toast.success("Camera started successfully!");
+        } catch (retryError: any) {
+          console.error("❌ Retry failed:", retryError);
+          toast.error(`Still unable to access camera: ${retryError.message}`);
+        }
       } else {
-        toast.error(`Unable to access camera: ${error.message || "Unknown error"}`);
+        toast.error(`Unable to access camera: ${error.message || "Unknown error"}`, {
+          description: `Error type: ${error.name || "Unknown"}`
+        });
       }
     }
   };
@@ -193,6 +255,16 @@ const router = useRouter();
     setFaceDetected(false);
     setMatchStatus("idle");
     setMatchedUser(null);
+    setScanningProgress(0);
+    setDetectionQuality("poor");
+    setAutoLoginTriggered(false);
+  };
+
+  // Функция для сброса блокировки Face ID (можно вызвать после успешного входа через email/password)
+  const resetFaceIdBlock = () => {
+    setIsBlocked(false);
+    setFailedAttempts(0);
+    toast.success("Face ID has been unlocked. You can try again.");
   };
 
   const detectFaceLoop = (forceStart = false) => {
@@ -232,6 +304,71 @@ const router = useRouter();
         }
         
         setFaceDetected(faceFound);
+
+        // Анимированное сканирование при обнаружении лица
+        if (faceFound && detection) {
+          // Симуляция прогресса сканирования
+          let currentProgress = 0;
+          setScanningProgress((prev) => {
+            const newProgress = Math.min(prev + 20, 100);
+            currentProgress = newProgress;
+            if (newProgress === 100 && prev !== 100) {
+              console.log("📊 Scanning reached 100%!");
+            }
+            return newProgress;
+          });
+
+          // Определение качества детекции на основе размера лица
+          const box = detection.detection.box;
+          const faceSize = box.width * box.height;
+          
+          let quality: "poor" | "good" | "excellent" = "poor";
+          if (faceSize > 40000) {
+            quality = "excellent";
+          } else if (faceSize > 20000) {
+            quality = "good";
+          }
+          setDetectionQuality(quality);
+          
+          // Auto-login when face is detected with good quality and scanning is complete
+          console.log("🔍 Auto-login check:", {
+            quality,
+            scanningProgress: currentProgress,
+            autoLoginTriggered,
+            isProcessing,
+            shouldTrigger: (quality === "good" || quality === "excellent") && currentProgress >= 100 && !autoLoginTriggered && !isProcessing
+          });
+          
+          if ((quality === "good" || quality === "excellent") && currentProgress >= 100 && !autoLoginTriggered && !isProcessing) {
+            // Cooldown: prevent multiple attempts within 5 seconds
+            const now = Date.now();
+            if (now - lastAttemptTime < 5000) {
+              console.warn("⚠️ Cooldown active - preventing rapid retry");
+              return;
+            }
+            
+            // Check if there are registered faces before triggering auto-login
+            if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
+              console.warn("⚠️ Cannot auto-trigger login - no registered faces");
+              setScanningProgress(0);
+              setAutoLoginTriggered(false);
+              toast.error("No registered faces found. Please register your face first.", { id: 'no-faces' });
+              return;
+            }
+            
+            console.log("🚀 Auto-triggering face login NOW!");
+            setAutoLoginTriggered(true);
+            setLastAttemptTime(now);
+            setTimeout(() => {
+              console.log("🚀 Calling attemptFaceLogin...");
+              attemptFaceLogin();
+            }, 100); // Small delay to ensure state is updated
+          }
+        } else {
+          setScanningProgress(0);
+          setDetectionQuality("poor");
+          setAutoLoginTriggered(false);
+        }
       } catch (error) {
         console.error("❌ Error in face detection loop:", error);
       }
@@ -240,9 +377,25 @@ const router = useRouter();
     return () => clearInterval(interval);
   };
 
-  const attemptFaceLogin = async () => {
-    if (!videoRef.current || !allFaceDescriptors || allFaceDescriptors.length === 0) {
-      toast.error("No registered faces found in the system.");
+  const attemptFaceLogin = useCallback(async () => {
+    // Проверка блокировки
+    if (isBlocked) {
+      console.warn("⚠️ Face ID is blocked");
+      return;
+    }
+
+    if (!videoRef.current) {
+      console.warn("⚠️ Video ref is null");
+      return;
+    }
+
+    if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
+      console.warn("⚠️ No registered faces found in the system");
+      // Only show toast once, not repeatedly
+      if (!isProcessing) {
+        toast.error("No registered faces found in the system. Please register your face first.");
+        setAutoLoginTriggered(false); // Reset to prevent infinite loop
+      }
       return;
     }
 
@@ -259,6 +412,17 @@ const router = useRouter();
         toast.error("No face detected. Please position your face in the frame.");
         setIsProcessing(false);
         setMatchStatus("not_found");
+        
+        // Локальное увеличение счетчика неудачных попыток
+        const newAttempts = failedAttempts + 1;
+        setFailedAttempts(newAttempts);
+        
+        if (newAttempts >= 3) {
+          setIsBlocked(true);
+          toast.error("Too many failed attempts. Face ID is now blocked. Please use email/password login.");
+          stopWebcam();
+        }
+        
         setTimeout(() => setMatchStatus("idle"), 2000);
         return;
       }
@@ -292,15 +456,59 @@ const router = useRouter();
       console.log("🔍 Step 3: Checking match quality. Distance:", bestMatch.distance, "Threshold: 0.6");
       if (!isFaceMatch(bestMatch.distance, 0.6)) {
         console.error("❌ Match quality too low. Distance:", bestMatch.distance);
-        toast.error(`Face not recognized. Confidence too low.`);
+        
+        // Записываем неудачную попытку в базу данных
+        if (bestMatch.userId) {
+          try {
+            const result = await recordFaceIdAttempt({ 
+              userId: bestMatch.userId as any, 
+              success: false 
+            });
+            
+            setFailedAttempts(result.attempts);
+            
+            if (result.blocked) {
+              setIsBlocked(true);
+              toast.error("Too many failed attempts. Face ID is now blocked. Please use email/password login.");
+              stopWebcam();
+            } else {
+              toast.error(`Face not recognized. Attempt ${result.attempts} of 3.`);
+            }
+          } catch (error) {
+            console.error("Failed to record attempt:", error);
+            // Фоллбэк на локальное увеличение
+            const newAttempts = failedAttempts + 1;
+            setFailedAttempts(newAttempts);
+            toast.error(`Face not recognized. Attempt ${newAttempts} of 3.`);
+            
+            if (newAttempts >= 3) {
+              setIsBlocked(true);
+              toast.error("Too many failed attempts. Face ID is now blocked.");
+              stopWebcam();
+            }
+          }
+        }
+        
         setMatchStatus("not_found");
         setTimeout(() => setMatchStatus("idle"), 2000);
         setIsProcessing(false);
         return;
       }
 
-      // Match found!
+      // Match found! Успешная попытка - записываем в БД и сбрасываем счетчик
       console.log("✅ Match confirmed! User:", bestMatch.name);
+      
+      // Записываем успешную попытку в базу данных
+      try {
+        await recordFaceIdAttempt({ 
+          userId: bestMatch.userId as any, 
+          success: true 
+        });
+      } catch (error) {
+        console.error("Failed to record successful attempt:", error);
+      }
+      
+      setFailedAttempts(0);
       setMatchedUser(bestMatch.name);
       setMatchStatus("found");
 
@@ -320,16 +528,43 @@ const router = useRouter();
       }
       console.log("✅ Matched user data:", matchedUserData);
 
-      console.log("🔍 Step 6: Creating session via loginAction...");
-      await loginAction({
+      console.log("🔍 Step 6: Creating session via API...");
+      console.log("📧 Login params:", {
         email: matchedUserData.email,
-        password: "", // Face login doesn't use password
-        isFaceLogin: true,
+        isFaceLogin: true
       });
-      console.log("✅ Session created successfully");
+      
+      try {
+        const response = await fetch('/api/auth/face-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: matchedUserData.email,
+            isFaceLogin: true,
+          }),
+        });
 
-      // Update auth store
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Login failed');
+        }
+
+        const data = await response.json();
+        console.log("✅ Session created successfully", data);
+      } catch (loginError: any) {
+        console.error("❌ Face login API failed:", loginError);
+        console.error("Error details:", {
+          name: loginError?.name,
+          message: loginError?.message,
+        });
+        throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
+      }
+
+      // Update auth store with data from Convex
       console.log("🔍 Step 7: Updating auth store...");
+      
       setUser({
         id: userData.userId,
         name: userData.name,
@@ -353,13 +588,31 @@ const router = useRouter();
       console.error("Error name:", error?.name);
       console.error("Error message:", error?.message);
       console.error("Error stack:", error?.stack);
-      toast.error("Failed to login with Face ID. Please try again.");
+      
+      // Determine specific error message
+      let errorMessage = "Failed to login with Face ID. Please try again.";
+      if (error?.message?.includes("Failed to fetch")) {
+        errorMessage = "Network error: Cannot connect to server. Please check your connection.";
+      } else if (error?.message?.includes("Login action failed")) {
+        errorMessage = "Server error: " + (error.message.replace("Login action failed: ", ""));
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Only show toast once with specific error
+      toast.error(errorMessage, { 
+        id: 'face-login-error',
+        duration: 5000 
+      });
+      
       setMatchStatus("not_found");
+      setAutoLoginTriggered(false); // Reset to allow retry
+      setScanningProgress(0); // Reset scanning
       setTimeout(() => setMatchStatus("idle"), 2000);
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [isBlocked, allFaceDescriptors, verifyFaceLogin, recordFaceIdAttempt, failedAttempts, setUser, router, isProcessing]);
 
   return (
     <Card className="p-6 bg-[var(--surface-base)] border-[var(--border-primary)]">
@@ -396,9 +649,9 @@ const router = useRouter();
               />
               
               {/* Face detection indicator */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-4 right-4 space-y-2">
                 {faceDetected ? (
-                  <div className="flex items-center gap-2 bg-green-500/90 text-white px-3 py-1.5 rounded-full text-sm">
+                  <div className="flex items-center gap-2 bg-green-500/90 text-white px-3 py-1.5 rounded-full text-sm animate-pulse">
                     <CheckCircle className="w-4 h-4" />
                     Face Detected
                   </div>
@@ -408,6 +661,18 @@ const router = useRouter();
                     No Face
                   </div>
                 )}
+                
+                {/* Quality indicator */}
+                {faceDetected && (
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs text-white ${
+                    detectionQuality === "excellent" ? "bg-green-600/90" :
+                    detectionQuality === "good" ? "bg-yellow-600/90" : "bg-orange-600/90"
+                  }`}>
+                    {detectionQuality === "excellent" && "✓ Excellent"}
+                    {detectionQuality === "good" && "◐ Good"}
+                    {detectionQuality === "poor" && "⚠ Move Closer"}
+                  </div>
+                )}
               </div>
 
               {/* Match status */}
@@ -415,7 +680,7 @@ const router = useRouter();
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
                   {matchStatus === "searching" && (
                     <div className="flex items-center gap-2 bg-blue-500/90 text-white px-4 py-2 rounded-full text-sm">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                       Searching for match...
                     </div>
                   )}
@@ -434,11 +699,42 @@ const router = useRouter();
                 </div>
               )}
 
-              {/* Face frame guide */}
+              {/* Face frame guide with animated scanning */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className={`w-64 h-80 border-4 rounded-2xl transition-colors ${
-                  faceDetected ? "border-green-500/50" : "border-white/50"
-                }`} />
+                <div className="relative">
+                  <div className={`w-64 h-80 border-4 rounded-2xl transition-all duration-300 ${
+                    faceDetected ? "border-green-500/70 shadow-[0_0_20px_rgba(34,197,94,0.5)]" : "border-white/50"
+                  }`}>
+                    {/* Scanning animation */}
+                    {faceDetected && scanningProgress > 0 && (
+                      <>
+                        {/* Scanning line */}
+                        <div 
+                          className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent animate-pulse"
+                          style={{
+                            top: `${scanningProgress}%`,
+                            transition: 'top 0.5s ease-out'
+                          }}
+                        />
+                        
+                        {/* Corner indicators */}
+                        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-green-400 animate-pulse" />
+                        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-green-400 animate-pulse" />
+                        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-green-400 animate-pulse" />
+                        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-green-400 animate-pulse" />
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Scanning progress */}
+                  {faceDetected && scanningProgress > 0 && (
+                    <div className="absolute -bottom-8 left-0 right-0 text-center">
+                      <div className="text-white text-xs bg-black/50 px-2 py-1 rounded">
+                        Scanning: {scanningProgress}%
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -464,45 +760,90 @@ const router = useRouter();
           </div>
         )}
 
+        {/* Attempts counter */}
+        {failedAttempts > 0 && !isBlocked && (
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+            <p className="text-sm text-orange-600 dark:text-orange-400 text-center">
+              ⚠️ Failed attempts: {failedAttempts} of 3
+            </p>
+          </div>
+        )}
+
+        {/* Blocked warning */}
+        {isBlocked && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+            <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">
+              🚫 Face ID Blocked
+            </p>
+            <p className="text-xs text-red-600/80 dark:text-red-400/80 text-center mt-1">
+              Too many failed attempts. Please use email/password login.
+            </p>
+          </div>
+        )}
+
         {/* Controls */}
         <div className="flex gap-3">
-          {!isWebcamActive && (
+          {!isWebcamActive && !isBlocked && (
             <Button onClick={startWebcam} className="flex-1">
               <Camera className="w-4 h-4 mr-2" />
               Start Face Login
             </Button>
           )}
 
-          {isWebcamActive && (
+          {isWebcamActive && !isBlocked && (
             <>
-              <Button
-                onClick={attemptFaceLogin}
-                disabled={!faceDetected || isProcessing}
-                className="flex-1"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Authenticating...
-                  </>
-                ) : (
-                  <>
-                    <ScanFace className="w-4 h-4 mr-2" />
-                    Scan Face
-                  </>
-                )}
-              </Button>
+              {isProcessing ? (
+                <div className="flex-1 flex items-center justify-center gap-2 bg-blue-500/10 text-blue-600 dark:text-blue-400 px-4 py-3 rounded-lg border border-blue-500/20">
+                  <ShieldLoader size="xs" variant="inline" />
+                  <span className="text-sm font-medium">Authenticating...</span>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center gap-2 bg-green-500/10 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg border border-green-500/20">
+                  <ScanFace className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {scanningProgress >= 100 ? "Ready to login..." : `Scanning... ${scanningProgress}%`}
+                  </span>
+                </div>
+              )}
               <Button onClick={stopWebcam} variant="outline">
                 Cancel
               </Button>
             </>
           )}
+          
+          {/* Alternative login button when blocked */}
+          {isBlocked && (
+            <Button 
+              onClick={() => router.push('/login')} 
+              className="flex-1"
+              variant="default"
+            >
+              Use Email/Password Login
+            </Button>
+          )}
         </div>
 
+        {/* No faces registered warning */}
+        {allFaceDescriptors !== undefined && allFaceDescriptors.length === 0 && (
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
+            <p className="text-sm text-orange-600 dark:text-orange-400 text-center font-medium">
+              ⚠️ No Registered Faces
+            </p>
+            <p className="text-xs text-orange-600/80 dark:text-orange-400/80 text-center mt-1">
+              No users have registered their face yet. Please register your face in your profile settings first.
+            </p>
+          </div>
+        )}
+
         {/* Info */}
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
           <p className="text-xs text-[var(--text-secondary)]">
-            <strong>Note:</strong> Make sure you have registered your face in Settings before using Face ID login.
+            <strong>🚀 Automatic Login:</strong> Position your face in the camera frame. The system will automatically authenticate you when your face is detected and scanned (100%).
+            {allFaceDescriptors !== undefined && (
+              <span className="block mt-1 text-[var(--text-tertiary)]">
+                📊 {allFaceDescriptors.length} registered face{allFaceDescriptors.length !== 1 ? 's' : ''} in the system
+              </span>
+            )}
           </p>
         </div>
       </div>

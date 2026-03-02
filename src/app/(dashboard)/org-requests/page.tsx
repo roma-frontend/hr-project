@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import { redirect } from "next/navigation";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
@@ -18,7 +19,6 @@ import {
   Users,
   Briefcase,
   MessageSquare,
-  Loader2,
   Crown,
   Zap,
   Filter,
@@ -136,7 +136,7 @@ export default function OrgRequestsPage() {
       {/* Requests List */}
       {!requests ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <ShieldLoader size="lg" />
         </div>
       ) : requests.length === 0 ? (
         <div className="text-center py-12">

@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Sparkles, Loader2, CheckCircle, AlertCircle, Calendar, Pencil, Trash2, Mic, MicOff } from 'lucide-react';
+import { X, Send, Sparkles, CheckCircle, AlertCircle, Calendar, Pencil, Trash2, Mic, MicOff } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUpgradeModal } from '@/components/subscription/PlanGate';
@@ -780,7 +781,7 @@ export function ChatWidget() {
                                 )}
                                 {state.status === 'loading' && (
                                   <div className="flex items-center justify-center gap-2 py-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-[#2563eb]" />
+                                    <ShieldLoader size="xs" variant="inline" />
                                     <span className="text-xs text-[var(--text-muted)]">Submitting...</span>
                                   </div>
                                 )}
@@ -831,7 +832,7 @@ export function ChatWidget() {
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-[var(--background-subtle)] px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#2563eb]" />
+                    <ShieldLoader size="xs" variant="inline" />
                     <span className="text-xs text-[var(--text-muted)]">Thinking...</span>
                   </div>
                 </div>
@@ -886,7 +887,7 @@ export function ChatWidget() {
                   disabled={isLoading || !input.trim()}
                   className="bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] hover:opacity-90 disabled:opacity-50"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {isLoading ? <ShieldLoader size="xs" variant="inline" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
             </form>

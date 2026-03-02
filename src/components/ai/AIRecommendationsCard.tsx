@@ -3,7 +3,8 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Calendar, AlertTriangle, TrendingUp, Users, RefreshCw, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Calendar, AlertTriangle, TrendingUp, Users, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -104,7 +105,7 @@ const user = useAuthStore((s) => s.user);
             <CardContent className="space-y-3 pt-0">
               {loading && !insights ? (
                 <div className="flex items-center gap-2 py-4 justify-center">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#2563eb]" />
+                  <ShieldLoader size="xs" variant="inline" />
                   <span className="text-sm text-[var(--text-muted)]">Analyzing your data...</span>
                 </div>
               ) : (

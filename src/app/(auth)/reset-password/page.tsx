@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Lock, Loader2, AlertCircle, Building2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Lock, AlertCircle, Building2, CheckCircle2 } from "lucide-react";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 function ResetPasswordForm() {
   const { t } = useTranslation();
@@ -94,7 +95,7 @@ function ResetPasswordForm() {
             {/* Loading token check */}
             {tokenValid === null && (
               <motion.div key="loading" className="text-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3" style={{ color: "#2563eb" }} />
+                <ShieldLoader size="lg" className="mb-3" />
                 <p className="text-sm" style={{ color: "var(--text-muted)" }}>Verifying reset link...</p>
               </motion.div>
             )}
@@ -205,7 +206,7 @@ function ResetPasswordForm() {
                     className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70"
                     style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
                   >
-                    {isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('buttons.updating')}</> : t('auth.updatePassword')}
+                    {isPending ? <><ShieldLoader size="xs" variant="inline" className="mr-2" /> {t('buttons.updating')}</> : t('auth.updatePassword')}
                   </motion.button>
                 </form>
               </motion.div>
@@ -227,7 +228,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#2563eb" }} />
+        <ShieldLoader size="lg" />
       </div>
     }>
       <ResetPasswordForm />
