@@ -460,6 +460,7 @@
     "doctor": "Բժշկական այց"
   },
   "leave": {
+    "title": "Արձակուրդների հայտեր",
     "requestLeave": "Արձակուրդի հայտ",
     "allStatuses": "Բոլոր կարգավիճակները",
     "allTypes": "Բոլոր տեսակները",
@@ -471,6 +472,20 @@
     "approveFailed": "Հաստատումը ձախողվեց",
     "rejectFailed": "Մերժումը ձախողվեց",
     "deleteFailed": "Ջնջումը ձախողվեց",
+    "noLeaves": "Արձակուրդների հայտեր չեն գտնվել"
+  },
+  "leaveRequest": {
+    "pickDate": "Ընտրեք ամսաթիվ",
+    "reasonRequired": "Պատճառ *",
+    "reasonPlaceholder": "Մուտքագրեք ձեր արձակուրդի հայտի պատճառը...",
+    "additionalComments": "Լրացուցիչ մեկնաբանություններ",
+    "commentsPlaceholder": "Ավելացրեք ցանկացած լրացուցիչ տեղեկություն...",
+    "attachDocuments": "Կցել փաստաթղթեր",
+    "cancel": "Չեղարկել",
+    "submitRequest": "Ուղարկել հայտը",
+    "submitting": "Ուղարկվում է..."
+  },
+  "attendance": {
     "type": "Տեսակ",
     "startDate": "Սկզբի ամսաթիվ",
     "endDate": "Ավարտի ամսաթիվ",
