@@ -43,6 +43,36 @@ export const getAllLeaves = query({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET LEAVES FOR SPECIFIC ORGANIZATION (superadmin filtered view)
+// ─────────────────────────────────────────────────────────────────────────────
+export const getLeavesForOrganization = query({
+  args: { organizationId: v.id("organizations") },
+  handler: async (ctx, { organizationId }) => {
+    const leaves = await ctx.db
+      .query("leaveRequests")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .order("desc")
+      .collect();
+
+    return await Promise.all(
+      leaves.map(async (leave) => {
+        const user = await ctx.db.get(leave.userId);
+        const reviewer = leave.reviewedBy ? await ctx.db.get(leave.reviewedBy) : null;
+        return {
+          ...leave,
+          userName: user?.name ?? "Unknown",
+          userEmail: user?.email ?? "",
+          userDepartment: user?.department ?? "",
+          userEmployeeType: user?.employeeType ?? "staff",
+          userAvatarUrl: user?.avatarUrl,
+          reviewerName: reviewer?.name,
+        };
+      })
+    );
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET USER LEAVES — own leaves only (or admin sees all within org)
 // ─────────────────────────────────────────────────────────────────────────────
 export const getUserLeaves = query({
@@ -131,6 +161,7 @@ export const createLeave = mutation({
       reason: args.reason,
       comment: args.comment,
       status: "pending",
+      isRead: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -444,6 +475,33 @@ export const deleteLeave = mutation({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FORCE DELETE LEAVE — superadmin only (for cleanup)
+// ─────────────────────────────────────────────────────────────────────────────
+export const forceDeleteLeave = mutation({
+  args: {
+    leaveId: v.id("leaveRequests"),
+    requesterId: v.id("users"),
+  },
+  handler: async (ctx, { leaveId, requesterId }) => {
+    const leave = await ctx.db.get(leaveId);
+    if (!leave) throw new Error("Leave request not found");
+
+    const requester = await ctx.db.get(requesterId);
+    if (!requester) throw new Error("Requester not found");
+
+    // Only superadmin can force delete
+    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+    if (requester.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+      throw new Error("Only superadmin can force delete leaves");
+    }
+
+    // Delete without any checks or notifications
+    await ctx.db.delete(leaveId);
+    return leaveId;
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET LEAVE STATS — scoped to org
 // ─────────────────────────────────────────────────────────────────────────────
 export const getLeaveStats = query({
@@ -474,5 +532,87 @@ export const getLeaveStats = query({
     ).length;
 
     return { total: all.length, pending, approved, rejected, onLeaveToday };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET UNREAD LEAVE REQUESTS COUNT
+// ─────────────────────────────────────────────────────────────────────────────
+export const getUnreadCount = query({
+  args: { requesterId: v.id("users") },
+  handler: async (ctx, { requesterId }) => {
+    const requester = await ctx.db.get(requesterId);
+    if (!requester) throw new Error("Requester not found");
+
+    // Superadmin sees all unread across all organizations
+    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+    let unread: number;
+    if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
+      const allLeaves = await ctx.db.query("leaveRequests").collect();
+      // Treat missing isRead as false (old records before field was added)
+      unread = allLeaves.filter((l) => (l.isRead === false || l.isRead === undefined) && l.status === "pending").length;
+    } else {
+      if (!requester.organizationId) throw new Error("User does not belong to an organization");
+      const orgLeaves = await ctx.db
+        .query("leaveRequests")
+        .withIndex("by_org", (q) =>
+          q.eq("organizationId", requester.organizationId)
+        )
+        .collect();
+      // Treat missing isRead as false (old records before field was added)
+      unread = orgLeaves.filter((l) => (l.isRead === false || l.isRead === undefined) && l.status === "pending").length;
+    }
+
+    return unread;
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK LEAVE REQUEST AS READ
+// ─────────────────────────────────────────────────────────────────────────────
+export const markLeaveAsRead = mutation({
+  args: { leaveId: v.id("leaveRequests") },
+  handler: async (ctx, { leaveId }) => {
+    const leave = await ctx.db.get(leaveId);
+    if (!leave) throw new Error("Leave request not found");
+    
+    await ctx.db.patch(leaveId, { isRead: true });
+    return leaveId;
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MARK ALL LEAVE REQUESTS AS READ (for an organization)
+// ─────────────────────────────────────────────────────────────────────────────
+export const markAllLeavesAsRead = mutation({
+  args: { requesterId: v.id("users") },
+  handler: async (ctx, { requesterId }) => {
+    const requester = await ctx.db.get(requesterId);
+    if (!requester) throw new Error("Requester not found");
+    if (!requester.organizationId && requester.email.toLowerCase() !== "romangulanyan@gmail.com") {
+      throw new Error("User does not belong to an organization");
+    }
+
+    // Superadmin can mark all as read
+    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+    let unreadLeaves;
+    if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
+      const allLeaves = await ctx.db.query("leaveRequests").collect();
+      unreadLeaves = allLeaves.filter((l) => (l.isRead === false || l.isRead === undefined));
+    } else {
+      const leaves = await ctx.db
+        .query("leaveRequests")
+        .withIndex("by_org", (q) =>
+          q.eq("organizationId", requester.organizationId!)
+        )
+        .collect();
+      unreadLeaves = leaves.filter((l) => (l.isRead === false || l.isRead === undefined));
+    }
+
+    for (const leave of unreadLeaves) {
+      await ctx.db.patch(leave._id, { isRead: true });
+    }
+
+    return unreadLeaves.length;
   },
 });

@@ -21,6 +21,7 @@ import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, DEPARTMENTS, type LeaveType } fro
 import { toast } from "sonner";
 import { format, isSameMonth } from "date-fns";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,9 +38,22 @@ export default function ReportsPage() {
 const [tab, setTab] = useState("overview");
   const [mounted, setMounted] = React.useState(false);
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   React.useEffect(() => { setMounted(true); }, []);
 
-  const leaves = useQuery(api.leaves.getAllLeaves, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
+  // Determine which query to use based on selectedOrgId
+  const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
+  const leavesQueryParams = shouldUseOrgQuery 
+    ? { organizationId: selectedOrgId as Id<"organizations"> }
+    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : null);
+
+  // Use organization-specific query if superadmin has selected an org, otherwise use default
+  const leaves = useQuery(
+    shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
+    mounted && user?.id
+      ? leavesQueryParams
+      : "skip"
+  );
   const users = useQuery(api.users.getAllUsers, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
 
   const isLoading = leaves === undefined || users === undefined;

@@ -244,8 +244,9 @@ export const createUser = mutation({
     position: v.optional(v.string()),
     phone: v.optional(v.string()),
     supervisorId: v.optional(v.id("users")),
+    organizationId: v.optional(v.id("organizations")), // Allow superadmin to create users in specific org
   },
-  handler: async (ctx, { adminId, ...args }) => {
+  handler: async (ctx, { adminId, organizationId, ...args }) => {
     const admin = await ctx.db.get(adminId);
     if (!admin || (admin.role !== "admin" && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
       throw new Error("Only org admins can create users");
@@ -261,16 +262,17 @@ export const createUser = mutation({
     if (existing) throw new Error("A user with this email already exists");
 
     // Check employee limit for this org
-    const orgId = admin.organizationId;
-    if (!orgId) throw new Error("Admin must belong to an organization");
+    // If organizationId is provided use it, otherwise use admin's org
+    const targetOrgId = organizationId || admin.organizationId;
+    if (!targetOrgId) throw new Error("Admin must belong to an organization");
 
-    const org = await ctx.db.get(orgId);
+    const org = await ctx.db.get(targetOrgId);
     if (!org) throw new Error("Organization not found");
 
     const currentCount = await ctx.db
       .query("users")
       .withIndex("by_org_active", (q) =>
-        q.eq("organizationId", orgId).eq("isActive", true)
+        q.eq("organizationId", targetOrgId).eq("isActive", true)
       )
       .collect();
 
@@ -283,7 +285,7 @@ export const createUser = mutation({
     const travelAllowance = args.employeeType === "contractor" ? 12000 : 20000;
 
     const userId = await ctx.db.insert("users", {
-      organizationId: orgId, // ← always scoped to admin's org
+      organizationId: targetOrgId, // ← use targetOrgId instead of admin's org
       name: args.name,
       email,
       passwordHash: args.passwordHash,
@@ -308,13 +310,13 @@ export const createUser = mutation({
     const admins = await ctx.db
       .query("users")
       .withIndex("by_org_role", (q) =>
-        q.eq("organizationId", orgId).eq("role", "admin")
+        q.eq("organizationId", targetOrgId).eq("role", "admin")
       )
       .collect();
 
     for (const a of admins) {
       await ctx.db.insert("notifications", {
-        organizationId: admin.organizationId,
+        organizationId: targetOrgId,
         userId: a._id,
         type: "employee_added",
         title: "👤 New Employee Added",
@@ -1229,3 +1231,35 @@ export const upgradeSuperadminRole = mutation({
     };
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HARD DELETE USER — completely removes user from database
+// ─────────────────────────────────────────────────────────────────────────────
+export const hardDeleteUser = mutation({
+  args: {
+    adminId: v.id("users"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { adminId, userId }) => {
+    const admin = await ctx.db.get(adminId);
+    if (!admin || (admin.role !== "admin" && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+      throw new Error("Only org admins can delete users");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    // Cross-org protection
+    if (
+      admin.organizationId !== user.organizationId &&
+      admin.email.toLowerCase() !== SUPERADMIN_EMAIL
+    ) {
+      throw new Error("Access denied: cannot delete users from another organization");
+    }
+
+    // Hard delete - remove from database completely
+    await ctx.db.delete(userId);
+    return userId;
+  },
+});
+

@@ -36,6 +36,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, getLeaveTypeLabel, type LeaveType, type LeaveStatus } from "@/lib/types";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LeaveRequestModal } from "@/components/leaves/LeaveRequestModal";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 
 type LeaveRequest = {
   _id: string;
@@ -192,16 +193,51 @@ export function CalendarClient() {
   const [mounted, setMounted] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
 
   const DAYS_OF_WEEK = [
     t('weekdays.sun'), t('weekdays.mon'), t('weekdays.tue'), t('weekdays.wed'),
     t('weekdays.thu'), t('weekdays.fri'), t('weekdays.sat')
   ];
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    console.log('📅 CalendarClient mounted');
+  }, []);
 
-  const leavesData = useQuery(api.leaves.getAllLeaves, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
+  // Debug: Log whenever selectedOrgId changes
+  useEffect(() => {
+    if (mounted) {
+      console.log('📅 selectedOrgId changed to:', selectedOrgId);
+    }
+  }, [selectedOrgId, mounted]);
+
+  // Determine which query to use based on selectedOrgId
+  const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
+  const queryParams = shouldUseOrgQuery 
+    ? { organizationId: selectedOrgId as Id<"organizations"> }
+    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : null);
+
+  // Use organization-specific query if org selected, otherwise use default
+  const leavesData = useQuery(
+    shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
+    mounted && user?.id
+      ? queryParams
+      : "skip"
+  );
   const leaves: LeaveRequest[] = leavesData ?? [];
+  
+  // Debug: Log data load
+  useEffect(() => {
+    if (mounted) {
+      console.log('📅 Leaves loaded:', { 
+        selectedOrgId, 
+        count: leaves.length, 
+        usingOrgQuery: shouldUseOrgQuery,
+        mounted 
+      });
+    }
+  }, [leaves.length, selectedOrgId, mounted, shouldUseOrgQuery]);
 
   // Build leave map
   const leaveDateMap = useMemo(() => {

@@ -13,6 +13,7 @@ import {
   LayoutGrid, List, ChevronRight,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { AddEmployeeModal } from "./AddEmployeeModal";
 import { EditEmployeeModal } from "./EditEmployeeModal";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
@@ -35,6 +36,7 @@ const TYPE_CONFIG = {
 export function EmployeesClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const router = useRouter();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -49,7 +51,20 @@ export function EmployeesClient() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const users = useQuery(api.users.getAllUsers, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
+  // For superadmin with selected org, ALWAYS use getOrgMembers
+  // For others, use getAllUsers which returns their org's members
+  const isSuperadmin = user?.role === "superadmin";
+  const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
+
+  // Use organization-specific query if superadmin has selected an org
+  const users = useQuery(
+    useOrgFilter ? api.organizations.getOrgMembers : api.users.getAllUsers,
+    mounted && user?.id
+      ? useOrgFilter
+        ? { organizationId: selectedOrgId as Id<"organizations">, superadminUserId: user.id as Id<"users"> }
+        : { requesterId: user.id as Id<"users"> }
+      : "skip"
+  );
   const supervisors = useQuery(api.tasks.getSupervisors, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
   const deleteUser = useMutation(api.users.deleteUser);
 
@@ -263,7 +278,7 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[emp.employeeType];
+                    const typeConf = TYPE_CONFIG[emp.employeeType] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
                     const presence = getPresenceBadge(emp.presenceStatus);
                     return (
@@ -346,7 +361,7 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[emp.employeeType];
+                    const typeConf = TYPE_CONFIG[emp.employeeType] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
                     const presence = getPresenceBadge(emp.presenceStatus);
                     return (

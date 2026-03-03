@@ -6,7 +6,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2, Users, CheckCircle, XCircle, Edit } from "lucide-react";
+import { Building2, Users, CheckCircle, XCircle, Edit, Shield } from "lucide-react";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
 export default function OrganizationsPage() {
@@ -235,13 +235,22 @@ export default function OrganizationsPage() {
                   )}
                 </div>
 
-                <button
-                  onClick={() => router.push(`/superadmin/organizations/${org._id}/edit`)}
-                  className="p-2 rounded-lg hover:bg-muted transition-colors"
-                  title={t('titles.editOrganization')}
-                >
-                  <Edit className="w-5 h-5" style={{ color: "var(--text-primary)" }} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => router.push(`/superadmin/organizations/${org._id}/manage-admins`)}
+                    className="p-2 rounded-lg hover:bg-blue-500/10 text-blue-500 transition-colors"
+                    title="Manage admins"
+                  >
+                    <Shield className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => router.push(`/superadmin/organizations/${org._id}/edit`)}
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    title={t('titles.editOrganization')}
+                  >
+                    <Edit className="w-5 h-5" style={{ color: "var(--text-primary)" }} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

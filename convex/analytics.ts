@@ -3,10 +3,26 @@ import { v } from "convex/values";
 
 // ── Get analytics overview ─────────────────────────────────────────────────
 export const getAnalyticsOverview = query({
-  args: {},
-  handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
-    const leaves = await ctx.db.query("leaveRequests").collect();
+  args: { organizationId: v.optional(v.id("organizations")) },
+  handler: async (ctx, { organizationId }) => {
+    let users, leaves;
+
+    if (organizationId) {
+      // Get organization-specific data
+      users = await ctx.db
+        .query("users")
+        .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+        .collect();
+      
+      leaves = await ctx.db
+        .query("leaveRequests")
+        .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+        .collect();
+    } else {
+      // Get all data
+      users = await ctx.db.query("users").collect();
+      leaves = await ctx.db.query("leaveRequests").collect();
+    }
 
     const totalEmployees = users.filter(u => u.isActive).length;
     const pendingApprovals = users.filter(u => !u.isApproved && u.isActive).length;

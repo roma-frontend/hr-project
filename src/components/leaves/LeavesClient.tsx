@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, CheckCircle, XCircle, Trash2 } from "lucide-react";
@@ -20,6 +20,9 @@ import { LeaveRequestModal } from "@/components/leaves/LeaveRequestModal";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LEAVE_TYPE_LABELS, DEPARTMENTS, type LeaveType, type LeaveStatus } from "@/lib/types";
 import dynamic from "next/dynamic";
+import { playNotificationSound, sendBrowserNotification } from "@/lib/notificationSound";
+import { UnreadRequestsBanner, UnreadTabBadge } from "@/components/UnreadRequestsBadge";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 
 const AILeaveAssistant = dynamic(() => import("@/components/leaves/AILeaveAssistant"), { ssr: false });
 
@@ -63,20 +66,49 @@ function LeaveTypeBadge({ type }: { type: LeaveType }) {
 export function LeavesClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [mounted, setMounted] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [previousUnreadCount, setPreviousUnreadCount] = useState(0);
 
   React.useEffect(() => { setMounted(true); }, []);
 
-  const leaves = useQuery(api.leaves.getAllLeaves, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
+  // Determine which query to use based on selectedOrgId
+  const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
+  const queryParams = shouldUseOrgQuery 
+    ? { organizationId: selectedOrgId as Id<"organizations"> }
+    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : null);
+
+  // Use organization-specific query if superadmin has selected an org, otherwise use default
+  const leaves = useQuery(
+    shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
+    mounted && user?.id
+      ? queryParams
+      : "skip"
+  );
+  const unreadCount = useQuery(api.leaves.getUnreadCount, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
 
   const approveLeave = useMutation(api.leaves.approveLeave);
   const rejectLeave = useMutation(api.leaves.rejectLeave);
   const deleteLeave = useMutation(api.leaves.deleteLeave);
+  const markLeaveAsRead = useMutation(api.leaves.markLeaveAsRead);
+  const markAllLeavesAsRead = useMutation(api.leaves.markAllLeavesAsRead);
+
+  // Play notification sound when new unread requests appear
+  useEffect(() => {
+    if (unreadCount && unreadCount > previousUnreadCount) {
+      playNotificationSound("new_request");
+      sendBrowserNotification("New Leave Request! 🏖️", {
+        body: `You have ${unreadCount} pending leave request(s)`,
+        soundType: "new_request",
+      });
+    }
+    setPreviousUnreadCount(unreadCount ?? 0);
+  }, [unreadCount]);
 
   const filtered = useMemo(() => {
     if (!leaves) return [];
@@ -96,11 +128,16 @@ export function LeavesClient() {
       return;
     }
     try {
+      // Mark as read first
+      await markLeaveAsRead({ leaveId: id });
+      
       await approveLeave({ 
         leaveId: id, 
         reviewerId: user.id as Id<"users">,
         comment 
       });
+      
+      playNotificationSound("approved");
       toast.success(t('leave.approvedSuccess'));
     } catch (err) {
       console.error("Approve error:", err);
@@ -114,11 +151,16 @@ export function LeavesClient() {
       return;
     }
     try {
+      // Mark as read first
+      await markLeaveAsRead({ leaveId: id });
+      
       await rejectLeave({ 
         leaveId: id, 
         reviewerId: user.id as Id<"users">,
         comment 
       });
+      
+      playNotificationSound("rejected");
       toast.success(t('leave.rejectedSuccess'));
     } catch (err) {
       console.error("Reject error:", err);
@@ -160,6 +202,11 @@ export function LeavesClient() {
 
   return (
     <div className="space-y-6">
+      {/* Unread Requests Banner */}
+      {isAdmin && unreadCount && unreadCount > 0 && (
+        <UnreadRequestsBanner userId={user?.id} />
+      )}
+
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -220,9 +267,12 @@ export function LeavesClient() {
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-                {isLoading ? t('common.loading') : `${filtered.length} request${filtered.length !== 1 ? "s" : ""}`}
-              </CardTitle>
+              {/* Only show count for admins, not superadmin */}
+              {isAdmin && (
+                <CardTitle className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                  {isLoading ? t('common.loading') : `${filtered.length} request${filtered.length !== 1 ? "s" : ""}`}
+                </CardTitle>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-0">

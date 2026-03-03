@@ -36,12 +36,10 @@ export default function OrgRequestsPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
 
-  // Check if superadmin
-  const isSuperadmin = user?.role === "superadmin" || user?.email?.toLowerCase() === "romangulanyan@gmail.com";
+  // Only admins can see organization requests
+  const isAdmin = user?.role === "admin";
   
-  console.log("🔍 [Org Requests] User check:", { email: user?.email, role: user?.role, isSuperadmin });
-  
-  if (!user || !isSuperadmin) {
+  if (!user || !isAdmin) {
     redirect("/dashboard");
   }
 

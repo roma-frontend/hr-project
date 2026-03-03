@@ -3,7 +3,9 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { StatsCard } from "@/components/analytics/StatsCard";
 import dynamic from "next/dynamic";
 
@@ -32,12 +34,26 @@ export default function AnalyticsPage() {
   
   const { t } = useTranslation();
 const { user } = useAuthStore();
-  const analytics = useQuery(api.analytics.getAnalyticsOverview, {});
+  const selectedOrgId = useSelectedOrganization();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
 
   // Only admin and supervisor can access
   if (user && user.role === "employee") {
     redirect("/dashboard");
   }
+
+  // Determine which query to use based on selectedOrgId
+  const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
+  
+  const analytics = useQuery(
+    api.analytics.getAnalyticsOverview,
+    mounted && user?.id
+      ? shouldUseOrgQuery
+        ? { organizationId: selectedOrgId as Id<"organizations"> }
+        : {}
+      : "skip"
+  );
 
   if (!analytics) {
     return (

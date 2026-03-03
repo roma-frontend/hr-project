@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:delete-employees": "tsx scripts/delete-test-employees.ts",
+    "test:add-org": "tsx scripts/add-test-org-data.ts",
     "stripe:view": "tsx scripts/view-stripe-transactions.ts",
     "stripe:add-test-data": "tsx scripts/add-test-stripe-data.ts",
     "stripe:export": "tsx scripts/export-stripe-to-excel.ts",

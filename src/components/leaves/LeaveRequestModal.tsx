@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { LEAVE_TYPE_LABELS, getLeaveTypeLabel, calculateDays, type LeaveType } from "@/lib/types";
 
 interface LeaveRequestModalProps {
@@ -40,8 +41,24 @@ const LEAVE_TYPE_COLORS: Record<LeaveType, string> = {
 
 export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const { t } = useTranslation();
-  const allUsers = useQuery(api.users.getAllUsers, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  // For superadmin with selected org, ALWAYS use getOrgMembers
+  const isSuperadmin = user?.role === "superadmin";
+  const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
+
+  // Use organization-specific query if superadmin has selected an org
+  const allUsers = useQuery(
+    useOrgFilter ? api.organizations.getOrgMembers : api.users.getAllUsers,
+    mounted && user?.id
+      ? useOrgFilter
+        ? { organizationId: selectedOrgId as Id<"organizations">, superadminUserId: user.id as Id<"users"> }
+        : { requesterId: user.id as Id<"users"> }
+      : "skip"
+  );
   const createLeave = useMutation(api.leaves.createLeave);
 
   const [selectedUserId, setSelectedUserId] = useState("");

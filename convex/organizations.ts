@@ -68,15 +68,15 @@ export const listAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    
+
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    
+
     // Only superadmin can access payment/subscription features
     const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-    
+
     if (!currentUser || !isSuperAdmin) {
       return [];
     }
@@ -104,11 +104,14 @@ export const listAll = query({
 // SUPERADMIN: Get all organizations
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAllOrganizations = query({
-  args: { superadminUserId: v.id("users") },
-  handler: async (ctx, { superadminUserId }) => {
-    const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
-      throw new Error("Superadmin only");
+  args: { superadminUserId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    // If userId provided, verify it's a superadmin
+    if (args.superadminUserId) {
+      const caller = await ctx.db.get(args.superadminUserId);
+      if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+        throw new Error("Superadmin only");
+      }
     }
 
     const orgs = await ctx.db.query("organizations").collect();
@@ -129,6 +132,7 @@ export const getAllOrganizations = query({
           totalEmployees: employees.length,
           activeEmployees: activeCount,
           adminNames: admins.map((a) => a.name),
+          memberCount: employees.length,
         };
       })
     );
@@ -188,6 +192,69 @@ export const assignOrgAdmin = mutation({
       role: "admin",
       isApproved: true,
       approvedAt: Date.now(),
+    });
+
+    return userId;
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPERADMIN: Get all members of a specific organization
+// ─────────────────────────────────────────────────────────────────────────────
+export const getOrgMembers = query({
+  args: {
+    superadminUserId: v.id("users"),
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, { superadminUserId, organizationId }) => {
+    const caller = await ctx.db.get(superadminUserId);
+    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+      throw new Error("Only the superadmin can view org members");
+    }
+
+    const org = await ctx.db.get(organizationId);
+    if (!org) throw new Error("Organization not found");
+
+    const members = await ctx.db
+      .query("users")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .collect();
+
+    return members.map((m) => ({
+      _id: m._id,
+      name: m.name,
+      email: m.email,
+      role: m.role,
+      isActive: m.isActive,
+      isApproved: m.isApproved,
+      department: m.department,
+      position: m.position,
+      avatarUrl: m.avatarUrl,
+      createdAt: m.createdAt,
+    }));
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPERADMIN: Remove admin role (demote to employee)
+// ─────────────────────────────────────────────────────────────────────────────
+export const removeOrgAdmin = mutation({
+  args: {
+    superadminUserId: v.id("users"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { superadminUserId, userId }) => {
+    const caller = await ctx.db.get(superadminUserId);
+    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+      throw new Error("Only the superadmin can remove org admins");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+    if (user.role !== "admin") throw new Error("User is not an admin");
+
+    await ctx.db.patch(userId, {
+      role: "employee",
     });
 
     return userId;
@@ -349,7 +416,7 @@ export const getJoinRequests = query({
     if (!admin.organizationId) {
       throw new Error("Admin must belong to an organization");
     }
-    
+
     const orgId = admin.organizationId; // Already checked for null above
 
     let invites;
@@ -393,11 +460,11 @@ export const approveJoinRequest = mutation({
     const invite = await ctx.db.get(args.inviteId);
     if (!invite) throw new Error("Invite not found");
     if (invite.status !== "pending") throw new Error("This request has already been reviewed");
-    
+
     if (!admin.organizationId) {
       throw new Error("Admin must belong to an organization");
     }
-    
+
     if (invite.organizationId !== admin.organizationId) {
       throw new Error("This request belongs to a different organization");
     }
@@ -484,11 +551,11 @@ export const rejectJoinRequest = mutation({
     const invite = await ctx.db.get(args.inviteId);
     if (!invite) throw new Error("Invite not found");
     if (invite.status !== "pending") throw new Error("This request has already been reviewed");
-    
+
     if (!admin.organizationId) {
       throw new Error("Admin must belong to an organization");
     }
-    
+
     if (invite.organizationId !== admin.organizationId) {
       throw new Error("This request belongs to a different organization");
     }

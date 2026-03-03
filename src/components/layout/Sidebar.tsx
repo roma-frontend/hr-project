@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OrganizationSelector } from "@/components/layout/OrganizationSelector";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -68,6 +69,14 @@ export function Sidebar() {
   const notifications = useQuery(
     api.notifications.getUserNotifications,
     mounted && user?.id ? { userId: user.id as Id<"users"> } : "skip"
+  );
+  
+  // Unread leaves count
+  const unreadLeavesCount = useQuery(
+    api.leaves.getUnreadCount,
+    mounted && user?.id && (user.role === "admin" || user.role === "supervisor" || user.role === "superadmin")
+      ? { requesterId: user.id as Id<"users"> }
+      : "skip"
   );
   
   const taskUnreadCount = (notifications ?? []).filter(
@@ -202,8 +211,12 @@ export function Sidebar() {
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            const badge = item.badge === "AI" ? taskUnreadCount : 0;
-            const showBadge = item.href === "/tasks" ? taskUnreadCount > 0 : false;
+            const taskBadgeCount = taskUnreadCount;
+            const leaveBadgeCount = unreadLeavesCount ?? 0;
+            const showTaskBadge = item.href === "/tasks" && taskBadgeCount > 0;
+            const showLeaveBadge = item.href === "/leaves" && leaveBadgeCount > 0;
+            const showBadge = showTaskBadge || showLeaveBadge;
+            const badgeCount = item.href === "/leaves" ? leaveBadgeCount : item.href === "/tasks" ? taskBadgeCount : 0;
 
             return (
               <Link
@@ -250,8 +263,8 @@ export function Sidebar() {
                   
                   {/* Badge */}
                   {showBadge && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-lg">
-                      {badge > 9 ? "9+" : badge}
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-lg animate-pulse">
+                      {badgeCount > 9 ? "9+" : badgeCount}
                     </span>
                   )}
 
@@ -278,6 +291,9 @@ export function Sidebar() {
           })}
         </div>
       </nav>
+
+      {/* Organization Selector */}
+      <OrganizationSelector collapsed={collapsed} />
 
       {/* Organization Branding */}
       <div className="px-3 py-2 border-t" style={{ borderColor: "var(--sidebar-border)" }}>
@@ -399,6 +415,14 @@ export function MobileSidebar() {
     mounted && user?.id ? { userId: user.id as Id<"users"> } : "skip"
   );
   
+  // Mobile Unread leaves count
+  const mobileUnreadLeavesCount = useQuery(
+    api.leaves.getUnreadCount,
+    mounted && user?.id && (user.role === "admin" || user.role === "supervisor" || user.role === "superadmin")
+      ? { requesterId: user.id as Id<"users"> }
+      : "skip"
+  );
+  
   const mobileTaskBadge = (mobileNotifications ?? []).filter(
     (n: any) => !n.isRead && n.type === "system" && (n.title?.includes("Task") || n.title?.includes("task"))
   ).length;
@@ -512,7 +536,9 @@ export function MobileSidebar() {
             {visibleItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              const mobileBadge = item.href === "/tasks" ? mobileTaskBadge : 0;
+              const mobileTaskCount = mobileTaskBadge;
+              const mobileLeaveCount = mobileUnreadLeavesCount ?? 0;
+              const mobileBadge = item.href === "/tasks" ? mobileTaskCount : item.href === "/leaves" ? mobileLeaveCount : 0;
 
               return (
                 <Link
@@ -561,7 +587,7 @@ export function MobileSidebar() {
                     
                     {/* Badge */}
                     {mobileBadge > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-lg">
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-lg animate-pulse">
                         {mobileBadge > 9 ? "9+" : mobileBadge}
                       </span>
                     )}
@@ -586,6 +612,16 @@ export function MobileSidebar() {
             })}
           </div>
         </nav>
+
+        {/* Organization Selector */}
+        <div
+          style={{
+            opacity: mobileOpen ? 1 : 0,
+            transition: "opacity 0.4s ease 0.25s",
+          }}
+        >
+          <OrganizationSelector collapsed={false} />
+        </div>
 
         {/* Organization Branding */}
         <div className="px-3 py-2 border-t" style={{ borderColor: "var(--sidebar-border)" }}>

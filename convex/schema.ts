@@ -224,6 +224,7 @@ export default defineSchema({
       v.literal("approved"),
       v.literal("rejected"),
     ),
+    isRead: v.optional(v.boolean()),        // Track if admin has read this request (optional for migration)
     reviewedBy: v.optional(v.id("users")),
     reviewComment: v.optional(v.string()),
     reviewedAt: v.optional(v.number()),
