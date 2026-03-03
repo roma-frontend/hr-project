@@ -15,14 +15,14 @@ export const createManualSubscription = mutation({
     // Check if user is superadmin
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    
+
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    
+
     const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-    
+
     if (!currentUser || !isSuperAdmin) {
       throw new Error("Not authorized - superadmin only");
     }
@@ -80,22 +80,22 @@ export const listAllWithUsers = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    
+
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    
+
     const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-    
+
     if (!currentUser || !isSuperAdmin) return [];
 
     const subscriptions = await ctx.db.query("subscriptions").collect();
-    
+
     const withOrganizations = await Promise.all(
       subscriptions.map(async (sub) => {
         const organization = sub.organizationId ? await ctx.db.get(sub.organizationId) : null;
-        
+
         // Count employees in the organization
         let employeeCount = 0;
         if (organization) {
@@ -105,13 +105,13 @@ export const listAllWithUsers = query({
             .collect();
           employeeCount = employees.length;
         }
-        
+
         return {
           ...sub,
           organizationName: organization?.name,
           organizationSlug: organization?.slug,
           employeeCount,
-          isManual: sub.metadata?.manual || false,
+          isManual: (sub as any).metadata?.manual || false,
         };
       })
     );
@@ -126,14 +126,14 @@ export const cancelSubscription = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    
+
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    
+
     const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-    
+
     if (!currentUser || !isSuperAdmin) {
       throw new Error("Not authorized - superadmin only");
     }

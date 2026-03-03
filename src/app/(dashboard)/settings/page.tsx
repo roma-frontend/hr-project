@@ -3,13 +3,13 @@
 import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Save, 
-  Bell, 
-  Shield, 
-  Palette, 
-  CreditCard, 
-  Settings as SettingsIcon, 
+import {
+  Save,
+  Bell,
+  Shield,
+  Palette,
+  CreditCard,
+  Settings as SettingsIcon,
   Lock,
   Zap,
   Globe,
@@ -56,9 +56,7 @@ export default function SettingsPage() {
 
   // Debug: log user data on mount
   useEffect(() => {
-    console.log('Current user data:', user);
-    console.log('Break interval from user:', user?.breakInterval);
-    console.log('Break reminders enabled:', user?.breakRemindersEnabled);
+    // Debug removed - breakInterval/breakRemindersEnabled not on User type
   }, [user]);
 
   const updateOwnProfile = useMutation(api.users.updateOwnProfile);
@@ -73,7 +71,7 @@ export default function SettingsPage() {
   // Auto-migrate: copy faceImageUrl → avatarUrl for users who registered face but have no avatar
   useEffect(() => {
     if (user?.role === "admin") {
-      migrateFaceToAvatar({}).catch(() => {});
+      migrateFaceToAvatar({}).catch(() => { });
     }
   }, [user?.role]);
 
@@ -104,8 +102,8 @@ export default function SettingsPage() {
       await updateSessionProfileAction(user.id, newName, newEmail);
 
       // 3. Update Zustand store (localStorage)
-      login({ 
-        ...user, 
+      login({
+        ...user,
         ...allSettings,
       });
 
@@ -182,13 +180,13 @@ export default function SettingsPage() {
     },
     ...(user?.role === "admin"
       ? [
-          {
-            value: "admin",
-            label: t('settings.admin'),
-            icon: SettingsIcon,
-            description: t('settings.adminDesc'),
-          },
-        ]
+        {
+          value: "admin",
+          label: t('settings.admin'),
+          icon: SettingsIcon,
+          description: t('settings.adminDesc'),
+        },
+      ]
       : []),
   ];
 
@@ -253,7 +251,7 @@ export default function SettingsPage() {
 
             {/* Productivity Tab */}
             <TabsContent value="productivity" className="space-y-6 mt-0">
-              <ProductivitySettings 
+              <ProductivitySettings
                 user={user}
                 onSettingsChange={setProductivitySettings}
               />
@@ -288,7 +286,7 @@ export default function SettingsPage() {
 
             {/* Dashboard Customization Tab */}
             <TabsContent value="dashboard" className="space-y-6 mt-0">
-              <DashboardCustomization 
+              <DashboardCustomization
                 user={user}
                 onSettingsChange={setDashboardSettings}
               />
@@ -296,7 +294,7 @@ export default function SettingsPage() {
 
             {/* Localization Tab */}
             <TabsContent value="localization" className="space-y-6 mt-0">
-              <LocalizationSettings 
+              <LocalizationSettings
                 user={user}
                 onSettingsChange={setLocalizationSettings}
               />

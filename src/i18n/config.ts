@@ -47,23 +47,22 @@ i18n
     supportedLngs: ['en', 'hy', 'ru'], // Explicitly define supported languages
     nonExplicitSupportedLngs: false, // Only use exact matches
     debug: true, // Enable debug mode
-    
+
     interpolation: {
       escapeValue: false, // React already escapes
     },
-    
+
     // Client-side language detection
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
-      checkWhitelist: true,
       // Custom detection function
       lookupQuerystring: 'lng',
       lookupCookie: 'i18next',
       lookupSessionStorage: 'i18nextLng',
     },
-    
+
     // SSR support
     react: {
       useSuspense: false, // Disable Suspense for SSR compatibility
@@ -76,7 +75,7 @@ i18n.on('languageChanged', (lng) => {
     console.log('🔄 i18n languageChanged event:', lng);
     localStorage.setItem('i18nextLng', lng);
     console.log('💾 Persisted to localStorage:', lng);
-    
+
     // Also update HTML lang attribute
     document.documentElement.lang = lng;
   }

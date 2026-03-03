@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Sparkles, CheckCircle, AlertCircle, Calendar, Pencil, Trash2, Mic, MicOff } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
@@ -117,7 +118,7 @@ function parseActions(content: string): { cleanContent: string; actions: AnyActi
 }
 
 // Generate follow-up suggestions based on assistant response content
-function getFollowUpSuggestions(content: string, userRole: string): string[] {
+function getFollowUpSuggestions(content: string, userRole: string, t: (key: string) => string): string[] {
   const lower = content.toLowerCase();
 
   if (lower.includes('book') || lower.includes(t("chatWidget.leaveRequest")) || lower.includes('submitted') || lower.includes('approved')) {
@@ -160,6 +161,7 @@ const INITIAL_SUGGESTIONS = [
 ];
 
 export function ChatWidget() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -250,7 +252,7 @@ export function ChatWidget() {
   useEffect(() => {
     // Disabled auto wake word detection
     return;
-    
+
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
 
@@ -304,7 +306,7 @@ export function ChatWidget() {
     let ruRec: SpeechRecognition | null = null;
     try {
       ruRec = createRecognizer('ru-RU');
-      wakeRecogRef.current = [enRec, ruRec];
+      wakeRecogRef.current = [enRec, ...(ruRec ? [ruRec] : [])] as SpeechRecognition[];
     } catch {
       // Browser doesn't allow second recognizer — OK, en-US handles it
     }
@@ -350,7 +352,7 @@ export function ChatWidget() {
       }
       const text = final || interim;
       setInput(text);
-      
+
       // Reset silence timer - auto-send after 1 second of silence
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current);
@@ -474,51 +476,51 @@ export function ChatWidget() {
   // Smart navigation - detect navigation commands
   const handleNavigation = useCallback((text: string) => {
     const lowerText = text.toLowerCase();
-    
+
     const navigationMap: { [key: string]: string } = {
       'календарь': '/calendar',
       'calendar': '/calendar',
       'покажи календарь': '/calendar',
       'открой календарь': '/calendar',
       'show calendar': '/calendar',
-      
+
       'отпуск': '/leaves',
       'отпуска': '/leaves',
       'leaves': '/leaves',
       'мои отпуска': '/leaves',
       'my leaves': '/leaves',
       'запросы на отпуск': '/leaves',
-      
+
       'сотрудники': '/employees',
       'employees': '/employees',
       'команда': '/employees',
       'team': '/employees',
       'покажи сотрудников': '/employees',
-      
+
       'задачи': '/tasks',
       'tasks': '/tasks',
       'мои задачи': '/tasks',
       'my tasks': '/tasks',
-      
+
       'посещаемость': '/attendance',
       'attendance': '/attendance',
       'присутствие': '/attendance',
-      
+
       'аналитика': '/analytics',
       'analytics': '/analytics',
       'статистика': '/analytics',
       'reports': '/reports',
       'отчеты': '/reports',
-      
+
       'настройки': '/settings',
       'settings': '/settings',
-      
+
       'дашборд': '/dashboard',
       'dashboard': '/dashboard',
       'главная': '/dashboard',
       'home': '/dashboard',
     };
-    
+
     for (const [keyword, path] of Object.entries(navigationMap)) {
       if (lowerText.includes(keyword)) {
         router.push(path);
@@ -526,7 +528,7 @@ export function ChatWidget() {
         return true;
       }
     }
-    
+
     return false;
   }, [router]);
 
@@ -587,17 +589,17 @@ export function ChatWidget() {
       }
 
       const { cleanContent, actions } = parseActions(fullContent);
-      const suggestions = getFollowUpSuggestions(cleanContent, user?.role || 'employee');
+      const suggestions = getFollowUpSuggestions(cleanContent, user?.role || 'employee', t);
 
       setMessages(prev => prev.map(m =>
         m.id === assistantId
           ? {
-              ...m,
-              content: cleanContent,
-              actions,
-              bookingStates: Object.fromEntries(actions.map((_, i) => [i, { status: 'pending' as const }])),
-              suggestions,
-            }
+            ...m,
+            content: cleanContent,
+            actions,
+            bookingStates: Object.fromEntries(actions.map((_, i) => [i, { status: 'pending' as const }])),
+            suggestions,
+          }
           : m
       ));
     } catch (err) {
@@ -722,11 +724,10 @@ export function ChatWidget() {
                   <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] space-y-2 ${isUser ? 'items-end' : 'items-start'} flex flex-col`}>
                       <div
-                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                          isUser
-                            ? 'bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] text-white rounded-br-sm'
-                            : 'bg-[var(--background-subtle)] text-[var(--text-primary)] rounded-bl-sm'
-                        }`}
+                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${isUser
+                          ? 'bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] text-white rounded-br-sm'
+                          : 'bg-[var(--background-subtle)] text-[var(--text-primary)] rounded-bl-sm'
+                          }`}
                       >
                         {m.content}
                       </div>
@@ -744,13 +745,12 @@ export function ChatWidget() {
                                 key={idx}
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className={`rounded-xl border p-3 text-xs space-y-2 ${
-                                  isDelete ? 'border-red-500/20 bg-red-500/5' : isEdit ? 'border-yellow-500/20 bg-yellow-500/5' : 'border-[#2563eb]/20 bg-[#2563eb]/5'
-                                }`}
+                                className={`rounded-xl border p-3 text-xs space-y-2 ${isDelete ? 'border-red-500/20 bg-red-500/5' : isEdit ? 'border-yellow-500/20 bg-yellow-500/5' : 'border-[#2563eb]/20 bg-[#2563eb]/5'
+                                  }`}
                               >
                                 <div className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
                                   {isDelete ? <Trash2 className="w-3.5 h-3.5 text-red-500" /> : isEdit ? <Pencil className="w-3.5 h-3.5 text-yellow-500" /> : <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />}
-                                  {isDelete ? t("chatWidget.cancelLeave") : isEdit ? t("chatWidget.updateLeave") : (LEAVE_TYPE_LABELS[( action as BookLeaveAction).leaveType] ?? t("chatWidget.leaveRequest"))}
+                                  {isDelete ? t("chatWidget.cancelLeave") : isEdit ? t("chatWidget.updateLeave") : (LEAVE_TYPE_LABELS[(action as BookLeaveAction).leaveType] ?? t("chatWidget.leaveRequest"))}
                                 </div>
                                 <div className="text-[var(--text-muted)] space-y-0.5">
                                   {action.type !== 'DELETE_LEAVE' && (
@@ -772,9 +772,8 @@ export function ChatWidget() {
                                 {state.status === 'pending' && (
                                   <button
                                     onClick={() => handleAction(m.id, action, idx)}
-                                    className={`w-full py-2 px-3 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity ${
-                                      isDelete ? 'bg-gradient-to-r from-red-500 to-red-600' : isEdit ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-[#2563eb] to-[#0ea5e9]'
-                                    }`}
+                                    className={`w-full py-2 px-3 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity ${isDelete ? 'bg-gradient-to-r from-red-500 to-red-600' : isEdit ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-[#2563eb] to-[#0ea5e9]'
+                                      }`}
                                   >
                                     {isDelete ? t("chatWidget.confirmDelete") : isEdit ? t("chatWidget.confirmUpdate") : t("chatWidget.confirmSend")}
                                   </button>
@@ -857,9 +856,8 @@ export function ChatWidget() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={isListening ? t("chatWidget.listening") : t("chatWidget.placeholder")}
-                    className={`w-full px-4 py-2 pr-10 bg-[var(--background-subtle)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm transition-colors ${
-                      isListening ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-[var(--border)]'
-                    }`}
+                    className={`w-full px-4 py-2 pr-10 bg-[var(--background-subtle)] border rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm transition-colors ${isListening ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-[var(--border)]'
+                      }`}
                     disabled={isLoading}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -873,11 +871,10 @@ export function ChatWidget() {
                     onClick={startVoiceInput}
                     disabled={isLoading}
                     title={isListening ? t("chatWidget.stopListening") : t("chatWidget.voiceInput")}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors disabled:opacity-50 ${
-                      isListening
-                        ? 'text-[#2563eb] animate-pulse'
-                        : 'text-[var(--text-muted)] hover:text-[#2563eb]'
-                    }`}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors disabled:opacity-50 ${isListening
+                      ? 'text-[#2563eb] animate-pulse'
+                      : 'text-[var(--text-muted)] hover:text-[#2563eb]'
+                      }`}
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </button>

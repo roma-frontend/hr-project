@@ -21,7 +21,7 @@ export function PomodoroTimer() {
   const [timeLeft, setTimeLeft] = useState(DURATIONS.pomodoro);
   const [isRunning, setIsRunning] = useState(false);
   const [sessionId, setSessionId] = useState<Id<"pomodoroSessions"> | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout>(null);
 
   const startSession = useMutation(api.productivity.startPomodoroSession);
   const completeSession = useMutation(api.productivity.completePomodoroSession);
@@ -107,7 +107,7 @@ export function PomodoroTimer() {
 
   const handleTimerComplete = async () => {
     setIsRunning(false);
-    
+
     if (sessionId) {
       await completeSession({ sessionId });
     }
@@ -117,7 +117,7 @@ export function PomodoroTimer() {
       toast.success("Pomodoro completed! 🎉 Time for a break!", {
         duration: 5000,
       });
-      
+
       // Send browser notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("🎉 Pomodoro Complete!", {
@@ -127,7 +127,7 @@ export function PomodoroTimer() {
           tag: "pomodoro-complete",
         });
       }
-      
+
       // Auto switch to break
       setMode("shortBreak");
       setTimeLeft(DURATIONS.shortBreak);
@@ -135,7 +135,7 @@ export function PomodoroTimer() {
       toast.success("Break over! Ready to focus? 💪", {
         duration: 5000,
       });
-      
+
       // Send browser notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("💪 Break Over!", {
@@ -145,7 +145,7 @@ export function PomodoroTimer() {
           tag: "break-complete",
         });
       }
-      
+
       setMode("pomodoro");
       setTimeLeft(DURATIONS.pomodoro);
     } else {
@@ -153,7 +153,7 @@ export function PomodoroTimer() {
       toast.success("Long break complete! ✨", {
         duration: 5000,
       });
-      
+
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("✨ Long Break Complete!", {
           body: "Time to get back to crushing your goals!",
@@ -162,7 +162,7 @@ export function PomodoroTimer() {
           tag: "long-break-complete",
         });
       }
-      
+
       setMode("pomodoro");
       setTimeLeft(DURATIONS.pomodoro);
     }
@@ -199,31 +199,28 @@ export function PomodoroTimer() {
       <div className="grid grid-cols-3 gap-1 mb-4 px-2">
         <button
           onClick={() => handleModeChange("pomodoro")}
-          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            mode === "pomodoro"
+          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${mode === "pomodoro"
               ? "bg-[var(--primary)] text-white shadow-sm"
               : "bg-[var(--background-subtle)] text-[var(--text-muted)] hover:bg-[var(--background-subtle)]/80"
-          }`}
+            }`}
         >
           Focus
         </button>
         <button
           onClick={() => handleModeChange("shortBreak")}
-          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            mode === "shortBreak"
+          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${mode === "shortBreak"
               ? "bg-[var(--primary)] text-white shadow-sm"
               : "bg-[var(--background-subtle)] text-[var(--text-muted)] hover:bg-[var(--background-subtle)]/80"
-          }`}
+            }`}
         >
           Short
         </button>
         <button
           onClick={() => handleModeChange("longBreak")}
-          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            mode === "longBreak"
+          className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${mode === "longBreak"
               ? "bg-[var(--primary)] text-white shadow-sm"
               : "bg-[var(--background-subtle)] text-[var(--text-muted)] hover:bg-[var(--background-subtle)]/80"
-          }`}
+            }`}
         >
           Long
         </button>
@@ -285,7 +282,7 @@ export function PomodoroTimer() {
             Pause
           </Button>
         )}
-        
+
         {(isRunning || timeLeft !== DURATIONS[mode]) && (
           <Button onClick={handleReset} variant="outline" size="sm">
             <RotateCcw className="w-4 h-4" />

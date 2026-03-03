@@ -13,17 +13,17 @@ export async function GET(req: Request) {
       fetchQuery(api.users.getAllUsers, { requesterId: requesterId as any }),
       fetchQuery(api.leaves.getAllLeaves, { requesterId: requesterId as any }),
       fetchQuery(api.timeTracking.getTodayAllAttendance, {}),
-      fetchQuery(api.tasks.getAllTasks, {}),
+      fetchQuery(api.tasks.getAllTasks, { requesterId: requesterId as any }),
     ]);
 
     // Build rich employee map with leave info
     const employeeData = (users as any[]).map((u: any) => {
       const userLeaves = (leaves as any[]).filter((l: any) => l.userId === u._id);
       const todayRecord = (todayAttendance as any[]).find((t: any) => t.userId === u._id);
-      
+
       const approvedLeaves = userLeaves.filter((l: any) => l.status === 'approved');
       const pendingLeaves = userLeaves.filter((l: any) => l.status === 'pending');
-      
+
       // Current/upcoming leaves
       const now = new Date().toISOString().split('T')[0];
       const activeLeave = approvedLeaves.find((l: any) => l.startDate <= now && l.endDate >= now);

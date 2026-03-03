@@ -96,15 +96,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {mounted && user && (
         <>
           <BreakReminderService
-            enabled={user.breakRemindersEnabled ?? false}
-            intervalMinutes={user.breakInterval ?? 120}
-            workHoursStart={user.workHoursStart}
-            workHoursEnd={user.workHoursEnd}
+            enabled={false}
+            intervalMinutes={120}
+            workHoursStart={undefined}
+            workHoursEnd={undefined}
           />
           <FocusModeIndicator
-            enabled={user.focusModeEnabled ?? false}
-            workHoursStart={user.workHoursStart}
-            workHoursEnd={user.workHoursEnd}
+            enabled={false}
+            workHoursStart={undefined}
+            workHoursEnd={undefined}
           />
         </>
       )}

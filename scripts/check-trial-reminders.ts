@@ -57,7 +57,7 @@ async function checkTrialReminders() {
   console.log(`${colors.bright}${colors.cyan}╚═══════════════════════════════════════════════════════════════════╝${colors.reset}\n`);
 
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
-  
+
   if (!convexUrl) {
     console.error(`${colors.red}❌ CONVEX_URL not found in .env.local${colors.reset}`);
     process.exit(1);
@@ -67,7 +67,7 @@ async function checkTrialReminders() {
   const client = new ConvexHttpClient(convexUrl);
 
   console.log(`${colors.cyan}📥 Fetching subscriptions...${colors.reset}`);
-  const subscriptions = await client.query(api.subscriptions.listAll) as Subscription[];
+  const subscriptions = await client.query(api.subscriptions.listAll) as unknown as Subscription[];
 
   if (!subscriptions || subscriptions.length === 0) {
     console.log(`${colors.yellow}⚠️  No subscriptions found${colors.reset}`);
@@ -77,7 +77,7 @@ async function checkTrialReminders() {
   console.log(`${colors.green}✅ Found ${subscriptions.length} subscription(s)${colors.reset}\n`);
 
   // Filter trialing subscriptions
-  const trialingSubscriptions = subscriptions.filter(sub => 
+  const trialingSubscriptions = subscriptions.filter(sub =>
     sub.status === 'trialing' && sub.trialEnd
   );
 
@@ -96,7 +96,7 @@ async function checkTrialReminders() {
 
   trialingSubscriptions.forEach(sub => {
     const daysLeft = getDaysUntil(sub.trialEnd!);
-    
+
     if (daysLeft < 0) {
       // Trial already ended but status not updated
       console.log(`${colors.red}🚨 EXPIRED${colors.reset} - ${sub.userEmail || 'No email'}`);
@@ -128,19 +128,19 @@ async function checkTrialReminders() {
   console.log(`${colors.bright}${colors.cyan}╚═══════════════════════════════════════════════════════════════════╝${colors.reset}\n`);
 
   console.log(`${colors.bright}Total trial subscriptions: ${trialingSubscriptions.length}${colors.reset}\n`);
-  
+
   if (reminders.critical.length > 0) {
     console.log(`${colors.red}🚨 CRITICAL (≤3 days): ${reminders.critical.length}${colors.reset}`);
     console.log(`${colors.dim}   Action: Send urgent reminder email${colors.reset}`);
     console.log(`${colors.dim}   Suggest: Offer discount or extend trial${colors.reset}\n`);
   }
-  
+
   if (reminders.warning.length > 0) {
     console.log(`${colors.yellow}⚡ WARNING (4-7 days): ${reminders.warning.length}${colors.reset}`);
     console.log(`${colors.dim}   Action: Send friendly reminder${colors.reset}`);
     console.log(`${colors.dim}   Suggest: Highlight product benefits${colors.reset}\n`);
   }
-  
+
   if (reminders.info.length > 0) {
     console.log(`${colors.green}✓ OK (>7 days): ${reminders.info.length}${colors.reset}`);
     console.log(`${colors.dim}   Action: Monitor, send welcome emails${colors.reset}\n`);
@@ -149,7 +149,7 @@ async function checkTrialReminders() {
   // Recommended actions
   if (reminders.critical.length > 0 || reminders.warning.length > 0) {
     console.log(`${colors.bright}${colors.cyan}💡 Recommended Actions:${colors.reset}\n`);
-    
+
     if (reminders.critical.length > 0) {
       console.log(`${colors.red}1. Critical trials:${colors.reset}`);
       reminders.critical.forEach(sub => {
@@ -157,7 +157,7 @@ async function checkTrialReminders() {
       });
       console.log();
     }
-    
+
     if (reminders.warning.length > 0) {
       console.log(`${colors.yellow}2. Warning trials:${colors.reset}`);
       reminders.warning.forEach(sub => {
@@ -169,17 +169,17 @@ async function checkTrialReminders() {
 
   // Email templates suggestion
   console.log(`${colors.bright}${colors.cyan}📧 Email Template Examples:${colors.reset}\n`);
-  
+
   console.log(`${colors.yellow}For 3-day reminder:${colors.reset}`);
   console.log(`${colors.dim}Subject: Your trial ends in 3 days - Don't miss out!${colors.reset}`);
   console.log(`${colors.dim}Body: Hi [Name], your trial is ending soon. Subscribe now to keep access!${colors.reset}\n`);
-  
+
   console.log(`${colors.yellow}For 7-day reminder:${colors.reset}`);
   console.log(`${colors.dim}Subject: Week left in your trial - Here's what you can do${colors.reset}`);
   console.log(`${colors.dim}Body: Hi [Name], you still have a week to explore all features!${colors.reset}\n`);
 
   console.log(`${colors.green}✨ Done!${colors.reset}`);
-  
+
   // Suggest scheduling
   console.log(`\n${colors.cyan}💡 Tip: Schedule this script to run daily:${colors.reset}`);
   console.log(`${colors.dim}   crontab: 0 9 * * * npm run stripe:check-trials${colors.reset}`);

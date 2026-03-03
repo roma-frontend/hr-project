@@ -36,7 +36,7 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
   const { t } = useTranslation();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.toISOString().slice(0, 7));
-  
+
   const MONTHS = [
     t('months.january'), t('months.february'), t('months.march'), t('months.april'),
     t('months.may'), t('months.june'), t('months.july'), t('months.august'),
@@ -178,14 +178,13 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                     const dayLabel = dateObj.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
                     return (
-                      <div key={record._id} className="px-6 py-4 transition-colors" style={{ '&:hover': { backgroundColor: "var(--background-subtle)" } }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--background-subtle)"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+                      <div key={record._id} className="px-6 py-4 transition-colors" onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--background-subtle)"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
                         <div className="flex items-start justify-between gap-3">
                           {/* Date + status dot */}
                           <div className="flex items-center gap-3">
-                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 ${
-                              record.status === "checked_in" ? "bg-green-500 animate-pulse" :
-                              record.status === "checked_out" ? "bg-blue-500" : "bg-rose-400"
-                            }`} />
+                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1 ${record.status === "checked_in" ? "bg-green-500 animate-pulse" :
+                                record.status === "checked_out" ? "bg-blue-500" : "bg-rose-400"
+                              }`} />
                             <div>
                               <p className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{dayLabel}</p>
                               {record.status === "absent" ? (
@@ -242,10 +241,9 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                           <div className="mt-2 ml-6">
                             <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--background-subtle)" }}>
                               <div
-                                className={`h-full rounded-full transition-all ${
-                                  parseFloat(workedH) >= 9 ? "bg-emerald-500" :
-                                  parseFloat(workedH) >= 6 ? "bg-blue-500" : "bg-amber-500"
-                                }`}
+                                className={`h-full rounded-full transition-all ${parseFloat(workedH) >= 9 ? "bg-emerald-500" :
+                                    parseFloat(workedH) >= 6 ? "bg-blue-500" : "bg-amber-500"
+                                  }`}
                                 style={{ width: `${Math.min(100, (parseFloat(workedH) / 9) * 100)}%` }}
                               />
                             </div>

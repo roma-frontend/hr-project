@@ -22,7 +22,7 @@ export function TodayTasksPanel() {
   const handleToggleTask = async (taskId: Id<"tasks">, currentStatus: string) => {
     try {
       const newStatus = currentStatus === "completed" ? "in_progress" : "completed";
-      await updateTaskStatus({ taskId, status: newStatus });
+      await updateTaskStatus({ taskId, status: newStatus, userId: user!.id as Id<"users"> });
       toast.success(newStatus === "completed" ? "Task completed! 🎉" : "Task reopened");
     } catch (error) {
       toast.error("Failed to update task");
@@ -71,15 +71,15 @@ export function TodayTasksPanel() {
       <div className="space-y-2">
         {tasks.map((task) => {
           const isCompleted = task.status === "completed";
-          const dueText = formatDueDate(task.dueDate);
-          const isOverdue = task.dueDate && task.dueDate < Date.now();
+          const dueText = formatDueDate(task.deadline);
+          const isOverdue = task.deadline && task.deadline < Date.now();
 
           return (
             <div
               key={task._id}
               className={`group rounded-lg border p-3 transition-all hover:border-[var(--primary)]/50 ${isCompleted
-                  ? "border-[var(--border)] bg-[var(--background-subtle)]/50 opacity-60"
-                  : "border-[var(--border)] bg-[var(--background-subtle)]"
+                ? "border-[var(--border)] bg-[var(--background-subtle)]/50 opacity-60"
+                : "border-[var(--border)] bg-[var(--background-subtle)]"
                 }`}
             >
               <div className="flex items-start gap-2">
@@ -97,8 +97,8 @@ export function TodayTasksPanel() {
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-sm font-medium leading-snug ${isCompleted
-                        ? "line-through text-[var(--text-muted)]"
-                        : "text-[var(--text-primary)]"
+                      ? "line-through text-[var(--text-muted)]"
+                      : "text-[var(--text-primary)]"
                       }`}
                   >
                     {task.title}

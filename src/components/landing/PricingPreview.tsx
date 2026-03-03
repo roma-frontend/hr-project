@@ -159,7 +159,7 @@ function PricingCard({ tier, delay, currentPlan }: { tier: PricingTier; delay: n
             style={{ background: `linear-gradient(90deg, ${tier.accentFrom}, ${tier.accentTo})`, boxShadow: `0 4px 20px ${tier.glowColor}`, color: '#ffffff' }}
           >
             <Star size={11} fill="currentColor" />
-            {tier.badge}
+            {t(tier.badgeKey!)}
           </div>
         </div>
       )}
@@ -311,7 +311,7 @@ export default function PricingPreview() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { plan } = useSubscription();
-  
+
   // Only show current plan if user is logged in
   const currentPlan = user ? plan : undefined;
 

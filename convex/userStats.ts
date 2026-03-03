@@ -21,7 +21,7 @@ export const getUserStats = query({
       .query("tasks")
       .filter((q) => q.eq(q.field("assignedTo"), userId))
       .collect();
-    
+
     const completedTasks = allTasks.filter(t => t.status === "completed").length;
 
     // Count approved leaves
@@ -29,14 +29,14 @@ export const getUserStats = query({
       .query("leaveRequests")
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
-    
+
     const approvedLeaves = leaves.filter(l => l.status === "approved").length;
 
     // Count projects (from tasks - unique project references)
     const projects = new Set(
       allTasks
-        .filter(t => t.projectId)
-        .map(t => t.projectId)
+        .filter(t => (t as any).projectId)
+        .map(t => (t as any).projectId)
     );
 
     return {

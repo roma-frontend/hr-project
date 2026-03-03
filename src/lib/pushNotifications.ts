@@ -66,18 +66,18 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
 
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
-    
+
     if (!subscription) {
       // Subscribe to push
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
           // Default test key (replace with your own)
           'BEl62iUYgUivxIkv69yViEuiBIa-Ib37gp65oYI-vA0e-CvnG8V8RswNPQNBrD7xHYb9rJXLGYvO6CYnlPqEm0U'
-        ),
+        ) as any,
       });
-      
+
       console.log('Subscribed to push notifications:', subscription);
     }
 
@@ -93,13 +93,13 @@ export async function unsubscribeFromPushNotifications(): Promise<boolean> {
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       await subscription.unsubscribe();
       console.log('Unsubscribed from push notifications');
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error('Failed to unsubscribe from push notifications:', error);
@@ -125,16 +125,14 @@ export async function sendLocalPushNotification(
     }
 
     const registration = await navigator.serviceWorker.ready;
-    
+
     await registration.showNotification(title, {
       icon: '/icon-192x192.png',
       badge: '/icon-192x192.png',
-      vibrate: [300, 100, 300, 100, 300, 100, 300], // Stronger pattern
       requireInteraction: false, // Better for iOS
-      renotify: true,
       silent: false,
       ...options,
-    });
+    } as any);
   } catch (error) {
     console.error('Failed to send local push notification:', error);
   }

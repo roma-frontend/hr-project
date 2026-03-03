@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Users, 
-  Plus, 
-  CreditCard, 
+import {
+  Users,
+  Plus,
+  CreditCard,
   Calendar,
   DollarSign,
   Shield,
@@ -29,15 +29,15 @@ const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 export default function SubscriptionsManagementPage() {
   const subscriptions = useQuery(api.subscriptions_admin.listAllWithUsers);
-  
+
   // Get current user from useAuthStore (works with both email/password and OAuth)
   const { user } = useAuthStore();
-  
+
   const allOrganizations = useQuery(
     api.organizations.getAllOrganizations,
     user?.id ? { superadminUserId: user.id as any } : "skip"
   );
-  
+
   const createManual = useMutation(api.subscriptions_admin.createManualSubscription);
   const cancelSub = useMutation(api.subscriptions_admin.cancelSubscription);
 
@@ -47,15 +47,15 @@ export default function SubscriptionsManagementPage() {
   const [customPrice, setCustomPrice] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   // Check if user is superadmin
   const isSuperAdmin = user?.role === "superadmin" || user?.email?.toLowerCase() === SUPERADMIN_EMAIL;
-  
+
   console.log("[Subscriptions Page] user from useAuthStore:", user);
   console.log("[Subscriptions Page] isSuperAdmin:", isSuperAdmin, "role:", user?.role, "email:", user?.email);
   console.log("[Subscriptions Page] allOrganizations:", allOrganizations);
   console.log("[Subscriptions Page] allOrganizations count:", allOrganizations?.length);
-  
+
   // Wait for user to load
   if (!user) {
     return (
@@ -64,7 +64,7 @@ export default function SubscriptionsManagementPage() {
       </div>
     );
   }
-  
+
   // If not superadmin, show access denied
   if (!isSuperAdmin) {
     return (
@@ -99,7 +99,7 @@ export default function SubscriptionsManagementPage() {
     try {
       const result = await createManual({
         organizationId: selectedOrganization as Id<"organizations">,
-        plan: selectedPlan,
+        plan: selectedPlan as "starter" | "professional" | "enterprise",
         customPrice: customPrice ? parseFloat(customPrice) : undefined,
         notes: notes || undefined,
       });
@@ -134,7 +134,7 @@ export default function SubscriptionsManagementPage() {
       trialing: "bg-blue-500/10 text-blue-500 border-blue-500/20",
       past_due: "bg-orange-500/10 text-orange-500 border-orange-500/20",
     };
-    
+
     return (
       <Badge variant="outline" className={colors[status] || ""}>
         {status === "active" && <CheckCircle className="w-3 h-3 mr-1" />}
@@ -151,7 +151,7 @@ export default function SubscriptionsManagementPage() {
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">Subscription Management</h1>
           <p className="text-[var(--text-muted)] mt-1">Manage customer subscriptions and Enterprise access</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2"
         >
@@ -182,11 +182,11 @@ export default function SubscriptionsManagementPage() {
                 className="w-full mt-1.5 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-[var(--text-primary)]"
               >
                 <option value="">
-                  {allOrganizations === undefined 
-                    ? "Loading organizations..." 
-                    : allOrganizations.length === 0 
-                    ? "No organizations found" 
-                    : "-- Select an organization --"}
+                  {allOrganizations === undefined
+                    ? "Loading organizations..."
+                    : allOrganizations.length === 0
+                      ? "No organizations found"
+                      : "-- Select an organization --"}
                 </option>
                 {allOrganizations?.map((org: any) => (
                   <option key={org._id} value={org._id}>
@@ -240,7 +240,7 @@ export default function SubscriptionsManagementPage() {
               />
             </div>
 
-            <Button 
+            <Button
               onClick={handleCreateSubscription}
               disabled={loading || !selectedOrganization}
               className="w-full"
@@ -313,12 +313,12 @@ export default function SubscriptionsManagementPage() {
                       )}
                     </td>
                     <td className="py-3 px-2 text-[var(--text-primary)]">
-                      ${sub.metadata?.customPrice || (sub.plan === "professional" ? "49" : sub.plan === "enterprise" ? "Custom" : "0")}
+                      ${(sub as any).metadata?.customPrice || (sub.plan === "professional" ? "49" : sub.plan === "enterprise" ? "Custom" : "0")}
                     </td>
                     <td className="py-3 px-2 text-[var(--text-muted)] text-sm">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+                        {new Date(sub.currentPeriodEnd ?? 0).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="py-3 px-2">

@@ -15,7 +15,7 @@ interface DashboardCustomizationProps {
 
 export function DashboardCustomization({ user, onSettingsChange }: DashboardCustomizationProps) {
   const { t } = useTranslation();
-  
+
   const defaultWidgets = {
     quickStats: true,
     leaveCalendar: true,
@@ -28,7 +28,7 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
   const [defaultView, setDefaultView] = useState(user?.defaultView ?? "dashboard");
   const [refreshRate, setRefreshRate] = useState(user?.dataRefreshRate ?? "realtime");
   const [compactMode, setCompactMode] = useState(user?.compactMode ?? false);
-  
+
   const [widgets, setWidgets] = useState(user?.dashboardWidgets ?? defaultWidgets);
 
   // Update parent when settings change
@@ -51,7 +51,7 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
   }, [user?.defaultView, user?.dataRefreshRate, user?.compactMode, user?.dashboardWidgets]);
 
   const toggleWidget = (key: keyof typeof widgets) => {
-    setWidgets(prev => ({ ...prev, [key]: !prev[key] }));
+    setWidgets((prev: Record<string, boolean>) => ({ ...prev, [key as string]: !prev[key as string] }));
   };
 
   return (
@@ -109,7 +109,7 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
             };
 
             const widget = widgetLabels[key];
-            
+
             return (
               <div key={key}>
                 <div className="flex items-center justify-between py-3">
@@ -120,9 +120,9 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
                       <p className="text-xs text-[var(--text-muted)] mt-0.5">{widget.desc}</p>
                     </div>
                   </div>
-                  <Switch 
-                    checked={enabled} 
-                    onCheckedChange={() => toggleWidget(key as keyof typeof widgets)} 
+                  <Switch
+                    checked={enabled as boolean}
+                    onCheckedChange={() => toggleWidget(key as keyof typeof widgets)}
                   />
                 </div>
                 {key !== "analytics" && <div className="border-b border-[var(--border)] mt-3" />}
@@ -170,11 +170,11 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
               </SelectContent>
             </Select>
             <p className="text-xs text-[var(--text-muted)]">
-              {refreshRate === "realtime" 
+              {refreshRate === "realtime"
                 ? t("settingsDashboard.dataUpdatesInstantly")
                 : refreshRate === "manual"
-                ? t("settingsDashboard.refreshDataManually")
-                : t("settingsDashboard.dataRefreshesEvery", { interval: refreshRate.replace("min", " minutes") })}
+                  ? t("settingsDashboard.refreshDataManually")
+                  : t("settingsDashboard.dataRefreshesEvery", { interval: refreshRate.replace("min", " minutes") })}
             </p>
           </div>
         </CardContent>

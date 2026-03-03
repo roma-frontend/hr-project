@@ -10,50 +10,50 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
   try {
     console.log('🔧 convexMutation called', { name, CONVEX_URL, hasURL: !!CONVEX_URL });
     log.debug('convexMutation called', { name });
-    
+
     if (!CONVEX_URL) {
       console.error('❌ CONVEX_URL is undefined!');
       console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('CONVEX')));
       throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not set');
     }
-    
+
     const res = await fetch(`${CONVEX_URL}/api/mutation`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: name, args }),
       cache: 'no-store',
     });
-    
+
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    
+
     const data = await res.json();
-    
+
     if (data.status === "error") {
       throw new Error(data.errorMessage ?? "Convex error");
     }
-    
-    log.debug('convexMutation returning value', { 
+
+    log.debug('convexMutation returning value', {
       resultKeys: data.value ? Object.keys(data.value) : null
     });
-    
+
     return data.value;
   } catch (error: any) {
-    log.error('convexMutation failed', error, { 
+    log.error('convexMutation failed', error, {
       name,
       errorMessage: error?.message,
       errorType: error?.name,
       errorStack: error?.stack
     });
-    
+
     // Provide better error messages
     if (error?.name === 'AbortError') {
       throw new Error('Request timeout - server is not responding');
     } else if (error?.message?.includes('fetch')) {
       throw new Error('Network error - cannot reach Convex server');
     }
-    
+
     throw error;
   }
 }
@@ -61,46 +61,46 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
 async function convexQuery(name: string, args: Record<string, unknown>) {
   try {
     log.debug('convexQuery called', { name });
-    
+
     if (!CONVEX_URL) {
       throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not set');
     }
-    
+
     const res = await fetch(`${CONVEX_URL}/api/query`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: name, args }),
       cache: 'no-store',
     });
-    
+
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    
+
     const data = await res.json();
-    
+
     if (data.status === "error") {
       throw new Error(data.errorMessage ?? "Convex error");
     }
-    
+
     log.debug('convexQuery data parsed', { result: data.value });
-    
+
     return data.value;
   } catch (error: any) {
-    log.error('convexQuery failed', error, { 
+    log.error('convexQuery failed', error, {
       name,
       errorMessage: error?.message,
       errorType: error?.name,
       errorStack: error?.stack
     });
-    
+
     // Provide better error messages
     if (error?.name === 'AbortError') {
       throw new Error('Request timeout - server is not responding');
     } else if (error?.message?.includes('fetch')) {
       throw new Error('Network error - cannot reach Convex server');
     }
-    
+
     throw error;
   }
 }
@@ -138,9 +138,9 @@ export async function registerAction(formData: FormData) {
         // Non-critical — subscription linking can fail silently
       }
     }
-    return { 
-      success: true, 
-      role: result.role, 
+    return {
+      success: true,
+      role: result.role,
       needsApproval: true,
       message: "Your account has been created and is pending admin approval. You will be notified once approved."
     };
@@ -194,8 +194,8 @@ export async function registerAction(formData: FormData) {
     path: "/",
   });
 
-  return { 
-    success: true, 
+  return {
+    success: true,
     role: result.role,
     needsApproval: false,
     userId: loginResult.userId,
@@ -209,18 +209,18 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData | { email: string; password: string; isFaceLogin?: boolean }) {
-  let email: string;
+  let email: string = "";
   let password: string;
   let isFaceLogin = false;
 
   try {
     const endTimer = log.time('User Login');
-    
+
     log.info('Login action initiated', {
       action: 'login',
       inputType: formData instanceof FormData ? 'FormData' : 'Object'
     });
-    
+
     if (formData instanceof FormData) {
       email = formData.get("email") as string;
       password = formData.get("password") as string;
@@ -245,7 +245,7 @@ export async function loginAction(formData: FormData | { email: string; password
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
     log.api.call('POST', 'auth:login', { email, isFaceLogin });
-    
+
     let result;
     try {
       result = await convexMutation("auth:login", {
@@ -255,14 +255,14 @@ export async function loginAction(formData: FormData | { email: string; password
         sessionExpiry,
         isFaceLogin, // Pass Face ID login flag
       });
-      
-      log.debug('Raw Convex login result', { 
+
+      log.debug('Raw Convex login result', {
         result,
         keys: Object.keys(result),
         types: Object.fromEntries(Object.entries(result).map(([k, v]) => [k, typeof v]))
       });
-      
-      log.api.response('POST', 'auth:login', 200, { 
+
+      log.api.response('POST', 'auth:login', 200, {
         userId: result.userId,
         role: result.role
       });
@@ -278,7 +278,7 @@ export async function loginAction(formData: FormData | { email: string; password
     }
 
     log.debug('Creating JWT token', { userId: result.userId });
-    
+
     const jwt = await signJWT({
       userId: result.userId,
       name: result.name,
@@ -289,11 +289,11 @@ export async function loginAction(formData: FormData | { email: string; password
       employeeType: result.employeeType,
       avatar: result.avatarUrl,
     });
-    
+
     log.debug('JWT token created successfully');
 
     log.debug('Setting authentication cookies');
-    
+
     const cookieStore = await cookies();
     cookieStore.set("hr-auth-token", jwt, {
       httpOnly: true,
@@ -309,14 +309,14 @@ export async function loginAction(formData: FormData | { email: string; password
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
-    
+
     log.user('User logged in successfully', {
       userId: result.userId,
       email: result.email,
       role: result.role,
       isFaceLogin
     });
-    
+
     // Auto-unlock Face ID after successful email/password login
     if (!isFaceLogin) {
       try {
@@ -326,20 +326,19 @@ export async function loginAction(formData: FormData | { email: string; password
         });
         log.info('Face ID auto-unlocked successfully', { userId: result.userId });
       } catch (error) {
-        log.error('Failed to auto-unlock Face ID', { 
-          userId: result.userId, 
-          error: error instanceof Error ? error.message : String(error) 
+        log.error('Failed to auto-unlock Face ID', error instanceof Error ? error : new Error(String(error)), {
+          userId: result.userId,
         });
         // Don't fail login if Face ID unlock fails
       }
     }
-    
+
     endTimer();
 
     // Return ONLY success flag to avoid serialization issues
     // The client will get user data from the JWT cookie via getSessionAction
     log.debug('Login successful, cookies set');
-    
+
     return { success: true };
   } catch (error: any) {
     log.error('Login action failed', error, {
@@ -362,7 +361,7 @@ export async function logoutAction() {
       if (payload && sessionToken) {
         await convexMutation("auth:logout", { userId: payload.userId });
       }
-    } catch {}
+    } catch { }
   }
 
   cookieStore.delete("hr-auth-token");

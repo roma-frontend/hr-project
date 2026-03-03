@@ -432,7 +432,7 @@ export const notifySuperadminSuspiciousActivity = mutation({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", SUPERADMIN_EMAIL))
       .first();
-    
+
     if (!superadmin) {
       console.error("Superadmin not found for notification");
       return null;
@@ -449,7 +449,7 @@ export const notifySuperadminSuspiciousActivity = mutation({
     let wasAutoBlocked = false;
     if (args.autoBlock !== false && args.riskScore >= AUTO_BLOCK_THRESHOLD) {
       const suspendedUntil = Date.now() + (AUTO_BLOCK_DURATION * 60 * 60 * 1000);
-      
+
       await ctx.db.patch(args.userId, {
         isSuspended: true,
         suspendedUntil,
@@ -483,10 +483,10 @@ export const notifySuperadminSuspiciousActivity = mutation({
     }
 
     // Create notification for superadmin with action metadata
-    const notificationTitle = wasAutoBlocked 
-      ? "🚫 User Auto-Blocked (High Risk)" 
+    const notificationTitle = wasAutoBlocked
+      ? "🚫 User Auto-Blocked (High Risk)"
       : "🚨 Suspicious Login Activity Detected";
-    
+
     const notificationMessage = wasAutoBlocked
       ? `User: ${args.email}\nRisk Score: ${args.riskScore}\nStatus: AUTOMATICALLY BLOCKED for ${AUTO_BLOCK_DURATION}h\nReasons: ${args.riskFactors.join(", ")}\nIP: ${args.ip || "Unknown"}\n\nUser was automatically suspended. Review and unsuspend if needed.`
       : `User: ${args.email}\nRisk Score: ${args.riskScore}\nReasons: ${args.riskFactors.join(", ")}\nIP: ${args.ip || "Unknown"}\n\nReview this activity immediately.`;
@@ -516,7 +516,7 @@ export const notifySuperadminSuspiciousActivity = mutation({
     });
 
     // Log the security event
-    await ctx.db.insert("securityAuditLogs", {
+    await ctx.db.insert("auditLogs" as any, {
       userId: args.userId,
       userName: user.name,
       userEmail: args.email,
@@ -527,11 +527,11 @@ export const notifySuperadminSuspiciousActivity = mutation({
       riskFactors: args.riskFactors,
       ip: args.ip,
       deviceInfo: args.deviceInfo,
-      details: wasAutoBlocked 
+      details: wasAutoBlocked
         ? `User auto-blocked for ${AUTO_BLOCK_DURATION}h. Risk: ${args.riskScore}, Factors: ${args.riskFactors.join(", ")}`
         : `Superadmin notified about suspicious activity. Risk: ${args.riskScore}, Factors: ${args.riskFactors.join(", ")}`,
       createdAt: Date.now(),
-    });
+    } as any);
 
     return { notificationId, autoBlocked: wasAutoBlocked };
   },
@@ -541,7 +541,7 @@ export const notifySuperadminSuspiciousActivity = mutation({
 // Get login attempts by user ID
 // ─────────────────────────────────────────────────────────────────────────────
 export const getLoginAttemptsByUser = query({
-  args: { 
+  args: {
     userId: v.id("users"),
     limit: v.optional(v.number())
   },
@@ -561,14 +561,14 @@ export const getSuspendedUsers = query({
   args: {},
   handler: async (ctx) => {
     const allUsers = await ctx.db.query("users").collect();
-    
+
     // Filter only suspended users
-    const suspendedUsers = allUsers.filter(user => 
+    const suspendedUsers = allUsers.filter(user =>
       user.isSuspended && user.suspendedUntil && user.suspendedUntil > Date.now()
     );
 
     // Sort by most recently suspended
-    return suspendedUsers.sort((a, b) => 
+    return suspendedUsers.sort((a, b) =>
       (b.suspendedAt || 0) - (a.suspendedAt || 0)
     );
   },

@@ -111,6 +111,7 @@ function DayCell({
   leaves: LeaveRequest[];
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const isCurrentMonth = isSameMonth(date, currentMonth);
   const isTodayDate = isToday(date);
   const isSelected = selected ? isSameDay(date, selected) : false;
@@ -126,10 +127,10 @@ function DayCell({
         isSelected
           ? "bg-[var(--primary)] border-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/20"
           : isTodayDate
-          ? "bg-[var(--primary)]/10 border-[var(--primary)]/40"
-          : isCurrentMonth
-          ? "bg-[var(--card)] border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-subtle)]"
-          : "bg-transparent border-transparent opacity-40",
+            ? "bg-[var(--primary)]/10 border-[var(--primary)]/40"
+            : isCurrentMonth
+              ? "bg-[var(--card)] border-[var(--border)] hover:border-[var(--primary)]/50 hover:bg-[var(--background-subtle)]"
+              : "bg-transparent border-transparent opacity-40",
       ].join(" ")}
     >
       {/* Day number */}
@@ -139,10 +140,10 @@ function DayCell({
           isSelected
             ? "text-white"
             : isTodayDate
-            ? "text-[var(--primary)] font-bold"
-            : isCurrentMonth
-            ? "text-[var(--text-primary)]"
-            : "text-[var(--text-muted)]",
+              ? "text-[var(--primary)] font-bold"
+              : isCurrentMonth
+                ? "text-[var(--text-primary)]"
+                : "text-[var(--text-muted)]",
         ].join(" ")}
       >
         {isTodayDate && !isSelected && (
@@ -191,7 +192,7 @@ export function CalendarClient() {
   const [mounted, setMounted] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const { user } = useAuthStore();
-  
+
   const DAYS_OF_WEEK = [
     t('weekdays.sun'), t('weekdays.mon'), t('weekdays.tue'), t('weekdays.wed'),
     t('weekdays.thu'), t('weekdays.fri'), t('weekdays.sat')

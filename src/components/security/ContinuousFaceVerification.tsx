@@ -28,7 +28,7 @@ export default function ContinuousFaceVerification({
   const failCountRef = useRef(0);
   const [status, setStatus] = useState<"idle" | "checking" | "ok" | "warning" | "failed">("idle");
   const [showWarning, setShowWarning] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout>(null);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -125,7 +125,7 @@ export default function ContinuousFaceVerification({
         event: "continuous_face_verification_failed",
         details: reason,
       }),
-    }).catch(() => {});
+    }).catch(() => { });
 
     onVerificationFail?.();
 
@@ -144,7 +144,7 @@ export default function ContinuousFaceVerification({
     intervalRef.current = setInterval(performVerification, intervalMs);
 
     return () => {
-      clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current!);
       stopCamera();
     };
   }, [enabled, intervalMinutes, performVerification, stopCamera]);

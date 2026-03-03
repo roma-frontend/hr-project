@@ -11,6 +11,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useAuthStore } from "@/store/useAuthStore";
 import { SupervisorRatingForm } from "@/components/attendance/SupervisorRatingForm";
+import { useTranslation } from "react-i18next";
 
 interface EmployeeProfileDetailProps {
   employeeId: Id<"users">;
@@ -19,6 +20,7 @@ interface EmployeeProfileDetailProps {
 export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDetailProps) {
   const { user: currentUser } = useAuthStore();
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const { t } = useTranslation();
 
   const employee = useQuery(api.users.getUserById, { userId: employeeId });
   const profile = useQuery(api.employeeProfiles.getEmployeeProfile, { userId: employeeId });

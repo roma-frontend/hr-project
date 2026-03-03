@@ -34,8 +34,8 @@ export function useSubscription() {
 
   // NOTE: subscriptions functionality is not implemented yet
   // Using organization plan instead
-  const subscription = null; // useQuery disabled temporarily
-  
+  const subscription = null as SubscriptionData | null; // useQuery disabled temporarily
+
   const isLoading = organization === undefined;
 
   // All users with organization are considered active
@@ -52,20 +52,20 @@ export function useSubscription() {
   const trialDaysLeft =
     isTrialing && subscription?.trialEnd
       ? Math.max(
-          0,
-          Math.ceil((subscription.trialEnd - Date.now()) / (1000 * 60 * 60 * 24))
-        )
+        0,
+        Math.ceil((subscription.trialEnd - Date.now()) / (1000 * 60 * 60 * 24))
+      )
       : null;
 
   // Дней до конца периода
   const periodDaysLeft =
     subscription?.currentPeriodEnd
       ? Math.max(
-          0,
-          Math.ceil(
-            (subscription.currentPeriodEnd - Date.now()) / (1000 * 60 * 60 * 24)
-          )
+        0,
+        Math.ceil(
+          (subscription.currentPeriodEnd - Date.now()) / (1000 * 60 * 60 * 24)
         )
+      )
       : null;
 
   return {

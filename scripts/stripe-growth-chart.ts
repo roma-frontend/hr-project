@@ -39,7 +39,7 @@ async function generateGrowthChart() {
   console.log(`${colors.bright}${colors.cyan}📈 Stripe Growth Chart Generator${colors.reset}\n`);
 
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
-  
+
   if (!convexUrl) {
     console.error(`${colors.yellow}⚠️  CONVEX_URL not found in .env.local${colors.reset}`);
     process.exit(1);
@@ -49,7 +49,7 @@ async function generateGrowthChart() {
   const client = new ConvexHttpClient(convexUrl);
 
   console.log(`${colors.cyan}📥 Fetching subscription data...${colors.reset}`);
-  const subscriptions = await client.query(api.subscriptions.listAll) as Subscription[];
+  const subscriptions = await client.query(api.subscriptions.listAll) as unknown as Subscription[];
 
   if (!subscriptions || subscriptions.length === 0) {
     console.log(`${colors.yellow}⚠️  No subscriptions found${colors.reset}`);
@@ -70,14 +70,14 @@ async function generateGrowthChart() {
   subscriptions.forEach(sub => {
     const date = new Date(sub._creationTime);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
+
     if (!monthlyData.has(monthKey)) {
       monthlyData.set(monthKey, { total: 0, active: 0, trialing: 0, canceled: 0 });
     }
 
     const data = monthlyData.get(monthKey)!;
     data.total++;
-    
+
     if (sub.status === 'active') data.active++;
     else if (sub.status === 'trialing') data.trialing++;
     else if (sub.status === 'canceled') data.canceled++;
@@ -85,11 +85,11 @@ async function generateGrowthChart() {
 
   // Sort by date
   const sortedMonths = Array.from(monthlyData.keys()).sort();
-  
+
   // Calculate cumulative totals
   let cumulativeTotal = 0;
   let cumulativeActive = 0;
-  
+
   const labels = sortedMonths.map(month => {
     const [year, monthNum] = month.split('-');
     return `${monthNum}/${year}`;
@@ -165,7 +165,7 @@ async function generateGrowthChart() {
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('.')[0];
   const filename = `stripe-growth-chart-${timestamp}.png`;
-  
+
   fs.writeFileSync(filename, imageBuffer);
 
   console.log(`${colors.green}${colors.bright}✅ Chart created successfully!${colors.reset}`);

@@ -88,12 +88,12 @@ const FEATURES = [
 ] as const;
 
 const COLOR_MAP: Record<string, { iconColor: string; accentBg: string; accentText: string }> = {
-  blue:   { iconColor: "#2563eb", accentBg: "rgba(37,99,235,0.1)",  accentText: "#2563eb" },
+  blue: { iconColor: "#2563eb", accentBg: "rgba(37,99,235,0.1)", accentText: "#2563eb" },
   orange: { iconColor: "#f59e0b", accentBg: "rgba(245,158,11,0.1)", accentText: "#d97706" },
   purple: { iconColor: "#8b5cf6", accentBg: "rgba(139,92,246,0.1)", accentText: "#8b5cf6" },
   indigo: { iconColor: "#6366f1", accentBg: "rgba(99,102,241,0.1)", accentText: "#6366f1" },
-  teal:   { iconColor: "#0ea5e9", accentBg: "rgba(14,165,233,0.1)", accentText: "#0ea5e9" },
-  red:    { iconColor: "#ef4444", accentBg: "rgba(239,68,68,0.1)",  accentText: "#ef4444" },
+  teal: { iconColor: "#0ea5e9", accentBg: "rgba(14,165,233,0.1)", accentText: "#0ea5e9" },
+  red: { iconColor: "#ef4444", accentBg: "rgba(239,68,68,0.1)", accentText: "#ef4444" },
   yellow: { iconColor: "#f59e0b", accentBg: "rgba(251,191,36,0.1)", accentText: "#d97706" },
 };
 
@@ -109,9 +109,8 @@ function Toggle({ enabled, onToggle, loading }: { enabled: boolean; onToggle: ()
       className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${loading ? "cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-          enabled ? "translate-x-6" : "translate-x-1"
-        }`}
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${enabled ? "translate-x-6" : "translate-x-1"
+          }`}
       />
     </button>
   );
@@ -183,7 +182,7 @@ export default function SecurityDashboard() {
   const handleToggle = async (key: string, currentEnabled: boolean) => {
     setToggling((prev) => ({ ...prev, [key]: true }));
     try {
-      await toggleSetting({ key, enabled: !currentEnabled, updatedBy: user.id as Id<"users"> });
+      await toggleSetting({ key, enabled: !currentEnabled, updatedBy: user!.id as Id<"users"> });
     } catch (err) {
       console.error("Toggle failed:", err);
     } finally {
@@ -199,12 +198,12 @@ export default function SecurityDashboard() {
   const enabledCount = FEATURES.filter((f) => getSettingEnabled(f.key)).length;
   const threatLevel =
     (loginStats?.highRisk ?? 0) >= 10 ? "Critical" :
-    (loginStats?.highRisk ?? 0) >= 3  ? "Elevated" :
-    (loginStats?.failed ?? 0) >= 20   ? "Moderate" : "Normal";
+      (loginStats?.highRisk ?? 0) >= 3 ? "Elevated" :
+        (loginStats?.failed ?? 0) >= 20 ? "Moderate" : "Normal";
   const threatColor =
     threatLevel === "Critical" ? "text-red-400" :
-    threatLevel === "Elevated" ? "text-orange-400" :
-    threatLevel === "Moderate" ? "text-yellow-400" : "text-green-400";
+      threatLevel === "Elevated" ? "text-orange-400" :
+        threatLevel === "Moderate" ? "text-yellow-400" : "text-green-400";
 
   return (
     <div className="min-h-screen p-3 sm:p-6" style={{ background: "var(--background)", color: "var(--text-primary)" }}>
@@ -360,7 +359,7 @@ export default function SecurityDashboard() {
               {suspendedUsers.map((user: any) => {
                 const isAutoBlocked = user.suspendedReason?.includes("AUTO-BLOCKED");
                 const hoursLeft = Math.max(0, Math.ceil((user.suspendedUntil - Date.now()) / (1000 * 60 * 60)));
-                
+
                 return (
                   <div
                     key={user._id}
@@ -396,7 +395,7 @@ export default function SecurityDashboard() {
                           <p className="text-xs sm:text-sm mb-2" style={{ color: "var(--text-muted)" }}>
                             {user.email} • {user.role}
                           </p>
-                          
+
                           <div className="space-y-1 text-xs sm:text-sm">
                             <p style={{ color: "var(--text-muted)" }}>
                               <span className="font-medium" style={{ color: "var(--text-primary)" }}>Reason:</span>{" "}

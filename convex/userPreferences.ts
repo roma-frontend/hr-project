@@ -6,13 +6,13 @@ import { mutation, query } from "./_generated/server";
  */
 async function getCurrentUserId(ctx: any, sessionToken?: string): Promise<string | null> {
   if (!sessionToken) return null;
-  
+
   const users = await ctx.db.query("users").collect();
   const user = users.find((u: any) => u.sessionToken === sessionToken);
-  
+
   if (!user) return null;
   if (user.sessionExpiry && user.sessionExpiry < Date.now()) return null;
-  
+
   return user._id;
 }
 
@@ -26,7 +26,7 @@ export const hasSeenTour = query({
   },
   handler: async (ctx, { tourId, sessionToken }) => {
     const userId = await getCurrentUserId(ctx, sessionToken);
-    
+
     // If not authenticated, check localStorage (handled on client)
     // For authenticated users, check database
     if (!userId) {
@@ -35,8 +35,8 @@ export const hasSeenTour = query({
 
     const preference = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user_and_key", (q) => 
-        q.eq("userId", userId).eq("key", `tour_seen_${tourId}`)
+      .withIndex("by_user_and_key", (q) =>
+        q.eq("userId", userId as any).eq("key", `tour_seen_${tourId}`)
       )
       .first();
 
@@ -54,7 +54,7 @@ export const markTourAsSeen = mutation({
   },
   handler: async (ctx, { tourId, sessionToken }) => {
     const userId = await getCurrentUserId(ctx, sessionToken);
-    
+
     // For non-authenticated users, this will be handled via localStorage on client
     if (!userId) {
       return { success: true, storage: "localStorage" };
@@ -63,8 +63,8 @@ export const markTourAsSeen = mutation({
     // Check if preference already exists
     const existing = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user_and_key", (q) => 
-        q.eq("userId", userId).eq("key", `tour_seen_${tourId}`)
+      .withIndex("by_user_and_key", (q) =>
+        q.eq("userId", userId as any).eq("key", `tour_seen_${tourId}`)
       )
       .first();
 
@@ -77,7 +77,7 @@ export const markTourAsSeen = mutation({
     } else {
       // Create new preference
       await ctx.db.insert("userPreferences", {
-        userId,
+        userId: userId as any,
         key: `tour_seen_${tourId}`,
         value: true,
         createdAt: Date.now(),
@@ -98,14 +98,14 @@ export const getAllPreferences = query({
   },
   handler: async (ctx, { sessionToken }) => {
     const userId = await getCurrentUserId(ctx, sessionToken);
-    
+
     if (!userId) {
       throw new Error("Not authenticated");
     }
 
     const preferences = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId as any))
       .collect();
 
     return preferences;
@@ -123,15 +123,15 @@ export const setPreference = mutation({
   },
   handler: async (ctx, { key, value, sessionToken }) => {
     const userId = await getCurrentUserId(ctx, sessionToken);
-    
+
     if (!userId) {
       throw new Error("Not authenticated");
     }
 
     const existing = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user_and_key", (q) => 
-        q.eq("userId", userId).eq("key", key)
+      .withIndex("by_user_and_key", (q) =>
+        q.eq("userId", userId as any).eq("key", key)
       )
       .first();
 
@@ -142,7 +142,7 @@ export const setPreference = mutation({
       });
     } else {
       await ctx.db.insert("userPreferences", {
-        userId,
+        userId: userId as any,
         key,
         value,
         createdAt: Date.now(),

@@ -160,7 +160,7 @@ function writeFileSecure(
       // For small files (>500B), require at least 70% of original size
       const threshold = originalSize > 5000 ? 0.80 : 0.70;
       if (originalSize > 500 && newSize < originalSize * threshold) {
-        const msg = `[writeFileSecure] Rejected: new content (${newSize}b) is less than ${threshold*100}% of original (${originalSize}b) — likely truncated`;
+        const msg = `[writeFileSecure] Rejected: new content (${newSize}b) is less than ${threshold * 100}% of original (${originalSize}b) — likely truncated`;
         console.warn(msg);
         return { success: false, error: msg };
       }
@@ -248,7 +248,6 @@ function findRelevantFiles(message: string): string[] {
     'attendance': ['src/components/attendance/AttendanceDashboard.tsx'],
     'reports': ['src/app/(dashboard)/reports/page.tsx'],
     'joins': ['src/app/(dashboard)/join-requests/page.tsx'],
-    'profile': ['src/components/settings/ProfileSettings.tsx'],
   };
 
   const relevant: string[] = [];
@@ -385,7 +384,7 @@ function parseCSSPatches(response: string): Array<{
   newClass: string;
 }> {
   const patches: Array<{ filePath: string; oldClass: string; newClass: string }> = [];
-  
+
   // Support both single and double quotes, and optional whitespace variations
   // Pattern: PATCH: path\nOLD: "value"\nNEW: "value"
   const patchPattern = /PATCH:\s*([^\n]+)\s*\nOLD:\s*["']([^"'\n]+)["']\s*\nNEW:\s*["']([^"'\n]+)["']/g;
@@ -575,7 +574,7 @@ async function generateFileChanges(
     if (content) {
       // If file is large, warn AI about size so it doesn't truncate output
       const sizeWarning = content.length > 10000
-        ? `\n[NOTE: This file is ${content.length} chars / ~${Math.round(content.length/4)} tokens. You MUST output the COMPLETE file without any truncation or abbreviation.]\n`
+        ? `\n[NOTE: This file is ${content.length} chars / ~${Math.round(content.length / 4)} tokens. You MUST output the COMPLETE file without any truncation or abbreviation.]\n`
         : '';
       fileContextParts.push(`\n--- FILE: ${filePath} ---${sizeWarning}\n${content}\n--- END FILE ---`);
     }
@@ -621,10 +620,10 @@ IMPORTANT: Only output FILE blocks for files that need to change. Do NOT rewrite
 export async function POST(req: NextRequest) {
   try {
     console.log('[AI Site Editor] Request received');
-    
+
     const body = await req.json();
     console.log('[AI Site Editor] Body parsed:', { message: body.message?.substring(0, 50), userId: body.userId, plan: body.plan });
-    
+
     const { message, userId, organizationId, plan } = body;
 
     if (!message || !userId || !organizationId) {
@@ -741,16 +740,16 @@ export async function POST(req: NextRequest) {
     console.error('Message:', error?.message);
     console.error('Stack:', error?.stack);
     console.error('Full error:', error);
-    
+
     // Возвращаем детальную ошибку для отладки
     return NextResponse.json(
-      { 
+      {
         error: error?.message || 'Internal server error',
         details: String(error),
         type: error?.name || 'Error',
         // Всегда показываем stack в dev режиме
         stack: error?.stack
-      }, 
+      },
       { status: 500 }
     );
   }

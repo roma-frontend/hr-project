@@ -28,18 +28,18 @@ type Priority = "low" | "medium" | "high" | "urgent";
 type ViewMode = "kanban" | "list";
 
 const STATUS_CONFIG: Record<Status, { labelKey: string; color: string; bg: string; border: string; dot: string }> = {
-  pending:     { labelKey: "tasks.status.pending",    color: "text-[var(--text-muted)]",    bg: "bg-[var(--background-subtle)]",   border: "border-[var(--border)]",        dot: "bg-[var(--text-muted)]" },
-  in_progress: { labelKey: "tasks.status.inProgress", color: "text-blue-500",               bg: "bg-blue-500/10",                  border: "border-blue-500/30",             dot: "bg-blue-500" },
-  review:      { labelKey: "tasks.status.review",     color: "text-amber-500",              bg: "bg-amber-500/10",                 border: "border-amber-500/30",            dot: "bg-amber-500" },
-  completed:   { labelKey: "tasks.status.completed",  color: "text-emerald-500",            bg: "bg-emerald-500/10",               border: "border-emerald-500/30",          dot: "bg-emerald-500" },
-  cancelled:   { labelKey: "tasks.status.cancelled",  color: "text-rose-500",               bg: "bg-rose-500/10",                  border: "border-rose-500/30",             dot: "bg-rose-400" },
+  pending: { labelKey: "tasks.status.pending", color: "text-[var(--text-muted)]", bg: "bg-[var(--background-subtle)]", border: "border-[var(--border)]", dot: "bg-[var(--text-muted)]" },
+  in_progress: { labelKey: "tasks.status.inProgress", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30", dot: "bg-blue-500" },
+  review: { labelKey: "tasks.status.review", color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/30", dot: "bg-amber-500" },
+  completed: { labelKey: "tasks.status.completed", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30", dot: "bg-emerald-500" },
+  cancelled: { labelKey: "tasks.status.cancelled", color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/30", dot: "bg-rose-400" },
 };
 
 const PRIORITY_CONFIG: Record<Priority, { labelKey: string; color: string; bg: string; icon: string }> = {
-  low:    { labelKey: "tasks.priority.low",    color: "text-[var(--text-muted)]", bg: "bg-[var(--background-subtle)]", icon: "" },
-  medium: { labelKey: "tasks.priority.medium", color: "text-blue-500",            bg: "bg-blue-500/10",                icon: "" },
-  high:   { labelKey: "tasks.priority.high",   color: "text-orange-500",          bg: "bg-orange-500/10",              icon: "" },
-  urgent: { labelKey: "tasks.priority.urgent", color: "text-rose-500",            bg: "bg-rose-500/10",                icon: "?" },
+  low: { labelKey: "tasks.priority.low", color: "text-[var(--text-muted)]", bg: "bg-[var(--background-subtle)]", icon: "" },
+  medium: { labelKey: "tasks.priority.medium", color: "text-blue-500", bg: "bg-blue-500/10", icon: "" },
+  high: { labelKey: "tasks.priority.high", color: "text-orange-500", bg: "bg-orange-500/10", icon: "" },
+  urgent: { labelKey: "tasks.priority.urgent", color: "text-rose-500", bg: "bg-rose-500/10", icon: "?" },
 };
 
 const KANBAN_COLUMNS: Status[] = ["pending", "in_progress", "review", "completed"];
@@ -73,20 +73,20 @@ function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status
 
 // ── Task Card (base content, reused in both draggable and overlay) ──────────
 function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?: boolean }) {
+  const { t } = useTranslation();
   const statusCfg = STATUS_CONFIG[task.status as Status];
   const priorityCfg = PRIORITY_CONFIG[task.priority as Priority];
   return (
-    <div className={`group bg-[var(--card)] rounded-2xl border shadow-sm p-4 space-y-3 transition-all duration-200 ${
-      isDragging
-        ? "border-blue-400 shadow-2xl rotate-2 scale-105 opacity-90"
-        : "border-[var(--border)] hover:shadow-md hover:border-blue-400/50"
-    }`}>
+    <div className={`group bg-[var(--card)] rounded-2xl border shadow-sm p-4 space-y-3 transition-all duration-200 ${isDragging
+      ? "border-blue-400 shadow-2xl rotate-2 scale-105 opacity-90"
+      : "border-[var(--border)] hover:shadow-md hover:border-blue-400/50"
+      }`}>
       <div className="flex items-center justify-between">
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}>
-          {priorityCfg.icon} {priorityCfg.label}
+          {priorityCfg.icon} {t(priorityCfg.labelKey)}
         </span>
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.color}`}>
-          {statusCfg.label}
+          {t(statusCfg.labelKey)}
         </span>
       </div>
       <p className={`font-semibold text-sm leading-snug line-clamp-2 ${isDragging ? "text-blue-400" : "text-[var(--text-primary)]"}`}>
@@ -170,14 +170,13 @@ function DroppableKanbanColumn({ status, tasks, onOpen }: { status: Status; task
     <div className="flex-1 min-w-[260px] max-w-[320px]">
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
-        <span className={`font-semibold text-sm ${cfg.color}`}>{cfg.label}</span>
+        <span className={`font-semibold text-sm ${cfg.color}`}>{t(cfg.labelKey)}</span>
         <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>{tasks.length}</span>
       </div>
       <div
         ref={setNodeRef}
-        className={`space-y-3 min-h-[120px] p-2 rounded-2xl transition-all duration-200 ${
-          isOver ? `border-2 border-dashed ${cfg.border} bg-blue-500/5` : "border-2 border-transparent"
-        }`}
+        className={`space-y-3 min-h-[120px] p-2 rounded-2xl transition-all duration-200 ${isOver ? `border-2 border-dashed ${cfg.border} bg-blue-500/5` : "border-2 border-transparent"
+          }`}
       >
         {tasks.map(task => (
           <DraggableTaskCard key={task._id} task={task} onOpen={() => onOpen(task)} />
@@ -194,6 +193,7 @@ function DroppableKanbanColumn({ status, tasks, onOpen }: { status: Status; task
 
 // ── List Row ───────────────────────────────────────────────────────────────
 function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
+  const { t } = useTranslation();
   const statusCfg = STATUS_CONFIG[task.status as Status];
   const priorityCfg = PRIORITY_CONFIG[task.priority as Priority];
 
@@ -216,12 +216,12 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
       </td>
       <td className="px-4 py-3">
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}>
-          {priorityCfg.icon} {priorityCfg.label}
+          {priorityCfg.icon} {t(priorityCfg.labelKey)}
         </span>
       </td>
       <td className="px-4 py-3">
         <span className={`text-xs font-medium px-2 py-1 rounded-full ${statusCfg.bg} ${statusCfg.color}`}>
-          {statusCfg.label}
+          {t(statusCfg.labelKey)}
         </span>
       </td>
       <td className="px-4 py-3">
@@ -237,7 +237,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
 // ── Main Client ────────────────────────────────────────────────────────────
 interface TasksClientProps {
   userId: string;
-  userRole: "admin" | "supervisor" | "employee";
+  userRole: "superadmin" | "admin" | "supervisor" | "employee";
 }
 
 export function TasksClient({ userId, userRole }: TasksClientProps) {
@@ -333,12 +333,12 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-6">
           {[
-            { label: t('tasksClient.total'),      value: stats.total,      color: "from-[var(--text-secondary)] to-[var(--text-muted)]" },
-            { label: t('tasksClient.pending'),    value: stats.pending,    color: "from-[var(--text-muted)] to-[var(--text-muted)]" },
+            { label: t('tasksClient.total'), value: stats.total, color: "from-[var(--text-secondary)] to-[var(--text-muted)]" },
+            { label: t('tasksClient.pending'), value: stats.pending, color: "from-[var(--text-muted)] to-[var(--text-muted)]" },
             { label: t('tasksClient.inProgress'), value: stats.inProgress, color: "from-blue-400 to-blue-500" },
-            { label: t('tasksClient.inReview'),   value: stats.review,     color: "from-amber-400 to-amber-500" },
-            { label: t('tasksClient.completed'),  value: stats.completed,  color: "from-emerald-400 to-emerald-500" },
-            { label: t('tasksClient.overdue'),    value: stats.overdue,    color: "from-rose-400 to-rose-500" },
+            { label: t('tasksClient.inReview'), value: stats.review, color: "from-amber-400 to-amber-500" },
+            { label: t('tasksClient.completed'), value: stats.completed, color: "from-emerald-400 to-emerald-500" },
+            { label: t('tasksClient.overdue'), value: stats.overdue, color: "from-rose-400 to-rose-500" },
           ].map(s => (
             <div key={s.label} className="bg-[var(--card)] rounded-2xl border border-[var(--border)] shadow-sm p-4 text-center">
               <p className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</p>
@@ -429,7 +429,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
             if (!task || task.status === newStatus) return;
             try {
               await updateStatus({ taskId: task._id as Id<"tasks">, status: newStatus, userId: convexId });
-              toast.success(`Moved to ${STATUS_CONFIG[newStatus].label} ✓`, { duration: 2000 });
+              toast.success(`Moved to ${t(STATUS_CONFIG[newStatus].labelKey)} ✓`, { duration: 2000 });
             } catch {
               toast.error("Failed to update status");
             }
@@ -491,7 +491,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
       {showCreate && (
         <CreateTaskModal
           currentUserId={convexId}
-          userRole={userRole}
+          userRole={userRole as "admin" | "supervisor" | "employee"}
           onClose={() => setShowCreate(false)}
         />
       )}
@@ -499,7 +499,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
         <TaskDetailModal
           task={selectedTask}
           currentUserId={convexId}
-          userRole={userRole}
+          userRole={userRole as "admin" | "supervisor" | "employee"}
           onClose={() => setSelectedTask(null)}
         />
       )}

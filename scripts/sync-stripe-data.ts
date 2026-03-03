@@ -30,7 +30,7 @@ async function syncStripeData() {
 
   // Check for Stripe API key
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  
+
   if (!stripeSecretKey) {
     console.log(`${colors.yellow}⚠️  STRIPE_SECRET_KEY not found in .env.local${colors.reset}\n`);
     console.log(`${colors.cyan}To use real Stripe data synchronization:${colors.reset}`);
@@ -39,7 +39,7 @@ async function syncStripeData() {
     console.log(`${colors.dim}3. Add to .env.local:${colors.reset}`);
     console.log(`${colors.yellow}   STRIPE_SECRET_KEY=sk_test_...${colors.reset}\n`);
     console.log(`${colors.cyan}💡 Running in demo mode with mock data...${colors.reset}\n`);
-    
+
     // Demo mode - show what would happen
     showDemoMode();
     return;
@@ -47,7 +47,7 @@ async function syncStripeData() {
 
   // Check for Convex URL
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
-  
+
   if (!convexUrl) {
     console.error(`${colors.red}❌ CONVEX_URL not found in .env.local${colors.reset}`);
     process.exit(1);
@@ -56,9 +56,7 @@ async function syncStripeData() {
   console.log(`${colors.cyan}🔑 Stripe API Key detected${colors.reset}`);
   console.log(`${colors.cyan}📡 Connecting to Stripe...${colors.reset}`);
 
-  const stripe = new Stripe(stripeSecretKey, {
-    apiVersion: '2024-12-18.acacia',
-  });
+  const stripe = new Stripe(stripeSecretKey);
 
   try {
     // Test Stripe connection
@@ -66,7 +64,7 @@ async function syncStripeData() {
     console.log(`${colors.green}✅ Connected to Stripe account: ${account.id}${colors.reset}\n`);
 
     console.log(`${colors.cyan}📥 Fetching subscriptions from Stripe...${colors.reset}`);
-    
+
     const subscriptions = await stripe.subscriptions.list({
       limit: 100,
       expand: ['data.customer', 'data.default_payment_method'],
@@ -92,16 +90,16 @@ async function syncStripeData() {
     for (const sub of subscriptions.data) {
       try {
         const customer = sub.customer as Stripe.Customer;
-        const priceId = typeof sub.items.data[0].price === 'string' 
-          ? sub.items.data[0].price 
+        const priceId = typeof sub.items.data[0].price === 'string'
+          ? sub.items.data[0].price
           : sub.items.data[0].price.id;
 
         // Determine plan from price
         let plan = 'starter';
-        const price = typeof sub.items.data[0].price === 'string' 
-          ? null 
+        const price = typeof sub.items.data[0].price === 'string'
+          ? null
           : sub.items.data[0].price;
-        
+
         if (price && price.unit_amount) {
           if (price.unit_amount >= 19900) plan = 'enterprise';
           else if (price.unit_amount >= 4900) plan = 'professional';
@@ -111,14 +109,14 @@ async function syncStripeData() {
           stripeCustomerId: customer.id,
           stripeSubscriptionId: sub.id,
           stripePriceId: priceId,
-          stripeCurrentPeriodEnd: sub.current_period_end * 1000,
+          stripeCurrentPeriodEnd: (sub as any).current_period_end * 1000,
           status: sub.status,
           plan,
           userEmail: customer.email || 'no-email@example.com',
           organizationId: customer.metadata?.organizationId || undefined,
           userId: customer.metadata?.userId || undefined,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
-          currentPeriodStart: sub.current_period_start * 1000,
+          currentPeriodStart: (sub as any).current_period_start * 1000,
           trialEnd: sub.trial_end ? sub.trial_end * 1000 : undefined,
         };
 
@@ -145,28 +143,28 @@ async function syncStripeData() {
 
   } catch (error: any) {
     console.error(`${colors.red}❌ Error: ${error.message}${colors.reset}`);
-    
+
     if (error.type === 'StripeAuthenticationError') {
       console.log(`\n${colors.yellow}💡 Your Stripe API key may be invalid${colors.reset}`);
       console.log(`${colors.dim}Check your .env.local and ensure STRIPE_SECRET_KEY is correct${colors.reset}`);
     }
-    
+
     process.exit(1);
   }
 }
 
 function showDemoMode() {
   console.log(`${colors.bright}${colors.cyan}📋 Demo Mode - What This Tool Does:${colors.reset}\n`);
-  
+
   console.log(`${colors.green}1. Connects to Stripe API${colors.reset}`);
   console.log(`   ${colors.dim}Uses your STRIPE_SECRET_KEY to authenticate${colors.reset}\n`);
-  
+
   console.log(`${colors.green}2. Fetches all subscriptions${colors.reset}`);
   console.log(`   ${colors.dim}Retrieves customer data, payment methods, and subscription details${colors.reset}\n`);
-  
+
   console.log(`${colors.green}3. Syncs to Convex database${colors.reset}`);
   console.log(`   ${colors.dim}Updates or creates subscription records in your database${colors.reset}\n`);
-  
+
   console.log(`${colors.green}4. Handles webhooks${colors.reset}`);
   console.log(`   ${colors.dim}Automatically updates when subscriptions change in Stripe${colors.reset}\n`);
 

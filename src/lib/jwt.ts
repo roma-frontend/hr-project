@@ -6,7 +6,8 @@ export interface JWTPayload {
   userId: string;
   name: string;
   email: string;
-  role: "admin" | "supervisor" | "employee";
+  role: "admin" | "supervisor" | "employee" | "superadmin";
+  organizationId?: string;
   department?: string;
   position?: string;
   employeeType?: "staff" | "contractor";

@@ -208,11 +208,11 @@ export function EmployeesClient() {
       {(() => {
         const getPresenceBadge = (status: string | undefined) => {
           const cfg: Record<string, { labelKey: string; cls: string }> = {
-            available:     { labelKey: "presence.available",   cls: "bg-emerald-100 text-emerald-700" },
-            in_meeting:    { labelKey: "presence.inMeeting",   cls: "bg-amber-100 text-amber-700" },
-            in_call:       { labelKey: "presence.inCall",      cls: "bg-blue-100 text-blue-700" },
+            available: { labelKey: "presence.available", cls: "bg-emerald-100 text-emerald-700" },
+            in_meeting: { labelKey: "presence.inMeeting", cls: "bg-amber-100 text-amber-700" },
+            in_call: { labelKey: "presence.inCall", cls: "bg-blue-100 text-blue-700" },
             out_of_office: { labelKey: "presence.outOfOffice", cls: "bg-rose-100 text-rose-700" },
-            busy:          { labelKey: "presence.busy",        cls: "bg-orange-100 text-orange-700" },
+            busy: { labelKey: "presence.busy", cls: "bg-orange-100 text-orange-700" },
           };
           return cfg[status ?? "available"] ?? cfg["available"];
         };
@@ -372,7 +372,7 @@ export function EmployeesClient() {
                               <p className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>{emp.name}</p>
                               <div className="flex items-center gap-1.5">
                                 <span className="inline-flex items-center gap-0.5 text-xs font-medium" style={{ color: roleConf.color }}>
-                                  <RoleIcon className="w-2.5 h-2.5" />{emp.position ?? roleConf.label}
+                                  <RoleIcon className="w-2.5 h-2.5" />{emp.position ?? t(roleConf.labelKey)}
                                 </span>
                               </div>
                             </div>
@@ -436,7 +436,7 @@ export function EmployeesClient() {
           employee={editEmployee as any}
           open={!!editEmployee}
           onClose={() => setEditEmployee(null)}
-          currentUserRole={user?.role ?? "employee"}
+          currentUserRole={(user?.role ?? "employee") as "admin" | "supervisor" | "employee"}
         />
       )}
 

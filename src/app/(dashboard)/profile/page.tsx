@@ -3,9 +3,9 @@
 import { useTranslation } from 'react-i18next';
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Save, User as UserIcon, Mail, Briefcase, Calendar, 
-  Shield, MapPin, Phone, Trash2, Upload, Clock, Award 
+import {
+  Save, User as UserIcon, Mail, Briefcase, Calendar,
+  Shield, MapPin, Phone, Trash2, Upload, Clock, Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ export default function ProfilePage() {
 
   const updateOwnProfile = useMutation(api.users.updateOwnProfile);
   const deleteAvatar = useMutation(api.users.deleteAvatar);
-  const userData = useQuery(api.users.getUserById, 
+  const userData = useQuery(api.users.getUserById,
     user?.id ? { userId: user.id as any, requesterId: user.id as any } : "skip"
   );
   const userStats = useQuery(api.userStats.getUserStats,
@@ -94,13 +94,13 @@ export default function ProfilePage() {
       // 1. Delete from Cloudinary
       const { deleteAvatarFromCloudinary } = await import("@/actions/cloudinary");
       await deleteAvatarFromCloudinary(user.id);
-      
+
       // 2. Delete from database
       await deleteAvatar({ userId: user.id as any });
-      
+
       // 3. Update local state
       login({ ...user, avatar: undefined });
-      
+
       toast.success("Profile picture deleted successfully!");
       setShowDeleteDialog(false);
     } catch (err) {
@@ -112,12 +112,12 @@ export default function ProfilePage() {
   };
 
   // Format date
-  const joinDate = user?.createdAt 
-    ? new Date(user.createdAt).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
+  const joinDate = userData?._creationTime
+    ? new Date(userData._creationTime).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
     : "N/A";
 
   return (
@@ -203,10 +203,10 @@ export default function ProfilePage() {
               <Label htmlFor="name">{t('labels.fullName')} {t('forms.required')}</Label>
               <div className="relative">
                 <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
+                <Input
                   id="name"
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="pl-10"
                   placeholder={t('placeholders.johnDoe')}
                 />
@@ -217,11 +217,11 @@ export default function ProfilePage() {
               <Label htmlFor="email">{t('labels.emailAddress')} {t('forms.required')}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
+                <Input
                   id="email"
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
                   className="pl-10"
                   placeholder="john@example.com"
                 />
@@ -232,11 +232,11 @@ export default function ProfilePage() {
               <Label htmlFor="phone">{t('labels.phoneNumber')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
+                <Input
                   id="phone"
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
-                  type="tel" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  type="tel"
                   className="pl-10"
                   placeholder="+1 (555) 123-4567"
                 />
@@ -247,10 +247,10 @@ export default function ProfilePage() {
               <Label htmlFor="location">{t('labels.location')}</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
+                <Input
                   id="location"
-                  value={location} 
-                  onChange={(e) => setLocation(e.target.value)} 
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
                   className="pl-10"
                   placeholder={t('placeholders.newYorkUSA')}
                 />
@@ -284,10 +284,10 @@ export default function ProfilePage() {
               <Label>{t('employeeInfo.department')}Department</Label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
-                  value={user?.department ?? "Not assigned"} 
-                  disabled 
-                  className="pl-10 opacity-60" 
+                <Input
+                  value={user?.department ?? "Not assigned"}
+                  disabled
+                  className="pl-10 opacity-60"
                 />
               </div>
             </div>
@@ -296,10 +296,10 @@ export default function ProfilePage() {
               <Label>Member Since</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
-                  value={joinDate} 
-                  disabled 
-                  className="pl-10 opacity-60" 
+                <Input
+                  value={joinDate}
+                  disabled
+                  className="pl-10 opacity-60"
                 />
               </div>
             </div>
@@ -308,10 +308,10 @@ export default function ProfilePage() {
               <Label>User ID</Label>
               <div className="relative">
                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <Input 
-                  value={user?.id?.slice(0, 16) + "..." ?? "N/A"} 
-                  disabled 
-                  className="pl-10 opacity-60 font-mono text-xs" 
+                <Input
+                  value={user?.id ? user.id.slice(0, 16) + "..." : "N/A"}
+                  disabled
+                  className="pl-10 opacity-60 font-mono text-xs"
                 />
               </div>
             </div>
@@ -321,7 +321,7 @@ export default function ProfilePage() {
           <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-sm">
             <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <p>
-              Your role and department are managed by your administrator. 
+              Your role and department are managed by your administrator.
               Contact them to request changes.
             </p>
           </div>
@@ -346,7 +346,7 @@ export default function ProfilePage() {
                 { label: t('profile.leavesTaken'), value: userStats.leavesTaken.toString(), icon: Calendar },
                 { label: t('profile.projects'), value: userStats.projects.toString(), icon: Briefcase },
               ].map((stat) => (
-                <div 
+                <div
                   key={stat.label}
                   className="flex flex-col items-center p-4 rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] hover:border-[var(--primary)] transition-all"
                 >
@@ -394,19 +394,19 @@ export default function ProfilePage() {
               {t('profile.deleteAvatarWarning') || 'Are you sure you want to delete your profile picture? This action cannot be undone.'}
             </DialogDescription>
           </DialogHeader>
-          
-          <div 
-            className="flex items-center gap-3 p-4 rounded-lg border" 
-            style={{ 
-              background: "var(--destructive-bg, rgba(239, 68, 68, 0.1))", 
-              borderColor: "var(--destructive-border, rgba(239, 68, 68, 0.3))" 
+
+          <div
+            className="flex items-center gap-3 p-4 rounded-lg border"
+            style={{
+              background: "var(--destructive-bg, rgba(239, 68, 68, 0.1))",
+              borderColor: "var(--destructive-border, rgba(239, 68, 68, 0.3))"
             }}
           >
             <div className="flex-shrink-0">
               {user?.avatar ? (
-                <img 
-                  src={user.avatar} 
-                  alt="Current avatar" 
+                <img
+                  src={user.avatar}
+                  alt="Current avatar"
                   className="w-16 h-16 rounded-full object-cover"
                 />
               ) : (
@@ -431,7 +431,7 @@ export default function ProfilePage() {
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
               disabled={deleting}
-              style={{ 
+              style={{
                 borderColor: "var(--border)",
                 color: "var(--text-primary)"
               }}

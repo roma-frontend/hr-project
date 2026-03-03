@@ -247,7 +247,7 @@ export default function JoinRequestsPage() {
 
                       {/* Status + Actions */}
                       <div className="flex flex-col items-end gap-3 sm:items-end">
-                        {STATUS_BADGES[req.status as keyof typeof STATUS_BADGES]}
+                        <Badge variant={req.status === "approved" ? "success" : req.status === "rejected" ? "destructive" : "warning"}>{req.status}</Badge>
 
                         {req.status === "pending" && (
                           <div className="flex items-center gap-2">

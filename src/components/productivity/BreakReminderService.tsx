@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Coffee } from "lucide-react";
-import { 
-  subscribeToPushNotifications, 
+import {
+  subscribeToPushNotifications,
   sendLocalPushNotification,
   isPushNotificationSupported,
-  requestNotificationPermission 
+  requestNotificationPermission
 } from "@/lib/pushNotifications";
 
 interface BreakReminderServiceProps {
@@ -18,8 +18,8 @@ interface BreakReminderServiceProps {
   workHoursEnd?: string;
 }
 
-export default function BreakReminderService({ 
-enabled,
+export default function BreakReminderService({
+  enabled,
   intervalMinutes,
   workHoursStart = "09:00",
   workHoursEnd = "18:00",
@@ -107,7 +107,7 @@ enabled,
         <div className="flex-1">
           <p className="font-semibold text-[var(--foreground)] text-base">Time for a Break! ☕</p>
           <p className="text-sm text-[var(--text-muted)] mt-0.5 leading-relaxed">
-            {intervalMinutes === 1 
+            {intervalMinutes === 1
               ? "Testing mode: Time to take a quick break!"
               : `You've been working for ${intervalMinutes} minutes. Take 5 minutes to stretch and recharge!`
             }
@@ -128,18 +128,8 @@ enabled,
           body: `You've been working for ${intervalMinutes} minutes. Take a 5-minute break to stretch and recharge!`,
           tag: `break-reminder-${Date.now()}`, // Unique tag to ensure it always shows
           requireInteraction: false, // Better for iOS - auto dismiss after some time
-          renotify: true, // Force new notification
-          vibrate: [300, 100, 300, 100, 300, 100, 300], // Stronger vibration
           silent: false, // Play sound
-          actions: [
-            { action: 'dismiss', title: 'Dismiss' },
-            { action: 'snooze', title: 'Snooze 5 min' },
-          ],
-          data: {
-            url: '/dashboard',
-            timestamp: Date.now(),
-          },
-        });
+        } as any);
       } catch (error) {
         console.error('Failed to send push notification:', error);
       }
@@ -166,7 +156,7 @@ enabled,
         }
       }
     };
-    
+
     initPushNotifications();
 
     // Check every minute if it's time for a break

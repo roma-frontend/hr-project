@@ -5,8 +5,8 @@ import { mutation, query } from "./_generated/server";
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 /** Verify caller has admin/superadmin role and return their organizationId */
-async function requireAdmin(ctx: { db: { get: (id: unknown) => Promise<unknown> } }, adminId: string) {
-  const admin = await (ctx.db as { get: (id: string) => Promise<{ role: string; organizationId: string; email: string } | null> }).get(adminId);
+async function requireAdmin(ctx: any, adminId: string) {
+  const admin = await ctx.db.get(adminId) as { _id: any; role: string; organizationId: string; email: string; name: string } | null;
   if (!admin) throw new Error("Admin not found");
   if (admin.role !== "admin" && admin.role !== "superadmin") {
     throw new Error("Only org admins can perform this action");
@@ -50,23 +50,23 @@ export const getCurrentUser = query({
   },
   handler: async (ctx, { email }) => {
     console.log("[getCurrentUser] Called with email:", email);
-    
+
     // Try to get identity from Convex auth first
     const identity = await ctx.auth.getUserIdentity();
     console.log("[getCurrentUser] Identity:", identity);
-    
+
     const userEmail = identity?.email || email;
-    
+
     if (!userEmail) {
       console.log("[getCurrentUser] No identity or email");
       return null;
     }
-    
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", userEmail.toLowerCase()))
       .first();
-    
+
     console.log("[getCurrentUser] Found user:", user);
     return user;
   },
@@ -84,63 +84,63 @@ export const createOAuthUser = mutation({
   handler: async (ctx, { email, name, avatarUrl }) => {
     console.log("[createOAuthUser] Called with:", { email, name, avatarUrl });
     const emailLower = email.toLowerCase().trim();
-    
+
     // Check if user already exists
     const existing = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", emailLower))
       .first();
-    
+
     console.log("[createOAuthUser] Existing user:", existing);
-    
+
     if (existing) {
       console.log("[createOAuthUser] User exists, updating avatar and name if needed");
       const updates: any = {};
-      
+
       // Update avatar if provided
       if (avatarUrl && !existing.avatarUrl) {
         updates.avatarUrl = avatarUrl;
       }
-      
+
       // Also update name if it's different
       if (name && name !== existing.name) {
         console.log("[createOAuthUser] Updating name from", existing.name, "to", name);
         updates.name = name;
       }
-      
+
       // Apply updates if any
       if (Object.keys(updates).length > 0) {
         await ctx.db.patch(existing._id, updates);
         console.log("[createOAuthUser] Updated user with:", updates);
       }
-      
+
       return existing._id;
     }
-    
+
     // For new OAuth users, check if they are superadmin
     const isSuperAdmin = emailLower === SUPERADMIN_EMAIL;
-    
+
     // Get first organization or create error
     const allOrgs = await ctx.db.query("organizations").collect();
-    
+
     if (allOrgs.length === 0) {
       throw new Error("No organization found. Please create an organization first.");
     }
-    
+
     const organizationId = allOrgs[0]._id;
-    
+
     // Check if user is first member of the org (becomes admin)
     const orgMembers = await ctx.db
       .query("users")
       .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
       .collect();
-    
+
     const isFirstMember = orgMembers.length === 0;
     const role = isSuperAdmin ? "superadmin" : (isFirstMember ? "admin" : "employee");
-    
+
     // OAuth users are auto-approved (trusted authentication)
     const isApproved = true;
-    
+
     // Create new OAuth user
     console.log("[createOAuthUser] Creating new user with:", {
       organizationId,
@@ -150,7 +150,7 @@ export const createOAuthUser = mutation({
       isSuperAdmin,
       isFirstMember,
     });
-    
+
     const userId = await ctx.db.insert("users", {
       organizationId,
       name,
@@ -170,7 +170,7 @@ export const createOAuthUser = mutation({
       createdAt: Date.now(),
       avatarUrl,
     });
-    
+
     console.log("[createOAuthUser] ✅ User created with ID:", userId);
     return userId;
   },
@@ -263,7 +263,7 @@ export const createUser = mutation({
     // Check employee limit for this org
     const orgId = admin.organizationId;
     if (!orgId) throw new Error("Admin must belong to an organization");
-    
+
     const org = await ctx.db.get(orgId);
     if (!org) throw new Error("Organization not found");
 
@@ -422,7 +422,7 @@ export const getSupervisors = query({
     // Superadmin sees all supervisors/admins across all orgs
     if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
       const allUsers = await ctx.db.query("users").collect();
-      return allUsers.filter(u => 
+      return allUsers.filter(u =>
         u.isActive && (u.role === "supervisor" || u.role === "admin" || u.role === "superadmin")
       );
     }
@@ -784,7 +784,7 @@ export const updateOwnProfile = mutation({
   handler: async (ctx, { userId, ...updates }) => {
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
-    
+
     await ctx.db.patch(userId, updates);
     return userId;
   },
@@ -798,12 +798,12 @@ export const deleteAvatar = mutation({
   handler: async (ctx, { userId }) => {
     const user = await ctx.db.get(userId);
     if (!user) throw new Error("User not found");
-    
+
     // Remove avatar URL from database
-    await ctx.db.patch(userId, { 
-      avatarUrl: undefined 
+    await ctx.db.patch(userId, {
+      avatarUrl: undefined
     });
-    
+
     return userId;
   },
 });
@@ -832,7 +832,7 @@ export const recordFaceIdAttempt = mutation({
     } else {
       throw new Error("Either email or userId must be provided");
     }
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -892,7 +892,7 @@ export const checkFaceIdStatus = query({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
       .first();
-    
+
     if (!user) {
       return { blocked: false, attempts: 0 };
     }
@@ -915,7 +915,7 @@ export const unblockFaceId = mutation({
   handler: async (ctx, { adminId, userId }) => {
     const admin = await requireAdmin(ctx, adminId);
     const user = await ctx.db.get(userId);
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -964,7 +964,7 @@ export const autoUnblockFaceId = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
     const user = await ctx.db.get(userId);
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -1016,29 +1016,29 @@ export const listAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    
+
     const currentUser = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email!))
       .first();
-    
+
     if (!currentUser) return [];
-    
+
     // Superadmin sees all users across all organizations
     if (currentUser.email.toLowerCase() === SUPERADMIN_EMAIL) {
       return await ctx.db.query("users").collect();
     }
-    
+
     // Admin sees only users from their organization
     if (currentUser.role === "admin") {
       if (!currentUser.organizationId) return [];
-      
+
       return await ctx.db
         .query("users")
         .withIndex("by_org", (q) => q.eq("organizationId", currentUser.organizationId))
         .collect();
     }
-    
+
     return [];
   },
 });
@@ -1056,7 +1056,7 @@ export const suspendUser = mutation({
   handler: async (ctx, { adminId, userId, reason, duration = 24 }) => {
     const admin = await requireAdmin(ctx, adminId);
     const user = await ctx.db.get(userId);
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -1115,7 +1115,7 @@ export const unsuspendUser = mutation({
   handler: async (ctx, { adminId, userId }) => {
     const admin = await requireAdmin(ctx, adminId);
     const user = await ctx.db.get(userId);
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -1169,7 +1169,7 @@ export const autoUnsuspendExpired = mutation({
   handler: async (ctx) => {
     const now = Date.now();
     const allUsers = await ctx.db.query("users").collect();
-    
+
     let count = 0;
     for (const user of allUsers) {
       if (user.isSuspended && user.suspendedUntil && user.suspendedUntil <= now) {
@@ -1210,22 +1210,22 @@ export const upgradeSuperadminRole = mutation({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", SUPERADMIN_EMAIL))
       .first();
-    
+
     if (!user) {
       throw new Error("Superadmin user not found");
     }
-    
+
     if (user.role === "superadmin") {
       return { message: "User is already superadmin", email: user.email, role: user.role };
     }
-    
+
     await ctx.db.patch(user._id, { role: "superadmin" });
-    
-    return { 
-      message: "Successfully upgraded to superadmin", 
-      email: user.email, 
+
+    return {
+      message: "Successfully upgraded to superadmin",
+      email: user.email,
       oldRole: user.role,
-      newRole: "superadmin" 
+      newRole: "superadmin"
     };
   },
 });

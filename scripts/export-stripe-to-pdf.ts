@@ -83,7 +83,7 @@ async function exportToPDF() {
   console.log(`${colors.bright}${colors.cyan}📄 Экспорт Stripe транзакций в PDF${colors.reset}\n`);
 
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
-  
+
   if (!convexUrl) {
     console.error(`${colors.red}❌ CONVEX_URL not found in .env.local${colors.reset}`);
     process.exit(1);
@@ -93,7 +93,7 @@ async function exportToPDF() {
   const client = new ConvexHttpClient(convexUrl);
 
   console.log(`${colors.cyan}📥 Получение данных...${colors.reset}`);
-  const subscriptions = await client.query(api.subscriptions.listAll) as Subscription[];
+  const subscriptions = await client.query(api.subscriptions.listAll) as unknown as Subscription[];
 
   if (!subscriptions || subscriptions.length === 0) {
     console.log(`${colors.yellow}⚠️  No subscriptions found${colors.reset}`);
@@ -115,7 +115,7 @@ async function exportToPDF() {
   subscriptions.forEach(sub => {
     stats.byStatus[sub.status] = (stats.byStatus[sub.status] || 0) + 1;
     stats.byPlan[sub.plan] = (stats.byPlan[sub.plan] || 0) + 1;
-    
+
     if (sub.status === 'active') {
       stats.mrr += getPlanPrice(sub.plan);
     }
@@ -124,47 +124,47 @@ async function exportToPDF() {
   // Create PDF
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('.')[0];
   const filename = `stripe-report-${timestamp}.pdf`;
-  
-  const doc = new PDFDocument({ 
+
+  const doc = new PDFDocument({
     size: 'A4',
     margins: { top: 50, bottom: 50, left: 50, right: 50 }
   });
-  
+
   const stream = fs.createWriteStream(filename);
   doc.pipe(stream);
 
   // Title
   doc.fontSize(24)
-     .fillColor('#2563eb')
-     .text('Stripe Subscriptions Report', { align: 'center' });
-  
+    .fillColor('#2563eb')
+    .text('Stripe Subscriptions Report', { align: 'center' });
+
   doc.fontSize(12)
-     .fillColor('#6b7280')
-     .text(`Generated: ${new Date().toLocaleString('ru-RU')}`, { align: 'center' });
-  
+    .fillColor('#6b7280')
+    .text(`Generated: ${new Date().toLocaleString('ru-RU')}`, { align: 'center' });
+
   doc.moveDown(2);
 
   // Summary Statistics
   doc.fontSize(18)
-     .fillColor('#1f2937')
-     .text('📊 Summary Statistics');
-  
+    .fillColor('#1f2937')
+    .text('📊 Summary Statistics');
+
   doc.moveDown(0.5);
   doc.fontSize(12)
-     .fillColor('#374151');
+    .fillColor('#374151');
 
   doc.text(`Total Subscriptions: ${stats.total}`, { continued: false });
   doc.text(`Monthly Recurring Revenue (MRR): $${stats.mrr}`, { continued: false });
-  
+
   doc.moveDown(1);
 
   // By Status
   doc.fontSize(14)
-     .fillColor('#1f2937')
-     .text('By Status:');
+    .fillColor('#1f2937')
+    .text('By Status:');
   doc.fontSize(11)
-     .fillColor('#4b5563');
-  
+    .fillColor('#4b5563');
+
   Object.entries(stats.byStatus).forEach(([status, count]) => {
     doc.text(`  • ${formatStatus(status)}: ${count}`, { continued: false });
   });
@@ -173,11 +173,11 @@ async function exportToPDF() {
 
   // By Plan
   doc.fontSize(14)
-     .fillColor('#1f2937')
-     .text('By Plan:');
+    .fillColor('#1f2937')
+    .text('By Plan:');
   doc.fontSize(11)
-     .fillColor('#4b5563');
-  
+    .fillColor('#4b5563');
+
   Object.entries(stats.byPlan).forEach(([plan, count]) => {
     doc.text(`  • ${formatPlan(plan)}: ${count}`, { continued: false });
   });
@@ -186,9 +186,9 @@ async function exportToPDF() {
 
   // Subscriptions List
   doc.fontSize(18)
-     .fillColor('#1f2937')
-     .text('📋 Subscriptions Details');
-  
+    .fillColor('#1f2937')
+    .text('📋 Subscriptions Details');
+
   doc.moveDown(1);
 
   subscriptions.forEach((sub, index) => {
@@ -200,24 +200,24 @@ async function exportToPDF() {
     // Subscription card background
     const boxY = doc.y;
     doc.rect(doc.x - 10, boxY - 5, 500, 110)
-       .fillAndStroke('#f3f4f6', '#e5e7eb');
+      .fillAndStroke('#f3f4f6', '#e5e7eb');
 
     doc.y = boxY;
 
     // Subscription details
     doc.fontSize(12)
-       .fillColor('#1f2937')
-       .text(`#${index + 1} - ${sub.userEmail || 'No email'}`, { continued: false });
+      .fillColor('#1f2937')
+      .text(`#${index + 1} - ${sub.userEmail || 'No email'}`, { continued: false });
 
     doc.fontSize(10)
-       .fillColor('#4b5563');
+      .fillColor('#4b5563');
 
     doc.text(`Plan: ${formatPlan(sub.plan)} ($${getPlanPrice(sub.plan)}/month)`, { continued: false });
     doc.text(`Status: ${formatStatus(sub.status)}`, { continued: false });
     doc.text(`Customer ID: ${sub.stripeCustomerId}`, { continued: false });
     doc.text(`Subscription ID: ${sub.stripeSubscriptionId}`, { continued: false });
     doc.text(`Period: ${formatDate(sub.currentPeriodStart)} - ${formatDate(sub.stripeCurrentPeriodEnd)}`, { continued: false });
-    
+
     if (sub.trialEnd) {
       doc.text(`Trial End: ${formatDate(sub.trialEnd)}`, { continued: false });
     }
@@ -227,16 +227,16 @@ async function exportToPDF() {
 
   // Footer
   doc.fontSize(8)
-     .fillColor('#9ca3af')
-     .text(`Generated by Stripe Export System • ${new Date().toLocaleDateString('ru-RU')}`, 
-           50, 
-           doc.page.height - 50, 
-           { align: 'center' });
+    .fillColor('#9ca3af')
+    .text(`Generated by Stripe Export System • ${new Date().toLocaleDateString('ru-RU')}`,
+      50,
+      doc.page.height - 50,
+      { align: 'center' });
 
   doc.end();
 
   // Wait for file to be written
-  await new Promise((resolve) => stream.on('finish', resolve));
+  await new Promise<void>((resolve) => stream.on('finish', () => resolve()));
 
   console.log(`${colors.green}${colors.bright}✅ PDF создан успешно!${colors.reset}`);
   console.log(`${colors.cyan}📁 Файл сохранён: ${colors.yellow}${filename}${colors.reset}`);

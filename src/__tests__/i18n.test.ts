@@ -5,7 +5,7 @@
  * that no translation keys are missing across languages.
  */
 
-import { describe, it, expect } from '@jest/globals';
+/// <reference types="jest" />
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -47,17 +47,17 @@ describe('Translation System', () => {
     // Helper function to get all keys from nested object
     function getAllKeys(obj: any, prefix = ''): string[] {
       let keys: string[] = [];
-      
+
       for (const key in obj) {
         const fullKey = prefix ? `${prefix}.${key}` : key;
-        
+
         if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
           keys = keys.concat(getAllKeys(obj[key], fullKey));
         } else {
           keys.push(fullKey);
         }
       }
-      
+
       return keys.sort();
     }
 
@@ -96,17 +96,17 @@ describe('Translation System', () => {
   describe('Translation Completeness', () => {
     function checkNoEmptyValues(obj: any, lang: string, prefix = ''): string[] {
       const emptyKeys: string[] = [];
-      
+
       for (const key in obj) {
         const fullKey = prefix ? `${prefix}.${key}` : key;
-        
+
         if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
           emptyKeys.push(...checkNoEmptyValues(obj[key], lang, fullKey));
         } else if (obj[key] === '' || obj[key] === null || obj[key] === undefined) {
           emptyKeys.push(fullKey);
         }
       }
-      
+
       return emptyKeys;
     }
 
@@ -131,9 +131,9 @@ describe('Translation System', () => {
       // Check for common English words that shouldn't appear in Russian
       const commonEnglishWords = ['the', 'and', 'or', 'but', 'loading', 'error', 'success'];
       const ruText = JSON.stringify(ruTranslations).toLowerCase();
-      
+
       // This is a simple heuristic - adjust as needed
-      const suspiciousMatches = commonEnglishWords.filter(word => 
+      const suspiciousMatches = commonEnglishWords.filter(word =>
         ruText.includes(`"${word}"`) || ruText.includes(` ${word} `)
       );
 

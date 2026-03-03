@@ -8,11 +8,11 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Sparkles, 
-  Code2, 
-  Palette, 
-  Layout, 
+import {
+  Sparkles,
+  Code2,
+  Palette,
+  Layout,
   Zap,
   Crown,
   Info,
@@ -46,7 +46,7 @@ export default function AISiteEditorPage() {
   const isProfessionalOrHigher = plan === "professional" || plan === "enterprise";
 
   return (
-    <PlanGate feature="aiSiteEditor" showUpgrade>
+    <PlanGate feature={"aiSiteEditor" as any}>
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -212,8 +212,8 @@ export default function AISiteEditorPage() {
                       ) : (
                         <>
                           <Badge variant="outline">{t("aiSiteEditor.proRequired")}</Badge>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={() => window.location.href = "/settings?tab=billing"}
                           >
                             <Crown className="h-4 w-4 mr-2" />
@@ -232,7 +232,7 @@ export default function AISiteEditorPage() {
           <TabsContent value="guide">
             <Card className="p-6">
               <h2 className="text-2xl font-bold mb-6">{t("aiSiteEditor.guideTitle")}</h2>
-              
+
               <div className="space-y-8">
                 {/* Step 1 */}
                 <div className="flex gap-4">
