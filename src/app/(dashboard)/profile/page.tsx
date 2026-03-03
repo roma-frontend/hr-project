@@ -384,18 +384,24 @@ export default function ProfilePage() {
 
       {/* Delete Avatar Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2" style={{ color: "var(--destructive)" }}>
               <Trash2 className="w-5 h-5" />
-              Delete Profile Picture?
+              {t('profile.deleteAvatarTitle') || 'Delete Profile Picture?'}
             </DialogTitle>
-            <DialogDescription className="pt-3">
-              Are you sure you want to delete your profile picture? This action cannot be undone.
+            <DialogDescription className="pt-3" style={{ color: "var(--text-muted)" }}>
+              {t('profile.deleteAvatarWarning') || 'Are you sure you want to delete your profile picture? This action cannot be undone.'}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div 
+            className="flex items-center gap-3 p-4 rounded-lg border" 
+            style={{ 
+              background: "var(--destructive-bg, rgba(239, 68, 68, 0.1))", 
+              borderColor: "var(--destructive-border, rgba(239, 68, 68, 0.3))" 
+            }}
+          >
             <div className="flex-shrink-0">
               {user?.avatar ? (
                 <img 
@@ -410,10 +416,10 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
                 {user?.name}
               </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+              <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
                 {user?.email}
               </p>
             </div>
@@ -425,8 +431,12 @@ export default function ProfilePage() {
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
               disabled={deleting}
+              style={{ 
+                borderColor: "var(--border)",
+                color: "var(--text-primary)"
+              }}
             >
-              Cancel
+              {t('ui.cancel') || 'Cancel'}
             </Button>
             <Button
               type="button"
@@ -437,12 +447,12 @@ export default function ProfilePage() {
               {deleting ? (
                 <>
                   <span className="animate-spin mr-2">⏳</span>
-                  Deleting...
+                  {t('ui.deleting') || 'Deleting...'}
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Picture
+                  {t('ui.deletePicture') || 'Delete Picture'}
                 </>
               )}
             </Button>
