@@ -261,7 +261,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
   const updateStatus = useMutation(api.tasks.updateTaskStatus);
 
   // Queries
-  const adminTasks = useQuery(api.tasks.getAllTasks, userRole === "admin" ? {} : "skip");
+  const adminTasks = useQuery(api.tasks.getAllTasks, userRole === "admin" ? { requesterId: convexId } : "skip");
   const supervisorTasks = useQuery(api.tasks.getTasksAssignedBy, userRole === "supervisor" ? { supervisorId: convexId } : "skip");
   const employeeTasks = useQuery(api.tasks.getTasksForEmployee, userRole === "employee" ? { userId: convexId } : "skip");
 

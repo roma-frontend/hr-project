@@ -168,15 +168,25 @@ export const assignSupervisor = mutation({
 export const getTasksForEmployee = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
+    const employee = await ctx.db.get(args.userId);
+    if (!employee) throw new Error("Employee not found");
+    
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_assigned_to", q => q.eq("assignedTo", args.userId))
       .order("desc")
       .collect();
 
-    return await Promise.all(
+    // Filter by organization
+    const orgTasks = await Promise.all(
       tasks.map(async task => {
         const assignedBy = await ctx.db.get(task.assignedBy);
+        
+        // Only include tasks where assignedBy is from same organization
+        if (employee.organizationId && assignedBy?.organizationId !== employee.organizationId) {
+          return null;
+        }
+        
         const comments = await ctx.db
           .query("taskComments")
           .withIndex("by_task", q => q.eq("taskId", task._id))
@@ -190,6 +200,8 @@ export const getTasksForEmployee = query({
         return { ...task, assignedByUser: assignedBy, comments: commentsWithAuthors };
       })
     );
+    
+    return orgTasks.filter(t => t !== null);
   },
 });
 
@@ -197,15 +209,25 @@ export const getTasksForEmployee = query({
 export const getTasksAssignedBy = query({
   args: { supervisorId: v.id("users") },
   handler: async (ctx, args) => {
+    const supervisor = await ctx.db.get(args.supervisorId);
+    if (!supervisor) throw new Error("Supervisor not found");
+    
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_assigned_by", q => q.eq("assignedBy", args.supervisorId))
       .order("desc")
       .collect();
 
-    return await Promise.all(
+    // Filter by organization
+    const orgTasks = await Promise.all(
       tasks.map(async task => {
         const assignedTo = await ctx.db.get(task.assignedTo);
+        
+        // Only include tasks where assignedTo is from same organization
+        if (supervisor.organizationId && assignedTo?.organizationId !== supervisor.organizationId) {
+          return null;
+        }
+        
         const comments = await ctx.db
           .query("taskComments")
           .withIndex("by_task", q => q.eq("taskId", task._id))
@@ -220,19 +242,38 @@ export const getTasksAssignedBy = query({
         };
       })
     );
+    
+    return orgTasks.filter(t => t !== null);
   },
 });
 
 // ── Get All Tasks (admin) ──────────────────────────────────────────────────
 export const getAllTasks = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { requesterId: v.id("users") },
+  handler: async (ctx, args) => {
+    const requester = await ctx.db.get(args.requesterId);
+    if (!requester) throw new Error("Requester not found");
+    
+    // Only admin can get all tasks, and only from their organization
+    if (requester.role !== "admin") {
+      throw new Error("Only admins can access all tasks");
+    }
+    
+    if (!requester.organizationId) {
+      throw new Error("Admin must belong to an organization");
+    }
+    
     const tasks = await ctx.db.query("tasks").order("desc").collect();
-
-    return await Promise.all(
+    
+    // Filter tasks by organization
+    const orgTasks = await Promise.all(
       tasks.map(async task => {
         const assignedTo = await ctx.db.get(task.assignedTo);
         const assignedBy = await ctx.db.get(task.assignedBy);
+        
+        // Only include tasks where both assignedTo and assignedBy are from the same org
+        if (assignedTo?.organizationId !== requester.organizationId) return null;
+        
         const comments = await ctx.db
           .query("taskComments")
           .withIndex("by_task", q => q.eq("taskId", task._id))
@@ -251,6 +292,8 @@ export const getAllTasks = query({
         };
       })
     );
+    
+    return orgTasks.filter(t => t !== null);
   },
 });
 
