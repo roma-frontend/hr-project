@@ -1,7 +1,11 @@
 "use client";
 
+// FORCE CLIENT-SIDE ONLY
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@/convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
