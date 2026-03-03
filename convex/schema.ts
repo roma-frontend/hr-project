@@ -255,6 +255,7 @@ export default defineSchema({
     message: v.string(),
     isRead: v.boolean(),
     relatedId: v.optional(v.string()),
+    metadata: v.optional(v.string()),       // JSON string for additional data (e.g., quick action buttons)
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])

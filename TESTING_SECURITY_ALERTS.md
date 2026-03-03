@@ -294,4 +294,20 @@ Check the implementation files:
 - **Security functions:** `Desktop/office/convex/security.ts` (lines 410-487)
 - **API endpoint:** `Desktop/office/src/app/api/security/quick-action/route.ts`
 
-Happy testing! 🚀🔒
+
+console-> fetch('/api/security/quick-action', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    action: 'suspend',
+    userId: 'jn78pvsmcxec73r04qy5t3tza181qkez',
+    adminId: 'jn78pvsmcxec73r04qy5t3tza181qkez',
+    reason: 'TEST: Suspicious activity detection',
+    duration: 0.1
+  })
+})
+.then(r => r.json())
+.then(data => {
+  console.log('✅ Response:', data);
+  return data;
+});
