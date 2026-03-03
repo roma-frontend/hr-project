@@ -207,26 +207,26 @@ export default function SecurityDashboard() {
     threatLevel === "Moderate" ? "text-yellow-400" : "text-green-400";
 
   return (
-    <div className="min-h-screen p-6" style={{ background: "var(--background)", color: "var(--text-primary)" }}>
+    <div className="min-h-screen p-3 sm:p-6" style={{ background: "var(--background)", color: "var(--text-primary)" }}>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl border" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.3)" }}>
-            <Shield className="w-7 h-7" style={{ color: "var(--primary)" }} />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl border flex-shrink-0" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.3)" }}>
+            <Shield className="w-5 h-5 sm:w-7 sm:h-7" style={{ color: "var(--primary)" }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Security Control Center</h1>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Manage identity verification systems across all organizations</p>
+            <h1 className="text-lg sm:text-2xl font-bold" style={{ color: "var(--text-primary)" }}>Security Control</h1>
+            <p className="text-xs sm:text-sm hidden sm:block" style={{ color: "var(--text-muted)" }}>Manage identity verification systems across all organizations</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-          <Activity className="w-4 h-4" style={{ color: "var(--success)" }} />
-          Live monitoring
+        <div className="flex items-center gap-2 text-xs sm:text-sm" style={{ color: "var(--text-muted)" }}>
+          <Activity className="w-3 h-3 sm:w-4 sm:h-4" style={{ color: "var(--success)" }} />
+          Live
         </div>
       </div>
 
       {/* ── Stats bar ── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 mb-6 sm:mb-8">
         {[
           { label: "Threat Level", value: threatLevel, color: threatLevel === "Critical" ? "var(--destructive)" : threatLevel === "Elevated" ? "var(--warning)" : threatLevel === "Moderate" ? "#f59e0b" : "var(--success)" },
           { label: "Logins (24h)", value: loginStats?.total ?? 0, color: "var(--text-primary)" },
@@ -234,20 +234,20 @@ export default function SecurityDashboard() {
           { label: "High Risk", value: loginStats?.highRisk ?? 0, color: "var(--warning)" },
           { label: "Features ON", value: `${enabledCount}/${FEATURES.length}`, color: "var(--success)" },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl p-4 text-center border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-            <div className="text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
-            <div className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{stat.label}</div>
+          <div key={stat.label} className="rounded-lg sm:rounded-xl p-2 sm:p-4 text-center border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+            <div className="text-lg sm:text-2xl font-bold" style={{ color: stat.color }}>{stat.value}</div>
+            <div className="text-[10px] sm:text-xs mt-0.5 sm:mt-1" style={{ color: "var(--text-muted)" }}>{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-2 mb-6 border-b" style={{ borderColor: "var(--border)" }}>
+      <div className="flex gap-1 sm:gap-2 mb-4 sm:mb-6 border-b overflow-x-auto" style={{ borderColor: "var(--border)" }}>
         {(["settings", "blocked", "attempts", "logs"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="px-5 py-2.5 text-sm font-medium rounded-t-lg transition-colors"
+            className="px-2 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex-shrink-0"
             style={{
               background: activeTab === tab ? "var(--card)" : "transparent",
               color: activeTab === tab ? "var(--text-primary)" : "var(--text-muted)",
@@ -257,7 +257,8 @@ export default function SecurityDashboard() {
               marginBottom: activeTab === tab ? "-1px" : "0",
             }}
           >
-            {tab === "settings" ? "🛡️ Security Features" : tab === "blocked" ? "🚫 Blocked Users" : tab === "attempts" ? "🔐 Login Attempts" : "📋 Audit Logs"}
+            <span className="hidden sm:inline">{tab === "settings" ? "🛡️ Security Features" : tab === "blocked" ? "🚫 Blocked Users" : tab === "attempts" ? "🔐 Login Attempts" : "📋 Audit Logs"}</span>
+            <span className="sm:hidden">{tab === "settings" ? "🛡️" : tab === "blocked" ? "🚫" : tab === "attempts" ? "🔐" : "📋"}</span>
           </button>
         ))}
       </div>
@@ -278,20 +279,32 @@ export default function SecurityDashboard() {
             return (
               <div
                 key={feature.key}
-                className="rounded-xl p-5 flex items-center gap-4 border transition-all"
+                className="rounded-lg sm:rounded-xl p-3 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 border transition-all"
                 style={{
                   background: enabled ? colors.accentBg : "var(--card)",
                   borderColor: enabled ? `${colors.iconColor}33` : "var(--border)",
                 }}
               >
-                <div
-                  className="p-2.5 rounded-lg flex-shrink-0"
-                  style={{ background: `${colors.iconColor}18`, color: colors.iconColor }}
-                >
-                  <Icon className="w-5 h-5" />
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div
+                    className="p-2 sm:p-2.5 rounded-lg flex-shrink-0"
+                    style={{ background: `${colors.iconColor}18`, color: colors.iconColor }}
+                  >
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div className="flex-1 sm:hidden">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{feature.title}</span>
+                      <Toggle
+                        enabled={enabled}
+                        onToggle={() => handleToggle(feature.key, enabled)}
+                        loading={isLoading}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 w-full sm:w-auto">
+                  <div className="hidden sm:flex items-center gap-2 mb-1">
                     <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{feature.title}</span>
                     {feature.critical && (
                       <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(37,99,235,0.12)", color: "var(--primary)" }}>Essential</span>
@@ -300,14 +313,22 @@ export default function SecurityDashboard() {
                       <span className="text-xs px-2 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-muted)" }}>Disabled</span>
                     )}
                   </div>
-                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>{feature.description}</p>
+                  <div className="flex sm:hidden items-center gap-2 mb-2">
+                    {feature.critical && (
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(37,99,235,0.12)", color: "var(--primary)" }}>Essential</span>
+                    )}
+                    {!enabled && (
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-muted)" }}>Disabled</span>
+                    )}
+                  </div>
+                  <p className="text-xs sm:text-sm" style={{ color: "var(--text-muted)" }}>{feature.description}</p>
                   {savedAt && (
-                    <p className="text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
+                    <p className="text-[10px] sm:text-xs mt-1" style={{ color: "var(--text-disabled)" }}>
                       Last changed: {new Date(savedAt).toLocaleString()}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
                   <span className="text-sm font-medium" style={{ color: enabled ? "var(--success)" : "var(--text-disabled)" }}>
                     {enabled ? "ON" : "OFF"}
                   </span>
@@ -343,18 +364,18 @@ export default function SecurityDashboard() {
                 return (
                   <div
                     key={user._id}
-                    className="rounded-xl p-5 border hover:shadow-md transition-all cursor-pointer"
+                    className="rounded-lg sm:rounded-xl p-3 sm:p-5 border hover:shadow-md transition-all cursor-pointer"
                     style={{ background: "var(--card)", borderColor: "var(--border)" }}
                     onClick={() => window.location.href = `/superadmin/security/alert/${user._id}`}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                       <div className="flex items-start gap-4 flex-1">
                         {/* Avatar */}
                         <div className="flex-shrink-0">
                           {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full" />
+                            <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-lg font-bold">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-base sm:text-lg font-bold">
                               {user.name.charAt(0)}
                             </div>
                           )}
@@ -362,31 +383,31 @@ export default function SecurityDashboard() {
 
                         {/* User Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-base sm:text-lg" style={{ color: "var(--text-primary)" }}>
                               {user.name}
                             </h3>
                             {isAutoBlocked && (
-                              <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded">
+                              <span className="text-[10px] sm:text-xs font-bold bg-red-600 text-white px-1.5 sm:px-2 py-0.5 rounded">
                                 AUTO-BLOCKED
                               </span>
                             )}
                           </div>
-                          <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
+                          <p className="text-xs sm:text-sm mb-2" style={{ color: "var(--text-muted)" }}>
                             {user.email} • {user.role}
                           </p>
                           
-                          <div className="space-y-1 text-sm">
+                          <div className="space-y-1 text-xs sm:text-sm">
                             <p style={{ color: "var(--text-muted)" }}>
                               <span className="font-medium" style={{ color: "var(--text-primary)" }}>Reason:</span>{" "}
                               {user.suspendedReason}
                             </p>
-                            <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-[10px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
                               <span>
                                 <Clock className="w-3 h-3 inline mr-1" />
                                 Expires in {hoursLeft}h
                               </span>
-                              <span>
+                              <span className="hidden sm:inline">
                                 Until {new Date(user.suspendedUntil).toLocaleString()}
                               </span>
                             </div>
@@ -400,14 +421,15 @@ export default function SecurityDashboard() {
                           e.stopPropagation();
                           window.location.href = `/superadmin/security/alert/${user._id}`;
                         }}
-                        className="px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center"
                         style={{
                           background: "rgba(37,99,235,0.1)",
                           color: "var(--primary)",
                         }}
                       >
-                        Review & Unsuspend
-                        <ChevronRight className="w-4 h-4" />
+                        <span className="hidden sm:inline">Review & Unsuspend</span>
+                        <span className="sm:hidden">Review</span>
+                        <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
@@ -432,25 +454,25 @@ export default function SecurityDashboard() {
               {loginStats.suspicious.map((attempt: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-lg p-4 flex items-center gap-4 border"
+                  className="rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 border"
                   style={{ background: "var(--card)", borderColor: "var(--border)" }}
                 >
                   <div className="flex-shrink-0">
                     {attempt.success ? (
-                      <CheckCircle className="w-5 h-5" style={{ color: "var(--success)" }} />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "var(--success)" }} />
                     ) : (
-                      <XCircle className="w-5 h-5" style={{ color: "var(--destructive)" }} />
+                      <XCircle className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "var(--destructive)" }} />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium truncate" style={{ color: "var(--text-primary)" }}>{attempt.email}</span>
-                      <span className="text-xs capitalize px-2 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-muted)" }}>
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-medium truncate text-sm sm:text-base" style={{ color: "var(--text-primary)" }}>{attempt.email}</span>
+                      <span className="text-[10px] sm:text-xs capitalize px-1.5 sm:px-2 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-muted)" }}>
                         {attempt.method}
                       </span>
                       {attempt.riskScore !== undefined && <RiskBadge score={attempt.riskScore} />}
                     </div>
-                    <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[10px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
                       <span>IP: {attempt.ip ?? "—"}</span>
                       {attempt.riskFactors?.length > 0 && (
                         <span style={{ color: "var(--warning)" }}>⚠ {attempt.riskFactors.join(", ")}</span>
@@ -460,7 +482,7 @@ export default function SecurityDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className="text-xs flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                  <div className="text-[10px] sm:text-xs flex-shrink-0 self-end sm:self-auto" style={{ color: "var(--text-muted)" }}>
                     {new Date(attempt.createdAt).toLocaleTimeString()}
                   </div>
                 </div>

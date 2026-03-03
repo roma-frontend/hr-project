@@ -105,7 +105,7 @@ export function StatsCard({
       transition={{ duration: 0.4, delay: index * 0.1, ease: "easeOut" }}
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
       className={cn(
-        "relative overflow-hidden rounded-xl border p-5 shadow-sm transition-colors duration-300",
+        "relative overflow-hidden rounded-lg sm:rounded-xl border p-3 sm:p-5 shadow-sm transition-colors duration-300",
         "bg-[var(--card)]",
         colors.border,
       )}
@@ -113,35 +113,35 @@ export function StatsCard({
       {/* Background gradient */}
       <div className={cn("absolute inset-0 bg-gradient-to-br opacity-40 pointer-events-none", colors.bg)} />
 
-      <div className="relative flex items-start justify-between gap-4">
+      <div className="relative flex items-start justify-between gap-2 sm:gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-2">{title}</p>
-          <div className="flex items-baseline gap-1">
-            {prefix && <span className="text-xl font-bold text-[var(--text-primary)]">{prefix}</span>}
-            <span className="text-3xl font-bold text-[var(--text-primary)] tabular-nums">
+          <p className="text-[10px] sm:text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider mb-1 sm:mb-2 truncate">{title}</p>
+          <div className="flex items-baseline gap-0.5 sm:gap-1">
+            {prefix && <span className="text-base sm:text-xl font-bold text-[var(--text-primary)]">{prefix}</span>}
+            <span className="text-xl sm:text-3xl font-bold text-[var(--text-primary)] tabular-nums">
               {typeof value === 'number' ? animatedValue.toLocaleString() : value}
             </span>
-            {suffix && <span className="text-xl font-bold text-[var(--text-primary)]">{suffix}</span>}
+            {suffix && <span className="text-base sm:text-xl font-bold text-[var(--text-primary)]">{suffix}</span>}
           </div>
 
           {change !== undefined && (
-            <div className={cn("flex items-center gap-1 mt-2", isPositive ? "text-emerald-500" : "text-red-500")}>
+            <div className={cn("flex items-center gap-1 mt-1 sm:mt-2", isPositive ? "text-emerald-500" : "text-red-500")}>
               {isPositive ? (
-                <TrendingUp className="w-3.5 h-3.5" />
+                <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
+                <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               )}
-              <span className="text-xs font-medium">
+              <span className="text-[10px] sm:text-xs font-medium">
                 {isPositive ? "+" : ""}{change}%
               </span>
               {changeLabel && (
-                <span className="text-xs text-[var(--text-muted)]">{changeLabel}</span>
+                <span className="text-[10px] sm:text-xs text-[var(--text-muted)] hidden sm:inline">{changeLabel}</span>
               )}
             </div>
           )}
         </div>
 
-        <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0", colors.icon)}>
+        <div className={cn("w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0", colors.icon)}>
           {icon}
         </div>
       </div>

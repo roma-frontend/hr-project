@@ -231,7 +231,7 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
                     <span className="truncate">{endDate ? format(new Date(endDate), "PPP") : t('leaveRequest.pickDate')}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 max-w-[280px] sm:max-w-none" align="center" side="bottom" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <PopoverContent className="w-auto p-0 max-w-[320px] sm:max-w-none" align="center" side="bottom" onOpenAutoFocus={(e) => e.preventDefault()}>
                   <Calendar
                     mode="single"
                     selected={endDate ? new Date(endDate) : undefined}

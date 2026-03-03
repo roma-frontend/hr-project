@@ -145,20 +145,20 @@ export default function DashboardClient() {
   );
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
       {/* Welcome header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-[var(--text-muted)] text-sm"
+            className="text-[var(--text-muted)] text-xs sm:text-sm"
           >
             {format(today, "EEEE, MMMM d, yyyy")}
           </motion.p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           {user?.email?.toLowerCase() === "romangulanyan@gmail.com" && (
             <>
               <Button asChild size="sm" variant="outline">
@@ -185,11 +185,11 @@ export default function DashboardClient() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : totalEmployees} icon={<Users className="w-5 h-5" />} color="blue" index={0} />
-        <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : pendingRequests} icon={<Clock className="w-5 h-5" />} color="yellow" index={1} />
-        <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : approvedThisMonth} icon={<CheckCircle className="w-5 h-5" />} color="green" index={2} />
-        <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : onLeaveNow} icon={<UserCheck className="w-5 h-5" />} color="purple" index={3} />
+      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
+        <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
+        <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
+        <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
+        <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : onLeaveNow} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} color="purple" index={3} />
       </div>
 
       {/* Security Widget — superadmin only */}
@@ -197,7 +197,7 @@ export default function DashboardClient() {
         <motion.div variants={itemVariants}>
           <Link href="/superadmin/security" className="block group">
             <div
-              className="rounded-2xl border p-4 flex items-center gap-4 transition-all duration-200 group-hover:shadow-md"
+              className="rounded-lg sm:rounded-2xl border p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 group-hover:shadow-md"
               style={{
                 background: "var(--card)",
                 borderColor: (securityStats?.highRisk ?? 0) >= 10
@@ -209,7 +209,7 @@ export default function DashboardClient() {
             >
               {/* Icon */}
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{
                   background: (securityStats?.highRisk ?? 0) >= 10
                     ? "rgba(239,68,68,0.12)"
@@ -219,22 +219,22 @@ export default function DashboardClient() {
                 }}
               >
                 {(securityStats?.highRisk ?? 0) >= 10 ? (
-                  <ShieldAlert className="w-5 h-5" style={{ color: "var(--destructive)" }} />
+                  <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "var(--destructive)" }} />
                 ) : (securityStats?.highRisk ?? 0) >= 3 ? (
-                  <ShieldAlert className="w-5 h-5" style={{ color: "var(--warning)" }} />
+                  <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "var(--warning)" }} />
                 ) : (
-                  <ShieldCheck className="w-5 h-5" style={{ color: "var(--success)" }} />
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "var(--success)" }} />
                 )}
               </div>
 
               {/* Title + threat level */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+                  <span className="text-xs sm:text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
                     Security Center
                   </span>
                   <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full"
                     style={{
                       background: (securityStats?.highRisk ?? 0) >= 10
                         ? "rgba(239,68,68,0.15)"
@@ -257,10 +257,11 @@ export default function DashboardClient() {
                       : "✓ Normal"}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-[10px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
                   <span className="flex items-center gap-1">
                     <Activity className="w-3 h-3" />
-                    {securityStats?.total ?? 0} logins (24h)
+                    <span className="hidden sm:inline">{securityStats?.total ?? 0} logins (24h)</span>
+                    <span className="sm:hidden">{securityStats?.total ?? 0} logins</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <XCircle className="w-3 h-3" style={{ color: securityStats?.failed ? "var(--destructive)" : "var(--text-muted)" }} />
@@ -284,21 +285,21 @@ export default function DashboardClient() {
       )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
         <motion.div variants={itemVariants} className="lg:col-span-3">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.monthlyLeaveTrend')}</CardTitle>
-                <TrendingUp className="w-4 h-4 text-[var(--text-muted)]" />
+                <CardTitle className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.monthlyLeaveTrend')}</CardTitle>
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[var(--text-muted)]" />
               </div>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={monthlyTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+              <ResponsiveContainer width="100%" height={180} className="sm:!h-[220px]">
+                <BarChart data={monthlyTrend} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="month" tick={{ fill: "var(--text-muted)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "var(--text-muted)", fontSize: 12 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="month" tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} axisLine={false} tickLine={false} />
                   <RechartsTooltip 
                     contentStyle={{ 
                       background: "var(--card)", 
@@ -366,7 +367,7 @@ export default function DashboardClient() {
       </div>
 
       {/* Recent Leaves & Admin Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
         <motion.div variants={itemVariants} className="lg:col-span-1">
           <Card>
             <CardHeader className="pb-2">
