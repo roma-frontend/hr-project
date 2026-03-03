@@ -89,8 +89,8 @@ export function PlanGate({
     <UpgradeModal
       open={modalOpen}
       onClose={() => setModalOpen(false)}
-      featureTitle={title}
-      featureDescription={description}
+      featureTitle={finalTitle}
+      featureDescription={finalDescription}
       recommendedPlan={needed === 'starter' ? 'professional' : needed as Exclude<PlanType, 'starter'>}
     />
   );
@@ -104,8 +104,8 @@ export function PlanGate({
           </div>
           <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/60 backdrop-blur-sm rounded-2xl">
             <UpgradeCard
-              title={title}
-              description={description}
+              title={finalTitle}
+              description={finalDescription}
               requiredPlan={needed}
               onUpgradeClick={() => setModalOpen(true)}
             />
@@ -120,8 +120,8 @@ export function PlanGate({
   return (
     <>
       <UpgradeCard
-        title={title}
-        description={description}
+        title={finalTitle}
+        description={finalDescription}
         requiredPlan={needed}
         onUpgradeClick={() => setModalOpen(true)}
       />

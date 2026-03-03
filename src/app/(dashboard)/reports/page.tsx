@@ -124,8 +124,8 @@ const [tab, setTab] = useState("overview");
   return (
     <PlanGate
       feature="reports"
-      title="Reports — Professional Plan Required"
-      description="Detailed reports and CSV export are available on the Professional plan and above."
+      title={t('planGate.reportsTitle')}
+      description={t('planGate.reportsDescription')}
     >
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
       {/* Header */}

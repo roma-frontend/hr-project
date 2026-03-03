@@ -73,8 +73,8 @@ const { user } = useAuthStore();
   return (
     <PlanGate
       feature="advancedAnalytics"
-      title="Analytics — Professional Plan Required"
-      description="Advanced analytics and HR insights are available on the Professional plan and above."
+      title={t('planGate.analyticsTitle')}
+      description={t('planGate.analyticsDescription')}
     >
     <div className="p-6 space-y-6">
       {/* Header */}
