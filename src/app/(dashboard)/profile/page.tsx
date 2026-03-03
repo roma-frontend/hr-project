@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuthStore } from "@/store/useAuthStore";
 import { updateSessionProfileAction } from "@/actions/auth";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const { user, login } = useAuthStore();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [phone, setPhone] = useState("");
@@ -86,10 +88,6 @@ export default function ProfilePage() {
 
   const handleDeleteAvatar = async () => {
     if (!user?.id || !user?.avatar) return;
-    
-    if (!confirm("Are you sure you want to delete your profile picture? This action cannot be undone.")) {
-      return;
-    }
 
     setDeleting(true);
     try {
@@ -104,6 +102,7 @@ export default function ProfilePage() {
       login({ ...user, avatar: undefined });
       
       toast.success("Profile picture deleted successfully!");
+      setShowDeleteDialog(false);
     } catch (err) {
       console.error("Delete avatar error:", err);
       toast.error(err instanceof Error ? err.message : "Failed to delete avatar");
@@ -177,11 +176,11 @@ export default function ProfilePage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleDeleteAvatar}
+                  onClick={() => setShowDeleteDialog(true)}
                   disabled={deleting}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  {deleting ? t('ui.deleting') : t('ui.deletePicture')}
+                  {t('ui.deletePicture')}
                 </Button>
               )}
             </div>
@@ -382,6 +381,74 @@ export default function ProfilePage() {
           {saving ? t('ui.saving') : t('ui.saveChanges')}
         </Button>
       </div>
+
+      {/* Delete Avatar Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Delete Profile Picture?
+            </DialogTitle>
+            <DialogDescription className="pt-3">
+              Are you sure you want to delete your profile picture? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="flex-shrink-0">
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt="Current avatar" 
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {user?.name?.charAt(0) || 'U'}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {user?.name}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteAvatar}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Picture
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
