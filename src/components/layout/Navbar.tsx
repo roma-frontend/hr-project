@@ -312,7 +312,9 @@ export function Navbar() {
                           onClick={() => {
                             handleMarkRead(n._id);
                             // Navigate based on notification type
-                            if (n.type === "leave_request" && n.relatedId) {
+                            if (n.type === "security_alert" && n.relatedId) {
+                              router.push(`/superadmin/security/alert/${n.relatedId}`);
+                            } else if (n.type === "leave_request" && n.relatedId) {
                               router.push("/leaves");
                             } else if (n.type === "employee_added") {
                               router.push("/employees");
