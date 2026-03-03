@@ -8,7 +8,6 @@ import { useState, useEffect } from "react"
 import { useTranslation } from 'react-i18next';;
 import { Building2, Save, ArrowLeft } from "lucide-react";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function EditOrganizationPage() {
@@ -158,11 +157,9 @@ export default function EditOrganizationPage() {
         </div>
 
         {/* Form */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <form
           onSubmit={handleSubmit}
-          className="p-6 rounded-xl border space-y-6"
+          className="p-6 rounded-xl border space-y-6 animate-fade-in"
           style={{ background: "var(--card)" }}
         >
           {/* Organization Name */}
@@ -332,7 +329,7 @@ export default function EditOrganizationPage() {
               )}
             </button>
           </div>
-        </motion.form>
+        </form>
       </div>
     </div>
   );

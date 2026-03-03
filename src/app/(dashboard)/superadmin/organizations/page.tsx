@@ -1,9 +1,5 @@
 "use client";
 
-// FORCE CLIENT-SIDE ONLY
-export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
-
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -12,7 +8,6 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Building2, Users, CheckCircle, XCircle, Edit } from "lucide-react";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
-import { motion } from "framer-motion";
 
 export default function OrganizationsPage() {
   const { t } = useTranslation();
@@ -172,11 +167,9 @@ export default function OrganizationsPage() {
         {/* Organizations List */}
         <div className="space-y-4">
           {organizations?.map((org) => (
-            <motion.div
+            <div
               key={org._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-xl border hover:shadow-lg transition-all"
+              className="p-6 rounded-xl border hover:shadow-lg transition-all animate-fade-in"
               style={{ background: "var(--card)" }}
             >
               <div className="flex items-start justify-between">
@@ -250,7 +243,7 @@ export default function OrganizationsPage() {
                   <Edit className="w-5 h-5" style={{ color: "var(--text-primary)" }} />
                 </button>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
