@@ -512,15 +512,8 @@ export function FaceLogin() {
       setMatchedUser(bestMatch.name);
       setMatchStatus("found");
 
-      // Verify login and get user data
-      console.log("🔍 Step 4: Verifying login with Convex...");
-      const userData = await verifyFaceLogin({
-        userId: bestMatch.userId as any,
-      });
-      console.log("✅ User data from Convex:", userData);
-
-      // Create session via server action
-      console.log("🔍 Step 5: Finding matched user data...");
+      // Find matched user data
+      console.log("🔍 Step 4: Finding matched user data...");
       const matchedUserData = allFaceDescriptors.find(u => u.userId === bestMatch.userId);
       if (!matchedUserData) {
         console.error("❌ User data not found in allFaceDescriptors");
@@ -528,7 +521,7 @@ export function FaceLogin() {
       }
       console.log("✅ Matched user data:", matchedUserData);
 
-      console.log("🔍 Step 6: Creating session via API...");
+      console.log("🔍 Step 5: Creating session via API...");
       console.log("📧 Login params:", {
         email: matchedUserData.email,
         isFaceLogin: true
@@ -562,26 +555,29 @@ export function FaceLogin() {
         throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
       }
 
-      // Update auth store with data from Convex
-      console.log("🔍 Step 7: Updating auth store...");
+      // Update auth store with matched user data
+      console.log("🔍 Step 6: Updating auth store...");
       
       setUser({
-        id: userData.userId,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        department: userData.department,
-        position: userData.position,
-        employeeType: userData.employeeType,
-        avatar: userData.avatar,
+        id: matchedUserData.userId,
+        name: matchedUserData.name,
+        email: matchedUserData.email,
+        role: "employee", // Will be updated from session
+        department: null,
+        position: null,
+        employeeType: "staff",
+        avatar: null,
       });
-      console.log("✅ Auth store updated");
+      console.log("✅ Auth store updated with basic user data");
       
-      // Redirect to dashboard
-      console.log("🔍 Step 8: Redirecting to dashboard...");
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
+      // Redirect to dashboard after ensuring session is set
+      console.log("🔍 Step 7: Redirecting to dashboard...");
+      
+      // Wait a bit longer for session cookies to be properly set
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Hard navigation to ensure fresh page load with new session
+      window.location.href = "/dashboard";
 
     } catch (error: any) {
       console.error("❌ Error during face login:", error);
@@ -612,7 +608,7 @@ export function FaceLogin() {
     } finally {
       setIsProcessing(false);
     }
-  }, [isBlocked, allFaceDescriptors, verifyFaceLogin, recordFaceIdAttempt, failedAttempts, setUser, router, isProcessing]);
+  }, [isBlocked, allFaceDescriptors, recordFaceIdAttempt, failedAttempts, setUser, isProcessing]);
 
   return (
     <Card className="p-6 bg-[var(--surface-base)] border-[var(--border-primary)]">

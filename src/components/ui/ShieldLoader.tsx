@@ -35,8 +35,8 @@ export function ShieldLoader({
         transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
       >
         <div className="relative flex items-center justify-center">
-          <Shield size={config.shield} className="text-blue-500" strokeWidth={1.5} />
-          <span className={`absolute text-blue-600 font-bold ${config.text}`}>HR</span>
+          <Shield size={config.shield} style={{ color: 'var(--primary)' }} strokeWidth={1.5} />
+          <span className={`absolute font-bold ${config.text}`} style={{ color: 'var(--primary)' }}>HR</span>
         </div>
       </motion.div>
     );
@@ -53,8 +53,8 @@ export function ShieldLoader({
       >
         {/* Shield with HR text */}
         <div className="relative flex items-center justify-center">
-          <Shield size={config.shield} className="text-blue-500" strokeWidth={1.5} />
-          <span className={`absolute text-blue-600 font-bold ${config.text}`}>HR</span>
+          <Shield size={config.shield} style={{ color: 'var(--primary)' }} strokeWidth={1.5} />
+          <span className={`absolute font-bold ${config.text}`} style={{ color: 'var(--primary)' }}>HR</span>
         </div>
         
         {/* Loading dots */}
@@ -62,7 +62,8 @@ export function ShieldLoader({
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className={`${config.dot} rounded-full bg-blue-500`}
+              className={`${config.dot} rounded-full`}
+              style={{ backgroundColor: 'var(--primary)' }}
               animate={{
                 scale: [1, 1.5, 1],
                 opacity: [0.3, 1, 0.3],
