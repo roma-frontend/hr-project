@@ -1042,3 +1042,33 @@ export const listAll = query({
     return [];
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX SUPERADMIN ROLE - One-time utility to upgrade admin to superadmin
+// ─────────────────────────────────────────────────────────────────────────────
+export const upgradeSuperadminRole = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", SUPERADMIN_EMAIL))
+      .first();
+    
+    if (!user) {
+      throw new Error("Superadmin user not found");
+    }
+    
+    if (user.role === "superadmin") {
+      return { message: "User is already superadmin", email: user.email, role: user.role };
+    }
+    
+    await ctx.db.patch(user._id, { role: "superadmin" });
+    
+    return { 
+      message: "Successfully upgraded to superadmin", 
+      email: user.email, 
+      oldRole: user.role,
+      newRole: "superadmin" 
+    };
+  },
+});
