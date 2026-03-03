@@ -139,11 +139,12 @@ export default function SecurityDashboard() {
   const { user } = useAuthStore();
   const { data: session, status } = useSession();
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"settings" | "logs" | "attempts">("settings");
+  const [activeTab, setActiveTab] = useState<"settings" | "logs" | "attempts" | "blocked">("settings");
 
   const settings = useQuery(api.security.getAllSettings);
   const loginStats = useQuery(api.security.getLoginStats, { hours: 24 });
   const auditLogs = useQuery(api.security.getRecentAuditLogs, { limit: 50 });
+  const suspendedUsers = useQuery(api.security.getSuspendedUsers);
   const toggleSetting = useMutation(api.security.toggleSetting);
 
   // Check role from either useAuthStore or NextAuth session
@@ -242,7 +243,7 @@ export default function SecurityDashboard() {
 
       {/* ── Tabs ── */}
       <div className="flex gap-2 mb-6 border-b" style={{ borderColor: "var(--border)" }}>
-        {(["settings", "attempts", "logs"] as const).map((tab) => (
+        {(["settings", "blocked", "attempts", "logs"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -319,6 +320,101 @@ export default function SecurityDashboard() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── TAB: Blocked Users ── */}
+      {activeTab === "blocked" && (
+        <div>
+          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+            Currently suspended users - review and unsuspend if needed
+          </p>
+          {!suspendedUsers?.length ? (
+            <div className="text-center py-16" style={{ color: "var(--text-muted)" }}>
+              <ShieldCheck className="w-12 h-12 mx-auto mb-3" style={{ color: "var(--success)" }} />
+              No suspended users
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {suspendedUsers.map((user: any) => {
+                const isAutoBlocked = user.suspendedReason?.includes("AUTO-BLOCKED");
+                const hoursLeft = Math.max(0, Math.ceil((user.suspendedUntil - Date.now()) / (1000 * 60 * 60)));
+                
+                return (
+                  <div
+                    key={user._id}
+                    className="rounded-xl p-5 border hover:shadow-md transition-all cursor-pointer"
+                    style={{ background: "var(--card)", borderColor: "var(--border)" }}
+                    onClick={() => window.location.href = `/superadmin/security/alert/${user._id}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-1">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-lg font-bold">
+                              {user.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-lg" style={{ color: "var(--text-primary)" }}>
+                              {user.name}
+                            </h3>
+                            {isAutoBlocked && (
+                              <span className="text-xs font-bold bg-red-600 text-white px-2 py-0.5 rounded">
+                                AUTO-BLOCKED
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
+                            {user.email} • {user.role}
+                          </p>
+                          
+                          <div className="space-y-1 text-sm">
+                            <p style={{ color: "var(--text-muted)" }}>
+                              <span className="font-medium" style={{ color: "var(--text-primary)" }}>Reason:</span>{" "}
+                              {user.suspendedReason}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                              <span>
+                                <Clock className="w-3 h-3 inline mr-1" />
+                                Expires in {hoursLeft}h
+                              </span>
+                              <span>
+                                Until {new Date(user.suspendedUntil).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/superadmin/security/alert/${user._id}`;
+                        }}
+                        className="px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
+                        style={{
+                          background: "rgba(37,99,235,0.1)",
+                          color: "var(--primary)",
+                        }}
+                      >
+                        Review & Unsuspend
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
