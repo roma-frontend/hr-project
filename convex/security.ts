@@ -412,6 +412,8 @@ export const unlockAccount = mutation({
 // NOTIFY SUPERADMIN about suspicious activity with quick action
 // ─────────────────────────────────────────────────────────────────────────────
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+const AUTO_BLOCK_THRESHOLD = 80; // Auto-block if risk score >= 80
+const AUTO_BLOCK_DURATION = 24; // 24 hours
 
 export const notifySuperadminSuspiciousActivity = mutation({
   args: {
@@ -422,6 +424,7 @@ export const notifySuperadminSuspiciousActivity = mutation({
     riskFactors: v.array(v.string()),
     ip: v.optional(v.string()),
     deviceInfo: v.optional(v.string()),
+    autoBlock: v.optional(v.boolean()), // if true, automatically suspend the user
   },
   handler: async (ctx, args) => {
     // Find superadmin
@@ -442,13 +445,58 @@ export const notifySuperadminSuspiciousActivity = mutation({
       return null;
     }
 
-    // Create notification with action metadata
+    // AUTO-BLOCK logic: if risk score is very high, block immediately
+    let wasAutoBlocked = false;
+    if (args.autoBlock !== false && args.riskScore >= AUTO_BLOCK_THRESHOLD) {
+      const suspendedUntil = Date.now() + (AUTO_BLOCK_DURATION * 60 * 60 * 1000);
+      
+      await ctx.db.patch(args.userId, {
+        isSuspended: true,
+        suspendedUntil,
+        suspendedReason: `AUTO-BLOCKED: High risk login (score: ${args.riskScore}). ${args.reason}`,
+        suspendedBy: superadmin._id,
+        suspendedAt: Date.now(),
+      });
+
+      wasAutoBlocked = true;
+
+      // Create audit log for auto-block
+      await ctx.db.insert("auditLogs", {
+        organizationId: user.organizationId,
+        userId: superadmin._id,
+        action: "user_auto_suspended",
+        target: user.email,
+        details: `User auto-blocked for ${AUTO_BLOCK_DURATION}h due to high risk score (${args.riskScore}). Factors: ${args.riskFactors.join(", ")}`,
+        createdAt: Date.now(),
+      });
+
+      // Notify the blocked user
+      await ctx.db.insert("notifications", {
+        organizationId: user.organizationId,
+        userId: args.userId,
+        type: "system",
+        title: "🚫 Account Automatically Suspended",
+        message: `Your account has been automatically suspended due to suspicious login activity (risk score: ${args.riskScore}). If this was you, please contact your administrator. Suspension will expire in ${AUTO_BLOCK_DURATION} hours.`,
+        isRead: false,
+        createdAt: Date.now(),
+      });
+    }
+
+    // Create notification for superadmin with action metadata
+    const notificationTitle = wasAutoBlocked 
+      ? "🚫 User Auto-Blocked (High Risk)" 
+      : "🚨 Suspicious Login Activity Detected";
+    
+    const notificationMessage = wasAutoBlocked
+      ? `User: ${args.email}\nRisk Score: ${args.riskScore}\nStatus: AUTOMATICALLY BLOCKED for ${AUTO_BLOCK_DURATION}h\nReasons: ${args.riskFactors.join(", ")}\nIP: ${args.ip || "Unknown"}\n\nUser was automatically suspended. Review and unsuspend if needed.`
+      : `User: ${args.email}\nRisk Score: ${args.riskScore}\nReasons: ${args.riskFactors.join(", ")}\nIP: ${args.ip || "Unknown"}\n\nReview this activity immediately.`;
+
     const notificationId = await ctx.db.insert("notifications", {
       organizationId: superadmin.organizationId,
       userId: superadmin._id,
       type: "security_alert",
-      title: "🚨 Suspicious Login Activity Detected",
-      message: `User: ${args.email}\nRisk Score: ${args.riskScore}\nReasons: ${args.riskFactors.join(", ")}\nIP: ${args.ip || "Unknown"}\n\nReview this activity immediately.`,
+      title: notificationTitle,
+      message: notificationMessage,
       isRead: false,
       relatedId: args.userId,
       metadata: JSON.stringify({
@@ -461,6 +509,8 @@ export const notifySuperadminSuspiciousActivity = mutation({
         deviceInfo: args.deviceInfo,
         timestamp: Date.now(),
         actionType: "suspicious_login",
+        autoBlocked: wasAutoBlocked,
+        blockDuration: wasAutoBlocked ? AUTO_BLOCK_DURATION : undefined,
       }),
       createdAt: Date.now(),
     });
@@ -470,18 +520,20 @@ export const notifySuperadminSuspiciousActivity = mutation({
       userId: args.userId,
       userName: user.name,
       userEmail: args.email,
-      action: "superadmin_notified",
+      action: wasAutoBlocked ? "auto_blocked" : "superadmin_notified",
       success: false,
-      blocked: false,
+      blocked: wasAutoBlocked,
       riskScore: args.riskScore,
       riskFactors: args.riskFactors,
       ip: args.ip,
       deviceInfo: args.deviceInfo,
-      details: `Superadmin notified about suspicious activity. Risk: ${args.riskScore}, Factors: ${args.riskFactors.join(", ")}`,
+      details: wasAutoBlocked 
+        ? `User auto-blocked for ${AUTO_BLOCK_DURATION}h. Risk: ${args.riskScore}, Factors: ${args.riskFactors.join(", ")}`
+        : `Superadmin notified about suspicious activity. Risk: ${args.riskScore}, Factors: ${args.riskFactors.join(", ")}`,
       createdAt: Date.now(),
     });
 
-    return notificationId;
+    return { notificationId, autoBlocked: wasAutoBlocked };
   },
 });
 

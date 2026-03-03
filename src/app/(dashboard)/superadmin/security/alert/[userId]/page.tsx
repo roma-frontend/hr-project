@@ -189,11 +189,23 @@ export default function SecurityAlertDetailPage() {
 
                 {suspiciousUser.isSuspended && (
                   <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm font-semibold text-red-700 mb-2">Suspension Details</p>
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-sm font-semibold text-red-700">Suspension Details</p>
+                      {suspiciousUser.suspendedReason?.includes("AUTO-BLOCKED") && (
+                        <span className="text-xs font-bold bg-red-600 text-white px-2 py-1 rounded">
+                          AUTO-BLOCKED
+                        </span>
+                      )}
+                    </div>
                     <div className="space-y-1 text-sm">
                       <p><span className="font-medium">Reason:</span> {suspiciousUser.suspendedReason}</p>
                       <p><span className="font-medium">Until:</span> {new Date(suspiciousUser.suspendedUntil!).toLocaleString()}</p>
                       <p><span className="font-medium">Suspended at:</span> {new Date(suspiciousUser.suspendedAt!).toLocaleString()}</p>
+                      {suspiciousUser.suspendedReason?.includes("AUTO-BLOCKED") && (
+                        <p className="text-xs text-red-600 font-medium mt-2 pt-2 border-t border-red-200">
+                          ⚡ This user was automatically blocked by the security system due to high-risk activity.
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
