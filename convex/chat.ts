@@ -534,19 +534,22 @@ export const deleteMessageForMe = mutation({
 });
 
 /**
- * Convert emoji to ASCII-safe key format
+ * Convert emoji to ASCII-safe key format using Unicode code points
  * Example: 👍 → "u1f44d", ❤️ → "u2764_ufe0f"
  */
 function emojiToKey(emoji: string): string {
-  const codePoints = Array.from(emoji).map(char => {
-    const hex = char.charCodeAt(0).toString(16).toLowerCase();
-    return `u${hex}`;
-  });
+  const codePoints: string[] = [];
+  for (const char of emoji) {
+    const codePoint = char.codePointAt(0);
+    if (codePoint !== undefined) {
+      codePoints.push('u' + codePoint.toString(16).toLowerCase());
+    }
+  }
   return codePoints.join('_');
 }
 
 /**
- * Convert ASCII-safe key back to emoji
+ * Convert ASCII-safe key back to emoji using Unicode code points
  * Example: "u1f44d" → 👍, "u2764_ufe0f" → ❤️
  */
 function keyToEmoji(key: string): string {
