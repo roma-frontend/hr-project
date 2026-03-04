@@ -30,7 +30,6 @@ const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 export default function SubscriptionsManagementPage() {
   const { t } = useTranslation();
-  const { t } = useTranslation();
   const subscriptions = useQuery(api.subscriptions_admin.listAllWithUsers);
 
   // Get current user from useAuthStore (works with both email/password and OAuth)
