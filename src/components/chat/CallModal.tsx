@@ -310,10 +310,25 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
   }, [callData]);
 
   const handleEnd = async () => {
+    console.log('[CallModal] Ending call and turning off media devices...');
+    
+    // Stop all media tracks and cleanup peer connection
     cleanup();
+    
+    // Clear media states
+    setMicOn(false);
+    setCamOn(false);
+    
     setCallStatus("ended");
-    try { await endCallMutation({ callId: call.callId, userId: currentUserId }); } catch {}
-    onEnd();
+    try { 
+      await endCallMutation({ callId: call.callId, userId: currentUserId }); 
+    } catch { }
+    
+    // Give a moment for cleanup to complete before closing
+    setTimeout(() => {
+      console.log('[CallModal] Call ended, closing modal');
+      onEnd();
+    }, 100);
   };
 
   const toggleMic = () => {
