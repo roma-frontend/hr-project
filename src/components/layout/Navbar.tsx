@@ -99,7 +99,7 @@ export function Navbar() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const { setMobileOpen } = useSidebarStore();
   const { user, logout } = useAuthStore();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -347,14 +347,10 @@ export function Navbar() {
           variant="ghost"
           size="icon"
           className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          title={mounted ? (theme === "dark" ? t('settings.lightMode') : t('settings.darkMode')) : t('settings.darkMode')}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          title={resolvedTheme === "dark" ? t('settings.lightMode') : t('settings.darkMode')}
         >
-          {mounted ? (
-            theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />
-          ) : (
-            <Moon className="w-5 h-5" />
-          )}
+          {resolvedTheme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
 
         {/* User dropdown */}
