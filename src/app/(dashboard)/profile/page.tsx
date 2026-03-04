@@ -358,10 +358,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex items-center justify-center py-8">
-              <div className="text-center text-[var(--text-muted)]">
-                <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                Loading stats...
-              </div>
+              <ShieldLoader size="md" />
             </div>
           )}
         </CardContent>

@@ -408,10 +408,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
       {/* Content */}
       {rawTasks === undefined ? (
         <div className="flex items-center justify-center py-20">
-          <div className="text-center space-y-3">
-            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto" />
-            <p className="text-[var(--text-muted)] text-sm">{t('ui.loadingTasks')}</p>
-          </div>
+          <ShieldLoader size="lg" />
         </div>
       ) : viewMode === "kanban" ? (
         <DndContext
