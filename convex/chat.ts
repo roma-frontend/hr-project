@@ -133,7 +133,8 @@ export const getMyConversations = query({
       memberships.map(async (m) => {
         const conv = await ctx.db.get(m.conversationId);
         if (!conv || conv.organizationId !== args.organizationId) return null;
-        if (conv.isArchived) return null;
+        // Skip archived and deleted conversations
+        if (conv.isArchived || conv.isDeleted) return null;
 
         // For DMs: get the other user's info
         let otherUser = null;
@@ -178,10 +179,16 @@ export const getMyConversations = query({
       })
     );
 
-    // Filter nulls and sort by lastMessageAt desc
+    // Filter nulls and sort: pinned first, then by lastMessageAt desc
     return conversations
       .filter(Boolean)
-      .sort((a, b) => (b!.lastMessageAt ?? b!.createdAt) - (a!.lastMessageAt ?? a!.createdAt));
+      .sort((a, b) => {
+        // Pinned conversations first
+        if (a!.isPinned && !b!.isPinned) return -1;
+        if (!a!.isPinned && b!.isPinned) return 1;
+        // Then by last message time
+        return (b!.lastMessageAt ?? b!.createdAt) - (a!.lastMessageAt ?? a!.createdAt);
+      });
   },
 });
 
@@ -1186,6 +1193,254 @@ export const setLinkPreview = mutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.messageId, { linkPreview: args.preview });
+  },
+});
+
+// ─── CONVERSATION MANAGEMENT ─────────────────────────────────────────────────────────
+
+/** Toggle pin status for a conversation */
+export const togglePin = mutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    const member = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!member) throw new Error("Not a member of this conversation");
+
+    await ctx.db.patch(args.conversationId, {
+      isPinned: !conv.isPinned,
+      updatedAt: Date.now(),
+    });
+
+    console.log(`[Chat] Conversation ${args.conversationId} pin toggled by ${args.userId}`);
+    return !conv.isPinned;
+  },
+});
+
+/** Soft delete a conversation */
+export const deleteConversation = mutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    // Only creator or members can delete
+    const member = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!member) throw new Error("Not a member of this conversation");
+
+    await ctx.db.patch(args.conversationId, {
+      isDeleted: true,
+      deletedBy: args.userId,
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    console.log(`[Chat] Conversation ${args.conversationId} deleted by ${args.userId}`);
+  },
+});
+
+/** Restore a deleted conversation */
+export const restoreConversation = mutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    // Only the person who deleted it, or creator can restore
+    if (conv.deletedBy !== args.userId && conv.createdBy !== args.userId) {
+      throw new Error("Only who deleted it can restore");
+    }
+
+    await ctx.db.patch(args.conversationId, {
+      isDeleted: false,
+      deletedBy: undefined,
+      deletedAt: undefined,
+      updatedAt: Date.now(),
+    });
+
+    console.log(`[Chat] Conversation ${args.conversationId} restored by ${args.userId}`);
+  },
+});
+
+/** Archive or unarchive a conversation */
+export const toggleArchive = mutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) throw new Error("Conversation not found");
+
+    const member = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!member) throw new Error("Not a member of this conversation");
+
+    await ctx.db.patch(args.conversationId, {
+      isArchived: !conv.isArchived,
+      updatedAt: Date.now(),
+    });
+
+    console.log(`[Chat] Conversation ${args.conversationId} archive toggled by ${args.userId}`);
+    return !conv.isArchived;
+  },
+});
+
+/** Toggle mute status for current user */
+export const toggleMute = mutation({
+  args: {
+    conversationId: v.id("chatConversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const member = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!member) throw new Error("Not a member of this conversation");
+
+    await ctx.db.patch(member._id, {
+      isMuted: !member.isMuted,
+    });
+
+    console.log(`[Chat] ${args.userId} muted=${!member.isMuted} for ${args.conversationId}`);
+    return !member.isMuted;
+  },
+});
+
+// ─── CONVERSATION FILTERS ────────────────────────────────────────────────────────────
+
+/** Get only unread conversations */
+export const getUnreadConversations = query({
+  args: {
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("chatMembers")
+      .filter((q) => q.and(
+        q.eq(q.field("userId"), args.userId),
+        q.eq(q.field("organizationId"), args.organizationId),
+        q.gt(q.field("unreadCount"), 0)
+      ))
+      .collect();
+
+    const convIds = members.map((m) => m.conversationId);
+    const convs = await Promise.all(
+      convIds.map((id) => ctx.db.get(id))
+    );
+
+    return convs
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => c !== null && !c.isDeleted && !c.isArchived)
+      .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
+  },
+});
+
+/** Get only group conversations */
+export const getGroupConversations = query({
+  args: {
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("chatMembers")
+      .filter((q) => q.and(
+        q.eq(q.field("userId"), args.userId),
+        q.eq(q.field("organizationId"), args.organizationId)
+      ))
+      .collect();
+
+    const convs = await Promise.all(
+      members.map((m) => ctx.db.get(m.conversationId))
+    );
+
+    return convs
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
+        c !== null && c.type === "group" && !c.isDeleted && !c.isArchived
+      )
+      .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
+  },
+});
+
+/** Get pinned conversations */
+export const getPinnedConversations = query({
+  args: {
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("chatMembers")
+      .filter((q) => q.and(
+        q.eq(q.field("userId"), args.userId),
+        q.eq(q.field("organizationId"), args.organizationId)
+      ))
+      .collect();
+
+    const convs = await Promise.all(
+      members.map((m) => ctx.db.get(m.conversationId))
+    );
+
+    return convs
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
+        c !== null && c.isPinned && !c.isDeleted
+      )
+      .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
+  },
+});
+
+/** Get archived conversations */
+export const getArchivedConversations = query({
+  args: {
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const members = await ctx.db
+      .query("chatMembers")
+      .filter((q) => q.and(
+        q.eq(q.field("userId"), args.userId),
+        q.eq(q.field("organizationId"), args.organizationId)
+      ))
+      .collect();
+
+    const convs = await Promise.all(
+      members.map((m) => ctx.db.get(m.conversationId))
+    );
+
+    return convs
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
+        c !== null && c.isArchived && !c.isDeleted
+      )
+      .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
   },
 });
 

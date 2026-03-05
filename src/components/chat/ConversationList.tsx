@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Search, Plus, Users, MessageCircle } from "lucide-react";
+import { Search, Plus, Users, MessageCircle, Pin, Archive, Trash2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
 
@@ -16,6 +16,9 @@ interface Conversation {
   lastMessageAt?: number;
   lastMessageText?: string;
   lastMessageSenderId?: Id<"users">;
+  isPinned?: boolean;
+  isArchived?: boolean;
+  isDeleted?: boolean;
   membership: { unreadCount: number; isMuted: boolean };
   otherUser?: { _id: Id<"users">; name: string; avatarUrl?: string; presenceStatus?: string } | null;
   memberCount?: number;
@@ -28,7 +31,14 @@ interface Props {
   currentUserId: Id<"users">;
   onSelect: (id: Id<"chatConversations">) => void;
   onNewConversation: () => void;
+  onTogglePin?: (convId: Id<"chatConversations">) => Promise<void>;
+  onDelete?: (convId: Id<"chatConversations">) => Promise<void>;
+  onRestore?: (convId: Id<"chatConversations">) => Promise<void>;
+  onToggleArchive?: (convId: Id<"chatConversations">) => Promise<void>;
+  onToggleMute?: (convId: Id<"chatConversations">) => Promise<void>;
 }
+
+type FilterType = "all" | "unread" | "groups" | "pinned" | "archived";
 
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
@@ -46,19 +56,66 @@ function PresenceDot({ status }: { status?: string }) {
   );
 }
 
-export function ConversationList({ conversations, selectedId, currentUserId, onSelect, onNewConversation }: Props) {
+export function ConversationList({ 
+  conversations, 
+  selectedId, 
+  currentUserId, 
+  onSelect, 
+  onNewConversation,
+  onTogglePin,
+  onDelete,
+  onRestore,
+  onToggleArchive,
+  onToggleMute,
+}: Props) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [contextMenu, setContextMenu] = useState<{ convId: Id<"chatConversations">; x: number; y: number } | null>(null);
+  const [loadingOp, setLoadingOp] = useState<string | null>(null);
 
+  // Apply filters
   const filtered = conversations.filter((c) => {
     const name = c.type === "direct" ? (c.otherUser?.name ?? "") : (c.name ?? "");
-    return name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    switch (filter) {
+      case "unread":
+        return c.membership.unreadCount > 0;
+      case "groups":
+        return c.type === "group";
+      case "pinned":
+        return c.isPinned;
+      case "archived":
+        return c.isArchived;
+      default:
+        return !c.isArchived; // "all" shows non-archived only
+    }
   });
 
   const totalUnread = conversations.reduce((s, c) => s + (c.membership.unreadCount ?? 0), 0);
 
+  const handleContextMenu = (e: React.MouseEvent, convId: Id<"chatConversations">) => {
+    e.preventDefault();
+    setContextMenu({ convId, x: e.clientX, y: e.clientY });
+  };
+
+  const handleOperation = async (operation: () => Promise<void>) => {
+    try {
+      setLoadingOp("pending");
+      await operation();
+      setContextMenu(null);
+    } catch (error) {
+      console.error("Operation failed:", error);
+    } finally {
+      setLoadingOp(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onClick={() => contextMenu && setContextMenu(null)}>
       {/* Header */}
       <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -83,7 +140,7 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
       </div>
 
       {/* Search */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "var(--text-disabled)" }} />
           <input
@@ -100,6 +157,31 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
             onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="px-3 pb-2 flex gap-1 overflow-x-auto scrollbar-hide">
+        {(["all", "unread", "groups", "pinned", "archived"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={cn(
+              "px-3 py-1 text-xs rounded-full whitespace-nowrap transition-all shrink-0",
+              filter === f
+                ? "text-white"
+                : "text-gray-500 opacity-60 hover:opacity-100"
+            )}
+            style={{
+              background: filter === f ? "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)" : "transparent",
+            }}
+          >
+            {f === "all" && "All"}
+            {f === "unread" && `Unread ${conversations.filter(c => c.membership.unreadCount > 0).length > 0 ? `(${conversations.filter(c => c.membership.unreadCount > 0).length})` : ""}`}
+            {f === "groups" && "Groups"}
+            {f === "pinned" && "Pinned"}
+            {f === "archived" && "Archived"}
+          </button>
+        ))}
       </div>
 
       {/* List */}
@@ -148,14 +230,16 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
             <button
               key={conv._id}
               onClick={() => onSelect(conv._id)}
+              onContextMenu={(e) => handleContextMenu(e, conv._id)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left",
+                "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-left relative",
                 isSelected ? "shadow-sm scale-[1.01]" : "hover:opacity-90"
               )}
               style={{
                 background: isSelected ? "var(--sidebar-item-active)" : "transparent",
                 color: isSelected ? "var(--sidebar-item-active-text)" : "var(--text-primary)",
                 animation: `conv-in 0.25s ease-out ${idx * 0.04}s both`,
+                opacity: conv.isDeleted ? 0.5 : 1,
               }}
               onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--sidebar-item-hover)"; }}
               onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
@@ -179,9 +263,12 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
-                  <span className={cn("text-sm truncate", unread > 0 ? "font-semibold" : "font-medium")}>
-                    {displayName}
-                  </span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className={cn("text-sm truncate", unread > 0 ? "font-semibold" : "font-medium")}>
+                      {displayName}
+                    </span>
+                    {conv.isPinned && <Pin className="w-3 h-3 shrink-0" style={{ color: "var(--primary)" }} />}
+                  </div>
                   {lastTime && (
                     <span className="text-[10px] shrink-0" style={{ color: "var(--text-disabled)" }}>
                       {lastTime}
@@ -203,7 +290,7 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
                     )}
                     <p className={cn("text-xs truncate", unread > 0 ? "font-medium" : "opacity-70")}
                       style={{ color: isSelected ? "var(--sidebar-item-active-text)" : "var(--text-muted)" }}>
-                      {lastMsgPreview}
+                      {conv.isDeleted ? "[Удалено]" : lastMsgPreview}
                     </p>
                   </div>
                   {unread > 0 && !conv.membership.isMuted && (
@@ -212,7 +299,7 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
                     </span>
                   )}
                   {conv.membership.isMuted && (
-                    <span className="text-[10px]" title="Muted">🔕</span>
+                    <VolumeX className="w-3 h-3 shrink-0 opacity-50" />
                   )}
                 </div>
               </div>
@@ -221,10 +308,70 @@ export function ConversationList({ conversations, selectedId, currentUserId, onS
         })}
       </div>
 
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed bg-white rounded-lg shadow-lg z-50 py-1 min-w-[140px]"
+          style={{
+            top: `${contextMenu.y}px`,
+            left: `${contextMenu.x}px`,
+            background: "var(--background-primary)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          {[
+            conv = conversations.find(c => c._id === contextMenu.convId),
+            {
+              label: conv?.isPinned ? "Открепить" : "Закрепить",
+              icon: Pin,
+              action: () => handleOperation(() => onTogglePin?.(contextMenu.convId) || Promise.resolve()),
+            },
+            {
+              label: conv?.isArchived ? "Разархивировать" : "Архивировать",
+              icon: Archive,
+              action: () => handleOperation(() => onToggleArchive?.(contextMenu.convId) || Promise.resolve()),
+            },
+            {
+              label: conv?.membership.isMuted ? "Включить звук" : "Отключить звук",
+              icon: conv?.membership.isMuted ? Volume2 : VolumeX,
+              action: () => handleOperation(() => onToggleMute?.(contextMenu.convId) || Promise.resolve()),
+            },
+            ...(conv?.isDeleted
+              ? [{
+                  label: "Восстановить",
+                  icon: RotateCcw,
+                  action: () => handleOperation(() => onRestore?.(contextMenu.convId) || Promise.resolve()),
+                }]
+              : [{
+                  label: "Удалить",
+                  icon: Trash2,
+                  action: () => handleOperation(() => onDelete?.(contextMenu.convId) || Promise.resolve()),
+                  className: "text-red-500",
+                }]
+            ),
+          ].filter(Boolean).slice(1).map((item: any) => (
+            <button
+              key={item.label}
+              onClick={() => !loadingOp && item.action()}
+              className={cn(
+                "w-full px-3 py-2 text-xs text-left flex items-center gap-2 hover:opacity-80 transition-all",
+                item.className
+              )}
+              disabled={loadingOp !== null}
+              style={{ color: item.className ? undefined : "var(--text-primary)" }}
+            >
+              <item.icon className="w-3.5 h-3.5" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes conv-in {
           from { opacity: 0; transform: translateX(-8px); }
           to   { opacity: 1; transform: translateX(0); }

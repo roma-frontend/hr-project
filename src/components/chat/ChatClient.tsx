@@ -68,6 +68,13 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
   const answerCallMutation = useMutation(api.chat.answerCall);
   const declineCallMutation = useMutation(api.chat.declineCall);
 
+  // Conversation management mutations
+  const togglePinMutation = useMutation(api.chat.togglePin);
+  const deleteConversationMutation = useMutation(api.chat.deleteConversation);
+  const restoreConversationMutation = useMutation(api.chat.restoreConversation);
+  const toggleArchiveMutation = useMutation(api.chat.toggleArchive);
+  const toggleMuteMutation = useMutation(api.chat.toggleMute);
+
   // ── Detect incoming calls (using real-time query) ─────────────────────────
   useEffect(() => {
     if (!uid) return;
@@ -209,6 +216,11 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
           currentUserId={uid}
           onSelect={handleSelectConversation}
           onNewConversation={() => setShowNewConv(true)}
+          onTogglePin={(convId) => togglePinMutation({ conversationId: convId, userId: uid })}
+          onDelete={(convId) => deleteConversationMutation({ conversationId: convId, userId: uid })}
+          onRestore={(convId) => restoreConversationMutation({ conversationId: convId, userId: uid })}
+          onToggleArchive={(convId) => toggleArchiveMutation({ conversationId: convId, userId: uid })}
+          onToggleMute={(convId) => toggleMuteMutation({ conversationId: convId, userId: uid })}
         />
       </div>
 

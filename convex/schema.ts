@@ -731,15 +731,22 @@ export default defineSchema({
     lastMessageSenderId: v.optional(v.id("users")),
     // For direct chats: sorted pair of userIds for uniqueness
     dmKey: v.optional(v.string()),  // e.g. "userId1_userId2" (sorted)
-    isPinned: v.optional(v.boolean()),
-    isArchived: v.optional(v.boolean()),
+    // Conversation management
+    isPinned: v.optional(v.boolean()),      // закреплена ли переписка
+    isArchived: v.optional(v.boolean()),    // архивирована ли
+    isDeleted: v.optional(v.boolean()),     // мягкое удаление (soft delete)
+    deletedBy: v.optional(v.id("users")),   // кто удалил
+    deletedAt: v.optional(v.number()),      // когда удалили
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_org", ["organizationId"])
     .index("by_org_last", ["organizationId", "lastMessageAt"])
     .index("by_dm_key", ["dmKey"])
-    .index("by_creator", ["createdBy"]),
+    .index("by_creator", ["createdBy"])
+    .index("by_org_not_deleted", ["organizationId", "isDeleted"])
+    .index("by_org_pinned", ["organizationId", "isPinned"])
+    .index("by_org_archived", ["organizationId", "isArchived"]),
 
   // ── CHAT MEMBERS ─────────────────────────────────────────────────────────
   chatMembers: defineTable({
