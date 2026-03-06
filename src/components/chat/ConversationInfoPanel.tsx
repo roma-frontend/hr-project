@@ -96,8 +96,9 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
       style={{
         borderColor: "var(--border)",
         background: "var(--background)",
-        zIndex: 40,
+        zIndex: 50,
         animation: "slideInRight 0.3s ease-out",
+        pointerEvents: "auto",
       }}
     >
       {/* Header */}
@@ -130,8 +131,8 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
 
         {/* Members section */}
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <p className="text-xs font-semibold flex-1" style={{ color: "var(--text-muted)" }}>
               {t('chat.members')} ({members?.length ?? 0})
             </p>
             {isGroupConversation !== false && (
@@ -140,11 +141,14 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
                   console.log("[PlusButton] Clicked, toggling showAddMember from", showAddMember, "to", !showAddMember);
                   setShowAddMember(!showAddMember);
                 }}
-                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:scale-105"
+                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95"
                 style={{
                   background: showAddMember ? "var(--primary)" : "var(--sidebar-item-hover)",
                   color: showAddMember ? "white" : "var(--text-muted)",
                   cursor: "pointer",
+                  position: "relative",
+                  zIndex: 100,
+                  flexShrink: 0,
                 }}
                 title={t('chat.addMembers')}
               >
