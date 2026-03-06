@@ -22,6 +22,7 @@ function getInitials(name: string) {
 }
 
 export function NewConversationModal({ currentUserId, organizationId, onClose, onCreated }: Props) {
+  console.log("[NewConversationModal] Component rendering!");
   const { t } = useTranslation();
   const [mode, setMode] = useState<"dm" | "group">("dm");
   const [search, setSearch] = useState("");
@@ -102,6 +103,8 @@ export function NewConversationModal({ currentUserId, organizationId, onClose, o
   };
 
   const canCreate = mode === "dm" ? selectedUsers.length === 1 : (selectedUsers.length >= 1 && groupName.trim().length > 0);
+
+  console.log("[NewConversationModal] Rendering JSX, mode:", mode, "canCreate:", canCreate);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

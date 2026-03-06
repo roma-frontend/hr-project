@@ -268,8 +268,10 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
 
       {/* New Conversation Modal */}
       {showNewConv && (
-        <div className="animate-fade-in">
-          <NewConversationModal
+        <>
+          {console.log("[ChatClient] Rendering NewConversationModal, showNewConv:", showNewConv)}
+          <div className="animate-fade-in">
+            <NewConversationModal
             currentUserId={uid}
             organizationId={effectiveOrgId}
             onClose={() => setShowNewConv(false)}
@@ -279,7 +281,8 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
               setMobileShowChat(true);
             }}
           />
-        </div>
+          </div>
+        </>
       )}
 
       {/* Active Call Modal */}
