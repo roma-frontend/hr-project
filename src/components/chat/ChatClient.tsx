@@ -191,6 +191,8 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
     </div>
   );
 
+  console.log("[ChatClient] Main render, showNewConv:", showNewConv);
+
   return (
     <div
       className="flex flex-1 min-h-0 h-full overflow-hidden sm:rounded-xl border-0 sm:border relative"
