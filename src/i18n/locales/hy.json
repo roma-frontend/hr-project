@@ -1106,7 +1106,9 @@
     "tasksCompleted": "Ավարտված առաջադրանքներ",
     "leavesTaken": "Վերցված արձակուրդներ",
     "projects": "Նախագծեր",
-    "employeeType": "Աշխատակցի տեսակ"
+    "employeeType": "Աշխատակցի տեսակ",
+    "deleteAvatarTitle": "Հեռացնել Ավատարը",
+    "deleteAvatarWarning": "Վստահ եք, որ ցանկանում եք հեռացնել ձեր պրոֆիլի նկարը"
   },
   "modals": {
     "assignSupervisor": {
@@ -1243,7 +1245,33 @@
     "createOrganization": "Ստեղծել կազմակերպություն"
   },
   "ui": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "accessDenied": "Մուտքը արգելված է",
+    "onlySuperadminCanAccess": "Միայն սուպերադմինները կարող են մուտք գործել այս էջ",
+    "adminAccessRequired": "Պահանջվում է ադմինիստրատորի մուտք",
+    "onlyAdminsCanAccess": "Դրան կարող են մուտք գործել միայն ադմինիստրատորները",
+    "pleaseLoginAgain": "Խնդրում ենք նորից մուտք գործել",
+    "userApproved": "Օգտատերը հաջողությամբ հաստատվել է",
+    "failedToApproveUser": "Օգտատերի հաստատումը ձախողվել է",
+    "confirmRejectUser": "Վստահ եք, որ ցանկանում եք մերժել այս օգտատերին",
+    "userRejected": "Օգտատերը հաջողությամբ մերժվել է",
+    "failedToRejectUser": "Օգտատերի մերժումը ձախողվել է",
+    "userApprovals": "Օգտատերերի հաստատումներ",
+    "approvalsPageDescription": "Վերստուգեք և հաստատեք սպասվող օգտատերերի գրանցումները",
+    "allCaughtUp": "Հաւա շարակցել!",
+    "noPendingApprovals": "Չկան սպասվող հաստատումներ",
+    "pending": "Սպասում",
+    "approve": "Հաստատել",
+    "reject": "Մերժել",
+    "profilePictureUpload": "Վերբեռնել պրոֆիլի նկար",
+    "clickCameraToUpload": "Կ累 կատարեք տեսախցիկի պատկերակը նոր պատկեր վերբեռնելու համար",
+    "recommendedImageSize": "Խորհուրդ տրվող պատկերի չափ՝ 300x300px կամ ավելի մեծ",
+    "deletePicture": "Հեռացնել պատկերը",
+    "personalInformation": "Անձնական տեղեկատվություն",
+    "yourAccountDetails": "Ձեր հաշվի մանրամասներ",
+    "yourActivity": "Ձեր գործունեությունը",
+    "saving": "Պահպանում...",
+    "saveChanges": "Պահպանել փոփոխությունները"
   },
   "reportsAnalytics": {
     "reportsAnalytics": "Հաշվետվություններ և վերլուծություն",
@@ -1708,7 +1736,10 @@
     "assignMonitor": "Նշանակել և հետևել",
     "assignSupervisor": "Նշանակել վերահսկուս",
     "newTask": "Նոր առաջադրանք",
-    "noDeadline": "No deadline"
+    "noDeadline": "No deadline",
+    "total": "Ընդամենը",
+    "allPriorities": "Բոլոր հաջ먹",
+    "allStatuses": "Բոլոր կարգավիճակները"
   },
   "attendanceExtra": {
     "daysWorked": "Աշխատանքային օրեր",
@@ -2694,7 +2725,20 @@
   },
   "tasks": {
     "taskCompleted": "Առաջադրանք ավարտված! 🎉",
-    "taskReopened": "Առաջադրանքը վերաբացվել է"
+    "taskReopened": "Առաջադրանքը վերաբացվել է",
+    "status": {
+      "pending": "Սպասում",
+      "inProgress": "Գործընթացում",
+      "review": "Վերստուգման մեջ",
+      "completed": "Ավարտված",
+      "cancelled": "Չեղարկված"
+    },
+    "priority": {
+      "low": "Ցածր",
+      "medium": "Միջին",
+      "high": "Բարձր",
+      "urgent": "Հ急"
+    }
   },
   "security": {
     "ddosAttempt": "🚨 DDoS հարձակման հանդես տալու հայտնաբերված",
@@ -2829,7 +2873,14 @@
     "youPrefix": "Դուք",
     "startConversationHint": "Սկսել զրույց",
     "missed": "Բաց թողնված",
-    "declined": "Մերժված"
+    "declined": "Մերժված",
+    "conversationInfo": "Խոսակցության մասին",
+    "addMembers": "Ավելացնել անդամներ",
+    "searchUsers": "Որոնել օգտատերերի",
+    "noUsersFound": "Օգտատերեր չեն գտնվել",
+    "allMembersAdded": "Բոլոր անդամները արդեն ավելացված են",
+    "add": "Ավելացնել",
+    "you": "Դուք"
   },
   "superadminStripe": {
     "accessDenied": "Մուտքը արգելված է",

@@ -1106,7 +1106,9 @@
     "tasksCompleted": "Задач завершено",
     "leavesTaken": "Отпусков взято",
     "projects": "Проекты",
-    "employeeType": "тип сотрудника"
+    "employeeType": "тип сотрудника",
+    "deleteAvatarTitle": "Удалить аватар",
+    "deleteAvatarWarning": "Вы уверены, что хотите удалить фотографию профиля?"
   },
   "modals": {
     "assignSupervisor": {
@@ -1243,7 +1245,33 @@
     "createOrganization": "Создать организацию"
   },
   "ui": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "accessDenied": "Доступ запрещен",
+    "onlySuperadminCanAccess": "Только суперадмины могут получить доступ к этой странице",
+    "adminAccessRequired": "Требуется доступ администратора",
+    "onlyAdminsCanAccess": "Доступ только для администраторов",
+    "pleaseLoginAgain": "Пожалуйста, залогиньтесь снова",
+    "userApproved": "Пользователь успешно одобрен",
+    "failedToApproveUser": "Ошибка при одобрении пользователя",
+    "confirmRejectUser": "Вы уверены, что хотите отклонить этого пользователя?",
+    "userRejected": "Пользователь успешно отклонен",
+    "failedToRejectUser": "Ошибка при отклонении пользователя",
+    "userApprovals": "Одобрения пользователей",
+    "approvalsPageDescription": "Проверьте и одобрите ожидающие регистрации пользователей",
+    "allCaughtUp": "Все в порядке!",
+    "noPendingApprovals": "Нет ожидающих одобрений",
+    "pending": "В ожидании",
+    "approve": "Одобрить",
+    "reject": "Отклонить",
+    "profilePictureUpload": "Загрузить фото профиля",
+    "clickCameraToUpload": "Щелкните значок камеры, чтобы загрузить новое изображение",
+    "recommendedImageSize": "Рекомендуемый размер изображения: 300x300px или больше",
+    "deletePicture": "Удалить изображение",
+    "personalInformation": "Личная информация",
+    "yourAccountDetails": "Детали вашей учетной записи",
+    "yourActivity": "Ваша активность",
+    "saving": "Сохранение...",
+    "saveChanges": "Сохранить изменения"
   },
   "reportsAnalytics": {
     "reportsAnalytics": "Отчеты и аналитика",
@@ -1708,7 +1736,10 @@
     "assignMonitor": "Назначить и отслеживать",
     "assignSupervisor": "Назначить руководителя",
     "newTask": "Новая задача",
-    "noDeadline": "No deadline"
+    "noDeadline": "No deadline",
+    "total": "Всего",
+    "allPriorities": "Все приоритеты",
+    "allStatuses": "Все статусы"
   },
   "attendanceExtra": {
     "daysWorked": "Days Worked",
@@ -2694,7 +2725,20 @@
   },
   "tasks": {
     "taskCompleted": "Задача выполнена! 🎉",
-    "taskReopened": "Задача переоткрыта"
+    "taskReopened": "Задача переоткрыта",
+    "status": {
+      "pending": "В ожидании",
+      "inProgress": "В процессе",
+      "review": "На проверке",
+      "completed": "Завершено",
+      "cancelled": "Отменено"
+    },
+    "priority": {
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий",
+      "urgent": "Срочно"
+    }
   },
   "security": {
     "ddosAttempt": "🚨 Обнаружена потенциальная DDoS-атака",
@@ -2829,7 +2873,14 @@
     "youPrefix": "Вы",
     "startConversationHint": "Начать разговор",
     "missed": "Пропущен",
-    "declined": "Отклонён"
+    "declined": "Отклонён",
+    "conversationInfo": "Информация о беседе",
+    "addMembers": "Добавить участников",
+    "searchUsers": "Поиск пользователей",
+    "noUsersFound": "Пользователи не найдены",
+    "allMembersAdded": "Все члены уже добавлены",
+    "add": "Добавить",
+    "you": "Вы"
   },
   "superadminStripe": {
     "accessDenied": "Доступ запрещен",
