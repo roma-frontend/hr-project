@@ -340,7 +340,13 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
 
               {/* Accept */}
               <button
-                onClick={() => {
+                onClick={async () => {
+                  try {
+                    // Tell backend the call was answered (transitions ringing -> active)
+                    await answerCallMutation({ callId: incomingCall.callId, userId: uid });
+                  } catch (e) {
+                    console.error('[ChatClient] Error answering call:', e);
+                  }
                   setActiveCall(incomingCall);
                   setIncomingCall(null);
                   // Open the conversation

@@ -27,7 +27,7 @@ interface Conversation {
   isPinned?: boolean;
   isArchived?: boolean;
   isDeleted?: boolean;
-  membership: { unreadCount: number; isMuted: boolean };
+  membership: { unreadCount: number; isMuted: boolean; isDeleted?: boolean; isArchived?: boolean };
   otherUser?: { _id: Id<"users">; name: string; avatarUrl?: string; presenceStatus?: string } | null;
   memberCount?: number;
   members?: Array<{ userId: Id<"users">; user?: { name: string; avatarUrl?: string } | null }>;
@@ -96,9 +96,9 @@ export function ConversationList({
       case "pinned":
         return c.isPinned;
       case "archived":
-        return c.isArchived;
+        return c.membership.isArchived || c.isArchived;
       default:
-        return !c.isArchived; // "all" shows non-archived only
+        return !(c.membership.isArchived || c.isArchived); // "all" shows non-archived only
     }
   });
 
@@ -269,7 +269,7 @@ export function ConversationList({
                     background: isSelected ? "var(--sidebar-item-active)" : "transparent",
                     color: isSelected ? "var(--sidebar-item-active-text)" : "var(--text-primary)",
                     animation: `conv-in 0.25s ease-out ${idx * 0.04}s both`,
-                    opacity: conv.isDeleted ? 0.5 : 1,
+                    opacity: (conv.membership.isDeleted || conv.isDeleted) ? 0.5 : 1,
                     userSelect: "none",
                   }}
                   onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--sidebar-item-hover)"; }}
@@ -323,7 +323,7 @@ export function ConversationList({
                       )}
                       <p className={cn("sm:text-xs text-sm truncate", unread > 0 ? "font-medium" : "opacity-70")}
                         style={{ color: isSelected ? "var(--sidebar-item-active-text)" : "var(--text-muted)" }}>
-                        {conv.isDeleted ? "[Удалено]" : lastMsgPreview}
+                        {(conv.membership.isDeleted || conv.isDeleted) ? "[Удалено]" : lastMsgPreview}
                       </p>
                     </div>
                     {unread > 0 && !conv.membership.isMuted && (
@@ -341,14 +341,14 @@ export function ConversationList({
 
               {/* Context Menu */}
               <ContextMenuContent className="w-48" side="right">
-                {!conv.isDeleted && (
+                {!(conv.membership.isDeleted || conv.isDeleted) && (
                   <>
                     <ContextMenuLabel className="text-xs" style={{ color: "var(--text-muted)" }}>{displayName}</ContextMenuLabel>
                     <ContextMenuSeparator />
                   </>
                 )}
                 
-                {conv.isDeleted ? (
+                {(conv.membership.isDeleted || conv.isDeleted) ? (
                   <ContextMenuItem
                     onClick={() => handleOperation(() => onRestore?.(conv._id) || Promise.resolve(), conv._id)}
                     disabled={isLoading}
@@ -392,7 +392,7 @@ export function ConversationList({
                       className="flex items-center gap-2"
                     >
                       <Archive className="w-4 h-4" />
-                      {conv.isArchived ? "Разархивировать" : "Архивировать"}
+                      {(conv.membership.isArchived || conv.isArchived) ? "Разархивировать" : "Архивировать"}
                     </ContextMenuItem>
                     
                     <ContextMenuSeparator />
@@ -400,7 +400,7 @@ export function ConversationList({
                     <ContextMenuItem
                       onClick={() => handleOperation(() => onDelete?.(conv._id) || Promise.resolve(), conv._id)}
                       disabled={isLoading}
-                      className="flex items-center gap-2 text-red-500 focus:text-red-500 focus:bg-red-50"
+                      className="flex items-center gap-2 text-red-500 focus:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
                       Удалить

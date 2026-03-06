@@ -24,7 +24,7 @@ const ContextMenuSubTrigger = React.forwardRef<
   <ContextMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-opacity-10 focus:bg-white data-[state=open]:bg-opacity-10 data-[state=open]:bg-white transition-colors",
+      "flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors [&:focus]:!bg-[var(--sidebar-item-hover)] [&[data-state=open]]:!bg-[var(--sidebar-item-hover)]",
       inset && "pl-8",
       className
     )}
@@ -88,7 +88,7 @@ const ContextMenuItem = React.forwardRef<
   <ContextMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-opacity-10 focus:bg-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors [&:focus]:!bg-[var(--sidebar-item-hover)]",
       inset && "pl-8",
       className
     )}
@@ -105,7 +105,7 @@ const ContextMenuCheckboxItem = React.forwardRef<
   <ContextMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-opacity-10 focus:bg-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors [&:focus]:!bg-[var(--sidebar-item-hover)]",
       className
     )}
     checked={checked}
@@ -141,7 +141,7 @@ const ContextMenuRadioItem = React.forwardRef<
   <ContextMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-opacity-10 focus:bg-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors",
+      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors [&:focus]:!bg-[var(--sidebar-item-hover)]",
       className
     )}
     style={{ color: "var(--text-primary)" }}

@@ -244,7 +244,8 @@
     "attachment": "Attachment",
     "attachments": "Attachments",
     "employees": "Employees",
-    "current": "Current"
+    "current": "Current",
+    "viewProfile": "View profile"
   },
   "nav": {
     "home": "Home",
@@ -486,7 +487,14 @@
     "noLeaves": "No leave requests found",
     "pending": "Pending",
     "approved": "Approved",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "days": "days",
+    "endDate": "End Date",
+    "myLeaves": "My Leaves",
+    "reason": "Reason",
+    "startDate": "Start Date",
+    "status": "Status",
+    "type": "Type"
   },
   "leaveRequest": {
     "pickDate": "Pick a date",
@@ -559,7 +567,8 @@
     "manualEntry": "Manual Entry",
     "autoCheckout": "Auto Checkout",
     "missedPunch": "Missed Punch",
-    "correction": "Correction"
+    "correction": "Correction",
+    "noFound": "No attendance records found"
   },
   "employees": {
     "addEmployee": "Add Employee",
@@ -698,7 +707,8 @@
     "paymentDue": "Payment due",
     "subscriptionExpiring": "Subscription expiring",
     "newMessage": "New message",
-    "mention": "You were mentioned"
+    "mention": "You were mentioned",
+    "markAllAsRead": "Mark all as read"
   },
   "errors": {
     "required": "This field is required",
@@ -953,7 +963,10 @@
     "showMore": "Show More",
     "showLess": "Show Less",
     "loadMore": "Load More",
-    "today": "Today"
+    "today": "Today",
+    "pause": "Pause",
+    "resume": "Resume",
+    "start": "Start"
   },
   "months": {
     "january": "January",
@@ -1036,7 +1049,9 @@
     "created": "Created",
     "updated": "Updated",
     "noEvents": "No events scheduled",
-    "addToCalendar": "Add to calendar"
+    "addToCalendar": "Add to calendar",
+    "selectADay": "Select a day",
+    "unknown": "Unknown"
   },
   "labels": {
     "fullName": "Full Name",
@@ -1074,7 +1089,9 @@
     "description": "Description",
     "notes": "Notes",
     "attachments": "Attachments",
-    "registered": "Registered"
+    "registered": "Registered",
+    "leaveBalances": "Leave Balances",
+    "phone": "Phone"
   },
   "forms": {
     "required": "*",
@@ -1126,6 +1143,12 @@
       "close": "Close",
       "saving": "Saving...",
       "saveAssignment": "Save Assignment"
+    },
+    "editEmployee": {
+      "failedToUpdate": "Failed to update employee",
+      "saveChanges": "Save Changes",
+      "title": "Edit Employee",
+      "updatedSuccess": "Employee updated successfully"
     }
   },
   "employeeInfo": {
@@ -1271,7 +1294,26 @@
     "yourAccountDetails": "Your Account Details",
     "yourActivity": "Your Activity",
     "saving": "Saving...",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "adminAssignedSuccessfully": "Admin assigned successfully",
+    "adminRemovedSuccessfully": "Admin removed successfully",
+    "backToHome": "Back to Home",
+    "backToLogin": "Back to Login",
+    "backToOrganizations": "Back to Organizations",
+    "backToPlans": "Back to Plans",
+    "cancel": "Cancel",
+    "comprehensiveAnalysis": "Comprehensive Analysis",
+    "days": "days",
+    "deleting": "Deleting...",
+    "errorAssigningAdmin": "Error assigning admin",
+    "errorRemovingAdmin": "Error removing admin",
+    "loadingAttendanceData": "Loading attendance data...",
+    "loadingFromConvex": "Loading from database...",
+    "notCheckedInWarning": "You have not checked in today",
+    "organizationNotFound": "Organization not found",
+    "role": "Role",
+    "saveAllChanges": "Save All Changes",
+    "yourEmail": "Your email"
   },
   "reportsAnalytics": {
     "reportsAnalytics": "Reports & Analytics",
@@ -1663,7 +1705,10 @@
     "clockInOut": "Clock in/out",
     "toggleSidebar": "Toggle Sidebar",
     "showHideNav": "Show/hide navigation",
-    "openNotifications": "Open notification panel"
+    "openNotifications": "Open notification panel",
+    "breakTestingMode": "Break Testing Mode",
+    "workHoursEnd": "Work Hours End",
+    "workHoursStart": "Work Hours Start"
   },
   "settingsNotifications": {
     "title": "Notification Settings",
@@ -1692,7 +1737,18 @@
     "outlookCalendar": "Outlook Calendar",
     "outlookCalendarDesc": "Sync your leave schedule with Microsoft Outlook",
     "emailReports": "Email Reports",
-    "dataManagement": "Data Management"
+    "dataManagement": "Data Management",
+    "backupToCloud": "Backup to Cloud",
+    "exportAsCSV": "Export as CSV",
+    "exportAsExcel": "Export as Excel",
+    "exportAsPDFReport": "Export as PDF Report",
+    "lastBackup": "Last backup",
+    "microsoftTeams": "Microsoft Teams",
+    "microsoftTeamsDesc": "Sync notifications with Microsoft Teams channels",
+    "neverBackedUp": "Never backed up",
+    "slack": "Slack",
+    "slackDesc": "Connect your Slack workspace for instant notifications",
+    "title": "Integrations"
   },
   "settingsAdvancedSecurity": {
     "twoFactor": "Two-Factor Authentication",
@@ -1767,7 +1823,8 @@
   "editEmployee": {
     "fullAccess": "Full access",
     "manageTeam": "Manage team",
-    "basicAccess": "Basic access"
+    "basicAccess": "Basic access",
+    "accessDenied": "Access denied"
   },
   "employeesExtra": {
     "contractorTip": "Tip: include \"contractor\" in email Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р В РІР‚В Р В Р вЂ Р В РІР‚С™Р РЋРІР‚С”Р В Р Р‹Р РЋРІР‚С” auto-sets contractor type (12,000 Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В¦Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р В Р РЏ allowance)",
@@ -1981,7 +2038,24 @@
     "delivered": "Delivered",
     "read": "Read",
     "sent": "Sent",
-    "failed": "Failed"
+    "failed": "Failed",
+    "cancelLeave": "Cancel leave",
+    "confirmDelete": "Confirm delete",
+    "confirmSend": "Confirm send",
+    "confirmUpdate": "Confirm update",
+    "greeting": "Hello! How can I help you?",
+    "leaveRequest": "Leave request",
+    "listening": "Listening...",
+    "pendingApprovals": "Pending approvals",
+    "placeholder": "Type a message...",
+    "showBalance": "Show balance",
+    "stopListening": "Stop listening",
+    "teamStats": "Team statistics",
+    "updateLeave": "Update leave",
+    "viewUpcoming": "View upcoming",
+    "voiceInput": "Voice input",
+    "whoOnLeave": "Who is on leave?",
+    "whoOnLeaveToday": "Who is on leave today?"
   },
   "analytics": {
     "approvalRate": "Approval Rate",
@@ -2388,7 +2462,16 @@
     "customIntegrations": "Custom integrations",
     "prioritySupport": "24/7 priority support",
     "onPremise": "On-premise deployment option",
-    "uptime": "99.9% uptime SLA"
+    "uptime": "99.9% uptime SLA",
+    "backToPricing": "Back to Pricing",
+    "contactHeader": "Contact our team",
+    "directContact": "Direct Contact",
+    "enterpriseSubtitle": "Get a custom plan for your organization",
+    "fillAllFields": "Please fill all required fields",
+    "messageSentDesc": "We will get back to you shortly",
+    "messageSentTitle": "Message Sent!",
+    "requirementsPlaceholder": "Tell us about your requirements...",
+    "selectTeamSize": "Select team size"
   },
   "task": {
     "createTask": "Create Task",
@@ -2441,7 +2524,13 @@
     "displayPerformance": "Display Performance",
     "compactMode": "Compact Mode",
     "dataRefreshRate": "Data Refresh Rate",
-    "dataUpdatesInstantly": "Data updates instantly"
+    "dataUpdatesInstantly": "Data updates instantly",
+    "dashboardWidgetsDesc": "Choose which widgets appear on your dashboard",
+    "dataRefreshesEvery": "Data refreshes every",
+    "every15Minutes": "Every 15 minutes",
+    "every30Minutes": "Every 30 minutes",
+    "realtimeUpdates": "Real-time Updates",
+    "refreshDataManually": "Refresh data manually"
   },
   "planGate": {
     "upgradeRequired": "Upgrade Required",
@@ -2986,5 +3075,101 @@
     "errorFillFields": "Fill in the title and message",
     "errorSpecifyTime": "Specify the maintenance start time",
     "errorOrgNotLoaded": "Organization not loaded"
+  },
+  "contact": {
+    "company": "Company",
+    "email": "Email",
+    "enterpriseSupport": "Enterprise Support",
+    "message": "Message",
+    "name": "Name",
+    "securityNotice": "Your data is encrypted and secure",
+    "sendMessage": "Send Message",
+    "teamSize": "Team Size",
+    "title": "Contact Us"
+  },
+  "legal": {
+    "acceptance": "Acceptance of Terms",
+    "acceptanceDesc": "By using our services, you agree to these terms of service.",
+    "accountInfo": "Account Information",
+    "adminResponsibilities": "Administrator Responsibilities",
+    "adminResponsibilitiesDesc": "Administrators are responsible for managing their organization's settings, users, and data within the platform.",
+    "aiAssistant": "AI Assistant Interactions",
+    "allActivities": "All platform activities are logged",
+    "analyzeUsage": "Analyze usage patterns and improve our services",
+    "attendanceData": "Attendance and time tracking data",
+    "audits": "Regular security audits",
+    "backToHome": "Back to Home",
+    "changesTerms": "Changes to Terms",
+    "changesTermsDesc": "We reserve the right to modify these terms at any time. Users will be notified of significant changes.",
+    "complyLaws": "Comply with applicable laws and regulations",
+    "complyLocal": "Compliance with local labor laws",
+    "configureSchedules": "Configure work schedules and attendance rules",
+    "contactSection": "Contact",
+    "contactSectionDesc": "If you have any questions about these terms, please contact us.",
+    "contactUs": "Contact Us",
+    "contactUsDesc": "For privacy-related inquiries, contact us at:",
+    "convex": "Convex real-time database",
+    "cookies": "Cookies",
+    "cookiesDesc": "We use essential cookies to maintain your session and preferences. No third-party tracking cookies are used.",
+    "cookiesNote": "Note: We only use essential cookies. No tracking or advertising cookies are used on this platform.",
+    "dataRetention": "Data Retention",
+    "dataRetentionDesc": "We retain your data for as long as your account is active. Upon account deletion, all associated data will be removed within 30 days.",
+    "dataSecurity": "Data Security",
+    "dataSecurityDesc": "We implement industry-standard security measures to protect your data:",
+    "employeeAnalytics": "Employee performance analytics",
+    "encryption": "End-to-end encryption for sensitive data",
+    "ensureAccurate": "Ensure accurate attendance and leave records",
+    "ensureConsent": "Ensure proper consent for biometric data collection",
+    "ensureSecurity": "Ensure platform security and prevent abuse",
+    "faceData": "Facial recognition data (if enabled)",
+    "gdpr": "GDPR Compliance",
+    "gdprDesc": "For users in the European Economic Area, we comply with GDPR. You have the following rights:",
+    "generateAnalytics": "Generate workforce analytics and reports",
+    "howWeUse": "How We Use Your Information",
+    "howWeUseDesc": "We use your information to:",
+    "https": "HTTPS encryption for all communications",
+    "infoWeCollect": "Information We Collect",
+    "infoWeCollectDesc": "We collect information that you provide directly to us, including:",
+    "intellectualProperty": "Intellectual Property",
+    "intellectualPropertyDesc": "All content, features, and functionality of the platform are owned by ShieldOffice and protected by international copyright laws.",
+    "lastUpdated": "Last updated",
+    "leaveManagement": "Leave management records",
+    "leaveRequests": "Leave request history",
+    "legal": "Legal",
+    "legalEmail": "legal@shieldoffice.com",
+    "limitationLiability": "Limitation of Liability",
+    "limitationLiabilityDesc": "ShieldOffice shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform.",
+    "maintainConfidentiality": "Maintain the confidentiality of your account credentials",
+    "maintainSession": "Maintain your session and preferences",
+    "manageAccess": "Manage employee access and permissions",
+    "notAttemptAccess": "Not attempt to access accounts or data of other users",
+    "privacyEmail": "privacy@shieldoffice.com",
+    "privacyPolicy": "Privacy Policy",
+    "privacyTitle": "Privacy Policy",
+    "processAttendance": "Process attendance and time tracking",
+    "profilePhotos": "Profile photos and preferences",
+    "provideMaintain": "Provide and maintain our services",
+    "realtimeTracking": "Real-time attendance tracking",
+    "rememberPreferences": "Remember your preferences",
+    "respondPrivacy": "Respond to your privacy requests",
+    "respondWithin": "We will respond to your request within 30 days.",
+    "rightOfAccess": "Right of Access - request a copy of your personal data",
+    "rightToErasure": "Right to Erasure - request deletion of your data",
+    "rightToObject": "Right to Object - object to processing of your data",
+    "rightToPortability": "Right to Portability - receive your data in a portable format",
+    "rightToRectification": "Right to Rectification - correct inaccurate personal data",
+    "sendNotifications": "Send notifications and updates",
+    "serviceAvailability": "Service Availability",
+    "serviceAvailabilityDesc": "We strive to maintain 99.9% uptime but do not guarantee uninterrupted access. Scheduled maintenance will be communicated in advance.",
+    "taskAssignments": "Task and project assignments",
+    "taskManagement": "Task management data",
+    "termination": "Termination",
+    "terminationDesc": "We may terminate or suspend your access immediately, without prior notice, for conduct that we believe violates these terms.",
+    "termsTitle": "Terms of Service",
+    "useOfServices": "Use of Services",
+    "useOfServicesDesc": "You agree to use our platform in accordance with applicable laws and these terms. You must:",
+    "userResponsibilities": "User Responsibilities",
+    "userResponsibilitiesDesc": "As a user of ShieldOffice, you agree to:",
+    "vectors": "Attack vector monitoring"
   }
 }

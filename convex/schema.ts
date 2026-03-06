@@ -762,6 +762,9 @@ export default defineSchema({
     lastReadAt: v.optional(v.number()),
     lastReadMessageId: v.optional(v.id("chatMessages")),
     isMuted: v.boolean(),
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
+    isArchived: v.optional(v.boolean()),
     joinedAt: v.number(),
   })
     .index("by_conversation", ["conversationId"])

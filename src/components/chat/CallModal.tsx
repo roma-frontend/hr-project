@@ -40,8 +40,10 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
 
   const endCallMutation = useMutation(api.chat.endCall);
   const answerCallMutation = useMutation(api.chat.answerCall);
+  const updateOfferMutation = useMutation(api.chat.updateOffer);
   const updateIceMutation = useMutation(api.chat.updateIceCandidates);
   const callData = useQuery(api.chat.getActiveCall, { conversationId: call.conversationId });
+  const addedIceCandidatesRef = useRef<Set<string>>(new Set());
 
   const FALLBACK_ICE_SERVERS: RTCIceServer[] = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -217,10 +219,10 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
       };
 
       if (call.isInitiator) {
-        // Create offer
+        // Create offer and store it via dedicated mutation (does NOT change call status)
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await answerCallMutation({ callId: call.callId, userId: currentUserId, answer: JSON.stringify(offer) });
+        await updateOfferMutation({ callId: call.callId, userId: currentUserId, offer: JSON.stringify(offer) });
         setCallStatus("connecting");
       }
     } catch (err: any) {
@@ -278,33 +280,47 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
     if (!callData || !peerConnectionRef.current) return;
     const pc = peerConnectionRef.current;
 
-    // Process ICE candidates from remote
     callData.participants?.forEach(async (p) => {
-      if (p.userId !== currentUserId && p.iceCandidates) {
-        for (const candStr of p.iceCandidates) {
-          try {
-            const cand = new RTCIceCandidate(JSON.parse(candStr));
-            if (pc.remoteDescription) await pc.addIceCandidate(cand);
-          } catch {}
-        }
-      }
-
-      // Process answer (if we're the initiator)
+      // === Receiver side: read the initiator's SDP offer from p.offer ===
       if (!call.isInitiator && p.userId !== currentUserId && p.offer && !pc.remoteDescription) {
         try {
+          console.log('[CallModal] Receiver: setting remote description from initiator offer');
           const offerSDP = JSON.parse(p.offer);
           await pc.setRemoteDescription(new RTCSessionDescription(offerSDP));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
+          // Store SDP answer on receiver's participant record (answerCall already called from ChatClient accept button)
           await answerCallMutation({ callId: call.callId, userId: currentUserId, answer: JSON.stringify(answer) });
-        } catch {}
+        } catch (e) {
+          console.error('[CallModal] Error processing offer:', e);
+        }
       }
 
+      // === Initiator side: read the receiver's SDP answer from p.answer ===
       if (call.isInitiator && p.userId !== currentUserId && p.answer && !pc.remoteDescription) {
         try {
+          console.log('[CallModal] Initiator: setting remote description from receiver answer');
           const answerSDP = JSON.parse(p.answer);
           await pc.setRemoteDescription(new RTCSessionDescription(answerSDP));
-        } catch {}
+        } catch (e) {
+          console.error('[CallModal] Error processing answer:', e);
+        }
+      }
+
+      // === Process ICE candidates from remote (deduplicated) ===
+      if (p.userId !== currentUserId && p.iceCandidates) {
+        for (const candStr of p.iceCandidates) {
+          if (addedIceCandidatesRef.current.has(candStr)) continue;
+          addedIceCandidatesRef.current.add(candStr);
+          try {
+            const cand = new RTCIceCandidate(JSON.parse(candStr));
+            if (pc.remoteDescription) {
+              await pc.addIceCandidate(cand);
+            }
+          } catch (e) {
+            console.error('[CallModal] Error adding ICE candidate:', e);
+          }
+        }
       }
     });
   }, [callData]);

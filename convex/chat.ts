@@ -143,9 +143,9 @@ export const getMyConversations = query({
           console.log(`[getMyConversations] Skipping conversation ${conv._id} - different org (${conv.organizationId} vs ${args.organizationId})`);
           return null;
         }
-        // Skip archived and deleted conversations
-        if (conv.isArchived || conv.isDeleted) {
-          console.log(`[getMyConversations] Skipping conversation ${conv._id} - archived/deleted`);
+        // Skip conversations deleted/archived by THIS user (per-user flags on membership)
+        if (m.isDeleted || m.isArchived) {
+          console.log(`[getMyConversations] Skipping conversation ${conv._id} - user deleted/archived (per-user)`);
           return null;
         }
 
@@ -441,13 +441,17 @@ export const sendMessage = mutation({
         .filter((m) => m.userId !== args.senderId && !m.isMuted)
         .map((m) => {
           // Don't increment unreadCount if user just marked conversation as read in the last 500ms
-          // This handles the race condition where markAsRead completes but new message arrives immediately
           const recentlyRead = m.lastReadAt && (now - m.lastReadAt) < 500;
           if (recentlyRead) {
-            // User just read, so don't increment their unread count
             return Promise.resolve();
           }
-          return ctx.db.patch(m._id, { unreadCount: m.unreadCount + 1 });
+          // If the member had soft-deleted this conversation, restore it so they see the new message
+          const patch: Record<string, any> = { unreadCount: m.unreadCount + 1 };
+          if (m.isDeleted) {
+            patch.isDeleted = false;
+            patch.deletedAt = undefined;
+          }
+          return ctx.db.patch(m._id, patch);
         })
     );
 
@@ -827,7 +831,7 @@ export const markMessageDelivered = mutation({
   },
 });
 
-/** Get total unread count across all conversations */
+/** Get total unread count across all conversations (excludes deleted/archived per-user) */
 export const getTotalUnread = query({
   args: { userId: v.id("users"), organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -835,7 +839,10 @@ export const getTotalUnread = query({
       .query("chatMembers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-    return memberships.reduce((sum, m) => sum + (m.unreadCount ?? 0), 0);
+    // Only count memberships that are not deleted/archived by this user and belong to the requested org
+    return memberships
+      .filter((m) => !m.isDeleted && !m.isArchived && m.organizationId === args.organizationId)
+      .reduce((sum, m) => sum + (m.unreadCount ?? 0), 0);
   },
 });
 
@@ -1041,6 +1048,28 @@ export const declineCall = mutation({
   },
 });
 
+/** Store SDP offer for the initiator (does NOT change call status) */
+export const updateOffer = mutation({
+  args: {
+    callId: v.id("chatCalls"),
+    userId: v.id("users"),
+    offer: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const call = await ctx.db.get(args.callId);
+    if (!call) throw new Error("Call not found");
+
+    const participants = call.participants.map((p) => {
+      if (p.userId === args.userId) {
+        return { ...p, offer: args.offer };
+      }
+      return p;
+    });
+
+    await ctx.db.patch(args.callId, { participants });
+  },
+});
+
 export const updateIceCandidates = mutation({
   args: {
     callId: v.id("chatCalls"),
@@ -1053,7 +1082,10 @@ export const updateIceCandidates = mutation({
 
     const participants = call.participants.map((p) => {
       if (p.userId === args.userId) {
-        return { ...p, iceCandidates: args.candidates };
+        // Append new candidates to existing array instead of replacing
+        const existing = p.iceCandidates ?? [];
+        const merged = [...existing, ...args.candidates];
+        return { ...p, iceCandidates: merged };
       }
       return p;
     });
@@ -1339,7 +1371,7 @@ export const togglePin = mutation({
   },
 });
 
-/** Soft delete a conversation */
+/** Soft delete a conversation (per-user — only hides it for the requesting user) */
 export const deleteConversation = mutation({
   args: {
     conversationId: v.id("chatConversations"),
@@ -1349,27 +1381,27 @@ export const deleteConversation = mutation({
     const conv = await ctx.db.get(args.conversationId);
     if (!conv) throw new Error("Conversation not found");
 
-    // Only creator or members can delete
     const member = await ctx.db
       .query("chatMembers")
-      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", args.conversationId).eq("userId", args.userId)
+      )
       .first();
 
     if (!member) throw new Error("Not a member of this conversation");
 
-    await ctx.db.patch(args.conversationId, {
+    // Mark as deleted for THIS user only & reset unread count
+    await ctx.db.patch(member._id, {
       isDeleted: true,
-      deletedBy: args.userId,
       deletedAt: Date.now(),
-      updatedAt: Date.now(),
+      unreadCount: 0,
     });
 
-    console.log(`[Chat] Conversation ${args.conversationId} deleted by ${args.userId}`);
+    console.log(`[Chat] Conversation ${args.conversationId} deleted for user ${args.userId} (per-user)`);
   },
 });
 
-/** Restore a deleted conversation */
+/** Restore a deleted conversation (per-user) */
 export const restoreConversation = mutation({
   args: {
     conversationId: v.id("chatConversations"),
@@ -1379,23 +1411,25 @@ export const restoreConversation = mutation({
     const conv = await ctx.db.get(args.conversationId);
     if (!conv) throw new Error("Conversation not found");
 
-    // Only the person who deleted it, or creator can restore
-    if (conv.deletedBy !== args.userId && conv.createdBy !== args.userId) {
-      throw new Error("Only who deleted it can restore");
-    }
+    const member = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", args.conversationId).eq("userId", args.userId)
+      )
+      .first();
 
-    await ctx.db.patch(args.conversationId, {
+    if (!member) throw new Error("Not a member of this conversation");
+
+    await ctx.db.patch(member._id, {
       isDeleted: false,
-      deletedBy: undefined,
       deletedAt: undefined,
-      updatedAt: Date.now(),
     });
 
-    console.log(`[Chat] Conversation ${args.conversationId} restored by ${args.userId}`);
+    console.log(`[Chat] Conversation ${args.conversationId} restored for user ${args.userId} (per-user)`);
   },
 });
 
-/** Archive or unarchive a conversation */
+/** Archive or unarchive a conversation (per-user) */
 export const toggleArchive = mutation({
   args: {
     conversationId: v.id("chatConversations"),
@@ -1407,19 +1441,20 @@ export const toggleArchive = mutation({
 
     const member = await ctx.db
       .query("chatMembers")
-      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", args.conversationId).eq("userId", args.userId)
+      )
       .first();
 
     if (!member) throw new Error("Not a member of this conversation");
 
-    await ctx.db.patch(args.conversationId, {
-      isArchived: !conv.isArchived,
-      updatedAt: Date.now(),
+    const newArchived = !member.isArchived;
+    await ctx.db.patch(member._id, {
+      isArchived: newArchived,
     });
 
-    console.log(`[Chat] Conversation ${args.conversationId} archive toggled by ${args.userId}`);
-    return !conv.isArchived;
+    console.log(`[Chat] Conversation ${args.conversationId} archive toggled for user ${args.userId} (per-user)`);
+    return newArchived;
   },
 });
 
@@ -1465,13 +1500,15 @@ export const getUnreadConversations = query({
       ))
       .collect();
 
-    const convIds = members.map((m) => m.conversationId);
+    // Filter out per-user deleted/archived memberships
+    const activeMembers = members.filter((m) => !m.isDeleted && !m.isArchived);
+    const convIds = activeMembers.map((m) => m.conversationId);
     const convs = await Promise.all(
       convIds.map((id) => ctx.db.get(id))
     );
 
     return convs
-      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => c !== null && !c.isDeleted && !c.isArchived)
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => c !== null)
       .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
   },
 });
@@ -1491,13 +1528,16 @@ export const getGroupConversations = query({
       ))
       .collect();
 
+    // Filter out per-user deleted/archived memberships
+    const activeMembers = members.filter((m) => !m.isDeleted && !m.isArchived);
+
     const convs = await Promise.all(
-      members.map((m) => ctx.db.get(m.conversationId))
+      activeMembers.map((m) => ctx.db.get(m.conversationId))
     );
 
     return convs
-      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
-        c !== null && c.type === "group" && !c.isDeleted && !c.isArchived
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } =>
+        c !== null && c.type === "group"
       )
       .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
   },
@@ -1518,13 +1558,16 @@ export const getPinnedConversations = query({
       ))
       .collect();
 
+    // Filter out members who have per-user deleted this conversation
+    const activeMembers = members.filter((m) => !m.isDeleted);
+
     const convs = await Promise.all(
-      members.map((m) => ctx.db.get(m.conversationId))
+      activeMembers.map((m) => ctx.db.get(m.conversationId))
     );
 
     return convs
-      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
-        c !== null && c.isPinned && !c.isDeleted
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } =>
+        c !== null && !!c.isPinned
       )
       .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
   },
@@ -1545,13 +1588,16 @@ export const getArchivedConversations = query({
       ))
       .collect();
 
+    // Only show conversations archived by this user (per-user) and not deleted
+    const archivedMembers = members.filter((m) => m.isArchived && !m.isDeleted);
+
     const convs = await Promise.all(
-      members.map((m) => ctx.db.get(m.conversationId))
+      archivedMembers.map((m) => ctx.db.get(m.conversationId))
     );
 
     return convs
-      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } => 
-        c !== null && c.isArchived && !c.isDeleted
+      .filter((c): c is typeof c & { _id: Id<"chatConversations"> } =>
+        c !== null
       )
       .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0));
   },
