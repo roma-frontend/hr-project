@@ -193,10 +193,10 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
 
   return (
     <>
+      {showNewConv && console.log("[ChatClient RETURN] showNewConv is TRUE, uid:", uid, "effectiveOrgId:", effectiveOrgId)}
       {/* New Conversation Modal - OUTSIDE overflow-hidden container */}
       {showNewConv && (
         <>
-          {console.log("[ChatClient] Rendering NewConversationModal, showNewConv:", showNewConv)}
           <NewConversationModal
             currentUserId={uid}
             organizationId={effectiveOrgId}
