@@ -216,11 +216,11 @@ export default function OrganizationsPage() {
                       </span>
                       {org.isActive ? (
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-green-500/10 text-green-500 border border-green-500/30">
-                          ✓ Активна
+                          {t('superadmin.organizations.card.statusActive')}
                         </span>
                       ) : (
                         <span className="px-2 py-1 rounded text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/30">
-                          ✗ Неактивна
+                          {t('superadmin.organizations.card.statusInactive')}
                         </span>
                       )}
                     </div>
@@ -266,7 +266,7 @@ export default function OrganizationsPage() {
                       <button
                         onClick={() => router.push(`/superadmin/organizations/${org._id}/manage-admins`)}
                         className="p-2 rounded hover:bg-blue-500/10 text-blue-500 transition-colors"
-                        title="Управлять администраторами"
+                        title={t('superadmin.organizations.card.manageAdmins')}
                       >
                         <Shield className="w-4 h-4" />
                       </button>

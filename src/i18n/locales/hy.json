@@ -2512,7 +2512,10 @@
         "totalEmployees": "Ընդամենը",
         "activeEmployees": "Ակտիվ",
         "employeeLimit": "Սահման",
-        "industry": "Արդյունաբերություն"
+        "industry": "Արդյունաբերություն",
+        "statusActive": "✓ Ակտիվ",
+        "statusInactive": "✗ Ոչ ակտիվ",
+        "manageAdmins": "Կառավարել ադմինիստրատորներ"
       },
       "list": {
         "title": "Կազմակերպությունների ցուցակ",

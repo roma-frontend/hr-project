@@ -2512,7 +2512,10 @@
         "totalEmployees": "Всего",
         "activeEmployees": "Активных",
         "employeeLimit": "Лимит",
-        "industry": "Отрасль"
+        "industry": "Отрасль",
+        "statusActive": "✓ Активна",
+        "statusInactive": "✗ Неактивна",
+        "manageAdmins": "Управлять администраторами"
       },
       "list": {
         "title": "Список организаций",

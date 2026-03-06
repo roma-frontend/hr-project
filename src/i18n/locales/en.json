@@ -2512,7 +2512,10 @@
         "totalEmployees": "Total",
         "activeEmployees": "Active",
         "employeeLimit": "Limit",
-        "industry": "Industry"
+        "industry": "Industry",
+        "statusActive": "✓ Active",
+        "statusInactive": "✗ Inactive",
+        "manageAdmins": "Manage administrators"
       },
       "list": {
         "title": "Organization List",
