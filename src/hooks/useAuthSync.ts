@@ -32,11 +32,18 @@ export function useAuthSync() {
       }
 
       // When NextAuth logs user out, clear everything
+      // BUT only if we don't have a valid email/password session (JWT cookie)
       if (status === "unauthenticated") {
-        console.log("[useAuthSync] NextAuth unauthenticated - logging out and clearing everything");
+        const { isAuthenticated } = useAuthStore.getState();
+        if (isAuthenticated) {
+          // User logged in via email/password — JWT session is active, don't logout
+          console.log("[useAuthSync] NextAuth unauthenticated but email/password session active - skipping logout");
+          return;
+        }
+        console.log("[useAuthSync] NextAuth unauthenticated and no active session - logging out");
         logout();
         setUserEmail(null);
-        sessionCreated.current = false; // Reset so it can initialize again on next login
+        sessionCreated.current = false;
         return;
       }
 

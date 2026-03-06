@@ -20,9 +20,11 @@ export function TeamPresence() {
 
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  // Only pass requesterId if it looks like a valid Convex user ID (not organizationId or temp ID)
+  const hasValidUserId = user?.id && !user.id.startsWith("nextauth-") && user.id !== user.organizationId;
   const teamMembers = useQuery(
     api.productivity.getTeamPresence,
-    user?.id ? { requesterId: user.id } : "skip"
+    hasValidUserId ? { requesterId: user!.id as any } : "skip"
   );
 
   if (!teamMembers) {

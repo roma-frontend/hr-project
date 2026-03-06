@@ -45,20 +45,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Rehydrate persisted stores from localStorage on client only
     // This prevents SSR/client mismatch (hydration errors) from localStorage state
-    
-    // IMPORTANT: Only rehydrate sidebar - DO NOT rehydrate auth store
-    // This prevents race condition where rehydrate() loads old/empty localStorage data
-    // after useAuthSync has already populated the store with fresh session data
     useSidebarStore.persist.rehydrate();
-    
-    // DO NOT rehydrate useAuthStore here during active NextAuth sessions
-    // useAuthSync handles session hydration and will populate the store
-    // Rehydrating here can overwrite fresh session data with stale localStorage data
-    // causing the "User logs in correctly, then becomes User" bug
-    
+
+    // Rehydrate auth store from localStorage for email/password login sessions.
+    // Email/password login saves user data to localStorage but after page reload
+    // the store is empty (skipHydration: true). We need to restore it here.
+    // For OAuth sessions, useAuthSync will overwrite with fresh data anyway,
+    // so rehydrating stale data first is harmless.
+    useAuthStore.persist.rehydrate();
+
     setMounted(true);
-    // Note: DO NOT call getSessionAction here - useAuthSync handles OAuth flow
-    // The server session is created by useAuthSync when needed
   }, []);
 
   // transition-colors removed from wrapper div — causes full-tree repaint on theme change

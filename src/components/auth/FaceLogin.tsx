@@ -541,11 +541,32 @@ export function FaceLogin() {
 
         if (!response.ok) {
           const errorData = await response.json();
+          if (errorData.error === 'maintenance') {
+            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+            return;
+          }
           throw new Error(errorData.error || 'Login failed');
         }
 
         const data = await response.json();
         console.log("✅ Session created successfully", data);
+
+        // Save user data to auth store so it persists after redirect
+        if (data.session) {
+          const { login } = useAuthStore.getState();
+          login({
+            id: data.session.userId,
+            name: data.session.name,
+            email: data.session.email,
+            role: data.session.role,
+            organizationId: data.session.organizationId,
+            department: data.session.department,
+            position: data.session.position,
+            employeeType: data.session.employeeType,
+            avatar: data.session.avatar,
+          });
+          console.log("💾 User saved to auth store:", data.session.name);
+        }
       } catch (loginError: any) {
         console.error("❌ Face login API failed:", loginError);
         console.error("Error details:", {
@@ -555,17 +576,8 @@ export function FaceLogin() {
         throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
       }
 
-      // Don't update auth store here - let Providers.tsx load from session
-      console.log("🔍 Step 6: Session created, user data will be loaded by Providers");
-      
-      // Redirect to dashboard after ensuring session is set
-      console.log("🔍 Step 7: Redirecting to dashboard...");
-      
-      // Wait for session cookies to be properly set
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Hard navigation to ensure fresh page load with new session
-      // Providers will load user data from session automatically
+      // Redirect to dashboard
+      console.log("🔍 Step 6: Redirecting to dashboard...");
       window.location.href = "/dashboard";
 
     } catch (error: any) {

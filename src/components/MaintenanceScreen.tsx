@@ -4,18 +4,17 @@ import React, { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, Wrench, Clock, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Wrench, Clock, Eye } from "lucide-react";
 
-export function MaintenanceScreen() {
+export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, logout } = useAuthStore();
   const [countdownTime, setCountdownTime] = useState<string>("");
-  
+
   // Get organizationId from user store, URL params, or localStorage
   const userOrgId = user?.organizationId;
-  const urlOrgId = searchParams?.get("org");
+  const urlOrgId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("org") : null;
   const storedOrgId = typeof window !== "undefined" ? localStorage.getItem("lastOrganizationId") : null;
   const organizationId = userOrgId || urlOrgId || storedOrgId;
 
@@ -40,7 +39,7 @@ export function MaintenanceScreen() {
       const now = Date.now();
       const startTime = maintenance.startTime;
       const endTime = maintenance.endTime || startTime + (maintenance.estimatedDuration ? calculateDuration(maintenance.estimatedDuration) : 3600000);
-      
+
       if (now >= endTime) {
         setCountdownTime("Обслуживание завершено...");
         clearInterval(interval);
@@ -63,195 +62,194 @@ export function MaintenanceScreen() {
     return () => clearInterval(interval);
   }, [maintenance?.isActive, maintenance?.startTime, maintenance?.endTime, maintenance?.estimatedDuration]);
 
-  // Check if maintenance banner should be shown:
-  // 1. If maintenance=true in URL (after automatic logout)
-  // 2. If maintenance has started and user is logged in (not superadmin)
-  const isForcedMaintenancePage = searchParams?.get("maintenance") === "true";
+  const isForcedMaintenancePage = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("maintenance") === "true";
   const now = Date.now();
   const maintenanceStarted = maintenance?.isActive && maintenance?.startTime && now >= maintenance.startTime;
-  const shouldShow = isForcedMaintenancePage || (maintenanceStarted && user && user.role !== "superadmin");
-  
-  if (!shouldShow || !maintenance?.isActive) {
+  const shouldShow = forceShow || isForcedMaintenancePage || (maintenanceStarted && user && user.role !== "superadmin");
+
+  // Reset opacity in case useMaintenanceAutoLogout set it to 0 before redirect
+  useEffect(() => {
+    if (shouldShow) {
+      document.documentElement.style.transition = "none";
+      document.documentElement.style.opacity = "1";
+    }
+  }, [shouldShow]);
+
+  if (!shouldShow) {
     return null;
   }
 
-  const maintenanceIcon = maintenance.icon || "🔧";
+  const maintenanceIcon = maintenance?.icon || "🔧";
+  const maintenanceTitle = maintenance?.title || "Техническое обслуживание";
+  const maintenanceMessage = maintenance?.message || "Система находится на техническом обслуживании. Пожалуйста, подождите.";
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        backgroundColor: "var(--background)",
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        overflowY: "auto",
+        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+        color: "#f1f5f9",
       }}
     >
       {/* Animated background gradient */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/5 dark:bg-orange-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-red-500/5 dark:bg-red-600/10 rounded-full blur-3xl" />
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+        <div style={{
+          position: "absolute", top: 0, left: "25%",
+          width: 384, height: 384, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(249,115,22,0.15), transparent)",
+          filter: "blur(80px)",
+        }} />
+        <div style={{
+          position: "absolute", bottom: 0, right: "25%",
+          width: 384, height: 384, borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(239,68,68,0.15), transparent)",
+          filter: "blur(80px)",
+        }} />
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 max-w-lg mx-auto px-6 text-center">
+      <div style={{
+        position: "relative", zIndex: 10,
+        maxWidth: 512, margin: "0 auto", padding: "48px 24px",
+        textAlign: "center",
+        minHeight: "100vh", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+      }}>
         {/* Icon with animation */}
-        <div className="mb-6 flex justify-center">
-          <div 
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 dark:from-orange-500 dark:to-red-600 flex items-center justify-center text-4xl animate-bounce"
-            style={{ animationDuration: "2s" }}
-          >
+        <div style={{ marginBottom: 24, display: "flex", justifyContent: "center" }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: "50%",
+            background: "linear-gradient(135deg, #f97316, #ea580c)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 40, animation: "bounce 2s infinite",
+          }}>
             {maintenanceIcon}
           </div>
         </div>
 
         {/* Title */}
-        <h1
-          className="text-4xl md:text-5xl font-bold mb-4"
-          style={{ color: "var(--text-primary)" }}
-        >
-          🔴 Техническое обслуживание
+        <h1 style={{ fontSize: 36, fontWeight: 800, marginBottom: 16, color: "#ffffff" }}>
+          Техническое обслуживание
         </h1>
 
         {/* Maintenance message */}
-        <div
-          className="mb-6 p-6 rounded-xl border-l-4"
-          style={{
-            backgroundColor: "var(--background-subtle)",
-            borderColor: "#f97316",
-            borderLeftColor: "#f97316",
-            color: "var(--text-primary)",
-          }}
-        >
-          <p className="text-lg leading-relaxed mb-4">
-            {maintenance.title}
+        <div style={{
+          marginBottom: 24, padding: 24, borderRadius: 12,
+          borderLeft: "4px solid #f97316",
+          background: "rgba(255,255,255,0.05)",
+          textAlign: "left",
+        }}>
+          <p style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 12, color: "#ffffff", fontWeight: 600 }}>
+            {maintenanceTitle}
           </p>
-          <p style={{ color: "var(--text-muted)" }} className="text-sm">
-            {maintenance.message}
+          <p style={{ color: "#94a3b8", fontSize: 14 }}>
+            {maintenanceMessage}
           </p>
         </div>
 
         {/* Maintenance details */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {/* Start time */}
-          <div
-            className="p-4 rounded-lg"
-            style={{
-              backgroundColor: "var(--background-subtle)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2" style={{ color: "var(--text-muted)" }}>
-              <Clock className="w-4 h-4" />
-              <span className="text-xs uppercase tracking-wide font-semibold">Начало</span>
+        {maintenance?.startTime && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 32, width: "100%" }}>
+            <div style={{ padding: 16, borderRadius: 8, background: "rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "#94a3b8" }}>
+                <Clock style={{ width: 16, height: 16 }} />
+                <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>Начало</span>
+              </div>
+              <p style={{ fontWeight: 600, color: "#ffffff" }}>
+                {new Date(maintenance.startTime).toLocaleString("ru-RU", {
+                  month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                })}
+              </p>
             </div>
-            <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
-              {new Date(maintenance.startTime).toLocaleString("ru-RU", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
 
-          {/* Estimated duration */}
-          <div
-            className="p-4 rounded-lg"
-            style={{
-              backgroundColor: "var(--background-subtle)",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2" style={{ color: "var(--text-muted)" }}>
-              <Wrench className="w-4 h-4" />
-              <span className="text-xs uppercase tracking-wide font-semibold">Длительность</span>
+            <div style={{ padding: 16, borderRadius: 8, background: "rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "#94a3b8" }}>
+                <Wrench style={{ width: 16, height: 16 }} />
+                <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>Длительность</span>
+              </div>
+              <p style={{ fontWeight: 600, color: "#ffffff" }}>
+                {maintenance.estimatedDuration || "Не указана"}
+              </p>
             </div>
-            <p className="font-semibold" style={{ color: "var(--text-primary)" }}>
-              {maintenance.estimatedDuration || "Не указана"}
-            </p>
           </div>
-        </div>
+        )}
 
-        {/* Countdown timer if available */}
+        {/* Countdown timer */}
         {countdownTime && (
-          <div
-            className="mb-8 p-6 rounded-xl border"
-            style={{
-              backgroundColor: "rgba(249, 115, 22, 0.1)",
-              borderColor: "#f97316",
-            }}
-          >
-            <div
-              className="flex items-center justify-center gap-2 mb-2"
-              style={{ color: "#f97316" }}
-            >
-              <Clock className="w-5 h-5" />
-              <span className="text-sm font-semibold uppercase tracking-wide">Оставшееся время</span>
+          <div style={{
+            marginBottom: 32, padding: 24, borderRadius: 12,
+            background: "rgba(249,115,22,0.1)",
+            border: "1px solid rgba(249,115,22,0.3)",
+            width: "100%",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8, color: "#f97316" }}>
+              <Clock style={{ width: 20, height: 20 }} />
+              <span style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Оставшееся время</span>
             </div>
-            <p className="text-3xl font-bold" style={{ color: "#f97316" }}>
+            <p style={{ fontSize: 32, fontWeight: 700, color: "#f97316" }}>
               {countdownTime}
             </p>
           </div>
         )}
 
         {/* Info message */}
-        <div
-          className="mb-8 p-4 rounded-lg border"
-          style={{
-            backgroundColor: "rgba(37, 99, 235, 0.08)",
-            borderColor: "var(--primary)",
-            color: "var(--primary)",
-          }}
-        >
-          <div className="flex items-center gap-2 justify-center">
-            <Eye className="w-4 h-4" />
-            <p className="text-sm">
-              Техническое обслуживание в процессе. Вы будете перенаправлены автоматически...
+        <div style={{
+          marginBottom: 32, padding: 16, borderRadius: 8,
+          background: "rgba(59,130,246,0.1)",
+          border: "1px solid rgba(59,130,246,0.3)",
+          width: "100%",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: "#60a5fa" }}>
+            <Eye style={{ width: 16, height: 16 }} />
+            <p style={{ fontSize: 14 }}>
+              Система на обслуживании. Страница обновится автоматически.
             </p>
           </div>
         </div>
 
         {/* Contact info */}
-        <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-          <p>Спасибо за терпение 🙏</p>
-          <p className="mt-2 text-xs">Если у вас есть вопросы, обратитесь к администратору</p>
+        <div style={{ color: "#94a3b8", fontSize: 14 }}>
+          <p>Спасибо за терпение</p>
+          <p style={{ marginTop: 8, fontSize: 12 }}>Если у вас есть вопросы, обратитесь к администратору</p>
         </div>
 
         {/* Sign Out button */}
-        <div className="mt-8">
+        <div style={{ marginTop: 32 }}>
           <button
             onClick={() => {
               logout();
               router.push("/login");
             }}
-            className="px-6 py-2.5 rounded-lg text-sm font-medium transition-all hover:opacity-90 active:scale-95"
             style={{
-              backgroundColor: "#f97316",
-              color: "white",
-              backgroundImage: "linear-gradient(to right, #f97316, #ea580c)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = "0.9";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = "1";
+              padding: "10px 24px", borderRadius: 8,
+              fontSize: 14, fontWeight: 500,
+              background: "linear-gradient(to right, #f97316, #ea580c)",
+              color: "white", border: "none", cursor: "pointer",
             }}
           >
             Выход
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-12px); }
+        }
+      `}</style>
     </div>
   );
 }
 
 function calculateDuration(duration: string | undefined): number {
-  if (!duration) return 3600000; // 1 hour default
-
+  if (!duration) return 3600000;
   const match = duration.match(/(\d+)/);
   const amount = match ? parseInt(match[1]) : 1;
-
   if (duration.includes("hour")) return amount * 3600000;
   if (duration.includes("minute")) return amount * 60000;
-  if (duration.includes("2 hour")) return 2 * 3600000;
-  if (duration.includes("3 hour")) return 3 * 3600000;
-  if (duration.includes("4 hour")) return 4 * 3600000;
-
   return 3600000;
 }

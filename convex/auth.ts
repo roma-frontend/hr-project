@@ -282,17 +282,28 @@ export const login = mutation({
     });
 
     const userData = safeUser(user as Parameters<typeof safeUser>[0]);
-    
+
+    // Fix placeholder name: if name is "User" or empty, use email prefix
+    const nameTrimmed = userData.name?.trim().toLowerCase();
+    const isPlaceholderName = !userData.name || nameTrimmed === "user";
+    let finalName = userData.name;
+    if (isPlaceholderName) {
+      finalName = email.split("@")[0] || "User";
+      // Also update in DB so it's fixed permanently
+      await ctx.db.patch(user._id, { name: finalName });
+      console.log('[auth:login] 📝 Fixed placeholder name from', userData.name, 'to', finalName);
+    }
+
     console.log('[auth:login] ✅ Login successful, returning:', {
       userId: userData.userId,
-      name: userData.name,
+      name: finalName,
       email: userData.email,
       role: userData.role,
     });
-    
+
     return {
       userId: userData.userId,
-      name: userData.name,
+      name: finalName,
       email: userData.email,
       role: userData.role,
       organizationId: userData.organizationId,

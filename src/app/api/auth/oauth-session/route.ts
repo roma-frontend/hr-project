@@ -60,6 +60,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
+    // Check maintenance mode — block non-superadmin login
+    if (userResult.role !== 'superadmin' && userResult.organizationId) {
+      const maintenanceData = await convexQuery('admin:getMaintenanceMode', {
+        organizationId: userResult.organizationId,
+      });
+      if (maintenanceData?.isActive && maintenanceData.startTime <= Date.now()) {
+        return NextResponse.json(
+          { error: 'maintenance', organizationId: userResult.organizationId },
+          { status: 503 }
+        );
+      }
+    }
+
     // 2. Create session via mutation (bypasses password — OAuth is trusted)
     const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days

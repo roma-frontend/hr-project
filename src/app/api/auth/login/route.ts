@@ -151,6 +151,19 @@ export async function POST(req: NextRequest) {
 
     const result = data.value;
 
+    // ── Check maintenance mode — block non-superadmin login ──────────────────
+    if (result.role !== 'superadmin' && result.organizationId) {
+      const maintenanceData = await convexQuery('admin:getMaintenanceMode', {
+        organizationId: result.organizationId,
+      });
+      if (maintenanceData?.isActive && maintenanceData.startTime <= Date.now()) {
+        return NextResponse.json(
+          { error: 'maintenance', organizationId: result.organizationId },
+          { status: 503 }
+        );
+      }
+    }
+
     // ── Register device fingerprint ──────────────────────────────────────────
     if (deviceFingerprint && result.userId) {
       const deviceResult = await convexMutation('security:registerDevice', {

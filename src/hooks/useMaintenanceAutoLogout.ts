@@ -92,11 +92,16 @@ export function useMaintenanceAutoLogout() {
             console.error("[Maintenance] Logout API failed (will continue):", err);
           }
           
-          // 2. Clear Zustand store and localStorage
+          // 2. Save organizationId before clearing store (for MaintenanceScreen)
+          if (organizationId) {
+            localStorage.setItem('lastOrganizationId', organizationId);
+          }
+
+          // 3. Clear Zustand store and localStorage
           logout();
           localStorage.removeItem('hr-auth-storage');
-          
-          // 3. Manually clear all auth cookies from browser
+
+          // 4. Manually clear all auth cookies from browser
           const cookies = document.cookie.split(";");
           for (let cookie of cookies) {
             const eqPos = cookie.indexOf("=");
@@ -141,22 +146,27 @@ export function useMaintenanceAutoLogout() {
         setTimeout(async () => {
           try {
             console.log("[Maintenance] Timeout: Executing logout and redirect");
-            
+
             const maintenanceUrl = `/login?maintenance=true${organizationId ? `&org=${organizationId}` : ""}`;
-            
-            // 1. Call logout API route to clear server-side session
+
+            // 1. Save organizationId before clearing (for MaintenanceScreen)
+            if (organizationId) {
+              localStorage.setItem('lastOrganizationId', organizationId);
+            }
+
+            // 2. Call logout API route to clear server-side session
             console.log("[Maintenance] Timeout: Calling logout API endpoint...");
             try {
               const response = await fetch(`/api/auth/logout?redirect=${encodeURIComponent(maintenanceUrl)}`, {
                 method: 'POST',
-                credentials: 'include', // Include cookies in the request
+                credentials: 'include',
               });
               console.log("[Maintenance] Timeout: Logout API response status:", response.status);
             } catch (err) {
               console.error("[Maintenance] Timeout: Logout API failed (will continue):", err);
             }
-            
-            // 2. Clear Zustand and localStorage
+
+            // 3. Clear Zustand and localStorage
             logout();
             localStorage.removeItem('hr-auth-storage');
             
@@ -215,22 +225,27 @@ export function useMaintenanceAutoLogout() {
         setTimeout(async () => {
           try {
             console.log("[Maintenance] Poll: Executing logout and redirect");
-            
+
             const maintenanceUrl = `/login?maintenance=true${organizationId ? `&org=${organizationId}` : ""}`;
-            
-            // 1. Call logout API route to clear server-side session
+
+            // 1. Save organizationId before clearing (for MaintenanceScreen)
+            if (organizationId) {
+              localStorage.setItem('lastOrganizationId', organizationId);
+            }
+
+            // 2. Call logout API route to clear server-side session
             console.log("[Maintenance] Poll: Calling logout API endpoint...");
             try {
               const response = await fetch(`/api/auth/logout?redirect=${encodeURIComponent(maintenanceUrl)}`, {
                 method: 'POST',
-                credentials: 'include', // Include cookies in the request
+                credentials: 'include',
               });
               console.log("[Maintenance] Poll: Logout API response status:", response.status);
             } catch (err) {
               console.error("[Maintenance] Poll: Logout API failed (will continue):", err);
             }
-            
-            // 2. Clear Zustand and localStorage
+
+            // 3. Clear Zustand and localStorage
             logout();
             localStorage.removeItem('hr-auth-storage');
             

@@ -20,6 +20,17 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
   return data.value;
 }
 
+async function convexQuery(name: string, args: Record<string, unknown>) {
+  const res = await fetch(`${CONVEX_URL}/api/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: name, args }),
+  });
+  const data = await res.json();
+  if (data.status === "error") return null;
+  return data.value;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -44,6 +55,19 @@ export async function POST(request: NextRequest) {
     });
 
     log.debug('Convex login successful', { userId: result.userId });
+
+    // Check maintenance mode — block non-superadmin login
+    if (result.role !== 'superadmin' && result.organizationId) {
+      const maintenanceData = await convexQuery('admin:getMaintenanceMode', {
+        organizationId: result.organizationId,
+      });
+      if (maintenanceData?.isActive && maintenanceData.startTime <= Date.now()) {
+        return NextResponse.json(
+          { error: 'maintenance', organizationId: result.organizationId },
+          { status: 503 }
+        );
+      }
+    }
 
     // Create JWT
     const jwt = await signJWT({
@@ -77,8 +101,21 @@ export async function POST(request: NextRequest) {
 
     log.user('Face Login successful', { userId: result.userId, email });
 
-    // Return simple success response
-    return NextResponse.json({ success: true });
+    // Return success with session data so client can populate auth store
+    return NextResponse.json({
+      success: true,
+      session: {
+        userId: result.userId,
+        name: result.name,
+        email: result.email,
+        role: result.role,
+        organizationId: result.organizationId,
+        department: result.department,
+        position: result.position,
+        employeeType: result.employeeType,
+        avatar: result.avatarUrl,
+      },
+    });
   } catch (error: any) {
     log.error('Face Login API error', error);
     return NextResponse.json(

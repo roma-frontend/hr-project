@@ -135,26 +135,22 @@ export function ServiceBroadcastDialog({
                 });
             }
             
-            // Schedule maintenance mode to be enabled at the specified time if needed
+            // Create maintenance mode record immediately in DB
+            // The record stores startTime — useMaintenanceAutoLogout on clients
+            // will trigger logout when startTime is reached (no client-side setTimeout needed)
             if (scheduleMaintenance && scheduleDateTime) {
-                const delay = Math.max(0, scheduledTime - now);
-                setTimeout(async () => {
-                    try {
-                        for (const orgId of targetOrgs) {
-                            await enableMaintenanceMode({
-                                organizationId: orgId,
-                                userId: userId as Id<"users">,
-                                title: title.trim(),
-                                message: broadcastContent,
-                                startTime: scheduledTime,
-                                estimatedDuration: estimatedDuration,
-                                icon: selectedIcon,
-                            });
-                        }
-                    } catch (err) {
-                        console.error("Error enabling maintenance mode:", err);
-                    }
-                }, delay);
+                for (const orgId of targetOrgs) {
+                    await enableMaintenanceMode({
+                        organizationId: orgId,
+                        userId: userId as Id<"users">,
+                        title: title.trim(),
+                        message: broadcastContent,
+                        startTime: scheduledTime,
+                        estimatedDuration: estimatedDuration,
+                        icon: selectedIcon,
+                    });
+                }
+                console.log("[ServiceBroadcast] Maintenance mode created in DB, will trigger at:", new Date(scheduledTime).toISOString());
             }
 
             setStatus("success");

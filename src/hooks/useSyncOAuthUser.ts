@@ -62,6 +62,14 @@ export function useSyncOAuthUser() {
           }),
         });
 
+        if (!res.ok && res.status === 503) {
+          const errorData = await res.json();
+          if (errorData.error === 'maintenance') {
+            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+            return;
+          }
+        }
+
         if (res.ok) {
           const data = await res.json();
           console.log("[useSyncOAuthUser] ✅ OAuth session created:", {
