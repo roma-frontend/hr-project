@@ -36,6 +36,11 @@ const FocusModeIndicator = dynamic(
   { ssr: false, loading: () => null }
 );
 
+const NotificationBanner = dynamic(
+  () => import("@/components/notifications/NotificationBanner").then((m) => m.NotificationBanner),
+  { ssr: false, loading: () => null }
+);
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
@@ -85,6 +90,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </div>
       {/* AI Chat Widget - hidden on /chat page so it doesn't cover the send button */}
       {!isChatPage && <ChatWidget />}
+
+      {/* Real-time notification banners */}
+      {mounted && user && <NotificationBanner />}
 
       {/* Productivity Services - only render when mounted to avoid SSR mismatch */}
       {mounted && user && (

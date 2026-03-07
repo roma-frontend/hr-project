@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { LEAVE_TYPE_LABELS, type LeaveType, type LeaveStatus } from "@/lib/types";
 import { CheckInOutWidget } from "@/components/attendance/CheckInOutWidget";
+import { DashboardBanners } from "@/components/dashboard/DashboardBanners";
 
 // Lazy load heavy dashboard components to reduce initial JS bundle
 const AttendanceDashboard = dynamic(
@@ -86,6 +87,17 @@ export function EmployeeDashboard() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
+      {/* Smart Banners */}
+      <motion.div variants={itemVariants}>
+        <DashboardBanners
+          paidLeaveBalance={userData?.paidLeaveBalance}
+          sickLeaveBalance={userData?.sickLeaveBalance}
+          familyLeaveBalance={userData?.familyLeaveBalance}
+          userCreatedAt={userData?.createdAt}
+          lastLoginAt={userData?.lastLoginAt}
+        />
+      </motion.div>
+
       {/* Welcome header */}
       <motion.div variants={itemVariants}>
         <h2 className="text-2xl font-bold text-[var(--text-primary)]">

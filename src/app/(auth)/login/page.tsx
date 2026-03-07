@@ -317,6 +317,14 @@ export default function LoginPage() {
         login(userData);
         reset(); // clear keystroke buffer after successful login
 
+        // Set flag for welcome banner on dashboard
+        sessionStorage.setItem("just_logged_in", "true");
+
+        // If login had elevated risk, flag it for the suspicious login banner
+        if (result.riskLevel === "high" || result.riskLevel === "critical") {
+          sessionStorage.setItem("suspicious_login", "Login from a new device or unusual location detected. Risk level: " + result.riskLevel);
+        }
+
         // Redirect to dashboard
         console.log("🔄 Redirecting to dashboard...");
         window.location.href = "/dashboard";
@@ -350,6 +358,7 @@ export default function LoginPage() {
       };
       
       login(userData);
+      sessionStorage.setItem("just_logged_in", "true");
       router.push("/dashboard");
     } catch (err) {
       console.error("❌ WebAuthn login failed:", err);

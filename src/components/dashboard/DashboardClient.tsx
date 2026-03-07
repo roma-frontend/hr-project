@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, type LeaveType, type LeaveStatus } from "@/lib/types";
 import dynamic from "next/dynamic";
 import { PlanGate } from "@/components/subscription/PlanGate";
+import { DashboardBanners } from "@/components/dashboard/DashboardBanners";
 
 // Lazy load admin components
 const HolidayCalendarSync = dynamic(() => import("@/components/admin/HolidayCalendarSync"), { ssr: false });
@@ -146,6 +147,11 @@ export default function DashboardClient() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
+      {/* Smart Banners */}
+      <motion.div variants={itemVariants}>
+        <DashboardBanners />
+      </motion.div>
+
       {/* Welcome header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>

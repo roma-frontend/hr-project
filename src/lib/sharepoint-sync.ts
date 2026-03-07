@@ -157,7 +157,7 @@ export async function fetchSharePointListItems(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${listId}/items?$expand=fields&$top=200`;
 
   while (url) {
-    const response = await fetch(url, {
+    const response: Response = await fetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -166,7 +166,7 @@ export async function fetchSharePointListItems(
       throw new Error(`Failed to fetch SharePoint list items: ${error}`);
     }
 
-    const data = await response.json();
+    const data: { value?: Array<{ fields?: Record<string, unknown> }>; "@odata.nextLink"?: string } = await response.json();
 
     for (const item of data.value || []) {
       const fields = item.fields || {};
