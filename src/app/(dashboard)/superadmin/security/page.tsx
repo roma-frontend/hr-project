@@ -148,12 +148,8 @@ export default function SecurityDashboard() {
   const suspendedUsers = useQuery(api.security.getSuspendedUsers);
   const toggleSetting = useMutation(api.security.toggleSetting);
 
-  // Check role from either useAuthStore or NextAuth session
-  const userRole = user?.role || (session?.user as any)?.role;
-  const isLoading = status === "loading" || (!user && status === "authenticated");
-
-  // Show loading state while user data is being fetched
-  if (isLoading || !user) {
+  // STEP 1: Check if user is loading from auth store
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-96" style={{ color: "var(--text-muted)" }}>
         <RefreshCw className="w-8 h-8 mr-3 animate-spin" style={{ color: "var(--primary)" }} />
@@ -162,8 +158,9 @@ export default function SecurityDashboard() {
     );
   }
 
-  // Check authorization - only after user is loaded
-  if (userRole !== "superadmin" && user?.email?.toLowerCase() !== "romangulanyan@gmail.com") {
+  // STEP 2: Check authorization - only after user is definitely loaded
+  const isSuperAdmin = user.role === "superadmin" || user.email?.toLowerCase() === "romangulanyan@gmail.com";
+  if (!isSuperAdmin) {
     return (
       <div className="flex items-center justify-center h-96" style={{ color: "var(--text-muted)" }}>
         <ShieldAlert className="w-8 h-8 mr-3" style={{ color: "var(--destructive)" }} />

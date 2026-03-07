@@ -20,8 +20,29 @@ export default function SecurityAlertDetailPage() {
   const [suspendReason, setSuspendReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Check if current user is superadmin
-  const isSuperadmin = user?.email?.toLowerCase() === "romangulanyan@gmail.com";
+  // STEP 1: Check if user is loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+        <ShieldLoader size="lg" message="Loading security details..." />
+      </div>
+    );
+  }
+
+  // STEP 2: Check if current user is superadmin (only after user is loaded)
+  const isSuperadmin = user.email?.toLowerCase() === "romangulanyan@gmail.com" || user.role === "superadmin";
+  
+  if (!isSuperadmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+        <div className="text-center">
+          <Shield className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--destructive)" }} />
+          <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Access Denied</h1>
+          <p style={{ color: "var(--text-muted)" }}>Only superadmin can access this page</p>
+        </div>
+      </div>
+    );
+  }
 
   // Get user details
   const suspiciousUser = useQuery(
@@ -38,18 +59,6 @@ export default function SecurityAlertDetailPage() {
   // Mutations
   const suspendUserMutation = useMutation(api.users.suspendUser);
   const unsuspendUserMutation = useMutation(api.users.unsuspendUser);
-
-  if (!isSuperadmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
-        <div className="text-center">
-          <Shield className="w-16 h-16 mx-auto mb-4" style={{ color: "var(--destructive)" }} />
-          <h1 className="text-2xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>Access Denied</h1>
-          <p style={{ color: "var(--text-muted)" }}>Only superadmin can access this page</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!suspiciousUser) {
     return (
