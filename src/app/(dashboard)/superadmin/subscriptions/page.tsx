@@ -51,15 +51,7 @@ export default function SubscriptionsManagementPage() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check if user is superadmin
-  const isSuperAdmin = user?.role === "superadmin" || user?.email?.toLowerCase() === SUPERADMIN_EMAIL;
-
-  console.log("[Subscriptions Page] user from useAuthStore:", user);
-  console.log("[Subscriptions Page] isSuperAdmin:", isSuperAdmin, "role:", user?.role, "email:", user?.email);
-  console.log("[Subscriptions Page] allOrganizations:", allOrganizations);
-  console.log("[Subscriptions Page] allOrganizations count:", allOrganizations?.length);
-
-  // Wait for user to load
+  // Wait for user to load - MUST check this first before checking role
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -67,6 +59,9 @@ export default function SubscriptionsManagementPage() {
       </div>
     );
   }
+
+  // Check if user is superadmin - only after user is loaded
+  const isSuperAdmin = user.role === "superadmin" || user.email?.toLowerCase() === SUPERADMIN_EMAIL;
 
   // If not superadmin, show access denied
   if (!isSuperAdmin) {

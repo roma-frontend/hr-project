@@ -53,14 +53,7 @@ export default function StripeDashboardPage() {
   // Get current user from auth store
   const { user: currentUser } = useAuthStore();
   
-  // Check if user is superadmin
-  const isSuperAdmin = currentUser?.email?.toLowerCase() === SUPERADMIN_EMAIL;
-  
-  console.log("🔍 [Stripe Dashboard] currentUser:", currentUser);
-  console.log("🔍 [Stripe Dashboard] isSuperAdmin:", isSuperAdmin);
-  console.log("🔍 [Stripe Dashboard] email check:", currentUser?.email?.toLowerCase(), "===", SUPERADMIN_EMAIL);
-  
-  // Wait for user to load
+  // Wait for user to load first
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -68,6 +61,9 @@ export default function StripeDashboardPage() {
       </div>
     );
   }
+  
+  // Check if user is superadmin - only after user is loaded
+  const isSuperAdmin = currentUser.email?.toLowerCase() === SUPERADMIN_EMAIL || currentUser.role === "superadmin";
   
   // If not superadmin, show access denied
   if (!isSuperAdmin) {
