@@ -219,7 +219,7 @@ export function LeavesClient() {
         </div>
         <Button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 w-full sm:w-auto justify-center bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark,var(--primary))] hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
         >
           <Plus className="w-5 h-5" /> {t('dashboard.newRequest')}
         </Button>

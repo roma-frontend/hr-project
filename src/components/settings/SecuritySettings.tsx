@@ -33,7 +33,7 @@ userId }: SecuritySettingsProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[var(--primary)]" />
+            <Shield className="w-5 h-5 text-(--primary)" />
             <CardTitle>{t('settingsSecurity.touchId')}</CardTitle>
           </div>
           <CardDescription>{t('settingsSecurity.touchIdDesc')}</CardDescription>
@@ -63,7 +63,7 @@ userId }: SecuritySettingsProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ScanFace className="w-5 h-5 text-[var(--primary)]" />
+            <ScanFace className="w-5 h-5 text-(--primary)" />
             <CardTitle>{t('settingsSecurity.faceId')}</CardTitle>
           </div>
           <CardDescription>{t('settingsSecurity.faceIdDesc')}</CardDescription>
@@ -73,7 +73,7 @@ userId }: SecuritySettingsProps) {
             {faceData?.faceDescriptor ? (
               <>
                 <div className="flex items-center gap-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20 overflow-hidden">
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--surface-hover)] border-2 border-green-500/30 flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-(--surface-hover) border-2 border-green-500/30 shrink-0">
                     {faceData.faceImageUrl ? (
                       <img
                         src={faceData.faceImageUrl}

@@ -212,7 +212,7 @@ export default function SecurityDashboard() {
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl border flex-shrink-0" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.3)" }}>
+          <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl border shrink-0" style={{ background: "rgba(37,99,235,0.1)", borderColor: "rgba(37,99,235,0.3)" }}>
             <Shield className="w-5 h-5 sm:w-7 sm:h-7" style={{ color: "var(--primary)" }} />
           </div>
           <div>
@@ -248,7 +248,7 @@ export default function SecurityDashboard() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="px-2 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap flex-shrink-0"
+            className="px-2 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap shrink-0"
             style={{
               background: activeTab === tab ? "var(--card)" : "transparent",
               color: activeTab === tab ? "var(--text-primary)" : "var(--text-muted)",
@@ -288,7 +288,7 @@ export default function SecurityDashboard() {
               >
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div
-                    className="p-2 sm:p-2.5 rounded-lg flex-shrink-0"
+                    className="p-2 sm:p-2.5 rounded-lg shrink-0"
                     style={{ background: `${colors.iconColor}18`, color: colors.iconColor }}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -329,7 +329,7 @@ export default function SecurityDashboard() {
                     </p>
                   )}
                 </div>
-                <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
+                <div className="hidden sm:flex items-center gap-3 shrink-0">
                   <span className="text-sm font-medium" style={{ color: enabled ? "var(--success)" : "var(--text-disabled)" }}>
                     {enabled ? "ON" : "OFF"}
                   </span>
@@ -372,11 +372,11 @@ export default function SecurityDashboard() {
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                       <div className="flex items-start gap-4 flex-1">
                         {/* Avatar */}
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           {user.avatarUrl ? (
                             <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
                           ) : (
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-base sm:text-lg font-bold">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-base sm:text-lg font-bold">
                               {user.name.charAt(0)}
                             </div>
                           )}
@@ -483,7 +483,7 @@ export default function SecurityDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className="text-[10px] sm:text-xs flex-shrink-0 self-end sm:self-auto" style={{ color: "var(--text-muted)" }}>
+                  <div className="text-[10px] sm:text-xs shrink-0 self-end sm:self-auto" style={{ color: "var(--text-muted)" }}>
                     {new Date(attempt.createdAt).toLocaleTimeString()}
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export default function SecurityDashboard() {
                   className="rounded-lg p-4 flex items-center gap-4 border"
                   style={{ background: "var(--card)", borderColor: "var(--border)" }}
                 >
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--primary)" }} />
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "var(--primary)" }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>{log.userName}</span>
@@ -529,7 +529,7 @@ export default function SecurityDashboard() {
                       <div className="text-xs mt-0.5" style={{ color: "var(--text-disabled)" }}>IP: {log.ip}</div>
                     )}
                   </div>
-                  <div className="text-xs flex-shrink-0" style={{ color: "var(--text-muted)" }}>
+                  <div className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                     {new Date(log.createdAt).toLocaleString()}
                   </div>
                 </div>

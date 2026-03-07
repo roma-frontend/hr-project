@@ -329,7 +329,7 @@ export function ConversationList({
                       </p>
                     </div>
                     {unread > 0 && !conv.membership.isMuted && (
-                      <span className="min-w-[20px] sm:min-w-[18px] h-[20px] sm:h-[18px] px-1 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white sm:text-[9px] text-[10px] font-bold flex items-center justify-center shrink-0">
+                      <span className="min-w-5 sm:min-w-4.5 h-5 sm:h-4.5 px-1 rounded-full bg-linear-to-r from-red-500 to-red-600 text-white sm:text-[9px] text-[10px] font-bold flex items-center justify-center shadow-lg">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}

@@ -147,7 +147,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.organization && <p className="text-xs text-[var(--destructive)]">{errors.organization}</p>}
+              {errors.organization && <p className="text-xs text-(--destructive)">{errors.organization}</p>}
             </div>
           )}
 
@@ -157,9 +157,9 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
             <Input
               id="emp-name" placeholder={t('placeholders.johnSmith')}
               value={name} onChange={(e) => setName(e.target.value)}
-              className={errors.name ? "border-[var(--destructive)]" : ""}
+              className={errors.name ? "border-(--destructive)" : ""}
             />
-            {errors.name && <p className="text-xs text-[var(--destructive)]">{errors.name}</p>}
+            {errors.name && <p className="text-xs text-(--destructive)">{errors.name}</p>}
           </div>
 
           {/* Email */}
@@ -168,9 +168,9 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
             <Input
               id="emp-email" type="email" placeholder="john.smith@company.com"
               value={email} onChange={(e) => setEmail(e.target.value)}
-              className={errors.email ? "border-[var(--destructive)]" : ""}
+              className={errors.email ? "border-(--destructive)" : ""}
             />
-            {errors.email && <p className="text-xs text-[var(--destructive)]">{errors.email}</p>}
+            {errors.email && <p className="text-xs text-(--destructive)">{errors.email}</p>}
             <p className="text-xs text-[var(--text-muted)]">
               {t('employees.contractorHint')}
             </p>
@@ -181,7 +181,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
             <div className="space-y-1.5">
               <Label>{t('employees.department')} *</Label>
               <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger className={errors.department ? "border-[var(--destructive)]" : ""}>
+                <SelectTrigger className={errors.department ? "border-(--destructive)" : ""}>
                   <SelectValue placeholder={t('placeholders.selectEmployee')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -190,16 +190,16 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.department && <p className="text-xs text-[var(--destructive)]">{errors.department}</p>}
+              {errors.department && <p className="text-xs text-(--destructive)">{errors.department}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="emp-position">{t('employees.position')} *</Label>
               <Input
                 id="emp-position" placeholder="e.g. Developer"
                 value={position} onChange={(e) => setPosition(e.target.value)}
-                className={errors.position ? "border-[var(--destructive)]" : ""}
+                className={errors.position ? "border-(--destructive)" : ""}
               />
-              {errors.position && <p className="text-xs text-[var(--destructive)]">{errors.position}</p>}
+              {errors.position && <p className="text-xs text-(--destructive)">{errors.position}</p>}
             </div>
           </div>
 
@@ -238,8 +238,8 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                   key={empType} type="button" onClick={() => setType(empType)}
                   className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
                     type === empType
-                      ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--text-primary)]"
-                      : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-subtle)]"
+                      ? "border-(--primary) bg-(--primary)/10 text-(--text-primary)"
+                      : "border-(--border) text-(--text-muted) hover:border-(--border-subtle)"
                   }`}
                 >
                   {t(`employees.${empType}`)}
@@ -252,15 +252,15 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
           <motion.div
             key={allowance}
             initial={{ scale: 0.97 }} animate={{ scale: 1 }}
-            className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 flex items-center justify-between"
+            className="rounded-lg bg-(--background-subtle) border border-(--border) p-3 flex items-center justify-between"
           >
             <div>
-              <p className="text-xs text-[var(--text-muted)]">{t('employees.travelAllowance')}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              <p className="text-xs text-(--text-muted)">{t('employees.travelAllowance')}</p>
+              <p className="text-xs text-(--text-muted) mt-0.5">
                 {type === "contractor" ? t('employeeTypes.contractor') : t('employeeTypes.staff')} type
               </p>
             </div>
-            <p className="text-lg font-bold text-[var(--text-primary)]">{formatCurrency(allowance)}</p>
+            <p className="text-lg font-bold text-(--text-primary)">{formatCurrency(allowance)}</p>
           </motion.div>
 
           <DialogFooter className="gap-2 pt-2">
