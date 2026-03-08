@@ -32,7 +32,8 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
   const [retryCount, setRetryCount] = useState(0);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLAudioElement>(null);
+  const remoteVideoDisplayRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -124,6 +125,9 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
+    if (remoteVideoDisplayRef.current) {
+      remoteVideoDisplayRef.current.srcObject = null;
+    }
     // Remove handlers before closing to avoid stale callbacks
     if (peerConnectionRef.current) {
       try {
@@ -201,11 +205,19 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
       };
 
       pc.ontrack = (event) => {
+        const stream = event.streams[0];
+        // Set remote stream on hidden audio element (ensures audio always plays)
         if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-          setPeerConnected(true);
-          setCallStatus("active");
-          // Start duration timer
+          remoteVideoRef.current.srcObject = stream;
+        }
+        // Set remote stream on visible video element (for video calls)
+        if (remoteVideoDisplayRef.current) {
+          remoteVideoDisplayRef.current.srcObject = stream;
+        }
+        setPeerConnected(true);
+        setCallStatus("active");
+        // Start duration timer
+        if (!durationTimerRef.current) {
           durationTimerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
         }
       };
@@ -274,6 +286,25 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // mount only — cleanup is stable (no deps), initMedia runs once
+
+  // Detect when remote side ends the call
+  // getActiveCall returns null when status is no longer "ringing"/"active" (i.e. ended/declined/missed)
+  const callEndedByRemoteRef = useRef(false);
+  useEffect(() => {
+    // callData becomes null when the call is ended/declined/missed
+    // But it's also null initially before data loads, so only trigger after we've seen it non-null
+    if (callData) {
+      callEndedByRemoteRef.current = true; // We've seen the call exist
+    }
+    if (callData === null && callEndedByRemoteRef.current && callStatus !== "ended") {
+      console.log('[CallModal] Remote side ended the call (callData became null), cleaning up...');
+      cleanup();
+      setMicOn(false);
+      setCamOn(false);
+      setCallStatus("ended");
+      setTimeout(() => onEnd(), 100);
+    }
+  }, [callData, callStatus]);
 
   // Poll for answer from remote peer
   useEffect(() => {
@@ -357,6 +388,16 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
     if (track) { track.enabled = !track.enabled; setCamOn(track.enabled); }
   };
 
+  // Apply speaker mute/unmute to remote audio/video elements
+  useEffect(() => {
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.muted = !speakerOn;
+    }
+    if (remoteVideoDisplayRef.current) {
+      remoteVideoDisplayRef.current.muted = !speakerOn;
+    }
+  }, [speakerOn]);
+
   const statusText = {
     ringing: "Ringing…",
     connecting: "Connecting…",
@@ -366,6 +407,9 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md">
+      {/* Hidden audio element for remote stream — ensures audio works for both call types */}
+      <audio ref={remoteVideoRef} autoPlay playsInline style={{ display: "none" }} />
+
       <div
         className="relative w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
         style={{
@@ -378,7 +422,7 @@ export function CallModal({ call, currentUserId, currentUserName, currentUserAva
           <div className="relative w-full h-72 bg-black rounded-t-3xl overflow-hidden">
             {/* Remote video */}
             <video
-              ref={remoteVideoRef}
+              ref={remoteVideoDisplayRef}
               autoPlay
               playsInline
               className="w-full h-full object-cover"

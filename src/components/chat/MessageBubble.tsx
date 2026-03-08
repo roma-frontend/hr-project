@@ -11,6 +11,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { SmartReply } from "./SmartReply";
 import { LinkPreview, extractUrl } from "./LinkPreview";
+import { createPortal } from "react-dom";
 
 // ── i18n labels for delivered / seen ──────────────────────────────────────────
 type Lang = "en" | "ru" | "hy";
@@ -208,6 +209,7 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
   const [showActions, setShowActions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuOpenDown, setMenuOpenDown] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left?: number; right?: number } | null>(null);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -433,7 +435,6 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
           // Delay closing to allow moving to menu
           hoverTimeoutRef.current = setTimeout(() => {
             setShowActions(false);
-            setShowMenu(false);
           }, 100);
         }}
       >
@@ -467,7 +468,7 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
           )}
         </div>
 
-        <div className={cn("flex flex-col max-w-[75%] min-w-0", isOwn ? "items-end" : "items-start")}>
+        <div className={cn("flex flex-col max-w-[95%] sm:max-w-[75%] min-w-0", isOwn ? "items-end" : "items-start")}>
           {showName && (
             <span className="text-[11px] font-medium mb-0.5 px-1" style={{ color: "var(--text-muted)" }}>
               {message.sender?.name}
@@ -721,7 +722,6 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
             onMouseLeave={() => {
               hoverTimeoutRef.current = setTimeout(() => {
                 setShowActions(false);
-                setShowMenu(false);
               }, 100);
             }}
           >
@@ -747,54 +747,55 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
               <button
                 ref={menuBtnRef}
                 onClick={() => {
-                  // Detect if there's enough space below; if not, open upward
                   if (menuBtnRef.current) {
                     const rect = menuBtnRef.current.getBoundingClientRect();
                     const spaceBelow = window.innerHeight - rect.bottom;
-                    setMenuOpenDown(spaceBelow > 200);
+                    const openDown = spaceBelow > 220;
+                    setMenuOpenDown(openDown);
+                    setMenuPosition({
+                      top: openDown ? rect.bottom + 8 : rect.top - 8,
+                      left: isOwn ? undefined : rect.left,
+                      right: isOwn ? window.innerWidth - rect.right - 8 : undefined,
+                    });
                   }
-                  setShowMenu(!showMenu);
+                  setShowMenu((prev) => !prev);
                 }}
                 className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full hover:scale-110 transition-transform duration-150 min-h-[36px]"
                 style={{ background: "var(--background-subtle)", color: "var(--text-muted)" }}
               >
                 <MoreHorizontal className="sm:w-3 sm:h-3 w-4 h-4" />
               </button>
-              {showMenu && (
-                <div
-                  ref={menuRef}
-                  className={cn(
-                    "absolute z-[9999] rounded-xl shadow-2xl border py-1 min-w-[160px] animate-slide-up",
-                    // Smart vertical: open down if space below, else up
-                    menuOpenDown ? "top-full mt-1" : "bottom-full mb-1",
-                    // Horizontal: align to edge
-                    isOwn ? "right-0" : "left-0"
-                  )}
-                  style={{ background: "var(--background)", borderColor: "var(--border)" }}
-                  onMouseEnter={() => {
-                    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-                    setShowActions(true);
-                  }}
-                  onMouseLeave={() => {
-                    hoverTimeoutRef.current = setTimeout(() => {
-                      setShowActions(false);
-                      setShowMenu(false);
-                    }, 50);
-                  }}
-                >
-                  <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label={L.copy} onClick={handleCopy} />
-                  <MenuItem icon={<Pin className="w-3.5 h-3.5" />} label={message.isPinned ? L.unpin : L.pin} onClick={handlePin} />
-                  {isOwn && <MenuItem icon={<Edit2 className="w-3.5 h-3.5" />} label={L.edit} onClick={() => { setEditing(true); setShowMenu(false); }} />}
-                  <MenuItem icon={<Trash className="w-3.5 h-3.5" />} label={L.deleteForMe} onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }} danger />
-                  {isOwn && withinFiveMin && (
-                    <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label={L.deleteForEveryone} onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }} danger />
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* Context menu rendered via portal so it isn't clipped by scroll containers */}
+      <MessageMenuPortal
+        open={showMenu}
+        position={menuPosition}
+        openDown={menuOpenDown}
+        onMouseEnter={() => {
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          setShowActions(true);
+        }}
+        onMouseLeave={() => {
+          hoverTimeoutRef.current = setTimeout(() => {
+            setShowActions(false);
+            setShowMenu(false);
+          }, 50);
+        }}
+      >
+        <div ref={menuRef}>
+          <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label={L.copy} onClick={handleCopy} />
+          <MenuItem icon={<Pin className="w-3.5 h-3.5" />} label={message.isPinned ? L.unpin : L.pin} onClick={handlePin} />
+          {isOwn && <MenuItem icon={<Edit2 className="w-3.5 h-3.5" />} label={L.edit} onClick={() => { setEditing(true); setShowMenu(false); }} />}
+          <MenuItem icon={<Trash className="w-3.5 h-3.5" />} label={L.deleteForMe} onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }} danger />
+          {isOwn && withinFiveMin && (
+            <MenuItem icon={<Trash2 className="w-3.5 h-3.5" />} label={L.deleteForEveryone} onClick={() => { setShowDeleteDialog(true); setShowMenu(false); }} danger />
+          )}
+        </div>
+      </MessageMenuPortal>
 
       <style jsx>{`
         @keyframes msg-in {
@@ -820,6 +821,43 @@ export function MessageBubble({ message, isOwn, showAvatar, showName, currentUse
         }
       `}</style>
     </>
+  );
+}
+
+// Portal-mounted menu so it isn't clipped by scroll containers / input area
+function MessageMenuPortal({
+  open,
+  position,
+  openDown,
+  children,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  open: boolean;
+  position: { top: number; left?: number; right?: number } | null;
+  openDown: boolean;
+  children: React.ReactNode;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}) {
+  if (!open || !position || typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="fixed z-[120] rounded-xl shadow-2xl border py-1 min-w-[160px] animate-slide-up"
+      style={{
+        top: position.top,
+        left: position.left,
+        right: position.right,
+        background: "var(--background)",
+        borderColor: "var(--border)",
+        transform: openDown ? "translateY(0)" : "translateY(-100%)",
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </div>,
+    document.body
   );
 }
 

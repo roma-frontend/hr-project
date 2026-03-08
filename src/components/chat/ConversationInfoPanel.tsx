@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { X, Plus, Search } from "lucide-react";
+import { X, Plus, Search, Building2, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
 
@@ -25,24 +25,28 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]);
   const [adding, setAdding] = useState(false);
+  const [selectedOrgId, setSelectedOrgId] = useState<Id<"organizations">>(organizationId);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
   const members = useQuery(api.chat.getConversationMembers, { conversationId });
   const conversations = useQuery(api.chat.getMyConversations, { userId: currentUserId, organizationId });
   const conversation = (conversations ?? []).find((c) => c && c._id === conversationId) ?? null;
-  const orgUsers = useQuery(api.users.getAllUsers, { requesterId: currentUserId });
-  const addMember = useMutation(api.chat.addMember);
 
-  // Log for debugging
-  console.log("[ConversationInfoPanel] Debug:", {
-    conversationId,
-    conversationExists: !!conversation,
-    conversationType: conversation && "type" in conversation ? (conversation as Record<string, unknown>).type : "unknown",
-    membersCount: members?.length ?? 0,
-    availableUsersCount: orgUsers?.length ?? 0,
-    showAddMember,
+  // Fetch all organizations for the dropdown (no superadmin check — just lists all orgs)
+  const allOrganizations = useQuery(api.organizations.getAllOrganizations, {});
+
+  // Fetch users from the selected organization using getOrgUsers (no permission restrictions)
+  const orgUsers = useQuery(api.chat.getOrgUsers, {
+    organizationId: selectedOrgId,
+    currentUserId,
   });
 
+  const addMember = useMutation(api.chat.addMember);
+
   const isGroupConversation = conversation && "type" in conversation && (conversation as Record<string, unknown>).type === "group";
+
+  // Find selected org name for display
+  const selectedOrg = allOrganizations?.find((org) => org._id === selectedOrgId);
 
   // Filter users not already in the conversation
   const availableUsers = (orgUsers ?? []).filter(
@@ -51,27 +55,24 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
 
   // Filter by search query
   const filteredUsers = availableUsers.filter((user) =>
-    (user.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    (user.name ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.department ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddMembers = async () => {
     try {
-      console.log("[handleAddMembers] Starting, selected users:", selectedUsers.length);
       setAdding(true);
       for (const userId of selectedUsers) {
-        console.log("[handleAddMembers] Adding user:", userId);
         await addMember({
           conversationId,
           requesterId: currentUserId,
           userId,
-          organizationId,
+          organizationId: selectedOrgId,
         });
-        console.log("[handleAddMembers] User added successfully:", userId);
       }
       setSelectedUsers([]);
       setSearchQuery("");
       setShowAddMember(false);
-      console.log("[handleAddMembers] All members added successfully");
     } catch (err) {
       console.error("[handleAddMembers] Failed to add members:", err);
     } finally {
@@ -80,14 +81,11 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
   };
 
   const toggleUserSelection = (userId: Id<"users">) => {
-    console.log("[toggleUserSelection] Toggling user:", userId);
-    setSelectedUsers((prev) => {
-      const newState = prev.includes(userId)
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId];
-      console.log("[toggleUserSelection] New selected users:", newState.length);
-      return newState;
-    });
+        : [...prev, userId]
+    );
   };
 
   return (
@@ -135,31 +133,99 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
             <p className="text-xs font-semibold flex-1" style={{ color: "var(--text-muted)" }}>
               {t('chat.members')} ({members?.length ?? 0})
             </p>
-            {isGroupConversation !== false && (
-              <button
-                onClick={() => {
-                  console.log("[PlusButton] Clicked, toggling showAddMember from", showAddMember, "to", !showAddMember);
-                  setShowAddMember(!showAddMember);
-                }}
-                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95"
-                style={{
-                  background: showAddMember ? "var(--primary)" : "var(--sidebar-item-hover)",
-                  color: showAddMember ? "white" : "var(--text-muted)",
-                  cursor: "pointer",
-                  position: "relative",
-                  zIndex: 100,
-                  flexShrink: 0,
-                }}
-                title={t('chat.addMembers')}
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            )}
+            {/* Always show add-member button (for both DM and group conversations) */}
+            <button
+              onClick={() => setShowAddMember(!showAddMember)}
+              className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:scale-105 active:scale-95"
+              style={{
+                background: showAddMember ? "var(--primary)" : "var(--sidebar-item-hover)",
+                color: showAddMember ? "white" : "var(--text-muted)",
+                cursor: "pointer",
+                position: "relative",
+                zIndex: 100,
+                flexShrink: 0,
+              }}
+              title={t('chat.addMembers')}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Add member UI */}
           {showAddMember && (
             <div className="mb-4 p-3 rounded-lg border" style={{ borderColor: "var(--border)", background: "var(--background-subtle)" }}>
+
+              {/* Organization selector — always visible when multiple orgs exist */}
+              {allOrganizations && allOrganizations.length > 1 && (
+                <div className="mb-3">
+                  <p className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: "var(--text-muted)" }}>
+                    <Building2 className="w-3 h-3" />
+                    {t('chat.selectOrganization', { defaultValue: 'Организация' })}
+                  </p>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                      className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg border transition-all hover:opacity-80"
+                      style={{
+                        background: "var(--background)",
+                        borderColor: showOrgDropdown ? "var(--primary)" : "var(--border)",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      <span className="truncate">{selectedOrg?.name ?? "..."}</span>
+                      <ChevronDown
+                        className="w-3.5 h-3.5 shrink-0 ml-1 transition-transform"
+                        style={{
+                          color: "var(--text-muted)",
+                          transform: showOrgDropdown ? "rotate(180deg)" : "rotate(0deg)",
+                        }}
+                      />
+                    </button>
+
+                    {showOrgDropdown && (
+                      <div
+                        className="absolute left-0 right-0 top-full mt-1 rounded-lg border shadow-xl overflow-hidden z-50"
+                        style={{
+                          background: "var(--background)",
+                          borderColor: "var(--border)",
+                        }}
+                      >
+                        <div className="max-h-40 overflow-y-auto custom-scrollbar">
+                          {allOrganizations.map((org) => (
+                            <button
+                              key={org._id}
+                              onClick={() => {
+                                setSelectedOrgId(org._id as Id<"organizations">);
+                                setShowOrgDropdown(false);
+                                setSearchQuery("");
+                                setSelectedUsers([]);
+                              }}
+                              className="w-full flex items-center gap-2 px-2.5 py-2 text-xs transition-all hover:opacity-80"
+                              style={{
+                                background: org._id === selectedOrgId ? "var(--sidebar-item-active)" : "transparent",
+                                color: org._id === selectedOrgId ? "var(--primary)" : "var(--text-primary)",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (org._id !== selectedOrgId) e.currentTarget.style.background = "var(--sidebar-item-hover)";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (org._id !== selectedOrgId) e.currentTarget.style.background = "transparent";
+                              }}
+                            >
+                              <Building2 className="w-3 h-3 shrink-0" style={{ color: "var(--text-muted)" }} />
+                              <span className="truncate flex-1 text-left">{org.name}</span>
+                              {org._id === selectedOrgId && (
+                                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--primary)" }} />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Search */}
               <div className="relative mb-3">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "var(--text-disabled)" }} />
@@ -175,19 +241,19 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
               </div>
 
               {/* User list */}
-              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+              <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <label
                       key={user._id}
                       className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      style={{ background: "var(--background)" }}
+                      style={{ background: selectedUsers.includes(user._id) ? "var(--sidebar-item-active)" : "var(--background)" }}
                     >
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(user._id)}
                         onChange={() => toggleUserSelection(user._id)}
-                        className="w-3.5 h-3.5 rounded"
+                        className="w-3.5 h-3.5 rounded accent-[var(--primary)]"
                       />
                       <Avatar className="w-6 h-6">
                         {user.avatarUrl && <AvatarImage src={user.avatarUrl} />}
@@ -195,9 +261,16 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
                           {getInitials(user.name ?? "U")}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs flex-1 truncate" style={{ color: "var(--text-primary)" }}>
-                        {user.name}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs truncate block" style={{ color: "var(--text-primary)" }}>
+                          {user.name}
+                        </span>
+                        {user.department && (
+                          <span className="text-[10px] truncate block" style={{ color: "var(--text-disabled)" }}>
+                            {user.department}
+                          </span>
+                        )}
+                      </div>
                     </label>
                   ))
                 ) : (
@@ -211,10 +284,7 @@ export function ConversationInfoPanel({ conversationId, currentUserId, organizat
               {selectedUsers.length > 0 && (
                 <div className="flex gap-2 mt-3">
                   <button
-                    onClick={() => {
-                      console.log("[AddButton] Clicked, calling handleAddMembers");
-                      handleAddMembers();
-                    }}
+                    onClick={() => handleAddMembers()}
                     disabled={adding}
                     className="flex-1 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all disabled:opacity-50"
                     style={{ background: "var(--primary)" }}

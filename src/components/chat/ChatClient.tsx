@@ -9,11 +9,10 @@ import { ChatWindow } from "./ChatWindow";
 import { NewConversationModal } from "./NewConversationModal";
 import { CallModal } from "./CallModal";
 import { cn } from "@/lib/utils";
-import { MessageCircle, Phone, Video, PhoneOff } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useOrgSelectorStore } from "@/store/useOrgSelectorStore";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { useTranslation } from "react-i18next";
-import { playChatMessageSound } from "@/lib/notificationSound";
 
 interface Props {
   userId: string;
@@ -36,7 +35,6 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
   const [selectedConvId, setSelectedConvId] = useState<Id<"chatConversations"> | null>(null);
   const [showNewConv, setShowNewConv] = useState(false);
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
-  const [incomingCall, setIncomingCall] = useState<ActiveCall | null>(null);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
 
@@ -52,21 +50,7 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
     uid && effectiveOrgId ? { userId: uid, organizationId: effectiveOrgId } : "skip"
   );
 
-  // Get active call for selected conversation using real-time query
-  const selectedConvData = useQuery(
-    api.chat.getActiveCall,
-    selectedConvId ? { conversationId: selectedConvId } : "skip"
-  );
-
-  // Get incoming calls across all conversations (real-time)
-  const incomingCallData = useQuery(
-    api.chat.getIncomingCalls,
-    uid && effectiveOrgId ? { userId: uid, organizationId: effectiveOrgId } : "skip"
-  );
-
   const initiateCallMutation = useMutation(api.chat.initiateCall);
-  const answerCallMutation = useMutation(api.chat.answerCall);
-  const declineCallMutation = useMutation(api.chat.declineCall);
 
   // Conversation management mutations
   const togglePinMutation = useMutation(api.chat.togglePin);
@@ -74,57 +58,6 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
   const restoreConversationMutation = useMutation(api.chat.restoreConversation);
   const toggleArchiveMutation = useMutation(api.chat.toggleArchive);
   const toggleMuteMutation = useMutation(api.chat.toggleMute);
-
-  // ── Detect incoming calls (using real-time query) ─────────────────────────
-  useEffect(() => {
-    if (!uid) return;
-
-    console.log('[ChatClient] Checking incoming calls for', uid, 'call data:', incomingCallData);
-
-    // If there's an active ringing call and we're not in it, show incoming call UI
-    if (incomingCallData && incomingCallData.status === "ringing") {
-      // Get initiator name from conversation members if available
-      let initiatorName = "Someone";
-      
-      if (conversations) {
-        const conv = conversations.find((c) => c._id === incomingCallData.conversationId);
-        if (conv) {
-          const initiatorMember = (conv as any).members?.find(
-            (m: any) => m.userId === incomingCallData.initiatorId
-          );
-          initiatorName =
-            initiatorMember?.user?.name ??
-            (conv as any).otherUser?.name ??
-            "Someone";
-        }
-      }
-
-      console.log('[ChatClient] Setting incoming call for', uid, {
-        callId: incomingCallData._id,
-        initiator: incomingCallData.initiatorId,
-        initiatorName,
-      });
-
-      setIncomingCall({
-        callId: incomingCallData._id,
-        conversationId: incomingCallData.conversationId,
-        type: incomingCallData.type,
-        isInitiator: false,
-        remoteUserId: incomingCallData.initiatorId,
-        remoteUserName: initiatorName,
-      });
-
-      // Only play sound if this is a new incoming call (not already shown)
-      if (!activeCall) {
-        playChatMessageSound();
-      }
-    } else {
-      // No incoming call anymore
-      if (!activeCall) {
-        setIncomingCall(null);
-      }
-    }
-  }, [incomingCallData, conversations, uid, activeCall]);
 
   const handleSelectConversation = useCallback((convId: Id<"chatConversations">) => {
     setSelectedConvId(convId);
@@ -199,6 +132,7 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
           <NewConversationModal
             currentUserId={uid}
             organizationId={effectiveOrgId}
+            userRole={userRole}
             onClose={() => setShowNewConv(false)}
             onCreated={(convId) => {
               setSelectedConvId(convId);
@@ -297,71 +231,6 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
         />
       )}
 
-      {/* Incoming Call Modal */}
-      {incomingCall && !activeCall && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
-          <div
-            className="relative w-80 rounded-3xl overflow-hidden shadow-2xl p-6 flex flex-col items-center gap-4"
-            style={{ background: "linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" }}
-          >
-            {/* Animated ring */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
-                <span className="text-white text-2xl font-bold">
-                  {incomingCall.remoteUserName?.[0]?.toUpperCase() ?? "?"}
-                </span>
-              </div>
-              <span className="absolute inset-0 rounded-full ring-4 ring-green-500/40 animate-ping" />
-              <span className="absolute inset-0 rounded-full ring-4 ring-green-500/20 animate-ping" style={{ animationDelay: "0.5s" }} />
-            </div>
-
-            <div className="text-center">
-              <p className="text-white font-semibold text-lg">{incomingCall.remoteUserName}</p>
-              <p className="text-white/60 text-sm flex items-center justify-center gap-1 mt-1">
-                {incomingCall.type === "video"
-                  ? <><Video className="w-3.5 h-3.5" /> Incoming video call…</>
-                  : <><Phone className="w-3.5 h-3.5" /> Incoming audio call…</>
-                }
-              </p>
-            </div>
-
-            <div className="flex items-center gap-6 mt-2">
-              {/* Decline */}
-              <button
-                onClick={async () => {
-                  try { await declineCallMutation({ callId: incomingCall.callId, userId: uid }); } catch {}
-                  setIncomingCall(null);
-                }}
-                className="w-14 h-14 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 transition-all hover:scale-110 shadow-lg shadow-red-500/30"
-                title="Decline"
-              >
-                <PhoneOff className="w-6 h-6 text-white" />
-              </button>
-
-              {/* Accept */}
-              <button
-                onClick={async () => {
-                  try {
-                    // Tell backend the call was answered (transitions ringing -> active)
-                    await answerCallMutation({ callId: incomingCall.callId, userId: uid });
-                  } catch (e) {
-                    console.error('[ChatClient] Error answering call:', e);
-                  }
-                  setActiveCall(incomingCall);
-                  setIncomingCall(null);
-                  // Open the conversation
-                  setSelectedConvId(incomingCall.conversationId);
-                  setMobileShowChat(true);
-                }}
-                className="w-14 h-14 rounded-full flex items-center justify-center bg-green-500 hover:bg-green-600 transition-all hover:scale-110 shadow-lg shadow-green-500/30"
-                title="Accept"
-              >
-                <Phone className="w-6 h-6 text-white" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

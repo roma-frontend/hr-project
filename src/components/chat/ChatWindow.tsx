@@ -74,6 +74,9 @@ export function ChatWindow({ conversationId, currentUserId, organizationId, curr
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [thread, setThread] = useState<{ id: Id<"chatMessages">; content: string } | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionStart, setMentionStart] = useState<number>(-1);
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -221,7 +224,7 @@ export function ChatWindow({ conversationId, currentUserId, organizationId, curr
         : "text";
 
       // Parse @mentions
-      const mentionRegex = /@(\w[\w\s]*?)(?=\s|$|[^a-zA-Z])/g;
+      const mentionRegex = /@([a-zA-Zа-яА-ЯёЁа-ֆА-Ֆ\u0531-\u0587][a-zA-Zа-яА-ЯёЁа-ֆА-Ֆ\u0531-\u0587\s]*?)(?=\s|$|[^a-zA-Zа-яА-ЯёЁ])/g;
       const mentionedIds: Id<"users">[] = [];
       let match;
       while ((match = mentionRegex.exec(text)) !== null) {
@@ -252,18 +255,94 @@ export function ChatWindow({ conversationId, currentUserId, organizationId, curr
     }
   }, [input, pendingFiles, replyTo, conversationId, currentUserId, organizationId, sendMessage, setTyping, members, isTypingTimeout]);
 
+  // Compute mention suggestions from conversation members
+  const mentionSuggestions = React.useMemo(() => {
+    if (mentionQuery === null || !members) return [];
+    const q = mentionQuery.toLowerCase();
+    return members
+      .filter((m) => m.userId !== currentUserId && m.user?.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [mentionQuery, members, currentUserId]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Handle mention navigation
+    if (mentionQuery !== null && mentionSuggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((prev) => (prev - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const selected = mentionSuggestions[mentionIndex];
+        if (selected?.user?.name) {
+          insertMention(selected.user.name);
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        setMentionQuery(null);
+        setMentionStart(-1);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const insertMention = (name: string) => {
+    const before = input.slice(0, mentionStart);
+    const after = input.slice(inputRef.current?.selectionStart ?? input.length);
+    const newInput = `${before}@${name} ${after}`;
+    setInput(newInput);
+    setMentionQuery(null);
+    setMentionStart(-1);
+    setMentionIndex(0);
+    // Focus back to input
+    setTimeout(() => {
+      if (inputRef.current) {
+        const cursorPos = before.length + name.length + 2; // +2 for @ and space
+        inputRef.current.selectionStart = cursorPos;
+        inputRef.current.selectionEnd = cursorPos;
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    const value = e.target.value;
+    setInput(value);
     handleTyping();
     e.target.style.height = "auto";
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+
+    // Detect @mention — look backward from cursor for '@'
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const atIdx = textBeforeCursor.lastIndexOf("@");
+    if (atIdx >= 0) {
+      const charBeforeAt = atIdx > 0 ? textBeforeCursor[atIdx - 1] : " ";
+      // Only trigger if @ is at start or preceded by whitespace
+      if (atIdx === 0 || /\s/.test(charBeforeAt)) {
+        const query = textBeforeCursor.slice(atIdx + 1);
+        // No spaces in the query (to avoid false positives on regular text)
+        if (!query.includes(" ") || query.length < 20) {
+          setMentionQuery(query);
+          setMentionStart(atIdx);
+          setMentionIndex(0);
+          return;
+        }
+      }
+    }
+    setMentionQuery(null);
+    setMentionStart(-1);
   };
 
   const handleEmojiSelect = (emoji: string) => {
@@ -771,17 +850,52 @@ export function ChatWindow({ conversationId, currentUserId, organizationId, curr
             <Clock className="sm:w-4 w-5 sm:h-4 h-5" />
           </button>
 
-          {/* Text input */}
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={pendingFiles.length > 0 ? t('chat.addCaption') : t('chat.messagePlaceholder')}
-            rows={1}
-            className="flex-1 resize-none bg-transparent outline-none text-sm leading-5"
-            style={{ color: "var(--text-primary)", maxHeight: "120px" }}
-          />
+          {/* Text input + @mention popup */}
+          <div className="flex-1 relative">
+            {/* @mention autocomplete popup */}
+            {mentionQuery !== null && mentionSuggestions.length > 0 && (
+              <div
+                className="absolute bottom-full left-0 right-0 mb-2 rounded-xl shadow-2xl border overflow-hidden z-50 animate-slide-up"
+                style={{ background: "var(--background)", borderColor: "var(--border)" }}
+              >
+                {mentionSuggestions.map((m, idx) => (
+                  <button
+                    key={m.userId}
+                    onClick={() => m.user?.name && insertMention(m.user.name)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-all"
+                    style={{
+                      background: idx === mentionIndex ? "var(--sidebar-item-active)" : "transparent",
+                      color: idx === mentionIndex ? "var(--primary)" : "var(--text-primary)",
+                    }}
+                    onMouseEnter={() => setMentionIndex(idx)}
+                  >
+                    <Avatar className="w-5 h-5">
+                      {m.user?.avatarUrl && <AvatarImage src={m.user.avatarUrl} />}
+                      <AvatarFallback className="text-[8px] font-bold text-white" style={{ background: "var(--primary)" }}>
+                        {(m.user?.name ?? "?").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate font-medium">{m.user?.name ?? "Unknown"}</span>
+                    {m.user?.department && (
+                      <span className="text-[10px] truncate ml-auto" style={{ color: "var(--text-disabled)" }}>
+                        {m.user.department}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={pendingFiles.length > 0 ? t('chat.addCaption') : t('chat.messagePlaceholder')}
+              rows={1}
+              className="w-full resize-none bg-transparent outline-none text-sm leading-5"
+              style={{ color: "var(--text-primary)", maxHeight: "120px" }}
+            />
+          </div>
 
           {/* Emoji */}
           <div className="relative">

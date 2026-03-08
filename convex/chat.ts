@@ -1633,6 +1633,7 @@ export const getOrgUsers = query({
         department: u.department,
         position: u.position,
         presenceStatus: u.presenceStatus,
+        organizationId: u.organizationId,
       }));
   },
 });

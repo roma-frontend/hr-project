@@ -5,14 +5,16 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, Search, Users, MessageCircle, Check, Globe } from "lucide-react";
+import { X, Search, Users, MessageCircle, Check, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOrgSelectorStore } from "@/store/useOrgSelectorStore";
 import { useTranslation } from "react-i18next";
+import type { Doc } from "@/convex/_generated/dataModel";
 
 interface Props {
   currentUserId: Id<"users">;
   organizationId: Id<"organizations">;
+  userRole: string;
   onClose: () => void;
   onCreated: (convId: Id<"chatConversations">) => void;
 }
@@ -21,26 +23,76 @@ function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
-export function NewConversationModal({ currentUserId, organizationId, onClose, onCreated }: Props) {
+export function NewConversationModal({ currentUserId, organizationId, userRole, onClose, onCreated }: Props) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<"dm" | "group">("dm");
   const [search, setSearch] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Id<"users">[]>([]);
   const [groupName, setGroupName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
   // Respect the org selector: null = "All orgs" (superadmin), else filter by org
-  const { selectedOrgId } = useOrgSelectorStore();
+  const orgStore = useOrgSelectorStore();
+  const selectedOrgId = orgStore.selectedOrgId;
+  const setSelectedOrgId = orgStore.setSelectedOrgId;
+
+  const isSuperadmin = userRole === "superadmin";
   // Use selectedOrgId if set (superadmin viewing specific org), else use the user's own org
   const effectiveOrgId = (selectedOrgId ?? organizationId) as Id<"organizations">;
 
-  const users = useQuery(api.chat.getOrgUsers, { organizationId: effectiveOrgId, currentUserId });
+  // "All orgs" mode is available only for superadmin via sidebar selector.
+  const isAllOrgs = selectedOrgId === null;
+
+  // For superadmin we can fetch all organizations to power the inline org picker.
+  const organizations = useQuery(
+    api.organizations.getAllOrganizations,
+    isSuperadmin ? {} : "skip"
+  );
+
+  // For a specific organization we keep using the lightweight chat.getOrgUsers query.
+  const orgScopedUsers = useQuery(
+    api.chat.getOrgUsers,
+    isAllOrgs ? "skip" : { organizationId: effectiveOrgId, currentUserId }
+  );
+
+  // In "All orgs" mode we load users via users.getAllUsers which,
+  // for superadmin, returns employees from every organization.
+  const allOrgUsers = useQuery(
+    api.users.getAllUsers,
+    isAllOrgs ? { requesterId: currentUserId } : "skip"
+  );
+
+  // Normalized users list used by the UI (always has organizationId attached).
+  const users = React.useMemo(() => {
+    if (isAllOrgs) {
+      const list = (allOrgUsers ?? []) as Doc<"users">[];
+      return list
+        .filter((u) => u._id !== currentUserId && u.isActive && u.isApproved)
+        .map((u) => ({
+          _id: u._id as Id<"users">,
+          name: u.name ?? "",
+          avatarUrl: u.avatarUrl,
+          department: u.department,
+          position: u.position,
+          presenceStatus: u.presenceStatus,
+          organizationId: u.organizationId as Id<"organizations"> | undefined,
+        }));
+    }
+
+    // orgScopedUsers already returns the normalized shape (including organizationId)
+    return (orgScopedUsers ?? []) as Array<{
+      _id: Id<"users">;
+      name: string;
+      avatarUrl?: string;
+      department?: string;
+      position?: string;
+      presenceStatus?: string;
+      organizationId?: Id<"organizations">;
+    }>;
+  }, [isAllOrgs, allOrgUsers, orgScopedUsers, currentUserId]);
   const getOrCreateDM = useMutation(api.chat.getOrCreateDM);
   const createGroup = useMutation(api.chat.createGroup);
-
-  // When "All organizations" is selected (selectedOrgId is null for superadmin),
-  // we show all users from the user's own org (cross-org DM uses user's org as conversation host)
-  const isAllOrgs = selectedOrgId === null;
 
   const filtered = useMemo(() => {
     if (!users) return [];
@@ -67,16 +119,49 @@ export function NewConversationModal({ currentUserId, organizationId, onClose, o
     setLoading(true);
     try {
       if (mode === "dm") {
+        const targetId = selectedUsers[0];
+        const targetUser = users.find((u) => u._id === targetId);
+
+        // For cross-org DM we host the conversation inside the target user's organization
+        // so that they can see it in their own tenant. For non-superadmin / single-org
+        // flow we fall back to the effectiveOrgId.
+        const dmOrgId =
+          (isAllOrgs && targetUser?.organizationId) ? targetUser.organizationId : effectiveOrgId;
+
         const convId = await getOrCreateDM({
-          organizationId: effectiveOrgId,
+          organizationId: dmOrgId,
           currentUserId,
-          targetUserId: selectedUsers[0],
+          targetUserId: targetId,
         });
         onCreated(convId);
       } else {
         if (!groupName.trim()) return;
+
+        // In "All orgs" mode we only support groups inside a single organization.
+        // If selected users span multiple organizations, we default the group to
+        // the first user's org and log a warning instead of failing silently.
+        let groupOrgId = effectiveOrgId;
+        if (isAllOrgs) {
+          const selected = users.filter((u) => selectedUsers.includes(u._id));
+          const orgIds = Array.from(
+            new Set(
+              selected
+                .map((u) => u.organizationId)
+                .filter((id): id is Id<"organizations"> => !!id)
+            )
+          );
+          if (orgIds.length === 1) {
+            groupOrgId = orgIds[0];
+          } else if (orgIds.length > 1) {
+            console.warn(
+              "[NewConversationModal] Cross-organization groups are not fully supported yet; using first organization's ID for the group."
+            );
+            groupOrgId = orgIds[0];
+          }
+        }
+
         const convId = await createGroup({
-          organizationId: effectiveOrgId,
+          organizationId: groupOrgId,
           createdBy: currentUserId,
           name: groupName.trim(),
           memberIds: selectedUsers,
@@ -99,21 +184,74 @@ export function NewConversationModal({ currentUserId, organizationId, onClose, o
         style={{ background: "var(--background)", border: "1px solid var(--border)", maxHeight: "80vh" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>
+        <div className="flex items-center justify-between p-4 border-b gap-3" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="font-semibold text-sm truncate" style={{ color: "var(--text-primary)" }}>
               {t('chat.newConversation')}
             </h2>
-            {isAllOrgs && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: "var(--background-subtle)", color: "var(--text-muted)" }}>
-                <Globe className="w-3 h-3" />
-                {t('chat.allOrgs')}
-              </span>
-            )}
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity">
-            <X className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            {isSuperadmin && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowOrgDropdown((v) => !v)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all"
+                  style={{
+                    background: "var(--background-subtle)",
+                    borderColor: showOrgDropdown ? "var(--primary)" : "var(--border)",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  <Globe className="w-3 h-3" />
+                  <span className="max-w-[120px] truncate">
+                    {isAllOrgs
+                      ? t('chat.allOrgs')
+                      : organizations?.find((o) => o._id === selectedOrgId)?.name || t('chat.allOrgs')}
+                  </span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+                {showOrgDropdown && (
+                  <div
+                    className="absolute right-0 mt-1 w-56 rounded-lg border shadow-xl z-50 max-h-64 overflow-y-auto custom-scrollbar"
+                    style={{ background: "var(--background)", borderColor: "var(--border)" }}
+                  >
+                    <button
+                      onClick={() => {
+                        setSelectedOrgId(null);
+                        setShowOrgDropdown(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs hover:opacity-80"
+                      style={{
+                        background: isAllOrgs ? "var(--sidebar-item-hover)" : "transparent",
+                        color: isAllOrgs ? "var(--primary)" : "var(--text-primary)",
+                      }}
+                    >
+                      {t('chat.allOrgs')}
+                    </button>
+                    {organizations?.map((org) => (
+                      <button
+                        key={org._id}
+                        onClick={() => {
+                          setSelectedOrgId(org._id as Id<"organizations">);
+                          setShowOrgDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs hover:opacity-80"
+                        style={{
+                          background: selectedOrgId === org._id ? "var(--sidebar-item-hover)" : "transparent",
+                          color: selectedOrgId === org._id ? "var(--primary)" : "var(--text-primary)",
+                        }}
+                      >
+                        {org.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center hover:opacity-70 transition-opacity">
+              <X className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
+            </button>
+          </div>
         </div>
 
         {/* Mode tabs */}

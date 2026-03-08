@@ -42,6 +42,32 @@ export const getAllUsers = query({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET USERS BY ORGANIZATION ID — for adding members from specific orgs
+// ─────────────────────────────────────────────────────────────────────────────
+export const getUsersByOrganizationId = query({
+  args: {
+    requesterId: v.id("users"),
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, { requesterId, organizationId }) => {
+    const requester = await ctx.db.get(requesterId);
+    if (!requester) throw new Error("Requester not found");
+
+    // Superadmin can query any org; regular users can only query their own
+    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
+    if (!isSuperadmin && requester.organizationId !== organizationId) {
+      throw new Error("Access denied: cross-organization access is not allowed");
+    }
+
+    return await ctx.db
+      .query("users")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET CURRENT USER — for client-side auth state
 // ─────────────────────────────────────────────────────────────────────────────
 export const getCurrentUser = query({

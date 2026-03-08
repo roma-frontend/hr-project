@@ -61,6 +61,11 @@ const MaintenanceBanner = dynamic(
   { ssr: false, loading: () => null }
 );
 
+const IncomingCallProvider = dynamic(
+  () => import("@/components/chat/IncomingCallProvider").then((m) => m.IncomingCallProvider),
+  { ssr: false, loading: () => null }
+);
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore();
   const { status } = useSession();
@@ -125,6 +130,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </div>
       {/* AI Chat Widget - hidden on /chat page so it doesn't cover the send button */}
       {!isChatPage && <ChatWidget />}
+
+      {/* Global incoming call detection — works on ALL pages */}
+      {hydrated && user && <IncomingCallProvider />}
 
       {/* Real-time notification banners */}
       {hydrated && user && <NotificationBanner />}
