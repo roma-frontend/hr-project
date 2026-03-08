@@ -697,16 +697,37 @@ export const getAuditLogs = query({
 export const updatePresenceStatus = mutation({
   args: {
     userId: v.id("users"),
-    status: v.union(
+    presenceStatus: v.union(
       v.literal("available"),
       v.literal("in_meeting"),
       v.literal("in_call"),
       v.literal("out_of_office"),
       v.literal("busy"),
     ),
+    outOfOfficeMessage: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, { presenceStatus: args.status });
+  handler: async (ctx, { userId, presenceStatus, outOfOfficeMessage }) => {
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found");
+
+    // Update status
+    await ctx.db.patch(userId, {
+      presenceStatus,
+      updatedAt: Date.now(),
+    });
+
+    // Create notification for the update
+    await ctx.db.insert("notifications", {
+      userId,
+      type: "status_change",
+      title: `Status updated to ${presenceStatus}`,
+      message: `Your status is now ${presenceStatus}`,
+      isRead: false,
+      createdAt: Date.now(),
+      relatedId: userId,
+    });
+
+    return { success: true, newStatus: presenceStatus };
   },
 });
 
@@ -1353,50 +1374,6 @@ export const hardDeleteUser = mutation({
     // Hard delete - remove from database completely
     await ctx.db.delete(userId);
     return userId;
-  },
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// UPDATE PRESENCE STATUS — for status modal (In Call, Out of Office, etc.)
-// ─────────────────────────────────────────────────────────────────────────────
-export const updatePresenceStatus = mutation({
-  args: {
-    userId: v.id("users"),
-    presenceStatus: v.union(
-      v.literal("available"),
-      v.literal("in_meeting"),
-      v.literal("in_call"),
-      v.literal("out_of_office"),
-      v.literal("busy")
-    ),
-    outOfOfficeMessage: v.optional(v.string()),
-  },
-  handler: async (ctx, { userId, presenceStatus, outOfOfficeMessage }) => {
-    const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
-
-    // Update status
-    await ctx.db.patch(userId, {
-      presenceStatus,
-      // Store OOO message if provided
-      ...(outOfOfficeMessage && presenceStatus === "out_of_office" && {
-        // You can add a field to schema if needed, or use userPreferences
-      }),
-      updatedAt: Date.now(),
-    });
-
-    // Create notification for the update
-    await ctx.db.insert("notifications", {
-      userId,
-      type: "status_change",
-      title: `Status updated to ${presenceStatus}`,
-      message: `Your status is now ${presenceStatus}`,
-      isRead: false,
-      createdAt: Date.now(),
-      relatedId: userId,
-    });
-
-    return { success: true, newStatus: presenceStatus };
   },
 });
 

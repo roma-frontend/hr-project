@@ -107,7 +107,7 @@ export function StatusModal({
     try {
       await updateStatusMutation({
         userId: currentUserId,
-        presenceStatus: selectedStatus,
+        presenceStatus: selectedStatus as any,
         outOfOfficeMessage: outOfOfficeMsg,
       });
 

@@ -218,7 +218,10 @@ function RegisterPageContent() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("invite");
-    if (token) setInviteToken(token);
+    if (token) {
+      // Wrap setState in setTimeout to avoid cascading renders
+      setTimeout(() => setInviteToken(token), 0);
+    }
   }, []);
 
   const strength = passwordStrength(formData.password);
