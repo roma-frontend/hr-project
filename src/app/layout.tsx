@@ -246,6 +246,8 @@ export default function RootLayout({
         {/* Google Fonts preconnect — fonts loaded via next/font, these just speed up the connection */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Google avatars (NextAuth/OAuth) — improves LCP for profile images */}
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" crossOrigin="anonymous" />
 
         {/* JSON-LD Structured Data */}
         <script

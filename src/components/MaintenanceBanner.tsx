@@ -131,6 +131,7 @@ export function MaintenanceBanner() {
           <button
             onClick={() => setDismissed(true)}
             className="flex-shrink-0 p-1 rounded-full hover:bg-amber-500/20 transition-colors"
+            aria-label="Dismiss maintenance notice"
           >
             <X className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </button>

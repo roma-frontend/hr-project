@@ -147,6 +147,8 @@ export default function DashboardClient() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
+      {/* Page title for accessibility — proper heading order h1 → h2 → h3 */}
+      <h1 className="sr-only">{t('nav.dashboard', { defaultValue: 'Dashboard' })}</h1>
       {/* Smart Banners */}
       <motion.div variants={itemVariants}>
         <DashboardBanners />
@@ -296,7 +298,7 @@ export default function DashboardClient() {
           <Card>
             <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.monthlyLeaveTrend')}</CardTitle>
+                <CardTitle as="h2" className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.monthlyLeaveTrend')}</CardTitle>
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-[var(--text-muted)]" />
               </div>
             </CardHeader>
@@ -330,7 +332,7 @@ export default function DashboardClient() {
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.leaveDistribution')}</CardTitle>
+              <CardTitle as="h2" className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{t('dashboard.leaveDistribution')}</CardTitle>
             </CardHeader>
             <CardContent>
               {pieData.length > 0 ? (

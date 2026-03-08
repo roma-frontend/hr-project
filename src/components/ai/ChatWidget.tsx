@@ -678,6 +678,7 @@ export function ChatWidget() {
 
       {/* Toggle Button */}
       <motion.button
+        aria-label={t('chatWidget.openAssistant', { defaultValue: 'Open AI assistant' })}
         onClick={() => {
           if (!hasAiChat) {
             openModal({
@@ -725,7 +726,7 @@ export function ChatWidget() {
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Shield HR AI</p>
                 <p className="text-[10px] text-[var(--text-muted)]">{t('chatWidget.subtitle', { defaultValue: 'Your intelligent HR assistant' })}</p>
               </div>
-              <button onClick={() => setIsOpen(false)} className="ml-auto p-1.5 rounded-lg hover:bg-[var(--background-subtle)] transition-colors">
+              <button onClick={() => setIsOpen(false)} className="ml-auto p-1.5 rounded-lg hover:bg-[var(--background-subtle)] transition-colors" aria-label={t('chatWidget.closeChat', { defaultValue: 'Close chat' })}>
                 <X className="w-4 h-4 text-[var(--text-muted)]" />
               </button>
             </div>

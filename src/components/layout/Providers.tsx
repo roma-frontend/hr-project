@@ -8,9 +8,22 @@ import { useSidebarStore } from "@/store/useSidebarStore";
 import { usePathname } from "next/navigation";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 
+function SidebarSkeleton() {
+  return (
+    <aside className="hidden lg:flex flex-col w-60 h-screen shrink-0 border-r bg-[var(--sidebar-bg)] border-[var(--sidebar-border)] animate-pulse">
+      <div className="h-16 border-b border-[var(--sidebar-border)]" />
+      <div className="flex-1 py-4 space-y-1">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="h-9 mx-2 rounded-lg bg-[var(--background-subtle)]/50" />
+        ))}
+      </div>
+    </aside>
+  );
+}
+
 const Sidebar = dynamic(
   () => import("@/components/layout/Sidebar").then((m) => m.Sidebar),
-  { ssr: false, loading: () => null }
+  { ssr: false, loading: () => <SidebarSkeleton /> }
 );
 
 const MobileSidebar = dynamic(
@@ -91,8 +104,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar */}
       <MobileSidebar />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Main content — contain:layout reduces CLS from child layout changes */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ contain: "layout" }}>
         {/* Navbar — ssr:false prevents theme/user/notification mismatch */}
         <Navbar />
         {/* Maintenance warning banner — below navbar, above content */}

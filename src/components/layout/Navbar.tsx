@@ -233,6 +233,7 @@ export function Navbar() {
         size="icon"
         className="lg:hidden text-[var(--text-muted)] hover:text-[var(--text-primary)]"
         onClick={() => setMobileOpen(true)}
+        aria-label={t('nav.openMenu', { defaultValue: 'Open menu' })}
       >
         <Menu className="w-5 h-5" />
       </Button>
@@ -262,6 +263,7 @@ export function Navbar() {
             size="icon"
             className="relative text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             onClick={() => setShowNotifications(!showNotifications)}
+            aria-label={t('notifications.title', { defaultValue: 'Notifications' })}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
@@ -349,6 +351,7 @@ export function Navbar() {
           className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           title={resolvedTheme === "dark" ? t('settings.lightMode') : t('settings.darkMode')}
+          aria-label={resolvedTheme === "dark" ? t('settings.lightMode', { defaultValue: 'Switch to light mode' }) : t('settings.darkMode', { defaultValue: 'Switch to dark mode' })}
         >
           {resolvedTheme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
@@ -356,7 +359,7 @@ export function Navbar() {
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-[var(--background-subtle)] transition-colors outline-none focus-visible:outline-none focus:outline-none">
+            <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-[var(--background-subtle)] transition-colors outline-none focus-visible:outline-none focus:outline-none" aria-label={t('nav.userMenu', { defaultValue: 'User menu' })}>
               <div className="relative">
                 <Avatar className="w-8 h-8">
                   {user?.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
@@ -558,6 +561,7 @@ export function Navbar() {
             <button
               onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
               className="flex-shrink-0 p-1 rounded-lg hover:bg-[var(--background-subtle)] transition-colors"
+              aria-label={t('notifications.dismiss', { defaultValue: 'Dismiss notification' })}
             >
               <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
             </button>
