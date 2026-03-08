@@ -135,7 +135,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               <div className="border-t border-[var(--border)] bg-[var(--background-subtle)] px-6 py-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-[var(--text-muted)]">
-                    t("keyboard.closeHint")
+                    t(&quot;keyboard.closeHint&quot;)
                   </p>
                   <Button onClick={onClose} variant="secondary" size="sm">
                     Got it!

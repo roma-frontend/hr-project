@@ -16,11 +16,25 @@ export default function SecurityAlertDetailPage() {
   const { user } = useAuthStore();
   const userId = params.userId as string;
   
+  // All hooks at the top level
   const [suspendDuration, setSuspendDuration] = useState(24);
   const [suspendReason, setSuspendReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // STEP 1: Check if user is loaded
+  const suspiciousUser = useQuery(
+    api.users.getUserById,
+    user?.id ? { userId: userId as Id<"users">, requesterId: user.id as Id<"users"> } : "skip"
+  );
+
+  const recentAttempts = useQuery(
+    api.security.getLoginAttemptsByUser,
+    userId ? { userId: userId as Id<"users">, limit: 10 } : "skip"
+  );
+
+  const suspendUserMutation = useMutation(api.users.suspendUser);
+  const unsuspendUserMutation = useMutation(api.users.unsuspendUser);
+
+  // Guard clauses AFTER all hooks
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
@@ -43,22 +57,6 @@ export default function SecurityAlertDetailPage() {
       </div>
     );
   }
-
-  // Get user details
-  const suspiciousUser = useQuery(
-    api.users.getUserById,
-    user?.id ? { userId: userId as Id<"users">, requesterId: user.id as Id<"users"> } : "skip"
-  );
-
-  // Get recent login attempts for this user
-  const recentAttempts = useQuery(
-    api.security.getLoginAttemptsByUser,
-    userId ? { userId: userId as Id<"users">, limit: 10 } : "skip"
-  );
-
-  // Mutations
-  const suspendUserMutation = useMutation(api.users.suspendUser);
-  const unsuspendUserMutation = useMutation(api.users.unsuspendUser);
 
   if (!suspiciousUser) {
     return (
@@ -85,8 +83,9 @@ export default function SecurityAlertDetailPage() {
 
       toast.success(`User suspended for ${suspendDuration} hours`);
       setSuspendReason("");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to suspend user");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to suspend user";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -101,8 +100,9 @@ export default function SecurityAlertDetailPage() {
       });
 
       toast.success("User unsuspended successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to unsuspend user");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to unsuspend user";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -304,7 +304,7 @@ export default function SecurityAlertDetailPage() {
                 </h2>
                 
                 <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-                  This will immediately restore the user's access to the system.
+                  This will immediately restore the user&apos;s access to the system.
                 </p>
                 
                 <button

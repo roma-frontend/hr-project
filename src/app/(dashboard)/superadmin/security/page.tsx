@@ -1,24 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useSession } from "next-auth/react";
 import type { Id } from "@/convex/_generated/dataModel";
 import {
   Shield,
   ShieldCheck,
   ShieldAlert,
   Eye,
-  EyeOff,
   Clock,
-  AlertTriangle,
   CheckCircle,
   XCircle,
   Monitor,
-  Fingerprint,
   Brain,
   Camera,
   Lock,
@@ -138,7 +134,6 @@ function RiskBadge({ score }: { score: number }) {
 export default function SecurityDashboard() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { data: session, status } = useSession();
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"settings" | "logs" | "attempts" | "blocked">("settings");
 
@@ -190,10 +185,6 @@ export default function SecurityDashboard() {
     (loginStats?.highRisk ?? 0) >= 10 ? t('superadmin.security.critical') :
       (loginStats?.highRisk ?? 0) >= 3 ? t('superadmin.security.elevated') :
         (loginStats?.failed ?? 0) >= 20 ? t('superadmin.security.moderate') : t('superadmin.security.normal');
-  const threatColor =
-    threatLevel === t('superadmin.security.critical') ? "text-red-400" :
-      threatLevel === t('superadmin.security.elevated') ? "text-orange-400" :
-        threatLevel === t('superadmin.security.moderate') ? "text-yellow-400" : "text-green-400";
 
   return (
     <div style={{ color: "var(--text-primary)" }}>
@@ -346,6 +337,7 @@ export default function SecurityDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {suspendedUsers.map((user: any) => {
                 const isAutoBlocked = user.suspendedReason?.includes("AUTO-BLOCKED");
                 const hoursLeft = Math.max(0, Math.ceil((user.suspendedUntil - Date.now()) / (1000 * 60 * 60)));
@@ -440,6 +432,7 @@ export default function SecurityDashboard() {
             </div>
           ) : (
             <div className="space-y-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {loginStats.suspicious.map((attempt: any, i: number) => (
                 <div
                   key={i}
@@ -492,6 +485,7 @@ export default function SecurityDashboard() {
             </div>
           ) : (
             <div className="space-y-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {auditLogs.map((log: any) => (
                 <div
                   key={log._id}

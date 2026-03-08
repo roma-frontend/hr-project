@@ -11,7 +11,6 @@ import {
   Users, 
   TrendingUp, 
   AlertCircle,
-  Download,
   RefreshCw,
   Calendar,
   CreditCard,
@@ -48,46 +47,9 @@ interface Subscription {
 }
 
 export default function StripeDashboardPage() {
+  // All hooks MUST be at the top, before any conditional returns
   const subscriptions = useQuery(api.subscriptions.listAll) as Subscription[] | undefined;
-  
-  // Get current user from auth store
   const { user: currentUser } = useAuthStore();
-  
-  // Wait for user to load first
-  if (!currentUser) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <ShieldLoader size="lg" />
-      </div>
-    );
-  }
-  
-  // Check if user is superadmin - only after user is loaded
-  const isSuperAdmin = currentUser.email?.toLowerCase() === SUPERADMIN_EMAIL || currentUser.role === "superadmin";
-  
-  // If not superadmin, show access denied
-  if (!isSuperAdmin) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2 text-red-500">
-              <ShieldAlert className="w-6 h-6" />
-              <CardTitle>Access Denied</CardTitle>
-            </div>
-            <CardDescription>
-              This page is only accessible to the superadmin.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Payment and subscription management features are restricted to authorized personnel only.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
   const [refreshing, setRefreshing] = useState(false);
   const [runningScript, setRunningScript] = useState<string | null>(null);
   const [scriptOutput, setScriptOutput] = useState<string>("");
@@ -143,6 +105,40 @@ export default function StripeDashboardPage() {
       canceled: byStatus.canceled || 0,
     };
   }, [subscriptions]);
+
+  // Guard clauses AFTER all hooks
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <ShieldLoader size="lg" />
+      </div>
+    );
+  }
+
+  const isSuperAdmin = currentUser.email?.toLowerCase() === SUPERADMIN_EMAIL || currentUser.role === "superadmin";
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <div className="flex items-center gap-2 text-red-500">
+              <ShieldAlert className="w-6 h-6" />
+              <CardTitle>Access Denied</CardTitle>
+            </div>
+            <CardDescription>
+              This page is only accessible to the superadmin.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Payment and subscription management features are restricted to authorized personnel only.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleRefresh = async () => {
     setRefreshing(true);
