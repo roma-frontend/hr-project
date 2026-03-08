@@ -3230,6 +3230,7 @@
     "filterAll": "All"
   },
   "status": {
+    "updated": "Status Updated",
     "selectStatus": "Select Your Status",
     "selectSubtitle": "Choose how you want to be perceived by your team",
     "confirmChange": "Confirm Status Change",

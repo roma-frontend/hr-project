@@ -111,16 +111,30 @@ export function StatusModal({
         outOfOfficeMessage: outOfOfficeMsg,
       });
 
-      // Show notification
-      const notification = getStatusNotification(selectedStatus);
-      toast.success(notification || `Status changed to ${selectedStatus}`);
+      // Show elegant notification toast
+      const statusLabel = t(`status.${selectedStatus}.label`, selectedStatus);
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold text-sm">{t('status.updated', 'Status Updated')}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">Your status is now <strong>{statusLabel}</strong></span>
+        </div>,
+        {
+          position: "top-right",
+          duration: 4000,
+          className: "status-change-toast",
+          descriptionClassName: "text-xs",
+        }
+      );
 
       onStatusChange?.(selectedStatus);
       setShowConfirm(false);
       onClose();
     } catch (error) {
       console.error("Failed to update status:", error);
-      toast.error(t("status.updateFailed", "Failed to update status"));
+      toast.error(t("status.updateFailed", "Failed to update status"), {
+        position: "top-right",
+        duration: 3000,
+      });
     }
   };
 

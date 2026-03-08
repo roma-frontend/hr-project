@@ -1200,6 +1200,38 @@ body {
   }
 }
 
+/* Status Change Toast Specific Styling */
+.status-change-toast {
+  min-width: 300px !important;
+  max-width: 400px !important;
+  background: linear-gradient(135deg, var(--card) 0%, rgba(79, 70, 229, 0.05) 100%) !important;
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid #4f46e5 !important;
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.15) !important;
+}
+
+.status-change-toast [data-title] {
+  color: var(--foreground) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-change-toast [data-description] {
+  color: var(--text-muted) !important;
+  font-size: 12px !important;
+  margin-top: 4px !important;
+}
+
+@media (max-width: 640px) {
+  .status-change-toast {
+    min-width: 280px !important;
+    max-width: calc(100vw - 1rem) !important;
+  }
+}
+
 /* Native Date Picker z-index fix */
 input[type="date"]::-webkit-calendar-picker-indicator {
   z-index: 9999 !important;
