@@ -224,7 +224,7 @@ function PricingCard({ tier, delay, currentPlan }: { tier: PricingTier; delay: n
           <div className="mb-6 sm:mb-8">
             <div className="flex items-end gap-2">
               <span
-                className="text-3xl sm:text-4xl md:text-5xl font-black leading-none"
+                className="text-3xl font-black leading-none"
                 style={{ color: 'var(--landing-text-primary)' }}
               >
                 {t(tier.priceKey)}
