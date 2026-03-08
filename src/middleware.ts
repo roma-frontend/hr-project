@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt';
 
 // ═══════════════════════════════════════════════════════════════
 // SECURITY CONFIGURATION
@@ -228,47 +227,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 8. Role-based access control
-  if (pathname.startsWith('/superadmin') || pathname.startsWith('/admin')) {
-    // Check both NextAuth JWT and hr-auth-token (for email/password users)
-    const jwtToken = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-    const hrAuthToken = request.cookies.get('hr-auth-token')?.value;
-    
-    // Allow access if user has EITHER token
-    if (!jwtToken && !hrAuthToken) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    // For superadmin pages: check role OR known superadmin email
-    if (pathname.startsWith('/superadmin')) {
-      // If using NextAuth, check role or email
-      if (jwtToken) {
-        const isSuperAdminEmail = jwtToken.email?.toString().toLowerCase() === 'romangulanyan@gmail.com';
-        const isSuperAdminRole = jwtToken.role === 'superadmin';
-        
-        // Allow if superadmin by email OR role OR role not yet loaded (undefined)
-        if (!isSuperAdminEmail && !isSuperAdminRole && jwtToken.role) {
-          console.log('[Middleware] Blocking superadmin access for:', jwtToken.email, 'role:', jwtToken.role);
-          return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-        // If role is undefined, email matches, or role is superadmin → allow access
-      }
-      // If using hr-auth-token, allow (role check on client)
-    }
-
-    if (pathname.startsWith('/admin')) {
-      // If using NextAuth, check role
-      if (jwtToken) {
-        // If role is not yet loaded (undefined), allow access temporarily
-        if (jwtToken.role && !['admin', 'superadmin'].includes(jwtToken.role as string)) {
-          console.log('[Middleware] Blocking admin access for user with role:', jwtToken.role);
-          return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-        // If role is undefined or is admin/superadmin, allow access
-      }
-      // If using hr-auth-token, allow (role check on client)
-    }
-  }
+  // 8. Role-based access control is handled CLIENT-SIDE by each page component
+  // (e.g. superadmin/organizations checks user.role === 'superadmin' || user.email === SUPERADMIN_EMAIL)
+  // The middleware only handles authentication gating (step 7 above), NOT authorization.
 
   // 9. Add security headers and return
   const response = NextResponse.next();
