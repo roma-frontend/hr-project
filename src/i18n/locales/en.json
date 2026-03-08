@@ -3244,27 +3244,27 @@
     "available": {
       "label": "Available",
       "description": "You're available and ready to help. Your team can reach you anytime.",
-      "notification": "✓ You're now available. Your team can reach you with messages and calls."
+      "notification": "You will receive all notifications from your team."
     },
     "in_meeting": {
       "label": "In Meeting",
       "description": "You're in a meeting and prefer not to be interrupted.",
-      "notification": "🚫 You're in a meeting. Messages will still arrive, but notifications are muted."
+      "notification": "You will receive notifications, but visual alerts will be muted."
     },
     "in_call": {
       "label": "In Call",
       "description": "You're on a phone or video call. Do not disturb.",
-      "notification": "☎️ You're on a call. Important messages will be marked as urgent."
+      "notification": "Only important messages will notify you."
     },
     "out_of_office": {
       "label": "Out of Office",
       "description": "You're away from the office. You can choose to get notifications or stay disconnected.",
-      "notification": "✈️ You're out of office. Your team will see you're not available."
+      "notification": "You won't receive standard notifications while away."
     },
     "busy": {
       "label": "Busy",
       "description": "You're focused on important work. Interruptions should be minimal.",
-      "notification": "⏱️ You're busy. Only urgent messages will notify you."
+      "notification": "Only urgent messages will notify you."
     }
   }
 }
