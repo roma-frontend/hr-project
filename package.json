@@ -32,6 +32,8 @@
     "@ai-sdk/groq": "^3.0.24",
     "@ai-sdk/openai": "^3.0.30",
     "@ai-sdk/react": "^3.0.99",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.70.1",
