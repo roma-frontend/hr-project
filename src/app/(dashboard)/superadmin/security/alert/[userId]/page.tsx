@@ -138,7 +138,7 @@ export default function SecurityAlertDetailPage() {
             Back to Security Center
           </button>
           
-          <div className="flex items-center justify-between">
+          <div className="flex  items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>Security Alert Details</h1>
               <p className="mt-1" style={{ color: "var(--text-muted)" }}>Review and manage suspicious activity</p>

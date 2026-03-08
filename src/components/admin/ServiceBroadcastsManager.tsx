@@ -123,7 +123,7 @@ export function ServiceBroadcastsManager({
             {broadcasts.map((broadcast) => (
               <div
                 key={broadcast._id}
-                className="flex items-start justify-between gap-4 p-4 rounded-lg transition-colors"
+                className="flex flex-col sm:flex-row  items-start justify-between gap-4 p-4 rounded-lg transition-colors"
                 style={{
                   borderColor: "var(--border)",
                   backgroundColor: "transparent",
@@ -136,7 +136,7 @@ export function ServiceBroadcastsManager({
                 }}
               >
                 {/* Left: Icon & Content */}
-                <div className="flex items-start gap-3 flex-1">
+                <div className="flex flex-col sm:flex-row items-start gap-3 flex-1">
                   <div className="text-2xl flex-shrink-0 pt-1">
                     {broadcast.icon}
                   </div>
@@ -154,7 +154,7 @@ export function ServiceBroadcastsManager({
                       {broadcast.content}
                     </p>
                     <div
-                      className="flex items-center gap-4 mt-2 text-xs"
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-2 text-xs"
                       style={{ color: "var(--text-muted)" }}
                     >
                       <div className="flex items-center gap-1">

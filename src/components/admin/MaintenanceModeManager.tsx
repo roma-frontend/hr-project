@@ -56,7 +56,7 @@ export function MaintenanceModeManager({
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 mt-0.5" />
             <div>
-              <CardTitle className="text-red-700 dark:text-red-300">🔴 Сайт На Обслуживании</CardTitle>
+              <CardTitle className="text-red-700 dark:text-red-300">Сайт На Обслуживании</CardTitle>
               <CardDescription>
                 {maintenance.title}
               </CardDescription>

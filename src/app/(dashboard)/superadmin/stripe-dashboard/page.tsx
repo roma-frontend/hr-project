@@ -452,7 +452,7 @@ export default function StripeDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {Object.entries(stats.byStatus).map(([status, count]) => (
-                <div key={status} className="flex items-center justify-between">
+                <div key={status} className="flex  items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{getStatusEmoji(status)}</span>
                     <span className="capitalize font-medium">{status}</span>

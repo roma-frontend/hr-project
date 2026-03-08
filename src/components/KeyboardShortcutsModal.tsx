@@ -108,7 +108,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: idx * 0.1 + itemIdx * 0.05 }}
-                            className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] p-3 transition-all hover:border-[var(--primary)]/50 hover:bg-[var(--background-subtle)]/80"
+                            className="flex  items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] p-3 transition-all hover:border-[var(--primary)]/50 hover:bg-[var(--background-subtle)]/80"
                           >
                             <span className="text-sm text-[var(--text-primary)]">
                               {shortcut.description}

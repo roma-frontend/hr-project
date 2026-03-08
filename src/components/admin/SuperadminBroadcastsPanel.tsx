@@ -44,7 +44,7 @@ export function SuperadminBroadcastsPanel({ organizationId, userId }: Superadmin
         }}
       >
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5" style={{ color: "#f97316" }} />
               <div>

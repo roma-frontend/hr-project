@@ -26,11 +26,11 @@ export default function CookieBanner() {
 
   const bannerContent = (
       <div
-        className="fixed bottom-0 left-0 right-0 z-[120] p-4 sm:p-6 animate-cookie-banner"
+        className="fixed bottom-0 left-0 right-0 z-[120] max-w-full p-4 sm:p-6 animate-cookie-banner"
         style={{ pointerEvents: 'none' }}
       >
         <div style={{ pointerEvents: 'auto' }}>
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-full sm:max-w-6xl">
             <div className="relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-xl" style={{ 
               borderColor: 'var(--landing-card-border)',
               backgroundColor: 'var(--background)',
@@ -42,14 +42,14 @@ export default function CookieBanner() {
             <div className="relative px-6 py-6 sm:px-8 sm:py-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 {/* Left section - Icon & Text */}
-                <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
                   <div className="text-left flex-shrink-0">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] shadow-lg">
                       <Cookie className="h-6 w-6 text-white" />
                     </div>
                   </div>
 
-                  <div className="text-left flex-1">
+                  <div className="text-left sm:flex-1">
                     <h3 className="text-lg font-semibold text-[var(--foreground)]">
                       🍪 {t("cookies.title")}
                     </h3>
