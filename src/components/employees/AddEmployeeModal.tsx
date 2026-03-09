@@ -206,13 +206,14 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
           {/* Role */}
           <div className="space-y-1.5">
             <Label>{t('employees.role')}</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "supervisor" | "employee")}>
+            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "supervisor" | "employee" | "driver")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="employee">{t('roles.employee')}</SelectItem>
                 <SelectItem value="supervisor">{t('roles.supervisor')}</SelectItem>
+                <SelectItem value="driver">{t('roles.driver')}</SelectItem>
                 {isActualAdmin && (
                   <SelectItem value="admin">{t('roles.admin')}</SelectItem>
                 )}

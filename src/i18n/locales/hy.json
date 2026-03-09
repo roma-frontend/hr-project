@@ -1505,7 +1505,8 @@
     "admin": "Ադմին",
     "supervisor": "Վերակացու",
     "supervisors": "Վերակացուներ",
-    "employee": "Աշխատակից"
+    "employee": "Աշխատակից",
+    "driver": "Վարորդ"
   },
   "reportsPageComplete": {
     "cumulativeLeaveDays": "Կուտակային արձակուրդային օրեր",

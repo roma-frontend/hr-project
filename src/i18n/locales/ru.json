@@ -1514,7 +1514,8 @@
     "admin": "Администратор",
     "supervisor": "Супервайзер",
     "supervisors": "Супервайзеры",
-    "employee": "Сотрудник"
+    "employee": "Сотрудник",
+    "driver": "Водитель"
   },
   "reportsPageComplete": {
     "cumulativeLeaveDays": "Накопительные дни отпуска",

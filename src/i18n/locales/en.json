@@ -1515,7 +1515,8 @@
     "admin": "Admin",
     "supervisor": "Supervisor",
     "supervisors": "Supervisors",
-    "employee": "Employee"
+    "employee": "Employee",
+    "driver": "Driver"
   },
   "reportsPageComplete": {
     "cumulativeLeaveDays": "Cumulative Leave Days",
