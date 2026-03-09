@@ -430,7 +430,7 @@ export const requestDriver = mutation({
       .withIndex("by_driver_time", (q) => q.eq("driverId", args.driverId))
       .filter((q) =>
         q.and(
-          q.eq(q.field("status"), v.literal("scheduled")),
+          q.eq(q.field("status"), "scheduled"),
           q.or(
             q.and(
               q.lte(q.field("startTime"), args.startTime),

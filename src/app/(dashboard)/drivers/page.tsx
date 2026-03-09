@@ -301,7 +301,7 @@ export default function DriversPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">{t("driver.booking", "Driver Booking")}</h1>
           <p className="text-muted-foreground">
