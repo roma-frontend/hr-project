@@ -44,6 +44,8 @@ export const getAllUsers = query({
 // ─────────────────────────────────────────────────────────────────────────────
 // GET USERS BY ORGANIZATION ID — for adding members from specific orgs
 // ─────────────────────────────────────────────────────────────────────────────
+// GET USERS BY ORGANIZATION — for team/member selection
+// ─────────────────────────────────────────────────────────────────────────────
 export const getUsersByOrganizationId = query({
   args: {
     requesterId: v.id("users"),
@@ -66,6 +68,9 @@ export const getUsersByOrganizationId = query({
       .collect();
   },
 });
+
+// Alias for mobile compatibility
+export const getUsersByOrganization = getUsersByOrganizationId;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET CURRENT USER — for client-side auth state
