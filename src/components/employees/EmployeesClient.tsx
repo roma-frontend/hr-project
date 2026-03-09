@@ -10,7 +10,7 @@ import {
   Plus, Search, MoreVertical, Edit2, Trash2,
   Shield, Users, Briefcase, Mail, Phone, Building2,
   Crown, UserCheck, User, AlertTriangle, Eye, UserCog,
-  LayoutGrid, List, ChevronRight,
+  LayoutGrid, List, ChevronRight, Car,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
@@ -26,6 +26,7 @@ const ROLE_CONFIG = {
   admin: { labelKey: "roles.admin", icon: Crown, color: "#2563eb", bg: "rgba(99,102,241,0.1)" },
   supervisor: { labelKey: "roles.supervisor", icon: UserCheck, color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   employee: { labelKey: "roles.employee", icon: User, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  driver: { labelKey: "roles.driver", icon: Car, color: "#06b6d4", bg: "rgba(6,182,212,0.1)" },
 };
 
 const TYPE_CONFIG = {
