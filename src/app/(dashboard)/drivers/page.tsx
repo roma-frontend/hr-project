@@ -56,6 +56,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface TripInfo {
   from: string;
@@ -68,11 +69,16 @@ interface TripInfo {
 export default function DriversPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { user } = useAuthStore();
+  const [mounted, setMounted] = React.useState(false);
+  
+  React.useEffect(() => setMounted(true), []);
+  
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Form state
   const [tripInfo, setTripInfo] = useState<TripInfo>({
     from: "",
@@ -84,25 +90,24 @@ export default function DriversPage() {
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
 
-  // Get current user
-  const currentUser = useQuery(api.users.getCurrentUser, { email: undefined });
-  const userId = currentUser?._id as Id<"users"> | undefined;
-  const organizationId = currentUser?.organizationId as Id<"organizations"> | undefined;
+  // Get user IDs from auth store
+  const userId = user?.id as Id<"users"> | undefined;
+  const organizationId = user?.orgId as Id<"organizations"> | undefined;
 
   // Get available drivers
   const availableDrivers = useQuery(
     api.drivers.getAvailableDrivers,
-    organizationId ? { organizationId } : "skip"
+    mounted && organizationId ? { organizationId } : "skip"
   );
 
   // Get my driver requests
   const myRequests = useQuery(
     api.drivers.getMyRequests,
-    userId ? { userId } : "skip"
+    mounted && userId ? { userId } : "skip"
   );
 
-  // Show loading while user data is loading
-  if (currentUser === undefined) {
+  // Show loading while mounting
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center h-full">
         <ShieldLoader />
@@ -111,26 +116,13 @@ export default function DriversPage() {
   }
 
   // Handle case when user is not logged in
-  if (!currentUser) {
+  if (!user || !userId || !organizationId) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
           <h2 className="text-xl font-semibold mb-2">Please log in</h2>
           <Button onClick={() => router.push("/login")}>Go to Login</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle case when user has no organization
-  if (!organizationId) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-2">No organization</h2>
-          <p className="text-muted-foreground">You must belong to an organization to access this page</p>
         </div>
       </div>
     );
