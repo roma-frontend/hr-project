@@ -79,7 +79,7 @@ export default function DriversPage() {
     console.log('[DriversPage] mounted:', mounted);
     console.log('[DriversPage] user:', user);
     console.log('[DriversPage] userId:', user?.id);
-    console.log('[DriversPage] orgId:', user?.orgId);
+    console.log('[DriversPage] organizationId:', user?.organizationId);
   }, [mounted, user]);
   
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
@@ -100,7 +100,7 @@ export default function DriversPage() {
 
   // Get user IDs from auth store
   const userId = user?.id as Id<"users"> | undefined;
-  const organizationId = user?.orgId as Id<"organizations"> | undefined;
+  const organizationId = user?.organizationId as Id<"organizations"> | undefined;
 
   // Get available drivers
   const availableDrivers = useQuery(
