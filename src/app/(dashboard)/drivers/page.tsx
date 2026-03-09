@@ -85,6 +85,7 @@ export default function DriversPage() {
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Form state
@@ -97,6 +98,21 @@ export default function DriversPage() {
   });
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
+
+  // Driver registration form
+  const [vehicleInfo, setVehicleInfo] = useState({
+    model: "",
+    plateNumber: "",
+    capacity: 4,
+    color: "",
+    year: new Date().getFullYear(),
+  });
+  const [workingHours, setWorkingHours] = useState({
+    startTime: "09:00",
+    endTime: "18:00",
+    workingDays: [1, 2, 3, 4, 5],
+  });
+  const [maxTripsPerDay, setMaxTripsPerDay] = useState(3);
 
   // Get user IDs from auth store
   const userId = user?.id as Id<"users"> | undefined;
@@ -117,6 +133,7 @@ export default function DriversPage() {
   // Mutations - MUST be called unconditionally at top level
   const requestDriver = useMutation(api.drivers.requestDriver);
   const requestCalendarAccess = useMutation(api.drivers.requestCalendarAccess);
+  const registerAsDriver = useMutation(api.drivers.registerAsDriver);
 
   // Filter drivers by search
   const filteredDrivers = useMemo(() => {
@@ -187,6 +204,42 @@ export default function DriversPage() {
     }
   };
 
+  // Handle driver registration
+  const handleRegisterDriver = async () => {
+    if (!userId || !organizationId) {
+      toast.error("Please log in");
+      return;
+    }
+
+    if (!vehicleInfo.model || !vehicleInfo.plateNumber) {
+      toast.error("Please fill in vehicle model and plate number");
+      return;
+    }
+
+    try {
+      await registerAsDriver({
+        organizationId,
+        userId,
+        vehicleInfo,
+        workingHours,
+        maxTripsPerDay,
+      });
+
+      toast.success("Successfully registered as driver!");
+      setShowRegisterModal(false);
+      // Refresh data
+      setVehicleInfo({
+        model: "",
+        plateNumber: "",
+        capacity: 4,
+        color: "",
+        year: new Date().getFullYear(),
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to register as driver");
+    }
+  };
+
   // Show loading while mounting
   if (!mounted) {
     return (
@@ -225,11 +278,8 @@ export default function DriversPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => {
-            // Navigate to employees to register as driver
-            router.push("/employees");
-          }}>
-            <Users className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={() => setShowRegisterModal(true)}>
+            <Car className="w-4 h-4 mr-2" />
             Register as Driver
           </Button>
           <Button onClick={() => setShowRequestModal(true)}>
@@ -544,6 +594,133 @@ export default function DriversPage() {
               </Button>
               <Button onClick={handleRequestDriver}>
                 {t("driver.submitRequest", "Submit Request")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Driver Registration Modal */}
+      <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Car className="w-5 h-5" />
+              Register as Driver
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> You must have the "Driver" role in the Employees section to register. 
+                This form adds your vehicle information to complete your driver profile.
+              </p>
+            </div>
+
+            {/* Vehicle Info */}
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Car className="w-4 h-4" />
+                Vehicle Information
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Vehicle Model *</Label>
+                  <Input
+                    value={vehicleInfo.model}
+                    onChange={(e) => setVehicleInfo({ ...vehicleInfo, model: e.target.value })}
+                    placeholder="e.g., Mercedes Sprinter"
+                  />
+                </div>
+                <div>
+                  <Label>Plate Number *</Label>
+                  <Input
+                    value={vehicleInfo.plateNumber}
+                    onChange={(e) => setVehicleInfo({ ...vehicleInfo, plateNumber: e.target.value })}
+                    placeholder="e.g., 34-AB-123"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Capacity (seats)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={vehicleInfo.capacity}
+                    onChange={(e) => setVehicleInfo({ ...vehicleInfo, capacity: parseInt(e.target.value) || 4 })}
+                  />
+                </div>
+                <div>
+                  <Label>Color</Label>
+                  <Input
+                    value={vehicleInfo.color}
+                    onChange={(e) => setVehicleInfo({ ...vehicleInfo, color: e.target.value })}
+                    placeholder="e.g., Black"
+                  />
+                </div>
+                <div>
+                  <Label>Year</Label>
+                  <Input
+                    type="number"
+                    min={2000}
+                    max={new Date().getFullYear()}
+                    value={vehicleInfo.year}
+                    onChange={(e) => setVehicleInfo({ ...vehicleInfo, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Working Hours */}
+            <div className="space-y-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Working Hours
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Start Time</Label>
+                  <Input
+                    type="time"
+                    value={workingHours.startTime}
+                    onChange={(e) => setWorkingHours({ ...workingHours, startTime: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>End Time</Label>
+                  <Input
+                    type="time"
+                    value={workingHours.endTime}
+                    onChange={(e) => setWorkingHours({ ...workingHours, endTime: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Max Trips Per Day</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={maxTripsPerDay}
+                  onChange={(e) => setMaxTripsPerDay(parseInt(e.target.value) || 3)}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowRegisterModal(false)}>
+                {t("cancel", "Cancel")}
+              </Button>
+              <Button onClick={handleRegisterDriver}>
+                Register as Driver
               </Button>
             </div>
           </div>
