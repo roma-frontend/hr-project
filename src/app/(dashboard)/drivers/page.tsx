@@ -101,6 +101,41 @@ export default function DriversPage() {
     userId ? { userId } : "skip"
   );
 
+  // Show loading while user data is loading
+  if (currentUser === undefined) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <ShieldLoader />
+      </div>
+    );
+  }
+
+  // Handle case when user is not logged in
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-xl font-semibold mb-2">Please log in</h2>
+          <Button onClick={() => router.push("/login")}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case when user has no organization
+  if (!organizationId) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h2 className="text-xl font-semibold mb-2">No organization</h2>
+          <p className="text-muted-foreground">You must belong to an organization to access this page</p>
+        </div>
+      </div>
+    );
+  }
+
   // Mutations
   const requestDriver = useMutation(api.drivers.requestDriver);
   const requestCalendarAccess = useMutation(api.drivers.requestCalendarAccess);
@@ -109,7 +144,7 @@ export default function DriversPage() {
   const filteredDrivers = useMemo(() => {
     if (!availableDrivers) return [];
     if (!searchQuery) return availableDrivers;
-    
+
     const query = searchQuery.toLowerCase();
     return availableDrivers.filter((d) =>
       d.userName.toLowerCase().includes(query) ||
@@ -117,71 +152,6 @@ export default function DriversPage() {
       d.vehicleInfo.plateNumber.toLowerCase().includes(query)
     );
   }, [availableDrivers, searchQuery]);
-
-  // Handle driver request
-  const handleRequestDriver = async () => {
-    if (!userId || !organizationId || !selectedDriver) {
-      toast.error("Please select a driver");
-      return;
-    }
-
-    if (!startTime || !endTime) {
-      toast.error("Please select start and end time");
-      return;
-    }
-
-    try {
-      const start = new Date(startTime).getTime();
-      const end = new Date(endTime).getTime();
-
-      await requestDriver({
-        organizationId,
-        requesterId: userId,
-        driverId: selectedDriver,
-        startTime: start,
-        endTime: end,
-        tripInfo,
-      });
-
-      toast.success(t("driver.requestSubmitted", "Request submitted!"));
-      setShowRequestModal(false);
-      setTripInfo({
-        from: "",
-        to: "",
-        purpose: "",
-        passengerCount: 1,
-        notes: "",
-      });
-    } catch (error: any) {
-      toast.error(error.message || "Failed to request driver");
-    }
-  };
-
-  // Handle calendar access request
-  const handleRequestAccess = async (driverUserId: Id<"users">) => {
-    if (!userId || !organizationId) return;
-
-    try {
-      await requestCalendarAccess({
-        organizationId,
-        requesterId: userId,
-        driverUserId,
-      });
-
-      toast.success(t("driver.calendar.requestSent", "Access request sent!"));
-      setShowAccessModal(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to request access");
-    }
-  };
-
-  if (!currentUser || !organizationId) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <ShieldLoader />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
