@@ -131,6 +131,62 @@ export default function DriversPage() {
     );
   }, [availableDrivers, searchQuery]);
 
+  // Handle driver request
+  const handleRequestDriver = async () => {
+    if (!userId || !organizationId || !selectedDriver) {
+      toast.error("Please select a driver");
+      return;
+    }
+
+    if (!startTime || !endTime) {
+      toast.error("Please select start and end time");
+      return;
+    }
+
+    try {
+      const start = new Date(startTime).getTime();
+      const end = new Date(endTime).getTime();
+
+      await requestDriver({
+        organizationId,
+        requesterId: userId,
+        driverId: selectedDriver,
+        startTime: start,
+        endTime: end,
+        tripInfo,
+      });
+
+      toast.success(t("driver.requestSubmitted", "Request submitted!"));
+      setShowRequestModal(false);
+      setTripInfo({
+        from: "",
+        to: "",
+        purpose: "",
+        passengerCount: 1,
+        notes: "",
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to request driver");
+    }
+  };
+
+  // Handle calendar access request
+  const handleRequestAccess = async (driverUserId: Id<"users">) => {
+    if (!userId || !organizationId) return;
+
+    try {
+      await requestCalendarAccess({
+        organizationId,
+        requesterId: userId,
+        driverUserId,
+      });
+
+      toast.success(t("driver.calendar.requestSent", "Access request sent!"));
+    } catch (error: any) {
+      toast.error(error.message || "Failed to request access");
+    }
+  };
+
   // Show loading while mounting
   if (!mounted) {
     return (
