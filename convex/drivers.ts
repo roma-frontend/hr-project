@@ -692,7 +692,15 @@ export const registerAsDriver = mutation({
       .first();
 
     if (existing) {
-      throw new Error("User is already registered as a driver");
+      // Update existing driver info instead of throwing error
+      await ctx.db.patch(existing._id, {
+        vehicleInfo: args.vehicleInfo,
+        workingHours: args.workingHours,
+        maxTripsPerDay: args.maxTripsPerDay,
+        isAvailable: true,
+        updatedAt: Date.now(),
+      });
+      return existing._id;
     }
 
     const driverId = await ctx.db.insert("drivers", {

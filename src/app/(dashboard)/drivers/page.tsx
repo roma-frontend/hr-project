@@ -216,6 +216,14 @@ export default function DriversPage() {
       return;
     }
 
+    console.log('[DriverRegistration] Starting registration:', {
+      userId,
+      organizationId,
+      vehicleInfo,
+      workingHours,
+      maxTripsPerDay,
+    });
+
     try {
       await registerAsDriver({
         organizationId,
@@ -225,6 +233,7 @@ export default function DriversPage() {
         maxTripsPerDay,
       });
 
+      console.log('[DriverRegistration] Success!');
       toast.success("Successfully registered as driver!");
       setShowRegisterModal(false);
       // Refresh data
@@ -236,6 +245,7 @@ export default function DriversPage() {
         year: new Date().getFullYear(),
       });
     } catch (error: any) {
+      console.error('[DriverRegistration] Error:', error);
       toast.error(error.message || "Failed to register as driver");
     }
   };
@@ -611,8 +621,8 @@ export default function DriversPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="p-4 border border-blue-200 rounded-lg">
+              <p className="text-sm text-white-800">
                 <strong>Note:</strong> You must have the "Driver" role in the Employees section to register. 
                 This form adds your vehicle information to complete your driver profile.
               </p>
