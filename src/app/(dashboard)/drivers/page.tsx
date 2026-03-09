@@ -100,6 +100,7 @@ export default function DriversPage() {
   const [endTime, setEndTime] = useState<string>("");
 
   // Driver registration form
+  const [selectedDriverUserId, setSelectedDriverUserId] = useState<Id<"users"> | "">("");
   const [vehicleInfo, setVehicleInfo] = useState({
     model: "",
     plateNumber: "",
@@ -118,6 +119,12 @@ export default function DriversPage() {
   const userId = user?.id as Id<"users"> | undefined;
   const organizationId = user?.organizationId as Id<"organizations"> | undefined;
 
+  // Get all users in organization to select driver
+  const allUsers = useQuery(
+    api.users.getUsersByOrganizationId,
+    mounted && organizationId ? { requesterId: userId!, organizationId } : "skip"
+  );
+
   // Get available drivers
   const availableDrivers = useQuery(
     api.drivers.getAvailableDrivers,
@@ -129,6 +136,14 @@ export default function DriversPage() {
     api.drivers.getMyRequests,
     mounted && userId ? { userId } : "skip"
   );
+
+  // Filter users with role 'driver' who are not yet registered
+  const unregisteredDrivers = useMemo(() => {
+    if (!allUsers || !availableDrivers) return [];
+    
+    const registeredUserIds = new Set(availableDrivers.map(d => d.userId));
+    return allUsers.filter(u => u.role === "driver" && !registeredUserIds.has(u._id));
+  }, [allUsers, availableDrivers]);
 
   // Mutations - MUST be called unconditionally at top level
   const requestDriver = useMutation(api.drivers.requestDriver);
@@ -211,13 +226,18 @@ export default function DriversPage() {
       return;
     }
 
+    if (!selectedDriverUserId) {
+      toast.error("Please select a driver to register");
+      return;
+    }
+
     if (!vehicleInfo.model || !vehicleInfo.plateNumber) {
       toast.error("Please fill in vehicle model and plate number");
       return;
     }
 
     console.log('[DriverRegistration] Starting registration:', {
-      userId,
+      selectedDriverUserId,
       organizationId,
       vehicleInfo,
       workingHours,
@@ -227,7 +247,7 @@ export default function DriversPage() {
     try {
       await registerAsDriver({
         organizationId,
-        userId,
+        userId: selectedDriverUserId,
         vehicleInfo,
         workingHours,
         maxTripsPerDay,
@@ -236,6 +256,7 @@ export default function DriversPage() {
       console.log('[DriverRegistration] Success!');
       toast.success("Successfully registered as driver!");
       setShowRegisterModal(false);
+      setSelectedDriverUserId("");
       // Refresh data
       setVehicleInfo({
         model: "",
@@ -623,9 +644,37 @@ export default function DriversPage() {
           <div className="space-y-4">
             <div className="p-4 border border-blue-200 rounded-lg">
               <p className="text-sm text-white-800">
-                <strong>Note:</strong> You must have the "Driver" role in the Employees section to register. 
-                This form adds your vehicle information to complete your driver profile.
+                <strong>Note:</strong> Select an employee with the "Driver" role to register their vehicle.
               </p>
+            </div>
+
+            {/* Select Driver */}
+            <div>
+              <Label>Select Driver *</Label>
+              <Select value={selectedDriverUserId} onValueChange={setSelectedDriverUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a driver to register" />
+                </SelectTrigger>
+                <SelectContent>
+                  {unregisteredDrivers.length === 0 ? (
+                    <SelectItem value="" disabled>No unregistered drivers</SelectItem>
+                  ) : (
+                    unregisteredDrivers.map((driver) => (
+                      <SelectItem key={driver._id} value={driver._id}>
+                        {driver.name} ({driver.email})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {unregisteredDrivers.length === 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  All drivers are already registered or no users with "Driver" role exist. 
+                  <Button variant="link" className="p-0 h-auto ml-1" onClick={() => router.push("/employees")}>
+                    Add Driver Employee
+                  </Button>
+                </p>
+              )}
             </div>
 
             {/* Vehicle Info */}
