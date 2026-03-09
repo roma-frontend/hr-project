@@ -54,6 +54,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { ShieldLoader } from "@/components/ui/ShieldLoader";
+import { useRouter } from "next/navigation";
 
 interface TripInfo {
   from: string;
@@ -65,6 +67,7 @@ interface TripInfo {
 
 export default function DriversPage() {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
@@ -175,10 +178,7 @@ export default function DriversPage() {
   if (!currentUser || !organizationId) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
-          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
-        </div>
+        <ShieldLoader />
       </div>
     );
   }
@@ -193,10 +193,19 @@ export default function DriversPage() {
             {t("driver.bookingDesc", "Book a driver for your business trips and transfers")}
           </p>
         </div>
-        <Button onClick={() => setShowRequestModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          {t("driver.requestDriver", "Request Driver")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => {
+            // Navigate to employees to register as driver
+            router.push("/employees");
+          }}>
+            <Users className="w-4 h-4 mr-2" />
+            Register as Driver
+          </Button>
+          <Button onClick={() => setShowRequestModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            {t("driver.requestDriver", "Request Driver")}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -251,10 +260,25 @@ export default function DriversPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredDrivers.length === 0 ? (
+          {availableDrivers === undefined ? (
+            <div className="text-center py-8">
+              <ShieldLoader />
+            </div>
+          ) : filteredDrivers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Car className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>{t("driver.noDriversFound", "No drivers found")}</p>
+              <p className="mb-2">{t("driver.noDriversFound", "No drivers found")}</p>
+              <p className="text-sm">
+                {searchQuery 
+                  ? "Try a different search term"
+                  : "To register as a driver, go to Employees and set role to 'Driver', then add vehicle information"}
+              </p>
+              {!searchQuery && (
+                <Button variant="outline" className="mt-4" onClick={() => router.push("/employees")}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Go to Employees
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
