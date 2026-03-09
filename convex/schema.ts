@@ -105,6 +105,7 @@ export default defineSchema({
       v.literal("admin"),        // org admin — sees only their org
       v.literal("supervisor"),
       v.literal("employee"),
+      v.literal("driver"),       // employee with driver privileges
     ),
     employeeType: v.union(v.literal("staff"), v.literal("contractor")),
     department: v.optional(v.string()),

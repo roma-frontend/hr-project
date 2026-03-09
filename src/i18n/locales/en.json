@@ -1045,6 +1045,7 @@
     "agenda": "Agenda",
     "event": "Event",
     "newEvent": "New Event",
+    "newLeave": "New Leave",
     "editEvent": "Edit Event",
     "deleteEvent": "Delete Event",
     "eventTitle": "Event Title",

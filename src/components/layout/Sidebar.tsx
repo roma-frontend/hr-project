@@ -41,7 +41,7 @@ const navItems = [
   { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3, roles: ["superadmin", "admin", "supervisor"] },
   { href: "/leaves", labelKey: "nav.leaves", icon: ClipboardList, roles: ["superadmin", "admin", "supervisor", "employee"] },
   { href: "/employees", labelKey: "nav.employees", icon: Users, roles: ["superadmin", "admin", "supervisor", "employee"] },
-  { href: "/drivers", labelKey: "nav.drivers", icon: Car, roles: ["superadmin", "admin", "supervisor", "employee"] },
+  { href: "/drivers", labelKey: "nav.drivers", icon: Car, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/join-requests", labelKey: "nav.joinRequests", icon: UserCheck, roles: ["superadmin", "admin"] },
   { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays, roles: ["superadmin", "admin", "supervisor", "employee"] },
   { href: "/reports", labelKey: "nav.reports", icon: FileText, roles: ["superadmin", "admin", "supervisor"] },

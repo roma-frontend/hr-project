@@ -29,20 +29,23 @@ export const getAvailableDrivers = query({
       .withIndex("by_org_available", (q) => q.eq("organizationId", organizationId).eq("isAvailable", true))
       .collect();
 
-    // Enrich with user info
+    // Enrich with user info and filter only users with role 'driver'
     const enriched = await Promise.all(
       drivers.map(async (driver) => {
         const user = await ctx.db.get(driver.userId);
+        // Only show if user has role 'driver'
+        if (!user || user.role !== "driver") return null;
+        
         return {
           ...driver,
-          userName: user?.name ?? "Unknown",
+          userName: user.name ?? "Unknown",
           userAvatar: user?.avatarUrl,
           userPosition: user?.position,
         };
       })
     );
 
-    return enriched;
+    return enriched.filter(Boolean) as typeof enriched;
   },
 });
 
