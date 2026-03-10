@@ -237,6 +237,7 @@ export const getMyConversations = query({
     
     console.log(`[getMyConversations] ===== RESULT: ${result.length} conversations for user in org ${args.organizationId} =====\n`);
     result.forEach(conv => {
+      if (!conv) return;
       console.log(`  - ${conv.name || conv.type} (unread: ${conv.membership?.unreadCount ?? 0})`);
     });
     return result;

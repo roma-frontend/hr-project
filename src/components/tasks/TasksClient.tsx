@@ -238,7 +238,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
 // ── Main Client ────────────────────────────────────────────────────────────
 interface TasksClientProps {
   userId: string;
-  userRole: "superadmin" | "admin" | "supervisor" | "employee";
+  userRole: "superadmin" | "admin" | "supervisor" | "employee" | "driver";
 }
 
 export function TasksClient({ userId, userRole }: TasksClientProps) {

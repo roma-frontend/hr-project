@@ -86,7 +86,7 @@ export function LeavesClient() {
   // Use organization-specific query if superadmin has selected an org, otherwise use default
   const leaves = useQuery(
     shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
-    mounted && user?.id
+    mounted && user?.id && queryParams !== null
       ? queryParams
       : "skip"
   );
@@ -205,7 +205,7 @@ export function LeavesClient() {
     <div className="space-y-4 sm:space-y-6">
       {/* Unread Requests Banner */}
       {isAdmin && unreadCount && unreadCount > 0 && (
-        <UnreadRequestsBanner userId={user?.id} />
+        <UnreadRequestsBanner userId={user?.id as Id<"users"> | null} />
       )}
 
       {/* Header */}

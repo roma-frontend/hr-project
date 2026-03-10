@@ -192,6 +192,7 @@ export default function AttendancePage() {
               ) : (
                 <div className="space-y-3">
                   {todayAllAttendance.map((record) => (
+                    record && (
                     <div
                       key={record._id}
                       className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
@@ -201,7 +202,7 @@ export default function AttendancePage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center text-white text-sm font-bold">
                           {record.user?.avatarUrl ? (
-                            <img src={record.user.avatarUrl} alt={record.user.name ?? ""} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <img src={record.user.avatarUrl} alt={record.user?.name ?? ""} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
                             record.user?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?"
                           )}
@@ -243,6 +244,7 @@ export default function AttendancePage() {
                         )}
                       </div>
                     </div>
+                    )
                   ))}
                 </div>
               )}

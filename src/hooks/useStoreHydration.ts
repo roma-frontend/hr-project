@@ -15,7 +15,9 @@ export function useStoreHydration() {
     setIsHydrated(true);
     
     return () => {
-      unsubscribe?.();
+      if (unsubscribe) {
+        (unsubscribe as any)();
+      }
     };
   }, []);
 

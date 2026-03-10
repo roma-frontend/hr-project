@@ -57,7 +57,11 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteUser({ userId: employeeId as Id<"users"> });
+      if (!currentUser?.id) {
+        toast.error("User ID not found");
+        return;
+      }
+      await deleteUser({ userId: employeeId as Id<"users">, adminId: currentUser.id as Id<"users"> });
       toast.success(t('employees.employeeDeleted', 'Employee deleted successfully'));
       window.history.back();
     } catch (error: any) {

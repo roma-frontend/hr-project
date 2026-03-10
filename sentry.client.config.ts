@@ -64,8 +64,8 @@ export function initSentryClient() {
     replaysOnErrorSampleRate: 0.2, // Reduced from 0.5
     
     // Minimize initialization overhead
-    autoSessionTracking: false,
-    
+    // autoSessionTracking removed - deprecated in newer Sentry versions
+
     // Don't capture console logs by default
     attachStacktrace: false,
   });

@@ -232,7 +232,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
 
             return (
               <Card 
-                key={day} 
+                key={day.toISOString()} 
                 className={`min-h-[280px] transition-all duration-200 ${
                   today 
                     ? "ring-2 ring-primary ring-offset-2 shadow-md" 
@@ -334,7 +334,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                   
                   return (
                     <button
-                      key={day}
+                      key={day.toISOString()}
                       onClick={() => setMobileViewDay(index)}
                       className={`flex flex-col items-center justify-center min-w-[60px] p-2 rounded-lg transition-all ${
                         isSelected

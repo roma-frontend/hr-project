@@ -2,6 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -302,9 +303,9 @@ export default function OrganizationsPage() {
           {/* Tab Content - Service Announcements */}
           <TabsContent value="announcements" className="space-y-6">
             <div className="rounded-xl border p-6" style={{ background: "var(--card)" }}>
-              <SuperadminBroadcastsPanel 
-                organizationId={user?.organizationId}
-                userId={user?.id}
+              <SuperadminBroadcastsPanel
+                organizationId={user?.organizationId as Id<"organizations">}
+                userId={user?.id as Id<"users">}
               />
             </div>
           </TabsContent>
@@ -312,9 +313,9 @@ export default function OrganizationsPage() {
           {/* Tab Content - Maintenance Mode */}
           <TabsContent value="maintenance" className="space-y-6">
             <div className="rounded-xl border p-6" style={{ background: "var(--card)" }}>
-              <MaintenanceModeManager 
-                organizationId={user?.organizationId}
-                userId={user?.id}
+              <MaintenanceModeManager
+                organizationId={user?.organizationId as Id<"organizations">}
+                userId={user?.id as Id<"users">}
               />
             </div>
           </TabsContent>

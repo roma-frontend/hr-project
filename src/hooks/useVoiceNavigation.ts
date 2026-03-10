@@ -69,10 +69,10 @@ export function useVoiceNavigation(options: VoiceNavigationOptions = {}) {
     recognition.interimResults = false;
     recognition.lang = language;
 
-    recognition.onstart = () => {
+    recognition.addEventListener('start', () => {
       setIsListening(true);
       console.log('🎤 Voice recognition started');
-    };
+    });
 
     recognition.onresult = (event: any) => {
       const last = event.results[event.results.length - 1];

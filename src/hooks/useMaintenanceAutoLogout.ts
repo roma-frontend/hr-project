@@ -11,7 +11,7 @@ export function useMaintenanceAutoLogout() {
   const { user, logout } = useAuthStore();
   const organizationId = user?.organizationId;
   const logoutAttemptedRef = useRef(false);
-  const logoutTimeoutRef = useRef<NodeJS.Timeout>();
+  const logoutTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const maintenance = useQuery(
     api.admin.getMaintenanceMode,

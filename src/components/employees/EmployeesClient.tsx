@@ -150,7 +150,7 @@ export function EmployeesClient() {
         (u.department ?? "").toLowerCase().includes(search.toLowerCase()) ||
         (u.position ?? "").toLowerCase().includes(search.toLowerCase());
       const matchRole = filterRole === "all" || u.role === filterRole;
-      const matchType = filterType === "all" || u.employeeType === filterType;
+      const matchType = filterType === "all" || (u as any).employeeType === filterType;
       const matchStatus =
         filterStatus === "all" ||
         (filterStatus === "active" && u.isActive) ||
@@ -164,8 +164,8 @@ export function EmployeesClient() {
     const active = users.filter((u) => u.isActive);
     return {
       total: active.length,
-      staff: active.filter((u) => u.employeeType === "staff").length,
-      contractors: active.filter((u) => u.employeeType === "contractor").length,
+      staff: active.filter((u: any) => (u as any).employeeType === "staff").length,
+      contractors: active.filter((u: any) => (u as any).employeeType === "contractor").length,
       admins: active.filter((u) => u.role === "admin").length,
       supervisors: active.filter((u) => u.role === "supervisor").length,
     };
@@ -372,9 +372,9 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[emp.employeeType] || TYPE_CONFIG.staff;
+                    const typeConf = TYPE_CONFIG[(emp as any).employeeType] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
-                    const presence = getPresenceBadge(emp.presenceStatus);
+                    const presence = getPresenceBadge((emp as any).presenceStatus);
                     return (
                       <motion.div
                         key={emp._id}
@@ -459,9 +459,9 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[emp.employeeType] || TYPE_CONFIG.staff;
+                    const typeConf = TYPE_CONFIG[(emp as any).employeeType] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
-                    const presence = getPresenceBadge(emp.presenceStatus);
+                    const presence = getPresenceBadge((emp as any).presenceStatus);
                     return (
                       <motion.div
                         key={emp._id}
@@ -570,7 +570,6 @@ export function EmployeesClient() {
           employee={editEmployee as any}
           open={!!editEmployee}
           onClose={() => setEditEmployee(null)}
-          currentUserRole={(user?.role ?? "employee") as "admin" | "supervisor" | "employee"}
         />
       )}
 

@@ -280,7 +280,7 @@ export function DriverRequestModal({
           {/* Select Driver */}
           <div>
             <Label>{t("driver.selectDriver", "Select Driver")}</Label>
-            <Select value={selectedDriver} onValueChange={setSelectedDriver}>
+            <Select value={selectedDriver} onValueChange={(v: Id<"drivers"> | "") => setSelectedDriver(v)}>
               <SelectTrigger>
                 <SelectValue placeholder={t("driver.chooseDriver", "Choose a driver")} />
               </SelectTrigger>

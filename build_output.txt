@@ -1,0 +1,329 @@
+
+> office@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ✓ optimizeCss
+  · optimizePackageImports
+  ✓ scrollRestoration
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 32.7s
+  Skipping validation of types
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/89) ...
+  Generating static pages using 7 workers (22/89) 
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+i18next: languageChanged en
+i18next: initialized {
+  debug: [33mtrue[39m,
+  initAsync: [33mtrue[39m,
+  ns: [ [32m'translation'[39m ],
+  defaultNS: [32m'translation'[39m,
+  fallbackLng: [ [32m'en'[39m ],
+  fallbackNS: [33mfalse[39m,
+  supportedLngs: [ [32m'en'[39m, [32m'hy'[39m, [32m'ru'[39m, [32m'cimode'[39m ],
+  nonExplicitSupportedLngs: [33mfalse[39m,
+  load: [32m'all'[39m,
+  preload: [33mfalse[39m,
+  simplifyPluralSuffix: [33mtrue[39m,
+  keySeparator: [32m'.'[39m,
+  nsSeparator: [32m':'[39m,
+  pluralSeparator: [32m'_'[39m,
+  contextSeparator: [32m'_'[39m,
+  partialBundledLanguages: [33mfalse[39m,
+  saveMissing: [33mfalse[39m,
+  updateMissing: [33mfalse[39m,
+  saveMissingTo: [32m'fallback'[39m,
+  saveMissingPlurals: [33mtrue[39m,
+  missingKeyHandler: [33mfalse[39m,
+  missingInterpolationHandler: [33mfalse[39m,
+  postProcess: [33mfalse[39m,
+  postProcessPassResolved: [33mfalse[39m,
+  returnNull: [33mfalse[39m,
+  returnEmptyString: [33mtrue[39m,
+  returnObjects: [33mfalse[39m,
+  joinArrays: [33mfalse[39m,
+  returnedObjectHandler: [33mfalse[39m,
+  parseMissingKeyHandler: [33mfalse[39m,
+  appendNamespaceToMissingKey: [33mfalse[39m,
+  appendNamespaceToCIMode: [33mfalse[39m,
+  overloadTranslationOptionHandler: [36m[Function: overloadTranslationOptionHandler][39m,
+  interpolation: {
+    escapeValue: [33mfalse[39m,
+    format: [36m[Function: bound format][39m,
+    prefix: [32m'{{'[39m,
+    suffix: [32m'}}'[39m,
+    formatSeparator: [32m','[39m,
+    unescapePrefix: [32m'-'[39m,
+    nestingPrefix: [32m'$t('[39m,
+    nestingSuffix: [32m')'[39m,
+    nestingOptionsSeparator: [32m','[39m,
+    maxReplaces: [33m1000[39m,
+    skipOnVariables: [33mtrue[39m
+  },
+  cacheInBuiltFormats: [33mtrue[39m,
+  resources: {
+    en: { translation: [36m[Object][39m },
+    hy: { translation: [36m[Object][39m },
+    ru: { translation: [36m[Object][39m }
+  },
+  lng: [32m'en'[39m,
+  detection: {
+    order: [ [32m'localStorage'[39m, [32m'navigator'[39m, [32m'htmlTag'[39m ],
+    lookupLocalStorage: [32m'i18nextLng'[39m,
+    caches: [ [32m'localStorage'[39m ],
+    lookupQuerystring: [32m'lng'[39m,
+    lookupCookie: [32m'i18next'[39m,
+    lookupSessionStorage: [32m'i18nextLng'[39m
+  },
+  react: { useSuspense: [33mfalse[39m },
+  ignoreJSONStructure: [33mtrue[39m
+}
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+i18next: languageChanged en
+i18next: initialized {
+  debug: [33mtrue[39m,
+  initAsync: [33mtrue[39m,
+  ns: [ [32m'translation'[39m ],
+  defaultNS: [32m'translation'[39m,
+  fallbackLng: [ [32m'en'[39m ],
+  fallbackNS: [33mfalse[39m,
+  supportedLngs: [ [32m'en'[39m, [32m'hy'[39m, [32m'ru'[39m, [32m'cimode'[39m ],
+  nonExplicitSupportedLngs: [33mfalse[39m,
+  load: [32m'all'[39m,
+  preload: [33mfalse[39m,
+  simplifyPluralSuffix: [33mtrue[39m,
+  keySeparator: [32m'.'[39m,
+  nsSeparator: [32m':'[39m,
+  pluralSeparator: [32m'_'[39m,
+  contextSeparator: [32m'_'[39m,
+  partialBundledLanguages: [33mfalse[39m,
+  saveMissing: [33mfalse[39m,
+  updateMissing: [33mfalse[39m,
+  saveMissingTo: [32m'fallback'[39m,
+  saveMissingPlurals: [33mtrue[39m,
+  missingKeyHandler: [33mfalse[39m,
+  missingInterpolationHandler: [33mfalse[39m,
+  postProcess: [33mfalse[39m,
+  postProcessPassResolved: [33mfalse[39m,
+  returnNull: [33mfalse[39m,
+  returnEmptyString: [33mtrue[39m,
+  returnObjects: [33mfalse[39m,
+  joinArrays: [33mfalse[39m,
+  returnedObjectHandler: [33mfalse[39m,
+  parseMissingKeyHandler: [33mfalse[39m,
+  appendNamespaceToMissingKey: [33mfalse[39m,
+  appendNamespaceToCIMode: [33mfalse[39m,
+  overloadTranslationOptionHandler: [36m[Function: overloadTranslationOptionHandler][39m,
+  interpolation: {
+    escapeValue: [33mfalse[39m,
+    format: [36m[Function: bound format][39m,
+    prefix: [32m'{{'[39m,
+    suffix: [32m'}}'[39m,
+    formatSeparator: [32m','[39m,
+    unescapePrefix: [32m'-'[39m,
+    nestingPrefix: [32m'$t('[39m,
+    nestingSuffix: [32m')'[39m,
+    nestingOptionsSeparator: [32m','[39m,
+    maxReplaces: [33m1000[39m,
+    skipOnVariables: [33mtrue[39m
+  },
+  cacheInBuiltFormats: [33mtrue[39m,
+  resources: {
+    en: { translation: [36m[Object][39m },
+    hy: { translation: [36m[Object][39m },
+    ru: { translation: [36m[Object][39m }
+  },
+  lng: [32m'en'[39m,
+  detection: {
+    order: [ [32m'localStorage'[39m, [32m'navigator'[39m, [32m'htmlTag'[39m ],
+    lookupLocalStorage: [32m'i18nextLng'[39m,
+    caches: [ [32m'localStorage'[39m ],
+    lookupQuerystring: [32m'lng'[39m,
+    lookupCookie: [32m'i18next'[39m,
+    lookupSessionStorage: [32m'i18nextLng'[39m
+  },
+  react: { useSuspense: [33mfalse[39m },
+  ignoreJSONStructure: [33mtrue[39m
+}
+🌐 i18next is maintained with support from Locize — consider powering your project with managed localization (AI, CDN, integrations): https://locize.com 💙
+i18next: languageChanged en
+i18next: initialized {
+  debug: [33mtrue[39m,
+  initAsync: [33mtrue[39m,
+  ns: [ [32m'translation'[39m ],
+  defaultNS: [32m'translation'[39m,
+  fallbackLng: [ [32m'en'[39m ],
+  fallbackNS: [33mfalse[39m,
+  supportedLngs: [ [32m'en'[39m, [32m'hy'[39m, [32m'ru'[39m, [32m'cimode'[39m ],
+  nonExplicitSupportedLngs: [33mfalse[39m,
+  load: [32m'all'[39m,
+  preload: [33mfalse[39m,
+  simplifyPluralSuffix: [33mtrue[39m,
+  keySeparator: [32m'.'[39m,
+  nsSeparator: [32m':'[39m,
+  pluralSeparator: [32m'_'[39m,
+  contextSeparator: [32m'_'[39m,
+  partialBundledLanguages: [33mfalse[39m,
+  saveMissing: [33mfalse[39m,
+  updateMissing: [33mfalse[39m,
+  saveMissingTo: [32m'fallback'[39m,
+  saveMissingPlurals: [33mtrue[39m,
+  missingKeyHandler: [33mfalse[39m,
+  missingInterpolationHandler: [33mfalse[39m,
+  postProcess: [33mfalse[39m,
+  postProcessPassResolved: [33mfalse[39m,
+  returnNull: [33mfalse[39m,
+  returnEmptyString: [33mtrue[39m,
+  returnObjects: [33mfalse[39m,
+  joinArrays: [33mfalse[39m,
+  returnedObjectHandler: [33mfalse[39m,
+  parseMissingKeyHandler: [33mfalse[39m,
+  appendNamespaceToMissingKey: [33mfalse[39m,
+  appendNamespaceToCIMode: [33mfalse[39m,
+  overloadTranslationOptionHandler: [36m[Function: overloadTranslationOptionHandler][39m,
+  interpolation: {
+    escapeValue: [33mfalse[39m,
+    format: [36m[Function: bound format][39m,
+    prefix: [32m'{{'[39m,
+    suffix: [32m'}}'[39m,
+    formatSeparator: [32m','[39m,
+    unescapePrefix: [32m'-'[39m,
+    nestingPrefix: [32m'$t('[39m,
+    nestingSuffix: [32m')'[39m,
+    nestingOptionsSeparator: [32m','[39m,
+    maxReplaces: [33m1000[39m,
+    skipOnVariables: [33mtrue[39m
+  },
+  cacheInBuiltFormats: [33mtrue[39m,
+  resources: {
+    en: { translation: [36m[Object][39m },
+    hy: { translation: [36m[Object][39m },
+    ru: { translation: [36m[Object][39m }
+  },
+  lng: [32m'en'[39m,
+  detection: {
+    order: [ [32m'localStorage'[39m, [32m'navigator'[39m, [32m'htmlTag'[39m ],
+    lookupLocalStorage: [32m'i18nextLng'[39m,
+    caches: [ [32m'localStorage'[39m ],
+    lookupQuerystring: [32m'lng'[39m,
+    lookupCookie: [32m'i18next'[39m,
+    lookupSessionStorage: [32m'i18nextLng'[39m
+  },
+  react: { useSuspense: [33mfalse[39m },
+  ignoreJSONStructure: [33mtrue[39m
+}
+🔍 DEBUG: showMaintenanceBanner = [33mfalse[39m
+  Generating static pages using 7 workers (44/89) 
+  Generating static pages using 7 workers (66/89) 
+✓ Generating static pages using 7 workers (89/89) in 2.4s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /ai-site-editor
+├ ○ /analytics
+├ ƒ /api/ai-site-editor
+├ ƒ /api/ai-site-editor/apply
+├ ƒ /api/approve-all
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/create-session
+├ ƒ /api/auth/face-login
+├ ƒ /api/auth/forgot-password
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/oauth-session
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/totp/disable
+├ ƒ /api/auth/totp/setup
+├ ƒ /api/auth/totp/status
+├ ƒ /api/auth/totp/verify
+├ ƒ /api/auth/totp/verify-setup
+├ ƒ /api/calendar/google/auth
+├ ƒ /api/calendar/google/callback
+├ ƒ /api/calendar/google/disconnect
+├ ƒ /api/calendar/google/events
+├ ƒ /api/calendar/google/status
+├ ƒ /api/calendar/google/sync
+├ ƒ /api/calendar/outlook/auth
+├ ƒ /api/calendar/outlook/callback
+├ ƒ /api/calendar/outlook/sync
+├ ƒ /api/chat
+├ ƒ /api/chat/book-driver
+├ ƒ /api/chat/book-leave
+├ ƒ /api/chat/context
+├ ƒ /api/chat/delete-leave
+├ ƒ /api/chat/edit-leave
+├ ƒ /api/chat/full-context
+├ ƒ /api/chat/insights
+├ ƒ /api/chat/link-preview
+├ ƒ /api/chat/smart-reply
+├ ƒ /api/chat/weekly-digest
+├ ƒ /api/drivers/available
+├ ƒ /api/profile/update
+├ ƒ /api/security/face-verify
+├ ƒ /api/security/log-event
+├ ƒ /api/security/metrics
+├ ƒ /api/security/quick-action
+├ ƒ /api/sharepoint/auth
+├ ƒ /api/sharepoint/callback
+├ ƒ /api/sharepoint/disconnect
+├ ƒ /api/sharepoint/status
+├ ƒ /api/sharepoint/sync
+├ ƒ /api/stripe/checkout
+├ ƒ /api/stripe/run-script
+├ ƒ /api/stripe/webhook
+├ ƒ /apple-icon
+├ ○ /approvals
+├ ○ /attendance
+├ ○ /calendar
+├ ○ /chat
+├ ○ /checkout/success
+├ ○ /contact
+├ ○ /dashboard
+├ ○ /drivers
+├ ○ /employees
+├ ƒ /employees/[id]
+├ ○ /forgot-password
+├ ƒ /icon
+├ ○ /join-requests
+├ ○ /leaves
+├ ○ /login
+├ ƒ /opengraph-image
+├ ○ /org-requests
+├ ○ /privacy
+├ ○ /profile
+├ ○ /register
+├ ○ /register-org
+├ ○ /register-org/create
+├ ○ /register-org/pending
+├ ○ /register-org/request
+├ ○ /reports
+├ ○ /reset-password
+├ ○ /robots.txt
+├ ○ /settings
+├ ○ /sitemap.xml
+├ ○ /superadmin/create-org
+├ ○ /superadmin/organizations
+├ ƒ /superadmin/organizations/[id]/edit
+├ ƒ /superadmin/organizations/[id]/manage-admins
+├ ○ /superadmin/security
+├ ƒ /superadmin/security/alert/[userId]
+├ ○ /superadmin/stripe-dashboard
+├ ○ /superadmin/subscriptions
+├ ○ /tasks
+├ ○ /terms
+└ ○ /test-i18n
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

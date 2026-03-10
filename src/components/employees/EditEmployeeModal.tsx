@@ -122,7 +122,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
   }
 
   // Protection: admin cannot edit other admins
-  if (employee.role === "admin" && currentUserRole === "admin" && !isActualAdmin) {
+  if (employee.role === "admin" && user?.role === "admin" && !isActualAdmin) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
@@ -163,7 +163,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
         adminId: user.id as Id<"users">,
         userId: employee._id as Id<"users">,
         name: form.name,
-        role: form.role as "admin" | "supervisor" | "employee" | "superadmin",
+        role: form.role as "admin" | "supervisor" | "employee" | "driver",
         employeeType: form.employeeType as "staff" | "contractor",
         department: form.department || undefined,
         position: form.position || undefined,
