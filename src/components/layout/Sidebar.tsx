@@ -36,24 +36,24 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 const navItems = [
-  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, roles: ["superadmin", "admin", "supervisor", "employee"] },
-  { href: "/attendance", labelKey: "nav.attendance", icon: Clock, roles: ["superadmin", "admin", "supervisor", "employee"] },
+  { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
+  { href: "/attendance", labelKey: "nav.attendance", icon: Clock, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/analytics", labelKey: "nav.analytics", icon: BarChart3, roles: ["superadmin", "admin", "supervisor"] },
-  { href: "/leaves", labelKey: "nav.leaves", icon: ClipboardList, roles: ["superadmin", "admin", "supervisor", "employee"] },
-  { href: "/employees", labelKey: "nav.employees", icon: Users, roles: ["superadmin", "admin", "supervisor", "employee"] },
+  { href: "/leaves", labelKey: "nav.leaves", icon: ClipboardList, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
+  { href: "/employees", labelKey: "nav.employees", icon: Users, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/drivers", labelKey: "nav.drivers", icon: Car, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/join-requests", labelKey: "nav.joinRequests", icon: UserCheck, roles: ["superadmin", "admin"] },
-  { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays, roles: ["superadmin", "admin", "supervisor", "employee"] },
+  { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/reports", labelKey: "nav.reports", icon: FileText, roles: ["superadmin", "admin", "supervisor"] },
-  { href: "/tasks", labelKey: "nav.tasks", icon: CheckSquare, roles: ["superadmin", "admin", "supervisor", "employee"] },
-  { href: "/chat", labelKey: "nav.chat", icon: MessageCircle, roles: ["superadmin", "admin", "supervisor", "employee"], badge: "CHAT" },
+  { href: "/tasks", labelKey: "nav.tasks", icon: CheckSquare, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
+  { href: "/chat", labelKey: "nav.chat", icon: MessageCircle, roles: ["superadmin", "admin", "supervisor", "employee", "driver"], badge: "CHAT" },
   { href: "/approvals", labelKey: "nav.approvals", icon: UserCheck, roles: ["superadmin", "admin"] },
   { href: "/admin", labelKey: "nav.admin", icon: ShieldCheck, roles: ["superadmin"] },
   { href: "/superadmin/subscriptions", labelKey: "nav.subscriptions", icon: CreditCard, roles: ["superadmin"] },
   { href: "/superadmin/security", labelKey: "nav.security", icon: ShieldCheck, roles: ["superadmin"], badge: "SEC" },
   { href: "/ai-site-editor", labelKey: "nav.aiSiteEditor", icon: Sparkles, roles: ["superadmin", "admin", "supervisor", "employee"], badge: "AI" },
-  { href: "/profile", labelKey: "nav.profile", icon: User, roles: ["superadmin", "admin", "supervisor", "employee"] },
-  { href: "/settings", labelKey: "nav.settings", icon: Settings, roles: ["superadmin", "admin", "supervisor", "employee"] },
+  { href: "/profile", labelKey: "nav.profile", icon: User, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
+  { href: "/settings", labelKey: "nav.settings", icon: Settings, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
 ];
 
 function getInitials(name: string) {
@@ -111,8 +111,11 @@ export function Sidebar() {
 
   if (!mounted) return null;
 
-  const visibleItems = navItems.filter((item) => 
-    item.roles.includes(user?.role ?? "employee")
+  // Get user role with fallback
+  const userRole = user?.role ?? "employee";
+
+  const visibleItems = navItems.filter((item) =>
+    item.roles.includes(userRole)
   );
 
   return (
@@ -469,8 +472,11 @@ export function MobileSidebar() {
 
   if (!mounted) return null;
 
-  const visibleItems = navItems.filter((item) => 
-    item.roles.includes(user?.role ?? "employee")
+  // Get user role with fallback
+  const userRole = user?.role ?? "employee";
+
+  const visibleItems = navItems.filter((item) =>
+    item.roles.includes(userRole)
   );
 
   return (

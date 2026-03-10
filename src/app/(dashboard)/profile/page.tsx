@@ -15,16 +15,17 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { useAuthStore } from "@/store/useAuthStore";
-import { updateSessionProfileAction } from "@/actions/auth";
 import { toast } from "sonner";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { user, login } = useAuthStore();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -56,13 +57,27 @@ export default function ProfilePage() {
   }, [userData]);
 
   const handleSave = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.error("[Profile] No user ID");
+      return;
+    }
+    
+    console.log("[Profile] Saving...", { user, name, email, phone, location });
+    
     setSaving(true);
     try {
       const newName = name.trim() || user.name;
       const newEmail = email.trim() || user.email;
       const newPhone = phone.trim();
       const newLocation = location.trim();
+
+      console.log("[Profile] Calling updateOwnProfile...", {
+        userId: user.id,
+        name: newName,
+        email: newEmail,
+        phone: newPhone,
+        location: newLocation,
+      });
 
       // 1. Save to Convex DB
       await updateOwnProfile({
@@ -73,14 +88,45 @@ export default function ProfilePage() {
         location: newLocation || undefined,
       });
 
-      // 2. Update JWT cookie (so data persists after page refresh)
-      await updateSessionProfileAction(user.id, newName, newEmail);
+      console.log("[Profile] Convex update successful");
+
+      // 2. Update JWT cookie via API route
+      console.log("[Profile] Calling /api/profile/update...");
+      
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          name: newName,
+          email: newEmail,
+        }),
+        credentials: "include",
+      });
+
+      console.log("[Profile] API response status:", res.status);
+
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("[Profile] API error:", error);
+        throw new Error(error.error || "Failed to update session");
+      }
+
+      console.log("[Profile] JWT cookie updated");
 
       // 3. Update Zustand store (localStorage)
       login({ ...user, name: newName, email: newEmail });
+      console.log("[Profile] Zustand store updated");
 
+      // 4. Update local state to reflect changes immediately
+      setName(newName);
+      setEmail(newEmail);
+      
       toast.success("Profile updated successfully!");
+      
+      // Don't reload - let Convex revalidate automatically
     } catch (err) {
+      console.error("[Profile] Save error:", err);
       toast.error(err instanceof Error ? err.message : "Failed to save profile");
     } finally {
       setSaving(false);

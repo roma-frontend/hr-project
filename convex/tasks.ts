@@ -381,17 +381,22 @@ export const getUsersForAssignment = query({
   handler: async (ctx, args) => {
     // If requesterId provided, filter by organization
     let users = await ctx.db.query("users").collect();
-    
+
     if (args.requesterId) {
       const requester = await ctx.db.get(args.requesterId);
       if (requester && requester.organizationId) {
         users = users.filter(u => u.organizationId === requester.organizationId);
       }
     }
-    
-    // Return all active and approved users (employees, supervisors, but not admins for assignment)
+
+    // Return all active users (employees, supervisors, admins, AND drivers)
+    // Anyone in the organization can be assigned a task
     return users
-      .filter(u => u.isActive && u.isApproved && (u.role === "employee" || u.role === "supervisor"))
+      .filter(u => 
+        u.isActive !== false && 
+        u.isApproved !== false && 
+        (u.role === "employee" || u.role === "supervisor" || u.role === "admin" || u.role === "driver")
+      )
       .map(u => ({
         _id: u._id,
         name: u.name,
@@ -399,6 +404,7 @@ export const getUsersForAssignment = query({
         department: u.department,
         avatarUrl: u.avatarUrl ?? u.faceImageUrl,
         supervisorId: u.supervisorId,
+        role: u.role,
       }));
   },
 });

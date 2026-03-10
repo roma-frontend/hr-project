@@ -55,6 +55,20 @@ type LeaveRequest = {
   comment?: string;
 };
 
+type DriverScheduleEvent = {
+  _id: string;
+  driverId: string;
+  driverName: string;
+  driverVehicle?: { model: string; plateNumber: string; capacity: number; color?: string; year?: number };
+  bookedByName?: string;
+  startTime: number;
+  endTime: number;
+  type: "trip" | "blocked" | "maintenance";
+  status: string;
+  tripInfo?: { from: string; to: string; purpose: string; passengerCount: number; notes?: string };
+  reason?: string;
+};
+
 type GoogleCalendarEvent = {
   id: string;
   title: string;
@@ -116,6 +130,7 @@ const LEAVE_TYPE_BG: Record<string, string> = {
 
 // --- Calendar Day Cell ---------------------------------------------------------
 const GOOGLE_EVENT_COLOR = "#8b5cf6";
+const DRIVER_EVENT_COLOR = "#f97316"; // orange for driver bookings
 
 function DayCell({
   date,
@@ -123,6 +138,7 @@ function DayCell({
   selected,
   leaves,
   googleEvents,
+  driverEvents,
   onClick,
 }: {
   date: Date;
@@ -130,6 +146,7 @@ function DayCell({
   selected: Date | null;
   leaves: LeaveRequest[];
   googleEvents: GoogleCalendarEvent[];
+  driverEvents: DriverScheduleEvent[];
   onClick: () => void;
 }) {
   const { t } = useTranslation();
@@ -138,7 +155,8 @@ function DayCell({
   const isSelected = selected ? isSameDay(date, selected) : false;
   const hasLeaves = leaves.length > 0 && isCurrentMonth;
   const hasGoogle = googleEvents.length > 0 && isCurrentMonth;
-  const totalItems = leaves.length + googleEvents.length;
+  const hasDriver = driverEvents.length > 0 && isCurrentMonth;
+  const totalItems = leaves.length + googleEvents.length + driverEvents.length;
 
   return (
     <motion.button
@@ -176,10 +194,10 @@ function DayCell({
       </span>
 
       {/* Event pills */}
-      {(hasLeaves || hasGoogle) && (
+      {(hasLeaves || hasGoogle || hasDriver) && (
         <div className="flex flex-col gap-0.5 mt-0.5">
           {/* Leave pills */}
-          {leaves.slice(0, hasGoogle ? 1 : 2).map((l, i) => (
+          {leaves.slice(0, (hasGoogle || hasDriver) ? 1 : 2).map((l, i) => (
             <div
               key={`l-${i}`}
               className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
@@ -197,8 +215,27 @@ function DayCell({
               </span>
             </div>
           ))}
+          {/* Driver booking pills */}
+          {driverEvents.slice(0, 1).map((evt, i) => (
+            <div
+              key={`d-${i}`}
+              className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
+              style={{ background: `${DRIVER_EVENT_COLOR}22` }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ background: DRIVER_EVENT_COLOR }}
+              />
+              <span
+                className="text-[9px] font-medium truncate hidden sm:block"
+                style={{ color: DRIVER_EVENT_COLOR }}
+              >
+                {evt.driverName.split(" ")[0]}
+              </span>
+            </div>
+          ))}
           {/* Google Calendar pills */}
-          {googleEvents.slice(0, hasLeaves ? 1 : 2).map((evt, i) => (
+          {googleEvents.slice(0, (hasLeaves || hasDriver) ? 1 : 2).map((evt, i) => (
             <div
               key={`g-${i}`}
               className="flex items-center gap-1 rounded-full px-1.5 py-0.5"
@@ -306,6 +343,38 @@ export function CalendarClient() {
     }
   }, [leaves.length, selectedOrgId, mounted, shouldUseOrgQuery]);
 
+  // Driver schedule events
+  const monthStart = useMemo(() => startOfMonth(currentMonth).getTime(), [currentMonth]);
+  const monthEnd = useMemo(() => endOfMonth(currentMonth).getTime(), [currentMonth]);
+
+  const driverSchedules = useQuery(
+    api.drivers.getOrgDriverSchedules,
+    mounted && selectedOrgId
+      ? { organizationId: selectedOrgId as Id<"organizations">, startTime: monthStart, endTime: monthEnd }
+      : "skip"
+  ) as DriverScheduleEvent[] | undefined;
+
+  const [selectedDriverEvent, setSelectedDriverEvent] = useState<DriverScheduleEvent | null>(null);
+
+  // Build driver schedule map
+  const driverDateMap = useMemo(() => {
+    const map = new Map<string, DriverScheduleEvent[]>();
+    (driverSchedules ?? []).forEach((evt) => {
+      // A schedule can span multiple days
+      const startD = new Date(evt.startTime);
+      const endD = new Date(evt.endTime);
+      const cur = new Date(startD);
+      cur.setHours(0, 0, 0, 0);
+      while (cur <= endD) {
+        const key = format(cur, "yyyy-MM-dd");
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(evt);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return map;
+  }, [driverSchedules]);
+
   // Build leave map
   const leaveDateMap = useMemo(() => {
     const map = new Map<string, LeaveRequest[]>();
@@ -360,6 +429,11 @@ export function CalendarClient() {
     if (!selectedDay) return [];
     return googleDateMap.get(format(selectedDay, "yyyy-MM-dd")) ?? [];
   }, [selectedDay, googleDateMap]);
+
+  const selectedDayDriverEvents = useMemo(() => {
+    if (!selectedDay) return [];
+    return driverDateMap.get(format(selectedDay, "yyyy-MM-dd")) ?? [];
+  }, [selectedDay, driverDateMap]);
 
   const prevMonth = () => setCurrentMonth((m) => subMonths(m, 1));
   const nextMonth = () => setCurrentMonth((m) => addMonths(m, 1));
@@ -416,13 +490,6 @@ export function CalendarClient() {
           <Button size="sm" onClick={() => setShowLeaveModal(true)}>
             <Plus className="w-4 h-4" />
             {t('calendar.newLeave')}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => {
-            setSelectedDate(selectedDay || new Date());
-            setShowDriverModal(true);
-          }}>
-            <Car className="w-4 h-4" />
-            {t('driver.requestDriver')}
           </Button>
         </div>
       </motion.div>
@@ -505,6 +572,7 @@ export function CalendarClient() {
                     const key = format(date, "yyyy-MM-dd");
                     const leaves = leaveDateMap.get(key) ?? [];
                     const gEvents = googleDateMap.get(key) ?? [];
+                    const dEvents = driverDateMap.get(key) ?? [];
                     return (
                       <DayCell
                         key={i}
@@ -513,6 +581,7 @@ export function CalendarClient() {
                         selected={selectedDay}
                         leaves={leaves}
                         googleEvents={gEvents}
+                        driverEvents={dEvents}
                         onClick={() => setSelectedDay(date)}
                       />
                     );
@@ -535,6 +604,10 @@ export function CalendarClient() {
                 <span className="text-xs text-[var(--text-muted)]">{getLeaveTypeLabel(type, t)}</span>
               </div>
             ))}
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: DRIVER_EVENT_COLOR }} />
+              <span className="text-xs text-[var(--text-muted)]">{t('driver.driverBookings', 'Driver Bookings')}</span>
+            </div>
             {googleConnected && (
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: GOOGLE_EVENT_COLOR }} />
@@ -564,7 +637,7 @@ export function CalendarClient() {
             </CardHeader>
             <CardContent className="px-4 pb-4">
               <AnimatePresence mode="wait">
-                {selectedDayLeaves.length === 0 && selectedDayGoogle.length === 0 ? (
+                {selectedDayLeaves.length === 0 && selectedDayGoogle.length === 0 && selectedDayDriverEvents.length === 0 ? (
                   <motion.div
                     key="empty"
                     initial={{ opacity: 0 }}
@@ -680,6 +753,47 @@ export function CalendarClient() {
                         </div>
                       </motion.div>
                     ))}
+
+                    {/* Driver booking events */}
+                    {selectedDayDriverEvents.map((evt, i) => (
+                      <motion.div
+                        key={evt._id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: (selectedDayLeaves.length + selectedDayGoogle.length + i) * 0.04 }}
+                        className="flex items-start gap-2.5 p-2.5 rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] cursor-pointer hover:border-[var(--primary)]/50 transition-colors"
+                        onClick={() => setSelectedDriverEvent(evt)}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white"
+                          style={{ background: DRIVER_EVENT_COLOR }}
+                        >
+                          <Car className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
+                              {evt.driverName}
+                            </p>
+                            <Badge variant="secondary" className="text-[9px] h-4 px-1.5 flex-shrink-0">
+                              {evt.type}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                            {format(new Date(evt.startTime), "h:mm a")} – {format(new Date(evt.endTime), "h:mm a")}
+                          </p>
+                          {evt.tripInfo && (
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 truncate">
+                              {evt.tripInfo.from} → {evt.tripInfo.to}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: DRIVER_EVENT_COLOR }} />
+                            <span className="text-[10px] text-[var(--text-secondary)]">{t('driver.driverBookings', 'Driver Booking')}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -777,6 +891,131 @@ export function CalendarClient() {
         onOpenChange={setShowDriverModal}
         selectedDate={selectedDate}
       />
+
+      {/* Driver Event Detail Modal */}
+      <AnimatePresence>
+        {selectedDriverEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setSelectedDriverEvent(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                    style={{ background: DRIVER_EVENT_COLOR }}
+                  >
+                    <Car className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[var(--text-primary)]">
+                      {selectedDriverEvent.driverName}
+                    </h3>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {selectedDriverEvent.type === "trip" ? t('driver.trip', 'Trip') : selectedDriverEvent.type === "blocked" ? t('driver.blocked', 'Blocked') : t('driver.maintenance', 'Maintenance')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedDriverEvent(null)}
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="px-5 pb-5 space-y-3">
+                {/* Time */}
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span className="text-[var(--text-secondary)]">
+                    {format(new Date(selectedDriverEvent.startTime), "MMM d, h:mm a")} – {format(new Date(selectedDriverEvent.endTime), "h:mm a")}
+                  </span>
+                </div>
+
+                {/* Vehicle info */}
+                {selectedDriverEvent.driverVehicle && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Car className="w-4 h-4 text-[var(--text-muted)]" />
+                    <span className="text-[var(--text-secondary)]">
+                      {selectedDriverEvent.driverVehicle.model} · {selectedDriverEvent.driverVehicle.plateNumber}
+                      {selectedDriverEvent.driverVehicle.color && ` · ${selectedDriverEvent.driverVehicle.color}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Trip info */}
+                {selectedDriverEvent.tripInfo && (
+                  <div className="rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-semibold text-[var(--text-muted)] w-14 shrink-0">{t('driver.from', 'From')}</span>
+                      <span className="text-xs text-[var(--text-primary)]">{selectedDriverEvent.tripInfo.from}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-semibold text-[var(--text-muted)] w-14 shrink-0">{t('driver.to', 'To')}</span>
+                      <span className="text-xs text-[var(--text-primary)]">{selectedDriverEvent.tripInfo.to}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-semibold text-[var(--text-muted)] w-14 shrink-0">{t('driver.purpose', 'Purpose')}</span>
+                      <span className="text-xs text-[var(--text-primary)]">{selectedDriverEvent.tripInfo.purpose}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Users className="w-3 h-3 text-[var(--text-muted)] mt-0.5 shrink-0" />
+                      <span className="text-xs text-[var(--text-primary)]">
+                        {selectedDriverEvent.tripInfo.passengerCount} {t('driver.passengers', 'passengers')}
+                      </span>
+                    </div>
+                    {selectedDriverEvent.tripInfo.notes && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs font-semibold text-[var(--text-muted)] w-14 shrink-0">{t('driver.notes', 'Notes')}</span>
+                        <span className="text-xs text-[var(--text-primary)]">{selectedDriverEvent.tripInfo.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Booked by */}
+                {selectedDriverEvent.bookedByName && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="w-4 h-4 text-[var(--text-muted)]" />
+                    <span className="text-[var(--text-secondary)]">
+                      {t('driver.bookedBy', 'Booked by')} {selectedDriverEvent.bookedByName}
+                    </span>
+                  </div>
+                )}
+
+                {/* Blocked reason */}
+                {selectedDriverEvent.reason && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--text-secondary)]">
+                      {t('driver.reason', 'Reason')}: {selectedDriverEvent.reason}
+                    </span>
+                  </div>
+                )}
+
+                {/* Status */}
+                <div className="flex items-center gap-2">
+                  <Badge variant={selectedDriverEvent.status === "scheduled" ? "default" : selectedDriverEvent.status === "completed" ? "success" : "secondary"}>
+                    {selectedDriverEvent.status}
+                  </Badge>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

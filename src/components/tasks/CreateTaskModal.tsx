@@ -1,10 +1,12 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { uploadTaskAttachment } from "@/actions/cloudinary";
+import { toast } from "sonner";
 
 interface Props {
   currentUserId: Id<"users">;
@@ -22,6 +24,8 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
   const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const employees = useQuery(api.tasks.getUsersForAssignment, { requesterId: currentUserId });
   const myEmployees = useQuery(
@@ -30,6 +34,23 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
   );
 
   const createTask = useMutation(api.tasks.createTask);
+  const addAttachment = useMutation(api.tasks.addAttachment);
+
+  const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files ?? []).filter(f => {
+      if (f.size > 10 * 1024 * 1024) {
+        toast.error(`${f.name} too large (max 10MB)`);
+        return false;
+      }
+      return true;
+    });
+    setFiles(prev => [...prev, ...newFiles].slice(0, 10));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const availableEmployees = userRole === "admin" ? employees : myEmployees;
 
@@ -42,7 +63,7 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
     setError("");
     try {
       const tags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
-      await createTask({
+      const taskId = await createTask({
         title: title.trim(),
         description: description.trim() || undefined,
         assignedTo: assignedTo as Id<"users">,
@@ -51,6 +72,32 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
         deadline: deadline ? new Date(deadline).getTime() : undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
+
+      // Upload attachments if any
+      if (files.length > 0 && taskId) {
+        await Promise.all(files.map(async (file) => {
+          try {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            const url = await uploadTaskAttachment(base64, file.name);
+            await addAttachment({
+              taskId: taskId as Id<"tasks">,
+              url,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              uploadedBy: currentUserId,
+            });
+          } catch {
+            toast.error(`Failed to upload ${file.name}`);
+          }
+        }));
+      }
+
       onClose();
     } catch (err: any) {
       setError(err.message ?? t('task.failedToCreate'));
@@ -64,11 +111,11 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[var(--card)] rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-[var(--border)]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-sky-500 px-6 py-5">
+        <div className="px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">{t('task.createTask')}</h2>
-              <p className="text-blue-200 text-sm mt-0.5">{t('task.assignTask')}</p>
+              <h2 className="text-xl font-bold ">{t('task.createTask')}</h2>
+              <p className="text-black-200 text-sm mt-0.5">{t('task.assignTask')}</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors">✕</button>
           </div>
@@ -114,7 +161,10 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
               <option value="">{t('task.selectEmployee')}</option>
               {availableEmployees?.map(emp => (
                 <option key={emp._id} value={emp._id}>
-                  {emp.name}{emp.position ? ` — ${emp.position}` : ""}{emp.department ? ` (${emp.department})` : ""}
+                  {emp.name}
+                  {emp.role ? ` [${emp.role === 'admin' ? 'Admin' : emp.role === 'supervisor' ? 'Supervisor' : emp.role === 'driver' ? 'Driver' : 'Employee'}]` : ''}
+                  {emp.position ? ` — ${emp.position}` : ""}
+                  {emp.department ? ` (${emp.department})` : ""}
                 </option>
               ))}
             </select>

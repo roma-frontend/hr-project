@@ -383,33 +383,54 @@ export async function getSessionAction() {
 }
 
 export async function updateSessionProfileAction(userId: string, name: string, email: string) {
-  const cookieStore = await cookies();
-  const jwt = cookieStore.get("hr-auth-token")?.value;
-  if (!jwt) throw new Error("Not authenticated");
+  "use server";
+  
+  try {
+    const cookieStore = await cookies();
+    const jwt = cookieStore.get("hr-auth-token")?.value;
+    
+    if (!jwt) {
+      console.error('[updateSessionProfileAction] No JWT token found');
+      throw new Error("Not authenticated");
+    }
 
-  const payload = await verifyJWT(jwt);
-  if (!payload || payload.userId !== userId) throw new Error("Unauthorized");
+    const payload = await verifyJWT(jwt);
+    
+    if (!payload) {
+      console.error('[updateSessionProfileAction] Invalid JWT payload');
+      throw new Error("Invalid token");
+    }
+    
+    if (payload.userId !== userId) {
+      console.error('[updateSessionProfileAction] User ID mismatch', { payloadUserId: payload.userId, requestUserId: userId });
+      throw new Error("Unauthorized");
+    }
 
-  const newJwt = await signJWT({
-    userId: payload.userId,
-    name,
-    email,
-    role: payload.role,
-    department: payload.department,
-    position: payload.position,
-    employeeType: payload.employeeType,
-    avatar: payload.avatar,
-  });
+    const newJwt = await signJWT({
+      userId: payload.userId,
+      name,
+      email,
+      role: payload.role,
+      department: payload.department,
+      position: payload.position,
+      employeeType: payload.employeeType,
+      avatar: payload.avatar,
+    });
 
-  cookieStore.set("hr-auth-token", newJwt, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60,
-    path: "/",
-  });
+    cookieStore.set("hr-auth-token", newJwt, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60,
+      path: "/",
+    });
 
-  return { success: true };
+    console.log('[updateSessionProfileAction] Success', { userId, name, email });
+    return { success: true };
+  } catch (error) {
+    console.error('[updateSessionProfileAction] Error:', error);
+    throw error;
+  }
 }
 
 export async function updateSessionAvatarAction(userId: string, avatarUrl: string) {

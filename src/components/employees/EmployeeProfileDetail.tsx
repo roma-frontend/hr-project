@@ -1,17 +1,28 @@
 ﻿"use client";
 
 import React, { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, Building2, Calendar, Briefcase, Star, Clock, Target, Award, AlertTriangle, Plus } from "lucide-react";
+import { User, Mail, Phone, Building2, Calendar, Briefcase, Star, Clock, Target, Award, AlertTriangle, Plus, Edit2, Trash2 } from "lucide-react";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { format } from "date-fns";
 import { useAuthStore } from "@/store/useAuthStore";
 import { SupervisorRatingForm } from "@/components/attendance/SupervisorRatingForm";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EditEmployeeModal } from "./EditEmployeeModal";
 
 interface EmployeeProfileDetailProps {
   employeeId: Id<"users">;
@@ -20,6 +31,9 @@ interface EmployeeProfileDetailProps {
 export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDetailProps) {
   const { user: currentUser } = useAuthStore();
   const [showRatingForm, setShowRatingForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { t } = useTranslation();
 
   const employee = useQuery(api.users.getUserById, { userId: employeeId });
@@ -32,7 +46,26 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
   });
   const ratingHistory = useQuery(api.supervisorRatings.getEmployeeRatings, { employeeId, limit: 3 });
 
+  const deleteUser = useMutation(api.users.deleteUser);
+
   const isAdminOrSupervisor = currentUser?.role === "admin" || currentUser?.role === "supervisor";
+  const isSuperadmin = currentUser?.role === "superadmin" || currentUser?.email?.toLowerCase() === "romangulanyan@gmail.com";
+  const isTargetSuperadmin = employee?.role === "superadmin" || employee?.email?.toLowerCase() === "romangulanyan@gmail.com";
+  const canEdit = isAdminOrSupervisor || isSuperadmin;
+  const canDelete = canEdit && !isTargetSuperadmin && employeeId !== currentUser?.id;
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteUser({ userId: employeeId as Id<"users"> });
+      toast.success(t('employees.employeeDeleted', 'Employee deleted successfully'));
+      window.history.back();
+    } catch (error: any) {
+      toast.error(error.message || t('employees.deleteFailed', 'Failed to delete employee'));
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const renderStars = (rating: number) =>
     [1, 2, 3, 4, 5].map((i) => (
@@ -87,16 +120,38 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                   <p className="text-3xl font-bold text-[var(--primary)]">{score.overallScore}/100</p>
                 </div>
               )}
-              {isAdminOrSupervisor && (
-                <Button
-                  size="sm"
-                  onClick={() => setShowRatingForm(!showRatingForm)}
-                  className="bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-sky-800 text-white"
-                >
-                  <Star className="w-4 h-4 mr-1" />
-                  {showRatingForm ? "Cancel Rating" : "Rate Performance"}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowEditModal(true)}
+                    variant="outline"
+                    className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                    variant="outline"
+                    className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+                {isAdminOrSupervisor && (
+                  <Button
+                    size="sm"
+                    onClick={() => setShowRatingForm(!showRatingForm)}
+                    className="bg-gradient-to-r from-blue-600 to-sky-700 hover:from-blue-700 hover:to-sky-800 text-white"
+                  >
+                    <Star className="w-4 h-4 mr-1" />
+                    {showRatingForm ? "Cancel Rating" : "Rate Performance"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -412,6 +467,58 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
           </CardContent>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteDialog && (
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-500">
+                  <Trash2 className="w-5 h-5" />
+                  {t('employees.confirmDelete', 'Confirm Deletion')}
+                </DialogTitle>
+                <DialogDescription>
+                  {t('employees.deleteWarning', 'Are you sure you want to delete this employee? This action cannot be undone.')}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={deleting}
+                >
+                  {t('common.cancel', 'Cancel')}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <>
+                      <Clock className="w-4 h-4 mr-2 animate-spin" />
+                      {t('common.deleting', 'Deleting...')}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      {t('common.delete', 'Delete')}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Employee Modal */}
+      <EditEmployeeModal
+        employee={employee as any}
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      />
     </div>
   );
 }

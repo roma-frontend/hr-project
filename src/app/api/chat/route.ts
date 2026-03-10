@@ -108,12 +108,35 @@ ${insights.teamConflicts?.length ? `⚠️ TEAM CONFLICTS (people already on lea
 
     // Fetch FULL SYSTEM CONTEXT — all employees, leaves, calendar, attendance
     let fullContext = '';
+    let availableDriversInfo = '';
     try {
       const fullRes = await fetch(`${req.headers.get('origin')}/api/chat/full-context?requesterId=${userId}`, {
         headers: { cookie: req.headers.get('cookie') || '' },
       });
       if (fullRes.ok) {
         const data = await fullRes.json();
+
+        // Fetch available drivers
+        try {
+          const driversRes = await fetch(`${req.headers.get('origin')}/api/drivers/available?organizationId=${userOrgId}`, {
+            headers: { cookie: req.headers.get('cookie') || '' },
+          });
+          if (driversRes.ok) {
+            const drivers = await driversRes.json();
+            console.log('[chat] Drivers API response:', { count: drivers?.length, orgId: userOrgId });
+            if (drivers && drivers.length > 0) {
+              availableDriversInfo = `\n\nAVAILABLE DRIVERS (use these driverId values for booking):\n${drivers.map((d: any) => `  - driverId: "${d._id}" | Name: ${d.userName} | Vehicle: ${d.vehicleInfo.model} (${d.vehicleInfo.plateNumber}) | Capacity: ${d.vehicleInfo.capacity} seats | Status: ${d.isAvailable ? 'Available' : 'Busy'}`).join('\n')}`;
+            } else {
+              availableDriversInfo = '\n\nAVAILABLE DRIVERS: No drivers available in your organization.';
+            }
+          } else {
+            console.error('[chat] Failed to fetch drivers, status:', driversRes.status);
+            availableDriversInfo = '\n\nAVAILABLE DRIVERS: Could not fetch driver list.';
+          }
+        } catch (e) {
+          console.error('[chat] Failed to fetch drivers:', e);
+          availableDriversInfo = '\n\nAVAILABLE DRIVERS: Could not fetch driver list.';
+        }
         
         // Build employees info
         const employeesInfo = (data.employees ?? []).map((e: any) => {
@@ -184,6 +207,7 @@ ${attendanceInfo || 'No attendance records today'}
 
 CALENDAR — APPROVED LEAVES (next 90 days):
 ${calendarInfo || 'No upcoming approved leaves'}
+${availableDriversInfo || ''}
 `;
       }
     } catch (e) {
@@ -305,6 +329,42 @@ When a user asks to delete/cancel/remove a leave request, respond with:
   "endDate": "YYYY-MM-DD"
 }
 </ACTION>
+
+BOOKING DRIVERS:
+When a user asks to book/request a driver for a trip:
+1. FIRST check AVAILABLE DRIVERS list above
+2. If no drivers available, respond: "Sorry, no drivers are available in your organization right now."
+3. If drivers exist, select one based on user preferences (capacity, availability)
+4. Use the EXACT driverId value from the list (format: "jnxxxxxxxxxxxxxxxxxxxxxxxx")
+5. Respond with:
+<ACTION>
+{
+  "type": "BOOK_DRIVER",
+  "driverId": "<COPY EXACT driverId FROM AVAILABLE DRIVERS LIST - e.g., jn71fqmccqe102v79w7v4qy5nh82az5n>",
+  "driverName": "<driver userName from list>",
+  "startTime": "YYYY-MM-DDTHH:MM:SS",
+  "endTime": "YYYY-MM-DDTHH:MM:SS",
+  "from": "<pickup location>",
+  "to": "<dropoff location>",
+  "purpose": "<trip purpose>",
+  "passengerCount": <number>
+}
+</ACTION>
+
+CRITICAL RULES:
+- NEVER write placeholder text like "driverId": "available_driver_id" or "Vardan Yaralov's id"
+- ALWAYS copy the exact driverId value from the AVAILABLE DRIVERS list (starts with "jn")
+- If no drivers in the list, tell the user there are no available drivers
+- driverId MUST be a string starting with "jn" followed by alphanumeric characters
+
+Example CORRECT:
+AVAILABLE DRIVERS:
+  - driverId: "jn71fqmccqe102v79w7v4qy5nh82az5n" | Name: Vardan Yaralov | ...
+User: "закажи водителя"
+AI: "Отправляю запрос... <ACTION>{"type":"BOOK_DRIVER","driverId":"jn71fqmccqe102v79w7v4qy5nh82az5n","driverName":"Vardan Yaralov",...}</ACTION>"
+
+Example WRONG (DO NOT DO THIS):
+AI: "<ACTION>{"type":"BOOK_DRIVER","driverId":"Vardan Yaralov's id",...}</ACTION>" ❌
 
 CRITICAL: Always use the real leaveId values shown as [leaveId: xxx] in the employee data above. Never generate or guess leaveIds.
 

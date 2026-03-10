@@ -74,9 +74,9 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
 
   useEffect(() => {
     if (open) {
-      // Auto-select current user for non-admin roles
-      if (user?.role === "employee") {
-        setSelectedUserId(user.id);
+      // Auto-select current user for non-admin roles (employee, supervisor, driver)
+      if (user?.role !== "admin" && user?.role !== "superadmin") {
+        setSelectedUserId(user?.id ?? "");
       } else {
         setSelectedUserId("");
       }
@@ -106,15 +106,33 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[LeaveRequest] Submit clicked", { selectedUserId, leaveType, startDate, endDate, reason });
+    
     const errs = validate();
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    console.log("[LeaveRequest] Validation errors:", errs);
+    
+    if (Object.keys(errs).length > 0) { 
+      setErrors(errs); 
+      return; 
+    }
 
     setSubmitting(true);
     try {
       // Find the convex user id
       const targetUser = allUsers?.find((u) => u._id === selectedUserId);
+      console.log("[LeaveRequest] Target user:", targetUser);
+      
       if (!targetUser) throw new Error("User not found");
 
+      console.log("[LeaveRequest] Creating leave:", {
+        userId: targetUser._id,
+        type: leaveType,
+        startDate,
+        endDate,
+        days,
+        reason,
+      });
+      
       await createLeave({
         userId: targetUser._id,
         type: leaveType as LeaveType,
@@ -127,6 +145,7 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
       toast.success("Leave request submitted successfully!");
       onClose();
     } catch (err: unknown) {
+      console.error("[LeaveRequest] Error:", err);
       toast.error(err instanceof Error ? err.message : "Failed to submit request");
     } finally {
       setSubmitting(false);
@@ -138,7 +157,11 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto px-4 sm:px-6">
         <DialogHeader>
           <DialogTitle className="text-[var(--text-primary)] text-lg sm:text-xl">New Leave Request</DialogTitle>
-          <DialogDescription className="text-[var(--text-muted)] text-xs sm:text-sm">Submit a new leave request for an employee.</DialogDescription>
+          <DialogDescription className="text-[var(--text-muted)] text-xs sm:text-sm">
+            {user?.role === "admin" || user?.role === "superadmin"
+              ? "Submit a new leave request for an employee."
+              : "Submit a new leave request for yourself."}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="pr-1 sm:pr-2">
@@ -146,13 +169,13 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
           {/* Employee */}
           <div className="space-y-1.5">
             <Label htmlFor="employee" className="text-sm">{t('labels.employee')} {t('forms.required')}</Label>
-            {user?.role === "employee" ? (
-              // Employees can only select themselves
+            {user?.role !== "admin" && user?.role !== "superadmin" ? (
+              // Regular employees, drivers, supervisors can only book for themselves
               <div className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] text-xs sm:text-sm text-[var(--text-primary)]">
-                {user.name} {user.department && <span className="text-xs text-[var(--text-muted)]">· {user.department}</span>}
+                {user?.name} {user?.department && <span className="text-xs text-[var(--text-muted)]">· {user?.department}</span>}
               </div>
             ) : (
-              // Admin and supervisor can select anyone
+              // Only admin and superadmin can select any employee
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger id="employee" className={errors.employee ? "border-destructive" : ""}>
                   <SelectValue placeholder={t('placeholders.selectEmployee')} />
@@ -318,10 +341,24 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
         </div>
 
         <DialogFooter className="gap-2 pt-2 flex-col sm:flex-row">
-          <Button type="button" variant="outline" onClick={onClose} disabled={submitting} className="w-full sm:w-auto text-sm">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose} 
+            disabled={submitting} 
+            className="w-full sm:w-auto text-sm"
+          >
             {t('leaveRequest.cancel')}
           </Button>
-          <Button type="submit" form="leave-request-form" disabled={submitting} className="w-full sm:w-auto text-sm">
+          <Button 
+            type="submit" 
+            form="leave-request-form" 
+            disabled={submitting} 
+            className="w-full sm:w-auto text-sm"
+            onClick={(e) => {
+              console.log("[LeaveRequest] Submit button clicked!", { submitting, selectedUserId, leaveType, startDate, endDate });
+            }}
+          >
             {submitting ? t('leaveRequest.submitting') : t('leaveRequest.submitRequest')}
           </Button>
         </DialogFooter>

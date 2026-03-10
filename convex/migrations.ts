@@ -27,6 +27,31 @@ export const approveAllExistingUsers = mutation({
   },
 });
 
+// Migration: Migrate driver notifications from leave_request to driver_request
+export const migrateDriverNotifications = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const notifications = await ctx.db.query("notifications").collect();
+
+    let migrated = 0;
+    for (const notif of notifications) {
+      // Migrate notifications with driver_request relatedId but wrong type
+      if (notif.type === "leave_request" && notif.relatedId?.startsWith("driver_request:")) {
+        await ctx.db.patch(notif._id, {
+          type: "driver_request",
+        });
+        migrated++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Migrated ${migrated} driver notifications`,
+      total: notifications.length
+    };
+  },
+});
+
 // Migration: Clean up reactions with invalid field names
 export const cleanReactionsFieldNames = mutation({
   args: {},

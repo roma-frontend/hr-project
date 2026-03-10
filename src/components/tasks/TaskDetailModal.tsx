@@ -155,7 +155,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
       <div className="relative bg-[var(--card)] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-[var(--border)]">
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-sky-500 px-6 py-5 flex-shrink-0">
+        <div className="px-6 py-5 flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               {editMode ? (
@@ -165,10 +165,10 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                   className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-3 py-1.5 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-white/50"
                 />
               ) : (
-                <h2 className="text-xl font-bold text-white leading-snug">{task.title}</h2>
+                <h2 className="text-xl font-bold leading-snug">{task.title}</h2>
               )}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20">
                   {statusLabel}
                 </span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 text-white">

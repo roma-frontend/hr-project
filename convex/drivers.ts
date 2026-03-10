@@ -118,7 +118,7 @@ export const isDriverAvailable = query({
       .withIndex("by_driver_time", (q) => q.eq("driverId", driverId))
       .filter((q) =>
         q.and(
-          q.eq(q.field("status"), v.literal("scheduled")),
+          q.eq(q.field("status"), "scheduled"),
           q.or(
             q.and(
               q.lte(q.field("startTime"), startTime),
@@ -188,10 +188,10 @@ export const isDriverAvailable = query({
       .withIndex("by_driver_time", (q) => q.eq("driverId", driverId))
       .filter((q) =>
         q.and(
-          q.eq(q.field("type"), v.literal("trip")),
+          q.eq(q.field("type"), "trip"),
           q.gte(q.field("startTime"), startOfDay.getTime()),
           q.lte(q.field("startTime"), endOfDay.getTime()),
-          q.neq(q.field("status"), v.literal("cancelled"))
+          q.neq(q.field("status"), "cancelled")
         )
       )
       .collect();
@@ -403,6 +403,68 @@ export const getDriverCalendarForViewer = query({
   },
 });
 
+/** Get all driver schedules for an organization (for general calendar) */
+export const getOrgDriverSchedules = query({
+  args: {
+    organizationId: v.id("organizations"),
+    startTime: v.number(),
+    endTime: v.number(),
+  },
+  handler: async (ctx, { organizationId, startTime, endTime }) => {
+    const schedules = await ctx.db
+      .query("driverSchedules")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("status"), "cancelled"),
+          q.gte(q.field("startTime"), startTime),
+          q.lte(q.field("startTime"), endTime)
+        )
+      )
+      .collect();
+
+    const enriched = await Promise.all(
+      schedules.map(async (schedule) => {
+        const driver = await ctx.db.get(schedule.driverId);
+        const driverUser = driver ? await ctx.db.get(driver.userId) : null;
+        const bookedByUser = schedule.userId ? await ctx.db.get(schedule.userId) : null;
+        return {
+          ...schedule,
+          driverName: driverUser?.name ?? "Unknown",
+          driverVehicle: driver?.vehicleInfo,
+          bookedByName: bookedByUser?.name,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+/** Get driver record by userId */
+export const getDriverByUserId = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    const driver = await ctx.db
+      .query("drivers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!driver) return null;
+
+    const user = await ctx.db.get(driver.userId);
+    return {
+      ...driver,
+      userName: user?.name ?? "Unknown",
+      userAvatar: user?.avatarUrl,
+      userPosition: user?.position,
+      userPhone: user?.phone,
+    };
+  },
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MUTATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -421,9 +483,22 @@ export const requestDriver = mutation({
       purpose: v.string(),
       passengerCount: v.number(),
       notes: v.optional(v.string()),
+      pickupCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
+      dropoffCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
     }),
   },
   handler: async (ctx, args) => {
+    // Validate startTime < endTime
+    if (args.startTime >= args.endTime) {
+      throw new Error("Start time must be before end time");
+    }
+
     // Check if driver is available
     const availability = await ctx.db
       .query("driverSchedules")
@@ -439,6 +514,10 @@ export const requestDriver = mutation({
             q.and(
               q.lte(q.field("startTime"), args.endTime),
               q.gte(q.field("endTime"), args.endTime)
+            ),
+            q.and(
+              q.gte(q.field("startTime"), args.startTime),
+              q.lte(q.field("endTime"), args.endTime)
             )
           )
         )
@@ -468,7 +547,7 @@ export const requestDriver = mutation({
       await ctx.db.insert("notifications", {
         organizationId: args.organizationId,
         userId: driver.userId,
-        type: "leave_request", // Reusing notification type
+        type: "driver_request",
         title: "New Driver Request",
         message: `${args.tripInfo.purpose}: ${args.tripInfo.from} → ${args.tripInfo.to}`,
         isRead: false,
@@ -522,11 +601,11 @@ export const respondToDriverRequest = mutation({
         updatedAt: Date.now(),
       });
 
-      // Update driver's trip count
+      // Update total trips count
       const driver = await ctx.db.get(driverId);
       if (driver) {
         await ctx.db.patch(driverId, {
-          currentTripsToday: driver.currentTripsToday + 1,
+          totalTrips: (driver.totalTrips || 0) + 1,
           updatedAt: Date.now(),
         });
       }
@@ -536,7 +615,7 @@ export const respondToDriverRequest = mutation({
     await ctx.db.insert("notifications", {
       organizationId: request.organizationId,
       userId: request.requesterId,
-      type: approved ? "leave_approved" : "leave_rejected",
+      type: approved ? "driver_request_approved" : "driver_request_rejected",
       title: approved ? "Driver Request Approved" : "Driver Request Declined",
       message: approved
         ? `Your trip to ${request.tripInfo.to} has been confirmed`
@@ -736,6 +815,145 @@ export const updateDriverAvailability = mutation({
   },
 });
 
+/** Update a driver request (requester/admin can edit pending or approved requests) */
+export const updateDriverRequest = mutation({
+  args: {
+    requestId: v.id("driverRequests"),
+    userId: v.id("users"),
+    driverId: v.optional(v.id("drivers")),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
+    tripInfo: v.optional(v.object({
+      from: v.string(),
+      to: v.string(),
+      purpose: v.string(),
+      passengerCount: v.number(),
+      notes: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const request = await ctx.db.get(args.requestId);
+    if (!request) throw new Error("Request not found");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+    const isSuperadmin = user.email?.toLowerCase() === SUPERADMIN_EMAIL;
+    const isAdmin = user.role === "admin";
+
+    if (request.requesterId !== args.userId && !isSuperadmin && !isAdmin) {
+      throw new Error("Only the requester can edit this booking");
+    }
+
+    if (request.status === "cancelled") {
+      throw new Error("Cannot edit a cancelled request");
+    }
+
+    const wasApproved = request.status === "approved";
+
+    // If the request was approved, remove the schedule entry
+    if (wasApproved) {
+      const schedule = await ctx.db
+        .query("driverSchedules")
+        .withIndex("by_driver", (q) => q.eq("driverId", request.driverId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("userId"), request.requesterId),
+            q.eq(q.field("startTime"), request.startTime),
+            q.eq(q.field("endTime"), request.endTime)
+          )
+        )
+        .first();
+      if (schedule) {
+        await ctx.db.delete(schedule._id);
+      }
+
+      // Decrement total trips
+      const driver = await ctx.db.get(request.driverId);
+      if (driver && driver.totalTrips > 0) {
+        await ctx.db.patch(request.driverId, {
+          totalTrips: driver.totalTrips - 1,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
+    // Update the request fields
+    const patch: Record<string, any> = {
+      updatedAt: Date.now(),
+      status: "pending" as const, // Reset to pending so driver re-approves
+      reviewedAt: undefined,
+      declineReason: undefined,
+    };
+    if (args.driverId) patch.driverId = args.driverId;
+    if (args.startTime) patch.startTime = args.startTime;
+    if (args.endTime) patch.endTime = args.endTime;
+    if (args.tripInfo) patch.tripInfo = args.tripInfo;
+
+    await ctx.db.patch(args.requestId, patch);
+
+    // Notify the driver about the updated request
+    const driverId = args.driverId || request.driverId;
+    const driverRecord = await ctx.db.get(driverId);
+    if (driverRecord) {
+      const tripInfo = args.tripInfo || request.tripInfo;
+      await ctx.db.insert("notifications", {
+        organizationId: request.organizationId,
+        userId: driverRecord.userId,
+        type: "driver_request",
+        title: wasApproved ? "Driver Request Updated (Re-approval needed)" : "Driver Request Updated",
+        message: `${tripInfo.purpose}: ${tripInfo.from} → ${tripInfo.to}`,
+        isRead: false,
+        relatedId: `driver_request:${args.requestId}`,
+        createdAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/** Delete a driver request (only requester can delete, only pending/declined) */
+export const deleteDriverRequest = mutation({
+  args: {
+    requestId: v.id("driverRequests"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const request = await ctx.db.get(args.requestId);
+    if (!request) throw new Error("Request not found");
+
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+    const isSuperadmin = user.email?.toLowerCase() === SUPERADMIN_EMAIL;
+    const isAdmin = user.role === "admin";
+
+    if (request.requesterId !== args.userId && !isSuperadmin && !isAdmin) {
+      throw new Error("Only the requester can delete this booking");
+    }
+
+    if (request.status === "approved") {
+      // Also delete the associated schedule entry
+      const schedule = await ctx.db
+        .query("driverSchedules")
+        .withIndex("by_driver", (q) => q.eq("driverId", request.driverId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("userId"), request.requesterId),
+            q.eq(q.field("startTime"), request.startTime),
+            q.eq(q.field("endTime"), request.endTime)
+          )
+        )
+        .first();
+      if (schedule) {
+        await ctx.db.delete(schedule._id);
+      }
+    }
+
+    await ctx.db.delete(args.requestId);
+    return { success: true };
+  },
+});
+
 /** Block time slot (for driver) */
 export const blockTimeSlot = mutation({
   args: {
@@ -760,5 +978,229 @@ export const blockTimeSlot = mutation({
     });
 
     return { success: true };
+  },
+});
+
+/** Update trip status (in_progress, completed, etc.) */
+export const updateTripStatus = mutation({
+  args: {
+    scheduleId: v.id("driverSchedules"),
+    userId: v.id("users"),
+    status: v.union(
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("cancelled"),
+    ),
+  },
+  handler: async (ctx, { scheduleId, userId, status }) => {
+    const schedule = await ctx.db.get(scheduleId);
+    if (!schedule) throw new Error("Schedule not found");
+
+    // Verify user is the driver
+    if (schedule.driverId) {
+      const driver = await ctx.db.get(schedule.driverId);
+      if (!driver || driver.userId !== userId) {
+        throw new Error("Only the driver can update trip status");
+      }
+    }
+
+    await ctx.db.patch(scheduleId, {
+      status,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/** Submit driver feedback after trip completion */
+export const submitDriverFeedback = mutation({
+  args: {
+    scheduleId: v.id("driverSchedules"),
+    userId: v.id("users"),
+    rating: v.number(),
+    comment: v.optional(v.string()),
+  },
+  handler: async (ctx, { scheduleId, userId, rating, comment }) => {
+    const schedule = await ctx.db.get(scheduleId);
+    if (!schedule) throw new Error("Schedule not found");
+
+    // Verify user is the driver
+    if (schedule.driverId) {
+      const driver = await ctx.db.get(schedule.driverId);
+      if (!driver || driver.userId !== userId) {
+        throw new Error("Only the driver can submit feedback");
+      }
+    }
+
+    // Validate rating
+    if (rating < 1 || rating > 5) {
+      throw new Error("Rating must be between 1 and 5");
+    }
+
+    await ctx.db.patch(scheduleId, {
+      driverFeedback: {
+        rating,
+        comment,
+        completedAt: Date.now(),
+      },
+      status: "completed",
+      updatedAt: Date.now(),
+    });
+
+    // Update driver's total rating
+    if (schedule.driverId) {
+      const driver = await ctx.db.get(schedule.driverId);
+      if (driver) {
+        const currentRating = driver.rating || 5.0;
+        const totalTrips = driver.totalTrips || 0;
+        const newRating = ((currentRating * totalTrips) + rating) / (totalTrips + 1);
+        await ctx.db.patch(schedule.driverId, {
+          rating: newRating,
+          totalTrips: totalTrips + 1,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
+    return { success: true };
+  },
+});
+
+/** Block time for vacation/sick leave */
+export const blockTimeOff = mutation({
+  args: {
+    driverId: v.id("drivers"),
+    organizationId: v.id("organizations"),
+    startTime: v.number(),
+    endTime: v.number(),
+    reason: v.string(),
+    type: v.union(
+      v.literal("vacation"),
+      v.literal("sick_leave"),
+      v.literal("personal"),
+    ),
+  },
+  handler: async (ctx, { driverId, organizationId, startTime, endTime, reason, type }) => {
+    const driver = await ctx.db.get(driverId);
+    if (!driver) throw new Error("Driver not found");
+
+    await ctx.db.insert("driverSchedules", {
+      organizationId,
+      driverId,
+      userId: driver.userId,
+      startTime,
+      endTime,
+      type: "time_off",
+      status: "scheduled",
+      reason: `${type}: ${reason}`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/** Calculate route distance and duration using Google Maps API */
+export const calculateRoute = mutation({
+  args: {
+    from: v.string(),
+    to: v.string(),
+  },
+  handler: async (ctx, { from, to }) => {
+    // Note: This requires Google Maps API key to be set in environment variables
+    // For now, return mock data - in production, you would call Google Maps API
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    
+    if (!apiKey) {
+      // Return mock data if no API key
+      return {
+        distanceMeters: 15000, // 15 km mock
+        durationSeconds: 1800, // 30 min mock
+        distanceKm: 15,
+        durationMinutes: 30,
+      };
+    }
+
+    // In production, call Google Maps Distance Matrix API:
+    // const response = await fetch(
+    //   `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(from)}&destinations=${encodeURIComponent(to)}&key=${apiKey}`
+    // );
+    // const data = await response.json();
+    // return {
+    //   distanceMeters: data.rows[0].elements[0].distance.value,
+    //   durationSeconds: data.rows[0].elements[0].duration.value,
+    //   distanceKm: data.rows[0].elements[0].distance.value / 1000,
+    //   durationMinutes: data.rows[0].elements[0].duration.value / 60,
+    // };
+
+    return {
+      distanceMeters: 15000,
+      durationSeconds: 1800,
+      distanceKm: 15,
+      durationMinutes: 30,
+    };
+  },
+});
+
+/** Get driver statistics */
+export const getDriverStats = query({
+  args: {
+    driverId: v.id("drivers"),
+    period: v.union(
+      v.literal("week"),
+      v.literal("month"),
+      v.literal("year"),
+    ),
+  },
+  handler: async (ctx, { driverId, period }) => {
+    const now = Date.now();
+    let periodStart: number;
+
+    if (period === "week") {
+      periodStart = now - 7 * 24 * 60 * 60 * 1000;
+    } else if (period === "month") {
+      periodStart = now - 30 * 24 * 60 * 60 * 1000;
+    } else {
+      periodStart = now - 365 * 24 * 60 * 60 * 1000;
+    }
+
+    const schedules = await ctx.db
+      .query("driverSchedules")
+      .withIndex("by_driver", (q) => q.eq("driverId", driverId))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("startTime"), periodStart),
+          q.eq(q.field("status"), "completed"),
+          q.eq(q.field("type"), "trip")
+        )
+      )
+      .collect();
+
+    const totalTrips = schedules.length;
+    const totalDistance = schedules.reduce((sum, s) => sum + (s.tripInfo?.distanceKm || 0), 0);
+    const totalDuration = schedules.reduce((sum, s) => sum + (s.tripInfo?.durationMinutes || 0), 0);
+
+    // Calculate popular routes
+    const routeCounts: Record<string, number> = {};
+    schedules.forEach((s) => {
+      const route = `${s.tripInfo?.from} → ${s.tripInfo?.to}`;
+      routeCounts[route] = (routeCounts[route] || 0) + 1;
+    });
+
+    const popularRoutes = Object.entries(routeCounts)
+      .map(([route, count]) => ({ route, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      totalTrips,
+      totalDistanceKm: totalDistance,
+      totalDurationMinutes: totalDuration,
+      averageDistancePerTrip: totalTrips > 0 ? totalDistance / totalTrips : 0,
+      averageDurationPerTrip: totalTrips > 0 ? totalDuration / totalTrips : 0,
+      popularRoutes,
+    };
   },
 });

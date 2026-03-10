@@ -11,12 +11,19 @@ import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { useAuthStore } from "@/store/useAuthStore";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Employee {
   _id: string;
   name: string;
   email: string;
-  role: "admin" | "supervisor" | "employee";
+  role: "admin" | "supervisor" | "employee" | "superadmin";
   employeeType: "staff" | "contractor";
   department?: string;
   position?: string;
@@ -24,6 +31,7 @@ interface Employee {
   avatarUrl?: string;
   supervisorId?: string;
   isActive: boolean;
+  organizationId?: string;
   travelAllowance: number;
   paidLeaveBalance: number;
   sickLeaveBalance: number;
@@ -34,7 +42,6 @@ interface EditEmployeeModalProps {
   employee: Employee;
   open: boolean;
   onClose: () => void;
-  currentUserRole: "admin" | "supervisor" | "employee";
 }
 
 const ADMIN_EMAIL = "romangulanyan@gmail.com";
@@ -45,12 +52,13 @@ const ALL_ROLES_CONFIG = [
   { value: "employee", icon: "👤", labelKey: "roles.employee", descKey: "editEmployee.basicAccess" },
 ];
 
-export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: EditEmployeeModalProps) {
+export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModalProps) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const updateUser = useMutation(api.users.updateUser);
   const supervisors = useQuery(api.users.getSupervisors, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
-  
+  const organizations = useQuery(api.organizations.getAllOrganizations, user?.role === "superadmin" ? {} : "skip");
+
   const DEPARTMENTS = [
     { value: "Engineering", label: t('departments.engineering') },
     { value: "HR", label: t('departments.hr') },
@@ -65,6 +73,7 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
   ];
 
   const [loading, setLoading] = useState(false);
+  const [selectedOrgId, setSelectedOrgId] = useState(employee.organizationId ?? "");
   const [form, setForm] = useState({
     name: employee.name,
     role: employee.role,
@@ -79,10 +88,11 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
     familyLeaveBalance: employee.familyLeaveBalance,
   });
 
-  const canEditRole = currentUserRole === "admin";
+  const canEditRole = user?.role === "admin" || user?.role === "superadmin";
   const currentUser = useAuthStore((s) => s.user);
   // Only romangulanyan@gmail.com can assign admin role
   const isActualAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL;
+  const isSuperadmin = user?.role === "superadmin";
   
   // Protection: non-superadmin cannot edit superadmin
   if (employee.role === "superadmin" && !isActualAdmin) {
@@ -153,7 +163,7 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
         adminId: user.id as Id<"users">,
         userId: employee._id as Id<"users">,
         name: form.name,
-        role: form.role as "admin" | "supervisor" | "employee",
+        role: form.role as "admin" | "supervisor" | "employee" | "superadmin",
         employeeType: form.employeeType as "staff" | "contractor",
         department: form.department || undefined,
         position: form.position || undefined,
@@ -163,6 +173,7 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
         paidLeaveBalance: form.paidLeaveBalance,
         sickLeaveBalance: form.sickLeaveBalance,
         familyLeaveBalance: form.familyLeaveBalance,
+        ...(isSuperadmin && selectedOrgId ? { organizationId: selectedOrgId as Id<"organizations"> } : {}),
       });
       toast.success(t('modals.editEmployee.updatedSuccess'));
       onClose();
@@ -331,6 +342,25 @@ export function EditEmployeeModal({ employee, open, onClose, currentUserRole }: 
                   onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                 />
               </div>
+
+              {/* Organization — superadmin only */}
+              {isSuperadmin && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium flex items-center gap-1.5" style={{ color: "var(--text-primary)" }}>
+                    <Building2 className="w-3.5 h-3.5" /> {t('employees.organization')}
+                  </label>
+                  <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('employees.selectOrganization')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations?.map((org: any) => (
+                        <SelectItem key={org._id} value={org._id}>{org.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Leave Balances — admin only */}
               {canEditRole && (

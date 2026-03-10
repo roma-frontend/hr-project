@@ -251,6 +251,9 @@ export default defineSchema({
       v.literal("leave_request"),
       v.literal("leave_approved"),
       v.literal("leave_rejected"),
+      v.literal("driver_request"),           // new: driver booking request
+      v.literal("driver_request_approved"),  // new: driver request approved
+      v.literal("driver_request_rejected"),  // new: driver request rejected
       v.literal("employee_added"),
       v.literal("join_request"),             // new: employee wants to join
       v.literal("join_approved"),            // new: join request approved
@@ -1008,6 +1011,7 @@ export default defineSchema({
       v.literal("trip"),                // booked trip
       v.literal("blocked"),             // blocked by driver
       v.literal("maintenance"),         // vehicle maintenance
+      v.literal("time_off"),            // vacation/sick leave
     ),
     status: v.union(
       v.literal("scheduled"),
@@ -1022,9 +1026,32 @@ export default defineSchema({
       purpose: v.string(),              // e.g., "Airport transfer", "Client meeting"
       passengerCount: v.number(),
       notes: v.optional(v.string()),
+      distanceKm: v.optional(v.number()), // distance in km (from Google Maps)
+      durationMinutes: v.optional(v.number()), // estimated duration
+      passengerPhone: v.optional(v.string()), // passenger phone for driver
+      pickupCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
+      dropoffCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
     })),
-    // For blocked/maintenance
+    // For blocked/maintenance/time_off
     reason: v.optional(v.string()),
+    // Driver feedback after trip
+    driverFeedback: v.optional(v.object({
+      rating: v.number(),               // 1-5 rating from driver
+      comment: v.optional(v.string()),
+      completedAt: v.number(),
+    })),
+    // Google Maps data
+    mapData: v.optional(v.object({
+      distanceMeters: v.number(),
+      durationSeconds: v.number(),
+      polyline: v.optional(v.string()), // encoded polyline for route
+    })),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -1048,6 +1075,14 @@ export default defineSchema({
       purpose: v.string(),
       passengerCount: v.number(),
       notes: v.optional(v.string()),
+      pickupCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
+      dropoffCoords: v.optional(v.object({
+        lat: v.number(),
+        lng: v.number(),
+      })),
     }),
     status: v.union(
       v.literal("pending"),             // waiting for driver approval

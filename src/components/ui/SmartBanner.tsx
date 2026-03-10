@@ -95,7 +95,7 @@ export function SmartBanner({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className={`relative overflow-hidden rounded-xl border p-4 ${colorClasses[type]} ${className}`}
+          className={`relative overflow-hidden border p-4 ${colorClasses[type]} ${className}`}
         >
           {/* Animated background gradient */}
           <motion.div

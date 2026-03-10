@@ -8,7 +8,10 @@ export const getUserStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
     const user = await ctx.db.get(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      // User not found - return null instead of throwing
+      return null;
+    }
 
     // Get user's leaves
     const userLeaves = await ctx.db

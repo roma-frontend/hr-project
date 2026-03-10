@@ -420,26 +420,6 @@ export function EmployeesClient() {
                               )}
                             </div>
                             <div className="flex items-center gap-1">
-                              {canEditEmployee(emp) && (
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setEditEmployee(emp as any); }}
-                                    className="p-1.5 rounded-md text-amber-500 hover:bg-amber-500/20 transition-colors"
-                                    title={t('common.edit')}
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  {canDeleteEmployee(emp) && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setDeleteConfirm(emp._id); }}
-                                      className="p-1.5 rounded-md text-red-500 hover:bg-red-500/20 transition-colors"
-                                      title={t('employees.deactivate')}
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              )}
                               {isAdmin
                                 ? <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>{emp.travelAllowance.toLocaleString()} AMD</span>
                                 : <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${presence.cls}`}>{t(presence.labelKey)}</span>
@@ -554,8 +534,8 @@ export function EmployeesClient() {
                             </span>
                           </div>
 
-                          {/* Actions — floating overlay on hover */}
-                          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1 px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md border"
+                          {/* Actions — view only on hover */}
+                          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1 px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md border"
                             style={{ background: "var(--card)", borderColor: "var(--border)" }}
                           >
                             <button
@@ -565,26 +545,6 @@ export function EmployeesClient() {
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
-                            {canEditEmployee(emp) && (
-                              <>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setEditEmployee(emp as any); }}
-                                  className="p-1.5 rounded-md text-amber-500 hover:bg-amber-500/20 transition-colors"
-                                  title={t('common.edit')}
-                                >
-                                  <Edit2 className="w-3.5 h-3.5" />
-                                </button>
-                                {canDeleteEmployee(emp) && (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setDeleteConfirm(emp._id); }}
-                                    className="p-1.5 rounded-md text-red-500 hover:bg-red-500/20 transition-colors"
-                                    title={t('employees.deactivate')}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                              </>
-                            )}
                           </div>
                         </motion.div>
                     );

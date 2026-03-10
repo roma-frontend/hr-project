@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Sparkles, CheckCircle, AlertCircle, Calendar, Pencil, Trash2, Mic, MicOff } from 'lucide-react';
+import { X, Send, Sparkles, CheckCircle, AlertCircle, Calendar, Pencil, Trash2, Mic, MicOff, Car } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -98,7 +98,20 @@ interface DeleteLeaveAction {
   endDate: string;
 }
 
-type AnyAction = BookLeaveAction | EditLeaveAction | DeleteLeaveAction;
+interface BookDriverAction {
+  type: 'BOOK_DRIVER';
+  driverId: string;
+  driverName: string;
+  startTime: string;
+  endTime: string;
+  from: string;
+  to: string;
+  purpose: string;
+  passengerCount: number;
+  notes?: string;
+}
+
+type AnyAction = BookLeaveAction | EditLeaveAction | DeleteLeaveAction | BookDriverAction;
 
 function parseActions(content: string): { cleanContent: string; actions: AnyAction[] } {
   const actionMatches = [...content.matchAll(/<ACTION>([\s\S]*?)<\/ACTION>/g)];
@@ -446,7 +459,35 @@ export function ChatWidget() {
           endDate: (action as DeleteLeaveAction).endDate,
           leaveType: (action as DeleteLeaveAction).leaveType,
         };
+      } else if (action.type === 'BOOK_DRIVER') {
+        url = '/api/chat/book-driver';
+        console.log('[ChatWidget] BOOK_DRIVER action:', action);
+        console.log('[ChatWidget] User:', { id: user.id, organizationId: user.organizationId });
+        const startTime = new Date(action.startTime).getTime();
+        const endTime = new Date(action.endTime).getTime();
+        if (!user.organizationId) {
+          throw new Error('Organization not selected. Please select an organization first.');
+        }
+        if (isNaN(startTime) || isNaN(endTime)) {
+          throw new Error('Invalid date/time for driver booking.');
+        }
+        body = {
+          userId: user.id,
+          organizationId: user.organizationId,
+          driverId: action.driverId,
+          startTime,
+          endTime,
+          tripInfo: {
+            from: action.from,
+            to: action.to,
+            purpose: action.purpose,
+            passengerCount: action.passengerCount,
+            notes: action.notes,
+          },
+        };
       }
+
+      console.log('[ChatWidget] Sending request to:', url, body);
 
       const res = await fetch(url, {
         method: 'POST',
@@ -454,25 +495,32 @@ export function ChatWidget() {
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      let data: Record<string, unknown>;
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: `Server error (${res.status})` };
+      }
 
       if (res.ok) {
         setMessages(prev => prev.map(m =>
           m.id === messageId
-            ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'booked', result: data.message || 'Done!' } } }
+            ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'booked', result: (data.message as string) || 'Done!' } } }
             : m
         ));
       } else {
         setMessages(prev => prev.map(m =>
           m.id === messageId
-            ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'conflict', result: data.error || 'Something went wrong.' } } }
+            ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'conflict', result: (data.error as string) || 'Something went wrong.' } } }
             : m
         ));
       }
-    } catch {
+    } catch (err) {
+      console.error('[ChatWidget] Action error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Network error. Please try again.';
       setMessages(prev => prev.map(m =>
         m.id === messageId
-          ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'conflict', result: 'Network error. Please try again.' } } }
+          ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'conflict', result: errorMsg } } }
           : m
       ));
     }
@@ -776,28 +824,36 @@ export function ChatWidget() {
                             const state = m.bookingStates?.[idx] ?? { status: 'pending' };
                             const isDelete = action.type === 'DELETE_LEAVE';
                             const isEdit = action.type === 'EDIT_LEAVE';
+                            const isBookDriver = action.type === 'BOOK_DRIVER';
 
                             return (
                               <motion.div
                                 key={idx}
                                 initial={{ opacity: 0, y: 4 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className={`rounded-xl border p-3 text-xs space-y-2 ${isDelete ? 'border-red-500/20 bg-red-500/5' : isEdit ? 'border-yellow-500/20 bg-yellow-500/5' : 'border-[#2563eb]/20 bg-[#2563eb]/5'
+                                className={`rounded-xl border p-3 text-xs space-y-2 ${isDelete ? 'border-red-500/20 bg-red-500/5' : isEdit ? 'border-yellow-500/20 bg-yellow-500/5' : isBookDriver ? 'border-purple-500/20 bg-purple-500/5' : 'border-[#2563eb]/20 bg-[#2563eb]/5'
                                   }`}
                               >
                                 <div className="flex items-center gap-2 font-semibold text-[var(--text-primary)]">
-                                  {isDelete ? <Trash2 className="w-3.5 h-3.5 text-red-500" /> : isEdit ? <Pencil className="w-3.5 h-3.5 text-yellow-500" /> : <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />}
-                                  {isDelete ? t("chatWidget.cancelLeave") : isEdit ? t("chatWidget.updateLeave") : (LEAVE_TYPE_LABELS[(action as BookLeaveAction).leaveType] ?? t("chatWidget.leaveRequest"))}
+                                  {isDelete ? <Trash2 className="w-3.5 h-3.5 text-red-500" /> : isEdit ? <Pencil className="w-3.5 h-3.5 text-yellow-500" /> : isBookDriver ? <Car className="w-3.5 h-3.5 text-purple-500" /> : <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />}
+                                  {isDelete ? t("chatWidget.cancelLeave") : isEdit ? t("chatWidget.updateLeave") : isBookDriver ? t("chatWidget.bookDriver", "Book Driver") : (LEAVE_TYPE_LABELS[(action as BookLeaveAction).leaveType] ?? t("chatWidget.leaveRequest"))}
                                 </div>
                                 <div className="text-[var(--text-muted)] space-y-0.5">
-                                  {action.type !== 'DELETE_LEAVE' && (
+                                  {isBookDriver ? (
+                                    <>
+                                      <p>🚗 {(action as BookDriverAction).driverName}</p>
+                                      <p>📅 {new Date((action as BookDriverAction).startTime).toLocaleString()}</p>
+                                      <p>📍 {(action as BookDriverAction).from} → {(action as BookDriverAction).to}</p>
+                                      <p>👥 {(action as BookDriverAction).passengerCount} passengers</p>
+                                      {(action as BookDriverAction).purpose && <p>💼 {(action as BookDriverAction).purpose}</p>}
+                                    </>
+                                  ) : action.type !== 'DELETE_LEAVE' ? (
                                     <>
                                       <p>📅 {action.startDate} → {action.endDate}</p>
                                       <p>⏱️ {action.days} day{action.days !== 1 ? 's' : ''}</p>
                                       {(action as BookLeaveAction).reason && <p>📝 {(action as BookLeaveAction).reason}</p>}
                                     </>
-                                  )}
-                                  {action.type === 'DELETE_LEAVE' && (
+                                  ) : (
                                     <>
                                       <p>👤 {(action as DeleteLeaveAction).employeeName}</p>
                                       <p>📅 {(action as DeleteLeaveAction).startDate} → {(action as DeleteLeaveAction).endDate}</p>

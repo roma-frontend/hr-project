@@ -130,7 +130,7 @@ export function Navbar() {
   );
   const userStats = useQuery(
     api.userStats.getUserStats,
-    user?.id ? { userId: user.id as Id<"users"> } : "skip"
+    user?.id && currentUserData ? { userId: user.id as Id<"users"> } : "skip"
   );
   const currentPresence = ((currentUserData as any)?.presenceStatus ?? "available") as PresenceStatus;
   const presenceCfg = PRESENCE_CONFIG[currentPresence];
@@ -320,6 +320,10 @@ export function Navbar() {
                               router.push(`/superadmin/security/alert/${n.relatedId}`);
                             } else if (n.type === "leave_request" && n.relatedId) {
                               router.push("/leaves");
+                            } else if (n.type === "driver_request") {
+                              router.push("/drivers");
+                            } else if (n.type === "driver_request_approved" || n.type === "driver_request_rejected") {
+                              router.push("/drivers");
                             } else if (n.type === "employee_added") {
                               router.push("/employees");
                             } else if (n.type === "system" && (n.title?.includes("Task") || n.title?.includes("task"))) {

@@ -264,7 +264,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
   // Queries
   const adminTasks = useQuery(api.tasks.getAllTasks, userRole === "admin" ? { requesterId: convexId } : "skip");
   const supervisorTasks = useQuery(api.tasks.getTasksAssignedBy, userRole === "supervisor" ? { supervisorId: convexId } : "skip");
-  const employeeTasks = useQuery(api.tasks.getTasksForEmployee, userRole === "employee" ? { userId: convexId } : "skip");
+  const employeeTasks = useQuery(api.tasks.getTasksForEmployee, (userRole === "employee" || userRole === "driver") ? { userId: convexId } : "skip");
 
   const rawTasks = userRole === "admin" ? adminTasks : userRole === "supervisor" ? supervisorTasks : employeeTasks;
 
@@ -305,10 +305,10 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold" style={{ color: "var(--text-primary)" }}>
-              {userRole === "employee" ? t('tasksClient.myTasks') : t('tasksClient.taskManager')}
+              {userRole === "employee" || userRole === "driver" ? t('tasksClient.myTasks') : t('tasksClient.taskManager')}
             </h1>
             <p className="mt-1" style={{ color: "var(--text-muted)" }}>
-              {userRole === "employee" ? t('tasksClient.trackAssignments') : t('tasksClient.assignMonitor')}
+              {userRole === "employee" || userRole === "driver" ? t('tasksClient.trackAssignments') : t('tasksClient.assignMonitor')}
             </p>
           </div>
           <div className="flex items-center gap-3">
