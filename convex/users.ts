@@ -78,15 +78,23 @@ export const getUsersByOrganization = getUsersByOrganizationId;
 export const getCurrentUser = query({
   args: {
     email: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
   },
-  handler: async (ctx, { email }) => {
-    console.log("[getCurrentUser] Called with email:", email);
+  handler: async (ctx, { email, userId }) => {
+    console.log("[getCurrentUser] Called with:", { email, userId });
 
     // Try to get identity from Convex auth first
     const identity = await ctx.auth.getUserIdentity();
     console.log("[getCurrentUser] Identity:", identity);
 
     const userEmail = identity?.email || email;
+
+    // If userId provided, get user directly
+    if (userId) {
+      const user = await ctx.db.get(userId);
+      console.log("[getCurrentUser] Found user by ID:", user);
+      return user;
+    }
 
     if (!userEmail) {
       console.log("[getCurrentUser] No identity or email");
