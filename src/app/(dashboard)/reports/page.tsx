@@ -180,10 +180,28 @@ const [tab, setTab] = useState("overview");
       {/* Tabs */}
       <motion.div variants={itemVariants}>
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="overview">{t('reports.overview')}Overview</TabsTrigger>
-            <TabsTrigger value="departments">Departments</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsList className="w-full mb-6 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
+            <TabsTrigger 
+              value="overview" 
+              className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium"
+            >
+              <FileText className="w-4 h-4 mr-2 inline-block" />
+              {t('reports.overview')} Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="departments" 
+              className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium"
+            >
+              <Users className="w-4 h-4 mr-2 inline-block" />
+              Departments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="trends" 
+              className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium"
+            >
+              <TrendingUp className="w-4 h-4 mr-2 inline-block" />
+              Trends
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview */}

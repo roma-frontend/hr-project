@@ -13,7 +13,7 @@ export const getAnalyticsOverview = query({
         .query("users")
         .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
         .collect();
-      
+
       leaves = await ctx.db
         .query("leaveRequests")
         .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
@@ -24,25 +24,29 @@ export const getAnalyticsOverview = query({
       leaves = await ctx.db.query("leaveRequests").collect();
     }
 
-    const totalEmployees = users.filter(u => u.isActive).length;
-    const pendingApprovals = users.filter(u => !u.isApproved && u.isActive).length;
-    
+    // Exclude superadmin from employee count (superadmin is not part of any organization)
+    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+    const filteredUsers = users.filter(u => u.role !== "superadmin");
+
+    const totalEmployees = filteredUsers.filter(u => u.isActive).length;
+    const pendingApprovals = filteredUsers.filter(u => !u.isApproved && u.isActive).length;
+
     const totalLeaves = leaves.length;
     const pendingLeaves = leaves.filter(l => l.status === "pending").length;
     const approvedLeaves = leaves.filter(l => l.status === "approved").length;
-    
+
     // Calculate average approval time (in hours)
-    const approvedWithTime = leaves.filter(l => 
+    const approvedWithTime = leaves.filter(l =>
       l.status === "approved" && l.reviewedAt && l.createdAt
     );
     const avgApprovalTime = approvedWithTime.length > 0
-      ? approvedWithTime.reduce((sum, l) => 
+      ? approvedWithTime.reduce((sum, l) =>
           sum + ((l.reviewedAt! - l.createdAt) / (1000 * 60 * 60)), 0
         ) / approvedWithTime.length
       : 0;
 
-    // Department breakdown
-    const departments = users.reduce((acc, user) => {
+    // Department breakdown (excluding superadmin)
+    const departments = filteredUsers.reduce((acc, user) => {
       const dept = user.department || "Unassigned";
       acc[dept] = (acc[dept] || 0) + 1;
       return acc;
@@ -66,27 +70,29 @@ export const getAnalyticsOverview = query({
 export const getDepartmentStats = query({
   args: { requesterId: v.optional(v.id("users")) },
   handler: async (ctx, { requesterId }) => {
-    // If no requesterId, return empty stats
-    if (!requesterId) {
-      return { departments: [], totalEmployees: 0 };
-    }
-    
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error("Requester not found");
-
     const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
-    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     let users = await ctx.db.query("users").collect();
 
-    // Filter by organization if not superadmin
-    if (!isSuperadmin) {
-      if (!requester.organizationId) {
-        throw new Error("User does not belong to an organization");
+    // Filter by requester's organization if provided
+    if (requesterId) {
+      const requester = await ctx.db.get(requesterId);
+      if (!requester) throw new Error("Requester not found");
+
+      const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
+
+      // If not superadmin, filter by organization
+      if (!isSuperadmin) {
+        if (!requester.organizationId) {
+          throw new Error("User does not belong to an organization");
+        }
+        users = users.filter(u => u.organizationId === requester.organizationId);
       }
-      users = users.filter(u => u.organizationId === requester.organizationId);
     }
-    
+
+    // Exclude superadmin from employee count (superadmin is not part of any organization)
+    users = users.filter(u => u.role !== "superadmin");
+
     const stats = users.reduce((acc, user) => {
       const dept = user.department || "Unassigned";
       if (!acc[dept]) {
@@ -121,27 +127,31 @@ export const getDepartmentStats = query({
 
 // ── Get leave trends (last 6 months) ───────────────────────────────────────
 export const getLeaveTrends = query({
-  args: { requesterId: v.id("users") },
+  args: { requesterId: v.optional(v.id("users")) },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error("Requester not found");
-
     const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
-    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     let leaves = await ctx.db.query("leaveRequests").collect();
-    
-    // Filter by organization if not superadmin
-    if (!isSuperadmin) {
-      if (!requester.organizationId) {
-        throw new Error("User does not belong to an organization");
+
+    // Filter by requester's organization if provided
+    if (requesterId) {
+      const requester = await ctx.db.get(requesterId);
+      if (!requester) throw new Error("Requester not found");
+
+      const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
+
+      // If not superadmin, filter by organization
+      if (!isSuperadmin) {
+        if (!requester.organizationId) {
+          throw new Error("User does not belong to an organization");
+        }
+        leaves = leaves.filter(l => l.organizationId === requester.organizationId);
       }
-      leaves = leaves.filter(l => l.organizationId === requester.organizationId);
     }
-    
+
     const now = Date.now();
     const sixMonthsAgo = now - (6 * 30 * 24 * 60 * 60 * 1000);
-    
+
     const recentLeaves = leaves.filter(l => l.createdAt >= sixMonthsAgo);
 
     return recentLeaves;
@@ -190,25 +200,29 @@ export const getUserAnalytics = query({
 
 // ── Get team calendar (who's on leave) ────────────────────────────────────
 export const getTeamCalendar = query({
-  args: { requesterId: v.id("users") },
+  args: { requesterId: v.optional(v.id("users")) },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error("Requester not found");
-
     const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
-    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     let leaves = await ctx.db
       .query("leaveRequests")
       .filter(q => q.eq(q.field("status"), "approved"))
       .collect();
 
-    // Filter by organization if not superadmin
-    if (!isSuperadmin) {
-      if (!requester.organizationId) {
-        throw new Error("User does not belong to an organization");
+    // Filter by requester's organization if provided
+    if (requesterId) {
+      const requester = await ctx.db.get(requesterId);
+      if (!requester) throw new Error("Requester not found");
+
+      const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
+
+      // If not superadmin, filter by organization
+      if (!isSuperadmin) {
+        if (!requester.organizationId) {
+          throw new Error("User does not belong to an organization");
+        }
+        leaves = leaves.filter(l => l.organizationId === requester.organizationId);
       }
-      leaves = leaves.filter(l => l.organizationId === requester.organizationId);
     }
 
     const now = Date.now();

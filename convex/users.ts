@@ -1,5 +1,37 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+
+// ── Helper: Get user ID from email or userId ────────────────────────────────
+async function getUserIdentityOrEmail(
+  ctx: any,
+  email?: string,
+  userId?: Id<"users">
+): Promise<Id<"users"> | null> {
+  // If userId provided, return it
+  if (userId) return userId;
+  
+  // Try to get identity from Convex auth
+  const identity = await ctx.auth.getUserIdentity();
+  if (identity?.email) {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email.toLowerCase()))
+      .first();
+    return user?._id || null;
+  }
+  
+  // Try email parameter
+  if (email) {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+      .first();
+    return user?._id || null;
+  }
+  
+  return null;
+}
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
