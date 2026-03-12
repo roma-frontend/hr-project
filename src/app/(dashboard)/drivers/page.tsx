@@ -2534,37 +2534,51 @@ export default function DriversPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Driver Calendar Modal */}
+      {/* Driver Calendar Modal - REDESIGNED */}
       <Dialog open={showCalendarModal} onOpenChange={(open) => {
         setShowCalendarModal(open);
         if (!open) setCalendarDriverId(null);
       }}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              {t("driver.driverSchedule", "Driver Schedule")}
-              {calendarDriverId && availableDrivers && (
-                <span className="font-normal text-muted-foreground">
-                  — {availableDrivers.find(d => d._id === calendarDriverId)?.userName}
-                </span>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t("driver.calendar.weekOf", "Week of")} {format(new Date(calendarWeekStart), "MMM dd")} – {format(new Date(calendarWeekEnd), "MMM dd, yyyy")}
-            </p>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          {/* Header with gradient */}
+          <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Driver Schedule</h2>
+                  {calendarDriverId && availableDrivers && (
+                    <p className="text-blue-100 text-sm">
+                      {availableDrivers.find(d => d._id === calendarDriverId)?.userName}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-blue-100 text-sm">Week of</p>
+                <p className="font-semibold">{format(new Date(calendarWeekStart), "MMM dd")} – {format(new Date(calendarWeekEnd), "MMM dd")}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
             {calendarSchedule === undefined ? (
-              <div className="text-center py-8"><ShieldLoader /></div>
+              <div className="flex items-center justify-center py-12">
+                <ShieldLoader />
+              </div>
             ) : calendarSchedule.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>{t("driver.calendar.noSchedule", "No trips scheduled this week")}</p>
-                <p className="text-sm mt-1">{t("driver.calendar.available", "This driver is available for booking")}</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                  <Calendar className="w-10 h-10 text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No trips scheduled</h3>
+                <p className="text-muted-foreground max-w-sm">This driver is available for booking this week</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => {
                   const dayDate = new Date(calendarWeekStart + idx * 24 * 60 * 60 * 1000);
                   const dayStart = dayDate.getTime();
@@ -2572,39 +2586,70 @@ export default function DriversPage() {
                   const daySchedules = calendarSchedule.filter(
                     (s) => s.startTime >= dayStart && s.startTime <= dayEnd
                   );
+                  const isToday = format(dayDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
                   return (
-                    <div key={day} className="flex gap-2 sm:gap-3 items-start">
-                      <div className="w-14 sm:w-20 pt-2 text-xs sm:text-sm font-medium shrink-0">
-                        <div>{day}</div>
-                        <div className="text-xs text-muted-foreground">{format(dayDate, "MMM dd")}</div>
-                      </div>
-                      <div className="flex-1 min-w-0 min-h-[40px] border-l pl-2 sm:pl-3">
-                        {daySchedules.length === 0 ? (
-                          <p className="text-xs text-muted-foreground py-2">{t("driver.calendar.free", "Free")}</p>
-                        ) : (
-                          <div className="space-y-1">
-                            {daySchedules
-                              .sort((a, b) => a.startTime - b.startTime)
-                              .map((s) => (
-                                <button
-                                  key={s._id}
-                                  onClick={() => setSelectedScheduleDetail(s)}
-                                  className="flex flex-wrap items-center gap-1 sm:gap-2 py-1.5 px-1.5 sm:px-2 -ml-1.5 sm:-ml-2 rounded-lg hover:bg-muted/50 transition-colors w-full text-left"
-                                >
-                                  <div className={`w-2 h-2 rounded-full shrink-0 ${
-                                    s.type === "trip" ? "bg-blue-500" : "bg-orange-500"
-                                  }`} />
-                                  <span className="text-xs sm:text-sm font-mono">
-                                    {format(new Date(s.startTime), "HH:mm")}–{format(new Date(s.endTime), "HH:mm")}
-                                  </span>
-                                  <Badge variant="secondary" className="text-xs truncate max-w-[120px] sm:max-w-none">
-                                    {s.type === "trip" ? (s.tripInfo?.from && s.tripInfo?.to ? `${s.tripInfo.from} → ${s.tripInfo.to}` : "Trip") : "Blocked"}
-                                  </Badge>
-                                </button>
-                              ))}
-                          </div>
-                        )}
+                    <div key={day} className={`rounded-xl border transition-all ${isToday ? 'border-blue-300 bg-blue-50/50 shadow-sm' : ''}`}>
+                      <div className="flex items-stretch">
+                        {/* Day column */}
+                        <div className={`w-24 sm:w-28 p-4 flex flex-col items-center justify-center border-r ${isToday ? 'bg-blue-100/50' : 'bg-muted/30'}`}>
+                          <span className={`text-sm font-medium ${isToday ? 'text-blue-700' : ''}`}>{day}</span>
+                          <span className={`text-2xl font-bold mt-1 ${isToday ? 'text-blue-600' : ''}`}>
+                            {format(dayDate, "dd")}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{format(dayDate, "MMM")}</span>
+                        </div>
+
+                        {/* Schedule column */}
+                        <div className="flex-1 p-4 min-h-[80px]">
+                          {daySchedules.length === 0 ? (
+                            <div className="flex items-center justify-center h-full">
+                              <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                Available all day
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {daySchedules
+                                .sort((a, b) => a.startTime - b.startTime)
+                                .map((s) => (
+                                  <button
+                                    key={s._id}
+                                    onClick={() => setSelectedScheduleDetail(s)}
+                                    className={`group flex flex-wrap items-center gap-3 p-3 rounded-lg transition-all w-full text-left ${
+                                      s.type === "trip" 
+                                        ? "bg-blue-50 hover:bg-blue-100 border border-blue-200" 
+                                        : "bg-orange-50 hover:bg-orange-100 border border-orange-200"
+                                    }`}
+                                  >
+                                    <div className={`w-3 h-3 rounded-full shrink-0 ${
+                                      s.type === "trip" ? "bg-blue-500" : "bg-orange-500"
+                                    }`} />
+                                    <div className="flex items-center gap-2 font-mono text-sm font-medium">
+                                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                                      <span>{format(new Date(s.startTime), "HH:mm")}</span>
+                                      <span className="text-muted-foreground">→</span>
+                                      <span>{format(new Date(s.endTime), "HH:mm")}</span>
+                                    </div>
+                                    <Badge variant={s.type === "trip" ? "default" : "secondary"} className="text-xs">
+                                      {s.type === "trip" ? (
+                                        <><Car className="w-3 h-3 mr-1" /> Trip</>
+                                      ) : (
+                                        <><AlertCircle className="w-3 h-3 mr-1" /> Blocked</>
+                                      )}
+                                    </Badge>
+                                    {s.type === "trip" && s.tripInfo?.from && s.tripInfo?.to && (
+                                      <span className="text-xs text-muted-foreground truncate flex-1">
+                                        {s.tripInfo.from} → {s.tripInfo.to}
+                                      </span>
+                                    )}
+                                    <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </button>
+                                ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -2615,88 +2660,241 @@ export default function DriversPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Schedule Detail Modal */}
+      {/* Schedule Detail Modal - REDESIGNED */}
       <Dialog open={!!selectedScheduleDetail} onOpenChange={(open) => { if (!open) setSelectedScheduleDetail(null); }}>
-        <DialogContent className="max-w-md p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-              {selectedScheduleDetail?.type === "trip" ? (
-                <><Car className="w-5 h-5 text-blue-500 shrink-0" /> {t("driver.tripDetails", "Trip Details")}</>
-              ) : (
-                <><AlertCircle className="w-5 h-5 text-orange-500 shrink-0" /> {selectedScheduleDetail?.type === "blocked" ? t("driver.blockedSlot", "Blocked Slot") : t("driver.maintenance", "Maintenance")}</>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedScheduleDetail && (
-            <div className="space-y-4">
-              {/* Time */}
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>
-                  {format(new Date(selectedScheduleDetail.startTime), "MMM d, h:mm a")} – {format(new Date(selectedScheduleDetail.endTime), "h:mm a")}
-                </span>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-2">
-                <Badge variant={selectedScheduleDetail.status === "scheduled" ? "default" : selectedScheduleDetail.status === "completed" ? "outline" : "secondary"}>
-                  {selectedScheduleDetail.status}
-                </Badge>
-                <Badge variant="secondary">{selectedScheduleDetail.type}</Badge>
-              </div>
-
-              {/* Booked by */}
-              {selectedScheduleDetail.userName && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <span>{t("driver.bookedBy", "Booked by")} {selectedScheduleDetail.userName}</span>
-                </div>
-              )}
-
-              {/* Trip info */}
-              {selectedScheduleDetail.tripInfo && (
-                <div className="space-y-3">
-                  {/* Map */}
-                  {(selectedScheduleDetail.tripInfo.pickupCoords || selectedScheduleDetail.tripInfo.dropoffCoords) ? (
-                    <div className="h-[180px] sm:h-[250px]">
-                      <DriverMap
-                        pickupLocation={selectedScheduleDetail.tripInfo.from}
-                        dropoffLocation={selectedScheduleDetail.tripInfo.to}
-                        pickupCoords={selectedScheduleDetail.tripInfo.pickupCoords}
-                        dropoffCoords={selectedScheduleDetail.tripInfo.dropoffCoords}
-                        height="100%"
-                        zoom={13}
-                      />
-                    </div>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          {/* Header */}
+          <div className={`relative p-6 shrink-0 ${
+            selectedScheduleDetail?.type === "trip" 
+              ? "bg-gradient-to-r from-blue-600 to-indigo-600" 
+              : "bg-gradient-to-r from-orange-500 to-red-500"
+          } text-white`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
+                  {selectedScheduleDetail?.type === "trip" ? (
+                    <Car className="w-6 h-6" />
                   ) : (
-                    <div className="rounded-lg border p-3 space-y-2 bg-muted/30">
-                      <div className="flex gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <div>
-                          <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.from} → {selectedScheduleDetail.tripInfo.to}</p>
-                          <p className="text-muted-foreground text-xs">{selectedScheduleDetail.tripInfo.purpose}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users className="w-4 h-4 text-muted-foreground" />
-                        <span>{selectedScheduleDetail.tripInfo.passengerCount} {t("driver.passengers", "passengers")}</span>
-                      </div>
-                      {selectedScheduleDetail.tripInfo.notes && (
-                        <p className="text-sm text-muted-foreground italic">{selectedScheduleDetail.tripInfo.notes}</p>
-                      )}
-                    </div>
+                    <AlertCircle className="w-6 h-6" />
                   )}
                 </div>
-              )}
-
-              {/* Blocked reason */}
-              {selectedScheduleDetail.reason && (
-                <div className="text-sm">
-                  <span className="font-medium">{t("driver.reason", "Reason")}:</span> {selectedScheduleDetail.reason}
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    {selectedScheduleDetail?.type === "trip" ? "Trip Details" : "Blocked Time Slot"}
+                  </h2>
+                  <p className="text-white/80 text-sm">
+                    {format(new Date(selectedScheduleDetail?.startTime || Date.now()), "EEEE, MMMM dd, yyyy")}
+                  </p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                  {selectedScheduleDetail?.type}
+                </Badge>
+                <Badge variant={selectedScheduleDetail?.status === "completed" ? "secondary" : "default"} className="bg-white/20 text-white border-0">
+                  {selectedScheduleDetail?.status}
+                </Badge>
+              </div>
             </div>
-          )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedScheduleDetail && (
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left column - Info */}
+                  <div className="space-y-4">
+                    {/* Time */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-blue-500" />
+                          Schedule Time
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">Start</p>
+                            <p className="text-lg font-bold font-mono">
+                              {format(new Date(selectedScheduleDetail.startTime), "HH:mm")}
+                            </p>
+                          </div>
+                          <div className="flex-1 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+                              <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                              <div className="flex-1 h-0.5 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground mb-1">End</p>
+                            <p className="text-lg font-bold font-mono">
+                              {format(new Date(selectedScheduleDetail.endTime), "HH:mm")}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center mt-2">
+                          Duration: {Math.round((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) / 3600000)}h {Math.round(((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) % 3600000) / 60000)}m
+                        </p>
+                      </CardContent>
+                    </Card>
+
+                    {/* Passenger Info */}
+                    {selectedScheduleDetail.userName && (
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Users className="w-4 h-4 text-blue-500" />
+                            Passenger
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-12 h-12">
+                              <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
+                                {selectedScheduleDetail.userName.split(" ").map(n => n[0]).join("").toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="font-semibold">{selectedScheduleDetail.userName}</p>
+                              {selectedScheduleDetail.userPhone && (
+                                <p className="text-sm text-muted-foreground">{selectedScheduleDetail.userPhone}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Trip Details */}
+                    {selectedScheduleDetail.tripInfo && (
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-blue-500" />
+                            Route Information
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-muted-foreground mb-0.5">Pickup</p>
+                              <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.from}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-muted-foreground mb-0.5">Dropoff</p>
+                              <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.to}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm pt-2 border-t">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-4 h-4 text-muted-foreground" />
+                              <span>{selectedScheduleDetail.tripInfo.passengerCount} passengers</span>
+                            </div>
+                            {selectedScheduleDetail.tripInfo.distanceKm && (
+                              <div className="flex items-center gap-1.5">
+                                <Navigation2 className="w-4 h-4 text-muted-foreground" />
+                                <span>{selectedScheduleDetail.tripInfo.distanceKm} km</span>
+                              </div>
+                            )}
+                            {selectedScheduleDetail.tripInfo.durationMinutes && (
+                              <div className="flex items-center gap-1.5">
+                                <Timer className="w-4 h-4 text-muted-foreground" />
+                                <span>{selectedScheduleDetail.tripInfo.durationMinutes} min</span>
+                              </div>
+                            )}
+                          </div>
+                          {selectedScheduleDetail.tripInfo.purpose && (
+                            <div className="p-3 bg-muted/50 rounded-lg">
+                              <p className="text-xs text-muted-foreground mb-1">Purpose</p>
+                              <p className="text-sm">{selectedScheduleDetail.tripInfo.purpose}</p>
+                            </div>
+                          )}
+                          {selectedScheduleDetail.tripInfo.notes && (
+                            <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                              <p className="text-xs text-amber-700 font-medium mb-1">📝 Notes</p>
+                              <p className="text-sm text-amber-900">{selectedScheduleDetail.tripInfo.notes}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Blocked reason */}
+                    {selectedScheduleDetail.reason && (
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                            <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-orange-900">Reason for blocking</p>
+                              <p className="text-sm text-orange-700 mt-1">{selectedScheduleDetail.reason}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+
+                  {/* Right column - Map */}
+                  <div className="space-y-4">
+                    {(selectedScheduleDetail.tripInfo?.pickupCoords || selectedScheduleDetail.tripInfo?.dropoffCoords) ? (
+                      <Card className="h-[400px] md:h-full">
+                        <CardContent className="p-0 h-full">
+                          <DriverMap
+                            pickupLocation={selectedScheduleDetail.tripInfo.pickupLocation}
+                            dropoffLocation={selectedScheduleDetail.tripInfo.dropoffLocation}
+                            pickupCoords={selectedScheduleDetail.tripInfo.pickupCoords}
+                            dropoffCoords={selectedScheduleDetail.tripInfo.dropoffCoords}
+                            height="100%"
+                            zoom={12}
+                          />
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card className="h-[300px] flex items-center justify-center">
+                        <CardContent className="flex flex-col items-center justify-center py-12">
+                          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                            <MapPin className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                          <p className="text-muted-foreground text-sm">No map available</p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Actions */}
+                    {selectedScheduleDetail.type === "trip" && selectedScheduleDetail.status === "scheduled" && (
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base">Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <PhoneCall className="w-3.5 h-3.5" />
+                            Call Passenger
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            Send Message
+                          </Button>
+                          <Button size="sm" variant="outline" className="gap-1">
+                            <Navigation className="w-3.5 h-3.5" />
+                            Navigate
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
