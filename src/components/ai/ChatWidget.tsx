@@ -58,6 +58,8 @@ declare global {
 interface BookingState {
   status: 'pending' | 'booked' | 'conflict' | 'loading';
   result?: string;
+  conflicts?: any[];  // Массив конфликтов из Conflict Service
+  alternativeDates?: string[];  // Альтернативные даты от AI
 }
 
 interface Message {
@@ -429,9 +431,44 @@ export function ChatWidget() {
       let body: Record<string, unknown> = {};
 
       if (action.type === 'BOOK_LEAVE') {
+        // ═══════════════════════════════════════════════════════════════
+        // CONFLICT CHECK — Перед созданием запроса проверяем конфликты
+        // ═══════════════════════════════════════════════════════════════
+        if (user.organizationId) {
+          const conflictCheckRes = await fetch(
+            `/api/chat/conflict-check?userId=${user.id}&organizationId=${user.organizationId}&requestType=leave&startDate=${new Date(action.startDate).getTime()}&endDate=${new Date(action.endDate).getTime()}`
+          );
+          
+          if (conflictCheckRes.ok) {
+            const conflictData = await conflictCheckRes.json();
+            
+            // Если есть критические конфликты — показываем предупреждение
+            if (conflictData.hasCriticalConflicts) {
+              setMessages(prev => prev.map(m =>
+                m.id === messageId
+                  ? {
+                      ...m,
+                      bookingStates: {
+                        ...m.bookingStates,
+                        [actionIndex]: {
+                          status: 'conflict',
+                          result: conflictData.aiMessage || 'Обнаружены критические конфликты. Пожалуйста, выберите другие даты или обсудите с руководителем.',
+                          conflicts: conflictData.conflicts,
+                          alternativeDates: conflictData.alternativeDates || [],
+                        }
+                      }
+                    }
+                  : m
+              ));
+              return; // Не продолжаем, если критический конфликт
+            }
+          }
+        }
+        
         url = '/api/chat/book-leave';
         body = {
           userId: user.id,
+          organizationId: user.organizationId, // ← Добавили organizationId
           type: action.leaveType,
           startDate: action.startDate,
           endDate: action.endDate,
@@ -463,14 +500,48 @@ export function ChatWidget() {
         url = '/api/chat/book-driver';
         console.log('[ChatWidget] BOOK_DRIVER action:', action);
         console.log('[ChatWidget] User:', { id: user.id, organizationId: user.organizationId });
+        
         const startTime = new Date(action.startTime).getTime();
         const endTime = new Date(action.endTime).getTime();
+        
         if (!user.organizationId) {
           throw new Error('Organization not selected. Please select an organization first.');
         }
         if (isNaN(startTime) || isNaN(endTime)) {
           throw new Error('Invalid date/time for driver booking.');
         }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // CONFLICT CHECK — Проверяем доступность водителя
+        // ═══════════════════════════════════════════════════════════════
+        const conflictCheckRes = await fetch(
+          `/api/chat/conflict-check?userId=${user.id}&organizationId=${user.organizationId}&requestType=driver&startDate=${startTime}&endDate=${endTime}`
+        );
+        
+        if (conflictCheckRes.ok) {
+          const conflictData = await conflictCheckRes.json();
+          
+          // Если водитель занят — показываем предупреждение
+          if (conflictData.hasCriticalConflicts) {
+            setMessages(prev => prev.map(m =>
+              m.id === messageId
+                ? { 
+                    ...m, 
+                    bookingStates: { 
+                      ...m.bookingStates, 
+                      [actionIndex]: { 
+                        status: 'conflict', 
+                        result: conflictData.aiMessage || 'Водитель уже забронирован на это время. Пожалуйста, выберите другое время или другого водителя.',
+                        conflicts: conflictData.conflicts,
+                      } 
+                    } 
+                  }
+                : m
+            ));
+            return; // Не продолжаем, если критический конфликт
+          }
+        }
+        
         body = {
           userId: user.id,
           organizationId: user.organizationId,
@@ -527,33 +598,61 @@ export function ChatWidget() {
   };
 
   // Smart navigation - detect navigation commands
+  // IMPORTANT: Only navigate for VIEW requests, not for CREATE/BOOK requests!
   const handleNavigation = useCallback((text: string) => {
     const lowerText = text.toLowerCase();
 
+    // 🔴 Ключевые слова для СОЗДАНИЯ запросов — НЕ перенаправлять!
+    const createKeywords = [
+      'хочу', 'book', 'request', 'создать', 'забронировать', 'организуй',
+      'взять отпуск', 'go on leave', 'vacation', 'с \\d', 'from \\d', 'до \\d', 'by \\d'
+    ];
+    
+    // Проверяем, не хочет ли пользователь создать что-то
+    const isCreateRequest = createKeywords.some(keyword => {
+      // Проверяем как точное совпадение, так и regex
+      if (keyword.includes('\\d')) {
+        // Это regex паттерн для дат
+        const regex = new RegExp(keyword, 'i');
+        return regex.test(lowerText);
+      }
+      return lowerText.includes(keyword);
+    });
+    
+    if (isCreateRequest) {
+      // НЕ перенаправлять, отправить AI для обработки
+      console.log('🚫 [handleNavigation] Create request detected, skipping navigation:', text);
+      return false;
+    }
+
     const navigationMap: { [key: string]: string } = {
-      'календарь': '/calendar',
-      'calendar': '/calendar',
       'покажи календарь': '/calendar',
       'открой календарь': '/calendar',
       'show calendar': '/calendar',
+      'view calendar': '/calendar',
+      'календарь': '/calendar',
+      'calendar': '/calendar',
 
-      'отпуск': '/leaves',
-      'отпуска': '/leaves',
-      'leaves': '/leaves',
-      'мои отпуска': '/leaves',
+      'покажи отпуска': '/leaves',
+      'покажи мои отпуска': '/leaves',
+      'view my leaves': '/leaves',
+      'show leaves': '/leaves',
       'my leaves': '/leaves',
-      'запросы на отпуск': '/leaves',
-
+      'view leaves': '/leaves',
+      
+      'покажи сотрудников': '/employees',
+      'show employees': '/employees',
+      'view team': '/employees',
       'сотрудники': '/employees',
       'employees': '/employees',
       'команда': '/employees',
       'team': '/employees',
-      'покажи сотрудников': '/employees',
 
+      'покажи задачи': '/tasks',
+      'show tasks': '/tasks',
+      'my tasks': '/tasks',
       'задачи': '/tasks',
       'tasks': '/tasks',
-      'мои задачи': '/tasks',
-      'my tasks': '/tasks',
 
       'посещаемость': '/attendance',
       'attendance': '/attendance',
@@ -568,24 +667,11 @@ export function ChatWidget() {
       'настройки': '/settings',
       'settings': '/settings',
 
-      'безопасность': '/security',
-      'security': '/security',
-      'покажи безопасность': '/security',
-      'show security': '/security',
-      'открой безопасность': '/security',
-      'open security': '/security',
-
       'дашборд': '/dashboard',
       'dashboard': '/dashboard',
       'главная': '/dashboard',
       'home': '/dashboard',
-      
-      'организации': '/organizations',
-      'organizations': '/organizations',
-      'все организации': '/organizations',
-      'all organizations': '/organizations',
-      'покажи организации': '/organizations',
-      
+
       'профиль': '/profile',
       'profile': '/profile',
       'мой профиль': '/profile',
@@ -593,10 +679,18 @@ export function ChatWidget() {
     };
 
     for (const [keyword, path] of Object.entries(navigationMap)) {
-      if (lowerText.includes(keyword)) {
-        router.push(path);
-        setIsOpen(false);
-        return true;
+      // Точное совпадение или "покажи/открой X"
+      if (lowerText === keyword || 
+          lowerText.startsWith('покажи ') || 
+          lowerText.startsWith('открой ') ||
+          lowerText.startsWith('show ') ||
+          lowerText.startsWith('view ') ||
+          lowerText.startsWith('open ')) {
+        if (keyword.includes(lowerText.split(' ')[1] || '')) {
+          router.push(path);
+          setIsOpen(false);
+          return true;
+        }
       }
     }
 
@@ -625,6 +719,12 @@ export function ChatWidget() {
     setError(null);
 
     try {
+      console.log('🤖 [ChatWidget] Sending message to AI:', { 
+        userId: user?.id, 
+        organizationId: user?.organizationId,
+        message: input 
+      });
+      
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -662,11 +762,17 @@ export function ChatWidget() {
       const { cleanContent, actions } = parseActions(fullContent);
       const suggestions = getFollowUpSuggestions(cleanContent, user?.role || 'employee', t);
 
+      // 🔍 DEBUG: Логируем полный ответ AI
+      console.log('🤖 [AI Response] Full content:', fullContent);
+      console.log('🤖 [AI Response] Clean content:', cleanContent);
+      console.log('🤖 [AI Response] Actions:', actions);
+
       // Check for navigation tags in response
       const navMatch = fullContent.match(/<NAVIGATE>(.*?)<\/NAVIGATE>/);
       if (navMatch && navMatch[1]) {
         const route = navMatch[1];
-        console.log('🎯 AI requested navigation to:', route);
+        console.log('🎯 [AI Navigation] Route:', route);
+        console.log('🎯 [AI Navigation] Full match:', navMatch[0]);
         // Navigate after a short delay to show the message
         setTimeout(() => {
           router.push(route);
@@ -886,7 +992,48 @@ export function ChatWidget() {
                                 {state.status === 'conflict' && (
                                   <div className="flex items-start gap-2 p-2 bg-red-500/10 rounded-lg border border-red-500/20">
                                     <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs text-red-600 dark:text-red-400">{state.result}</p>
+                                    <div className="flex-1">
+                                      <p className="text-xs text-red-600 dark:text-red-400 whitespace-pre-line">{state.result}</p>
+                                      
+                                      {state.conflicts && state.conflicts.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {state.conflicts.map((conflict: any, idx: number) => (
+                                            <div key={idx} className="text-xs text-red-700 dark:text-red-300 bg-red-500/5 p-2 rounded border border-red-500/10">
+                                              <p className="font-medium">{conflict.title}</p>
+                                              <p className="mt-0.5 text-red-600 dark:text-red-400">{conflict.message}</p>
+                                              <p className="mt-1 text-red-500 dark:text-red-300">💡 {conflict.suggestion}</p>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      
+                                      {/* Кнопки альтернативных дат */}
+                                      {state.alternativeDates && state.alternativeDates.length > 0 && (
+                                        <div className="mt-3">
+                                          <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">✅ Доступные даты без конфликтов:</p>
+                                          <div className="flex flex-wrap gap-1.5">
+                                            {state.alternativeDates.map((dateRange, idx) => (
+                                              <button
+                                                key={idx}
+                                                onClick={() => {
+                                                  // Вставляем даты в input
+                                                  setInput(`Хочу отпуск ${dateRange}`);
+                                                  // Обновляем состояние — убираем конфликт
+                                                  setMessages(prev => prev.map(m =>
+                                                    m.id === messageId
+                                                      ? { ...m, bookingStates: { ...m.bookingStates, [actionIndex]: { status: 'pending' } } }
+                                                      : m
+                                                  ));
+                                                }}
+                                                className="px-3 py-1.5 rounded-full border border-green-500/30 bg-green-500/10 hover:bg-green-500/20 text-xs text-green-700 dark:text-green-400 font-medium transition-all"
+                                              >
+                                                📅 {dateRange}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 )}
                               </motion.div>

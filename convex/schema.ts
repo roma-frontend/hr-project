@@ -143,6 +143,8 @@ export default defineSchema({
     faceIdBlockedAt: v.optional(v.number()),
     faceIdFailedAttempts: v.optional(v.number()),
     faceIdLastAttempt: v.optional(v.number()),
+    // Birthday
+    dateOfBirth: v.optional(v.string()), // ISO date format: "YYYY-MM-DD"
     // Account Suspension (for security/suspicious activity)
     isSuspended: v.optional(v.boolean()),
     suspendedUntil: v.optional(v.number()),
@@ -1350,4 +1352,19 @@ export default defineSchema({
     .index("by_schedule", ["scheduleId"])
     .index("by_passenger", ["passengerId"])
     .index("by_driver", ["driverId"]),
+
+  // ── SCHEDULED JOBS ────────────────────────────────────────────────────────
+  // Track scheduled jobs (birthdays, reminders, etc.)
+  scheduledJobs: defineTable({
+    organizationId: v.id("organizations"),
+    functionName: v.string(),
+    schedule: v.string(), // Cron format
+    isActive: v.boolean(),
+    lastRun: v.optional(v.number()),
+    nextRun: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_org", ["organizationId"])
+    .index("by_org_active", ["organizationId", "isActive"])
+    .index("by_function", ["functionName"]),
 });

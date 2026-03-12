@@ -1,0 +1,209 @@
+/**
+ * Персональная статистика отпусков + Burnout Prevention
+ */
+
+"use client";
+
+import { useQuery } from "convex/react";
+import { useTranslation } from "react-i18next";
+import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
+import { Calendar, AlertTriangle, CheckCircle, TrendingUp, Award } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+
+interface LeaveStatsProps {
+  userId: Id<"users">;
+}
+
+export default function LeaveStats({ userId }: LeaveStatsProps) {
+  const { t } = useTranslation();
+  const analytics = useQuery(api.analytics.getUserAnalytics, { userId });
+  const user = useQuery(api.users.getUserById, { userId });
+
+  if (!analytics || !user) {
+    return <div className="text-center p-8">Загрузка...</div>;
+  }
+
+  const { balances, totalDaysTaken, userLeaves } = analytics;
+
+  // ═══════════════════════════════════════════════════════════════
+  // РАСЧЁТ: Использовано дней за год
+  // ═══════════════════════════════════════════════════════════════
+  const currentYear = new Date().getFullYear();
+  const leavesThisYear = userLeaves.filter((leave: any) => {
+    const leaveYear = new Date(leave.startDate).getFullYear();
+    return leaveYear === currentYear && leave.status === "approved";
+  });
+
+  const totalDaysThisYear = leavesThisYear.reduce((sum: number, leave: any) => 
+    sum + (leave.days || 0), 0
+  );
+
+  const totalBalance = balances.paid + balances.sick + balances.family;
+  const usagePercentage = ((totalDaysThisYear / 20) * 100).toFixed(0); // 20 дней стандартный отпуск
+
+  // ═══════════════════════════════════════════════════════════════
+  // BURNOUT PREVENTION: Проверка, когда был последний отпуск
+  // ═══════════════════════════════════════════════════════════════
+  const approvedLeaves = userLeaves
+    .filter((leave: any) => leave.status === "approved")
+    .sort((a: any, b: any) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+
+  const lastLeave = approvedLeaves[0];
+  const lastLeaveDate = lastLeave ? new Date(lastLeave.endDate) : null;
+  
+  const daysSinceLastLeave = lastLeaveDate 
+    ? Math.floor((Date.now() - lastLeaveDate.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const burnoutRisk = daysSinceLastLeave !== null && daysSinceLastLeave > 180; // 6 месяцев
+  const burnoutRiskLevel = daysSinceLastLeave !== null 
+    ? daysSinceLastLeave > 240 ? 'critical' // 8 месяцев
+    : daysSinceLastLeave > 180 ? 'high'     // 6 месяцев
+    : daysSinceLastLeave > 120 ? 'medium'   // 4 месяца
+    : 'low'
+    : 'unknown';
+
+  // ═══════════════════════════════════════════════════════════════
+  // СЛЕДУЮЩИЙ возможный отпуск (рекомендация)
+  // ═══════════════════════════════════════════════════════════════
+  const nextAvailableDate = lastLeaveDate 
+    ? new Date(lastLeaveDate.getTime() + (180 * 24 * 60 * 60 * 1000)) // +6 месяцев
+    : new Date();
+
+  return (
+    <div className="space-y-6">
+      {/* ═══════════════════════════════════════════════════════════════
+          BURNOUT PREVENTION CARD
+          ═══════════════════════════════════════════════════════════════ */}
+      <Card className={`border-2 ${
+        burnoutRiskLevel === 'critical' ? 'border-red-500 bg-red-500/5' :
+        burnoutRiskLevel === 'high' ? 'border-orange-500 bg-orange-500/5' :
+        burnoutRiskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/5' :
+        'border-green-500 bg-green-500/5'
+      }`}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {burnoutRisk ? (
+              <AlertTriangle className="w-5 h-5 text-orange-500" />
+            ) : (
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            )}
+            🏖️ Burnout Prevention
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {burnoutRisk ? (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                ⚠️ Вы не были в отпуске уже {daysSinceLastLeave} дней
+              </p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">
+                Последний отпуск был: {lastLeaveDate.toLocaleDateString('ru-RU')}
+              </p>
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive">
+                  Риск выгорания: {burnoutRiskLevel === 'critical' ? 'ВЫСОКИЙ' : burnoutRiskLevel === 'high' ? 'СРЕДНИЙ' : 'НИЗКИЙ'}
+                </Badge>
+                <Badge variant="secondary">
+                  Рекомендуем отпуск до: {nextAvailableDate.toLocaleDateString('ru-RU')}
+                </Badge>
+              </div>
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                💡 Исследования показывают, что регулярные отпуска повышают продуктивность на 20-30%
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                ✅ Всё хорошо! Вы регулярно отдыхаете
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                Последний отпуск: {lastLeaveDate ? lastLeaveDate.toLocaleDateString('ru-RU') : 'Не было'}
+                {daysSinceLastLeave !== null && ` (${daysSinceLastLeave} дней назад)`}
+              </p>
+              <Badge variant="success">
+                Риск выгорания: НИЗКИЙ
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          ПЕРСОНАЛЬНАЯ СТАТИСТИКА
+          ═══════════════════════════════════════════════════════════════ */}
+      <Card className="border-[var(--border)]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+            📊 Персональная статистика ({currentYear})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Прогресс использования отпуска */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Использовано дней отпуска</span>
+              <span className="text-sm font-bold">{totalDaysThisYear} / 20</span>
+            </div>
+            <Progress value={parseInt(usagePercentage)} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-1">
+              {usagePercentage}% от годового лимита
+            </p>
+          </div>
+
+          {/* Балансы */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+              <p className="text-xs text-muted-foreground">Оплачиваемый</p>
+              <p className="text-2xl font-bold text-blue-600">{balances.paid}</p>
+              <p className="text-xs text-muted-foreground">дней</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+              <p className="text-xs text-muted-foreground">Больничный</p>
+              <p className="text-2xl font-bold text-red-600">{balances.sick}</p>
+              <p className="text-xs text-muted-foreground">дней</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+              <p className="text-xs text-muted-foreground">Семейный</p>
+              <p className="text-2xl font-bold text-green-600">{balances.family}</p>
+              <p className="text-xs text-muted-foreground">дней</p>
+            </div>
+          </div>
+
+          {/* Общий баланс */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Всего доступно</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  {totalBalance} дней
+                </p>
+              </div>
+              <Award className="w-12 h-12 text-purple-500 opacity-50" />
+            </div>
+          </div>
+
+          {/* Статистика */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-xs text-muted-foreground">Всего отпусков</p>
+              <p className="text-lg font-bold">{leavesThisYear.length}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-xs text-muted-foreground">Средняя длительность</p>
+              <p className="text-lg font-bold">
+                {leavesThisYear.length > 0 
+                  ? (totalDaysThisYear / leavesThisYear.length).toFixed(1) 
+                  : 0} дн.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

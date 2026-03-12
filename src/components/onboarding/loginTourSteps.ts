@@ -40,14 +40,14 @@ export const loginTourSteps: TourStep[] = [
     target: "#join-team-link",
     title: "👥 Присоединиться к команде",
     description: "Уже есть организация? Запросите доступ у администратора",
-    placement: "top",
+    placement: "left",
     highlight: true,
   },
   {
     target: "#create-org-link",
     title: "🏢 Создать организацию",
     description: "Создайте свою организацию и пригласите сотрудников",
-    placement: "top",
+    placement: "right",
     highlight: true,
   },
   {

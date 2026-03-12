@@ -203,10 +203,6 @@ export function LeavesClient() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Unread Requests Banner */}
-      {isAdmin && unreadCount && unreadCount > 0 && (
-        <UnreadRequestsBanner userId={user?.id as Id<"users"> | null} />
-      )}
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}

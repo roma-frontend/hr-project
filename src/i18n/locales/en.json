@@ -1961,7 +1961,39 @@
     "warnings": "Warnings",
     "noConflicts": "No Conflicts Detected",
     "balanced": "Leave schedules are well balanced",
-    "employeesOut": "Employees out:"
+    "employeesOut": "Employees out:",
+    "aiAssistant": {
+      "conflictDetected": "⚠️ Conflict Detected",
+      "criticalConflict": "🚨 Critical Conflict",
+      "warning": "⚠️ Warning",
+      "noConflicts": "✅ No Conflicts Detected",
+      "leaveEventConflict": "Leave conflicts with event",
+      "departmentOverlap": "Too many department employees on leave",
+      "driverScheduleConflict": "Driver already booked",
+      "taskDeadlineConflict": "Task deadline during leave",
+      "taskAssignmentConflict": "Assignee is on leave",
+      "holidayConflict": "Event on holiday",
+      "blackoutPeriodConflict": "Request during blackout period",
+      "suggestion": "Suggestion",
+      "canProceed": "Can proceed",
+      "requiresAttention": "Requires attention",
+      "alternativeDates": "Alternative dates",
+      "discussWithManager": "Discuss with manager"
+    },
+    "types": {
+      "leave_event": "Event Conflict",
+      "leave_department": "Department Overload",
+      "driver_schedule": "Driver Conflict",
+      "task_deadline": "Deadline Conflict",
+      "task_assignment": "Assignment Conflict",
+      "holiday_conflict": "Holiday Conflict",
+      "blackout_period": "Blackout Period"
+    },
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
+    }
   },
   "costAnalysis": {
     "title": "Cost Analysis",
@@ -3783,11 +3815,5 @@
     "approveDespiteConflict": "Approve Despite Conflict",
     "conflictType.required_employee": "Required Employee",
     "conflictType.required_department": "Required Department"
-  },
-  "common": {
-    "to": "to",
-    "approved": "Approved",
-    "cancel": "Cancel",
-    "save": "Save"
   }
 }

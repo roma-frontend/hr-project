@@ -42,10 +42,12 @@ export async function GET() {
     // Build context for AI
     const context = {
       user: {
+        id: userId,  // ← Добавили userId
         name: session.name,
         email: session.email,
         role: session.role,
         department: session.department,
+        organizationId: session.organizationId,  // ← Добавили organizationId
       },
       leaveBalances: {
         paid: analytics.balances.paid,

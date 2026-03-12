@@ -9,23 +9,24 @@ export async function loadFaceApiModels() {
     return;
   }
 
-  const MODEL_URL = '/models'; // We'll place model files in public/models
-  
+  // Use local models from public/models folder
+  const MODEL_URL = '/models';
+
   console.log('📦 Loading Face-API models from:', MODEL_URL);
-  
+
   try {
     console.log('⏳ Loading SSD MobileNet v1...');
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
     console.log('✅ SSD MobileNet v1 loaded');
-    
+
     console.log('⏳ Loading Face Landmark 68...');
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     console.log('✅ Face Landmark 68 loaded');
-    
+
     console.log('⏳ Loading Face Recognition...');
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
     console.log('✅ Face Recognition loaded');
-    
+
     modelsLoaded = true;
     console.log('✅ All Face-API models loaded successfully');
   } catch (error) {

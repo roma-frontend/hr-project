@@ -168,16 +168,28 @@ export function useAuthSync() {
           // Check if we're in maintenance mode
           const params = new URLSearchParams(window.location.search);
           const isMaintenance = params.get('maintenance') === 'true';
-          
+
           // Skip redirect if in maintenance mode or already on dashboard/login
           if (isMaintenance) {
             console.log("[useAuthSync] Maintenance mode detected - not redirecting");
             return;
           }
-          
-          // Only redirect if we're on auth pages (login/register), not if already on a dashboard page
+
+          // Public routes that should NOT redirect
+          const publicRoutes = ['/', '/contact', '/privacy', '/terms', '/test-i18n'];
+          const isPublicRoute = publicRoutes.some(route => 
+            window.location.pathname === route || window.location.pathname.startsWith(`${route}/`)
+          );
+
+          // Only redirect if we're on auth pages (login/register), not if already on a dashboard page or public page
           const path = window.location.pathname;
           const isAuthPage = path === '/login' || path === '/register' || path.startsWith('/register-org');
+          
+          if (isPublicRoute) {
+            console.log("[useAuthSync] Public route - not redirecting:", path);
+            return;
+          }
+          
           const isDashboardPage = path === '/dashboard' || path.startsWith('/superadmin') || path.startsWith('/admin') || path.startsWith('/employees') || path.startsWith('/tasks') || path.startsWith('/calendar') || path.startsWith('/leaves') || path.startsWith('/attendance') || path.startsWith('/settings') || path.startsWith('/chat') || path.startsWith('/analytics') || path.startsWith('/reports') || path.startsWith('/join-requests') || path.startsWith('/org-requests') || path.startsWith('/approvals') || path.startsWith('/profile') || path.startsWith('/ai-site-editor');
           if (!isDashboardPage && !isAuthPage) {
             console.log("[useAuthSync] Redirecting from", path, "to dashboard");

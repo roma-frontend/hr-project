@@ -38,6 +38,9 @@ const PROTECTED_ROUTES = [
 // Auth routes
 const AUTH_ROUTES = ['/login', '/register']
 
+// Public routes that should NOT redirect authenticated users
+const PUBLIC_ROUTES = ['/', '/contact', '/privacy', '/terms', '/test-i18n']
+
 // ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════
@@ -199,25 +202,34 @@ export async function middleware(request: NextRequest) {
 
   // 7. Auth logic
   const token = request.cookies.get('hr-auth-token')?.value;
-  const nextAuthToken = request.cookies.get('next-auth.session-token')?.value || 
+  const nextAuthToken = request.cookies.get('next-auth.session-token')?.value ||
                         request.cookies.get('__Secure-next-auth.session-token')?.value;
-  
+
   const isAuthRoute = AUTH_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
   const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
 
-  // Если пользователь уже авторизован (через Google или обычный вход)
+  console.log(`[Middleware] Path: ${pathname}, isAuth: ${isAuthRoute}, isProtected: ${isProtectedRoute}, isPublic: ${isPublicRoute}, hasToken: ${!!token || !!nextAuthToken}`);
+
+  // Если пользователь уже авторизован и заходит на auth routes (/login, /register)
   if (isAuthRoute && (token || nextAuthToken)) {
     // Получаем URL откуда пришли
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
-    
+
     // Если есть параметр from и это защищенный маршрут, редиректим туда
     if (from && from.startsWith('/')) {
       return NextResponse.redirect(new URL(from, request.url));
     }
-    
+
     // Иначе редиректим на dashboard
     return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
+  // Если пользователь авторизован и заходит на публичную страницу — пропускаем (без редиректа)
+  if (isPublicRoute && (token || nextAuthToken)) {
+    console.log(`[Middleware] Allowing public route: ${pathname}`);
+    return NextResponse.next();
   }
 
   // Блокируем доступ к защищенным маршрутам без авторизации

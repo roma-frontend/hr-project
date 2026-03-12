@@ -26,6 +26,7 @@ import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, type LeaveType, type LeaveStatus 
 import dynamic from "next/dynamic";
 import { PlanGate } from "@/components/subscription/PlanGate";
 import { DashboardBanners } from "@/components/dashboard/DashboardBanners";
+import LeaveStats from "@/components/dashboard/LeaveStats";
 
 // Lazy load admin components
 const HolidayCalendarSync = dynamic(() => import("@/components/admin/HolidayCalendarSync"), { ssr: false });
@@ -407,7 +408,16 @@ export default function DashboardClient() {
           </Card>
         </motion.div>
 
-        {/* Admin Widgets - Conditionally rendered */}
+        {/* ═══════════════════════════════════════════════════════════════
+          PERSONAL LEAVE STATS — For all users
+          ═══════════════════════════════════════════════════════════════ */}
+      {user?.id && (
+        <motion.div variants={itemVariants} className="lg:col-span-1">
+          <LeaveStats userId={user.id as Id<"users">} />
+        </motion.div>
+      )}
+
+      {/* Admin Widgets - Conditionally rendered */}
         {organization?.plan === "enterprise" && (
           <>
             <motion.div variants={itemVariants} className="lg:col-span-1">

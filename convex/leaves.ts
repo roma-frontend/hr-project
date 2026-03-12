@@ -216,6 +216,34 @@ export const createLeave = mutation({
       )
       .collect();
 
+    // ═══════════════════════════════════════════════════════════════
+    // АВТО-ОТВЕТ СОТРУДНИКУ — Заявка получена
+    // ═══════════════════════════════════════════════════════════════
+    const expectedResponseDate = new Date();
+    expectedResponseDate.setDate(expectedResponseDate.getDate() + 1); // 24 часа
+    
+    const autoReplyMessage = `Ваша заявка на ${args.type} отпуск (${args.startDate} → ${args.endDate}) получена! ✅
+
+📋 Детали:
+• Тип: ${args.type === 'paid' ? 'Оплачиваемый' : args.type === 'sick' ? 'Больничный' : args.type === 'family' ? 'Семейный' : args.type}
+• Даты: ${args.startDate} — ${args.endDate} (${args.days} дн.)
+• Причина: ${args.reason}
+
+⏰ Ожидайте ответа до: ${expectedResponseDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+
+Если заявка не будет рассмотрена в течение 24 часов, вам придёт напоминание.`;
+
+    await ctx.db.insert("notifications", {
+      organizationId: user.organizationId,
+      userId: args.userId,
+      type: "system",
+      title: "📋 Заявка получена",
+      message: autoReplyMessage,
+      isRead: false,
+      relatedId: leaveId,
+      createdAt: Date.now(),
+    });
+
     for (const recipient of [...admins, ...supervisors]) {
       if (recipient._id === args.userId) continue;
       await ctx.db.insert("notifications", {

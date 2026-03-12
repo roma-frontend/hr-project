@@ -1,20 +1,49 @@
 import { NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '../../../../../convex/_generated/api';
+import type { Id } from '../../../../../convex/_generated/dataModel';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
-    const { userId, type, startDate, endDate, days, reason } = await req.json();
+    const { userId, organizationId, type, startDate, endDate, days, reason } = await req.json();
 
-    if (!userId || !type || !startDate || !endDate || !days || !reason) {
+    if (!userId || !organizationId || !type || !startDate || !endDate || !days || !reason) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check for conflicts — see if user already has approved/pending leave in this period
+    // ═══════════════════════════════════════════════════════════════
+    // CONFLICT DETECTION — Unified Conflict Service
+    // ═══════════════════════════════════════════════════════════════
+    const conflictResult = await convex.query(api.conflicts.checkConflictsForRequest, {
+      organizationId: organizationId as Id<"organizations">,
+      requestType: "leave" as const,
+      userId: userId as Id<"users">,
+      startDate: new Date(startDate).getTime(),
+      endDate: new Date(endDate).getTime(),
+      metadata: { leaveType: type },
+    });
+
+    // Если есть критические конфликты — возвращаем ошибку
+    if (conflictResult.hasCritical) {
+      const criticalConflicts = conflictResult.conflicts.filter(c => c.severity === 'critical');
+      
+      return NextResponse.json({
+        success: false,
+        conflict: true,
+        hasCriticalConflicts: true,
+        conflictCount: conflictResult.conflicts.length,
+        message: buildConflictMessage(criticalConflicts, type, startDate, endDate),
+        conflicts: conflictResult.conflicts,
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // LEGACY CHECK — personal leave overlap
+    // ═══════════════════════════════════════════════════════════════
     const userLeaves = await convex.query(api.leaves.getUserLeaves, { userId });
-    const conflict = userLeaves.find((leave: any) => {
+    const personalConflict = userLeaves.find((leave: any) => {
       if (leave.status === 'rejected') return false;
       const existStart = new Date(leave.startDate);
       const existEnd = new Date(leave.endDate);
@@ -23,9 +52,8 @@ export async function POST(req: Request) {
       return newStart <= existEnd && newEnd >= existStart;
     });
 
-    if (conflict) {
-      // Suggest next available dates after the conflict ends
-      const conflictEnd = new Date(conflict.endDate);
+    if (personalConflict) {
+      const conflictEnd = new Date(personalConflict.endDate);
       conflictEnd.setDate(conflictEnd.getDate() + 1);
       const suggestedStart = conflictEnd.toISOString().split('T')[0];
       const suggestedEnd = new Date(conflictEnd);
@@ -35,11 +63,13 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: false,
         conflict: true,
-        message: `You already have a ${conflict.type} leave (${conflict.startDate} → ${conflict.endDate}) with status: "${conflict.status}". 💡 Suggested alternative: ${suggestedStart} → ${suggestedEndStr}`,
+        message: `You already have a ${personalConflict.type} leave (${personalConflict.startDate} → ${personalConflict.endDate}) with status: "${personalConflict.status}". 💡 Suggested alternative: ${suggestedStart} → ${suggestedEndStr}`,
       });
     }
 
-    // Check leave balance
+    // ═══════════════════════════════════════════════════════════════
+    // CHECK LEAVE BALANCE
+    // ═══════════════════════════════════════════════════════════════
     const user = await convex.query(api.users.getUserById, { userId });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -67,7 +97,9 @@ export async function POST(req: Request) {
       });
     }
 
-    // Create the leave request — status will be "pending" (admin must approve)
+    // ═══════════════════════════════════════════════════════════════
+    // CREATE LEAVE REQUEST
+    // ═══════════════════════════════════════════════════════════════
     const leaveId = await convex.mutation(api.leaves.createLeave, {
       userId,
       type,
@@ -78,10 +110,20 @@ export async function POST(req: Request) {
       comment: 'Submitted via AI Assistant',
     });
 
+    // Формируем ответ с учётом предупреждений
+    const warnings = conflictResult.conflicts.filter(c => c.severity === 'warning');
+    let message = `✅ Your ${type} leave request for ${days} day(s) (${startDate} → ${endDate}) has been submitted and sent to admin for approval!`;
+    
+    if (warnings.length > 0) {
+      message += `\n\n⚠️ Note: ${warnings.map(w => w.message).join(' ')}`;
+    }
+
     return NextResponse.json({
       success: true,
       leaveId,
-      message: `✅ Your ${type} leave request for ${days} day(s) (${startDate} → ${endDate}) has been submitted and sent to admin for approval!`,
+      message,
+      hasWarnings: warnings.length > 0,
+      conflicts: conflictResult.conflicts,
     });
   } catch (error) {
     console.error('Book leave error:', error);
@@ -90,4 +132,23 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Build human-readable conflict message for AI
+ */
+function buildConflictMessage(conflicts: any[], leaveType: string, startDate: string, endDate: string): string {
+  if (conflicts.length === 0) return '';
+
+  let message = `🚨 **Conflict detected for your ${leaveType} leave request (${startDate} → ${endDate})**:\n\n`;
+
+  conflicts.forEach((conflict, i) => {
+    message += `${i + 1}. **${conflict.title}**\n`;
+    message += `   ${conflict.message}\n`;
+    message += `   💡 ${conflict.suggestion}\n\n`;
+  });
+
+  message += "Please consider alternative dates or discuss with your manager before proceeding.";
+
+  return message;
 }

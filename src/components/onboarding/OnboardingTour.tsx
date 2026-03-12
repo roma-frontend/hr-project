@@ -81,14 +81,33 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
 
     // Determine best placement based on available space
     let finalPlacement = placement;
-    
+
     const topSpace = rect.top - tooltipHeight - spacing;
     const bottomSpace = window.innerHeight - rect.bottom - spacing;
     const leftSpace = rect.left - tooltipWidth - spacing;
     const rightSpace = window.innerWidth - rect.right - spacing;
-    
+
+    // For left/right placements, ONLY flip to opposite side, never to top/bottom
+    // This ensures tooltips for bottom elements stay at sides
+    if (placement === "left") {
+      if (leftSpace < viewportPadding) {
+        // Not enough space on left, try right
+        if (rightSpace > viewportPadding) {
+          finalPlacement = "right";
+        }
+        // Otherwise keep "left" and let it overflow (user can scroll)
+      }
+    } else if (placement === "right") {
+      if (rightSpace < viewportPadding) {
+        // Not enough space on right, try left
+        if (leftSpace > viewportPadding) {
+          finalPlacement = "left";
+        }
+        // Otherwise keep "right" and let it overflow (user can scroll)
+      }
+    }
     // If "top" placement would go off-screen, try alternatives
-    if (placement === "top" && topSpace < viewportPadding) {
+    else if (placement === "top" && topSpace < viewportPadding) {
       if (bottomSpace > tooltipHeight + viewportPadding) {
         finalPlacement = "bottom";
       } else if (rightSpace > tooltipWidth + viewportPadding) {
@@ -97,9 +116,9 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
         finalPlacement = "left";
       }
     }
-    
+
     // If "bottom" placement would go off-screen and there's space above, use "top"
-    if (placement === "bottom" && bottomSpace < viewportPadding) {
+    else if (placement === "bottom" && bottomSpace < viewportPadding) {
       if (topSpace > tooltipHeight + viewportPadding) {
         finalPlacement = "top";
       } else if (rightSpace > tooltipWidth + viewportPadding) {
@@ -120,11 +139,25 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
         break;
       case "left":
         x = rect.left - tooltipWidth - spacing;
-        y = rect.top + rect.height / 2 - tooltipHeight / 2;
+        // For left placement, align to top of element if it's low on the page
+        if (rect.bottom > window.innerHeight - 100) {
+          y = rect.bottom - tooltipHeight;
+        } else if (rect.top < 100) {
+          y = rect.top;
+        } else {
+          y = rect.top + rect.height / 2 - tooltipHeight / 2;
+        }
         break;
       case "right":
         x = rect.right + spacing;
-        y = rect.top + rect.height / 2 - tooltipHeight / 2;
+        // For right placement, align to top of element if it's low on the page
+        if (rect.bottom > window.innerHeight - 100) {
+          y = rect.bottom - tooltipHeight;
+        } else if (rect.top < 100) {
+          y = rect.top;
+        } else {
+          y = rect.top + rect.height / 2 - tooltipHeight / 2;
+        }
         break;
       case "center":
         x = window.innerWidth / 2 - tooltipWidth / 2;

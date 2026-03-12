@@ -42,7 +42,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create driver request directly
+    // ═══════════════════════════════════════════════════════════════
+    // CONFLICT DETECTION — Check driver availability
+    // ═══════════════════════════════════════════════════════════════
+    const conflictResult = await convex.query(api.conflicts.checkConflictsForRequest, {
+      organizationId: organizationId as Id<"organizations">,
+      requestType: "driver" as const,
+      userId: userId as Id<"users">,
+      startDate: new Date(startTime).getTime(),
+      endDate: new Date(endTime).getTime(),
+      metadata: { driverId: driverId as Id<"drivers"> },
+    });
+
+    // Если есть критические конфликты (водитель занят)
+    if (conflictResult.hasCritical) {
+      const criticalConflicts = conflictResult.conflicts.filter(c => c.severity === 'critical');
+      
+      return NextResponse.json({
+        success: false,
+        conflict: true,
+        hasCriticalConflicts: true,
+        conflictCount: conflictResult.conflicts.length,
+        message: buildDriverConflictMessage(criticalConflicts, startTime, endTime),
+        conflicts: conflictResult.conflicts,
+        suggestion: "Please choose a different time or select another driver.",
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CREATE DRIVER REQUEST
+    // ═══════════════════════════════════════════════════════════════
     const requestId = await convex.mutation(api.drivers.requestDriver, {
       organizationId: organizationId as Id<"organizations">,
       requesterId: userId as Id<"users">,
@@ -61,9 +90,10 @@ export async function POST(req: NextRequest) {
     console.log('[book-driver] Request created:', requestId);
 
     return NextResponse.json({
-      message: 'Driver request submitted successfully!',
+      message: '✅ Driver request submitted successfully!',
       success: true,
       requestId,
+      hasWarnings: conflictResult.conflicts.filter(c => c.severity === 'warning').length > 0,
     });
   } catch (error: any) {
     console.error('[book-driver] Error:', error);
@@ -72,4 +102,24 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Build human-readable conflict message for driver booking
+ */
+function buildDriverConflictMessage(conflicts: any[], startTime: string, endTime: string): string {
+  if (conflicts.length === 0) return '';
+
+  const startDate = new Date(startTime).toLocaleString();
+  const endDate = new Date(endTime).toLocaleString();
+
+  let message = `🚨 **Driver unavailable for requested time** (${startDate} → ${endDate}):\n\n`;
+
+  conflicts.forEach((conflict, i) => {
+    message += `${i + 1}. **${conflict.title}**\n`;
+    message += `   ${conflict.message}\n`;
+    message += `   💡 ${conflict.suggestion}\n\n`;
+  });
+
+  return message;
 }

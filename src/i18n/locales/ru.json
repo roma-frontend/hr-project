@@ -1960,7 +1960,39 @@
     "warnings": "Warnings",
     "noConflicts": "No Conflicts Detected",
     "balanced": "Leave schedules are well balanced",
-    "employeesOut": "Employees out:"
+    "employeesOut": "Employees out:",
+    "aiAssistant": {
+      "conflictDetected": "⚠️ Обнаружен конфликт",
+      "criticalConflict": "🚨 Критический конфликт",
+      "warning": "⚠️ Предупреждение",
+      "noConflicts": "✅ Конфликтов не обнаружено",
+      "leaveEventConflict": "Отпуск пересекается с мероприятием",
+      "departmentOverlap": "Слишком много сотрудников отдела в отпуске",
+      "driverScheduleConflict": "Водитель уже забронирован",
+      "taskDeadlineConflict": "Дедлайн задачи во время отпуска",
+      "taskAssignmentConflict": "Исполнитель в отпуске",
+      "holidayConflict": "Мероприятие в праздник",
+      "blackoutPeriodConflict": "Запрос в запретный период",
+      "suggestion": "Рекомендация",
+      "canProceed": "Можно продолжить",
+      "requiresAttention": "Требуется внимание",
+      "alternativeDates": "Альтернативные даты",
+      "discussWithManager": "Обсудите с руководителем"
+    },
+    "types": {
+      "leave_event": "Конфликт с мероприятием",
+      "leave_department": "Перегрузка отдела",
+      "driver_schedule": "Конфликт водителя",
+      "task_deadline": "Конфликт дедлайна",
+      "task_assignment": "Конфликт назначения",
+      "holiday_conflict": "Праздничный конфликт",
+      "blackout_period": "Запретный период"
+    },
+    "severity": {
+      "critical": "Критический",
+      "warning": "Предупреждение",
+      "info": "Информация"
+    }
   },
   "costAnalysis": {
     "title": "Анализ затрат",
@@ -3782,11 +3814,5 @@
     "approveDespiteConflict": "Утвердить несмотря на конфликт",
     "conflictType.required_employee": "Требуемый сотрудник",
     "conflictType.required_department": "Требуемый департамент"
-  },
-  "common": {
-    "to": "по",
-    "approved": "Утверждено",
-    "cancel": "Отмена",
-    "save": "Сохранить"
   }
 }

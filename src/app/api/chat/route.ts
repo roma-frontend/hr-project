@@ -10,6 +10,9 @@ export async function POST(req: Request) {
   try {
     console.log('🤖 AI Chat request received');
     const { messages, userId, lang } = await req.json();
+    
+    console.log('📋 [AI Chat] Request params:', { userId, lang, messagesCount: messages.length });
+    
     const langInstruction = lang === 'ru'
       ? 'ЯЗЫК: Пользователь пишет на русском. Отвечай ТОЛЬКО на русском языке.'
       : lang === 'hy'
@@ -68,19 +71,95 @@ ${context.recentLeaves.map((l: any) => `- ${l.type}: ${l.startDate} to ${l.endDa
 TEAM AVAILABILITY (Next 30 days):
 ${context.teamAvailability.map((l: any) => `- ${l.userName} (${l.department}): ${l.startDate} to ${l.endDate}`).join('\n')}
 `;
+    
+    console.log('👤 [AI Chat] User context:', { 
+      userId: context.user.id, 
+      orgId: context.user.organizationId,
+      role: context.user.role 
+    });
     }
   } catch (error) {
     console.error('Failed to fetch context:', error);
   }
 
     console.log('🧠 Calling Groq AI...');
-    
+
     // Ensure API key is available
     const apiKey = process.env.GROQ_API_KEY;
     console.log('🔑 API Key available:', !!apiKey, 'Length:', apiKey?.length);
-    
+
     if (!apiKey) {
       throw new Error('GROQ_API_KEY is not configured');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONFLICT CHECK — Автоматическая проверка конфликтов
+    // ═══════════════════════════════════════════════════════════════
+    let conflictCheckData = '';
+    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+    
+    // Проверяем, хочет ли пользователь забронировать отпуск или водителя
+    const wantsLeaveBooking = /хочу отпуск|book leave|request vacation|отпуск с \d|vacation from \d|sick leave|больничный/i.test(lastUserMessage);
+    const wantsDriverBooking = /заказать водителя|book driver|driver from \d|водитель/i.test(lastUserMessage);
+    
+    if ((wantsLeaveBooking || wantsDriverBooking) && userId && userOrgId) {
+      try {
+        // Извлекаем даты из сообщения
+        const dateMatch = lastUserMessage.match(/с (\d{1,2})[\/\.-](\d{1,2})|from (\d{1,2})[\/\.-](\d{1,2})|(\d{1,2})[\/\.-](\d{1,2}) (марта|марта|апреля|апреля|мая|мая|июня|июня)/i);
+        
+        if (dateMatch) {
+          const day1 = parseInt(dateMatch[1] || dateMatch[3] || dateMatch[5]);
+          const monthStr = dateMatch[2] || dateMatch[4] || dateMatch[6];
+          const monthMap: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, 'марта': 2, 'марта': 2, 'апреля': 3, 'апреля': 3, 'мая': 4, 'мая': 4, 'июня': 5, 'июня': 5 };
+          const month = monthMap[monthStr.toLowerCase()] || (parseInt(monthStr) - 1);
+          const year = new Date().getFullYear();
+          
+          const startDate = new Date(year, month, day1).getTime();
+          const endDate = new Date(year, month, day1 + 7).getTime(); // +7 дней по умолчанию
+          
+          const requestType = wantsLeaveBooking ? 'leave' : 'driver';
+          
+          console.log('🔍 [Conflict Check] Checking conflicts:', { userId, userOrgId, requestType, startDate, endDate });
+          
+          const conflictRes = await fetch(`${req.headers.get('origin')}/api/chat/conflict-check?userId=${userId}&organizationId=${userOrgId}&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`, {
+            headers: { cookie: req.headers.get('cookie') || '' },
+          });
+          
+          if (conflictRes.ok) {
+            const conflictData = await conflictRes.json();
+            
+            if (conflictData.hasConflicts) {
+              conflictCheckData = `
+
+CONFLICT CHECK RESULTS:
+- Has Conflicts: ${conflictData.hasConflicts}
+- Critical Conflicts: ${conflictData.hasCriticalConflicts}
+- Conflict Count: ${conflictData.conflictCount}
+- AI Message: ${conflictData.aiMessage}
+- Conflicts: ${JSON.stringify(conflictData.conflicts, null, 2)}
+- Can Proceed: ${conflictData.canProceed}
+
+IMPORTANT: If hasCriticalConflicts is true, inform the user about the conflict and suggest alternatives. DO NOT create <ACTION> tag until user confirms alternative dates.
+`;
+              console.log('⚠️ [Conflict Check] Conflicts found:', conflictData.conflictCount);
+            } else {
+              conflictCheckData = `
+
+CONFLICT CHECK RESULTS:
+- Has Conflicts: false
+- Status: ✅ No conflicts detected
+- Can Proceed: true
+
+You can safely create the <ACTION> tag for this booking.
+`;
+              console.log('✅ [Conflict Check] No conflicts');
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[Conflict Check] Error:', e);
+        // Ignore errors, continue without conflict check
+      }
     }
     
     // Fetch AI insights (patterns, best dates, balance warnings)
@@ -226,7 +305,7 @@ ${availableDriversInfo || ''}
     });
 
     // Detect intent from last user message (for navigation actions)
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+    // lastUserMessage уже объявлена выше для Conflict Check
     const detectedIntent = detectIntent(lastUserMessage, userRole);
     
     let navigationHint = '';
@@ -243,7 +322,7 @@ Example: "Открываю календарь... 📅 <NAVIGATE>/calendar</NAVIG
 
 ${dateContext}
 
-${userContext}${aiInsights}${fullContext}
+${userContext}${aiInsights}${fullContext}${conflictCheckData}
 ${userId ? `CURRENT USER ID: ${userId}` : ''}
 ${navigationHint}
 
@@ -259,10 +338,18 @@ CORE CAPABILITIES:
 - Presence status: who is available, in meeting, in call, out of office, busy
 - Supervisor relationships: who reports to whom, who manages whom
 - Employee info: department, position, contact details, type (staff/contractor)
+
+CRITICAL RULE FOR LEAVE BOOKING:
+- When user says "хочу отпуск", "book leave", "request vacation", "организуй отпуск" → GENERATE <ACTION> TAG!
+- DO NOT navigate to /leaves page when user wants to BOOK a leave!
+- Only navigate to /leaves when user explicitly says "show leaves", "view my leaves", "покажи отпуска"
+- <ACTION> tag is used for CREATING/EDITING/DELETING leaves
+- <NAVIGATE> tag is used only for VIEWING pages
+- If user does not specify dates for leave booking → ASK for dates, do NOT navigate!
 - **NAVIGATION** - When user asks to open/show a page, navigate them using <NAVIGATE>route</NAVIGATE> tags
   Available routes:
-  * /calendar - календарь, calendar
-  * /leaves - отпуска, leaves, мои отпуска
+  * /calendar - календарь, calendar, показать календарь
+  * /leaves - ТОЛЬКО для просмотра списка отпусков (не для создания!)
   * /employees - сотрудники, employees, команда, team
   * /tasks - задачи, tasks, мои задачи
   * /attendance - посещаемость, attendance
@@ -273,34 +360,46 @@ CORE CAPABILITIES:
   * /organizations - организации, organizations (for superadmin)
   * /profile - профиль, profile, мой профиль
   * /dashboard - дашборд, dashboard, главная, home
-  
+
+  IMPORTANT: 
+  - NEVER use <NAVIGATE>/leaves</NAVIGATE> when user wants to BOOK/REQUEST a leave!
+  - If user says "хочу отпуск", "book leave", "request vacation" → generate <ACTION> tag instead!
+  - Only use <NAVIGATE>/leaves</NAVIGATE> when user explicitly asks to "show leaves", "view my leaves", "покажи отпуска"
+
   Examples:
   - "покажи безопасность" → "Открываю панель безопасности... 🔒 <NAVIGATE>/security</NAVIGATE>"
   - "открой страницу сотрудников" → "Показываю список сотрудников... 👥 <NAVIGATE>/employees</NAVIGATE>"
+  - "покажи мои отпуска" → "Открываю список отпусков... 📅 <NAVIGATE>/leaves</NAVIGATE>"
+  - "хочу отпуск" → НЕ использовать <NAVIGATE>, использовать <ACTION> для создания!
+  - "забронировать отпуск" → НЕ использовать <NAVIGATE>, использовать <ACTION>!
 
 BOOKING LEAVES:
-IMPORTANT: Before creating <ACTION> tag, you MUST:
-1. Check for conflicts in user's department (analyze COMPLETE SYSTEM DATA)
-2. If conflicts exist, suggest alternative dates and WAIT for user confirmation
-3. Only generate <ACTION> tag AFTER user explicitly confirms the dates
+IMPORTANT: When user wants to book a leave:
 
-When user CONFIRMS dates (either original or alternative), respond with:
-<ACTION>
-{
-  "type": "BOOK_LEAVE",
-  "leaveType": "paid|sick|family|unpaid|doctor",
-  "startDate": "YYYY-MM-DD",
-  "endDate": "YYYY-MM-DD",
-  "days": <number>,
-  "reason": "<reason from user>"
-}
-</ACTION>
+STEP 1 - GET DATES:
+- If user DID NOT specify dates → ASK for dates! Example: "Конечно! Какие даты вы планируете?"
+- If user specified dates → proceed to STEP 2
 
-Example flow:
-User: "организуй отпуск для Ивана с 10 по 15 марта"
-AI: "Проверяю доступность... Я вижу, что Петр из отдела разработки уже в отпуске 12-14 марта. Рекомендую альтернативные даты: 17-22 марта (полное покрытие команды). Какие даты выбираете?"
-User: "давай 17-22"
-AI: "Отлично! Отправляю запрос... <ACTION>{...}</ACTION>"
+STEP 2 - CHECK CONFLICTS:
+- Check COMPLETE SYSTEM DATA for conflicts (other leaves, events, department coverage)
+- If conflicts exist → suggest alternative dates
+- Wait for user to confirm dates (original or alternative)
+
+STEP 3 - GENERATE ACTION:
+- ONLY after user confirms dates, generate <ACTION> tag
+- Include all required fields: leaveType, startDate, endDate, days, reason
+
+Example flow 1 (user specifies dates):
+User: "Хочу отпуск с 10 по 15 марта"
+AI: "Проверяю доступность... [checks data] Вижу конфликт 12-14 марта. Рекомендую 17-22 марта. Какие даты выбираете?"
+User: "17-22"
+AI: "Отправляю запрос... <ACTION>{"type":"BOOK_LEAVE","leaveType":"paid","startDate":"2026-03-17","endDate":"2026-03-22","days":6,"reason":"..."}</ACTION>"
+
+Example flow 2 (user does NOT specify dates):
+User: "Хочу отпуск"
+AI: "Конечно! На какие даты вы планируете отпуск?"
+User: "с 10 по 15 марта"
+AI: "Проверяю... [checks] Всё чисто! Отправляю запрос... <ACTION>{...}</ACTION>"
 
 EDITING LEAVES:
 When a user asks to edit/change/update a leave request, respond with:
@@ -398,6 +497,17 @@ INTELLIGENT VACATION CONFLICT DETECTION & ALTERNATIVE DATES:
 - Consider department workload: if >30% of department is on leave, strongly recommend alternative dates
 - Prioritize team coverage over individual preferences
 - WAIT FOR EXPLICIT USER CONFIRMATION before generating <ACTION> tag
+
+CONFLICT CHECK API:
+- Before generating <ACTION> tag, the system will automatically call /api/chat/conflict-check
+- This API checks for:
+  • leave_event conflicts (user required at company event)
+  • leave_department conflicts (>30% or >50% of department on leave)
+  • driver_schedule conflicts (driver already booked)
+  • task conflicts (deadline during assignee's leave)
+- If CRITICAL conflict detected → booking will be blocked with error message
+- If WARNING detected → booking proceeds with warning shown to user
+- Your AI response should mention conflicts proactively based on COMPLETE SYSTEM DATA
 
 CONFIRMATION WORKFLOW:
 1. User requests: "организуй отпуск для меня с 10 по 15 марта"

@@ -208,46 +208,46 @@ export function LeaveConflictAlerts({ organizationId, userId }: LeaveConflictAle
           {selectedAlert && (
             <div className="space-y-4">
               {/* Employee Info */}
-              <div className="p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-500">{t('events.leaveRequest', 'Leave Request')}</h4>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <h4 className="font-semibold text-foreground">{t('events.leaveRequest', 'Leave Request')}</h4>
                 <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
                   <div>
-                    <p className="text-blue-400">{t('events.employee', 'Employee')}</p>
-                    <p className="font-medium">{selectedAlert.employeeName}</p>
-                    <p className="text-blue-400 text-xs">{selectedAlert.employeeEmail}</p>
+                    <p className="text-muted-foreground">{t('events.employee', 'Employee')}</p>
+                    <p className="font-medium text-foreground">{selectedAlert.employeeName}</p>
+                    <p className="text-muted-foreground text-xs">{selectedAlert.employeeEmail}</p>
                   </div>
                   <div>
-                    <p className="text-blue-400">{t('events.department', 'Department')}</p>
-                    <p className="font-medium">{selectedAlert.department}</p>
+                    <p className="text-muted-foreground">{t('events.department', 'Department')}</p>
+                    <p className="font-medium text-foreground">{selectedAlert.department}</p>
                   </div>
                   <div>
-                    <p className="text-blue-400">{t('events.leaveDates', 'Leave Dates')}</p>
-                    <p className="font-medium">{selectedAlert.leaveStartDate}</p>
-                    <p className="text-blue-400 text-xs">{t('common.to', 'to')} {selectedAlert.leaveEndDate}</p>
+                    <p className="text-muted-foreground">{t('events.leaveDates', 'Leave Dates')}</p>
+                    <p className="font-medium text-foreground">{selectedAlert.leaveStartDate}</p>
+                    <p className="text-muted-foreground text-xs">{t('common.to', 'to')} {selectedAlert.leaveEndDate}</p>
                   </div>
                   <div>
-                    <p className="text-blue-400">{t('events.leaveType', 'Leave Type')}</p>
-                    <p className="font-medium capitalize">{selectedAlert.leaveType}</p>
+                    <p className="text-muted-foreground">{t('events.leaveType', 'Leave Type')}</p>
+                    <p className="font-medium text-foreground capitalize">{selectedAlert.leaveType}</p>
                   </div>
                 </div>
               </div>
 
               {/* Event Info */}
-              <div className="p-4 rounded-lg">
-                <h4 className="font-semibold text-red-900">{t('events.conflictingEvent', 'Conflicting Event')}</h4>
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <h4 className="font-semibold text-foreground">{t('events.conflictingEvent', 'Conflicting Event')}</h4>
                 <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
                   <div>
-                    <p className="text-red-600">{t('events.event', 'Event')}</p>
-                    <p className="font-medium">{selectedAlert.eventName}</p>
+                    <p className="text-muted-foreground">{t('events.event', 'Event')}</p>
+                    <p className="font-medium text-foreground">{selectedAlert.eventName}</p>
                   </div>
                   <div>
-                    <p className="text-red-600">{t('events.dates', 'Dates')}</p>
-                    <p className="font-medium">{selectedAlert.eventStartDate}</p>
-                    <p className="text-red-600 text-xs">{t('common.to', 'to')} {selectedAlert.eventEndDate}</p>
+                    <p className="text-muted-foreground">{t('events.dates', 'Dates')}</p>
+                    <p className="font-medium text-foreground">{selectedAlert.eventStartDate}</p>
+                    <p className="text-muted-foreground text-xs">{t('common.to', 'to')} {selectedAlert.eventEndDate}</p>
                   </div>
                   <div>
-                    <p className="text-red-600">{t('events.conflictType', 'Conflict Type')}</p>
-                    <p className="font-medium capitalize">
+                    <p className="text-muted-foreground">{t('events.conflictType', 'Conflict Type')}</p>
+                    <p className="font-medium text-foreground capitalize">
                       {(() => {
                         const conflictType = selectedAlert.conflictType || 'required_department';
                         const typeText = t(`events.conflictType.${conflictType}` as any);
@@ -256,7 +256,7 @@ export function LeaveConflictAlerts({ organizationId, userId }: LeaveConflictAle
                     </p>
                   </div>
                   <div>
-                    <p className="text-red-600">{t('events.severity', 'Severity')}</p>
+                    <p className="text-muted-foreground">{t('events.severity', 'Severity')}</p>
                     <Badge className={getSeverityColor(selectedAlert.severity)}>
                       {(() => {
                         const severity = selectedAlert.severity || 'medium';
@@ -283,20 +283,20 @@ export function LeaveConflictAlerts({ organizationId, userId }: LeaveConflictAle
               {/* Action Buttons */}
               <DialogFooter className="gap-2">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => handleReview(false)}
                   disabled={isReviewing}
-                  className="border-red-200 text-red-700 hover:bg-red-50"
+                  className="gap-2"
                 >
-                  <XCircle className="w-4 h-4 mr-2" />
+                  <XCircle className="w-4 h-4" />
                   {t('events.flagForDiscussion', 'Flag for Discussion')}
                 </Button>
                 <Button
                   onClick={() => handleReview(true)}
                   disabled={isReviewing}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="gap-2 bg-green-600 hover:bg-green-700"
                 >
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4" />
                   {t('events.approveDespiteConflict', 'Approve Despite Conflict')}
                 </Button>
               </DialogFooter>

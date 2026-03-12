@@ -67,11 +67,11 @@ export function AssignSupervisorModal({ onClose }: Props) {
       <div className="absolute inset-0 backdrop-blur-sm" style={{ backgroundColor: "var(--overlay-bg, rgba(0, 0, 0, 0.6))" }} onClick={onClose} />
       <div className="relative bg-[var(--card)] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-[var(--border)]">
         {/* Header */}
-        <div style={{ background: "var(--accent-gradient)" }} className="px-6 py-5">
+        <div className="px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold" style={{ color: "var(--text-on-accent)" }}>{t('modals.assignSupervisor.title')}</h2>
-              <p className="text-sm mt-0.5" style={{ color: "var(--text-on-accent-secondary)" }}>{t('modals.assignSupervisor.description')}</p>
+              <h2 className="text-xl font-bold">{t('modals.assignSupervisor.title')}</h2>
+              <p className="text-sm mt-0.5">{t('modals.assignSupervisor.description')}</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/30 flex items-center justify-center transition-colors" style={{ backgroundColor: "rgba(255,255,255,0.2)", color: "var(--text-on-accent)" }}>✕</button>
           </div>
