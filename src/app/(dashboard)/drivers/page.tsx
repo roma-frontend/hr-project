@@ -36,6 +36,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -2540,6 +2541,9 @@ export default function DriversPage() {
         if (!open) setCalendarDriverId(null);
       }}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <VisuallyHidden>
+            <DialogTitle>Driver Schedule Calendar</DialogTitle>
+          </VisuallyHidden>
           {/* Header with gradient */}
           <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shrink-0">
             <div className="flex items-center justify-between">
@@ -2663,6 +2667,9 @@ export default function DriversPage() {
       {/* Schedule Detail Modal - REDESIGNED */}
       <Dialog open={!!selectedScheduleDetail} onOpenChange={(open) => { if (!open) setSelectedScheduleDetail(null); }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <VisuallyHidden>
+            <DialogTitle>Trip Details</DialogTitle>
+          </VisuallyHidden>
           {/* Header */}
           <div className={`relative p-6 shrink-0 ${
             selectedScheduleDetail?.type === "trip" 
