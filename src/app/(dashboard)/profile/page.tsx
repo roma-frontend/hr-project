@@ -328,7 +328,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>{t('employeeInfo.department')}Department</Label>
+              <Label>{t('employeeInfo.department')}</Label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                 <Input

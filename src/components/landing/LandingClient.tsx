@@ -120,7 +120,7 @@ const getFeaturesData = (t: any) => [
     title: t('landing.familyLeave'),
     description: t('landing.familyLeaveDesc'),
     gradient: 'linear-gradient(135deg, rgba(14,165,233,0.12) 0%, rgba(14,165,233,0.06) 100%)',
-    accentColor: '#94a3b8',
+    accentColor: '#60b3fa',
     badge: t('landing.complianceReady'),
   },
   {

@@ -303,7 +303,7 @@ export const getTodayAllAttendance = query({
     // Sort: checked_in first, then checked_out, then absent
     return filtered.sort((a, b) => {
       const order = { checked_in: 0, checked_out: 1, absent: 2 };
-      return order[a.status] - order[b.status];
+      return order[a!.status] - order[b!.status];
     });
   },
 });

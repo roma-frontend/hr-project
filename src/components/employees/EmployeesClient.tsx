@@ -372,7 +372,7 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[(emp as any).employeeType] || TYPE_CONFIG.staff;
+                    const typeConf = TYPE_CONFIG[(emp as any).employeeType as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
                     const presence = getPresenceBadge((emp as any).presenceStatus);
                     return (
@@ -399,13 +399,13 @@ export function EmployeesClient() {
                             <div className="flex items-center gap-2" style={{ color: "var(--text-muted)" }}>
                               <Mail className="w-3 h-3 flex-shrink-0" /><span className="truncate">{emp.email}</span>
                             </div>
-                            {emp.phone && <div className="flex items-center gap-2" style={{ color: "var(--text-muted)" }}><Phone className="w-3 h-3" />{emp.phone}</div>}
+                            {(emp as any).phone && <div className="flex items-center gap-2" style={{ color: "var(--text-muted)" }}><Phone className="w-3 h-3" />{(emp as any).phone}</div>}
                             {emp.department && <div className="flex items-center gap-2" style={{ color: "var(--text-muted)" }}><Building2 className="w-3 h-3" />{emp.department}</div>}
-                            {emp.supervisorId && (
+                            {(emp as any).supervisorId && (
                               <div className="flex items-center gap-2">
                                 <UserCog className="w-3 h-3 flex-shrink-0 text-blue-400" />
                                 <span className="truncate text-blue-500 font-medium">
-                                  {supervisors?.find(s => s._id === emp.supervisorId)?.name ?? "Supervisor"}
+                                  {supervisors?.find(s => s._id === (emp as any).supervisorId)?.name ?? "Supervisor"}
                                 </span>
                               </div>
                             )}
@@ -413,15 +413,15 @@ export function EmployeesClient() {
                           <div className="flex items-center justify-between mt-4 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
                             <div className="flex gap-2">
                               <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: typeConf.bg, color: typeConf.color }}>{t(typeConf.labelKey)}</span>
-                              {emp.supervisorId && (
+                              {(emp as any).supervisorId && (
                                 <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-500">
-                                  {supervisors?.find(s => s._id === emp.supervisorId)?.name ?? "Supervisor"}
+                                  {supervisors?.find(s => s._id === (emp as any).supervisorId)?.name ?? "Supervisor"}
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-1">
                               {isAdmin
-                                ? <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>{emp.travelAllowance.toLocaleString()} AMD</span>
+                                ? <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>{(emp as any).travelAllowance?.toLocaleString() ?? '0'} AMD</span>
                                 : <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${presence.cls}`}>{t(presence.labelKey)}</span>
                               }
                             </div>
@@ -459,7 +459,7 @@ export function EmployeesClient() {
                 <AnimatePresence mode="popLayout">
                   {filtered.map((emp, i) => {
                     const roleConf = ROLE_CONFIG[emp.role];
-                    const typeConf = TYPE_CONFIG[(emp as any).employeeType] || TYPE_CONFIG.staff;
+                    const typeConf = TYPE_CONFIG[(emp as any).employeeType as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.staff;
                     const RoleIcon = roleConf.icon;
                     const presence = getPresenceBadge((emp as any).presenceStatus);
                     return (
@@ -514,8 +514,8 @@ export function EmployeesClient() {
 
                           {/* Supervisor - desktop only */}
                           <div className="hidden sm:block sm:col-span-2 text-sm truncate text-blue-500 font-medium">
-                            {emp.supervisorId
-                              ? supervisors?.find(s => s._id === emp.supervisorId)?.name ?? "—"
+                            {(emp as any).supervisorId
+                              ? supervisors?.find(s => s._id === (emp as any).supervisorId)?.name ?? "—"
                               : "—"}
                           </div>
 

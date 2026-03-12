@@ -286,9 +286,9 @@ export function DriverRequestModal({
                 <SelectValue placeholder={t("driver.chooseDriver", "Choose a driver")} />
               </SelectTrigger>
               <SelectContent>
-                {availableDrivers?.map((driver) => (
-                  <SelectItem key={driver._id} value={driver._id}>
-                    {driver.userName} - {driver.vehicleInfo.model} ({driver.vehicleInfo.plateNumber})
+                {availableDrivers?.filter(Boolean).map((driver) => (
+                  <SelectItem key={driver!._id} value={driver!._id}>
+                    {driver!.userName} - {driver!.vehicleInfo.model} ({driver!.vehicleInfo.plateNumber})
                   </SelectItem>
                 ))}
               </SelectContent>

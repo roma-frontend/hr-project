@@ -51,20 +51,8 @@ export const getUserStats = query({
       totalWorkingDays: 0,
     };
 
-    try {
-      const attendance = await ctx.db
-        .query("attendance")
-        .filter((q) => q.eq(q.field("userId"), userId))
-        .collect();
-
-      if (attendance && attendance.length > 0) {
-        attendanceStats.presentDays = attendance.filter(a => a.status === "present").length;
-        attendanceStats.absentDays = attendance.filter(a => a.status === "absent").length;
-        attendanceStats.totalWorkingDays = attendance.length;
-      }
-    } catch (err) {
-      // Attendance table might not exist
-    }
+    // Attendance table not available in this schema
+    // Attendance data would be tracked through timeTracking or other modules
 
     // Calculate leave balances
     const leaveBalances = {

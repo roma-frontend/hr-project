@@ -261,11 +261,24 @@ export const getMyRequests = query({
       .order("desc")
       .take(50);
 
-    // Enrich with driver info
+    // Enrich with driver info and schedule status
     const enriched = await Promise.all(
       requests.map(async (request) => {
         const driver = await ctx.db.get(request.driverId);
         const driverUser = driver ? await ctx.db.get(driver.userId) : null;
+        
+        // Check if there's a completed schedule for this request
+        const schedule = await ctx.db
+          .query("driverSchedules")
+          .withIndex("by_driver", (q) => q.eq("driverId", request.driverId))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("userId"), request.requesterId),
+              q.eq(q.field("startTime"), request.startTime)
+            )
+          )
+          .first();
+        
         return {
           ...request,
           driverName: driverUser?.name,
@@ -273,6 +286,8 @@ export const getMyRequests = query({
           driverUserId: driver?.userId,
           driverPhone: driverUser?.phone,
           driverVehicle: driver?.vehicleInfo,
+          scheduleStatus: schedule?.status, // Add schedule status
+          scheduleId: schedule?._id,
         };
       })
     );
@@ -495,6 +510,24 @@ export const requestDriver = mutation({
         lng: v.number(),
       })),
     }),
+    // Corporate features (all optional for backward compatibility)
+    priority: v.optional(v.union(
+      v.literal("P0"),
+      v.literal("P1"),
+      v.literal("P2"),
+      v.literal("P3"),
+    )),
+    tripCategory: v.optional(v.union(
+      v.literal("client_meeting"),
+      v.literal("airport"),
+      v.literal("office_transfer"),
+      v.literal("emergency"),
+      v.literal("team_event"),
+      v.literal("personal"),
+    )),
+    costCenter: v.optional(v.string()),
+    businessJustification: v.optional(v.string()),
+    requiresApproval: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     // Validate startTime < endTime
@@ -531,7 +564,7 @@ export const requestDriver = mutation({
       throw new Error("Driver is not available at this time");
     }
 
-    // Create request
+    // Create request with corporate fields
     const requestId = await ctx.db.insert("driverRequests", {
       organizationId: args.organizationId,
       requesterId: args.requesterId,
@@ -539,24 +572,53 @@ export const requestDriver = mutation({
       startTime: args.startTime,
       endTime: args.endTime,
       tripInfo: args.tripInfo,
-      status: "pending",
+      status: args.requiresApproval ? "pending" : "pending", // Will be approved by manager or driver
+      priority: args.priority || "P2",
+      tripCategory: args.tripCategory || "office_transfer",
+      costCenter: args.costCenter,
+      businessJustification: args.businessJustification || args.tripInfo.purpose,
+      requiresApproval: args.requiresApproval || false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
     // Create notification for driver
     const driver = await ctx.db.get(args.driverId);
+    const priority = args.priority || "P2";
     if (driver) {
       await ctx.db.insert("notifications", {
         organizationId: args.organizationId,
         userId: driver.userId,
         type: "driver_request",
-        title: "New Driver Request",
+        title: `🚗 ${priority} Trip Request`,
         message: `${args.tripInfo.purpose}: ${args.tripInfo.from} → ${args.tripInfo.to}`,
         isRead: false,
         relatedId: `driver_request:${requestId}`,
         createdAt: Date.now(),
       });
+    }
+
+    // If requires approval, notify managers
+    if (args.requiresApproval) {
+      const admins = await ctx.db
+        .query("users")
+        .withIndex("by_org_role", (q) => 
+          q.eq("organizationId", args.organizationId).eq("role", "admin")
+        )
+        .collect();
+
+      for (const admin of admins) {
+        await ctx.db.insert("notifications", {
+          organizationId: args.organizationId,
+          userId: admin._id,
+          type: "system",
+          title: `📋 ${priority} Trip Requires Approval`,
+          message: `${args.businessJustification || args.tripInfo.purpose}`,
+          isRead: false,
+          relatedId: `driver_request:${requestId}`,
+          createdAt: Date.now(),
+        });
+      }
     }
 
     return requestId;
@@ -656,7 +718,6 @@ export const grantCalendarAccess = mutation({
         accessLevel,
         expiresAt,
         isActive: true,
-        updatedAt: Date.now(),
       });
       return existing._id;
     }
@@ -952,7 +1013,15 @@ export const deleteDriverRequest = mutation({
       }
     }
 
-    await ctx.db.delete(args.requestId);
+    // Instead of deleting the request, mark it as cancelled to preserve history
+    // This ensures the driver still has a record of the trip in their logs
+    await ctx.db.patch(args.requestId, {
+      status: "cancelled",
+      cancelledAt: Date.now(),
+      cancelledBy: args.userId,
+      cancellationReason: "Cancelled by requester",
+    });
+    
     return { success: true };
   },
 });
@@ -1897,5 +1966,279 @@ export const getDriverStats = query({
       averageDurationPerTrip: totalTrips > 0 ? totalDuration / totalTrips : 0,
       popularRoutes,
     };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHIFT MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Start a new shift for a driver */
+export const startShift = mutation({
+  args: {
+    driverId: v.id("drivers"),
+    userId: v.id("users"),
+    organizationId: v.id("organizations"),
+    scheduledStartTime: v.optional(v.number()),
+    scheduledEndTime: v.optional(v.number()),
+  },
+  handler: async (ctx, { driverId, userId, organizationId, scheduledStartTime, scheduledEndTime }) => {
+    // Check if driver already has an active shift
+    const existingShift = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver_status", (q) => q.eq("driverId", driverId).eq("status", "active"))
+      .first();
+
+    if (existingShift) {
+      throw new Error("Driver already has an active shift");
+    }
+
+    // Create new shift
+    const shiftId = await ctx.db.insert("driverShifts", {
+      organizationId,
+      driverId,
+      userId,
+      startTime: Date.now(),
+      scheduledStartTime,
+      scheduledEndTime,
+      status: "active",
+      tripsCompleted: 0,
+      totalDistance: 0,
+      totalDuration: 0,
+      breakTime: 0,
+      overtimeHours: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // Update driver status
+    await ctx.db.patch(driverId, {
+      isOnShift: true,
+      currentShiftStart: Date.now(),
+      currentShiftEnd: scheduledEndTime,
+      lastStatusUpdateAt: Date.now(),
+    });
+
+    return shiftId;
+  },
+});
+
+/** End current shift */
+export const endShift = mutation({
+  args: {
+    driverId: v.id("drivers"),
+    userId: v.id("users"),
+    breakTime: v.optional(v.number()),
+    driverNotes: v.optional(v.string()),
+  },
+  handler: async (ctx, { driverId, userId, breakTime, driverNotes }) => {
+    // Find active shift
+    const shift = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver_status", (q) => q.eq("driverId", driverId).eq("status", "active"))
+      .first();
+
+    if (!shift) {
+      throw new Error("No active shift found");
+    }
+
+    const endTime = Date.now();
+    const totalHours = (endTime - shift.startTime) / (1000 * 60 * 60);
+    
+    // Calculate overtime
+    let overtimeHours = 0;
+    if (shift.scheduledEndTime && endTime > shift.scheduledEndTime) {
+      overtimeHours = (endTime - shift.scheduledEndTime) / (1000 * 60 * 60);
+    }
+
+    // Get driver record
+    const driver = await ctx.db.get(driverId);
+
+    // Update shift
+    await ctx.db.patch(shift._id, {
+      endTime,
+      status: "completed",
+      totalHours,
+      breakTime: breakTime || 0,
+      overtimeHours,
+      driverNotes: driverNotes || shift.driverNotes,
+      updatedAt: Date.now(),
+    });
+
+    // Update driver status
+    await ctx.db.patch(driverId, {
+      isOnShift: false,
+      currentShiftStart: undefined,
+      currentShiftEnd: undefined,
+      lastStatusUpdateAt: Date.now(),
+      overtimeHours: (driver?.overtimeHours || 0) + overtimeHours,
+    });
+
+    return shift._id;
+  },
+});
+
+/** Pause shift (for breaks) */
+export const pauseShift = mutation({
+  args: {
+    driverId: v.id("drivers"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { driverId, userId }) => {
+    const shift = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver_status", (q) => q.eq("driverId", driverId).eq("status", "active"))
+      .first();
+
+    if (!shift) {
+      throw new Error("No active shift found");
+    }
+
+    await ctx.db.patch(shift._id, {
+      status: "paused",
+      updatedAt: Date.now(),
+    });
+
+    return shift._id;
+  },
+});
+
+/** Resume paused shift */
+export const resumeShift = mutation({
+  args: {
+    driverId: v.id("drivers"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { driverId, userId }) => {
+    const shift = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver_status", (q) => q.eq("driverId", driverId).eq("status", "paused"))
+      .first();
+
+    if (!shift) {
+      throw new Error("No paused shift found");
+    }
+
+    await ctx.db.patch(shift._id, {
+      status: "active",
+      updatedAt: Date.now(),
+    });
+
+    return shift._id;
+  },
+});
+
+/** Get current active shift for a driver */
+export const getCurrentShift = query({
+  args: {
+    driverId: v.id("drivers"),
+  },
+  handler: async (ctx, { driverId }) => {
+    const shift = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver_status", (q) => q.eq("driverId", driverId).eq("status", "active"))
+      .first();
+
+    if (!shift) return null;
+
+    // Calculate current duration
+    const now = Date.now();
+    const currentDuration = (now - shift.startTime) / (1000 * 60 * 60); // hours
+
+    return {
+      ...shift,
+      currentDuration,
+      isOvertime: shift.scheduledEndTime && now > shift.scheduledEndTime,
+    };
+  },
+});
+
+/** Get shift history for a driver */
+export const getShiftHistory = query({
+  args: {
+    driverId: v.id("drivers"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { driverId, limit }) => {
+    const shifts = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_driver", (q) => q.eq("driverId", driverId))
+      .order("desc")
+      .take(limit || 50);
+
+    return shifts.map((shift) => ({
+      ...shift,
+      duration: shift.endTime ? (shift.endTime - shift.startTime) / (1000 * 60 * 60) : null,
+    }));
+  },
+});
+
+/** Get shift statistics for organization */
+export const getShiftStatistics = query({
+  args: {
+    organizationId: v.id("organizations"),
+    period: v.union(v.literal("week"), v.literal("month"), v.literal("year")),
+  },
+  handler: async (ctx, { organizationId, period }) => {
+    const now = Date.now();
+    let periodStart: number;
+
+    if (period === "week") {
+      periodStart = now - 7 * 24 * 60 * 60 * 1000;
+    } else if (period === "month") {
+      periodStart = now - 30 * 24 * 60 * 60 * 1000;
+    } else {
+      periodStart = now - 365 * 24 * 60 * 60 * 1000;
+    }
+
+    const shifts = await ctx.db
+      .query("driverShifts")
+      .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.gte(q.field("startTime"), periodStart))
+      .collect();
+
+    const completedShifts = shifts.filter((s) => s.status === "completed");
+    
+    const totalShifts = completedShifts.length;
+    const totalHours = completedShifts.reduce((sum, s) => sum + (s.totalHours || 0), 0);
+    const totalOvertime = completedShifts.reduce((sum, s) => sum + (s.overtimeHours || 0), 0);
+    const totalTrips = completedShifts.reduce((sum, s) => sum + (s.tripsCompleted || 0), 0);
+    const totalDistance = completedShifts.reduce((sum, s) => sum + (s.totalDistance || 0), 0);
+
+    const avgShiftDuration = totalShifts > 0 ? totalHours / totalShifts : 0;
+    const avgTripsPerShift = totalShifts > 0 ? totalTrips / totalShifts : 0;
+
+    return {
+      totalShifts,
+      totalHours,
+      totalOvertime,
+      totalTrips,
+      totalDistanceKm: totalDistance,
+      avgShiftDuration,
+      avgTripsPerShift,
+      activeShifts: shifts.filter((s) => s.status === "active").length,
+    };
+  },
+});
+
+/** Update shift trip count (called when a trip is completed) */
+export const updateShiftTripCount = mutation({
+  args: {
+    shiftId: v.id("driverShifts"),
+    distanceKm: v.optional(v.number()),
+    durationMinutes: v.optional(v.number()),
+  },
+  handler: async (ctx, { shiftId, distanceKm, durationMinutes }) => {
+    const shift = await ctx.db.get(shiftId);
+    if (!shift) throw new Error("Shift not found");
+
+    await ctx.db.patch(shiftId, {
+      tripsCompleted: (shift.tripsCompleted || 0) + 1,
+      totalDistance: (shift.totalDistance || 0) + (distanceKm || 0),
+      totalDuration: (shift.totalDuration || 0) + (durationMinutes || 0),
+      updatedAt: Date.now(),
+    });
+
+    return shiftId;
   },
 });

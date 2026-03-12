@@ -172,11 +172,11 @@ export default function ChatClient({ userId, organizationId, userName, userAvata
           onNewConversation={() => {
             setShowNewConv(true);
           }}
-          onTogglePin={(convId) => togglePinMutation({ conversationId: convId, userId: uid })}
-          onDelete={(convId) => deleteConversationMutation({ conversationId: convId, userId: uid })}
-          onRestore={(convId) => restoreConversationMutation({ conversationId: convId, userId: uid })}
-          onToggleArchive={(convId) => toggleArchiveMutation({ conversationId: convId, userId: uid })}
-          onToggleMute={(convId) => toggleMuteMutation({ conversationId: convId, userId: uid })}
+          onTogglePin={async (convId) => { await togglePinMutation({ conversationId: convId, userId: uid }); }}
+          onDelete={async (convId) => { await deleteConversationMutation({ conversationId: convId, userId: uid }); }}
+          onRestore={async (convId) => { await restoreConversationMutation({ conversationId: convId, userId: uid }); }}
+          onToggleArchive={async (convId) => { await toggleArchiveMutation({ conversationId: convId, userId: uid }); }}
+          onToggleMute={async (convId) => { await toggleMuteMutation({ conversationId: convId, userId: uid }); }}
         />
       </div>
 

@@ -11,6 +11,24 @@ import { v } from "convex/values";
 import { query, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+
+// Types for AI responses
+interface DriverAvailability {
+  _id: Id<"drivers">;
+  userName: string;
+  availability: { available: boolean; nextAvailable?: number };
+  vehicleInfo: { model: string; plateNumber: string; capacity: number };
+  rating: number;
+}
+
+interface AvailabilityResponse {
+  text: { en: string; ru: string; hy: string };
+  type: string;
+  suggestions?: Array<{ driverId: Id<"drivers">; driverName: string; nextAvailable: string }>;
+  availableDrivers?: Array<{ driverId: Id<"drivers">; driverName: string; vehicle: string; capacity: number; rating: number }>;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI QUERY PROCESSING
@@ -135,15 +153,16 @@ export const getDriverScheduleWithSummary = query({
     let visibleSchedules = schedules;
     if (!hasFullAccess && hasBusyOnlyAccess) {
       visibleSchedules = schedules.map((s) => ({
+        ...s,
         startTime: s.startTime,
         endTime: s.endTime,
         type: s.type,
         status: s.status,
-      }));
+      })) as typeof schedules;
     }
 
     // Generate AI summary
-    const summary = generateScheduleSummary(visibleSchedules, hasFullAccess);
+    const summary = generateScheduleSummary(visibleSchedules, hasFullAccess ?? false);
 
     return {
       schedules: visibleSchedules,
@@ -218,7 +237,7 @@ function extractIntent(query: string) {
  * Check driver availability for a time range
  */
 async function checkDriverAvailability(
-  ctx: any,
+  ctx: QueryCtx,
   driverId: Id<"drivers">,
   startTime: number,
   endTime: number
@@ -264,7 +283,7 @@ async function checkDriverAvailability(
 /**
  * Generate natural language response about availability
  */
-function generateAvailabilityResponse(drivers: any[], intent: any, query: string) {
+function generateAvailabilityResponse(drivers: DriverAvailability[], intent: any, query: string): AvailabilityResponse {
   if (drivers.length === 0) {
     return {
       text: {
@@ -302,7 +321,7 @@ function generateAvailabilityResponse(drivers: any[], intent: any, query: string
       hy: `Գտնվել է ${availableDrivers.length} ազատ վարորդ:`,
     },
     type: "available",
-    drivers: availableDrivers.map((d) => ({
+    availableDrivers: availableDrivers.map((d) => ({
       driverId: d._id,
       driverName: d.userName,
       vehicle: `${d.vehicleInfo.model} (${d.vehicleInfo.plateNumber})`,
@@ -315,7 +334,7 @@ function generateAvailabilityResponse(drivers: any[], intent: any, query: string
 /**
  * Generate AI summary for driver schedule
  */
-function generateScheduleSummary(schedules: any[], hasFullAccess: boolean) {
+function generateScheduleSummary(schedules: Doc<"driverSchedules">[], hasFullAccess: boolean) {
   const totalHours = schedules.reduce((sum, s) => {
     return sum + (s.endTime - s.startTime) / (1000 * 60 * 60);
   }, 0);

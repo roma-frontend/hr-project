@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 
@@ -13,6 +14,7 @@ interface LeavesTrendChartProps {
 }
 
 export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
+  const { t } = useTranslation();
   // Generate last 6 months
   const now = new Date();
   const months = eachMonthOfInterval({
@@ -24,7 +26,7 @@ export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
   const data = months.map(month => {
     const monthStart = startOfMonth(month);
     const monthEnd = endOfMonth(month);
-    
+
     const monthLeaves = leaves.filter(leave => {
       const leaveStart = new Date(leave.startDate);
       const leaveEnd = new Date(leave.endDate);
@@ -51,17 +53,17 @@ export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
   return (
     <div className="bg-[var(--background)] rounded-2xl p-6 shadow-lg border border-[var(--border)]">
       <h3 className="text-xl font-bold mb-4 text-[var(--text-primary)]">
-        📈 Leave Requests Trend
+        📈 {t('leaveRequestsTrend.title')}
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)]" opacity={0.3} />
-          <XAxis 
-            dataKey="month" 
+          <XAxis
+            dataKey="month"
             className="fill-[var(--text-muted)]"
             style={{ fontSize: '12px' }}
           />
-          <YAxis 
+          <YAxis
             className="fill-[var(--text-muted)]"
             style={{ fontSize: '12px' }}
           />
@@ -76,26 +78,26 @@ export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
             labelStyle={{ color: 'var(--text-primary)' }}
           />
           <Legend wrapperStyle={{ color: 'var(--text-primary)' }} />
-          <Line 
-            type="monotone" 
-            dataKey="approved" 
-            stroke="#10B981" 
+          <Line
+            type="monotone"
+            dataKey="approved"
+            stroke="#10B981"
             strokeWidth={2}
-            name="Approved"
+            name={t('leaveRequestsTrend.approved')}
           />
-          <Line 
-            type="monotone" 
-            dataKey="pending" 
-            stroke="#F59E0B" 
+          <Line
+            type="monotone"
+            dataKey="pending"
+            stroke="#F59E0B"
             strokeWidth={2}
-            name="Pending"
+            name={t('leaveRequestsTrend.pending')}
           />
-          <Line 
-            type="monotone" 
-            dataKey="rejected" 
-            stroke="#EF4444" 
+          <Line
+            type="monotone"
+            dataKey="rejected"
+            stroke="#EF4444"
             strokeWidth={2}
-            name="Rejected"
+            name={t('leaveRequestsTrend.rejected')}
           />
         </LineChart>
       </ResponsiveContainer>

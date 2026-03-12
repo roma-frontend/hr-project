@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next';
 
 const metricKeys = [
   { icon: Users,      value: '10,000+', labelKey: 'socialProof.activeUsers',    color: '#2563eb' },
-  { icon: Award,      value: '4.9/5',   labelKey: 'socialProof.customerRating', color: '#93c5fd' },
+  { icon: Award,      value: '4.9/5',   labelKey: 'socialProof.customerRating', color: '#60a5fa' },
   { icon: TrendingUp, value: '99.9%',   labelKey: 'socialProof.uptime',         color: '#60a5fa' },
-  { icon: Globe,      value: '50+',     labelKey: 'socialProof.countries',      color: '#94a3b8' },
+  { icon: Globe,      value: '50+',     labelKey: 'socialProof.countries',      color: '#2563eb' },
 ];
 
 function MetricItem({ icon: Icon, value, labelKey, color, delay }: typeof metricKeys[0] & { delay: number }) {
@@ -43,7 +43,7 @@ function MetricItem({ icon: Icon, value, labelKey, color, delay }: typeof metric
       </div>
       <div>
         <div className="text-2xl md:text-3xl font-bold mb-1" style={{ color: 'var(--landing-text-primary)' }}>{value}</div>
-        <div className="text-sm" style={{ color: 'var(--landing-text-muted)', opacity: 0.7 }}>{t(labelKey)}</div>
+        <div className="text-sm" style={{ color: 'var(--landing-text-muted)', opacity: 1 }}>{t(labelKey)}</div>
       </div>
     </div>
   );

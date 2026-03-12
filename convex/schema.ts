@@ -983,7 +983,11 @@ export default defineSchema({
       color: v.optional(v.string()),
       year: v.optional(v.number()),
     }),
+    // Availability status
     isAvailable: v.boolean(),           // currently available for bookings
+    isOnShift: v.optional(v.boolean()), // currently on shift (real-time status)
+    lastStatusUpdateAt: v.optional(v.number()), // when status was last updated
+    // Working hours
     workingHours: v.object({
       startTime: v.string(),            // "09:00"
       endTime: v.string(),              // "18:00"
@@ -991,14 +995,75 @@ export default defineSchema({
     }),
     maxTripsPerDay: v.number(),         // maximum trips per day
     currentTripsToday: v.number(),      // trips completed today
+    // Performance metrics
     rating: v.number(),                 // average rating (1-5)
     totalTrips: v.number(),             // lifetime trips
+    // KPI tracking
+    kpiMetrics: v.optional(v.object({
+      onTimeRate: v.number(),           // % on-time performance
+      customerSatisfaction: v.number(), // avg customer rating
+      tripsPerShift: v.number(),        // avg trips per shift
+      completionRate: v.number(),       // % trips completed
+    })),
+    // Shift management
+    currentShiftStart: v.optional(v.number()), // when current shift started
+    currentShiftEnd: v.optional(v.number()),   // when current shift ends
+    overtimeHours: v.optional(v.number()),     // overtime hours this week
+    // Vehicle maintenance
+    lastMaintenanceDate: v.optional(v.number()),
+    nextMaintenanceDue: v.optional(v.number()),
+    vehicleMileage: v.optional(v.number()),
+    inspectionStatus: v.optional(v.union(
+      v.literal("passed"),
+      v.literal("failed"),
+      v.literal("overdue"),
+    )),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_org", ["organizationId"])
     .index("by_user", ["userId"])
-    .index("by_org_available", ["organizationId", "isAvailable"]),
+    .index("by_org_available", ["organizationId", "isAvailable"])
+    .index("by_on_shift", ["isOnShift"]),
+
+  // ── DRIVER SHIFT MANAGEMENT ────────────────────────────────────────────────
+  // Track driver shift sessions (start/end times, duration, breaks)
+  driverShifts: defineTable({
+    organizationId: v.id("organizations"),
+    driverId: v.id("drivers"),
+    userId: v.id("users"),              // the driver's user ID
+    startTime: v.number(),              // when shift started
+    endTime: v.optional(v.number()),    // when shift ended (null if active)
+    scheduledStartTime: v.optional(v.number()), // planned start time
+    scheduledEndTime: v.optional(v.number()),   // planned end time
+    status: v.union(
+      v.literal("active"),              // currently on shift
+      v.literal("completed"),           // shift ended normally
+      v.literal("paused"),              // on break
+      v.literal("overtime"),            // working beyond scheduled hours
+    ),
+    // Time tracking
+    totalHours: v.optional(v.number()), // total hours worked
+    breakTime: v.optional(v.number()),  // total break time in minutes
+    overtimeHours: v.optional(v.number()), // overtime hours
+    // Trip statistics for this shift
+    tripsCompleted: v.number(),         // trips completed in this shift
+    totalDistance: v.optional(v.number()), // total km driven
+    totalDuration: v.optional(v.number()),  // total driving time
+    // Performance metrics
+    onTimePerformance: v.optional(v.number()), // % on-time trips
+    averageRating: v.optional(v.number()),     // avg rating for this shift
+    // Notes
+    driverNotes: v.optional(v.string()), // driver's notes for the shift
+    supervisorNotes: v.optional(v.string()), // supervisor notes
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_driver", ["driverId"])
+    .index("by_org", ["organizationId"])
+    .index("by_driver_status", ["driverId", "status"])
+    .index("by_org_status", ["organizationId", "status"])
+    .index("by_start_time", ["startTime"]),
 
   // ── DRIVER SCHEDULE ────────────────────────────────────────────────────────
   // Driver's schedule/availability (blocked times, existing trips)
@@ -1094,15 +1159,42 @@ export default defineSchema({
         lng: v.number(),
       })),
     }),
+    // Trip priority (for corporate prioritization)
+    priority: v.optional(v.union(
+      v.literal("P0"),  // CEO/Board - immediate
+      v.literal("P1"),  // Client-facing - urgent
+      v.literal("P2"),  // Internal meetings - standard
+      v.literal("P3"),  // Personal/non-urgent - lowest
+    )),
+    // Business justification (compliance)
+    businessJustification: v.optional(v.string()), // Цель поездки
+    tripCategory: v.optional(v.union(
+      v.literal("client_meeting"),
+      v.literal("airport"),
+      v.literal("office_transfer"),
+      v.literal("emergency"),
+      v.literal("team_event"),
+      v.literal("personal"),
+    )),
+    costCenter: v.optional(v.string()), // Для бухгалтерии
+    // Manager approval workflow
+    requiresApproval: v.optional(v.boolean()),
+    approvedBy: v.optional(v.id("users")), // manager who approved
+    approvedAt: v.optional(v.number()),
+    // Status tracking
     status: v.union(
       v.literal("pending"),             // waiting for driver approval
       v.literal("approved"),            // driver accepted
       v.literal("declined"),            // driver declined
       v.literal("cancelled"),           // requester cancelled
+      v.literal("completed"),           // trip completed
     ),
     declineReason: v.optional(v.string()), // e.g., "Already booked", "Not available"
     reviewedAt: v.optional(v.number()),
     passengerRated: v.optional(v.boolean()), // whether passenger has rated this trip
+    cancelledAt: v.optional(v.number()), // when the request was cancelled
+    cancelledBy: v.optional(v.id("users")), // who cancelled (requester or admin)
+    cancellationReason: v.optional(v.string()), // reason for cancellation
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -1110,7 +1202,79 @@ export default defineSchema({
     .index("by_requester", ["requesterId"])
     .index("by_driver", ["driverId"])
     .index("by_status", ["status"])
-    .index("by_org_status", ["organizationId", "status"]),
+    .index("by_org_status", ["organizationId", "status"])
+    .index("by_priority", ["priority"])
+    .index("by_requires_approval", ["requiresApproval"]),
+
+  // ── COMPANY EVENTS / MEETINGS ─────────────────────────────────────────────
+  // Corporate events that require attendance from specific departments
+  companyEvents: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),                   // e.g., "Annual IT Conference"
+    description: v.optional(v.string()),
+    startDate: v.number(),              // timestamp
+    endDate: v.number(),                // timestamp
+    isAllDay: v.optional(v.boolean()),
+    // Required departments for attendance
+    requiredDepartments: v.array(v.string()), // ["IT", "Finance", "Marketing"]
+    // Optional: specific employees required
+    requiredEmployeeIds: v.optional(v.array(v.id("users"))),
+    // Event type
+    eventType: v.union(
+      v.literal("meeting"),
+      v.literal("conference"),
+      v.literal("training"),
+      v.literal("team_building"),
+      v.literal("holiday"),
+      v.literal("deadline"),
+      v.literal("other"),
+    ),
+    // Priority level
+    priority: v.optional(v.union(
+      v.literal("high"),                // Critical attendance required
+      v.literal("medium"),              // Recommended attendance
+      v.literal("low"),                 // Optional
+    )),
+    // Created by
+    createdBy: v.id("users"),
+    // Notifications
+    notifyDaysBefore: v.optional(v.number()), // remind N days before
+    notifiedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_org", ["organizationId"])
+    .index("by_date", ["startDate"])
+    .index("by_org_date", ["organizationId", "startDate"])
+    .index("by_priority", ["priority"]),
+
+  // ── LEAVE CONFLICT ALERTS ──────────────────────────────────────────────────
+  // Track leave requests that conflict with company events
+  leaveConflictAlerts: defineTable({
+    organizationId: v.id("organizations"),
+    leaveRequestId: v.id("leaveRequests"),
+    eventId: v.id("companyEvents"),
+    userId: v.id("users"),              // employee who requested leave
+    department: v.string(),             // employee's department
+    conflictType: v.union(
+      v.literal("required_department"), // User's dept required at event
+      v.literal("required_employee"),   // User specifically required
+    ),
+    severity: v.union(
+      v.literal("high"),                // Required attendee
+      v.literal("medium"),              // Department match
+      v.literal("low"),                 // Optional event
+    ),
+    isReviewed: v.boolean(),            // Admin has reviewed
+    reviewNotes: v.optional(v.string()),
+    resolvedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_org", ["organizationId"])
+    .index("by_leave_request", ["leaveRequestId"])
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"])
+    .index("by_is_reviewed", ["isReviewed"]),
 
   // ── CALENDAR ACCESS PERMISSIONS ───────────────────────────────────────────
   // Who can see whose calendar (driver calendar visibility)

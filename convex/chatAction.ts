@@ -101,10 +101,12 @@ ${myLeaves.slice(0, 15).map(l =>
 
       // All users get team calendar (who else is on leave)
       const requesterId = userProfile?._id ?? userId;
-      const allLeaves = requesterId 
+      const organizationId = userProfile?.organizationId;
+      // If requesterId is not available, use organizationId directly
+      const allLeaves = requesterId
         ? await ctx.runQuery(api.leaves.getAllLeaves, { requesterId })
-        : [];
-      const allUsers = requesterId 
+        : (organizationId ? await ctx.runQuery(api.leaves.getAllLeaves, { organizationId }) : []);
+      const allUsers = requesterId
         ? await ctx.runQuery(api.users.getAllUsers, { requesterId })
         : [];
 

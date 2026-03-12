@@ -247,6 +247,7 @@ export const login = mutation({
     }
 
     // Verify org is still active
+    if (!user.organizationId) throw new Error("User has no organization");
     const org = await ctx.db.get(user.organizationId);
     if (!org || !org.isActive) {
       throw new Error("Your organization account is inactive. Contact support.");
@@ -290,6 +291,7 @@ export const verifySession = query({
     const user = users.find((u) => u.sessionToken === sessionToken);
     if (!user) return null;
     if (user.sessionExpiry && user.sessionExpiry < Date.now()) return null;
+    if (!user.organizationId) return null;
 
     const org = await ctx.db.get(user.organizationId);
 
@@ -312,6 +314,7 @@ export const getSession = query({
     const user = users.find((u) => u.sessionToken === sessionToken);
     if (!user) return null;
     if (user.sessionExpiry && user.sessionExpiry < Date.now()) return null;
+    if (!user.organizationId) return null;
 
     const org = await ctx.db.get(user.organizationId);
 
@@ -494,6 +497,7 @@ export const loginWebauthn = mutation({
     if (!user) throw new Error("User not found");
     if (!user.isActive) throw new Error("Account is deactivated");
     if (!user.isApproved) throw new Error("Account pending approval");
+    if (!user.organizationId) throw new Error("User has no organization");
 
     const org = await ctx.db.get(user.organizationId);
     if (!org || !org.isActive) throw new Error("Organization is inactive");
@@ -544,6 +548,7 @@ export const googleOAuthLogin = mutation({
       // Existing user — validate
       if (!user.isActive) throw new Error("Your account has been deactivated. Contact your administrator.");
       if (!user.isApproved) throw new Error("Your account is pending approval from your organization administrator.");
+      if (!user.organizationId) throw new Error("User has no organization");
 
       const org = await ctx.db.get(user.organizationId);
       if (!org || !org.isActive) throw new Error("Your organization account is inactive. Contact support.");
@@ -566,10 +571,10 @@ export const googleOAuthLogin = mutation({
         name: user.name,
         email: user.email,
         role: user.role,
-        organizationId: user.organizationId,
-        organizationName: org.name,
-        organizationSlug: org.slug,
-        organizationPlan: org.plan,
+        organizationId: user.organizationId!,
+        organizationName: org!.name,
+        organizationSlug: org!.slug,
+        organizationPlan: org!.plan,
         department: user.department,
         position: user.position,
         employeeType: user.employeeType,

@@ -14,6 +14,7 @@ import { MonitoringProvider } from '@/components/providers/MonitoringProvider'
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/components/I18nProvider";
+import { StatusUpdateProvider } from "@/context/StatusUpdateContext";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import { MaintenanceAutoLogout } from "@/components/MaintenanceAutoLogout";
 
@@ -255,33 +256,35 @@ export default function RootLayout({
         <MonitoringProvider>
           <SessionProvider>
             <I18nProvider>
-              <ConvexClientProvider>
-                <AuthSyncProvider>
-                  <MaintenanceAutoLogout />
-                  <ThemeProvider
-                    attribute="class"
-                    defaultTheme="system"
-                    enableSystem={true}
-                    disableTransitionOnChange
-                  >
-                    {children}
-                    <Toaster
-                      position="top-right"
-                      closeButton
-                      expand={false}
-                      duration={4000}
-                      toastOptions={{
-                        style: {
-                          background: 'var(--card)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--foreground)',
-                        },
-                        className: 'sonner-toast',
-                      }}
-                    />
-                  </ThemeProvider>
-                </AuthSyncProvider>
-              </ConvexClientProvider>
+              <StatusUpdateProvider>
+                <ConvexClientProvider>
+                  <AuthSyncProvider>
+                    <MaintenanceAutoLogout />
+                    <ThemeProvider
+                      attribute="class"
+                      defaultTheme="system"
+                      enableSystem={true}
+                      disableTransitionOnChange
+                    >
+                      {children}
+                      <Toaster
+                        position="top-right"
+                        closeButton
+                        expand={false}
+                        duration={4000}
+                        toastOptions={{
+                          style: {
+                            background: 'var(--card)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--foreground)',
+                          },
+                          className: 'sonner-toast',
+                        }}
+                      />
+                    </ThemeProvider>
+                  </AuthSyncProvider>
+                </ConvexClientProvider>
+              </StatusUpdateProvider>
             </I18nProvider>
           </SessionProvider>
         </MonitoringProvider>

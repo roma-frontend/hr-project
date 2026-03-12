@@ -700,6 +700,7 @@ export const validateInviteToken = query({
       return { valid: false, reason: "Token expired" };
     }
 
+    if (!invite.organizationId) return { valid: false, reason: "Invite has no organization" };
     const org = await ctx.db.get(invite.organizationId);
     if (!org || !org.isActive) return { valid: false, reason: "Organization inactive" };
 
@@ -778,9 +779,9 @@ export const removeMemberFromOrganization = mutation({
       throw new Error("Cannot remove the superadmin from any organization");
     }
 
-    // Remove from organization: set organizationId to null and deactivate
+    // Remove from organization: set organizationId to undefined and deactivate
     await ctx.db.patch(userId, {
-      organizationId: null,
+      organizationId: undefined,
       isActive: false,
     });
 

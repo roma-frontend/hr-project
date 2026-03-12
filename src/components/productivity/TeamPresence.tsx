@@ -9,11 +9,11 @@ import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const PRESENCE_CONFIG = {
-  available: { dot: "bg-green-500", label: "Available" },
-  in_meeting: { dot: "bg-yellow-500", label: "In Meeting" },
-  in_call: { dot: "bg-blue-500", label: "In Call" },
-  out_of_office: { dot: "bg-gray-500", label: "Out of Office" },
-  busy: { dot: "bg-red-500", label: "Busy" },
+  available: { dot: "bg-green-500", labelKey: "quickStats.available" },
+  in_meeting: { dot: "bg-yellow-500", labelKey: "quickStats.inMeeting" },
+  in_call: { dot: "bg-blue-500", labelKey: "quickStats.inCall" },
+  out_of_office: { dot: "bg-gray-500", labelKey: "quickStats.outOfOffice" },
+  busy: { dot: "bg-red-500", labelKey: "quickStats.busy" },
 } as const;
 
 export function TeamPresence() {
@@ -41,9 +41,9 @@ export function TeamPresence() {
     <div className="px-2 py-3">
       <div className="mb-3 px-2 flex items-center justify-between">
         <div>
-          <h3 className="text-xs font-semibold text-[var(--text-muted)]">Team Online</h3>
+          <h3 className="text-xs font-semibold text-[var(--text-muted)]">{t('quickStats.teamOnline')}</h3>
           <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
-            {onlineCount} {onlineCount === 1 ? "member" : "members"} active
+            {onlineCount} {onlineCount === 1 ? t('quickStats.member') : t('quickStats.members')} active
           </p>
         </div>
         <Users className="w-4 h-4 text-[var(--text-muted)]" />
@@ -51,7 +51,7 @@ export function TeamPresence() {
 
       {teamMembers.length === 0 ? (
         <div className="text-center py-4">
-          <p className="text-xs text-[var(--text-muted)]">No team members online</p>
+          <p className="text-xs text-[var(--text-muted)]">{t('quickStats.noTeamMembersOnline')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -92,7 +92,7 @@ export function TeamPresence() {
                 </div>
 
                 <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${presenceConfig.dot} bg-opacity-20`}>
-                  {presenceConfig.label}
+                  {t(presenceConfig.labelKey)}
                 </span>
               </div>
             );

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   CalendarDays,
+  Calendar,
   Users,
   FileText,
   Settings,
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/join-requests", labelKey: "nav.joinRequests", icon: UserCheck, roles: ["superadmin", "admin"] },
   { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/reports", labelKey: "nav.reports", icon: FileText, roles: ["superadmin", "admin", "supervisor"] },
+  { href: "/admin/events", labelKey: "nav.events", icon: Calendar, roles: ["superadmin", "admin"] },
   { href: "/tasks", labelKey: "nav.tasks", icon: CheckSquare, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/chat", labelKey: "nav.chat", icon: MessageCircle, roles: ["superadmin", "admin", "supervisor", "employee", "driver"], badge: "CHAT" },
   { href: "/approvals", labelKey: "nav.approvals", icon: UserCheck, roles: ["superadmin", "admin"] },

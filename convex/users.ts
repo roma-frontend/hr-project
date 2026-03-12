@@ -1,26 +1,27 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Id, Doc } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
 
 // ── Helper: Get user ID from email or userId ────────────────────────────────
-async function getUserIdentityOrEmail(
-  ctx: any,
+async function getUserIdIdentityOrEmail(
+  ctx: QueryCtx,
   email?: string,
   userId?: Id<"users">
 ): Promise<Id<"users"> | null> {
   // If userId provided, return it
   if (userId) return userId;
-  
+
   // Try to get identity from Convex auth
   const identity = await ctx.auth.getUserIdentity();
   if (identity?.email) {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email.toLowerCase()))
+      .withIndex("by_email", (q) => q.eq("email", identity.email!.toLowerCase()))
       .first();
     return user?._id || null;
   }
-  
+
   // Try email parameter
   if (email) {
     const user = await ctx.db
@@ -29,7 +30,7 @@ async function getUserIdentityOrEmail(
       .first();
     return user?._id || null;
   }
-  
+
   return null;
 }
 
@@ -37,8 +38,8 @@ async function getUserIdentityOrEmail(
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 /** Verify caller has admin/superadmin role and return their organizationId */
-async function requireAdmin(ctx: any, adminId: string) {
-  const admin = await ctx.db.get(adminId) as { _id: any; role: string; organizationId: string; email: string; name: string } | null;
+async function requireAdmin(ctx: QueryCtx, adminId: Id<"users">) {
+  const admin = await ctx.db.get(adminId) as Doc<"users"> | null;
   if (!admin) throw new Error("Admin not found");
   if (admin.role !== "admin" && admin.role !== "superadmin") {
     throw new Error("Only org admins can perform this action");
@@ -174,7 +175,7 @@ export const createOAuthUser = mutation({
 
     if (existing) {
       console.log("[createOAuthUser] ✅ User exists, updating avatar and name if needed");
-      const updates: any = {};
+      const updates: Partial<Pick<typeof existing, 'avatarUrl' | 'name'>> = {};
 
       // Update avatar if provided
       if (avatarUrl && !existing.avatarUrl) {
@@ -1110,8 +1111,8 @@ export const unblockFaceId = mutation({
 
     // Verify same organization (unless superadmin)
     if (
-      admin.organizationId !== user.organizationId &&
-      admin.email.toLowerCase() !== "romangulanyan@gmail.com"
+      (admin as Doc<"users">).organizationId !== user.organizationId &&
+      (admin as Doc<"users">).email.toLowerCase() !== "romangulanyan@gmail.com"
     ) {
       throw new Error("Access denied: cannot unblock users from another organization");
     }
@@ -1125,10 +1126,10 @@ export const unblockFaceId = mutation({
     // Create audit log
     await ctx.db.insert("auditLogs", {
       organizationId: user.organizationId,
-      userId: admin._id,
+      userId: admin._id as Id<"users">,
       action: "face_id_unblocked",
       target: user.email,
-      details: `Face ID unblocked by ${admin.name} for ${user.name}`,
+      details: `Face ID unblocked by ${(admin as Doc<"users">).name} for ${user.name}`,
       createdAt: Date.now(),
     });
 
@@ -1138,7 +1139,7 @@ export const unblockFaceId = mutation({
       userId,
       type: "system",
       title: "✅ Face ID Unlocked",
-      message: `Your Face ID has been unlocked by ${admin.name}. You can try again.`,
+      message: `Your Face ID has been unlocked by ${(admin as Doc<"users">).name}. You can try again.`,
       isRead: false,
       createdAt: Date.now(),
     });
@@ -1251,8 +1252,8 @@ export const suspendUser = mutation({
 
     // Verify same organization (unless superadmin)
     if (
-      admin.organizationId !== user.organizationId &&
-      admin.email.toLowerCase() !== SUPERADMIN_EMAIL
+      (admin as Doc<"users">).organizationId !== user.organizationId &&
+      (admin as Doc<"users">).email.toLowerCase() !== SUPERADMIN_EMAIL
     ) {
       throw new Error("Access denied: cannot suspend users from another organization");
     }
@@ -1310,8 +1311,8 @@ export const unsuspendUser = mutation({
 
     // Verify same organization (unless superadmin)
     if (
-      admin.organizationId !== user.organizationId &&
-      admin.email.toLowerCase() !== SUPERADMIN_EMAIL
+      (admin as Doc<"users">).organizationId !== user.organizationId &&
+      (admin as Doc<"users">).email.toLowerCase() !== SUPERADMIN_EMAIL
     ) {
       throw new Error("Access denied: cannot unsuspend users from another organization");
     }
@@ -1330,7 +1331,7 @@ export const unsuspendUser = mutation({
       userId: adminId,
       action: "user_unsuspended",
       target: user.email,
-      details: `User unsuspended by ${admin.name}`,
+      details: `User unsuspended by ${(admin as Doc<"users">).name}`,
       createdAt: Date.now(),
     });
 
@@ -1340,7 +1341,7 @@ export const unsuspendUser = mutation({
       userId,
       type: "system",
       title: "✅ Account Unsuspended",
-      message: `Your account has been reactivated by ${admin.name}. You can now log in again.`,
+      message: `Your account has been reactivated by ${(admin as Doc<"users">).name}. You can now log in again.`,
       isRead: false,
       createdAt: Date.now(),
     });

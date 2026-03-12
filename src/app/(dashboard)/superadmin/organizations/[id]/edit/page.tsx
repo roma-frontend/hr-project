@@ -304,11 +304,11 @@ export default function EditOrganizationPage() {
           <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30">
             <div>
               <p className="text-xs text-muted-foreground">{t('organization.totalEmployees')}</p>
-              <p className="text-lg font-semibold">{organization.totalEmployees || 0}</p>
+              <p className="text-lg font-semibold">{(organization as any).totalEmployees || organization.employeeCount || 0}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t('organization.activeEmployees')}</p>
-              <p className="text-lg font-semibold text-green-600">{organization.activeEmployees || 0}</p>
+              <p className="text-lg font-semibold text-green-600">{(organization as any).activeEmployees || organization.employeeCount || 0}</p>
             </div>
           </div>
 

@@ -318,14 +318,14 @@ export function CalendarClient() {
 
   // Determine which query to use based on selectedOrgId
   const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
-  const queryParams = shouldUseOrgQuery 
+  const queryParams = shouldUseOrgQuery
     ? { organizationId: selectedOrgId as Id<"organizations"> }
-    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : null);
+    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : "skip" as const);
 
   // Use organization-specific query if org selected, otherwise use default
   const leavesData = useQuery(
     shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
-    mounted && user?.id
+    mounted && user?.id && queryParams !== "skip"
       ? queryParams
       : "skip"
   );

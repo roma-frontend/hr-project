@@ -11,12 +11,12 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,13 +49,13 @@ import { Switch } from "@/components/ui/switch";
 import {
   Car,
   Calendar,
+  AlertCircle,
   Clock,
   MapPin,
   Users,
   Star,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Plus,
   Search,
   MessageSquare,
@@ -74,6 +75,7 @@ import {
   Navigation,
   History,
   ArrowRightLeft,
+  ArrowRight,
   Filter,
   SortAsc,
   StickyNote,
@@ -89,7 +91,10 @@ import { DriverStatsCard } from "@/components/drivers/DriverStatsCard";
 import { DriverCalendar } from "@/components/drivers/DriverCalendar";
 import { MessageTemplates } from "@/components/drivers/MessageTemplates";
 import { DriverMap } from "@/components/drivers/DriverMap";
+import { CorporateTripFields } from "@/components/drivers/CorporateTripFields";
 import { PlaceAutocomplete } from "@/components/drivers/PlaceAutocomplete";
+import { DriverShiftControls } from "@/components/drivers/DriverShiftControls";
+import { ShiftHistory } from "@/components/drivers/ShiftHistory";
 import { CallModal } from "@/components/chat/CallModal";
 import type { ActiveCall } from "@/components/chat/ChatClient";
 
@@ -141,7 +146,7 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
   const markArrived = useMutation(api.drivers.markDriverArrived);
   const markPickedUp = useMutation(api.drivers.markPassengerPickedUp);
   const updateETAMutation = useMutation(api.drivers.updateETA);
-  
+
   // Driver notes state
   const [notesScheduleId, setNotesScheduleId] = useState<string | null>(null);
   const [notesText, setNotesText] = useState("");
@@ -158,9 +163,9 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
         approved,
         declineReason: approved ? undefined : "Declined by driver",
       });
-      toast.success(approved ? "Request approved!" : "Request declined");
+      toast.success(approved ? t("driver.requestApprovedMsg", "Request approved!") : t("driver.requestDeclinedMsg", "Request declined!"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to respond");
+      toast.error(error.message || t("driver.failedToRespond", "Failed to respond"));
     }
   };
 
@@ -168,9 +173,9 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
     if (!driver) return;
     try {
       await updateAvailability({ driverId: driver._id, isAvailable: checked });
-      toast.success(checked ? "You are now available" : "You are now unavailable");
+      toast.success(checked ? t("driver.youAreNowAvailable", "You are now available") : t("driver.youAreNowUnavailable", "You are now unavailable"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to update availability");
+      toast.error(error.message || t("driver.failedToUpdateAvailability", "Failed to update availability"));
     }
   };
 
@@ -256,6 +261,13 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
           </CardContent>
         </Card>
       </div>
+
+      {/* Shift Management */}
+      <DriverShiftControls
+        driverId={driver._id}
+        userId={userId}
+        organizationId={organizationId}
+      />
 
       {/* Pending Requests */}
       <Card className="mb-8">
@@ -358,11 +370,10 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                 .sort((a, b) => a.startTime - b.startTime)
                 .map((schedule) => (
                   <div key={schedule._id} className="flex gap-3 p-3 sm:p-4 border rounded-lg">
-                    <div className={`w-2 shrink-0 rounded-full ${
-                      schedule.status === "scheduled" ? "bg-blue-500" :
+                    <div className={`w-2 shrink-0 rounded-full ${schedule.status === "scheduled" ? "bg-blue-500" :
                       schedule.status === "completed" ? "bg-green-500" :
-                      "bg-gray-400"
-                    }`} />
+                        "bg-gray-400"
+                      }`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -417,12 +428,12 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                               onClick={async () => {
                                 try {
                                   await markArrived({ scheduleId: schedule._id, userId });
-                                  toast.success("Marked as arrived!");
+                                  toast.success(t("driver.markedAsArrived", "Marked as arrived!"));
                                 } catch (e: any) { toast.error(e.message); }
                               }}
                             >
                               <MapPinned className="w-3 h-3" />
-                              I've Arrived
+                              {t("driver.arrived", "I've Arrived")}
                             </Button>
                           )}
                           {schedule.arrivedAt && !schedule.passengerPickedUpAt && (
@@ -438,12 +449,12 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                                 onClick={async () => {
                                   try {
                                     await markPickedUp({ scheduleId: schedule._id, userId });
-                                    toast.success("Passenger picked up!");
+                                    toast.success(t("driver.passengerPickedUp", "Passenger picked up!"));
                                   } catch (e: any) { toast.error(e.message); }
                                 }}
                               >
                                 <Users className="w-3 h-3" />
-                                Passenger In
+                                {t("driver.passengerIn", "Passenger In")}
                               </Button>
                             </>
                           )}
@@ -469,11 +480,11 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                                         userId,
                                         etaMinutes: parseInt(etaValue) || 10,
                                       });
-                                      toast.success("ETA sent!");
+                                      toast.success(t("driver.etaSent", "ETA sent!"));
                                       setEtaScheduleId(null);
                                     } catch (e: any) { toast.error(e.message); }
                                   }}>
-                                    Send
+                                    {t("driver.send", "Send")}
                                   </Button>
                                   <Button size="sm" variant="ghost" className="h-7 px-1 text-xs" onClick={() => setEtaScheduleId(null)}>✕</Button>
                                 </div>
@@ -485,7 +496,7 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                                   onClick={() => { setEtaScheduleId(schedule._id); setEtaValue("10"); }}
                                 >
                                   <Navigation className="w-3 h-3" />
-                                  Set ETA
+                                  {t("driver.setETA", "Set ETA")}
                                 </Button>
                               )}
                             </>
@@ -503,11 +514,11 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                               <Button size="sm" className="h-7 px-2 text-xs" onClick={async () => {
                                 try {
                                   await addDriverNotes({ scheduleId: schedule._id, userId, notes: notesText });
-                                  toast.success("Note saved!");
+                                  toast.success(t("driver.noteSaved", "Note saved!"));
                                   setNotesScheduleId(null);
                                 } catch (e: any) { toast.error(e.message); }
                               }}>
-                                Save
+                                {t("common.save", "Save")}
                               </Button>
                               <Button size="sm" variant="ghost" className="h-7 px-1 text-xs" onClick={() => setNotesScheduleId(null)}>✕</Button>
                             </div>
@@ -519,7 +530,7 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
                               onClick={() => { setNotesScheduleId(schedule._id); setNotesText(schedule.driverNotes || ""); }}
                             >
                               <StickyNote className="w-3 h-3" />
-                              {schedule.driverNotes ? "Edit Note" : "Add Note"}
+                              {schedule.driverNotes ? t("driver.editNote", "Edit Note") : t("driver.addNote", "Add Note")}
                             </Button>
                           )}
                           {schedule.driverNotes && notesScheduleId !== schedule._id && (
@@ -559,6 +570,11 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
           <DriverStatsCard driverId={driver._id} organizationId={organizationId} />
         </CardContent>
       </Card>
+
+      {/* Shift History */}
+      <Card className="mt-8">
+        <ShiftHistory driverId={driver._id} />
+      </Card>
     </div>
   );
 }
@@ -575,6 +591,7 @@ const NAVIGATOR_LINKS = [
 ];
 
 function NavigatorDropdown({ label, coords }: { label: string; coords: { lat: number; lng: number } }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -594,7 +611,7 @@ function NavigatorDropdown({ label, coords }: { label: string; coords: { lat: nu
               className="flex items-center gap-2"
             >
               <span>{nav.icon}</span>
-              <span>{nav.name}</span>
+              <span>{t(`navigator.${nav.id}`, nav.name)}</span>
             </a>
           </DropdownMenuItem>
         ))}
@@ -621,6 +638,7 @@ function InAppCallButton({
   organizationId: Id<"organizations">;
   label?: string;
 }) {
+  const { t } = useTranslation();
   const [activeCall, setActiveCall] = React.useState<ActiveCall | null>(null);
   const [calling, setCalling] = React.useState(false);
   const getOrCreateDM = useMutation(api.chat.getOrCreateDM);
@@ -666,7 +684,7 @@ function InAppCallButton({
     <>
       <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs" onClick={handleCall} disabled={calling}>
         <PhoneCall className="w-3 h-3" />
-        {label || `Call ${remoteName}`}
+        {label || t("driver.call", "Call") + ` ${remoteName}`}
       </Button>
       {activeCall && (
         <CallModal
@@ -693,17 +711,18 @@ function DriverQuickMessage({
   organizationId: Id<"organizations">;
   tripInfo: { from: string; to: string; purpose: string };
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const getOrCreateDM = useMutation(api.chat.getOrCreateDM);
   const sendChatMessage = useMutation(api.chat.sendMessage);
 
   const DRIVER_TEMPLATES = [
-    { id: "arrived", label: "I've Arrived", message: "Hi! I've arrived at the pickup location. Ready when you are! 🚗" },
-    { id: "delayed", label: "Running Late", message: "Hi! I'm running about 5 minutes late due to traffic. Apologies! ⏰" },
-    { id: "waiting", label: "Waiting", message: "Hi! I'm waiting at the pickup point. Please let me know when you're ready. 👋" },
-    { id: "confirming", label: "Confirming Trip", message: `Hi! Confirming your trip from ${tripInfo.from} to ${tripInfo.to}. See you soon! ✅` },
-    { id: "cant_find", label: "Can't Find Location", message: "Hi! I'm having trouble finding the pickup location. Can you provide more details? 📍" },
-    { id: "completed", label: "Trip Completed", message: "Thank you for choosing our service! Hope you had a great trip. ⭐" },
+    { id: "arrived", label: t("driver.templates.arrived", "I've Arrived"), message: t("driver.templates.arrivedMsg", "Hi! I've arrived at the pickup location. Ready when you are! 🚗") },
+    { id: "delayed", label: t("driver.templates.delayed", "Running Late"), message: t("driver.templates.delayedMsg", "Hi! I'm running about 5 minutes late due to traffic. Apologies! ⏰") },
+    { id: "waiting", label: t("driver.templates.waiting", "Waiting"), message: t("driver.templates.waitingMsg", "Hi! I'm waiting at the pickup point. Please let me know when you're ready. 👋") },
+    { id: "confirming", label: t("driver.templates.confirming", "Confirming Trip"), message: t("driver.templates.confirmingMsg", "Hi! Confirming your trip from {{from}} to {{to}}. See you soon! ✅") },
+    { id: "cant_find", label: t("driver.templates.cantFind", "Can't Find Location"), message: t("driver.templates.cantFindMsg", "Hi! I'm having trouble finding the pickup location. Can you provide more details? 📍") },
+    { id: "completed", label: t("driver.templates.completed", "Trip Completed"), message: t("driver.templates.completedMsg", "Thank you for choosing our service! Hope you had a great trip. ⭐") },
   ];
 
   const handleSend = async (message: string) => {
@@ -734,7 +753,7 @@ function DriverQuickMessage({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs">
           <MessageSquare className="w-3 h-3" />
-          Message
+          {t("driver.message", "Message")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
@@ -764,16 +783,17 @@ function PassengerQuickMessage({
   organizationId: Id<"organizations">;
   tripInfo: { from: string; to: string; purpose: string };
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const getOrCreateDM = useMutation(api.chat.getOrCreateDM);
   const sendChatMessage = useMutation(api.chat.sendMessage);
 
   const PASSENGER_TEMPLATES = [
-    { id: "omw", label: "On My Way", message: "Hi! I'm on my way to the pickup point. Be there shortly! 🚶" },
-    { id: "ready", label: "Ready", message: "Hi! I'm ready at the pickup location. 📍" },
-    { id: "delayed", label: "Running Late", message: "Hi! I'll be about 5 minutes late. Sorry for the wait! ⏰" },
-    { id: "cancel", label: "Need to Cancel", message: "Hi! I need to cancel/reschedule this trip. Sorry for the inconvenience. 🙏" },
-    { id: "thanks", label: "Thank You", message: "Thank you for the ride! Great service! ⭐" },
+    { id: "omw", label: t("driver.templates.passengerOmw", "On My Way"), message: t("driver.templates.passengerOmwMsg", "Hi! I'm on my way to the pickup point. Be there shortly! 🚶") },
+    { id: "ready", label: t("driver.templates.passengerReady", "Ready"), message: t("driver.templates.passengerReadyMsg", "Hi! I'm ready at the pickup location. 📍") },
+    { id: "delayed", label: t("driver.templates.passengerDelayed", "Running Late"), message: t("driver.templates.passengerDelayedMsg", "Hi! I'll be about 5 minutes late. Sorry for the wait! ⏰") },
+    { id: "cancel", label: t("driver.templates.passengerCancel", "Need to Cancel"), message: t("driver.templates.passengerCancelMsg", "Hi! I need to cancel/reschedule this trip. Sorry for the inconvenience. 🙏") },
+    { id: "thanks", label: t("driver.templates.passengerThanks", "Thank You"), message: t("driver.templates.passengerThanksMsg", "Thank you for the ride! Great service! ⭐") },
   ];
 
   const handleSend = async (message: string) => {
@@ -803,7 +823,7 @@ function PassengerQuickMessage({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs">
           <MessageSquare className="w-3 h-3" />
-          Message Driver
+          {t("driver.messageDriver", "Message Driver")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
@@ -868,7 +888,7 @@ function RatingDialog({
       setRating(5);
       setComment("");
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit rating");
+      toast.error(error.message || t("driver.failedToSubmitRating", "Failed to submit rating"));
     } finally {
       setSubmitting(false);
     }
@@ -898,21 +918,20 @@ function RatingDialog({
                 className="p-1 hover:scale-110 transition-transform"
               >
                 <Star
-                  className={`w-8 h-8 ${
-                    star <= rating
-                      ? "fill-yellow-500 text-yellow-500"
-                      : "text-gray-300"
-                  }`}
+                  className={`w-8 h-8 ${star <= rating
+                    ? "fill-yellow-500 text-yellow-500"
+                    : "text-gray-300"
+                    }`}
                 />
               </button>
             ))}
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            {rating === 1 && "Poor"}
-            {rating === 2 && "Fair"}
-            {rating === 3 && "Good"}
-            {rating === 4 && "Very Good"}
-            {rating === 5 && "Excellent"}
+            {rating === 1 && t("driver.poor", "Poor")}
+            {rating === 2 && t("driver.fair", "Fair")}
+            {rating === 3 && t("driver.good", "Good")}
+            {rating === 4 && t("driver.veryGood", "Very Good")}
+            {rating === 5 && t("driver.excellent", "Excellent")}
           </p>
           <div>
             <Label>{t("driver.comment", "Comment")} ({t("optional", "Optional")})</Label>
@@ -976,7 +995,7 @@ function ReassignDriverDialog({
       toast.success(t("driver.reassigned", "Request sent to new driver!"));
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to reassign");
+      toast.error(error.message || t("driver.failedToReassign", "Failed to reassign"));
     } finally {
       setSubmitting(false);
     }
@@ -997,12 +1016,12 @@ function ReassignDriverDialog({
               <SelectValue placeholder={t("driver.selectNewDriver", "Choose another driver")} />
             </SelectTrigger>
             <SelectContent>
-              {otherDrivers.map((driver) => (
-                <SelectItem key={driver._id} value={driver._id}>
+              {otherDrivers.filter(Boolean).map((driver) => (
+                <SelectItem key={driver!._id} value={driver!._id}>
                   <div className="flex items-center gap-2">
-                    <span>{driver.userName}</span>
+                    <span>{driver!.userName}</span>
                     <span className="text-xs text-muted-foreground">
-                      {driver.vehicleInfo.model} · ⭐{driver.rating.toFixed(1)}
+                      {driver!.vehicleInfo.model} · ⭐{driver!.rating.toFixed(1)}
                     </span>
                   </div>
                 </SelectItem>
@@ -1028,9 +1047,9 @@ export default function DriversPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [mounted, setMounted] = React.useState(false);
-  
+
   React.useEffect(() => setMounted(true), []);
-  
+
   // Debug logging
   React.useEffect(() => {
     console.log('[DriversPage] mounted:', mounted);
@@ -1038,9 +1057,30 @@ export default function DriversPage() {
     console.log('[DriversPage] userId:', user?.id);
     console.log('[DriversPage] organizationId:', user?.organizationId);
   }, [mounted, user]);
-  
+
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+
+  // Set default start/end times when modal opens
+  useEffect(() => {
+    if (showRequestModal) {
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+      
+      // Format as datetime-local string (YYYY-MM-DDTHH:mm)
+      const formatDateTimeLocal = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+      
+      setStartTime(formatDateTimeLocal(now));
+      setEndTime(formatDateTimeLocal(oneHourLater));
+    }
+  }, [showRequestModal]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [calendarDriverId, setCalendarDriverId] = useState<Id<"drivers"> | null>(null);
   const [selectedScheduleDetail, setSelectedScheduleDetail] = useState<any>(null);
@@ -1064,6 +1104,13 @@ export default function DriversPage() {
   const [endTime, setEndTime] = useState<string>("");
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
   const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
+  
+  // Corporate features state
+  const [tripPriority, setTripPriority] = useState<"P0" | "P1" | "P2" | "P3">("P2");
+  const [tripCategory, setTripCategory] = useState<"client_meeting" | "airport" | "office_transfer" | "emergency" | "team_event" | "personal">("office_transfer");
+  const [costCenter, setCostCenter] = useState<string>("");
+  const [businessJustification, setBusinessJustification] = useState<string>("");
+  const [requiresApproval, setRequiresApproval] = useState<boolean>(false);
 
   const handleLocationSelect = (location: { lat: number; lng: number; address?: string }, type: "pickup" | "dropoff") => {
     if (type === "pickup") {
@@ -1132,8 +1179,8 @@ export default function DriversPage() {
   // Filter users with role 'driver' who are not yet registered
   const unregisteredDrivers = useMemo(() => {
     if (!allUsers || !availableDrivers) return [];
-    
-    const registeredUserIds = new Set(availableDrivers.map(d => d.userId));
+
+    const registeredUserIds = new Set(availableDrivers.filter(Boolean).map(d => d!.userId));
     return allUsers.filter(u => u.role === "driver" && !registeredUserIds.has(u._id));
   }, [allUsers, availableDrivers]);
 
@@ -1242,19 +1289,27 @@ export default function DriversPage() {
 
   // Handle driver request
   const handleRequestDriver = async () => {
+    console.log('[RequestDriver] handleRequestDriver called', { userId, organizationId, selectedDriver, startTime, endTime });
     if (!userId || !organizationId || !selectedDriver) {
-      toast.error("Please select a driver");
+      toast.error(t("driver.pleaseSelectDriver", "Please select a driver"));
       return;
     }
 
     if (!startTime || !endTime) {
-      toast.error("Please select start and end time");
+      toast.error(t("driver.pleaseSelectStartEnd", "Please select start and end time"));
       return;
     }
 
     try {
+      // Parse datetime-local values correctly
       const start = new Date(startTime).getTime();
       const end = new Date(endTime).getTime();
+
+      // Validate start is before end
+      if (start >= end) {
+        toast.error(t("driver.startBeforeEnd", "Start time must be before end time"));
+        return;
+      }
 
       await requestDriver({
         organizationId,
@@ -1267,6 +1322,12 @@ export default function DriversPage() {
           pickupCoords: pickupCoords ? { lat: pickupCoords.lat, lng: pickupCoords.lng } : undefined,
           dropoffCoords: dropoffCoords ? { lat: dropoffCoords.lat, lng: dropoffCoords.lng } : undefined,
         },
+        // Corporate features
+        priority: tripPriority,
+        tripCategory,
+        costCenter: costCenter || undefined,
+        businessJustification: businessJustification || tripInfo.purpose,
+        requiresApproval,
       });
 
       toast.success(t("driver.requestSubmitted", "Request submitted!"));
@@ -1280,8 +1341,15 @@ export default function DriversPage() {
       });
       setPickupCoords(undefined);
       setDropoffCoords(undefined);
+      // Reset corporate fields
+      setTripPriority("P2");
+      setTripCategory("office_transfer");
+      setCostCenter("");
+      setBusinessJustification("");
+      setRequiresApproval(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to request driver");
+      console.error('[RequestDriver] Error:', error);
+      toast.error(error.message || t("driver.failedToRequestDriver", "Failed to request driver"));
     }
   };
 
@@ -1296,26 +1364,26 @@ export default function DriversPage() {
         driverUserId,
       });
 
-      toast.success(t("driver.calendar.requestSent", "Access request sent!"));
+      toast.success(t("driver.accessRequestSent", "Access request sent!"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to request access");
+      toast.error(error.message || t("driver.failedToRequestAccess", "Failed to request access"));
     }
   };
 
   // Handle driver registration
   const handleRegisterDriver = async () => {
     if (!userId || !organizationId) {
-      toast.error("Please log in");
+      toast.error(t("driver.pleaseLogin", "Please log in"));
       return;
     }
 
     if (!selectedDriverUserId || selectedDriverUserId === "none") {
-      toast.error("Please select a driver to register");
+      toast.error(t("driver.pleaseSelectDriverToRegister", "Please select a driver to register"));
       return;
     }
 
     if (!vehicleInfo.model || !vehicleInfo.plateNumber) {
-      toast.error("Please fill in vehicle model and plate number");
+      toast.error(t("driver.pleaseFillVehicleInfo", "Please fill in vehicle model and plate number"));
       return;
     }
 
@@ -1337,7 +1405,7 @@ export default function DriversPage() {
       });
 
       console.log('[DriverRegistration] Success!');
-      toast.success("Successfully registered as driver!");
+      toast.success(t("driver.successfullyRegistered", "Successfully registered as driver!"));
       setShowRegisterModal(false);
       setSelectedDriverUserId("");
       // Refresh data
@@ -1350,7 +1418,7 @@ export default function DriversPage() {
       });
     } catch (error: any) {
       console.error('[DriverRegistration] Error:', error);
-      toast.error(error.message || "Failed to register as driver");
+      toast.error(error.message || t("driver.failedToRegister", "Failed to register as driver"));
     }
   };
 
@@ -1371,8 +1439,8 @@ export default function DriversPage() {
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
           <h2 className="text-xl font-semibold mb-2">Please log in</h2>
           <p className="text-muted-foreground mb-4">
-            User: {user ? 'Loaded' : 'Not loaded'} | 
-            ID: {userId || 'N/A'} | 
+            User: {user ? 'Loaded' : 'Not loaded'} |
+            ID: {userId || 'N/A'} |
             Org: {organizationId || 'N/A'}
           </p>
           <Button onClick={() => router.push("/login")}>Go to Login</Button>
@@ -1479,12 +1547,12 @@ export default function DriversPage() {
               <Select value={filterSortBy} onValueChange={setFilterSortBy}>
                 <SelectTrigger className="w-[130px] h-8 text-xs">
                   <SortAsc className="w-3 h-3 mr-1" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t("driver.sortBy", "Sort by")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rating">By Rating</SelectItem>
-                  <SelectItem value="trips">By Trips</SelectItem>
-                  <SelectItem value="name">By Name</SelectItem>
+                  <SelectItem value="rating">{t("driver.byRating", "By Rating")}</SelectItem>
+                  <SelectItem value="trips">{t("driver.byTrips", "By Trips")}</SelectItem>
+                  <SelectItem value="name">{t("driver.byName", "By Name")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1581,13 +1649,13 @@ export default function DriversPage() {
                           try {
                             if (favoriteDriverIds.has(driver._id)) {
                               await removeFavorite({ userId, driverId: driver._id });
-                              toast.success("Removed from favorites");
+                              toast.success(t("driver.removedFromFavorites", "Removed from favorites"));
                             } else {
                               await addFavorite({ organizationId, userId, driverId: driver._id });
-                              toast.success("Added to favorites");
+                              toast.success(t("driver.addedToFavorites", "Added to favorites"));
                             }
                           } catch (e: any) {
-                            toast.error(e.message || "Failed");
+                            toast.error(e.message || t("driver.failed", "Failed"));
                           }
                         }}
                       >
@@ -1630,282 +1698,281 @@ export default function DriversPage() {
 
             {/* Active Requests Tab */}
             <TabsContent value="active">
-          {myRequests && myRequests.length > 0 ? (
-            <div className="space-y-3">
-              {myRequests.filter((r) => r.status !== "cancelled").map((request) => (
-                <div
-                  key={request._id}
-                  className="p-4 border rounded-lg space-y-3"
-                >
-                  {editingRequestId === request._id ? (
-                    /* Edit mode */
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">{t("driver.pickupLocation", "From")}</Label>
-                          <PlaceAutocomplete
-                            value={editTripInfo.from}
-                            onChange={(val) => setEditTripInfo({ ...editTripInfo, from: val })}
-                            onSelect={(place) => setEditTripInfo((prev) => ({ ...prev, from: place.address }))}
-                            placeholder="From"
-                          />
+              {myRequests && myRequests.length > 0 ? (
+                <div className="space-y-3">
+                  {myRequests.filter((r) => r.status !== "cancelled" && r.scheduleStatus !== "completed").map((request) => (
+                    <div
+                      key={request._id}
+                      className="p-4 border rounded-lg space-y-3"
+                    >
+                      {editingRequestId === request._id ? (
+                        /* Edit mode */
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">{t("driver.pickupLocation", "From")}</Label>
+                              <PlaceAutocomplete
+                                value={editTripInfo.from}
+                                onChange={(val) => setEditTripInfo({ ...editTripInfo, from: val })}
+                                onSelect={(place) => setEditTripInfo((prev) => ({ ...prev, from: place.address }))}
+                                placeholder="From"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">{t("driver.dropoffLocation", "To")}</Label>
+                              <PlaceAutocomplete
+                                value={editTripInfo.to}
+                                onChange={(val) => setEditTripInfo({ ...editTripInfo, to: val })}
+                                onSelect={(place) => setEditTripInfo((prev) => ({ ...prev, to: place.address }))}
+                                placeholder="To"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">{t("driver.tripPurpose", "Purpose")}</Label>
+                            <Input
+                              value={editTripInfo.purpose}
+                              onChange={(e) => setEditTripInfo({ ...editTripInfo, purpose: e.target.value })}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">{t("driver.startTime", "Start")}</Label>
+                              <Input type="datetime-local" value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} className="h-8 text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">{t("driver.endTime", "End")}</Label>
+                              <Input type="datetime-local" value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">{t("driver.passengerCount", "Passengers")}</Label>
+                            <Input type="number" min={1} max={10} value={editTripInfo.passengerCount} onChange={(e) => setEditTripInfo({ ...editTripInfo, passengerCount: parseInt(e.target.value) || 1 })} className="h-8 text-sm w-full sm:w-1/2" />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button size="sm" variant="ghost" onClick={() => setEditingRequestId(null)}>
+                              {t("cancel", "Cancel")}
+                            </Button>
+                            <Button size="sm" onClick={async () => {
+                              if (!userId) return;
+                              try {
+                                await updateDriverRequest({
+                                  requestId: request._id as Id<"driverRequests">,
+                                  userId,
+                                  startTime: new Date(editStartTime).getTime(),
+                                  endTime: new Date(editEndTime).getTime(),
+                                  tripInfo: editTripInfo,
+                                });
+                                toast.success(t("driver.requestUpdated", "Request updated"));
+                                setEditingRequestId(null);
+                              } catch (e: any) {
+                                toast.error(e.message || "Failed to update");
+                              }
+                            }}>
+                              {t("common.save", "Save")}
+                            </Button>
+                          </div>
                         </div>
-                        <div>
-                          <Label className="text-xs">{t("driver.dropoffLocation", "To")}</Label>
-                          <PlaceAutocomplete
-                            value={editTripInfo.to}
-                            onChange={(val) => setEditTripInfo({ ...editTripInfo, to: val })}
-                            onSelect={(place) => setEditTripInfo((prev) => ({ ...prev, to: place.address }))}
-                            placeholder="To"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs">{t("driver.tripPurpose", "Purpose")}</Label>
-                        <Input
-                          value={editTripInfo.purpose}
-                          onChange={(e) => setEditTripInfo({ ...editTripInfo, purpose: e.target.value })}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-xs">{t("driver.startTime", "Start")}</Label>
-                          <Input type="datetime-local" value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} className="h-8 text-sm" />
-                        </div>
-                        <div>
-                          <Label className="text-xs">{t("driver.endTime", "End")}</Label>
-                          <Input type="datetime-local" value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} className="h-8 text-sm" />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs">{t("driver.passengerCount", "Passengers")}</Label>
-                        <Input type="number" min={1} max={10} value={editTripInfo.passengerCount} onChange={(e) => setEditTripInfo({ ...editTripInfo, passengerCount: parseInt(e.target.value) || 1 })} className="h-8 text-sm w-full sm:w-1/2" />
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button size="sm" variant="ghost" onClick={() => setEditingRequestId(null)}>
-                          {t("cancel", "Cancel")}
-                        </Button>
-                        <Button size="sm" onClick={async () => {
-                          if (!userId) return;
-                          try {
-                            await updateDriverRequest({
-                              requestId: request._id as Id<"driverRequests">,
-                              userId,
-                              startTime: new Date(editStartTime).getTime(),
-                              endTime: new Date(editEndTime).getTime(),
-                              tripInfo: editTripInfo,
-                            });
-                            toast.success(t("driver.requestUpdated", "Request updated"));
-                            setEditingRequestId(null);
-                          } catch (e: any) {
-                            toast.error(e.message || "Failed to update");
-                          }
-                        }}>
-                          {t("common.save", "Save")}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* View mode */
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-2 h-12 shrink-0 rounded-full ${
-                            request.status === "approved"
-                              ? "bg-green-500"
-                              : request.status === "declined"
-                              ? "bg-red-500"
-                              : "bg-yellow-500"
-                          }`}
-                        />
-                        <div className="min-w-0">
-                          <h3 className="font-semibold truncate">{request.driverName}</h3>
-                          <p className="text-sm text-muted-foreground break-words">
-                            {request.tripInfo.from} → {request.tripInfo.to}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(request.startTime), "MMM dd, HH:mm")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 ml-5 sm:ml-0">
-                        <Badge
-                          variant={
-                            request.status === "approved"
-                              ? "default"
-                              : request.status === "declined"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
-                          {request.status === "declined" && <XCircle className="w-3 h-3 mr-1" />}
-                          {request.status === "pending" && <Clock className="w-3 h-3 mr-1" />}
-                          {t(`driver.status.${request.status}`, request.status)}
-                        </Badge>
+                      ) : (
+                        /* View mode */
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`w-2 h-12 shrink-0 rounded-full ${request.status === "approved"
+                                ? "bg-green-500"
+                                : request.status === "declined"
+                                  ? "bg-red-500"
+                                  : "bg-yellow-500"
+                                }`}
+                            />
+                            <div className="min-w-0">
+                              <h3 className="font-semibold truncate">{request.driverName}</h3>
+                              <p className="text-sm text-muted-foreground break-words">
+                                {request.tripInfo.from} → {request.tripInfo.to}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(request.startTime), "MMM dd, HH:mm")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 ml-5 sm:ml-0">
+                            <Badge
+                              variant={
+                                request.status === "approved"
+                                  ? "default"
+                                  : request.status === "declined"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {request.status === "approved" && <CheckCircle className="w-3 h-3 mr-1" />}
+                              {request.status === "declined" && <XCircle className="w-3 h-3 mr-1" />}
+                              {request.status === "pending" && <Clock className="w-3 h-3 mr-1" />}
+                              {t(`driver.status.${request.status}`, request.status)}
+                            </Badge>
 
-                        {/* Edit button - for pending and approved requests */}
-                        {(request.status === "pending" || request.status === "approved") && (
+                            {/* Edit button - for pending and approved requests */}
+                            {(request.status === "pending" || request.status === "approved") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1 h-7 px-2 text-xs"
+                                onClick={() => {
+                                  setEditingRequestId(request._id);
+                                  setEditTripInfo(request.tripInfo);
+                                  setEditStartTime(new Date(request.startTime).toISOString().slice(0, 16));
+                                  setEditEndTime(new Date(request.endTime).toISOString().slice(0, 16));
+                                }}
+                              >
+                                <Pencil className="w-3 h-3" />
+                                {t("common.edit", "Edit")}
+                              </Button>
+                            )}
+
+                            {/* Delete button */}
+                            {deletingRequestId === request._id ? (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="h-7 px-2 text-xs"
+                                  onClick={async () => {
+                                    if (!userId) return;
+                                    try {
+                                      await deleteDriverRequest({
+                                        requestId: request._id as Id<"driverRequests">,
+                                        userId,
+                                      });
+                                      toast.success(t("driver.requestDeleted", "Request deleted"));
+                                      setDeletingRequestId(null);
+                                    } catch (e: any) {
+                                      toast.error(e.message || "Failed to delete");
+                                    }
+                                  }}
+                                >
+                                  {t("common.yes", "Yes")}
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setDeletingRequestId(null)}>
+                                  {t("common.no", "No")}
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1 h-7 px-2 text-xs text-red-500 border-red-200 hover:bg-red-50"
+                                onClick={() => setDeletingRequestId(request._id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                {t("common.delete", "Delete")}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {request.status === "declined" && request.declineReason && !editingRequestId && (
+                        <div className="ml-6 space-y-2">
+                          <p className="text-xs text-muted-foreground">
+                            {t("driver.declineReason", "Reason")}: {request.declineReason}
+                          </p>
+                          {/* Feature #3: Reassign to another driver */}
                           <Button
                             size="sm"
                             variant="outline"
                             className="gap-1 h-7 px-2 text-xs"
-                            onClick={() => {
-                              setEditingRequestId(request._id);
-                              setEditTripInfo(request.tripInfo);
-                              setEditStartTime(new Date(request.startTime).toISOString().slice(0, 16));
-                              setEditEndTime(new Date(request.endTime).toISOString().slice(0, 16));
-                            }}
+                            onClick={() => setReassignDialog({
+                              open: true,
+                              requestId: request._id as Id<"driverRequests">,
+                              currentDriverId: request.driverId as Id<"drivers">,
+                            })}
                           >
-                            <Pencil className="w-3 h-3" />
-                            {t("common.edit", "Edit")}
+                            <ArrowRightLeft className="w-3 h-3" />
+                            {t("driver.requestAnotherDriver", "Request Another Driver")}
                           </Button>
-                        )}
-
-                        {/* Delete button */}
-                        {deletingRequestId === request._id ? (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 px-2 text-xs"
-                              onClick={async () => {
-                                if (!userId) return;
-                                try {
-                                  await deleteDriverRequest({
-                                    requestId: request._id as Id<"driverRequests">,
-                                    userId,
-                                  });
-                                  toast.success(t("driver.requestDeleted", "Request deleted"));
-                                  setDeletingRequestId(null);
-                                } catch (e: any) {
-                                  toast.error(e.message || "Failed to delete");
-                                }
-                              }}
-                            >
-                              {t("common.yes", "Yes")}
-                            </Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setDeletingRequestId(null)}>
-                              {t("common.no", "No")}
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1 h-7 px-2 text-xs text-red-500 border-red-200 hover:bg-red-50"
-                            onClick={() => setDeletingRequestId(request._id)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            {t("common.delete", "Delete")}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {request.status === "declined" && request.declineReason && !editingRequestId && (
-                    <div className="ml-6 space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        {t("driver.declineReason", "Reason")}: {request.declineReason}
-                      </p>
-                      {/* Feature #3: Reassign to another driver */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 h-7 px-2 text-xs"
-                        onClick={() => setReassignDialog({
-                          open: true,
-                          requestId: request._id as Id<"driverRequests">,
-                          currentDriverId: request.driverId as Id<"drivers">,
-                        })}
-                      >
-                        <ArrowRightLeft className="w-3 h-3" />
-                        {t("driver.requestAnotherDriver", "Request Another Driver")}
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Feature #9: ETA display for approved/in_progress trips */}
-                  {(request.status === "approved") && request.etaMinutes != null && !editingRequestId && (
-                    <div className="ml-6 flex items-center gap-2 text-sm">
-                      <Navigation className="w-4 h-4 text-blue-500" />
-                      <span className="text-blue-600 font-medium">
-                        ETA: ~{request.etaMinutes} min
-                      </span>
-                      {request.etaUpdatedAt && (
-                        <span className="text-xs text-muted-foreground">
-                          (updated {format(new Date(request.etaUpdatedAt), "HH:mm")})
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Feature #8: Wait time display */}
-                  {request.waitTimeMinutes != null && !editingRequestId && (
-                    <div className="ml-6 flex items-center gap-2 text-sm text-muted-foreground">
-                      <Timer className="w-4 h-4" />
-                      <span>Wait time: {request.waitTimeMinutes} min</span>
-                    </div>
-                  )}
-
-                  {/* Feature #7: Driver notes display */}
-                  {request.driverNotes && !editingRequestId && (
-                    <div className="ml-6 flex items-center gap-2 text-sm text-muted-foreground">
-                      <StickyNote className="w-3 h-3" />
-                      <span className="italic">{request.driverNotes}</span>
-                    </div>
-                  )}
-
-                  {/* Passenger actions for approved requests: contact driver + navigation */}
-                  {request.status === "approved" && !editingRequestId && (
-                    <div className="flex flex-wrap items-center gap-2 mt-2 ml-5">
-                      {/* Contact driver via Team Chat call */}
-                      {request.driverUserId && userId && user?.organizationId && (
-                        <InAppCallButton
-                          callerUserId={userId}
-                          callerName={user.name}
-                          remoteUserId={request.driverUserId as Id<"users">}
-                          remoteName={request.driverName || "Driver"}
-                          remotePhone={request.driverPhone}
-                          organizationId={user.organizationId as Id<"organizations">}
-                        />
+                        </div>
                       )}
 
-                      {/* Quick message to driver */}
-                      {request.driverUserId && userId && user?.organizationId && (
-                        <PassengerQuickMessage
-                          driverUserId={request.driverUserId as Id<"users">}
-                          passengerUserId={userId}
-                          organizationId={user.organizationId as Id<"organizations">}
-                          tripInfo={request.tripInfo}
-                        />
+                      {/* Feature #9: ETA display for approved/in_progress trips */}
+                      {(request.status === "approved") && (request as any).etaMinutes != null && !editingRequestId && (
+                        <div className="ml-6 flex items-center gap-2 text-sm">
+                          <Navigation className="w-4 h-4 text-blue-500" />
+                          <span className="text-blue-600 font-medium">
+                            ETA: ~{(request as any).etaMinutes} min
+                          </span>
+                          {(request as any).etaUpdatedAt && (
+                            <span className="text-xs text-muted-foreground">
+                              (updated {format(new Date((request as any).etaUpdatedAt), "HH:mm")})
+                            </span>
+                          )}
+                        </div>
                       )}
 
-                      {/* Navigator buttons for pickup/dropoff */}
-                      {request.tripInfo.pickupCoords && (
-                        <NavigatorDropdown
-                          label="Navigate to Pickup"
-                          coords={request.tripInfo.pickupCoords}
-                        />
+                      {/* Feature #8: Wait time display */}
+                      {(request as any).waitTimeMinutes != null && !editingRequestId && (
+                        <div className="ml-6 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Timer className="w-4 h-4" />
+                          <span>Wait time: {(request as any).waitTimeMinutes} min</span>
+                        </div>
                       )}
-                      {request.tripInfo.dropoffCoords && (
-                        <NavigatorDropdown
-                          label="Navigate to Destination"
-                          coords={request.tripInfo.dropoffCoords}
-                        />
+
+                      {/* Feature #7: Driver notes display */}
+                      {(request as any).driverNotes && !editingRequestId && (
+                        <div className="ml-6 flex items-center gap-2 text-sm text-muted-foreground">
+                          <StickyNote className="w-3 h-3" />
+                          <span className="italic">{(request as any).driverNotes}</span>
+                        </div>
+                      )}
+
+                      {/* Passenger actions for approved requests: contact driver + navigation */}
+                      {request.status === "approved" && !editingRequestId && (
+                        <div className="flex flex-wrap items-center gap-2 mt-2 ml-5">
+                          {/* Contact driver via Team Chat call */}
+                          {request.driverUserId && userId && user?.organizationId && (
+                            <InAppCallButton
+                              callerUserId={userId}
+                              callerName={user.name}
+                              remoteUserId={request.driverUserId as Id<"users">}
+                              remoteName={request.driverName || "Driver"}
+                              remotePhone={request.driverPhone}
+                              organizationId={user.organizationId as Id<"organizations">}
+                            />
+                          )}
+
+                          {/* Quick message to driver */}
+                          {request.driverUserId && userId && user?.organizationId && (
+                            <PassengerQuickMessage
+                              driverUserId={request.driverUserId as Id<"users">}
+                              passengerUserId={userId}
+                              organizationId={user.organizationId as Id<"organizations">}
+                              tripInfo={request.tripInfo}
+                            />
+                          )}
+
+                          {/* Navigator buttons for pickup/dropoff */}
+                          {request.tripInfo.pickupCoords && (
+                            <NavigatorDropdown
+                              label="Navigate to Pickup"
+                              coords={request.tripInfo.pickupCoords}
+                            />
+                          )}
+                          {request.tripInfo.dropoffCoords && (
+                            <NavigatorDropdown
+                              label="Navigate to Destination"
+                              coords={request.tripInfo.dropoffCoords}
+                            />
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clipboard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>{t("driver.noRequests", "No driver requests yet")}</p>
-            </div>
-          )}
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clipboard className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>{t("driver.noRequests", "No driver requests yet")}</p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Feature #2: History Tab - Completed Trips */}
@@ -1930,7 +1997,7 @@ export default function DriversPage() {
                         <div className="flex items-center gap-2">
                           <Badge variant="default">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Completed
+                            {t("driver.status.completed", "Completed")}
                           </Badge>
                         </div>
                       </div>
@@ -1959,11 +2026,10 @@ export default function DriversPage() {
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
                                 key={s}
-                                className={`w-4 h-4 ${
-                                  s <= (trip.passengerRating ?? 0)
-                                    ? "fill-yellow-500 text-yellow-500"
-                                    : "text-gray-300"
-                                }`}
+                                className={`w-4 h-4 ${s <= (trip.passengerRating ?? 0)
+                                  ? "fill-yellow-500 text-yellow-500"
+                                  : "text-gray-300"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -1983,7 +2049,7 @@ export default function DriversPage() {
                             }
                           >
                             <Star className="w-3 h-3" />
-                            Rate Driver
+                            {t("driver.rateDriver", "Rate Driver")}
                           </Button>
                         )}
                       </div>
@@ -1993,7 +2059,7 @@ export default function DriversPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No completed trips yet</p>
+                  <p>{t("driver.noCompletedTrips", "No completed trips yet")}</p>
                 </div>
               )}
             </TabsContent>
@@ -2008,7 +2074,7 @@ export default function DriversPage() {
                   onClick={() => setShowRecurringModal(true)}
                 >
                   <Plus className="w-4 h-4" />
-                  Create Recurring Trip
+                  {t("driver.createRecurringTrip", "Create Recurring Trip")}
                 </Button>
 
                 {recurringTrips && recurringTrips.length > 0 ? (
@@ -2041,7 +2107,7 @@ export default function DriversPage() {
                                     userId,
                                     isActive: checked,
                                   });
-                                  toast.success(checked ? "Activated" : "Paused");
+                                  toast.success(checked ? t("driver.activated", "Activated") : t("driver.paused", "Paused"));
                                 } catch (e: any) {
                                   toast.error(e.message);
                                 }
@@ -2058,7 +2124,7 @@ export default function DriversPage() {
                                     recurringTripId: trip._id as any,
                                     userId,
                                   });
-                                  toast.success("Deleted");
+                                  toast.success(t("driver.deleted", "Deleted"));
                                 } catch (e: any) {
                                   toast.error(e.message);
                                 }
@@ -2074,8 +2140,8 @@ export default function DriversPage() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Repeat className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No recurring trips</p>
-                    <p className="text-sm mt-1">Create one for daily commutes!</p>
+                    <p>{t("driver.noRecurringTrips", "No recurring trips")}</p>
+                    <p className="text-sm mt-1">{t("driver.createOneForDailyCommutes", "Create one for daily commutes!")}</p>
                   </div>
                 )}
               </div>
@@ -2116,20 +2182,20 @@ export default function DriversPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Repeat className="w-5 h-5" />
-              Create Recurring Trip
+              {t("driver.createRecurringTrip", "Create Recurring Trip")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Driver</Label>
+              <Label>{t("driver.selectDriver", "Select Driver")}</Label>
               <Select value={selectedDriver || ""} onValueChange={(v) => setSelectedDriver(v as Id<"drivers">)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a driver" />
+                  <SelectValue placeholder={t("driver.chooseDriver", "Choose a driver")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDrivers?.map((driver) => (
-                    <SelectItem key={driver._id} value={driver._id}>
-                      {driver.userName} - {driver.vehicleInfo.model}
+                  {availableDrivers?.filter(Boolean).map((driver) => (
+                    <SelectItem key={driver!._id} value={driver!._id}>
+                      {driver!.userName} - {driver!.vehicleInfo.model}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2137,33 +2203,33 @@ export default function DriversPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>From</Label>
+                <Label>{t("driver.from", "From")}</Label>
                 <Input
                   value={tripInfo.from}
                   onChange={(e) => setTripInfo({ ...tripInfo, from: e.target.value })}
-                  placeholder="Pickup"
+                  placeholder={t("driver.pickup", "Pickup")}
                 />
               </div>
               <div>
-                <Label>To</Label>
+                <Label>{t("driver.to", "To")}</Label>
                 <Input
                   value={tripInfo.to}
                   onChange={(e) => setTripInfo({ ...tripInfo, to: e.target.value })}
-                  placeholder="Destination"
+                  placeholder={t("driver.dropoff", "Destination")}
                 />
               </div>
             </div>
             <div>
-              <Label>Purpose</Label>
+              <Label>{t("driver.purpose", "Purpose")}</Label>
               <Input
                 value={tripInfo.purpose}
                 onChange={(e) => setTripInfo({ ...tripInfo, purpose: e.target.value })}
-                placeholder="e.g., Daily commute"
+                placeholder={t("driver.purposePlaceholder", "e.g., Daily commute")}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Departure Time</Label>
+                <Label>{t("driver.departureTime", "Departure Time")}</Label>
                 <Input
                   type="time"
                   value={recurringStartTime}
@@ -2171,7 +2237,7 @@ export default function DriversPage() {
                 />
               </div>
               <div>
-                <Label>Arrival Time</Label>
+                <Label>{t("driver.arrivalTime", "Arrival Time")}</Label>
                 <Input
                   type="time"
                   value={recurringEndTime}
@@ -2180,7 +2246,7 @@ export default function DriversPage() {
               </div>
             </div>
             <div>
-              <Label>Days</Label>
+              <Label>{t("driver.days", "Days")}</Label>
               <div className="flex flex-wrap gap-2 mt-1">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, idx) => (
                   <Button
@@ -2201,12 +2267,12 @@ export default function DriversPage() {
             </div>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowRecurringModal(false)}>
-                Cancel
+                {t("common.cancel", "Cancel")}
               </Button>
               <Button
                 onClick={async () => {
                   if (!userId || !organizationId || !selectedDriver) {
-                    toast.error("Please fill all fields");
+                    toast.error(t("driver.fillAllFields", "Please fill all fields"));
                     return;
                   }
                   try {
@@ -2227,14 +2293,14 @@ export default function DriversPage() {
                         endTime: recurringEndTime,
                       },
                     });
-                    toast.success("Recurring trip created!");
+                    toast.success(t("driver.recurringTripCreated", "Recurring trip created!"));
                     setShowRecurringModal(false);
                   } catch (e: any) {
-                    toast.error(e.message || "Failed");
+                    toast.error(e.message || t("driver.failed", "Failed"));
                   }
                 }}
               >
-                Create
+                {t("common.create", "Create")}
               </Button>
             </div>
           </div>
@@ -2255,9 +2321,9 @@ export default function DriversPage() {
                   <SelectValue placeholder="Choose a driver" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableDrivers?.map((driver) => (
-                    <SelectItem key={driver._id} value={driver._id}>
-                      {driver.userName} - {driver.vehicleInfo.model}
+                  {availableDrivers?.filter(Boolean).map((driver) => (
+                    <SelectItem key={driver!._id} value={driver!._id}>
+                      {driver!.userName} - {driver!.vehicleInfo.model}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -2345,6 +2411,24 @@ export default function DriversPage() {
               </div>
             </div>
 
+            {/* Time validation alert */}
+            <Alert variant="warning" className="border-amber-500/50 bg-amber-50 text-amber-900">
+              <AlertCircle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-sm">
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    🇬🇧 Start time must be earlier than end time
+                  </p>
+                  <p className="font-medium">
+                    🇷🇺 Время начала должно быть раньше времени окончания
+                  </p>
+                  <p className="font-medium">
+                    🇦🇲 Սկսման ժամանակը պետք է ավելի վաղ լինի, քան ավարտը
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+
             <div>
               <Label>{t("driver.passengerCount", "Passengers")}</Label>
               <Input
@@ -2366,11 +2450,25 @@ export default function DriversPage() {
               />
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-              <Button variant="outline" onClick={() => setShowRequestModal(false)}>
+            {/* Corporate Trip Fields */}
+            <CorporateTripFields
+              priority={tripPriority}
+              tripCategory={tripCategory}
+              costCenter={costCenter}
+              businessJustification={businessJustification}
+              requiresApproval={requiresApproval}
+              onPriorityChange={setTripPriority}
+              onCategoryChange={setTripCategory}
+              onCostCenterChange={setCostCenter}
+              onBusinessJustificationChange={setBusinessJustification}
+              onRequiresApprovalChange={setRequiresApproval}
+            />
+
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-4">
+              <Button variant="outline" onClick={() => setShowRequestModal(false)} type="button">
                 {t("cancel", "Cancel")}
               </Button>
-              <Button onClick={handleRequestDriver}>
+              <Button onClick={handleRequestDriver} type="button" className="relative z-10">
                 {t("driver.submitRequest", "Submit Request")}
               </Button>
             </div>
@@ -2398,7 +2496,7 @@ export default function DriversPage() {
             {/* Select Driver */}
             <div>
               <Label>{t("driver.selectDriver", "Select Driver")} *</Label>
-              <Select value={selectedDriverUserId || undefined} onValueChange={(v) => setSelectedDriverUserId(v || "")}>
+              <Select value={selectedDriverUserId || undefined} onValueChange={(v) => setSelectedDriverUserId(v as Id<"users">)}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("driver.chooseDriverToRegister", "Choose a driver to register")} />
                 </SelectTrigger>
@@ -2542,26 +2640,26 @@ export default function DriversPage() {
       }}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
           <VisuallyHidden>
-            <DialogTitle>Driver Schedule Calendar</DialogTitle>
+            <DialogTitle>{t("driver.driverScheduleCalendar", "Driver Schedule Calendar")}</DialogTitle>
           </VisuallyHidden>
           {/* Header with gradient */}
-          <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shrink-0">
-            <div className="flex items-center justify-between">
+          <div className="relative bg-gradient-to-r from-primary to-primary-dark text-primary-foreground p-6 shrink-0">
+            <div className="flex items-center justify-between mr-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                   <Calendar className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Driver Schedule</h2>
+                  <h2 className="text-xl font-semibold">{t("driver.driverSchedule", "Driver Schedule")}</h2>
                   {calendarDriverId && availableDrivers && (
-                    <p className="text-blue-100 text-sm">
-                      {availableDrivers.find(d => d._id === calendarDriverId)?.userName}
+                    <p className="text-primary-foreground/80 text-sm">
+                      {availableDrivers.filter(Boolean).find(d => d!._id === calendarDriverId)?.userName}
                     </p>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-blue-100 text-sm">Week of</p>
+                <p className="text-primary-foreground/80 text-sm">{t("driver.weekOf", "Week of")}</p>
                 <p className="font-semibold">{format(new Date(calendarWeekStart), "MMM dd")} – {format(new Date(calendarWeekEnd), "MMM dd")}</p>
               </div>
             </div>
@@ -2575,11 +2673,11 @@ export default function DriversPage() {
               </div>
             ) : calendarSchedule.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                  <Calendar className="w-10 h-10 text-blue-500" />
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <Calendar className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No trips scheduled</h3>
-                <p className="text-muted-foreground max-w-sm">This driver is available for booking this week</p>
+                <h3 className="text-lg font-semibold mb-2">{t("driver.noTripsScheduled", "No trips scheduled")}</h3>
+                <p className="text-muted-foreground max-w-sm">{t("driver.availableForBooking", "This driver is available for booking this week")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -2593,12 +2691,12 @@ export default function DriversPage() {
                   const isToday = format(dayDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
 
                   return (
-                    <div key={day} className={`rounded-xl border transition-all ${isToday ? 'border-blue-300 bg-blue-50/50 shadow-sm' : ''}`}>
+                    <div key={day} className={`rounded-xl border transition-all ${isToday ? 'border-primary/50 bg-primary/10 shadow-sm' : ''}`}>
                       <div className="flex items-stretch">
                         {/* Day column */}
-                        <div className={`w-24 sm:w-28 p-4 flex flex-col items-center justify-center border-r ${isToday ? 'bg-blue-100/50' : 'bg-muted/30'}`}>
-                          <span className={`text-sm font-medium ${isToday ? 'text-blue-700' : ''}`}>{day}</span>
-                          <span className={`text-2xl font-bold mt-1 ${isToday ? 'text-blue-600' : ''}`}>
+                        <div className={`w-24 sm:w-28 p-4 flex flex-col items-center justify-center border-r ${isToday ? 'bg-primary/20' : 'bg-muted/30'}`}>
+                          <span className={`text-sm font-medium ${isToday ? 'text-primary' : ''}`}>{day}</span>
+                          <span className={`text-2xl font-bold mt-1 ${isToday ? 'text-primary' : ''}`}>
                             {format(dayDate, "dd")}
                           </span>
                           <span className="text-xs text-muted-foreground">{format(dayDate, "MMM")}</span>
@@ -2610,7 +2708,7 @@ export default function DriversPage() {
                             <div className="flex items-center justify-center h-full">
                               <span className="text-sm text-muted-foreground flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-green-400"></span>
-                                Available all day
+                                {t("driver.availableAllDay", "Available all day")}
                               </span>
                             </div>
                           ) : (
@@ -2621,15 +2719,13 @@ export default function DriversPage() {
                                   <button
                                     key={s._id}
                                     onClick={() => setSelectedScheduleDetail(s)}
-                                    className={`group flex flex-wrap items-center gap-3 p-3 rounded-lg transition-all w-full text-left ${
-                                      s.type === "trip" 
-                                        ? "bg-blue-50 hover:bg-blue-100 border border-blue-200" 
-                                        : "bg-orange-50 hover:bg-orange-100 border border-orange-200"
-                                    }`}
+                                    className={`group flex flex-wrap items-center gap-3 p-3 rounded-lg transition-all w-full text-left ${s.type === "trip"
+                                      ? "bg-primary/10 hover:bg-primary/20 border border-primary/30"
+                                      : "bg-warning/10 hover:bg-warning/20 border border-warning/30"
+                                      }`}
                                   >
-                                    <div className={`w-3 h-3 rounded-full shrink-0 ${
-                                      s.type === "trip" ? "bg-blue-500" : "bg-orange-500"
-                                    }`} />
+                                    <div className={`w-3 h-3 rounded-full shrink-0 ${s.type === "trip" ? "bg-green-500" : "bg-warning-500"
+                                      }`} />
                                     <div className="flex items-center gap-2 font-mono text-sm font-medium">
                                       <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                                       <span>{format(new Date(s.startTime), "HH:mm")}</span>
@@ -2638,13 +2734,13 @@ export default function DriversPage() {
                                     </div>
                                     <Badge variant={s.type === "trip" ? "default" : "secondary"} className="text-xs">
                                       {s.type === "trip" ? (
-                                        <><Car className="w-3 h-3 mr-1" /> Trip</>
+                                        <><Car className="w-3 h-3 mr-1" /> {t("driver.trip", "Trip")}</>
                                       ) : (
-                                        <><AlertCircle className="w-3 h-3 mr-1" /> Blocked</>
+                                        <><AlertCircle className="w-3 h-3 mr-1" /> {t("driver.blocked", "Blocked")}</>
                                       )}
                                     </Badge>
                                     {s.type === "trip" && s.tripInfo?.from && s.tripInfo?.to && (
-                                      <span className="text-xs text-muted-foreground truncate flex-1">
+                                      <span className="text-xs text-muted-foreground">
                                         {s.tripInfo.from} → {s.tripInfo.to}
                                       </span>
                                     )}
@@ -2666,17 +2762,16 @@ export default function DriversPage() {
 
       {/* Schedule Detail Modal - REDESIGNED */}
       <Dialog open={!!selectedScheduleDetail} onOpenChange={(open) => { if (!open) setSelectedScheduleDetail(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col p-0">
           <VisuallyHidden>
             <DialogTitle>Trip Details</DialogTitle>
           </VisuallyHidden>
           {/* Header */}
-          <div className={`relative p-6 shrink-0 ${
-            selectedScheduleDetail?.type === "trip" 
-              ? "bg-gradient-to-r from-blue-600 to-indigo-600" 
-              : "bg-gradient-to-r from-orange-500 to-red-500"
-          } text-white`}>
-            <div className="flex items-center justify-between">
+          <div className={`relative p-6 shrink-0 ${selectedScheduleDetail?.type === "trip"
+            ? "bg-gradient-to-r from-primary to-primary-dark text-primary-foreground"
+            : "bg-gradient-to-r from-warning to-destructive text-primary-foreground"
+            }`}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
                   {selectedScheduleDetail?.type === "trip" ? (
@@ -2687,220 +2782,220 @@ export default function DriversPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">
-                    {selectedScheduleDetail?.type === "trip" ? "Trip Details" : "Blocked Time Slot"}
+                    {selectedScheduleDetail?.type === "trip" ? t("driver.tripDetailsTitle", "Trip Details") : t("driver.blockedTimeSlot", "Blocked Time Slot")}
                   </h2>
-                  <p className="text-white/80 text-sm">
+                  <p className="text-primary-foreground/80 text-sm">
                     {format(new Date(selectedScheduleDetail?.startTime || Date.now()), "EEEE, MMMM dd, yyyy")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                  {selectedScheduleDetail?.type}
+                  {selectedScheduleDetail?.type === "trip" ? t("driver.trip", "Trip") : t("driver.blocked", "Blocked")}
                 </Badge>
                 <Badge variant={selectedScheduleDetail?.status === "completed" ? "secondary" : "default"} className="bg-white/20 text-white border-0">
-                  {selectedScheduleDetail?.status}
+                  {String(t(`driver.status.${selectedScheduleDetail?.status}`, selectedScheduleDetail?.status))}
                 </Badge>
               </div>
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto">
-            {selectedScheduleDetail && (
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left column - Info */}
-                  <div className="space-y-4">
-                    {/* Time */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-blue-500" />
-                          Schedule Time
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div className="text-center">
-                            <p className="text-xs text-muted-foreground mb-1">Start</p>
-                            <p className="text-lg font-bold font-mono">
-                              {format(new Date(selectedScheduleDetail.startTime), "HH:mm")}
-                            </p>
-                          </div>
-                          <div className="flex-1 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
-                              <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                              <div className="flex-1 h-0.5 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-xs text-muted-foreground mb-1">End</p>
-                            <p className="text-lg font-bold font-mono">
-                              {format(new Date(selectedScheduleDetail.endTime), "HH:mm")}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground text-center mt-2">
-                          Duration: {Math.round((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) / 3600000)}h {Math.round(((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) % 3600000) / 60000)}m
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    {/* Passenger Info */}
-                    {selectedScheduleDetail.userName && (
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {selectedScheduleDetail && (
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left column - Info */}
+                    <div className="space-y-4">
+                      {/* Time */}
                       <Card>
                         <CardHeader className="pb-3">
                           <CardTitle className="text-base flex items-center gap-2">
-                            <Users className="w-4 h-4 text-blue-500" />
-                            Passenger
+                            <Clock className="w-4 h-4 text-primary" />
+                            {t("driver.scheduleTime", "Schedule Time")}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-12 h-12">
-                              <AvatarFallback className="bg-blue-100 text-blue-700 font-semibold">
-                                {selectedScheduleDetail.userName.split(" ").map(n => n[0]).join("").toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <p className="font-semibold">{selectedScheduleDetail.userName}</p>
-                              {selectedScheduleDetail.userPhone && (
-                                <p className="text-sm text-muted-foreground">{selectedScheduleDetail.userPhone}</p>
+                          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground mb-1">{t("driver.start", "Start")}</p>
+                              <p className="text-lg font-bold font-mono">
+                                {format(new Date(selectedScheduleDetail.startTime), "HH:mm")}
+                              </p>
+                            </div>
+                            <div className="flex-1 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-0.5 bg-gradient-to-r from-primary to-accent"></div>
+                                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                                <div className="flex-1 h-0.5 bg-gradient-to-r from-accent to-primary"></div>
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground mb-1">{t("driver.end", "End")}</p>
+                              <p className="text-lg font-bold font-mono">
+                                {format(new Date(selectedScheduleDetail.endTime), "HH:mm")}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center mt-2">
+                            {t("driver.duration", "Duration")}: {Math.round((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) / 3600000)}h {Math.round(((selectedScheduleDetail.endTime - selectedScheduleDetail.startTime) % 3600000) / 60000)}m
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      {/* Passenger Info */}
+                      {selectedScheduleDetail.userName && (
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Users className="w-4 h-4 text-primary" />
+                              {t("driver.passenger", "Passenger")}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-12 h-12">
+                                <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                                  {selectedScheduleDetail.userName.split(" ").map((n: string) => n[0]).join("").toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="font-semibold">{selectedScheduleDetail.userName}</p>
+                                {selectedScheduleDetail.userPhone && (
+                                  <p className="text-sm text-muted-foreground">{selectedScheduleDetail.userPhone}</p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Trip Details */}
+                      {selectedScheduleDetail.tripInfo && (
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-primary" />
+                              {t("driver.routeInformation", "Route Information")}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="flex items-start gap-3 p-3 bg-primary/10 rounded-lg border border-primary/30">
+                              <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-muted-foreground mb-0.5">{t("driver.pickupLabel", "Pickup")}</p>
+                                <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.from}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 bg-accent/10 rounded-lg border border-accent/30">
+                              <div className="w-2 h-2 rounded-full bg-accent mt-2 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-muted-foreground mb-0.5">{t("driver.dropoffLabel", "Dropoff")}</p>
+                                <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.to}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm pt-2 border-t">
+                              <div className="flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-muted-foreground" />
+                                <span>{selectedScheduleDetail.tripInfo.passengerCount} {t("driver.passengerCountLabel", "passengers")}</span>
+                              </div>
+                              {selectedScheduleDetail.tripInfo.distanceKm && (
+                                <div className="flex items-center gap-1.5">
+                                  <Navigation2 className="w-4 h-4 text-muted-foreground" />
+                                  <span>{selectedScheduleDetail.tripInfo.distanceKm} {t("driver.distanceLabel", "km")}</span>
+                                </div>
+                              )}
+                              {selectedScheduleDetail.tripInfo.durationMinutes && (
+                                <div className="flex items-center gap-1.5">
+                                  <Timer className="w-4 h-4 text-muted-foreground" />
+                                  <span>{selectedScheduleDetail.tripInfo.durationMinutes} {t("driver.durationLabel", "min")}</span>
+                                </div>
                               )}
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* Trip Details */}
-                    {selectedScheduleDetail.tripInfo && (
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-blue-500" />
-                            Route Information
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-muted-foreground mb-0.5">Pickup</p>
-                              <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.from}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-muted-foreground mb-0.5">Dropoff</p>
-                              <p className="font-medium break-words">{selectedScheduleDetail.tripInfo.to}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm pt-2 border-t">
-                            <div className="flex items-center gap-1.5">
-                              <Users className="w-4 h-4 text-muted-foreground" />
-                              <span>{selectedScheduleDetail.tripInfo.passengerCount} passengers</span>
-                            </div>
-                            {selectedScheduleDetail.tripInfo.distanceKm && (
-                              <div className="flex items-center gap-1.5">
-                                <Navigation2 className="w-4 h-4 text-muted-foreground" />
-                                <span>{selectedScheduleDetail.tripInfo.distanceKm} km</span>
+                            {selectedScheduleDetail.tripInfo.purpose && (
+                              <div className="p-3 bg-muted/50 rounded-lg">
+                                <p className="text-xs text-muted-foreground mb-1">{t("driver.purposeLabel", "Purpose")}</p>
+                                <p className="text-sm">{selectedScheduleDetail.tripInfo.purpose}</p>
                               </div>
                             )}
-                            {selectedScheduleDetail.tripInfo.durationMinutes && (
-                              <div className="flex items-center gap-1.5">
-                                <Timer className="w-4 h-4 text-muted-foreground" />
-                                <span>{selectedScheduleDetail.tripInfo.durationMinutes} min</span>
+                            {selectedScheduleDetail.tripInfo.notes && (
+                              <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
+                                <p className="text-xs text-warning-foreground font-medium mb-1">📝 {t("driver.notesLabel", "Notes")}</p>
+                                <p className="text-sm text-warning-foreground">{selectedScheduleDetail.tripInfo.notes}</p>
                               </div>
                             )}
-                          </div>
-                          {selectedScheduleDetail.tripInfo.purpose && (
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                              <p className="text-xs text-muted-foreground mb-1">Purpose</p>
-                              <p className="text-sm">{selectedScheduleDetail.tripInfo.purpose}</p>
-                            </div>
-                          )}
-                          {selectedScheduleDetail.tripInfo.notes && (
-                            <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                              <p className="text-xs text-amber-700 font-medium mb-1">📝 Notes</p>
-                              <p className="text-sm text-amber-900">{selectedScheduleDetail.tripInfo.notes}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
+                          </CardContent>
+                        </Card>
+                      )}
 
-                    {/* Blocked reason */}
-                    {selectedScheduleDetail.reason && (
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
-                            <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-sm font-medium text-orange-900">Reason for blocking</p>
-                              <p className="text-sm text-orange-700 mt-1">{selectedScheduleDetail.reason}</p>
+                      {/* Blocked reason */}
+                      {selectedScheduleDetail.reason && (
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="flex items-start gap-3 p-3 bg-warning/10 rounded-lg border border-warning/30">
+                              <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-sm font-medium text-warning-foreground">{t("driver.reasonForBlocking", "Reason for blocking")}</p>
+                                <p className="text-sm text-warning-foreground mt-1">{selectedScheduleDetail.reason}</p>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
 
-                  {/* Right column - Map */}
-                  <div className="space-y-4">
-                    {(selectedScheduleDetail.tripInfo?.pickupCoords || selectedScheduleDetail.tripInfo?.dropoffCoords) ? (
-                      <Card className="h-[400px] md:h-full">
-                        <CardContent className="p-0 h-full">
-                          <DriverMap
-                            pickupLocation={selectedScheduleDetail.tripInfo.pickupLocation}
-                            dropoffLocation={selectedScheduleDetail.tripInfo.dropoffLocation}
-                            pickupCoords={selectedScheduleDetail.tripInfo.pickupCoords}
-                            dropoffCoords={selectedScheduleDetail.tripInfo.dropoffCoords}
-                            height="100%"
-                            zoom={12}
-                          />
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Card className="h-[300px] flex items-center justify-center">
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                            <MapPin className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                          <p className="text-muted-foreground text-sm">No map available</p>
-                        </CardContent>
-                      </Card>
-                    )}
+                    {/* Right column - Map */}
+                    <div className="space-y-4">
+                      {(selectedScheduleDetail.tripInfo?.pickupCoords || selectedScheduleDetail.tripInfo?.dropoffCoords) ? (
+                        <Card className="h-[400px] md:h-full">
+                          <CardContent className="p-0 h-full">
+                            <DriverMap
+                              pickupLocation={selectedScheduleDetail.tripInfo.pickupLocation}
+                              dropoffLocation={selectedScheduleDetail.tripInfo.dropoffLocation}
+                              pickupCoords={selectedScheduleDetail.tripInfo.pickupCoords}
+                              dropoffCoords={selectedScheduleDetail.tripInfo.dropoffCoords}
+                              height="100%"
+                              zoom={12}
+                            />
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card className="h-[300px] flex items-center justify-center">
+                          <CardContent className="flex flex-col items-center justify-center py-12">
+                            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                              <MapPin className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                            <p className="text-muted-foreground text-sm">{t("driver.noMapAvailable", "No map available")}</p>
+                          </CardContent>
+                        </Card>
+                      )}
 
-                    {/* Actions */}
-                    {selectedScheduleDetail.type === "trip" && selectedScheduleDetail.status === "scheduled" && (
-                      <Card>
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-base">Quick Actions</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-wrap gap-2">
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <PhoneCall className="w-3.5 h-3.5" />
-                            Call Passenger
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            Send Message
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1">
-                            <Navigation className="w-3.5 h-3.5" />
-                            Navigate
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    )}
+                      {/* Actions */}
+                      {selectedScheduleDetail.type === "trip" && selectedScheduleDetail.status === "scheduled" && (
+                        <Card>
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-base">{t("driver.quickActions", "Quick Actions")}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" className="gap-1">
+                              <PhoneCall className="w-3.5 h-3.5" />
+                              {t("driver.callPassenger", "Call Passenger")}
+                            </Button>
+                            <Button size="sm" variant="outline" className="gap-1">
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              {t("driver.sendMessage", "Send Message")}
+                            </Button>
+                            <Button size="sm" variant="outline" className="gap-1">
+                              <Navigation className="w-3.5 h-3.5" />
+                              {t("driver.navigate", "Navigate")}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -28,33 +28,33 @@ const { user } = useAuthStore();
   const statItems = [
     {
       icon: Clock,
-      label: "Today",
+      label: t('quickStats.today'),
       value: `${stats.hoursWorkedToday}h`,
-      subtext: `${stats.hoursWorkedWeek}h this week`,
+      subtext: t('quickStats.thisWeek', { hours: stats.hoursWorkedWeek }),
       color: "text-[var(--primary)]",
       bgColor: "bg-[var(--primary)]/10",
     },
     {
       icon: CheckCircle2,
-      label: "Tasks",
+      label: t('quickStats.tasks'),
       value: `${stats.completedTasksToday}/${stats.totalTasksWeek}`,
-      subtext: `${stats.completedTasksWeek} done this week`,
+      subtext: t('quickStats.doneThisWeek', { completed: stats.completedTasksWeek }),
       color: "text-[var(--primary)]",
       bgColor: "bg-[var(--primary)]/10",
     },
     {
       icon: Calendar,
-      label: "Deadlines",
+      label: t('quickStats.deadlines'),
       value: stats.todayDeadlines,
-      subtext: "due today",
+      subtext: t('quickStats.dueToday'),
       color: stats.todayDeadlines > 0 ? "text-orange-500" : "text-[var(--text-muted)]",
       bgColor: stats.todayDeadlines > 0 ? "bg-orange-500/10" : "bg-[var(--background-subtle)]",
     },
     {
       icon: TrendingUp,
-      label: "Weekly Goal",
+      label: t('quickStats.weeklyGoal'),
       value: `${stats.weeklyGoalProgress}%`,
-      subtext: "40h target",
+      subtext: t('quickStats.target', { hours: 40 }),
       color: "text-[var(--primary)]",
       bgColor: "bg-[var(--primary)]/10",
     },
@@ -63,14 +63,14 @@ const { user } = useAuthStore();
   return (
     <div className="px-2 py-3">
       <div className="mb-2 flex items-center justify-between px-2">
-        <h3 className="text-xs font-semibold text-[var(--text-muted)]">Today's Overview</h3>
+        <h3 className="text-xs font-semibold text-[var(--text-muted)]">{t('quickStats.todaysOverview')}</h3>
         {stats.isClockedIn && (
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--primary)]"></span>
             </span>
-            <span className="text-[10px] text-[var(--primary)] font-medium">Clocked In</span>
+            <span className="text-[10px] text-[var(--primary)] font-medium">{t('quickStats.clockedIn')}</span>
           </div>
         )}
       </div>
@@ -97,11 +97,11 @@ const { user } = useAuthStore();
       {/* Weekly progress bar */}
       <div className="mt-3 px-2">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-[var(--text-muted)]">Weekly Progress</span>
+          <span className="text-[10px] text-[var(--text-muted)]">{t('quickStats.weeklyProgress')}</span>
           <span className="text-[10px] font-semibold text-[var(--text-primary)]">{stats.weeklyGoalProgress}%</span>
         </div>
         <div className="h-1.5 rounded-full bg-[var(--background-subtle)] overflow-hidden">
-          <div 
+          <div
             className="h-full bg-[var(--primary)] transition-all duration-500"
             style={{ width: `${Math.min(100, stats.weeklyGoalProgress)}%` }}
           />

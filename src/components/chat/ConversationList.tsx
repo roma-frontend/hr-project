@@ -447,7 +447,7 @@ export function ConversationList({
               </ContextMenuTrigger>
 
               {/* Context Menu */}
-              <ContextMenuContent className="w-48" side="right">
+              <ContextMenuContent className="w-48">
                 {!conv.membership.isDeleted && (
                   <>
                     <ContextMenuLabel className="text-xs" style={{ color: "var(--text-muted)" }}>{displayName}</ContextMenuLabel>

@@ -51,7 +51,7 @@ function TestimonialCard({ testimonial, delay, index }: { testimonial: Testimoni
         style={{ background: testimonial.gradient }} aria-hidden="true" />
 
       {/* Card — lifts on hover */}
-      <div className="relative h-full rounded-2xl border backdrop-blur-xl p-6 flex flex-col gap-4 group-hover:-translate-y-2 transition-transform duration-300"
+      <div className="relative h-full rounded-2xl border backdrop-blur-xl p-6 flex flex-col gap-4"
         style={{ borderColor: 'var(--landing-card-border)', backgroundColor: 'var(--landing-card-bg)' }}>
         <div className="flex items-start justify-between">
           <Quote size={32} style={{ color: 'var(--primary)', opacity: 0.4 }} />

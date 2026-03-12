@@ -1,13 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
 
 const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: get user's organizationId from DB
 // ─────────────────────────────────────────────────────────────────────────────
-async function getUserOrgId(ctx: any, userId: Id<"users">): Promise<Id<"organizations">> {
+async function getUserOrgId(ctx: QueryCtx, userId: Id<"users">): Promise<Id<"organizations">> {
   const user = await ctx.db.get(userId);
   if (!user) throw new Error("User not found");
   if (!user.organizationId) throw new Error("User has no organization");
@@ -664,7 +665,7 @@ export const markConversationRead = mutation({
 
     for (const msg of recent) {
       if (msg.senderId === userId) continue;
-      const readBy: Array<{ userId: string; readAt: number }> = (msg.readBy as any) ?? [];
+      const readBy: Array<{ userId: Id<"users">; readAt: number }> = (msg.readBy as any) ?? [];
       const existing = readBy.find((r) => r.userId === userId);
       if (existing && existing.readAt > 0) continue; // Already read
       // Update delivered (-1) to read, or add new entry

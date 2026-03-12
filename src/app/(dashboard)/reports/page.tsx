@@ -43,14 +43,14 @@ const [tab, setTab] = useState("overview");
 
   // Determine which query to use based on selectedOrgId
   const shouldUseOrgQuery = mounted && selectedOrgId && user?.id;
-  const leavesQueryParams = shouldUseOrgQuery 
+  const leavesQueryParams = shouldUseOrgQuery
     ? { organizationId: selectedOrgId as Id<"organizations"> }
-    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : null);
+    : (mounted && user?.id ? { requesterId: user.id as Id<"users"> } : "skip" as const);
 
   // Use organization-specific query if superadmin has selected an org, otherwise use default
   const leaves = useQuery(
     shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
-    mounted && user?.id
+    mounted && user?.id && leavesQueryParams !== "skip"
       ? leavesQueryParams
       : "skip"
   );

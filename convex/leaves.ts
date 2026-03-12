@@ -5,8 +5,39 @@ import { mutation, query } from "./_generated/server";
 // GET ALL LEAVES — scoped to caller's organization
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAllLeaves = query({
-  args: { requesterId: v.id("users") },
-  handler: async (ctx, { requesterId }) => {
+  args: { 
+    requesterId: v.optional(v.id("users")),
+    organizationId: v.optional(v.id("organizations")),
+  },
+  handler: async (ctx, { requesterId, organizationId }) => {
+    // If organizationId is provided directly, use it
+    if (organizationId && !requesterId) {
+      const leaves = await ctx.db
+        .query("leaveRequests")
+        .withIndex("by_org", (q) => q.eq("organizationId", organizationId))
+        .order("desc")
+        .collect();
+
+      return await Promise.all(
+        leaves.map(async (leave) => {
+          const user = await ctx.db.get(leave.userId);
+          const reviewer = leave.reviewedBy ? await ctx.db.get(leave.reviewedBy) : null;
+          return {
+            ...leave,
+            userName: user?.name ?? "Unknown",
+            userEmail: user?.email ?? "",
+            userDepartment: user?.department ?? "",
+            userEmployeeType: user?.employeeType ?? "staff",
+            userAvatarUrl: user?.avatarUrl,
+            reviewerName: reviewer?.name,
+          };
+        })
+      );
+    }
+
+    // Otherwise use requesterId
+    if (!requesterId) return [];
+    
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error("Requester not found");
 
@@ -165,6 +196,10 @@ export const createLeave = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+
+    // Conflict detection with company events is handled by:
+    // 1. Admin manually checking events before approving
+    // 2. Future: scheduled job to check conflicts
 
     // Notify admins and supervisors within same org only
     const admins = await ctx.db

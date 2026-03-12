@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -15,6 +16,7 @@ interface FocusModeProps {
 }
 
 export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [isFocusMode, setIsFocusMode] = useState(currentPresence === "busy");
   const updatePresence = useMutation(api.users.updatePresenceStatus);
@@ -24,7 +26,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
 
     try {
       const newFocusState = !isFocusMode;
-      
+
       // Update presence status
       await updatePresence({
         userId: user.id as Id<"users">,
@@ -35,16 +37,16 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
       onFocusChange?.(newFocusState);
 
       if (newFocusState) {
-        toast.success("Focus Mode activated! 🎯", {
-          description: "Status set to Busy. Notifications muted.",
+        toast.success(t('focusMode.activated'), {
+          description: t('focusMode.statusBusy'),
         });
       } else {
-        toast.info("Focus Mode deactivated", {
-          description: "Back to normal mode",
+        toast.info(t('focusMode.deactivated'), {
+          description: t('focusMode.backToNormal'),
         });
       }
     } catch (error) {
-      toast.error("Failed to toggle focus mode");
+      toast.error(t('focusMode.toggleFailed'));
     }
   };
 
@@ -53,10 +55,10 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
       <div className="mb-3 px-2">
         <h3 className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-2">
           <Focus className="w-3.5 h-3.5" />
-          Focus Mode
+          {t('focusMode.title')}
         </h3>
         <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
-          Minimize distractions and stay productive
+          {t('focusMode.description')}
         </p>
       </div>
 
@@ -85,12 +87,10 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
 
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isFocusMode ? "Focus Mode Active" : "Focus Mode"}
+              {isFocusMode ? t('focusMode.modeActive') : t('focusMode.title')}
             </h4>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {isFocusMode
-                ? "You're in deep work mode"
-                : "Enter deep work mode"}
+              {isFocusMode ? t('focusMode.deepWorkMode') : t('focusMode.enterDeepWork')}
             </p>
           </div>
 
@@ -119,21 +119,21 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
               <Bell className="w-3.5 h-3.5 text-[var(--text-muted)]" />
             )}
             <span className={isFocusMode ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
-              {isFocusMode ? "Notifications muted" : "Mute notifications"}
+              {isFocusMode ? t('focusMode.notificationsMuted') : t('focusMode.muteNotifications')}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
             <div className={`w-2 h-2 rounded-full ${isFocusMode ? "bg-red-500" : "bg-[var(--text-muted)]"}`} />
             <span className={isFocusMode ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
-              {isFocusMode ? "Status: Busy" : "Set status to Busy"}
+              {isFocusMode ? t('focusMode.statusBusy') : t('focusMode.setStatusBusy')}
             </span>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
             <Zap className={`w-3.5 h-3.5 ${isFocusMode ? "text-[var(--primary)]" : "text-[var(--text-muted)]"}`} />
             <span className={isFocusMode ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
-              {isFocusMode ? "Deep work mode enabled" : "Enable deep work mode"}
+              {isFocusMode ? t('focusMode.deepWorkEnabled') : t('focusMode.enableDeepWork')}
             </span>
           </div>
         </div>
@@ -141,7 +141,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
         {isFocusMode && (
           <div className="mt-3 pt-3 border-t border-[var(--border)]">
             <p className="text-xs text-center text-[var(--primary)] font-medium">
-              💪 Stay focused and crush your goals!
+              {t('focusMode.stayFocused')}
             </p>
           </div>
         )}
@@ -154,7 +154,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
           size="sm"
         >
           <Zap className="w-4 h-4 mr-2" />
-          Activate Focus Mode
+          {t('focusMode.activateFocusMode')}
         </Button>
       )}
     </div>
