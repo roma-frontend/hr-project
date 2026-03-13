@@ -260,7 +260,7 @@ function PricingCard({ tier, delay, currentPlan }: { tier: PricingTier; delay: n
           <button
             onClick={handleCheckout}
             disabled={loading || isCurrentPlan}
-            className={`relative w-full py-3 sm:py-4 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden group/btn
+            className={`relative w-full p-3 sm:p-4 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 overflow-hidden group/btn
               ${loading || isCurrentPlan ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]'}
             `}
             style={tier.popular || isCurrentPlan ? {
@@ -293,7 +293,6 @@ function PricingCard({ tier, delay, currentPlan }: { tier: PricingTier; delay: n
               </>
             ) : (
               <>
-                <Sparkles size={15} />
                 {t(tier.buttonTextKey)}
                 <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
               </>

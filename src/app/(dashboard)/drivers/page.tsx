@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +80,7 @@ import {
   SortAsc,
   StickyNote,
   MapPinned,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -213,7 +214,7 @@ function DriverDashboard({ userId, organizationId }: { userId: Id<"users">; orga
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            {driver.isAvailable ? "Available" : "Unavailable"}
+            {driver.isAvailable ? t("driver.available", "Available") : t("driver.busy", "Busy")}
           </span>
           <Switch checked={driver.isAvailable} onCheckedChange={handleToggleAvailability} />
         </div>
@@ -1213,6 +1214,23 @@ export default function DriversPage() {
     mounted && userId ? { userId, limit: 50 } : "skip"
   );
 
+  // Check if selected driver is on leave
+  const driverLeaveCheck = useQuery(
+    api.drivers.isDriverOnLeave,
+    selectedDriver && startTime && endTime
+      ? {
+          driverId: selectedDriver,
+          startTime: new Date(startTime).getTime(),
+          endTime: new Date(endTime).getTime(),
+        }
+      : "skip"
+  );
+
+  const checkDriverLeave = async (args: { driverId: Id<"drivers">; startTime: number; endTime: number }) => {
+    // For immediate check, we'll use the query result
+    return driverLeaveCheck || { onLeave: false, leave: null };
+  };
+
   // Feature #1: Rating dialog state
   const [ratingDialog, setRatingDialog] = useState<{
     open: boolean;
@@ -1308,6 +1326,24 @@ export default function DriversPage() {
       // Validate start is before end
       if (start >= end) {
         toast.error(t("driver.startBeforeEnd", "Start time must be before end time"));
+        return;
+      }
+
+      // Check if driver is on leave BEFORE submitting
+      const leaveCheck = await checkDriverLeave({
+        driverId: selectedDriver,
+        startTime: start,
+        endTime: end,
+      });
+
+      if (leaveCheck?.onLeave && leaveCheck?.leave) {
+        toast.error(
+          t("driver.driverOnLeaveBlock", "Невозможно заказать водителя: он находится в отпуске"),
+          {
+            description: `Водитель в отпуске с ${leaveCheck.leave.startDate} по ${leaveCheck.leave.endDate}. Выберите другого водителя.`,
+            duration: 8000,
+          }
+        );
         return;
       }
 
@@ -1534,14 +1570,14 @@ export default function DriversPage() {
               <Filter className="w-4 h-4 text-muted-foreground" />
               <Select value={String(filterCapacity)} onValueChange={(v) => setFilterCapacity(Number(v))}>
                 <SelectTrigger className="w-[140px] h-8 text-xs">
-                  <SelectValue placeholder="Min seats" />
+                  <SelectValue placeholder={t("driver.minSeats", "Min seats")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Any capacity</SelectItem>
-                  <SelectItem value="2">2+ seats</SelectItem>
-                  <SelectItem value="4">4+ seats</SelectItem>
-                  <SelectItem value="6">6+ seats</SelectItem>
-                  <SelectItem value="8">8+ seats</SelectItem>
+                  <SelectItem value="0">{t("driver.anyCapacity", "Any capacity")}</SelectItem>
+                  <SelectItem value="2">{t("driver.seats2Plus", "2+ seats")}</SelectItem>
+                  <SelectItem value="4">{t("driver.seats4Plus", "4+ seats")}</SelectItem>
+                  <SelectItem value="6">{t("driver.seats6Plus", "6+ seats")}</SelectItem>
+                  <SelectItem value="8">{t("driver.seats8Plus", "8+ seats")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterSortBy} onValueChange={setFilterSortBy}>
@@ -1584,7 +1620,7 @@ export default function DriversPage() {
               {filteredDrivers.map((driver) => (
                 <Card key={driver._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="pt-6">
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col items-start gap-4">
                       <Avatar className="w-12 h-12">
                         {driver.userAvatar && <AvatarImage src={driver.userAvatar} />}
                         <AvatarFallback>
@@ -2330,6 +2366,33 @@ export default function DriversPage() {
               </Select>
             </div>
 
+            {/* Leave Warning Alert */}
+            {driverLeaveCheck?.onLeave && driverLeaveCheck.leave && (
+              <Alert variant="destructive" className="border-red-500 bg-red-50">
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+                <AlertTitle className="text-red-800">
+                  ⛔ {t("driver.driverOnLeave", "Driver on leave")}
+                </AlertTitle>
+                <AlertDescription className="text-red-700">
+                  <p className="font-semibold">
+                    {t("driver.onLeaveFrom", "Driver on leave from")} {driverLeaveCheck.leave.startDate} {t("driver.to", "to")} {driverLeaveCheck.leave.endDate}
+                  </p>
+                  <p className="mt-2">
+                    <strong>{t("driver.leaveType", "Leave type")}:</strong> {
+                      driverLeaveCheck.leave.type === 'paid' ? t("leave.types.paid", "Paid") :
+                      driverLeaveCheck.leave.type === 'sick' ? t("leave.types.sick", "Sick") :
+                      driverLeaveCheck.leave.type === 'family' ? t("leave.types.family", "Family") :
+                      driverLeaveCheck.leave.type === 'unpaid' ? t("leave.types.unpaid", "Unpaid") :
+                      driverLeaveCheck.leave.type
+                    }
+                  </p>
+                  <p className="text-sm mt-2 text-red-600">
+                    💡 {t("driver.selectAnotherDriver", "Select another driver or change dates")}
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <Label>{t("driver.pickupLocation", "Pickup Location")}</Label>
@@ -2468,8 +2531,15 @@ export default function DriversPage() {
               <Button variant="outline" onClick={() => setShowRequestModal(false)} type="button">
                 {t("cancel", "Cancel")}
               </Button>
-              <Button onClick={handleRequestDriver} type="button" className="relative z-10">
-                {t("driver.submitRequest", "Submit Request")}
+              <Button
+                onClick={handleRequestDriver}
+                type="button"
+                className="relative z-10"
+                disabled={driverLeaveCheck?.onLeave}
+              >
+                {driverLeaveCheck?.onLeave
+                  ? t("driver.driverOnLeave", "Водитель в отпуске")
+                  : t("driver.submitRequest", "Submit Request")}
               </Button>
             </div>
           </div>

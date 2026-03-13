@@ -218,12 +218,15 @@ export async function middleware(request: NextRequest) {
     const from = url.searchParams.get('from');
 
     // Если есть параметр from и это защищенный маршрут, редиректим туда
-    if (from && from.startsWith('/')) {
+    if (from && from.startsWith('/') && !from.startsWith('/login') && !from.startsWith('/register')) {
+      console.log(`[Middleware] Redirecting to 'from' param: ${from}`);
       return NextResponse.redirect(new URL(from, request.url));
     }
 
-    // Иначе редиректим на dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Для всех остальных случаев — просто пропускаем на запрашиваемую страницу
+    // Это позволяет обновлять страницу без редиректа на /dashboard
+    console.log(`[Middleware] Auth user on auth route, allowing: ${pathname}`);
+    return NextResponse.next();
   }
 
   // Если пользователь авторизован и заходит на публичную страницу — пропускаем (без редиректа)

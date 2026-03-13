@@ -67,7 +67,7 @@ export function AssignSupervisorModal({ onClose }: Props) {
       <div className="absolute inset-0 backdrop-blur-sm" style={{ backgroundColor: "var(--overlay-bg, rgba(0, 0, 0, 0.6))" }} onClick={onClose} />
       <div className="relative bg-[var(--card)] rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-[var(--border)]">
         {/* Header */}
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 bg-transparent">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold">{t('modals.assignSupervisor.title')}</h2>

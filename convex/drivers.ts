@@ -483,6 +483,151 @@ export const getDriverByUserId = query({
   },
 });
 
+/** Check if driver is on leave for a given date range */
+export const isDriverOnLeave = query({
+  args: {
+    driverId: v.id("drivers"),
+    startTime: v.number(),
+    endTime: v.number(),
+  },
+  handler: async (ctx, { driverId, startTime, endTime }) => {
+    // Get the driver's userId
+    const driver = await ctx.db.get(driverId);
+    if (!driver) {
+      return { onLeave: false, leave: null };
+    }
+
+    // Convert startTime to date string for comparison (YYYY-MM-DD)
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    // Get all approved leaves for this user
+    const allLeaves = await ctx.db
+      .query("leaveRequests")
+      .withIndex("by_user", (q) => q.eq("userId", driver.userId))
+      .filter((q) => q.eq(q.field("status"), "approved"))
+      .collect();
+
+    // Check for overlap in JavaScript
+    for (const leave of allLeaves) {
+      const leaveStart = leave.startDate;
+      const leaveEnd = leave.endDate;
+      
+      // Check if ranges overlap: leaveStart <= endDateStr AND leaveEnd >= startDateStr
+      if (leaveStart <= endDateStr && leaveEnd >= startDateStr) {
+        return {
+          onLeave: true,
+          leave: {
+            _id: leave._id,
+            type: leave.type,
+            startDate: leave.startDate,
+            endDate: leave.endDate,
+            reason: leave.reason,
+          },
+        };
+      }
+    }
+
+    return { onLeave: false, leave: null };
+  },
+});
+
+/** Get alternative available drivers for a time slot (excluding drivers on leave) */
+export const getAlternativeDrivers = query({
+  args: {
+    organizationId: v.id("organizations"),
+    startTime: v.number(),
+    endTime: v.number(),
+    excludeDriverId: v.optional(v.id("drivers")),
+  },
+  handler: async (ctx, { organizationId, startTime, endTime, excludeDriverId }) => {
+    // Get all available drivers
+    const allDrivers = await ctx.db
+      .query("drivers")
+      .withIndex("by_org_available", (q) => q.eq("organizationId", organizationId).eq("isAvailable", true))
+      .collect();
+
+    // Filter out excluded driver
+    const drivers = excludeDriverId
+      ? allDrivers.filter((d) => d._id !== excludeDriverId)
+      : allDrivers;
+
+    // Convert startTime to date string for leave comparison
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    // Enrich with user info and filter
+    const enriched = await Promise.all(
+      drivers.map(async (driver) => {
+        const user = await ctx.db.get(driver.userId);
+        // Only show if user has role 'driver'
+        if (!user || user.role !== "driver") return null;
+
+        // Check if driver is on leave
+        const leaveRequests = await ctx.db
+          .query("leaveRequests")
+          .withIndex("by_user", (q) => q.eq("userId", driver.userId))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("status"), "approved"),
+              q.lte(q.field("startDate"), endDateStr),
+              q.gte(q.field("endDate"), startDateStr)
+            )
+          )
+          .collect();
+
+        if (leaveRequests.length > 0) {
+          return null; // Skip drivers on leave
+        }
+
+        // Check if driver is already booked for this time
+        const overlapping = await ctx.db
+          .query("driverSchedules")
+          .withIndex("by_driver_time", (q) => q.eq("driverId", driver._id))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("status"), "scheduled"),
+              q.or(
+                q.and(
+                  q.lte(q.field("startTime"), startTime),
+                  q.gte(q.field("endTime"), startTime)
+                ),
+                q.and(
+                  q.lte(q.field("startTime"), endTime),
+                  q.gte(q.field("endTime"), endTime)
+                ),
+                q.and(
+                  q.gte(q.field("startTime"), startTime),
+                  q.lte(q.field("endTime"), endTime)
+                )
+              )
+            )
+          )
+          .first();
+
+        if (overlapping) {
+          return null; // Skip already booked drivers
+        }
+
+        return {
+          ...driver,
+          userName: user.name ?? "Unknown",
+          userAvatar: user?.avatarUrl,
+          userPosition: user?.position,
+          userPhone: user?.phone,
+        };
+      })
+    );
+
+    return enriched.filter(Boolean) as typeof enriched;
+  },
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MUTATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -535,6 +680,40 @@ export const requestDriver = mutation({
       throw new Error("Start time must be before end time");
     }
 
+    // Check if driver is on leave
+    const startDate = new Date(args.startTime);
+    const endDate = new Date(args.endTime);
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    const driver = await ctx.db.get(args.driverId);
+    let leaveError = null;
+
+    if (driver) {
+      const leaveRequests = await ctx.db
+        .query("leaveRequests")
+        .withIndex("by_user", (q) => q.eq("userId", driver.userId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("status"), "approved"),
+            q.lte(q.field("startDate"), endDateStr),
+            q.gte(q.field("endDate"), startDateStr)
+          )
+        )
+        .collect();
+
+      if (leaveRequests.length > 0) {
+        const leave = leaveRequests[0];
+        leaveError = {
+          code: "DRIVER_ON_LEAVE",
+          message: `Водитель находится в отпуске с ${leave.startDate} по ${leave.endDate}. Запросить другого водителя.`,
+          leaveType: leave.type,
+          startDate: leave.startDate,
+          endDate: leave.endDate,
+        };
+      }
+    }
+
     // Check if driver is available
     const availability = await ctx.db
       .query("driverSchedules")
@@ -564,6 +743,15 @@ export const requestDriver = mutation({
       throw new Error("Driver is not available at this time");
     }
 
+    // If driver is on leave, return error instead of throwing
+    if (leaveError) {
+      return { 
+        requestId: null, 
+        leaveWarning: null,
+        error: leaveError 
+      };
+    }
+
     // Create request with corporate fields
     const requestId = await ctx.db.insert("driverRequests", {
       organizationId: args.organizationId,
@@ -583,12 +771,12 @@ export const requestDriver = mutation({
     });
 
     // Create notification for driver
-    const driver = await ctx.db.get(args.driverId);
+    const driverRecord = await ctx.db.get(args.driverId);
     const priority = args.priority || "P2";
-    if (driver) {
+    if (driverRecord) {
       await ctx.db.insert("notifications", {
         organizationId: args.organizationId,
-        userId: driver.userId,
+        userId: driverRecord.userId,
         type: "driver_request",
         title: `🚗 ${priority} Trip Request`,
         message: `${args.tripInfo.purpose}: ${args.tripInfo.from} → ${args.tripInfo.to}`,
@@ -602,7 +790,7 @@ export const requestDriver = mutation({
     if (args.requiresApproval) {
       const admins = await ctx.db
         .query("users")
-        .withIndex("by_org_role", (q) => 
+        .withIndex("by_org_role", (q) =>
           q.eq("organizationId", args.organizationId).eq("role", "admin")
         )
         .collect();
@@ -621,7 +809,7 @@ export const requestDriver = mutation({
       }
     }
 
-    return requestId;
+    return { requestId, leaveWarning: null, error: null };
   },
 });
 
