@@ -126,8 +126,8 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.dates.title")}</h3>
-              
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">{t("leaveWizard.steps.dates.title")}</h3>
+
               {/* Тип отпуска */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
                 {(Object.keys(LEAVE_TYPE_LABELS) as LeaveType[]).map((type) => (
@@ -137,7 +137,7 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
                       leaveType === type
                         ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
-                        : "border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] hover:border-[var(--primary)]/50"
+                        : "border-[var(--border)] bg-[var(--card)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
                     }`}
                   >
                     {LEAVE_TYPE_LABELS[type]}
@@ -148,26 +148,26 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
               {/* Даты */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-[var(--foreground)] mb-2 block">{t("leaveWizard.startDate")}</Label>
+                  <Label className="text-[var(--text-primary)] mb-2 block">{t("leaveWizard.startDate")}</Label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     min={format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                    className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
                     style={{
                       colorScheme: 'light',
                     }}
                   />
                 </div>
                 <div>
-                  <Label className="text-[var(--foreground)] mb-2 block">{t("leaveWizard.endDate")}</Label>
+                  <Label className="text-[var(--text-primary)] mb-2 block">{t("leaveWizard.endDate")}</Label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     min={startDate || format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                    className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
                     style={{
                       colorScheme: 'light',
                     }}
@@ -194,26 +194,26 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.details.title")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">{t("leaveWizard.steps.details.title")}</h3>
 
               {/* Баланс */}
-              <div className={`p-4 rounded-lg mb-6 ${hasEnoughBalance ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"}`}>
+              <div className={`p-4 rounded-lg mb-6 ${hasEnoughBalance ? "bg-[var(--success)]/10" : "bg-[var(--destructive)]/10"}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-[var(--foreground)]">
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {t("leaveWizard.currentBalance")}
                   </span>
-                  <span className="text-lg font-bold text-[var(--foreground)]">{balance} {t("leaveWizard.days")}</span>
+                  <span className="text-lg font-bold text-[var(--text-primary)]">{balance} {t("leaveWizard.days")}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[var(--foreground)]">
+                  <span className="text-sm font-medium text-[var(--text-primary)]">
                     {t("leaveWizard.afterLeave")}
                   </span>
-                  <span className={`text-lg font-bold ${hasEnoughBalance ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  <span className={`text-lg font-bold ${hasEnoughBalance ? "text-[var(--success)]" : "text-[var(--destructive)]"}`}>
                     {remainingBalance} {t("leaveWizard.days")}
                   </span>
                 </div>
                 {!hasEnoughBalance && (
-                  <div className="mt-3 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+                  <div className="mt-3 flex items-center gap-2 text-[var(--destructive)] text-sm">
                     <AlertTriangle className="w-4 h-4" />
                     {t("leaveWizard.errors.insufficientBalance")}
                   </div>
@@ -222,25 +222,25 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
 
               {/* Причина */}
               <div className="mb-4">
-                <Label className="text-[var(--foreground)] block mb-2">{t("leaveWizard.reason")} *</Label>
+                <Label className="text-[var(--text-primary)] block mb-2">{t("leaveWizard.reason")} *</Label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder={t("leaveWizard.reasonPlaceholder")}
-                  className="w-full p-3 rounded-lg border border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] placeholder-gray-400 focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                  className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
                 />
               </div>
 
               {/* Комментарий */}
               <div>
-                <Label className="text-[var(--foreground)] block mb-2">{t("leaveWizard.comment")} ({t("leaveWizard.optional")})</Label>
+                <Label className="text-[var(--text-primary)] block mb-2">{t("leaveWizard.comment")} ({t("leaveWizard.optional")})</Label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder={t("leaveWizard.commentPlaceholder")}
                   rows={3}
-                  className="w-full p-3 rounded-lg border border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] placeholder-gray-400 focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent resize-none"
+                  className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent resize-none"
                 />
               </div>
             </div>
@@ -251,49 +251,49 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.confirm.title")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">{t("leaveWizard.steps.confirm.title")}</h3>
 
               <div className="p-6 rounded-lg bg-[var(--background-subtle)] space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.type")}</span>
-                  <span className="font-medium text-[var(--foreground)]">{LEAVE_TYPE_LABELS[leaveType]}</span>
+                  <span className="text-[var(--text-muted)]">{t("leaveWizard.type")}</span>
+                  <span className="font-medium text-[var(--text-primary)]">{LEAVE_TYPE_LABELS[leaveType]}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.dates")}</span>
-                  <span className="font-medium text-[var(--foreground)]">
+                  <span className="text-[var(--text-muted)]">{t("leaveWizard.dates")}</span>
+                  <span className="font-medium text-[var(--text-primary)]">
                     {format(new Date(startDate), "dd MMM")} — {format(new Date(endDate), "dd MMM yyyy", { locale: ru })}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.totalDays", { count: days })}</span>
-                  <span className="font-medium text-[var(--foreground)]">{days} {t("leaveWizard.days")}</span>
+                  <span className="text-[var(--text-muted)]">{t("leaveWizard.totalDays", { count: days })}</span>
+                  <span className="font-medium text-[var(--text-primary)]">{days} {t("leaveWizard.days")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.reason")}</span>
-                  <span className="font-medium text-[var(--foreground)]">{reason}</span>
+                  <span className="text-[var(--text-muted)]">{t("leaveWizard.reason")}</span>
+                  <span className="font-medium text-[var(--text-primary)]">{reason}</span>
                 </div>
                 {comment && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.comment")}</span>
-                    <span className="font-medium text-[var(--foreground)]">{comment}</span>
+                    <span className="text-[var(--text-muted)]">{t("leaveWizard.comment")}</span>
+                    <span className="font-medium text-[var(--text-primary)]">{comment}</span>
                   </div>
                 )}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-4 border-t border-[var(--border)]">
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.balanceAfter")}</span>
-                    <span className={`font-bold ${remainingBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                    <span className="text-[var(--text-muted)]">{t("leaveWizard.balanceAfter")}</span>
+                    <span className={`font-bold ${remainingBalance >= 0 ? "text-[var(--success)]" : "text-[var(--destructive)]"}`}>
                       {remainingBalance} {t("leaveWizard.days")}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <div className="mt-6 p-4 rounded-lg bg-[var(--background-subtle)]">
                 <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                  <div className="text-sm text-blue-800 dark:text-blue-200">
-                    <p className="font-medium text-[var(--foreground)] mb-1">{t("leaveWizard.info.title")}</p>
-                    <p className="text-[var(--foreground)]">{t("leaveWizard.info.description")}</p>
+                  <Info className="w-5 h-5 text-[var(--primary)] mt-0.5" />
+                  <div className="text-sm text-[var(--text-secondary)]">
+                    <p className="font-medium text-[var(--text-primary)] mb-1">{t("leaveWizard.info.title")}</p>
+                    <p>{t("leaveWizard.info.description")}</p>
                   </div>
                 </div>
               </div>
