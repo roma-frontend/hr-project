@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   MessageCircle,
   Car,
+  Command,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -35,6 +36,7 @@ import { OrganizationSelector } from "@/components/layout/OrganizationSelector";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { CommandPalette } from "@/components/search/CommandPalette";
 
 const navItems = [
   { href: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
@@ -56,6 +58,7 @@ const navItems = [
   { href: "/ai-site-editor", labelKey: "nav.aiSiteEditor", icon: Sparkles, roles: ["superadmin", "admin", "supervisor", "employee"], badge: "AI" },
   { href: "/profile", labelKey: "nav.profile", icon: User, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
   { href: "/settings", labelKey: "nav.settings", icon: Settings, roles: ["superadmin", "admin", "supervisor", "employee", "driver"] },
+  { href: "#", labelKey: "nav.commandPalette", icon: Command, onClick: () => setOpenCommandPalette(true), roles: ["superadmin", "admin", "supervisor", "employee", "driver"], badge: "⌘K" },
 ];
 
 function getInitials(name: string) {
@@ -70,6 +73,7 @@ export function Sidebar() {
   const { user } = useAuthStore();
   const [mounted, setMounted] = React.useState(false);
   const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
+  const [openCommandPalette, setOpenCommandPalette] = React.useState(false);
 
   React.useEffect(() => setMounted(true), []);
 

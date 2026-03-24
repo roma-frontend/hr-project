@@ -136,7 +136,7 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     onClick={() => setLeaveType(type)}
                     className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
                       leaveType === type
-                        ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]"
+                        ? "border-[var(--primary)] bg-[var(--primary)] text-white !text-white"
                         : "border-[var(--border)] bg-[var(--card)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
                     }`}
                   >
@@ -155,9 +155,6 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     onChange={(e) => setStartDate(e.target.value)}
                     min={format(new Date(), "yyyy-MM-dd")}
                     className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
-                    style={{
-                      colorScheme: 'light',
-                    }}
                   />
                 </div>
                 <div>
@@ -168,9 +165,6 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     onChange={(e) => setEndDate(e.target.value)}
                     min={startDate || format(new Date(), "yyyy-MM-dd")}
                     className="w-full p-3 rounded-lg border border-[var(--input-border)] bg-[var(--input)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--ring)] focus:border-transparent"
-                    style={{
-                      colorScheme: 'light',
-                    }}
                   />
                 </div>
               </div>

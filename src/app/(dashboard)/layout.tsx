@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "@/components/layout/Providers";
-import { CommandPalette } from "@/components/search/CommandPalette";
 
 export const metadata: Metadata = {
   title: {
@@ -19,7 +18,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <Providers>
       {children}
-      <CommandPalette />
     </Providers>
   );
 }
