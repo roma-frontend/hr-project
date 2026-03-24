@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { LeaveRequestModal } from "@/components/leaves/LeaveRequestModal";
+import { LeaveRequestWizard } from "@/components/leaves/LeaveRequestWizard";
 import { useAuthStore } from "@/store/useAuthStore";
 import { LEAVE_TYPE_LABELS, DEPARTMENTS, type LeaveType, type LeaveStatus } from "@/lib/types";
 import dynamic from "next/dynamic";
@@ -67,6 +68,7 @@ export function LeavesClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -214,7 +216,7 @@ export function LeavesClient() {
           </p>
         </div>
         <Button
-          onClick={() => setModalOpen(true)}
+          onClick={() => setWizardOpen(true)}
           className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
         >
           <Plus className="w-5 h-5" /> {t('dashboard.newRequest')}
@@ -379,6 +381,15 @@ export function LeavesClient() {
         </Card>
       </motion.div>
 
+      {/* Leave Request Wizard (New) */}
+      {wizardOpen && user?.id && (
+        <LeaveRequestWizard
+          userId={user.id as Id<"users">}
+          onClose={() => setWizardOpen(false)}
+        />
+      )}
+
+      {/* Legacy Modal (keep for backward compatibility) */}
       <LeaveRequestModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
