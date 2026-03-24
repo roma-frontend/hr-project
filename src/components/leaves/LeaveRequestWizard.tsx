@@ -126,7 +126,7 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t("leaveWizard.steps.dates.title")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.dates.title")}</h3>
               
               {/* Тип отпуска */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
@@ -136,13 +136,9 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     onClick={() => setLeaveType(type)}
                     className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
                       leaveType === type
-                        ? `border-[${LEAVE_TYPE_COLORS[type]}] bg-[${LEAVE_TYPE_COLORS[type]}]/10`
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                        ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                        : "border-[var(--card-border)] bg-[var(--card)] text-[var(--foreground)] hover:border-[var(--primary)]/50"
                     }`}
-                    style={{
-                      borderColor: leaveType === type ? LEAVE_TYPE_COLORS[type] : undefined,
-                      backgroundColor: leaveType === type ? `${LEAVE_TYPE_COLORS[type]}10` : undefined,
-                    }}
                   >
                     {LEAVE_TYPE_LABELS[type]}
                   </button>
@@ -198,26 +194,26 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t("leaveWizard.steps.details.title")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.details.title")}</h3>
 
               {/* Баланс */}
               <div className={`p-4 rounded-lg mb-6 ${hasEnoughBalance ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-[var(--foreground)]">
                     {t("leaveWizard.currentBalance")}
                   </span>
-                  <span className="text-lg font-bold">{balance} {t("leaveWizard.days")}</span>
+                  <span className="text-lg font-bold text-[var(--foreground)]">{balance} {t("leaveWizard.days")}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-[var(--foreground)]">
                     {t("leaveWizard.afterLeave")}
                   </span>
-                  <span className={`text-lg font-bold ${hasEnoughBalance ? "text-green-600" : "text-red-600"}`}>
+                  <span className={`text-lg font-bold ${hasEnoughBalance ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                     {remainingBalance} {t("leaveWizard.days")}
                   </span>
                 </div>
                 {!hasEnoughBalance && (
-                  <div className="mt-3 flex items-center gap-2 text-red-600 text-sm">
+                  <div className="mt-3 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
                     <AlertTriangle className="w-4 h-4" />
                     {t("leaveWizard.errors.insufficientBalance")}
                   </div>
@@ -255,37 +251,37 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t("leaveWizard.steps.confirm.title")}</h3>
+              <h3 className="text-lg font-semibold text-[var(--foreground)] mb-4">{t("leaveWizard.steps.confirm.title")}</h3>
 
-              <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-800 space-y-4">
+              <div className="p-6 rounded-lg bg-[var(--background-subtle)] space-y-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{t("leaveWizard.type")}</span>
-                  <span className="font-medium">{LEAVE_TYPE_LABELS[leaveType]}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.type")}</span>
+                  <span className="font-medium text-[var(--foreground)]">{LEAVE_TYPE_LABELS[leaveType]}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{t("leaveWizard.dates")}</span>
-                  <span className="font-medium">
+                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.dates")}</span>
+                  <span className="font-medium text-[var(--foreground)]">
                     {format(new Date(startDate), "dd MMM")} — {format(new Date(endDate), "dd MMM yyyy", { locale: ru })}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{t("leaveWizard.totalDays", { count: days })}</span>
-                  <span className="font-medium">{days} {t("leaveWizard.days")}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.totalDays", { count: days })}</span>
+                  <span className="font-medium text-[var(--foreground)]">{days} {t("leaveWizard.days")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">{t("leaveWizard.reason")}</span>
-                  <span className="font-medium">{reason}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.reason")}</span>
+                  <span className="font-medium text-[var(--foreground)]">{reason}</span>
                 </div>
                 {comment && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">{t("leaveWizard.comment")}</span>
-                    <span className="font-medium">{comment}</span>
+                    <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.comment")}</span>
+                    <span className="font-medium text-[var(--foreground)]">{comment}</span>
                   </div>
                 )}
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">{t("leaveWizard.balanceAfter")}</span>
-                    <span className={`font-bold ${remainingBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <span className="text-gray-500 dark:text-gray-400">{t("leaveWizard.balanceAfter")}</span>
+                    <span className={`font-bold ${remainingBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
                       {remainingBalance} {t("leaveWizard.days")}
                     </span>
                   </div>
@@ -294,10 +290,10 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
 
               <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <div className="flex items-start gap-3">
-                  <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                   <div className="text-sm text-blue-800 dark:text-blue-200">
-                    <p className="font-medium mb-1">{t("leaveWizard.info.title")}</p>
-                    <p>{t("leaveWizard.info.description")}</p>
+                    <p className="font-medium text-[var(--foreground)] mb-1">{t("leaveWizard.info.title")}</p>
+                    <p className="text-[var(--foreground)]">{t("leaveWizard.info.description")}</p>
                   </div>
                 </div>
               </div>
