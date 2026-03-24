@@ -3924,5 +3924,66 @@
     "approvedOn": "Approved on",
     "rejectedOn": "Rejected on",
     "reason": "Reason"
+  },
+  "dashboardTour": {
+    "welcome": {
+      "title": "Welcome to Dashboard! 👋",
+      "description": "Let us show you the main features of the dashboard. It will take just 2 minutes!"
+    },
+    "quickStats": {
+      "title": "Quick Stats 📊",
+      "description": "Here you see key metrics: total employees, pending requests, who's on leave now, and approved this month."
+    },
+    "leaveBalance": {
+      "title": "Leave Balance 🏖",
+      "description": "Your available leave days: paid, sick, and family. Always stay aware of your balance!"
+    },
+    "quickActions": {
+      "title": "Quick Actions ⚡",
+      "description": "Create leave requests, check in/out, write to chat — all in one click!"
+    },
+    "recentActivity": {
+      "title": "Recent Activity 📋",
+      "description": "History of all your leave requests with statuses. Track approvals in real-time."
+    },
+    "navigation": {
+      "title": "Navigation 🧭",
+      "description": "Sidebar menu contains all sections: attendance, analytics, employees, tasks, chat, and settings."
+    },
+    "complete": {
+      "title": "You're All Set! 🎉",
+      "description": "Now you know the basics! If you forget anything, you can always run the tour again in settings."
+    }
+  },
+  "common": {
+    "back": "Back",
+    "skip": "Skip",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "quickActions": {
+    "title": "⚡ Quick Actions",
+    "leaveRequest": "Leave Request",
+    "leaveRequestDesc": "Create new request",
+    "checkIn": "Check In",
+    "checkInDesc": "Check-in / Check-out",
+    "chat": "Chat",
+    "chatDesc": "Write message",
+    "tasks": "Tasks",
+    "tasksDesc": "My tasks",
+    "approvals": "Approvals",
+    "approvalsDesc": "Approve requests",
+    "analytics": "Analytics",
+    "analyticsDesc": "View reports",
+    "employees": "Employees",
+    "employeesDesc": "Team management",
+    "settings": "Settings",
+    "settingsDesc": "Configuration",
+    "shortcuts": {
+      "hint": "Keyboard shortcuts"
+    },
+    "toast": {
+      "success": "Opening..."
+    }
   }
 }

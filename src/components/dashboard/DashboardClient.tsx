@@ -27,6 +27,10 @@ import dynamic from "next/dynamic";
 import { PlanGate } from "@/components/subscription/PlanGate";
 import { DashboardBanners } from "@/components/dashboard/DashboardBanners";
 import LeaveStats from "@/components/dashboard/LeaveStats";
+import { DashboardTour } from "@/components/onboarding/DashboardTour";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 // Lazy load admin components
 const HolidayCalendarSync = dynamic(() => import("@/components/admin/HolidayCalendarSync"), { ssr: false });
@@ -78,7 +82,20 @@ export default function DashboardClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => { setMounted(true); }, []);
+  const [showTour, setShowTour] = React.useState(false);
+  React.useEffect(() => { 
+    setMounted(true);
+    // Show tour for new users (first time login)
+    const hasSeenTour = localStorage.getItem("dashboard_tour_seen");
+    if (!hasSeenTour && user) {
+      setTimeout(() => setShowTour(true), 1000);
+    }
+  }, [user]);
+
+  const handleTourComplete = () => {
+    localStorage.setItem("dashboard_tour_seen", "true");
+    setShowTour(false);
+  };
 
   const leaves = useQuery(api.leaves.getAllLeaves, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
   const users = useQuery(api.users.getAllUsers, user?.id ? { requesterId: user.id as Id<"users"> } : "skip");
@@ -194,7 +211,7 @@ export default function DashboardClient() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
+      <div data-tour="quick-stats" className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
         <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
         <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
         <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
@@ -417,6 +434,11 @@ export default function DashboardClient() {
         </motion.div>
       )}
 
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants} className="lg:col-span-2">
+        <QuickActions />
+      </motion.div>
+
       {/* Admin Widgets - Conditionally rendered */}
         {organization?.plan === "enterprise" && (
           <>
@@ -453,6 +475,9 @@ export default function DashboardClient() {
           </>
         )}
       </div>
+
+      {/* Dashboard Tour */}
+      {showTour && <DashboardTour onComplete={handleTourComplete} onSkip={handleTourComplete} />}
     </motion.div>
   );
 }
