@@ -152,24 +152,28 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
               {/* Даты */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-gray-900 dark:text-white">{t("leaveWizard.startDate")}</Label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    min={format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
+                  <Label className="text-gray-900 dark:text-white mb-2 block">{t("leaveWizard.startDate")}</Label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      min={format(new Date(), "yyyy-MM-dd")}
+                      className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-gray-900 dark:text-white">{t("leaveWizard.endDate")}</Label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate || format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  />
+                  <Label className="text-gray-900 dark:text-white mb-2 block">{t("leaveWizard.endDate")}</Label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      min={startDate || format(new Date(), "yyyy-MM-dd")}
+                      className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:focus:ring-blue-400 [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
 
