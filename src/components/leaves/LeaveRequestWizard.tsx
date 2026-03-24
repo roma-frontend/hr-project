@@ -152,23 +152,23 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
               {/* Даты */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{t("leaveWizard.startDate")}</Label>
+                  <Label className="text-gray-900 dark:text-white">{t("leaveWizard.startDate")}</Label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     min={format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <Label>{t("leaveWizard.endDate")}</Label>
+                  <Label className="text-gray-900 dark:text-white">{t("leaveWizard.endDate")}</Label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     min={startDate || format(new Date(), "yyyy-MM-dd")}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -220,25 +220,25 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
 
               {/* Причина */}
               <div className="mb-4">
-                <Label>{t("leaveWizard.reason")} *</Label>
+                <Label className="text-gray-900 dark:text-white">{t("leaveWizard.reason")} *</Label>
                 <input
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder={t("leaveWizard.reasonPlaceholder")}
-                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               {/* Комментарий */}
               <div>
-                <Label>{t("leaveWizard.comment")} ({t("leaveWizard.optional")})</Label>
+                <Label className="text-gray-900 dark:text-white">{t("leaveWizard.comment")} ({t("leaveWizard.optional")})</Label>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder={t("leaveWizard.commentPlaceholder")}
                   rows={3}
-                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 resize-none"
+                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none"
                 />
               </div>
             </div>
