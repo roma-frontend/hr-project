@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { shallow } from 'zustand/shallow'
+import { useShallow } from 'zustand/shallow'
 import React from 'react'
 
 export interface User {
@@ -88,11 +88,11 @@ export const useAuthStore = create<AuthState>()(
  * const { user, isAuthenticated } = useAuthStoreShallow();
  */
 export function useAuthStoreShallow() {
-  const user = useAuthStore((state) => state.user, shallow)
-  const token = useAuthStore((state) => state.token, shallow)
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated, shallow)
-  const needsOnboarding = useAuthStore((state) => state.needsOnboarding, shallow)
-  
+  const user = useAuthStore(useShallow((state) => state.user))
+  const token = useAuthStore(useShallow((state) => state.token))
+  const isAuthenticated = useAuthStore(useShallow((state) => state.isAuthenticated))
+  const needsOnboarding = useAuthStore(useShallow((state) => state.needsOnboarding))
+
   return React.useMemo(() => ({
     user,
     token,
@@ -105,7 +105,7 @@ export function useAuthStoreShallow() {
  * Селекторы для отдельных полей store
  * Используем для максимальной оптимизации ре-рендеров
  */
-export const useAuthUser = (): User | null => useAuthStore((state) => state.user, shallow)
-export const useAuthIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated, shallow)
-export const useAuthNeedsOnboarding = () => useAuthStore((state) => state.needsOnboarding, shallow)
+export const useAuthUser = (): User | null => useAuthStore(useShallow((state) => state.user))
+export const useAuthIsAuthenticated = () => useAuthStore(useShallow((state) => state.isAuthenticated))
+export const useAuthNeedsOnboarding = () => useAuthStore(useShallow((state) => state.needsOnboarding))
 export const useAuthLogout = () => useAuthStore((state) => state.logout)

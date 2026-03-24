@@ -32,10 +32,12 @@ export const sendChatMessage = action({
     try {
       if (userEmail) {
         // Get user profile via email (safe string lookup)
+        // @ts-expect-error - Convex type inference issue
         userProfile = await ctx.runQuery(api.users.getUserByEmail, { email: userEmail });
         const resolvedUserId = userProfile?._id;
 
         // Get user's own leaves
+        // @ts-expect-error - Convex type inference issue
         const userLeaves = resolvedUserId
           ? await ctx.runQuery(api.leaves.getUserLeaves, { userId: resolvedUserId })
           : [];

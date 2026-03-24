@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/shallow";
 
 interface SidebarState {
   collapsed: boolean;
@@ -30,24 +30,23 @@ export const useSidebarStore = create<SidebarState>()(
  * Оптимизированные селекторы для sidebar store
  * Используем для предотвращения лишних ре-рендеров
  */
-export const useSidebarCollapsed = () => useSidebarStore((state) => state.collapsed, shallow)
-export const useSidebarMobileOpen = () => useSidebarStore((state) => state.mobileOpen, shallow)
-export const useSidebarToggle = () => useSidebarStore((state) => state.toggle, shallow)
-export const useSidebarSetCollapsed = () => useSidebarStore((state) => state.setCollapsed, shallow)
-export const useSidebarSetMobileOpen = () => useSidebarStore((state) => state.setMobileOpen, shallow)
+export const useSidebarCollapsed = () => useSidebarStore(useShallow((state) => state.collapsed))
+export const useSidebarMobileOpen = () => useSidebarStore(useShallow((state) => state.mobileOpen))
+export const useSidebarToggle = () => useSidebarStore((state) => state.toggle)
+export const useSidebarSetCollapsed = () => useSidebarStore((state) => state.setCollapsed)
+export const useSidebarSetMobileOpen = () => useSidebarStore((state) => state.setMobileOpen)
 
 /**
  * Оптимизированный хук для использования sidebar store с shallow comparison
  */
 export function useSidebarStoreShallow() {
   return useSidebarStore(
-    (state) => ({
+    useShallow((state) => ({
       collapsed: state.collapsed,
       mobileOpen: state.mobileOpen,
       toggle: state.toggle,
       setCollapsed: state.setCollapsed,
       setMobileOpen: state.setMobileOpen,
-    }),
-    shallow
+    }))
   )
 }
