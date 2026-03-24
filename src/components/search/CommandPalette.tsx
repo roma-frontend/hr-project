@@ -234,10 +234,10 @@ export function CommandPalette() {
               exit={{ opacity: 0, scale: 0.95, y: -20 }}
               className="fixed top-20 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-4"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="bg-[var(--card)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden">
                 {/* Поисковая строка */}
-                <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
-                  <Search className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-4 border-b border-[var(--border)]">
+                  <Search className="w-5 h-5 text-[var(--text-muted)]" />
                   <input
                     type="text"
                     value={query}
@@ -246,15 +246,15 @@ export function CommandPalette() {
                       setSelectedIndex(0);
                     }}
                     placeholder={t("commandPalette.placeholder")}
-                    className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder-gray-400"
+                    className="flex-1 bg-transparent outline-none text-[var(--text-primary)] placeholder-[var(--text-muted)]"
                     autoFocus
                   />
-                  <kbd className="hidden sm:inline-flex px-2 py-1 text-xs font-mono rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">
+                  <kbd className="hidden sm:inline-flex px-2 py-1 text-xs font-mono rounded bg-[var(--background-subtle)] border border-[var(--border)] text-[var(--text-muted)]">
                     ESC
                   </kbd>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -263,7 +263,7 @@ export function CommandPalette() {
                 {/* Результаты поиска */}
                 <div className="max-h-96 overflow-y-auto p-2">
                   {filteredCommands.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-[var(--text-muted)]">
                       <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
                       <p>{t("commandPalette.noResults")}</p>
                     </div>
@@ -276,24 +276,24 @@ export function CommandPalette() {
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left",
                             index === selectedIndex
-                              ? "bg-blue-50 dark:bg-blue-900/20"
-                              : "hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                              ? "bg-[var(--primary)]/10"
+                              : "hover:bg-[var(--background-subtle)]"
                           )}
                         >
                           <div className={cn(
                             "p-2 rounded-lg",
                             index === selectedIndex
-                              ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400"
-                              : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                              ? "bg-[var(--primary)]/20 text-[var(--primary)]"
+                              : "bg-[var(--background-subtle)] text-[var(--text-muted)]"
                           )}>
                             {item.icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900 dark:text-white truncate">
+                            <div className="font-medium text-[var(--text-primary)] truncate">
                               {item.label}
                             </div>
                             {item.description && (
-                              <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              <div className="text-sm text-[var(--text-muted)] truncate">
                                 {item.description}
                               </div>
                             )}
@@ -301,8 +301,8 @@ export function CommandPalette() {
                           <ArrowRight className={cn(
                             "w-4 h-4",
                             index === selectedIndex
-                              ? "text-blue-600 dark:text-blue-400"
-                              : "text-gray-400"
+                              ? "text-[var(--primary)]"
+                              : "text-[var(--text-muted)]"
                           )} />
                         </button>
                       ))}
@@ -311,15 +311,15 @@ export function CommandPalette() {
                 </div>
 
                 {/* Подсказки */}
-                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500">
+                <div className="flex items-center justify-between px-4 py-3 bg-[var(--background-subtle)] border-t border-[var(--border)] text-xs text-[var(--text-muted)]">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600">↑</kbd>
-                      <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600">↓</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">↑</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">↓</kbd>
                       <span>{t("commandPalette.navigate")}</span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600">↵</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-[var(--card)] border border-[var(--border)]">↵</kbd>
                       <span>{t("commandPalette.select")}</span>
                     </span>
                   </div>
