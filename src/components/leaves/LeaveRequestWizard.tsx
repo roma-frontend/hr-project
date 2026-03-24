@@ -136,7 +136,7 @@ export function LeaveRequestWizard({ userId, onClose }: LeaveRequestWizardProps)
                     onClick={() => setLeaveType(type)}
                     className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
                       leaveType === type
-                        ? "border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]"
+                        ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]"
                         : "border-[var(--border)] bg-[var(--card)] text-[var(--text-primary)] hover:border-[var(--primary)]/50"
                     }`}
                   >
