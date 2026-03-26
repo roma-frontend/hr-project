@@ -4,6 +4,7 @@
 
 "use client";
 
+import React from "react";
 import { useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
@@ -12,12 +13,13 @@ import { Calendar, AlertTriangle, CheckCircle, TrendingUp, Award } from 'lucide-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useMemo } from 'react';
 
 interface LeaveStatsProps {
   userId: Id<"users">;
 }
 
-export default function LeaveStats({ userId }: LeaveStatsProps) {
+export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
   const { t } = useTranslation();
   const analytics = useQuery(api.analytics.getUserAnalytics, { userId });
   const user = useQuery(api.users.getUserById, { userId });
@@ -29,49 +31,58 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
   const { balances, totalDaysTaken, userLeaves } = analytics;
 
   // ═══════════════════════════════════════════════════════════════
-  // РАСЧЁТ: Использовано дней за год
+  // OPTIMIZED: Memoize all calculations
   // ═══════════════════════════════════════════════════════════════
-  const currentYear = new Date().getFullYear();
-  const leavesThisYear = userLeaves.filter((leave: any) => {
-    const leaveYear = new Date(leave.startDate).getFullYear();
-    return leaveYear === currentYear && leave.status === "approved";
-  });
+  const stats = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const leavesThisYear = userLeaves.filter((leave: any) => {
+      return new Date(leave.startDate).getFullYear() === currentYear && leave.status === "approved";
+    });
 
-  const totalDaysThisYear = leavesThisYear.reduce((sum: number, leave: any) => 
-    sum + (leave.days || 0), 0
-  );
+    const totalDaysThisYear = leavesThisYear.reduce((sum: number, leave: any) =>
+      sum + (leave.days || 0), 0
+    );
 
-  const totalBalance = balances.paid + balances.sick + balances.family;
-  const usagePercentage = ((totalDaysThisYear / 20) * 100).toFixed(0); // 20 дней стандартный отпуск
+    const totalBalance = balances.paid + balances.sick + balances.family;
+    const usagePercentage = ((totalDaysThisYear / 20) * 100).toFixed(0);
 
-  // ═══════════════════════════════════════════════════════════════
-  // BURNOUT PREVENTION: Проверка, когда был последний отпуск
-  // ═══════════════════════════════════════════════════════════════
-  const approvedLeaves = userLeaves
-    .filter((leave: any) => leave.status === "approved")
-    .sort((a: any, b: any) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
+    // Burnout prevention
+    const approvedLeaves = userLeaves
+      .filter((leave: any) => leave.status === "approved")
+      .sort((a: any, b: any) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime());
 
-  const lastLeave = approvedLeaves[0];
-  const lastLeaveDate = lastLeave ? new Date(lastLeave.endDate) : null;
-  
-  const daysSinceLastLeave = lastLeaveDate 
-    ? Math.floor((Date.now() - lastLeaveDate.getTime()) / (1000 * 60 * 60 * 24))
-    : null;
+    const lastLeave = approvedLeaves[0];
+    const lastLeaveDate = lastLeave ? new Date(lastLeave.endDate) : null;
+    const daysSinceLastLeave = lastLeaveDate
+      ? Math.floor((Date.now() - lastLeaveDate.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
 
-  const burnoutRisk = daysSinceLastLeave !== null && daysSinceLastLeave > 180; // 6 месяцев
-  const burnoutRiskLevel = daysSinceLastLeave !== null 
-    ? daysSinceLastLeave > 240 ? 'critical' // 8 месяцев
-    : daysSinceLastLeave > 180 ? 'high'     // 6 месяцев
-    : daysSinceLastLeave > 120 ? 'medium'   // 4 месяца
-    : 'low'
-    : 'unknown';
+    const burnoutRiskLevel = daysSinceLastLeave !== null
+      ? daysSinceLastLeave > 240 ? 'critical'
+      : daysSinceLastLeave > 180 ? 'high'
+      : daysSinceLastLeave > 120 ? 'medium'
+      : 'low'
+      : 'unknown';
 
-  // ═══════════════════════════════════════════════════════════════
-  // СЛЕДУЮЩИЙ возможный отпуск (рекомендация)
-  // ═══════════════════════════════════════════════════════════════
-  const nextAvailableDate = lastLeaveDate 
-    ? new Date(lastLeaveDate.getTime() + (180 * 24 * 60 * 60 * 1000)) // +6 месяцев
-    : new Date();
+    const nextAvailableDate = lastLeaveDate
+      ? new Date(lastLeaveDate.getTime() + (180 * 24 * 60 * 60 * 1000))
+      : new Date();
+
+    return {
+      currentYear,
+      leavesThisYear,
+      totalDaysThisYear,
+      totalBalance,
+      usagePercentage,
+      lastLeaveDate,
+      daysSinceLastLeave,
+      burnoutRiskLevel,
+      nextAvailableDate,
+      avgDuration: leavesThisYear.length > 0 ? (totalDaysThisYear / leavesThisYear.length).toFixed(1) : 0,
+    };
+  }, [userLeaves, balances]);
+
+  const burnoutRisk = stats.daysSinceLastLeave !== null && stats.daysSinceLastLeave > 180;
 
   return (
     <div className="space-y-6">
@@ -79,9 +90,9 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
           BURNOUT PREVENTION CARD
           ═══════════════════════════════════════════════════════════════ */}
       <Card className={`border-2 ${
-        burnoutRiskLevel === 'critical' ? 'border-red-500 bg-red-500/5' :
-        burnoutRiskLevel === 'high' ? 'border-orange-500 bg-orange-500/5' :
-        burnoutRiskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/5' :
+        stats.burnoutRiskLevel === 'critical' ? 'border-red-500 bg-red-500/5' :
+        stats.burnoutRiskLevel === 'high' ? 'border-orange-500 bg-orange-500/5' :
+        stats.burnoutRiskLevel === 'medium' ? 'border-yellow-500 bg-yellow-500/5' :
         'border-green-500 bg-green-500/5'
       }`}>
         <CardHeader>
@@ -98,17 +109,17 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
           {burnoutRisk ? (
             <div className="space-y-3">
               <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                ⚠️ Вы не были в отпуске уже {daysSinceLastLeave} дней
+                ⚠️ Вы не были в отпуске уже {stats.daysSinceLastLeave} дней
               </p>
               <p className="text-xs text-orange-600 dark:text-orange-400">
-                Последний отпуск был: {lastLeaveDate.toLocaleDateString('ru-RU')}
+                Последний отпуск был: {stats.lastLeaveDate?.toLocaleDateString('ru-RU')}
               </p>
               <div className="flex items-center gap-2">
                 <Badge variant="destructive">
-                  Риск выгорания: {burnoutRiskLevel === 'critical' ? 'ВЫСОКИЙ' : burnoutRiskLevel === 'high' ? 'СРЕДНИЙ' : 'НИЗКИЙ'}
+                  Риск выгорания: {stats.burnoutRiskLevel === 'critical' ? 'ВЫСОКИЙ' : stats.burnoutRiskLevel === 'high' ? 'СРЕДНИЙ' : 'НИЗКИЙ'}
                 </Badge>
                 <Badge variant="secondary">
-                  Рекомендуем отпуск до: {nextAvailableDate.toLocaleDateString('ru-RU')}
+                  Рекомендуем отпуск до: {stats.nextAvailableDate.toLocaleDateString('ru-RU')}
                 </Badge>
               </div>
               <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
@@ -121,8 +132,8 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
                 ✅ Всё хорошо! Вы регулярно отдыхаете
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">
-                Последний отпуск: {lastLeaveDate ? lastLeaveDate.toLocaleDateString('ru-RU') : 'Не было'}
-                {daysSinceLastLeave !== null && ` (${daysSinceLastLeave} дней назад)`}
+                Последний отпуск: {stats.lastLeaveDate ? stats.lastLeaveDate.toLocaleDateString('ru-RU') : 'Не было'}
+                {stats.daysSinceLastLeave !== null && ` (${stats.daysSinceLastLeave} дней назад)`}
               </p>
               <Badge variant="success">
                 Риск выгорания: НИЗКИЙ
@@ -139,7 +150,7 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
-            📊 Персональная статистика ({currentYear})
+            📊 Персональная статистика ({stats.currentYear})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -147,11 +158,11 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Использовано дней отпуска</span>
-              <span className="text-sm font-bold">{totalDaysThisYear} / 20</span>
+              <span className="text-sm font-bold">{stats.totalDaysThisYear} / 20</span>
             </div>
-            <Progress value={parseInt(usagePercentage)} className="h-3" />
+            <Progress value={parseInt(stats.usagePercentage)} className="h-3" />
             <p className="text-xs text-muted-foreground mt-1">
-              {usagePercentage}% от годового лимита
+              {stats.usagePercentage}% от годового лимита
             </p>
           </div>
 
@@ -180,7 +191,7 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
               <div>
                 <p className="text-sm font-medium">Всего доступно</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  {totalBalance} дней
+                  {stats.totalBalance} дней
                 </p>
               </div>
               <Award className="w-12 h-12 text-purple-500 opacity-50" />
@@ -191,14 +202,12 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs text-muted-foreground">Всего отпусков</p>
-              <p className="text-lg font-bold">{leavesThisYear.length}</p>
+              <p className="text-lg font-bold">{stats.leavesThisYear.length}</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs text-muted-foreground">Средняя длительность</p>
               <p className="text-lg font-bold">
-                {leavesThisYear.length > 0 
-                  ? (totalDaysThisYear / leavesThisYear.length).toFixed(1) 
-                  : 0} дн.
+                {stats.avgDuration} дн.
               </p>
             </div>
           </div>
@@ -206,4 +215,4 @@ export default function LeaveStats({ userId }: LeaveStatsProps) {
       </Card>
     </div>
   );
-}
+}, (prev, next) => prev.userId === next.userId);

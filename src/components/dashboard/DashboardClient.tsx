@@ -62,7 +62,7 @@ function formatDate(dateStr: string | undefined | null, fmt: string): string {
   return format(d, fmt);
 }
 
-function LeaveTypeBadge({ type }: { type: LeaveType }) {
+const LeaveTypeBadge = React.memo(({ type }: { type: LeaveType }) => {
   const colorMap: Record<LeaveType, string> = {
     paid: "bg-[#2563eb]/20 text-[#2563eb] border-[#2563eb]/30",
     unpaid: "bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30",
@@ -75,7 +75,16 @@ function LeaveTypeBadge({ type }: { type: LeaveType }) {
       {LEAVE_TYPE_LABELS[type]}
     </span>
   );
-}
+});
+LeaveTypeBadge.displayName = "LeaveTypeBadge";
+
+const StatusBadgeMemo = React.memo(({ status }: { status: LeaveStatus }) => {
+  const variants: Record<LeaveStatus, "warning" | "success" | "destructive"> = {
+    pending: "warning", approved: "success", rejected: "destructive",
+  };
+  return <Badge variant={variants[status]} className="capitalize">{status}</Badge>;
+});
+StatusBadgeMemo.displayName = "StatusBadgeMemo";
 
 export default function DashboardClient() {
   const { t } = useTranslation();
@@ -112,33 +121,42 @@ export default function DashboardClient() {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
 
-  const totalEmployees = users?.filter(u => u.role !== "superadmin").length ?? 0;
-  const pendingRequests = leaves?.filter((r) => r.status === "pending").length ?? 0;
-  const onLeaveNow = leaves?.filter(
-    (r) => r.status === "approved" && r.startDate <= todayStr && r.endDate >= todayStr
-  ).length ?? 0;
-  const approvedThisMonth = leaves?.filter(
-    (r) => r.status === "approved" && isSameMonth(new Date(r.startDate), today)
-  ).length ?? 0;
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIMIZED: Memoize all data transformations
+  // ═══════════════════════════════════════════════════════════════
+  const stats = useMemo(() => ({
+    totalEmployees: users?.filter(u => u.role !== "superadmin").length ?? 0,
+    pendingRequests: leaves?.filter((r) => r.status === "pending").length ?? 0,
+    onLeaveNow: leaves?.filter(
+      (r) => r.status === "approved" && r.startDate <= todayStr && r.endDate >= todayStr
+    ).length ?? 0,
+    approvedThisMonth: leaves?.filter(
+      (r) => r.status === "approved" && isSameMonth(new Date(r.startDate), today)
+    ).length ?? 0,
+  }), [users, leaves, todayStr]);
 
-  const recentLeaves = leaves?.slice(0, 6) ?? [];
+  const recentLeaves = useMemo(() => leaves?.slice(0, 6) ?? [], [leaves]);
 
-  // Build pie data
-  const pieData = (Object.keys(LEAVE_TYPE_COLORS) as LeaveType[]).map((key) => ({
-    name: LEAVE_TYPE_LABELS[key],
-    value: leaves?.filter((r) => r.type === key).length ?? 0,
-    color: LEAVE_TYPE_COLORS[key],
-  })).filter((d) => d.value > 0);
+  const pieData = useMemo(() => {
+    const data = (Object.keys(LEAVE_TYPE_COLORS) as LeaveType[]).map((key) => ({
+      name: LEAVE_TYPE_LABELS[key],
+      value: leaves?.filter((r) => r.type === key).length ?? 0,
+      color: LEAVE_TYPE_COLORS[key],
+    }));
+    return data.filter((d) => d.value > 0);
+  }, [leaves]);
 
-  // Build monthly trend from real data
-  const monthlyTrend = React.useMemo(() => {
+  const monthlyTrend = useMemo(() => {
     const months: Record<string, { month: string; approved: number; pending: number; rejected: number }> = {};
     const now = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = format(d, "MMM");
-      months[format(d, "yyyy-MM")] = { month: key, approved: 0, pending: 0, rejected: 0 };
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months[key] = { month: monthNames[d.getMonth()], approved: 0, pending: 0, rejected: 0 };
     }
+    
     leaves?.forEach((l) => {
       const key = l.startDate.slice(0, 7);
       if (months[key]) {
@@ -214,10 +232,10 @@ export default function DashboardClient() {
 
       {/* Stats */}
       <div data-tour="quick-stats" className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
-        <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
-        <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
-        <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
-        <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : onLeaveNow} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} color="purple" index={3} />
+        <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : stats.totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
+        <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : stats.pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
+        <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : stats.approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
+        <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : stats.onLeaveNow} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} color="purple" index={3} />
       </div>
 
       {/* Security Widget — superadmin only */}
@@ -413,7 +431,7 @@ export default function DashboardClient() {
                         <p className="font-medium text-[var(--text-primary)]">{leave.userName}</p>
                         <p className="text-[var(--text-muted)]">{formatDate(leave.startDate, "MMM d")} - {formatDate(leave.endDate, "MMM d")}</p>
                       </div>
-                      <StatusBadge status={leave.status} />
+                      <StatusBadgeMemo status={leave.status} />
                     </li>
                   ))}
                 </ul>
