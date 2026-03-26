@@ -1057,8 +1057,17 @@ export default function DriversPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [mounted, setMounted] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(Date.now());
 
   React.useEffect(() => setMounted(true), []);
+
+  // Update current time every minute
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Debug logging
   React.useEffect(() => {
