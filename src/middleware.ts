@@ -99,18 +99,29 @@ export async function middleware(request: NextRequest) {
 
   // 2. Check suspicious paths - block IP persistently via Redis
   if (isSuspiciousPath(pathname)) {
-    await blockKey(`ip:${ip}`, 24 * 60 * 60 * 1000, 'Suspicious path access attempt'); // 24 hours
+    try {
+      await blockKey(`ip:${ip}`, 24 * 60 * 60 * 1000, 'Suspicious path access attempt');
+    } catch (error) {
+      console.error('Redis error (suspicious path):', error);
+    }
     console.warn(`🚨 Suspicious path: ${pathname} from ${ip} - blocked for 24h`);
     return new NextResponse('Not Found', { status: 404 });
   }
 
-  // 3. Rate Limiting with Redis
-  const rateLimitResult = await checkRateLimit(ip, SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS, SECURITY_CONFIG.RATE_LIMIT_WINDOW);
+  // 3. Rate Limiting with Redis (with fallback)
+  let rateLimitResult;
+  try {
+    rateLimitResult = await checkRateLimit(ip, SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS, SECURITY_CONFIG.RATE_LIMIT_WINDOW);
+  } catch (error) {
+    console.error('Redis rate limit error:', error);
+    // Fallback: allow request if Redis is unavailable
+    rateLimitResult = { allowed: true, remaining: 100, resetAt: Date.now() };
+  }
   if (!rateLimitResult.allowed) {
     console.warn(`⚠️ Rate limit exceeded: ${ip}`);
     return new NextResponse('Too Many Requests', {
       status: 429,
-      headers: { 
+      headers: {
         'Retry-After': Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000).toString(),
         'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
         'X-RateLimit-Reset': new Date(rateLimitResult.resetAt).toUTCString(),
@@ -120,22 +131,31 @@ export async function middleware(request: NextRequest) {
 
   // 4. DDoS Protection (check request volume) - block IP persistently via Redis
   if (rateLimitResult.remaining < SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS - SECURITY_CONFIG.DDOS_THRESHOLD) {
-    await blockKey(`ip:${ip}`, 60 * 60 * 1000, 'Potential DDoS attack'); // 1 hour
+    try {
+      await blockKey(`ip:${ip}`, 60 * 60 * 1000, 'Potential DDoS attack');
+    } catch (error) {
+      console.error('Redis DDoS block error:', error);
+    }
     console.error(`🚨 Potential DDoS attack from IP: ${ip} - blocked for 1h`);
-    return new NextResponse('Service Unavailable', { status: 503 });
+    return new NextResponse('Too Many Requests', { status: 429 });
   }
 
   // 5. Brute Force Protection for login with Redis
   if (pathname === '/login' || pathname === '/api/auth/signin') {
-    const blocked = await isBlocked(`login:${ip}`);
-    if (blocked) {
-      return new NextResponse(
-        JSON.stringify({
-          error: 'Too many login attempts',
-          message: 'Blocked for 15 minutes',
-        }),
-        { status: 429, headers: { 'Content-Type': 'application/json' } }
-      );
+    try {
+      const blocked = await isBlocked(`login:${ip}`);
+      if (blocked) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Too many login attempts',
+            message: 'Blocked for 15 minutes',
+          }),
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (error) {
+      console.error('Redis login block error:', error);
+      // Continue without blocking if Redis is unavailable
     }
   }
 
@@ -149,7 +169,11 @@ export async function middleware(request: NextRequest) {
 
     for (const [, value] of url.searchParams.entries()) {
       if (suspiciousPatterns.some(pattern => pattern.test(value))) {
-        await blockKey(`ip:${ip}`, 24 * 60 * 60 * 1000, 'SQL/XSS injection attempt'); // 24 hours
+        try {
+          await blockKey(`ip:${ip}`, 24 * 60 * 60 * 1000, 'SQL/XSS injection attempt');
+        } catch (error) {
+          console.error('Redis SQL injection block error:', error);
+        }
         console.error(`🚨 SQL Injection attempt from ${ip} - blocked for 24h`);
         return new NextResponse('Bad Request', { status: 400 });
       }
