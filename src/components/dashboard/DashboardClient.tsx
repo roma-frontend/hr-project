@@ -89,8 +89,26 @@ StatusBadgeMemo.displayName = "StatusBadgeMemo";
 export default function DashboardClient() {
   const { t } = useTranslation();
   const user = useAuthUser();
+  
+  // ═══════════════════════════════════════════════════════════════
+  // HOOKS MUST BE CALLED IN THE SAME ORDER EVERY RENDER
+  // ═══════════════════════════════════════════════════════════════
   const [mounted, setMounted] = React.useState(false);
   const [showTour, setShowTour] = React.useState(false);
+  
+  // Convex useQuery arguments - using any to avoid infinite type recursion
+  const userId = user?.id as Id<"users"> | undefined;
+  const leaves: any[] = (useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : "skip") as any) ?? [];
+  const users: any[] = (useQuery(api.users.getAllUsers, userId ? { requesterId: userId } : "skip") as any) ?? [];
+  const organization = useQuery(api.organizations.getMyOrganization, userId ? { userId } : "skip") as any;
+  
+  // Security stats — only for superadmin (always call, condition is in arguments)
+  const isSuperadmin = user?.role === "superadmin";
+  const securityStats = useQuery(
+    api.security.getLoginStats,
+    mounted && isSuperadmin ? { hours: 24 } : "skip"
+  );
+  
   React.useEffect(() => {
     setMounted(true);
     // Show tour for new users (first time login)
@@ -105,19 +123,9 @@ export default function DashboardClient() {
     setShowTour(false);
   };
 
-  // Convex useQuery arguments - using any to avoid infinite type recursion
-  const userId = user?.id as Id<"users"> | undefined;
-  const leaves: any[] = (useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : "skip") as any) ?? [];
-  const users: any[] = (useQuery(api.users.getAllUsers, userId ? { requesterId: userId } : "skip") as any) ?? [];
-  const organization = useQuery(api.organizations.getMyOrganization, userId ? { userId } : "skip") as any;
-
-  // Security stats — only for superadmin
-  const isSuperadmin = user?.role === "superadmin";
-  const securityStats = useQuery(
-    api.security.getLoginStats,
-    mounted && isSuperadmin ? { hours: 24 } : "skip"
-  );
-
+  // ═══════════════════════════════════════════════════════════════
+  // Non-hook values (can be conditional)
+  // ═══════════════════════════════════════════════════════════════
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
 
