@@ -116,34 +116,34 @@ export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
           {burnoutRisk ? (
             <div className="space-y-3">
               <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                ⚠️ Вы не были в отпуске уже {stats.daysSinceLastLeave} дней
+                ⚠️ {t('leaveStats.notOnLeave', { days: stats.daysSinceLastLeave })}
               </p>
               <p className="text-xs text-orange-600 dark:text-orange-400">
-                Последний отпуск был: {stats.lastLeaveDate?.toLocaleDateString('ru-RU')}
+                {t('leaveStats.lastLeave')}: {stats.lastLeaveDate?.toLocaleDateString('ru-RU')}
               </p>
               <div className="flex items-center gap-2">
                 <Badge variant="destructive">
-                  Риск выгорания: {stats.burnoutRiskLevel === 'critical' ? 'ВЫСОКИЙ' : stats.burnoutRiskLevel === 'high' ? 'СРЕДНИЙ' : 'НИЗКИЙ'}
+                  {t('leaveStats.burnoutRisk')}: {t(`leaveStats.risk.${stats.burnoutRiskLevel}`)}
                 </Badge>
                 <Badge variant="secondary">
-                  Рекомендуем отпуск до: {stats.nextAvailableDate.toLocaleDateString('ru-RU')}
+                  {t('leaveStats.recommendLeave')}: {stats.nextAvailableDate.toLocaleDateString('ru-RU')}
                 </Badge>
               </div>
               <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
-                💡 Исследования показывают, что регулярные отпуска повышают продуктивность на 20-30%
+                💡 {t('leaveStats.productivityBoost')}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <p className="text-sm font-medium text-green-600 dark:text-green-300">
-                ✅ Всё хорошо! Вы регулярно отдыхаете
+                ✅ {t('leaveStats.allGood')}
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">
-                Последний отпуск: {stats.lastLeaveDate ? stats.lastLeaveDate.toLocaleDateString('ru-RU') : 'Не было'}
-                {stats.daysSinceLastLeave !== null && ` (${stats.daysSinceLastLeave} дней назад)`}
+                {t('leaveStats.lastLeave')}: {stats.lastLeaveDate ? stats.lastLeaveDate.toLocaleDateString('ru-RU') : t('leaveStats.never')}
+                {stats.daysSinceLastLeave !== null && ` (${stats.daysSinceLastLeave} ${t('leaveStats.daysAgo')})`}
               </p>
               <Badge variant="success">
-                Риск выгорания: НИЗКИЙ
+                {t('leaveStats.burnoutRisk')}: {t('leaveStats.risk.low')}
               </Badge>
             </div>
           )}
@@ -157,38 +157,38 @@ export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
-            📊 Персональная статистика ({stats.currentYear})
+            📊 {t('leaveStats.personalStats', { year: stats.currentYear })}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Прогресс использования отпуска */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Использовано дней отпуска</span>
+              <span className="text-sm font-medium">{t('leaveStats.daysUsed')}</span>
               <span className="text-sm font-bold">{stats.totalDaysThisYear} / 20</span>
             </div>
             <Progress value={parseInt(stats.usagePercentage)} className="h-3" />
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.usagePercentage}% от годового лимита
+              {stats.usagePercentage}% {t('leaveStats.ofAnnualLimit')}
             </p>
           </div>
 
           {/* Балансы */}
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
-              <p className="text-xs text-muted-foreground">Оплачиваемый</p>
+              <p className="text-xs text-muted-foreground">{t('leaveTypes.paid')}</p>
               <p className="text-2xl font-bold text-blue-600">{balances.paid}</p>
-              <p className="text-xs text-muted-foreground">дней</p>
+              <p className="text-xs text-muted-foreground">{t('leaveStats.days')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-              <p className="text-xs text-muted-foreground">Больничный</p>
+              <p className="text-xs text-muted-foreground">{t('leaveTypes.sick')}</p>
               <p className="text-2xl font-bold text-red-600">{balances.sick}</p>
-              <p className="text-xs text-muted-foreground">дней</p>
+              <p className="text-xs text-muted-foreground">{t('leaveStats.days')}</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-              <p className="text-xs text-muted-foreground">Семейный</p>
+              <p className="text-xs text-muted-foreground">{t('leaveTypes.family')}</p>
               <p className="text-2xl font-bold text-green-600">{balances.family}</p>
-              <p className="text-xs text-muted-foreground">дней</p>
+              <p className="text-xs text-muted-foreground">{t('leaveStats.days')}</p>
             </div>
           </div>
 
@@ -196,9 +196,9 @@ export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
           <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Всего доступно</p>
+                <p className="text-sm font-medium">{t('leaveStats.totalAvailable')}</p>
                 <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  {stats.totalBalance} дней
+                  {stats.totalBalance} {t('leaveStats.days')}
                 </p>
               </div>
               <Award className="w-12 h-12 text-purple-500 opacity-50" />
@@ -208,13 +208,13 @@ export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
           {/* Статистика */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">Всего отпусков</p>
+              <p className="text-xs text-muted-foreground">{t('leaveStats.totalLeaves')}</p>
               <p className="text-lg font-bold">{stats.leavesThisYear.length}</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground">Средняя длительность</p>
+              <p className="text-xs text-muted-foreground">{t('leaveStats.avgDuration')}</p>
               <p className="text-lg font-bold">
-                {stats.avgDuration} дн.
+                {stats.avgDuration} {t('leaveStats.days')}
               </p>
             </div>
           </div>

@@ -589,7 +589,32 @@
     "teamHealthGood": "Команда работает отлично! 🎉",
     "supervisors": "Супервайзеры",
     "contractors": "Контрактники",
-    "deactivate": "Деактивировать",
+    "deactivate": "Деактивировать"
+  },
+  "leaveStats": {
+    "burnoutRisk": "Риск выгорания",
+    "notOnLeave": "Вы не были в отпуске уже {{days}} дней",
+    "lastLeave": "Последний отпуск",
+    "recommendLeave": "Рекомендуем отпуск до",
+    "productivityBoost": "Исследования показывают, что регулярные отпуска повышают продуктивность на 20-30%",
+    "allGood": "Всё хорошо! Вы регулярно отдыхаете",
+    "never": "Не было",
+    "daysAgo": "дней назад",
+    "personalStats": "Персональная статистика ({{year}})",
+    "daysUsed": "Использовано дней отпуска",
+    "ofAnnualLimit": "от годового лимита",
+    "days": "дней",
+    "totalAvailable": "Всего доступно",
+    "totalLeaves": "Всего отпусков",
+    "avgDuration": "Средняя длительность",
+    "risk": {
+      "critical": "ВЫСОКИЙ",
+      "high": "СРЕДНИЙ",
+      "medium": "НИЗКИЙ",
+      "low": "НИЗКИЙ",
+      "unknown": "Неизвестно"
+    }
+  },
     "deactivated": "Сотрудник деактивирован",
     "deactivateFailed": "Не удалось деактивировать",
     "deactivatedBadge": "ДЕАКТИВИРОВАН",

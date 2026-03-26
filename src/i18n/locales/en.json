@@ -589,7 +589,32 @@
     "teamHealthGood": "Team is doing great! 🎉",
     "supervisors": "Supervisors",
     "contractors": "Contractors",
-    "deactivate": "Deactivate",
+    "deactivate": "Deactivate"
+  },
+  "leaveStats": {
+    "burnoutRisk": "Burnout Risk",
+    "notOnLeave": "You haven't been on leave for {{days}} days",
+    "lastLeave": "Last leave",
+    "recommendLeave": "Recommend leave by",
+    "productivityBoost": "Studies show regular breaks increase productivity by 20-30%",
+    "allGood": "All good! You take regular breaks",
+    "never": "Never",
+    "daysAgo": "days ago",
+    "personalStats": "Personal Statistics ({{year}})",
+    "daysUsed": "Days used",
+    "ofAnnualLimit": "of annual limit",
+    "days": "days",
+    "totalAvailable": "Total Available",
+    "totalLeaves": "Total leaves",
+    "avgDuration": "Average duration",
+    "risk": {
+      "critical": "CRITICAL",
+      "high": "HIGH",
+      "medium": "MEDIUM",
+      "low": "LOW",
+      "unknown": "Unknown"
+    }
+  },
     "deactivated": "Employee deactivated",
     "deactivateFailed": "Failed to deactivate",
     "deactivatedBadge": "DEACTIVATED",
@@ -628,8 +653,7 @@
     "noSupervisor": "No supervisor",
     "allRolesFilter": "All Roles",
     "allTypesFilter": "All Types",
-    "allStatusesFilter": "All Statuses"
-  },
+    "allStatusesFilter": "All Statuses",
   "currency": {
     "amd": "AMD",
     "usd": "$",
