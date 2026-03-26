@@ -135,7 +135,7 @@ export default React.memo(function LeaveStats({ userId }: LeaveStatsProps) {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-green-700 dark:text-green-300">
+              <p className="text-sm font-medium text-green-600 dark:text-green-300">
                 ✅ Всё хорошо! Вы регулярно отдыхаете
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">
