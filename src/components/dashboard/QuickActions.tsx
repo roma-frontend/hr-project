@@ -1,13 +1,13 @@
 /**
  * Quick Actions — Быстрые действия для Dashboard
- * 
+ *
  * Позволяет сотрудникам выполнять частые действия в 1 клик
  * Адаптируется под роль пользователя
  */
 
 "use client";
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -42,99 +42,107 @@ export function QuickActions() {
   const router = useRouter();
   const { user } = useAuthStore();
 
-  // Действия для всех ролей
-  const commonActions: QuickAction[] = [
-    {
-      id: "leave-request",
-      label: t("quickActions.leaveRequest"),
-      icon: <Plus className="w-5 h-5" />,
-      href: "/leaves",
-      color: "bg-blue-500 hover:bg-blue-600",
-      description: t("quickActions.leaveRequestDesc"),
-    },
-    {
-      id: "check-in",
-      label: t("quickActions.checkIn"),
-      icon: <Clock className="w-5 h-5" />,
-      href: "/attendance",
-      color: "bg-green-500 hover:bg-green-600",
-      description: t("quickActions.checkInDesc"),
-    },
-    {
-      id: "chat",
-      label: t("quickActions.chat"),
-      icon: <MessageCircle className="w-5 h-5" />,
-      href: "/chat",
-      color: "bg-purple-500 hover:bg-purple-600",
-      description: t("quickActions.chatDesc"),
-    },
-    {
-      id: "tasks",
-      label: t("quickActions.tasks"),
-      icon: <CheckSquare className="w-5 h-5" />,
-      href: "/tasks",
-      color: "bg-orange-500 hover:bg-orange-600",
-      description: t("quickActions.tasksDesc"),
-    },
-  ];
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIMIZED: Memoize actions array
+  // ═══════════════════════════════════════════════════════════════
+  const actions = useMemo<QuickAction[]>(() => {
+    // Действия для всех ролей
+    const commonActions: QuickAction[] = [
+      {
+        id: "leave-request",
+        label: t("quickActions.leaveRequest"),
+        icon: <Plus className="w-5 h-5" />,
+        href: "/leaves",
+        color: "bg-blue-500 hover:bg-blue-600",
+        description: t("quickActions.leaveRequestDesc"),
+      },
+      {
+        id: "check-in",
+        label: t("quickActions.checkIn"),
+        icon: <Clock className="w-5 h-5" />,
+        href: "/attendance",
+        color: "bg-green-500 hover:bg-green-600",
+        description: t("quickActions.checkInDesc"),
+      },
+      {
+        id: "chat",
+        label: t("quickActions.chat"),
+        icon: <MessageCircle className="w-5 h-5" />,
+        href: "/chat",
+        color: "bg-purple-500 hover:bg-purple-600",
+        description: t("quickActions.chatDesc"),
+      },
+      {
+        id: "tasks",
+        label: t("quickActions.tasks"),
+        icon: <CheckSquare className="w-5 h-5" />,
+        href: "/tasks",
+        color: "bg-orange-500 hover:bg-orange-600",
+        description: t("quickActions.tasksDesc"),
+      },
+    ];
 
-  // Дополнительные действия для менеджеров
-  const managerActions: QuickAction[] = [
-    {
-      id: "approvals",
-      label: t("quickActions.approvals"),
-      icon: <User className="w-5 h-5" />,
-      href: "/approvals",
-      color: "bg-indigo-500 hover:bg-indigo-600",
-      description: t("quickActions.approvalsDesc"),
-      role: ["admin", "supervisor"],
-    },
-    {
-      id: "analytics",
-      label: t("quickActions.analytics"),
-      icon: <FileText className="w-5 h-5" />,
-      href: "/analytics",
-      color: "bg-pink-500 hover:bg-pink-600",
-      description: t("quickActions.analyticsDesc"),
-      role: ["admin", "supervisor"],
-    },
-  ];
+    // Дополнительные действия для менеджеров
+    const managerActions: QuickAction[] = [
+      {
+        id: "approvals",
+        label: t("quickActions.approvals"),
+        icon: <User className="w-5 h-5" />,
+        href: "/approvals",
+        color: "bg-indigo-500 hover:bg-indigo-600",
+        description: t("quickActions.approvalsDesc"),
+        role: ["admin", "supervisor"],
+      },
+      {
+        id: "analytics",
+        label: t("quickActions.analytics"),
+        icon: <FileText className="w-5 h-5" />,
+        href: "/analytics",
+        color: "bg-pink-500 hover:bg-pink-600",
+        description: t("quickActions.analyticsDesc"),
+        role: ["admin", "supervisor"],
+      },
+    ];
 
-  // Действия для админов
-  const adminActions: QuickAction[] = [
-    {
-      id: "employees",
-      label: t("quickActions.employees"),
-      icon: <User className="w-5 h-5" />,
-      href: "/employees",
-      color: "bg-teal-500 hover:bg-teal-600",
-      description: t("quickActions.employeesDesc"),
-      role: ["admin", "superadmin"],
-    },
-    {
-      id: "settings",
-      label: t("quickActions.settings"),
-      icon: <Settings className="w-5 h-5" />,
-      href: "/settings",
-      color: "bg-gray-500 hover:bg-gray-600",
-      description: t("quickActions.settingsDesc"),
-      role: ["admin", "superadmin"],
-    },
-  ];
+    // Действия для админов
+    const adminActions: QuickAction[] = [
+      {
+        id: "employees",
+        label: t("quickActions.employees"),
+        icon: <User className="w-5 h-5" />,
+        href: "/employees",
+        color: "bg-teal-500 hover:bg-teal-600",
+        description: t("quickActions.employeesDesc"),
+        role: ["admin", "superadmin"],
+      },
+      {
+        id: "settings",
+        label: t("quickActions.settings"),
+        icon: <Settings className="w-5 h-5" />,
+        href: "/settings",
+        color: "bg-gray-500 hover:bg-gray-600",
+        description: t("quickActions.settingsDesc"),
+        role: ["admin", "superadmin"],
+      },
+    ];
 
-  // Собрать все действия для текущей роли
-  const actions = [
-    ...commonActions,
-    ...(user?.role === "admin" || user?.role === "supervisor" ? managerActions : []),
-    ...(user?.role === "admin" || user?.role === "superadmin" ? adminActions : []),
-  ];
+    // Собрать все действия для текущей роли
+    return [
+      ...commonActions,
+      ...(user?.role === "admin" || user?.role === "supervisor" ? managerActions : []),
+      ...(user?.role === "admin" || user?.role === "superadmin" ? adminActions : []),
+    ];
+  }, [user?.role, t]);
 
-  const handleAction = (action: QuickAction) => {
-    router.push(action.href);
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIMIZED: useCallback for handleAction
+  // ═══════════════════════════════════════════════════════════════
+  const handleAction = useCallback((href: string, label: string) => {
+    router.push(href);
     toast.success(t("quickActions.toast.success"), {
-      description: action.label,
+      description: label,
     });
-  };
+  }, [router, t]);
 
   return (
     <Card
@@ -163,7 +171,7 @@ export function QuickActions() {
               whileTap={{ scale: 0.95 }}
             >
               <Button
-                onClick={() => handleAction(action)}
+                onClick={() => handleAction(action.href, action.label)}
                 className={`w-full h-24 flex flex-col items-center justify-center gap-2 rounded-xl transition-all ${action.color} text-white shadow-md hover:shadow-lg`}
                 variant="ghost"
               >

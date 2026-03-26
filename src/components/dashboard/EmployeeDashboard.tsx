@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useMemo, memo } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -22,17 +22,17 @@ import { ShieldLoader } from "@/components/ui/ShieldLoader";
 // Lazy load heavy dashboard components to reduce initial JS bundle
 const AttendanceDashboard = dynamic(
   () => import("@/components/attendance/AttendanceDashboard").then(mod => ({ default: mod.AttendanceDashboard })),
-  { 
+  {
     loading: () => <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />,
-    ssr: true 
+    ssr: true
   }
 );
 
 const AIRecommendationsCard = dynamic(
   () => import("@/components/ai/AIRecommendationsCard"),
-  { 
+  {
     loading: () => <div className="h-32 bg-gray-100 rounded-lg animate-pulse" />,
-    ssr: true 
+    ssr: true
   }
 );
 
@@ -45,14 +45,25 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-function StatusBadge({ status }: { status: LeaveStatus }) {
+const StatusBadge = memo(({ status }: { status: LeaveStatus }) => {
   const variants: Record<LeaveStatus, "warning" | "success" | "destructive"> = {
     pending: "warning",
     approved: "success",
     rejected: "destructive",
   };
   return <Badge variant={variants[status]} className="capitalize">{status}</Badge>;
-}
+});
+StatusBadge.displayName = "StatusBadge";
+
+const StarRating = memo(({ rating }: { rating: number }) => {
+  return [1, 2, 3, 4, 5].map((i) => (
+    <Star
+      key={i}
+      className={`w-4 h-4 ${i <= Math.round(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+    />
+  ));
+});
+StarRating.displayName = "StarRating";
 
 export function EmployeeDashboard() {
   const { t } = useTranslation();
@@ -81,20 +92,18 @@ export function EmployeeDashboard() {
     user?.id ? { userId: user.id as any, month: new Date().toISOString().slice(0, 7) } : "skip"
   );
 
-  const today = new Date();
-  const myLeaves = leaves?.filter((l) => l.userId === user?.id) ?? [];
-  const pendingLeaves = myLeaves.filter((l) => l.status === "pending");
-  const approvedLeaves = myLeaves.filter((l) => l.status === "approved");
-  const rejectedLeaves = myLeaves.filter((l) => l.status === "rejected");
-
-  const renderStars = (rating: number) => {
-    return [1, 2, 3, 4, 5].map((i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i <= Math.round(rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-      />
-    ));
-  };
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIMIZED: Memoize all data transformations
+  // ═══════════════════════════════════════════════════════════════
+  const leaveStats = useMemo(() => {
+    const myLeaves = leaves?.filter((l) => l.userId === user?.id) ?? [];
+    return {
+      myLeaves,
+      pendingLeaves: myLeaves.filter((l) => l.status === "pending"),
+      approvedLeaves: myLeaves.filter((l) => l.status === "approved"),
+      rejectedLeaves: myLeaves.filter((l) => l.status === "rejected"),
+    };
+  }, [leaves, user?.id]);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
@@ -196,7 +205,7 @@ export function EmployeeDashboard() {
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-sm text-[var(--text-muted)] w-36">{label}</span>
                   <div className="flex items-center gap-2">
-                    <div className="flex">{renderStars(value)}</div>
+                    <div className="flex"><StarRating rating={value} /></div>
                     <span className="text-sm font-semibold w-6 text-right" style={{ color: "var(--text-primary)" }}>
                       {value}
                     </span>
@@ -279,7 +288,7 @@ export function EmployeeDashboard() {
                   <Clock className="w-6 h-6 text-[#f59e0b]" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[var(--text-primary)]">{pendingLeaves.length}</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{leaveStats.pendingLeaves.length}</p>
                   <p className="text-sm text-[var(--text-muted)]">{t('dashboard.pending')}</p>
                 </div>
               </div>
@@ -295,7 +304,7 @@ export function EmployeeDashboard() {
                   <CheckCircle className="w-6 h-6 text-[#10b981]" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[var(--text-primary)]">{approvedLeaves.length}</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{leaveStats.approvedLeaves.length}</p>
                   <p className="text-sm text-[var(--text-muted)]">{t('dashboard.approved')}</p>
                 </div>
               </div>
@@ -311,7 +320,7 @@ export function EmployeeDashboard() {
                   <XCircle className="w-6 h-6 text-[#ef4444]" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[var(--text-primary)]">{rejectedLeaves.length}</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{leaveStats.rejectedLeaves.length}</p>
                   <p className="text-sm text-[var(--text-muted)]">{t('dashboard.rejected')}</p>
                 </div>
               </div>

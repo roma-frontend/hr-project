@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -82,7 +82,7 @@ function useCountUp(target: number, duration = 1500) {
   return count;
 }
 
-export function StatsCard({
+export const StatsCard = memo(function StatsCard({
   title,
   value,
   change,
@@ -147,4 +147,16 @@ export function StatsCard({
       </div>
     </motion.div>
   );
-}
+}, (prev, next) => {
+  // Custom comparison: only re-render if props actually changed
+  return (
+    prev.title === next.title &&
+    prev.value === next.value &&
+    prev.change === next.change &&
+    prev.changeLabel === next.changeLabel &&
+    prev.color === next.color &&
+    prev.prefix === next.prefix &&
+    prev.suffix === next.suffix &&
+    prev.index === next.index
+  );
+});
