@@ -69,15 +69,9 @@ export function EmployeeDashboard() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
 
-  // Don't render anything if user is not loaded (Providers handles onboarding redirect)
-  if (!user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
-        <ShieldLoader size="lg" />
-      </div>
-    );
-  }
-
+  // ═══════════════════════════════════════════════════════════════
+  // HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // ═══════════════════════════════════════════════════════════════
   const leaves = useQuery(api.leaves.getAllLeaves, user?.id && user.organizationId ? { requesterId: user.id as Id<"users"> } : "skip");
   const userData = useQuery(
     api.users.getUserById,
@@ -104,6 +98,15 @@ export function EmployeeDashboard() {
       rejectedLeaves: myLeaves.filter((l) => l.status === "rejected"),
     };
   }, [leaves, user?.id]);
+
+  // Don't render anything if user is not loaded (Providers handles onboarding redirect)
+  if (!user) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+        <ShieldLoader size="lg" />
+      </div>
+    );
+  }
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
