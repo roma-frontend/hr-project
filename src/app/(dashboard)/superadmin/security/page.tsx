@@ -442,7 +442,7 @@ export default function SecurityDashboard() {
 
                           <div className="space-y-1 text-xs sm:text-sm">
                             <p style={{ color: "var(--text-muted)" }}>
-                              <span className="font-medium" style={{ color: "var(--text-primary)" }}>Reason:</span>{" "}
+                              <span className="font-medium" style={{ color: "var(--text-primary)" }}>{t('superadmin.security.reason')}:</span>{" "}
                               {user.suspendedReason}
                             </p>
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-[10px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
@@ -470,8 +470,8 @@ export default function SecurityDashboard() {
                           color: "var(--primary)",
                         }}
                       >
-                        <span className="hidden sm:inline">Review & Unsuspend</span>
-                        <span className="sm:hidden">Review</span>
+                        <span className="hidden sm:inline">{t('superadmin.security.reviewAndUnsuspend')}</span>
+                        <span className="sm:hidden">{t('superadmin.security.review')}</span>
                         <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                     </div>
@@ -517,7 +517,7 @@ export default function SecurityDashboard() {
                       {attempt.riskScore !== undefined && <RiskBadge score={attempt.riskScore} />}
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[10px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
-                      <span>IP: {attempt.ip ?? "—"}</span>
+                      <span>{t('superadmin.security.ip')}: {attempt.ip ?? "—"}</span>
                       {attempt.riskFactors?.length > 0 && (
                         <span style={{ color: "var(--warning)" }}>⚠ {attempt.riskFactors.join(", ")}</span>
                       )}
@@ -570,7 +570,7 @@ export default function SecurityDashboard() {
                       {log.details}
                     </div>
                     {log.ip && (
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text-disabled)" }}>IP: {log.ip}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text-disabled)" }}>{t('superadmin.security.ip')}: {log.ip}</div>
                     )}
                   </div>
                   <div className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
