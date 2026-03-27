@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { CreateTaskModal } from "./CreateTaskModal";
 import { TaskDetailModal } from "./TaskDetailModal";
 import { AssignSupervisorModal } from "./AssignSupervisorModal";
@@ -254,6 +255,11 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
 
   const convexId = userId as Id<"users">;
   const canManage = userRole === "admin" || userRole === "supervisor";
+  const isSuperadmin = userRole === "superadmin";
+  const selectedOrgId = useSelectedOrganization();
+  
+  // For superadmin, use selectedOrgId if available
+  const effectiveOrgId = (isSuperadmin && selectedOrgId) ? selectedOrgId : undefined;
 
   // DnD sensors — require 5px movement before drag starts (prevents accidental drags)
   const sensors = useSensors(
@@ -261,12 +267,16 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
   );
   const updateStatus = useMutation(api.tasks.updateTaskStatus);
 
-  // Queries
-  const adminTasks = useQuery(api.tasks.getAllTasks, userRole === "admin" ? { requesterId: convexId } : "skip");
+  // Queries - for superadmin, filter by selected organization
+  const adminTasks = useQuery(
+    api.tasks.getAllTasks,
+    userRole === "admin" ? { requesterId: convexId, organizationId: effectiveOrgId as Id<"organizations"> } : 
+    userRole === "superadmin" && effectiveOrgId ? { requesterId: convexId, organizationId: effectiveOrgId } : "skip"
+  );
   const supervisorTasks = useQuery(api.tasks.getTasksAssignedBy, userRole === "supervisor" ? { supervisorId: convexId } : "skip");
   const employeeTasks = useQuery(api.tasks.getTasksForEmployee, (userRole === "employee" || userRole === "driver") && convexId ? { userId: convexId } : "skip");
 
-  const rawTasks = userRole === "admin" ? adminTasks : userRole === "supervisor" ? supervisorTasks : employeeTasks;
+  const rawTasks = userRole === "admin" ? adminTasks : userRole === "supervisor" ? supervisorTasks : userRole === "superadmin" ? adminTasks : employeeTasks;
 
   // Filter
   const tasks = useMemo(() => {

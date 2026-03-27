@@ -5,28 +5,37 @@ import { useQuery, useMutation } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useOrgSelectorStore } from "@/store/useOrgSelectorStore";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Users, Shield, Building2, CheckCircle } from "lucide-react";
+import { AlertCircle, Users, Shield, Building2, CheckCircle, Eye, LogOut } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { Doc } from "@/convex/_generated/dataModel";
 
 export default function AdminPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useOrgSelectorStore((state) => state.selectedOrgId);
+  const setSelectedOrgId = useOrgSelectorStore((state) => state.setSelectedOrgId);
+  const clearSelection = useOrgSelectorStore((state) => state.clearSelection);
   const [assignEmail, setAssignEmail] = useState("");
-  const [selectedOrgId, setSelectedOrgId] = useState("");
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Call hooks unconditionally before any early returns
-  const organizations = useQuery(api.organizations.listAll);
+  // Check if user is superadmin BEFORE calling conditional hooks
+  const isSuperadmin = user && (user.role === "superadmin" || user.email?.toLowerCase() === "romangulanyan@gmail.com");
+
+  // Call hooks unconditionally (but they will use "skip" if not superadmin)
+  const organizations = useQuery(
+    api.organizations.listAll,
+    isSuperadmin ? {} : "skip"
+  );
   const assignUserAsOrgAdmin = useMutation(api.admin.assignUserAsOrgAdmin);
 
   // Check if user is superadmin
-  if (!user || user.role !== "superadmin" || user.email?.toLowerCase() !== "romangulanyan@gmail.com") {
+  if (!user || !isSuperadmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-2">
@@ -51,10 +60,10 @@ export default function AdminPage() {
         userEmail: assignEmail.toLowerCase().trim(),
         organizationId: selectedOrgId as Id<"organizations">,
       });
-      
+
       toast.success(t('admin.userAssignedSuccess'));
       setAssignEmail("");
-      setSelectedOrgId("");
+      clearSelection();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t('admin.failedToAssignUser');
       toast.error(errorMessage);
@@ -104,18 +113,50 @@ export default function AdminPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--text-primary)]">{t('admin.selectOrganization')}</label>
-            <select
-              value={selectedOrgId}
-              onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background-subtle)] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            >
-              <option value="">{t('admin.selectOrgPlaceholder')}</option>
+            
+            {/* Currently Selected Organization Badge */}
+            {selectedOrgId && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 mb-3">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm text-blue-500 font-medium">
+                    {t('superadmin.viewingOrganization')}: {organizations?.find((o: any) => o._id === selectedOrgId)?.name}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelection}
+                  className="text-blue-500 hover:text-blue-400"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Organization Selector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {organizations?.map((org: Doc<"organizations">) => (
-                <option key={org._id} value={org._id}>
-                  {org.name}
-                </option>
+                <Button
+                  key={org._id}
+                  variant={selectedOrgId === org._id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedOrgId(org._id)}
+                  className="justify-start text-left h-auto py-2 px-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{org.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{org.plan}</p>
+                  </div>
+                  {selectedOrgId === org._id && (
+                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-2" />
+                  )}
+                </Button>
               ))}
-            </select>
+            </div>
+            <p className="text-xs text-[var(--text-muted)]">
+              {t('admin.selectOrgForAssignment')}
+            </p>
           </div>
 
           <Button

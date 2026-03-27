@@ -1568,7 +1568,8 @@
     "noOrganizations": "Организаций еще нет",
     "plan": "План",
     "active": "Активно",
-    "inactive": "Неактивно"
+    "inactive": "Неактивно",
+    "selectOrgForAssignment": "Нажмите на организацию, чтобы выбрать её для назначения администратора"
   },
   "productivity": {
     "todayTasks": "Задачи на сегодня",
@@ -3091,27 +3092,15 @@
       "noSuspendedUsers": "Нет заблокированных пользователей",
       "enable": "Включить",
       "disable": "Отключить"
-    },
-    "superadminSecurity": {
-      "securityControl": "Управление безопасностью",
-      "manageIdentityVerification": "Управление системами проверки личности во всех организациях",
-      "securityFeatures": "Функции безопасности",
-      "blockedUsers": "Заблокированные пользователи",
-      "loginAttempts": "Попытки входа",
-      "auditLogs": "Журнал аудита",
-      "toggleSecuritySystems": "Переключение функций и систем безопасности",
-      "essential": "Основное",
-      "disabled": "Отключено",
-      "review": "Проверка"
-    },
-    "attendanceIssues": {
+  },
+  "attendanceIssues": {
       "title": "Проблемы посещаемости",
       "lateArrivals": "опоздание(й) в этом месяце",
       "earlyLeaves": "ранний(е) уход(ы) в этом месяце",
       "noRecordsYet": "Записей посещаемости ещё нет",
       "early": "Ранний"
-    },
-    "settingsExtended": {
+  },
+  "settingsExtended": {
       "appearance": "Внешний вид",
       "customizeInterface": "Настройте внешний вид интерфейса и тему",
       "theme": "Тема",
@@ -3124,11 +3113,6 @@
       "accentColor": "Акцентный цвет",
       "chooseAccentColor": "Выберите предпочитаемый акцентный цвет (скоро)"
     },
-    "announcements": {
-      "title": "Объявления",
-      "new": "Новое"
-    }
-  },
   "pomodoro": {
     "sessionStarted": "Сеанс Помодоро начался!",
     "pomodoroCompleted": "Помодоро завершен! 🎉 Пора на перерыв!",

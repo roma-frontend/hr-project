@@ -88,6 +88,7 @@ import { format } from "date-fns";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { DriverStatsCard } from "@/components/drivers/DriverStatsCard";
 import { DriverCalendar } from "@/components/drivers/DriverCalendar";
 import { MessageTemplates } from "@/components/drivers/MessageTemplates";
@@ -1056,6 +1057,7 @@ export default function DriversPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const [mounted, setMounted] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(Date.now());
 
@@ -1168,9 +1170,14 @@ export default function DriversPage() {
   );
 
   // Get available drivers
+  // For superadmin with selected org, filter by selectedOrgId
+  const isSuperadmin = user?.role === "superadmin";
+  const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
+  const effectiveOrgId = useOrgFilter ? selectedOrgId : organizationId;
+
   const availableDrivers = useQuery(
     api.drivers.getAvailableDrivers,
-    mounted && organizationId ? { organizationId } : "skip"
+    mounted && effectiveOrgId ? { organizationId: effectiveOrgId as any } : "skip"
   );
 
   // Get my driver requests

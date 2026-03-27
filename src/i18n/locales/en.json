@@ -1533,7 +1533,8 @@
     "noOrganizations": "No organizations yet",
     "plan": "Plan",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "selectOrgForAssignment": "Click on an organization to select it for admin assignment"
   },
   "productivity": {
     "todayTasks": "Today's Tasks",
@@ -2877,22 +2878,7 @@
     "select": "Select",
     "deselect": "Deselect"
   },
-  "common": {
-    "viewing": "Viewing"
-  },
-  "superadminSecurity": {
-      "securityControl": "Security Control",
-      "manageIdentityVerification": "Manage identity verification systems across all organizations",
-      "securityFeatures": "Security Features",
-      "blockedUsers": "Blocked Users",
-      "loginAttempts": "Login Attempts",
-      "auditLogs": "Audit Logs",
-      "toggleSecuritySystems": "Toggle security features and systems",
-      "essential": "Essential",
-      "disabled": "Disabled",
-      "review": "Review"
-    },
-    "attendanceIssues": {
+  "attendanceIssues": {
       "title": "Attendance Issues",
       "lateArrivals": "late arrival(s) this month",
       "earlyLeaves": "early leave(s) this month",
@@ -3105,11 +3091,6 @@
       "enable": "Enable",
       "disable": "Disable"
     },
-    "announcements": {
-      "title": "Announcements",
-      "new": "New"
-    }
-  },
   "pomodoro": {
     "sessionStarted": "Pomodoro session started!",
     "pomodoroCompleted": "Pomodoro completed! 🎉 Time for a break!",

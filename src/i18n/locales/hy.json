@@ -1559,7 +1559,8 @@
     "noOrganizations": "Դեռ կազմակերպություններ չկան",
     "plan": "Պլան",
     "active": "Ակտիվ",
-    "inactive": "Ոչ ակտիվ"
+    "inactive": "Ոչ ակտիվ",
+    "selectOrgForAssignment": "Սեղմեք կազմակերպության վրա՝ այն ադմինիստրատոր նշանակելու համար"
   },
   "productivity": {
     "todayTasks": "Այսօրվա առաջադրանքներ",
@@ -2878,10 +2879,6 @@
     "announcements": {
       "title": "Ծառայության հայտարարություններ",
       "new": "Նոր"
-    },
-    "maintenance": {
-      "title": "Սպասարկման ռեժիմ",
-      "config": "Կարգավորումներ"
     }
   },
   "placeholders": {
@@ -3095,29 +3092,16 @@
       "recentSuspiciousLogins": "Վերջերս կասկածելի և չհաջողված մուտքի փորձեր (վերջին 24 ժ.)",
       "noSuspendedUsers": "Չար արգելափակված օգտագործողներ",
       "enable": "Միացնել",
-      "disable": "Անջատել",
-      "deviceFingerprinting": "Սարքերի մատնահետքեր"
-    },
-    "superadminSecurity": {
-      "securityControl": "Անվտանգության վերահսկողություն",
-      "manageIdentityVerification": "Կառավարել ինքնության հաստատման համակարգերը բոլոր կազմակերպություններում",
-      "securityFeatures": "Անվտանգության գործառույթներ",
-      "blockedUsers": "Արգելափակված օգտատերեր",
-      "loginAttempts": "Մուտքի փորձեր",
-      "auditLogs": "Աուդիտային տեղեկամատյան",
-      "toggleSecuritySystems": "Անվտանգության համակարգերը միացրեք / անջատեք ակնթարթորեն: Եթե թաղանթները հաղորդում են խնդիրների մասին, պարզապես անջատեք հատկությունը:",
-      "essential": "Հիմնական",
-      "disabled": "Մերժված",
-      "review": "Ստուգում"
-    },
-    "attendanceIssues": {
+      "disable": "Անջատել"
+  },
+  "attendanceIssues": {
       "title": "Ներկայության խնդիրներ",
       "lateArrivals": "ուշ հասնողներ",
       "earlyLeaves": "վաղ տեղափոխվողներ",
       "noRecordsYet": "Նոր գրառումներ դեռ չկան",
       "early": "Վաղ"
-    },
-    "settingsExtended": {
+  },
+  "settingsExtended": {
       "appearance": "Արտաքին տեսք",
       "customizeInterface": "Հարմարեցնել ինտերֆեյսը ձեր նախասիրություններին համապատասխան",
       "theme": "Թեմա",
@@ -3130,15 +3114,6 @@
       "accentColor": "Ակցենտային գույն",
       "chooseAccentColor": "Ընտրեք ձեր նախընտրված ակցենտային գույնը (շղթակից)"
     },
-    "announcements": {
-      "title": "Հայտարարություններ",
-      "new": "Նոր"
-    },
-    "maintenance": {
-      "title": "Սպասարկում",
-      "config": "Կառուցվածք"
-    }
-  },
   "pomodoro": {
     "sessionStarted": "Pomodoro նստաշրջանը սկսվել է!",
     "pomodoroCompleted": "Pomodoro ավարտված! 🎉 Ժամանակ հանգստի համար!",

@@ -20,13 +20,16 @@ const AILeaveAssistant = dynamic(() => import("@/components/leaves/AILeaveAssist
 export default function ApprovalsPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  
+  const selectedOrgId = useSelectedOrganization();
+  const isSuperadmin = user?.role === "superadmin";
+  const effectiveOrgId = (isSuperadmin && selectedOrgId) ? selectedOrgId : user?.organizationId;
+
   // Debug
   React.useEffect(() => {
     console.log("Approvals page - Current user:", user);
   }, [user]);
-  
-  const pendingUsers = useQuery(api.users.getPendingApprovalUsers, user?.id ? { adminId: user.id as Id<"users"> } : "skip");
+
+  const pendingUsers = useQuery(api.users.getPendingApprovalUsers, user?.id ? { adminId: user.id as Id<"users">, organizationId: effectiveOrgId as Id<"organizations"> } : "skip");
   const approveUser = useMutation(api.users.approveUser);
   const rejectUser = useMutation(api.users.rejectUser);
 

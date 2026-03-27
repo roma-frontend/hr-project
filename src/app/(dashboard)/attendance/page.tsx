@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { CheckInOutWidget } from "@/components/attendance/CheckInOutWidget";
 import { AttendanceDashboard } from "@/components/attendance/AttendanceDashboard";
 import { SupervisorRatingForm } from "@/components/attendance/SupervisorRatingForm";
@@ -21,6 +22,7 @@ type Tab = "today" | "all_employees" | "rating";
 export default function AttendancePage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const [selectedEmployee, setSelectedEmployee] = useState<{ id: Id<"users">; name: string } | null>(null);
   const [detailRecord, setDetailRecord] = useState<any | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -30,32 +32,36 @@ export default function AttendancePage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const isAdminOrSupervisor = user?.role === "admin" || user?.role === "supervisor";
+  const isSuperadmin = user?.role === "superadmin";
   const isEmployee = user?.role === "employee";
+  
+  // For superadmin, use selectedOrgId if available
+  const effectiveOrgId = (isSuperadmin && selectedOrgId) ? selectedOrgId : user?.organizationId;
 
   // Admin/Supervisor: fetch today's attendance summary and employees needing rating
   // Use user?.id as dependency so queries only run after localStorage hydration
   const todaySummary = useQuery(
     api.timeTracking.getTodayAttendanceSummary,
-    user?.id && isAdminOrSupervisor ? { adminId: user.id as Id<"users"> } : "skip"
+    user?.id && (isAdminOrSupervisor || isSuperadmin) ? { adminId: user.id as Id<"users"> } : "skip"
   );
   const currentlyAtWork = useQuery(
     api.timeTracking.getCurrentlyAtWork,
-    user?.id && isAdminOrSupervisor ? { adminId: user.id as Id<"users"> } : "skip"
+    user?.id && (isAdminOrSupervisor || isSuperadmin) ? { adminId: user.id as Id<"users"> } : "skip"
   );
   const todayAllAttendance = useQuery(
     api.timeTracking.getTodayAllAttendance,
-    user?.id && isAdminOrSupervisor ? { adminId: user.id as Id<"users"> } : "skip"
+    user?.id && (isAdminOrSupervisor || isSuperadmin) ? { adminId: user.id as Id<"users"> } : "skip"
   );
   const needsRating = useQuery(
     api.supervisorRatings.getEmployeesNeedingRating,
-    user?.id && isAdminOrSupervisor
+    user?.id && (isAdminOrSupervisor || isSuperadmin)
       ? { supervisorId: user.id as Id<"users"> }
       : "skip"
   );
 
   const allEmployeesOverview = useQuery(
     api.timeTracking.getAllEmployeesAttendanceOverview,
-    user?.id && isAdminOrSupervisor ? { adminId: user.id as Id<"users">, month: selectedMonth } : "skip"
+    user?.id && (isAdminOrSupervisor || isSuperadmin) ? { adminId: user.id as Id<"users">, month: selectedMonth } : "skip"
   );
 
   const MONTHS = [
