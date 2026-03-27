@@ -18,6 +18,7 @@ import { Calendar, Plus, AlertCircle, Users, CheckCircle, RefreshCw, Edit, Trash
 import { CreateEventModal } from '@/components/events/CreateEventModal';
 import { LeaveConflictAlerts } from '@/components/events/LeaveConflictAlerts';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import {
   Dialog,
   DialogContent,
@@ -45,17 +46,20 @@ export default function CompanyEventsPage() {
 
   // Get current user from auth store
   const { user: authUser } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   
-  const organizationId = authUser?.organizationId as Id<'organizations'> | undefined;
+  // For superadmin, use selectedOrgId if available, otherwise use user's organizationId
+  const isSuperadmin = authUser?.role === 'superadmin';
+  const effectiveOrgId = (isSuperadmin && selectedOrgId) ? selectedOrgId : authUser?.organizationId;
   const userId = authUser?.id as Id<'users'> | undefined;
 
-  const events = useQuery(api.events.getCompanyEvents, 
-    organizationId ? { organizationId } : 'skip'
+  const events = useQuery(api.events.getCompanyEvents,
+    effectiveOrgId ? { organizationId: effectiveOrgId as any } : 'skip'
   );
 
   // Get pending leave requests for admin review
-  const pendingLeaves = useQuery(api.leaves.getLeavesForOrganization, 
-    organizationId ? { organizationId } : 'skip'
+  const pendingLeaves = useQuery(api.leaves.getLeavesForOrganization,
+    effectiveOrgId ? { organizationId: effectiveOrgId as any } : 'skip'
   );
 
   const updateEvent = useMutation(api.events.updateCompanyEvent);
@@ -98,7 +102,7 @@ export default function CompanyEventsPage() {
                     userId: leave.userId,
                     startDate: new Date(leave.startDate).getTime(),
                     endDate: new Date(leave.endDate).getTime(),
-                    organizationId: organizationId!,
+                    organizationId: effectiveOrgId as any,
                   });
                   totalConflicts += result.conflictsFound;
                 } catch (e: any) {
@@ -267,7 +271,7 @@ export default function CompanyEventsPage() {
         </Card>
       ) : (
         <LeaveConflictAlerts
-          organizationId={organizationId!}
+          organizationId={effectiveOrgId as any}
           userId={userId!}
         />
       )}
@@ -276,7 +280,7 @@ export default function CompanyEventsPage() {
       <CreateEventModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
-        organizationId={organizationId!}
+        organizationId={effectiveOrgId as any}
         userId={userId!}
         onSuccess={() => {
           toast.success(t('events.eventCreated', 'Event created successfully'));

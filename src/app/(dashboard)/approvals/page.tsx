@@ -7,6 +7,7 @@ import { UserCheck, UserX, Clock, Mail, Calendar, CheckCircle } from "lucide-rea
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ export default function ApprovalsPage() {
     console.log("Approvals page - Current user:", user);
   }, [user]);
 
-  const pendingUsers = useQuery(api.users.getPendingApprovalUsers, user?.id ? { adminId: user.id as Id<"users">, organizationId: effectiveOrgId as Id<"organizations"> } : "skip");
+  const pendingUsers = useQuery(api.users.getPendingApprovalUsers, user?.id ? { adminId: user.id as Id<"users"> } : "skip");
   const approveUser = useMutation(api.users.approveUser);
   const rejectUser = useMutation(api.users.rejectUser);
 

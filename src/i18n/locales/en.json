@@ -2858,6 +2858,28 @@
     "announcements": {
       "title": "Service Announcements",
       "new": "New"
+    },
+    "security": {
+      "title": "Security Control",
+      "subtitle": "Manage identity verification systems across all organizations",
+      "auditLogging": "Audit Logging",
+      "auditLoggingDesc": "Track all user actions and system events",
+      "adaptiveAuth": "Adaptive Authentication",
+      "adaptiveAuthDesc": "Risk-based authentication challenges",
+      "deviceFingerprinting": "Device Fingerprinting",
+      "deviceFingerprintingDesc": "Identify devices by unique characteristics",
+      "keystrokeDynamics": "Keystroke Dynamics",
+      "keystrokeDynamicsDesc": "Analyze typing patterns for verification",
+      "continuousFace": "Continuous Face Verification",
+      "continuousFaceDesc": "Ongoing facial recognition during session",
+      "autoLockout": "Auto Lockout",
+      "autoLockoutDesc": "Lock account after failed login attempts",
+      "newDeviceAlert": "New Device Alert",
+      "newDeviceAlertDesc": "Notify when user logs in from new device",
+      "toggleFeatures": "Toggle security features on/off instantly",
+      "essential": "Essential",
+      "disabled": "Disabled",
+      "review": "Review"
     }
   },
   "placeholders": {
