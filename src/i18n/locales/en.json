@@ -2849,10 +2849,38 @@
         "title": "Organization List",
         "description": "Manage all organizations in the system",
         "notFound": "No organizations found",
-        "empty": "Create your first organization to get started"
+        "empty": "Create your first organization to get started",
+        "found": "found"
       }
     },
-    "superadminSecurity": {
+    "viewingOrganization": "Viewing Organization",
+    "announcements": {
+      "title": "Service Announcements",
+      "new": "New"
+    }
+  },
+  "placeholders": {
+    "searchOrganizations": "Search organizations..."
+  },
+  "filters": {
+    "plan": "Plan",
+    "status": "Status",
+    "allPlans": "All Plans",
+    "allStatuses": "All Statuses"
+  },
+  "statuses": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "actions": {
+    "clearSelection": "Clear Selection",
+    "select": "Select",
+    "deselect": "Deselect"
+  },
+  "common": {
+    "viewing": "Viewing"
+  },
+  "superadminSecurity": {
       "securityControl": "Security Control",
       "manageIdentityVerification": "Manage identity verification systems across all organizations",
       "securityFeatures": "Security Features",
@@ -3080,10 +3108,6 @@
     "announcements": {
       "title": "Announcements",
       "new": "New"
-    },
-    "maintenance": {
-      "title": "Maintenance",
-      "config": "Config"
     }
   },
   "pomodoro": {
@@ -3646,6 +3670,8 @@
     "purposePlaceholder": "e.g., Airport transfer, Client meeting",
     "tryDifferentSearch": "Try a different search term",
     "registerDriverHint": "To register as a driver, go to Employees and set role to 'Driver', then add vehicle information",
+    "onlyAdminsCanRegister": "Only organization admins can register drivers",
+    "userNotInOrganization": "User does not belong to this organization",
     "goToEmployees": "Go to Employees",
     "aiAssistant": {
       "title": "AI Driver Assistant",

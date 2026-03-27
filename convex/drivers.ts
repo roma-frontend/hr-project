@@ -996,7 +996,7 @@ export const cancelDriverRequest = mutation({
   },
 });
 
-/** Register as a driver */
+/** Register as a driver - only organization admins can register drivers */
 export const registerAsDriver = mutation({
   args: {
     organizationId: v.id("organizations"),
@@ -1016,6 +1016,33 @@ export const registerAsDriver = mutation({
     maxTripsPerDay: v.number(),
   },
   handler: async (ctx, args) => {
+    // Check authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get the user making the request
+    const requester = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!requester) {
+      throw new Error("User not found");
+    }
+
+    // Only organization admins can register drivers
+    if (requester.role !== "admin") {
+      throw new Error("Only organization admins can register drivers");
+    }
+
+    // Verify the user being registered belongs to the same organization
+    const userToRegister = await ctx.db.get(args.userId);
+    if (!userToRegister || userToRegister.organizationId !== args.organizationId) {
+      throw new Error("User does not belong to this organization");
+    }
+
     // Check if user is already a driver
     const existing = await ctx.db
       .query("drivers")

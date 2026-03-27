@@ -1,34 +1,80 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useOrgSelectorStore } from "@/store/useOrgSelectorStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Building2, Users, CheckCircle, XCircle, Edit, Shield, MessageSquare, Wrench } from "lucide-react";
+import { 
+  Building2, 
+  Users, 
+  CheckCircle, 
+  XCircle, 
+  Edit, 
+  Shield, 
+  MessageSquare, 
+  Wrench,
+  Eye,
+  LogOut,
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  AlertTriangle,
+  Search,
+  Filter
+} from "lucide-react";
 import { ShieldLoader } from "@/components/ui/ShieldLoader";
 import { SuperadminBroadcastsPanel } from "@/components/admin/SuperadminBroadcastsPanel";
 import { MaintenanceModeManager } from "@/components/admin/MaintenanceModeManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function OrganizationsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
+  const selectedOrgId = useOrgSelectorStore((state) => state.selectedOrgId);
+  const setSelectedOrgId = useOrgSelectorStore((state) => state.setSelectedOrgId);
+  const clearSelection = useOrgSelectorStore((state) => state.clearSelection);
   const [activeTab, setActiveTab] = useState("organizations");
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+
   // Debug user object
   console.log("🔍 [Organizations] Full user object:", user);
   console.log("🔍 [Organizations] user.id:", user?.id);
   console.log("🔍 [Organizations] typeof user.id:", typeof user?.id);
-  
+
   const organizations = useQuery(
     api.organizations.getAllOrganizations,
     user?.id ? { superadminUserId: user.id as any } : "skip"
   );
-  
+
+  // Filter organizations
+  const filteredOrgs = organizations?.filter((org: any) => {
+    const matchesSearch = org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         org.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesPlan = planFilter === "all" || org.plan === planFilter;
+    const matchesStatus = statusFilter === "all" || 
+                         (statusFilter === "active" && org.isActive) ||
+                         (statusFilter === "inactive" && !org.isActive);
+    return matchesSearch && matchesPlan && matchesStatus;
+  });
+
   console.log("🔍 [Organizations] organizations query result:", organizations);
 
   const isSuperadmin = user?.role === "superadmin" || user?.email?.toLowerCase() === "romangulanyan@gmail.com";
@@ -122,7 +168,7 @@ export default function OrganizationsPage() {
             <TabsTrigger value="organizations" className="flex items-center justify-center gap-2 py-2.5">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">{t('superadmin.organizations.title')}</span>
-              <span className="sm:hidden text-xs">({organizations?.length || 0})</span>
+              <span className="sm:hidden text-xs">({filteredOrgs?.length || 0})</span>
             </TabsTrigger>
             <TabsTrigger value="announcements" className="flex items-center justify-center gap-2 py-2.5">
               <MessageSquare className="w-4 h-4" />
@@ -145,7 +191,7 @@ export default function OrganizationsPage() {
                   <Building2 className="w-4 h-4 text-blue-500" />
                   <p className="text-xs text-muted-foreground">{t('superadmin.organizations.stats.totalOrgs')}</p>
                 </div>
-                <p className="text-2xl font-bold">{organizations?.length || 0}</p>
+                <p className="text-2xl font-bold">{filteredOrgs?.length || 0}</p>
                 <p className="text-xs text-muted-foreground mt-1">{t('superadmin.organizations.stats.count')}</p>
               </div>
               <div className="p-4 rounded-lg border" style={{ background: "var(--background-subtle)" }}>
@@ -154,7 +200,7 @@ export default function OrganizationsPage() {
                   <p className="text-xs text-muted-foreground">{t('superadmin.organizations.stats.active')}</p>
                 </div>
                 <p className="text-2xl font-bold text-green-500">
-                  {organizations?.filter((o) => o.isActive).length || 0}
+                  {filteredOrgs?.filter((o: any) => o.isActive).length || 0}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{t('superadmin.organizations.stats.working')}</p>
               </div>
@@ -164,7 +210,7 @@ export default function OrganizationsPage() {
                   <p className="text-xs text-muted-foreground">{t('superadmin.organizations.stats.viewed')}</p>
                 </div>
                 <p className="text-2xl font-bold">
-                  {organizations?.reduce((sum, o) => sum + (o.totalEmployees || 0), 0) || 0}
+                  {filteredOrgs?.reduce((sum: number, o: any) => sum + (o.totalEmployees || 0), 0) || 0}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{t('superadmin.organizations.stats.total')}</p>
               </div>
@@ -174,11 +220,68 @@ export default function OrganizationsPage() {
                   <p className="text-xs text-muted-foreground">{t('superadmin.organizations.stats.inactive')}</p>
                 </div>
                 <p className="text-2xl font-bold text-red-500">
-                  {organizations?.filter((o) => !o.isActive).length || 0}
+                  {filteredOrgs?.filter((o: any) => !o.isActive).length || 0}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{t('superadmin.organizations.stats.suspended')}</p>
               </div>
             </div>
+
+            {/* Filters & Search */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('placeholders.searchOrganizations')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Select value={planFilter} onValueChange={setPlanFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder={t('filters.plan')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('filters.allPlans')}</SelectItem>
+                    <SelectItem value="starter">Starter</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder={t('filters.status')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
+                    <SelectItem value="active">{t('statuses.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('statuses.inactive')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedOrgId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSelection}
+                    className="gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    {t('actions.clearSelection')}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Currently Viewing Badge */}
+            {selectedOrgId && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <Eye className="w-4 h-4 text-blue-500" />
+                <span className="text-sm text-blue-500 font-medium">
+                  {t('superadmin.viewingOrganization')}: {organizations?.find((o: any) => o._id === selectedOrgId)?.name}
+                </span>
+              </div>
+            )}
 
             {/* Organizations List */}
             <div className="space-y-4">

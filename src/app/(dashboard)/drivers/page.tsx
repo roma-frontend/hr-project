@@ -1508,6 +1508,9 @@ export default function DriversPage() {
     return <DriverDashboard userId={userId} organizationId={organizationId} />;
   }
 
+  // Only organization admins can register drivers
+  const canRegisterDrivers = user.role === "admin";
+
   return (
     <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-6">
       {/* Header */}
@@ -1519,11 +1522,13 @@ export default function DriversPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => setShowRegisterModal(true)}>
-            <Car className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">{t("driver.registerDriver", "Register as Driver")}</span>
-            <span className="sm:hidden">Register</span>
-          </Button>
+          {canRegisterDrivers && (
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={() => setShowRegisterModal(true)}>
+              <Car className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">{t("driver.registerDriver", "Register as Driver")}</span>
+              <span className="sm:hidden">Register</span>
+            </Button>
+          )}
           <Button size="sm" className="flex-1 sm:flex-none" onClick={() => setShowRequestModal(true)}>
             <Plus className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">{t("driver.requestDriver", "Request Driver")}</span>
