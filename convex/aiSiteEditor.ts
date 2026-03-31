@@ -3,11 +3,10 @@ import { v } from 'convex/values';
 
 // ── Get current month's usage for a user ──────────────────────────────────────
 export const getCurrentMonthUsage = query({
-  args: { 
+  args: {
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
   },
-  handler: async (ctx, { userId, organizationId }) => {
+  handler: async (ctx, { userId }) => {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     

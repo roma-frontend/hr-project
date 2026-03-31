@@ -342,7 +342,7 @@ export default function AIChatPage() {
         }, ...prev]);
       } catch (error) {
         console.error('[Create conversation error]:', error);
-        toast.error("Failed to create conversation");
+        toast.error(t("toasts.conversationCreateFailed"));
         return;
       }
     }

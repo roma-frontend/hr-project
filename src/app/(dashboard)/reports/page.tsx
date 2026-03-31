@@ -19,21 +19,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, DEPARTMENTS, type LeaveType } from "@/lib/types";
 import { toast } from "sonner";
-import { format, isSameMonth } from "date-fns";
+import { format } from "date-fns";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
-};
-
 export default function ReportsPage() {
-
   const { t } = useTranslation();
   const [tab, setTab] = useState("overview");
   const { user } = useAuthStore();
@@ -72,14 +62,14 @@ export default function ReportsPage() {
   const pieData = useMemo(() => {
     return (Object.keys(LEAVE_TYPE_COLORS) as LeaveType[]).map((key) => ({
       name: LEAVE_TYPE_LABELS[key as LeaveType],
-      value: leaves?.filter((r: any) => r.type === key).length ?? 0,
+      value: leaves?.filter((r) => r.type === key).length ?? 0,
       color: LEAVE_TYPE_COLORS[key as LeaveType],
-    })).filter((d: any) => d.value > 0);
+    })).filter((d) => d.value > 0);
   }, [leaves]);
 
   // Department breakdown
   const deptData = useMemo(() => {
-    return DEPARTMENTS.map((dept: any) => ({
+    return DEPARTMENTS.map((dept) => ({
       dept: dept.slice(0, 3),
       fullName: dept,
       total: leaves?.filter((r) => r.userDepartment === dept).length ?? 0,
@@ -106,18 +96,18 @@ export default function ReportsPage() {
 
   // Cumulative
   const cumulativeData = useMemo(() => {
-    return monthlyTrend.map((m: any, i: any, arr: any) => ({
+    return monthlyTrend.map((m, i, arr) => ({
       month: m.month,
-      cumulative: arr.slice(0, i + 1).reduce((s: number, x: any) => s + x.approved, 0),
-      days: Math.round(arr.slice(0, i + 1).reduce((s: number, x: any) => s + x.approved * 1.8, 0)),
+      cumulative: arr.slice(0, i + 1).reduce((s, x) => s + x.approved, 0),
+      days: Math.round(arr.slice(0, i + 1).reduce((s, x) => s + x.approved * 1.8, 0)),
     }));
   }, [monthlyTrend]);
 
   const handleExport = () => {
-    if (!leaves || leaves.length === 0) { toast.error("No data to export"); return; }
+    if (!leaves || leaves.length === 0) { toast.error(t("toasts.noDataToExport")); return; }
     const csv = [
       [t('employees.employee'), t('employeeInfo.department'), t('leave.type'), t('leave.startDate'), t('leave.endDate'), t('leave.days'), t('leave.status'), t('leave.reason')].join(","),
-      ...leaves.map((l: any) => [
+      ...leaves.map((l) => [
         l.userName ?? "", l.userDepartment ?? "", l.type,
         l.startDate, l.endDate, l.days, l.status,
         `"${l.reason.replace(/"/g, "'")}"`,
@@ -128,7 +118,7 @@ export default function ReportsPage() {
     const a = document.createElement("a");
     a.href = url; a.download = `leave-report-${format(new Date(), "yyyy-MM-dd")}.csv`; a.click();
     URL.revokeObjectURL(url);
-    toast.success("Report exported successfully", { description: "CSV file downloaded" });
+    toast.success(t("toasts.reportExported"), { description: t("toasts.reportExportedDesc") });
   };
 
   return (
@@ -137,9 +127,9 @@ export default function ReportsPage() {
       title={t('planGate.reportsTitle')}
       description={t('planGate.reportsDescription')}
     >
-    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       {/* Header */}
-      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)]">{t('reportsAnalytics.reportsAnalytics')}</h2>
           <p className="text-[var(--text-muted)] text-sm mt-1">{t('ui.comprehensiveAnalysis')}</p>
@@ -150,13 +140,13 @@ export default function ReportsPage() {
       </motion.div>
 
       {/* KPI Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: t('reports.totalRequests'), value: isLoading ? "—" : totalLeaves, icon: FileText, color: "text-[var(--primary)]", bg: "bg-[var(--primary)]/10" },
           { label: t('reports.approvalRate'), value: isLoading ? "—" : `${approvalRate}%`, icon: TrendingUp, color: "text-[var(--success)]", bg: "bg-[var(--success)]/10" },
-          { label: "Avg. Duration", value: isLoading ? "—" : `${avgDays}d`, icon: CalendarDays, color: "text-[var(--warning)]", bg: "bg-[var(--warning)]/10" },
+          { label: t('reports.avgDuration'), value: isLoading ? "—" : `${avgDays}${t('common.daysShort')}`, icon: CalendarDays, color: "text-[var(--warning)]", bg: "bg-[var(--warning)]/10" },
           { label: t('organization.activeEmployees'), value: isLoading ? "—" : (users?.length ?? 0), icon: Users, color: "text-[var(--text-secondary)]", bg: "bg-[var(--background-subtle)]" },
-        ].map((kpi: any) => (
+        ].map((kpi) => (
           <Card key={kpi.label}>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-start justify-between">
@@ -174,7 +164,7 @@ export default function ReportsPage() {
       </motion.div>
 
       {/* Tabs */}
-      <motion.div variants={itemVariants}>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full mb-6 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
             <TabsTrigger 
@@ -214,7 +204,7 @@ export default function ReportsPage() {
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} innerRadius={50} dataKey="value" paddingAngle={3}>
-                          {pieData.map((entry: any, i: any) => <Cell key={i} fill={entry.color} stroke={t("common.transparent")} />)}
+                          {pieData.map((entry, i) => <Cell key={i} fill={entry.color} stroke="transparent" />)}
                         </Pie>
                         <Tooltip 
                           contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text-primary)" }}
@@ -237,7 +227,7 @@ export default function ReportsPage() {
                     { label: t('statuses.approved'), count: approvedCount, color: "#10b981", variant: "success" as const },
                     { label: t('statuses.pending'), count: pendingCount, color: "#f59e0b", variant: "warning" as const },
                     { label: t('statuses.rejected'), count: rejectedCount, color: "#ef4444", variant: "destructive" as const },
-                  ].map((s: any) => (
+                  ].map((s) => (
                     <div key={s.label}>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
@@ -256,15 +246,15 @@ export default function ReportsPage() {
                   ))}
 
                   <div className="mt-6 pt-4 border-t border-[var(--border)]">
-                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-3">Workforce Composition</p>
+                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('reports.workforceComposition')}</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
                         <p className="text-xl font-bold text-[var(--primary)]">{staffCount}</p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">Staff</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{t('employees.staff')}</p>
                       </div>
                       <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
                         <p className="text-xl font-bold text-[var(--warning)]">{contractorCount}</p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">Contractors</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{t('employees.contractors')}</p>
                       </div>
                     </div>
                   </div>
@@ -278,7 +268,7 @@ export default function ReportsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">Leaves by Department</CardTitle>
+                  <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">{t('reports.leavesByDepartment')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {deptData.length === 0 ? (
@@ -309,11 +299,11 @@ export default function ReportsPage() {
                 <CardContent className="space-y-3">
                   {deptData.length === 0 ? (
                     <p className="text-xs text-[var(--text-muted)]">{t('emptyStates.noDataYet')}</p>
-                  ) : deptData.map((d: any) => (
+                  ) : deptData.map((d) => (
                     <div key={d.dept} className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0">
                       <div>
                         <p className="text-sm font-medium text-[var(--text-primary)]">{d.fullName}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{d.total} total requests</p>
+                        <p className="text-xs text-[var(--text-muted)]">{d.total} {t('reports.totalRequests').toLowerCase()}</p>
                       </div>
                       <div className="flex gap-1.5">
                         <Badge variant="success" className="text-xs">{d.approved}</Badge>

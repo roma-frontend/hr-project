@@ -43,6 +43,55 @@ export function PomodoroTimer() {
     }
   }, [activeSession, sessionId]);
 
+  const handleTimerComplete = async () => {
+    setIsRunning(false);
+
+    if (sessionId) {
+      await completeSession({ sessionId });
+    }
+
+    // Browser Notification
+    if (mode === "pomodoro") {
+      toast.success(t('pomodoro.pomodoroCompleted'), {
+        duration: 5000,
+      });
+
+      // Send browser notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(t('pomodoro.notificationTitle'), {
+          body: t('pomodoro.breakReadyMsg'),
+          icon: "/icon.png",
+          badge: "/badge.png",
+          tag: "pomodoro-complete",
+        });
+      }
+
+      // Auto switch to break
+      setMode("shortBreak");
+      setTimeLeft(DURATIONS.shortBreak);
+    } else if (mode === "shortBreak") {
+      toast.success(t('pomodoro.breakOver'), {
+        duration: 5000,
+      });
+
+      // Send browser notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(t('pomodoro.breakTitle'), {
+          body: t('pomodoro.refreshedMsg'),
+          icon: "/icon.png",
+          badge: "/badge.png",
+          tag: "break-complete",
+        });
+      }
+
+      // Auto switch back to pomodoro
+      setMode("pomodoro");
+      setTimeLeft(DURATIONS.pomodoro);
+    }
+
+    setSessionId(null);
+  };
+
   // Timer countdown
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -104,70 +153,6 @@ export function PomodoroTimer() {
     }
     setIsRunning(false);
     setTimeLeft(DURATIONS[mode]);
-    setSessionId(null);
-  };
-
-  const handleTimerComplete = async () => {
-    setIsRunning(false);
-
-    if (sessionId) {
-      await completeSession({ sessionId });
-    }
-
-    // Browser Notification
-    if (mode === "pomodoro") {
-      toast.success(t('pomodoro.pomodoroCompleted'), {
-        duration: 5000,
-      });
-
-      // Send browser notification
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(t('pomodoro.notificationTitle'), {
-          body: t('pomodoro.breakReadyMsg'),
-          icon: "/icon.png",
-          badge: "/badge.png",
-          tag: "pomodoro-complete",
-        });
-      }
-
-      // Auto switch to break
-      setMode("shortBreak");
-      setTimeLeft(DURATIONS.shortBreak);
-    } else if (mode === "shortBreak") {
-      toast.success(t('pomodoro.breakOver'), {
-        duration: 5000,
-      });
-
-      // Send browser notification
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(t('pomodoro.breakTitle'), {
-          body: t('pomodoro.refreshedMsg'),
-          icon: "/icon.png",
-          badge: "/badge.png",
-          tag: "break-complete",
-        });
-      }
-
-      setMode("pomodoro");
-      setTimeLeft(DURATIONS.pomodoro);
-    } else {
-      // Long break
-      toast.success(t('pomodoro.longBreakComplete'), {
-        duration: 5000,
-      });
-
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(t('pomodoro.longBreakTitle'), {
-          body: t('pomodoro.goalsMsg'),
-          icon: "/icon.png",
-          badge: "/badge.png",
-          tag: "long-break-complete",
-        });
-      }
-
-      setMode("pomodoro");
-      setTimeLeft(DURATIONS.pomodoro);
-    }
     setSessionId(null);
   };
 

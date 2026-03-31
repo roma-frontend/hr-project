@@ -67,15 +67,15 @@ userId,
     
     if (!file.type.startsWith("image/")) {
       log.warn('Invalid file type selected', { fileType: file.type });
-      toast.error("Please select an image file");
+      toast.error(t("toasts.pleaseSelectImage"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      log.warn('File size exceeds limit', { 
-        fileSize: file.size, 
-        maxSize: 5 * 1024 * 1024 
+      log.warn('File size exceeds limit', {
+        fileSize: file.size,
+        maxSize: 5 * 1024 * 1024
       });
-      toast.error("Image must be smaller than 5MB");
+      toast.error(t("toasts.imageTooLarge"));
       return;
     }
 
@@ -133,15 +133,15 @@ userId,
         log.debug('Updating user in store', { userId });
         setUser({ ...user, avatar: url });
       }
-      
+
       onSuccess?.(url);
-      toast.success("Avatar updated successfully!");
-      
-      log.info('Avatar upload completed successfully', { 
-        userId, 
-        url 
+      toast.success(t("toasts.avatarUpdated"));
+
+      log.info('Avatar upload completed successfully', {
+        userId,
+        url
       });
-      
+
       endTimer();
     } catch (err) {
       log.error('Avatar upload failed', err as Error, {
@@ -150,9 +150,9 @@ userId,
         fileName: file.name,
         errorMessage: err instanceof Error ? err.message : String(err)
       });
-      
+
       setPreview(null);
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : t("toasts.uploadFailed"));
       endTimer();
     } finally {
       setUploading(false);

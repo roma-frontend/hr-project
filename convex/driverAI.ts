@@ -8,11 +8,9 @@
  */
 
 import { v } from "convex/values";
-import { query, internalQuery } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
 
 // Types for AI responses
 interface DriverAvailability {
@@ -63,12 +61,9 @@ export const queryDriverAvailability = query({
       .collect();
 
     // Filter by driver name if mentioned
-    let targetDrivers = drivers;
+    const targetDrivers = drivers;
     if (intent.driverName) {
-      targetDrivers = drivers.filter((d) => {
-        // Get user info for name matching
-        return false; // Will be filled below
-      });
+      // Get user info for name matching - filtering logic would go here
     }
 
     // Enrich drivers with user info and availability
@@ -283,7 +278,7 @@ async function checkDriverAvailability(
 /**
  * Generate natural language response about availability
  */
-function generateAvailabilityResponse(drivers: DriverAvailability[], intent: any, query: string): AvailabilityResponse {
+function generateAvailabilityResponse(drivers: DriverAvailability[], _intent: { driverName?: string; timeRange?: { start: number; end: number } }, _query: string): AvailabilityResponse {
   if (drivers.length === 0) {
     return {
       text: {

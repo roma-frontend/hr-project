@@ -26,6 +26,22 @@ interface CreateTicketWizardProps {
   onCancel?: () => void;
 }
 
+// Wrapper component to accept stepData and updateStepData props
+const StepWrapper = ({
+  stepData,
+  updateStepData,
+  children
+}: {
+  stepData?: Record<string, string | number | boolean | null>;
+  updateStepData?: (key: string, value: string | number | boolean | null) => void;
+  children: (props: {
+    stepData: Record<string, string | number | boolean | null>;
+    updateStepData: (key: string, value: string | number | boolean | null) => void;
+  }) => React.ReactNode;
+}) => {
+  return <>{children({ stepData: stepData || {}, updateStepData: updateStepData || (() => {}) })}</>;
+};
+
 export function CreateTicketWizard({
   userId,
   onComplete,
@@ -81,25 +97,29 @@ export function CreateTicketWizard({
       description: t("help.wizard.step2.description"),
       icon: <FileText className="w-5 h-5" />,
       content: (
-        <div className="space-y-4">
-          <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
-            field="title"
-            label={t("help.wizard.step2.titleLabel")}
-            placeholder={t("help.wizard.step2.titlePlaceholder")}
-            required
-          />
-          <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
-            field="description"
-            label={t("help.wizard.step2.descriptionLabel")}
-            placeholder={t("help.wizard.step2.descriptionPlaceholder")}
-            rows={6}
-            required
-          />
-        </div>
+        <StepWrapper>
+          {({ stepData, updateStepData }) => (
+            <div className="space-y-4">
+              <TextInputStep
+                stepData={stepData}
+                updateStepData={updateStepData}
+                field="title"
+                label={t("help.wizard.step2.titleLabel")}
+                placeholder={t("help.wizard.step2.titlePlaceholder")}
+                required
+              />
+              <TextareaStep
+                stepData={stepData}
+                updateStepData={updateStepData}
+                field="description"
+                label={t("help.wizard.step2.descriptionLabel")}
+                placeholder={t("help.wizard.step2.descriptionPlaceholder")}
+                rows={6}
+                required
+              />
+            </div>
+          )}
+        </StepWrapper>
       ),
     },
     {
@@ -108,36 +128,40 @@ export function CreateTicketWizard({
       description: t("help.wizard.step3.description"),
       icon: <AlertCircle className="w-5 h-5" />,
       content: (
-        <div className="space-y-4">
-          <SelectStep
-            stepData={{}}
-            updateStepData={() => {}}
-            field="priority"
-            label={t("help.wizard.step3.priorityLabel")}
-            options={[
-              { value: "low", label: t("priority.low") },
-              { value: "medium", label: t("priority.medium") },
-              { value: "high", label: t("priority.high") },
-              { value: "critical", label: t("priority.critical") },
-            ]}
-            placeholder={t("help.wizard.step3.priorityPlaceholder")}
-            required
-          />
-          <SelectStep
-            stepData={{}}
-            updateStepData={() => {}}
-            field="category"
-            label={t("help.wizard.step3.categoryLabel")}
-            options={[
-              { value: "technical", label: t("help.categories.technical") },
-              { value: "billing", label: t("help.categories.billing") },
-              { value: "account", label: t("help.categories.account") },
-              { value: "feature", label: t("help.categories.feature") },
-              { value: "other", label: t("help.categories.other") },
-            ]}
-            placeholder={t("help.wizard.step3.categoryPlaceholder")}
-          />
-        </div>
+        <StepWrapper>
+          {({ stepData, updateStepData }) => (
+            <div className="space-y-4">
+              <SelectStep
+                stepData={stepData}
+                updateStepData={updateStepData}
+                field="priority"
+                label={t("help.wizard.step3.priorityLabel")}
+                options={[
+                  { value: "low", label: t("priority.low") },
+                  { value: "medium", label: t("priority.medium") },
+                  { value: "high", label: t("priority.high") },
+                  { value: "critical", label: t("priority.critical") },
+                ]}
+                placeholder={t("help.wizard.step3.priorityPlaceholder")}
+                required
+              />
+              <SelectStep
+                stepData={stepData}
+                updateStepData={updateStepData}
+                field="category"
+                label={t("help.wizard.step3.categoryLabel")}
+                options={[
+                  { value: "technical", label: t("help.categories.technical") },
+                  { value: "billing", label: t("help.categories.billing") },
+                  { value: "account", label: t("help.categories.account") },
+                  { value: "feature", label: t("help.categories.feature") },
+                  { value: "other", label: t("help.categories.other") },
+                ]}
+                placeholder={t("help.wizard.step3.categoryPlaceholder")}
+              />
+            </div>
+          )}
+        </StepWrapper>
       ),
     },
   ];

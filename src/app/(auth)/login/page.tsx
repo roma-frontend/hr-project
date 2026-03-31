@@ -577,15 +577,13 @@ export default function LoginPage() {
                 </AnimatePresence>
 
                 {isBackupCode && (
-                  <motion.button
+                  <button
                     type="submit"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="w-full py-2 rounded-xl font-semibold text-sm text-white"
+                    className="w-full py-2 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.01] active:scale-[0.99]"
                     style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
                   >
                     Verify Backup Code
-                  </motion.button>
+                  </button>
                 )}
               </form>
 
@@ -739,12 +737,10 @@ export default function LoginPage() {
             </AnimatePresence>
 
             {/* Submit */}
-            <motion.button
+            <button
               type="submit"
               disabled={isPending}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="w-full py-2 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
+              className="w-full py-2 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70 hover:scale-[1.01] active:scale-[0.99]"
               style={{ background: "linear-gradient(135deg, #2563eb, #0ea5e9)" }}
             >
               {isPending ? (
@@ -752,7 +748,7 @@ export default function LoginPage() {
               ) : (
                 t('auth.signIn')
               )}
-            </motion.button>
+            </button>
           </form>
           )}
           </>

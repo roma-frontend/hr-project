@@ -89,7 +89,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
     setSubmitting(true);
     try {
       if (!currentUser?.id) {
-        toast.error("User ID not found");
+        toast.error(t("toasts.userIdNotFound"));
         return;
       }
       

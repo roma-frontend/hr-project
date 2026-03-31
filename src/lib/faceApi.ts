@@ -83,7 +83,8 @@ export async function detectFace(videoElement: HTMLVideoElement) {
 }
 
 // Compare two face descriptors
-export function compareFaces(descriptor1: Float32Array, descriptor2: number[]): number {
+export async function compareFaces(descriptor1: Float32Array, descriptor2: number[]): Promise<number> {
+  const api = await loadFaceApiLibrary();
   const distance = api.euclideanDistance(descriptor1, descriptor2);
   return distance;
 }
@@ -94,20 +95,20 @@ export function isFaceMatch(distance: number, threshold: number = 0.6): boolean 
 }
 
 // Find best matching face from a list
-export function findBestMatch(
+export async function findBestMatch(
   inputDescriptor: Float32Array,
   knownDescriptors: { userId: string; name: string; descriptor: number[] }[]
-): { userId: string; name: string; distance: number } | null {
+): Promise<{ userId: string; name: string; distance: number } | null> {
   if (knownDescriptors.length === 0) return null;
 
   let bestMatch = {
     userId: knownDescriptors[0].userId,
     name: knownDescriptors[0].name,
-    distance: compareFaces(inputDescriptor, knownDescriptors[0].descriptor),
+    distance: await compareFaces(inputDescriptor, knownDescriptors[0].descriptor),
   };
 
   for (let i = 1; i < knownDescriptors.length; i++) {
-    const distance = compareFaces(inputDescriptor, knownDescriptors[i].descriptor);
+    const distance = await compareFaces(inputDescriptor, knownDescriptors[i].descriptor);
     if (distance < bestMatch.distance) {
       bestMatch = {
         userId: knownDescriptors[i].userId,

@@ -265,6 +265,7 @@ export const motion = {
   u: MotionDiv,
   hr: MotionDiv,
   br: MotionDiv,
+  tr: MotionDiv,
 };
 
 // Default export for compatibility

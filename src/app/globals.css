@@ -283,6 +283,21 @@ html.light {
   /* Scoped transitions — NOT on * (causes layout thrash & paint on every element) */
 }
 
+/* Fix for space-y not working with motion.div - force margin-top on all children */
+.space-y-4 > * + * {
+  margin-top: 1rem !important;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem !important;
+}
+
+@media (min-width: 640px) {
+  .sm\:space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+}
+
 /* Only transitioning interactive elements saves massive repaint cost */
 a,
 button,

@@ -121,9 +121,9 @@ export default function ProfilePage() {
       // 4. Update local state to reflect changes immediately
       setName(newName);
       setEmail(newEmail);
-      
-      toast.success("Profile updated successfully!");
-      
+
+      toast.success(t("toasts.profileUpdated"));
+
       // Don't reload - let Convex revalidate automatically
     } catch (err) {
       console.error("[Profile] Save error:", err);
@@ -148,7 +148,7 @@ export default function ProfilePage() {
       // 3. Update local state
       login({ ...user, avatar: undefined });
 
-      toast.success("Profile picture deleted successfully!");
+      toast.success(t("toasts.profilePictureDeleted"));
       setShowDeleteDialog(false);
     } catch (err) {
       console.error("Delete avatar error:", err);
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                 name={user?.name ?? "User"}
                 size="lg"
                 onSuccess={(url) => {
-                  toast.success("Profile picture updated!");
+                  toast.success(t("toasts.profilePictureUpdated"));
                   login({ ...user!, avatar: url });
                 }}
               />
@@ -416,7 +416,7 @@ export default function ProfilePage() {
         <Button variant="outline" onClick={() => {
           setName(user?.name ?? "");
           setEmail(user?.email ?? "");
-          toast.info("Changes discarded");
+          toast.info(t("toasts.changesDiscarded"));
         }}>
           Discard Changes
         </Button>

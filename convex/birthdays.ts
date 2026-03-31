@@ -6,7 +6,6 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 // ... остальной код
-import type { Id } from "./_generated/dataModel";
 
 /**
  * Проверить дни рождения сегодня и отправить уведомления
@@ -20,7 +19,7 @@ export const checkBirthdaysToday = mutation({
     const currentMonth = today.getMonth() + 1; // 1-12
     const currentDay = today.getDate(); // 1-31
 
-    console.log(`[Birthday Check] Checking for ${currentDay}.${currentMonth}`);
+    console.warn(`[Birthday Check] Checking for ${currentDay}.${currentMonth}`);
 
     // Получить всех сотрудников организации
     const users = await ctx.db
@@ -38,7 +37,7 @@ export const checkBirthdaysToday = mutation({
       );
     });
 
-    console.log(`[Birthday Check] Found ${birthdayUsers.length} birthdays today`);
+    console.warn(`[Birthday Check] Found ${birthdayUsers.length} birthdays today`);
 
     // Для каждого именинника отправить уведомление коллегам
     for (const birthdayUser of birthdayUsers) {
@@ -103,7 +102,18 @@ export const checkUpcomingBirthdays = mutation({
   },
   handler: async (ctx, { organizationId, daysAhead = 7 }) => {
     const today = new Date();
-    const upcomingBirthdays: any[] = [];
+    const upcomingBirthdays: Array<{
+      user: {
+        _id: string;
+        name: string;
+        email: string;
+        department?: string;
+        dateOfBirth?: string;
+      };
+      date: string;
+      age: number;
+      daysUntil: number;
+    }> = [];
 
     // Получить всех сотрудников
     const users = await ctx.db

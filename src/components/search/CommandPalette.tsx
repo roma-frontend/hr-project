@@ -33,41 +33,6 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Закрыть по ESC
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-        setQuery("");
-      }
-
-      // Ctrl+K или Cmd+K
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setIsOpen((prev) => !prev);
-      }
-
-      // Навигация стрелками
-      if (isOpen) {
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
-        }
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
-        }
-        if (e.key === "Enter" && filteredCommands[selectedIndex]) {
-          e.preventDefault();
-          handleSelect(filteredCommands[selectedIndex]);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, selectedIndex]);
-
   // Команды для поиска
   const allCommands: CommandItem[] = [
     {
@@ -204,6 +169,41 @@ export function CommandPalette() {
     setQuery("");
     setSelectedIndex(0);
   }, [router]);
+
+  // Закрыть по ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setQuery("");
+      }
+
+      // Ctrl+K или Cmd+K
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setIsOpen((prev) => !prev);
+      }
+
+      // Навигация стрелками
+      if (isOpen) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % filteredCommands.length);
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+        }
+        if (e.key === "Enter" && filteredCommands[selectedIndex]) {
+          e.preventDefault();
+          handleSelect(filteredCommands[selectedIndex]);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, selectedIndex, filteredCommands, handleSelect]);
 
   return (
     <>

@@ -274,7 +274,7 @@ function RegisterPageContent() {
               avatar: result.avatar,
             });
           }
-          toast.success("Welcome! Your account is ready. 🎉");
+          toast.success(t("toasts.welcomeAccountReady"));
           router.push("/dashboard");
         }
       } catch (err) {

@@ -147,7 +147,7 @@ export function Sidebar() {
         style={{ borderColor: "var(--sidebar-border)" }}
       >
         {!collapsed ? (
-          <div 
+          <div
             className="flex items-center justify-between w-full gap-3"
             style={{
               transition: "all 600ms cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -158,7 +158,7 @@ export function Sidebar() {
               href="/"
               className="flex items-center gap-2 hover:opacity-80 cursor-pointer transition-opacity duration-300"
             >
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg transition-all duration-300"
                 style={{
                   background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)",
@@ -166,7 +166,14 @@ export function Sidebar() {
               >
                 <span className="text-white font-bold text-sm">HR</span>
               </div>
-              <div>
+              <div
+                style={{
+                  opacity: collapsed ? 0 : 1,
+                  transition: collapsed
+                    ? "opacity 150ms"
+                    : "opacity 150ms 600ms",
+                }}
+              >
                 <h1 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
                   {t('sidebar.appName')}
                 </h1>
@@ -341,7 +348,15 @@ export function Sidebar() {
                 </div>
 
                 {/* Label */}
-                <span className="flex-1 text-sm font-medium truncate">
+                <span
+                  className="flex-1 text-sm font-medium truncate"
+                  style={{
+                    opacity: collapsed ? 0 : 1,
+                    transition: collapsed
+                      ? "opacity 150ms"
+                      : "opacity 150ms 600ms",
+                  }}
+                >
                   {t(item.labelKey)}
                 </span>
 
@@ -370,10 +385,12 @@ export function Sidebar() {
           <div
             className={cn(
               "min-w-0 flex-1",
-              collapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
+              collapsed ? "opacity-0 w-0 invisible" : "opacity-100 w-auto visible"
             )}
             style={{
-              transition: "opacity 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms, width 600ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              transition: collapsed
+                ? "opacity 150ms, width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), visibility 150ms"
+                : "opacity 150ms 600ms, width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0ms 600ms",
             }}
           >
             <p className="text-[10px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>

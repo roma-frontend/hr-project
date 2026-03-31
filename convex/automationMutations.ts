@@ -68,7 +68,11 @@ export const createWorkflow = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    config: v.any(),
+    config: v.object({
+      steps: v.optional(v.array(v.string())),
+      trigger: v.optional(v.string()),
+      action: v.optional(v.string()),
+    }),
   },
   handler: async (ctx, args) => {
     const workflowId = await ctx.db.insert("automationWorkflows", {

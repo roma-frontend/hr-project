@@ -885,7 +885,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
       <DriverRequestModal
         open={showDriverModal}
         onOpenChange={setShowDriverModal}
-        selectedDate={selectedDate}
+        selectedDate={selectedDay ?? undefined}
       />
 
       {/* Driver Event Detail Modal */}

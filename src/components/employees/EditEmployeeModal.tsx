@@ -155,7 +155,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
     setLoading(true);
     try {
       if (!user?.id) {
-        toast.error("User ID not found");
+        toast.error(t("toasts.userIdNotFound"));
         return;
       }
       

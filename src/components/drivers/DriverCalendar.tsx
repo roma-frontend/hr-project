@@ -96,7 +96,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
 
   const handleBlockTime = async () => {
     if (!blockStartTime || !blockEndTime || !blockReason) {
-      toast.error("Please fill in all fields");
+      toast.error(t("toasts.pleaseFillAllFields"));
       return;
     }
 
@@ -109,7 +109,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
         reason: blockReason,
         type: blockType,
       });
-      toast.success("Time blocked successfully");
+      toast.success(t("toasts.timeBlockedSuccess"));
       setShowBlockModal(false);
       setBlockReason("");
       setBlockStartTime("");

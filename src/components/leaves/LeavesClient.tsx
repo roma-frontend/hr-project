@@ -20,10 +20,9 @@ import { LeaveRequestModal } from "@/components/leaves/LeaveRequestModal";
 import { LeaveRequestWizard } from "@/components/leaves/LeaveRequestWizard";
 import { useAuthStore, type User } from "@/store/useAuthStore";
 import { useShallow } from 'zustand/shallow';
-import { LEAVE_TYPE_LABELS, DEPARTMENTS, type LeaveType, type LeaveStatus } from "@/lib/types";
+import { LEAVE_TYPE_LABELS, type LeaveType, type LeaveStatus } from "@/lib/types";
 import dynamic from "next/dynamic";
 import { playNotificationSound, sendBrowserNotification } from "@/lib/notificationSound";
-import { UnreadRequestsBanner, UnreadTabBadge } from "@/components/UnreadRequestsBadge";
 import { useSelectedOrganization } from "@/hooks/useSelectedOrganization";
 
 const AILeaveAssistant = dynamic(() => import("@/components/leaves/AILeaveAssistant"), { ssr: false });
@@ -96,7 +95,6 @@ export function LeavesClient() {
   const rejectLeave = useMutation(api.leaves.rejectLeave);
   const deleteLeave = useMutation(api.leaves.deleteLeave);
   const markLeaveAsRead = useMutation(api.leaves.markLeaveAsRead);
-  const markAllLeavesAsRead = useMutation(api.leaves.markAllLeavesAsRead);
 
   // Play notification sound when new unread requests appear (only for admin, once per request)
   useEffect(() => {
@@ -113,7 +111,7 @@ export function LeavesClient() {
       });
     }
     setPreviousUnreadCount(unreadCount);
-  }, [unreadCount, user?.role]);
+  }, [unreadCount, user?.role, previousUnreadCount]);
 
   const filtered = useMemo(() => {
     if (!leaves) return [];
@@ -129,7 +127,7 @@ export function LeavesClient() {
 
   const handleApprove = async (id: Id<"leaveRequests">, comment?: string) => {
     if (!user?.id) {
-      toast.error("Please login again");
+      toast.error(t("toasts.pleaseLoginAgain"));
       return;
     }
     try {
@@ -255,7 +253,7 @@ export function LeavesClient() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('leave.allTypes')}</SelectItem>
-                  {(Object.entries(LEAVE_TYPE_LABELS) as [LeaveType, string][]).map(([value, label]: any) => (
+                  {(Object.entries(LEAVE_TYPE_LABELS) as [LeaveType, string][]).map(([value, label]) => (
                     <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -303,13 +301,11 @@ export function LeavesClient() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-(--border)">
-                    {filtered.map((req: any, i: any) => (
+                    {filtered.map((req, i) => (
                       <React.Fragment key={req._id}>
-                        <motion.tr
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.03 }}
-                          className="hover:bg-(--background-subtle) transition-colors cursor-pointer"
+                        <tr
+                          className="hover:bg-(--background-subtle) transition-colors cursor-pointer animate-fade-in"
+                          style={{ animationDelay: `${i * 30}ms` }}
                           onClick={() => isAdmin && req.status === "pending" && setExpandedRow(expandedRow === req._id ? null : req._id)}
                         >
                         <td className="px-6 py-3">
@@ -353,15 +349,11 @@ export function LeavesClient() {
                             </div>
                           </td>
                         )}
-                      </motion.tr>
-                      
+                      </tr>
+
                       {/* AI Assistant Expandable Row */}
                       {isAdmin && req.status === "pending" && expandedRow === req._id && (
-                        <motion.tr
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
+                        <tr className="animate-fade-in">
                           <td colSpan={7} className="px-6 py-4 bg-(--background-subtle)">
                             <AILeaveAssistant
                               leaveRequestId={req._id}
@@ -370,7 +362,7 @@ export function LeavesClient() {
                               onReject={(comment?: string) => handleReject(req._id, comment)}
                             />
                           </td>
-                        </motion.tr>
+                        </tr>
                       )}
                     </React.Fragment>
                     ))}

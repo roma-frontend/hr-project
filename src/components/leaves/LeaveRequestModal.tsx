@@ -142,7 +142,7 @@ export function LeaveRequestModal({ open, onClose }: LeaveRequestModalProps) {
         reason,
         comment: comment || undefined,
       });
-      toast.success("Leave request submitted successfully!");
+      toast.success(t("toasts.leaveRequestSubmitted"));
       onClose();
     } catch (err: unknown) {
       console.error("[LeaveRequest] Error:", err);

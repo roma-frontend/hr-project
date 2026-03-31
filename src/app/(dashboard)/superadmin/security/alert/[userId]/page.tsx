@@ -71,7 +71,7 @@ export default function SecurityAlertDetailPage() {
 
   const handleSuspend = async () => {
     if (!suspendReason.trim()) {
-      toast.error("Please provide a reason for suspension");
+      toast.error(t("toasts.provideReasonForSuspension"));
       return;
     }
 
@@ -102,7 +102,7 @@ export default function SecurityAlertDetailPage() {
         userId: userId as Id<"users">,
       });
 
-      toast.success("User unsuspended successfully");
+      toast.success(t("toasts.userUnsuspended"));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to unsuspend user";
       toast.error(message);

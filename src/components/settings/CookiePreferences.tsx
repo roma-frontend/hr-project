@@ -77,7 +77,7 @@ const { hasConsent, preferences, savePreferences, resetConsent } = useCookieCons
 
   const handleSave = () => {
     savePreferences(localPreferences);
-    toast.success("Cookie preferences saved successfully!");
+    toast.success(t("toasts.cookiePreferencesSaved"));
     setHasChanges(false);
   };
 
@@ -104,7 +104,7 @@ const { hasConsent, preferences, savePreferences, resetConsent } = useCookieCons
   const handleReset = () => {
     if (confirm("This will reset your cookie consent and show the banner again. Continue?")) {
       resetConsent();
-      toast.info("Cookie consent has been reset. The banner will appear on your next page load.");
+      toast.info(t("toasts.cookieConsentReset"));
     }
   };
 

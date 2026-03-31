@@ -90,12 +90,12 @@ export function Wizard({
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className={cn("w-full p-6", className)}>
+    <div className={cn("w-full p-3 md:p-6", className)}>
       {/* Stepper */}
       {showStepper && (
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           {/* Progress Bar */}
-          <div className="relative h-2 bg-(--background-subtle) rounded-full overflow-hidden mb-6">
+          <div className="relative h-1.5 md:h-2 bg-(--background-subtle) rounded-full overflow-hidden mb-4 md:mb-6">
             <motion.div
               className="absolute inset-y-0 left-0 bg-(--primary)"
               initial={{ width: 0 }}
@@ -112,10 +112,10 @@ export function Wizard({
 
               return (
                 <React.Fragment key={step.id}>
-                  <div className="flex flex-col items-center flex-1">
+                  <div className="flex flex-col items-center flex-1 min-w-0">
                     <motion.div
                       className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
+                        "w-7 h-7 md:w-10 md:h-10 rounded-full flex items-center justify-center border-2 transition-colors shrink-0",
                         isCompleted
                           ? "bg-(--primary) border-(--primary) text-white"
                           : isCurrent
@@ -127,15 +127,15 @@ export function Wizard({
                       transition={{ duration: 0.2 }}
                     >
                       {isCompleted ? (
-                        <CheckCircle className="w-5 h-5" />
+                        <CheckCircle className="w-3 h-3 md:w-5 md:h-5" />
                       ) : (
-                        <span className="text-sm font-semibold">{index + 1}</span>
+                        <span className="text-[10px] md:text-sm font-semibold">{index + 1}</span>
                       )}
                     </motion.div>
-                    <div className="mt-2 text-center">
+                    <div className="mt-1 md:mt-2 text-center w-full px-1">
                       <p
                         className={cn(
-                          "text-xs font-medium transition-colors",
+                          "text-[9px] md:text-xs font-medium transition-colors truncate",
                           isCurrent
                             ? "text-(--primary)"
                             : "text-(--muted-foreground)"
@@ -144,7 +144,7 @@ export function Wizard({
                         {step.title}
                       </p>
                       {step.description && (
-                        <p className="text-xs text-(--muted-foreground) mt-0.5 hidden sm:block">
+                        <p className="text-[8px] md:text-xs text-(--muted-foreground) mt-0.5 hidden lg:block truncate">
                           {step.description}
                         </p>
                       )}
@@ -152,7 +152,7 @@ export function Wizard({
                   </div>
 
                   {index < steps.length - 1 && (
-                    <div className="flex-1 h-0.5 bg-(--border) mx-2">
+                    <div className="flex-1 h-0.5 bg-(--border) mx-1 md:mx-2 max-w-5 md:max-w-none">
                       <motion.div
                         className={cn(
                           "h-full transition-colors",
@@ -172,7 +172,7 @@ export function Wizard({
       )}
 
       {/* Step Content */}
-      <div className="min-h-100">
+      <div className="min-h-50 md:min-h-75">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
@@ -182,18 +182,18 @@ export function Wizard({
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="h-full"
           >
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-(--text-primary) mb-2">
+            <div className="mb-4 md:mb-6">
+              <h2 className="text-base md:text-xl font-bold text-(--text-primary) mb-1 md:mb-2">
                 {currentStepData.title}
               </h2>
               {currentStepData.description && (
-                <p className="text-sm text-(--text-muted)">
+                <p className="text-xs md:text-sm text-(--text-muted)">
                   {currentStepData.description}
                 </p>
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {React.cloneElement(currentStepData.content as React.ReactElement<{ stepData?: Record<string, string | number | boolean | null>; updateStepData?: (key: string, value: string | number | boolean | null) => void }>, {
                 stepData,
                 updateStepData,
@@ -204,24 +204,24 @@ export function Wizard({
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-(--border)">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-6 md:mt-8 pt-4 md:pt-6 border-t border-(--border) gap-2 md:gap-0">
         <Button
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 0 || isSubmitting}
-          className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground)"
+          className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground) w-full sm:w-auto text-sm"
         >
-          <ChevronLeft className="w-4 h-4 mr-2" />
+          <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
           Back
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {onCancel && (
             <Button
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground)"
+              className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground) w-full sm:w-auto text-sm"
             >
               {cancelLabel}
             </Button>
@@ -231,7 +231,7 @@ export function Wizard({
             onClick={handleNext}
             disabled={!canGoNext() || isSubmitting}
             className={cn(
-              "gap-2",
+              "gap-1 md:gap-2 w-full sm:w-auto text-sm",
               currentStep === steps.length - 1
                 ? "bg-(--primary) hover:bg-(--primary-hover) text-white"
                 : "bg-(--primary) hover:bg-(--primary-hover) text-white"
@@ -244,7 +244,7 @@ export function Wizard({
             ) : (
               <>
                 Next
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
               </>
             )}
           </Button>

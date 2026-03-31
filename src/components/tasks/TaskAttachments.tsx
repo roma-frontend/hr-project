@@ -101,7 +101,7 @@ taskId, attachments, currentUserId, canUpload }: Props) {
       }));
       toast.success(`${validFiles.length} file${validFiles.length > 1 ? "s" : ""} uploaded ✓`);
     } catch {
-      toast.error("Upload failed");
+      toast.error(t("toasts.uploadFailed"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -112,10 +112,10 @@ taskId, attachments, currentUserId, canUpload }: Props) {
     if (!confirm(`Remove "${name}"?`)) return;
     try {
       await removeAttachment({ taskId, url });
-      toast.success("Removed");
+      toast.success(t("toasts.removed"));
       if (preview?.url === url) setPreview(null);
     } catch {
-      toast.error("Failed to remove");
+      toast.error(t("toasts.removeFailed"));
     }
   };
 

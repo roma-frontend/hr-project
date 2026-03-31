@@ -228,11 +228,15 @@ export default function DashboardClient() {
       </motion.div>
 
       {/* Stats */}
-      <div data-tour="quick-stats" className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
-        <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : stats.totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
-        <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : stats.pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
-        <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : stats.approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
-        <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : stats.onLeaveNow} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} color="purple" index={3} />
+      <div style={{ marginBottom: '2rem' }}>
+        <motion.div variants={itemVariants}>
+          <div data-tour="quick-stats" className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4">
+            <StatsCard title={t('titles.totalEmployees')} value={isLoading ? "—" : stats.totalEmployees} icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} color="blue" index={0} />
+            <StatsCard title={t('titles.pendingRequests')} value={isLoading ? "—" : stats.pendingRequests} icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5" />} color="yellow" index={1} />
+            <StatsCard title={t('titles.approvedThisMonth')} value={isLoading ? "—" : stats.approvedThisMonth} icon={<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />} color="green" index={2} />
+            <StatsCard title={t('titles.onLeaveNow')} value={isLoading ? "—" : stats.onLeaveNow} icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />} color="purple" index={3} />
+          </div>
+        </motion.div>
       </div>
 
       {/* Security Widget — superadmin only */}

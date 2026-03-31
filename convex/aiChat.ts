@@ -16,7 +16,7 @@ export const getConversations = query({
     
     return conversations.map(conv => ({
       ...conv,
-      messages: [] as any[], // Don't load all messages here
+      messages: [] as Array<{ _id: Id<"aiMessages">; content: string; role: string }>, // Don't load all messages here
     }));
   },
 });

@@ -6,7 +6,22 @@ import type { Id } from "./_generated/dataModel";
  * Helper to batch-load users and their leave status
  * Eliminates N+1 queries for presence status calculation
  */
-async function getUsersWithLeaveStatus(ctx: any, userIds: Id<"users">[]) {
+async function getUsersWithLeaveStatus(ctx: {
+  db: {
+    get: (id: Id<"users">) => Promise<{
+      _id: Id<"users">;
+      presenceStatus?: string;
+    } | null>;
+    query: (table: string) => {
+      collect: () => Promise<Array<{
+        userId: Id<"users">;
+        status: string;
+        startDate: string;
+        endDate: string;
+      }>>;
+    };
+  };
+}, userIds: Id<"users">[]) {
   if (userIds.length === 0) return { userMap: new Map(), result: new Map() };
 
   const today = new Date().toISOString().split("T")[0];
@@ -17,11 +32,16 @@ async function getUsersWithLeaveStatus(ctx: any, userIds: Id<"users">[]) {
 
   // Batch load all approved leaves for these users
   const allLeaves = await ctx.db.query("leaveRequests").collect();
-  const userLeavesMap = new Map<Id<"users">, any[]>();
+  const userLeavesMap = new Map<Id<"users">, Array<{
+    userId: Id<"users">;
+    status: string;
+    startDate: string;
+    endDate: string;
+  }>>();
 
   userIds.forEach((id) => {
     const leaves = allLeaves.filter(
-      (l: any) => l.userId === id && l.status === "approved" && l.startDate <= today && today <= l.endDate
+      (l) => l.userId === id && l.status === "approved" && l.startDate <= today && today <= l.endDate
     );
     userLeavesMap.set(id, leaves);
   });
@@ -188,16 +208,22 @@ export const getMyConversations = query({
     });
 
     const validMemberships = memberships.filter((m, idx) => validConvs[idx] !== null);
-    const filteredConvs = validConvs.filter(Boolean) as any[];
+    const filteredConvs = validConvs.filter(Boolean) as Array<{
+      _id: Id<"chatConversations">;
+      type: "direct" | "group";
+      createdBy: Id<"users">;
+      organizationId: Id<"organizations">;
+      lastMessageAt?: number;
+      createdAt: number;
+      isPinned?: boolean;
+    }>;
 
     // Step 4: Collect all user IDs that we need to load
     const allUserIds = new Set<Id<"users">>();
-    const dmOtherUserIds: Id<"users">[] = [];
 
     filteredConvs.forEach((conv) => {
       if (conv.type === "direct") {
         allUserIds.add(conv.createdBy);
-        dmOtherUserIds.push(conv.createdBy);
       } else if (conv.type === "group") {
         allUserIds.add(conv.createdBy);
       }
@@ -210,10 +236,13 @@ export const getMyConversations = query({
 
     // Step 6: Batch load group members for groups
     const groupConvs = filteredConvs.filter((c) => c.type === "group");
-    const groupMemberIds = groupConvs.flatMap((c) => c._id);
 
     const allGroupMembers = await ctx.db.query("chatMembers").collect();
-    const groupMembersMap = new Map<Id<"chatConversations">, any[]>();
+    const groupMembersMap = new Map<Id<"chatConversations">, Array<{
+      _id: Id<"chatMembers">;
+      userId: Id<"users">;
+      conversationId: Id<"chatConversations">;
+    }>>();
     groupConvs.forEach((conv) => {
       const members = allGroupMembers.filter((m) => m.conversationId === conv._id);
       groupMembersMap.set(conv._id, members);
@@ -226,7 +255,6 @@ export const getMyConversations = query({
     // Load group member users
     const groupMemberUsers = await getUsersWithLeaveStatus(ctx, Array.from(groupMemberUserIds));
     const groupMemberUserMap = groupMemberUsers.userMap;
-    const groupMemberUserStatusMap = groupMemberUsers.result;
 
     // Step 7: Build result with pre-loaded data
     const conversationsWithDetails = filteredConvs.map((conv, idx) => {
@@ -249,7 +277,10 @@ export const getMyConversations = query({
       }
 
       // For groups: build members list
-      let members: any[] = [];
+      let members: Array<{
+        userId: Id<"users">;
+        user: { name: string; avatarUrl?: string } | null;
+      }> = [];
       if (conv.type === "group") {
         const groupMembers = groupMembersMap.get(conv._id) || [];
         members = groupMembers.map((m) => ({
@@ -540,7 +571,7 @@ export const sendMessage = mutation({
             return Promise.resolve();
           }
           // If the member had soft-deleted this conversation, restore it so they see the new message
-          const patch: Record<string, any> = { unreadCount: m.unreadCount + 1 };
+          const patch: Record<string, number | boolean | undefined> = { unreadCount: m.unreadCount + 1 };
           if (m.isDeleted) {
             patch.isDeleted = false;
             patch.deletedAt = undefined;
@@ -734,20 +765,6 @@ function emojiToKey(emoji: string): string {
     }
   }
   return codePoints.join('_');
-}
-
-/**
- * Convert ASCII-safe key back to emoji using Unicode code points
- * Example: "u1f44d" → 👍, "u2764_ufe0f" → ❤️
- */
-function keyToEmoji(key: string): string {
-  return key
-    .split('_')
-    .map(part => {
-      const codePoint = parseInt(part.substring(1), 16);
-      return String.fromCodePoint(codePoint);
-    })
-    .join('');
 }
 
 /** Toggle reaction on a message */
@@ -1189,7 +1206,7 @@ export const getIncomingCalls = query({
 
     // Filter to only calls where user is a participant
     const incomingCalls = calls.filter((call) =>
-      call.participants?.some((p: any) => p.userId === args.userId)
+      call.participants?.some((p: { userId: Id<"users">; joinedAt?: number }) => p.userId === args.userId)
     );
 
     // Get the most recent one (or return null if none)
@@ -1283,7 +1300,11 @@ export const closePoll = mutation({
     const msg = await ctx.db.get(args.messageId);
     if (!msg?.poll) throw new Error("No poll");
     if (msg.senderId !== args.userId) throw new Error("Not authorized");
-    const poll = msg.poll as any;
+    const poll = msg.poll as {
+      question: string;
+      options: Array<{ id: string; text: string; votes: Id<"users">[] }>;
+      closedAt?: number;
+    };
     await ctx.db.patch(args.messageId, { poll: { ...poll, closedAt: Date.now() } });
   },
 });

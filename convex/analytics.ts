@@ -25,7 +25,6 @@ export const getAnalyticsOverview = query({
     }
 
     // Exclude superadmin from employee count (superadmin is not part of any organization)
-    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
     const filteredUsers = users.filter(u => u.role !== "superadmin");
 
     const totalEmployees = filteredUsers.filter(u => u.isActive).length;
@@ -112,10 +111,19 @@ export const getDepartmentStats = query({
       acc[dept].totalSickLeave += user.sickLeaveBalance;
       acc[dept].totalFamilyLeave += user.familyLeaveBalance;
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, {
+      department: string;
+      employees: number;
+      totalPaidLeave: number;
+      totalSickLeave: number;
+      totalFamilyLeave: number;
+      avgPaidLeave: number;
+      avgSickLeave: number;
+      avgFamilyLeave: number;
+    }>);
 
     // Calculate averages
-    Object.values(stats).forEach((dept: any) => {
+    Object.values(stats).forEach((dept) => {
       dept.avgPaidLeave = Math.round(dept.totalPaidLeave / dept.employees);
       dept.avgSickLeave = Math.round(dept.totalSickLeave / dept.employees);
       dept.avgFamilyLeave = Math.round(dept.totalFamilyLeave / dept.employees);

@@ -185,20 +185,56 @@ export const evaluateLeaveRequest = query({
 
 // ── Helper Functions ──────────────────────────────────────────────
 
-function calculatePerformanceScore(metrics: any): number {
+interface PerformanceMetrics {
+  kpiScore: number;
+  projectCompletion: number;
+  deadlineAdherence: number;
+  punctualityScore?: number;
+  absenceRate?: number;
+  lateArrivals?: number;
+  teamworkRating?: number;
+}
+
+interface LeaveRequest {
+  _id: Id<"leaveRequests">;
+  userId: Id<"users">;
+  status: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  type: string;
+}
+
+interface EmployeeNote {
+  sentiment: string;
+}
+
+interface TimeRecord {
+  isLate?: boolean;
+  isEarlyLeave?: boolean;
+  status?: string;
+}
+
+interface User {
+  paidLeaveBalance?: number;
+  sickLeaveBalance?: number;
+  familyLeaveBalance?: number;
+}
+
+function calculatePerformanceScore(metrics: PerformanceMetrics): number {
   const kpi = (metrics.kpiScore / 5) * 100;
   const completion = metrics.projectCompletion;
   const deadline = metrics.deadlineAdherence;
   return Math.round((kpi + completion + deadline) / 3);
 }
 
-function calculateAttendanceScore(metrics: any, leaves: any[], timeRecords?: any[]): number {
+function calculateAttendanceScore(metrics: PerformanceMetrics | null, leaves: LeaveRequest[], timeRecords?: TimeRecord[]): number {
   // If we have real time tracking data, use it
   if (timeRecords && timeRecords.length > 0) {
     const totalDays = timeRecords.length;
-    const lateDays = timeRecords.filter((r: any) => r.isLate).length;
-    const earlyLeaveDays = timeRecords.filter((r: any) => r.isEarlyLeave).length;
-    const absentDays = timeRecords.filter((r: any) => r.status === 'absent').length;
+    const lateDays = timeRecords.filter((r) => r.isLate).length;
+    const earlyLeaveDays = timeRecords.filter((r) => r.isEarlyLeave).length;
+    const absentDays = timeRecords.filter((r) => r.status === 'absent').length;
 
     const punctualityRate = totalDays > 0 ? ((totalDays - lateDays) / totalDays) * 100 : 100;
     const attendanceRate = totalDays > 0 ? ((totalDays - absentDays) / totalDays) * 100 : 100;
@@ -211,13 +247,13 @@ function calculateAttendanceScore(metrics: any, leaves: any[], timeRecords?: any
   }
 
   if (!metrics) return 70;
-  const punctuality = metrics.punctualityScore;
-  const absenceDeduction = metrics.absenceRate * 5;
-  const lateDeduction = metrics.lateArrivals * 2;
+  const punctuality = metrics.punctualityScore ?? 0;
+  const absenceDeduction = (metrics.absenceRate ?? 0) * 5;
+  const lateDeduction = (metrics.lateArrivals ?? 0) * 2;
   return Math.max(0, Math.min(100, punctuality - absenceDeduction - lateDeduction));
 }
 
-function calculateBehaviorScore(notes: any[]): number {
+function calculateBehaviorScore(notes: EmployeeNote[]): number {
   if (notes.length === 0) return 75;
   
   const positive = notes.filter(n => n.sentiment === "positive").length;
@@ -228,20 +264,20 @@ function calculateBehaviorScore(notes: any[]): number {
   return Math.max(0, Math.min(100, score));
 }
 
-function calculateLeaveHistoryScore(leaves: any[], user: any): number {
+function calculateLeaveHistoryScore(leaves: LeaveRequest[], user: User): number {
   const thisYear = new Date().getFullYear();
   const thisYearLeaves = leaves.filter(l => {
     const year = new Date(l.startDate).getFullYear();
     return year === thisYear;
   });
-  
+
   const usedDays = thisYearLeaves
     .filter(l => l.status === "approved")
     .reduce((sum, l) => sum + l.days, 0);
-  
+
   const totalBalance = (user.paidLeaveBalance ?? 24) + (user.sickLeaveBalance ?? 10);
   const utilizationRate = totalBalance > 0 ? (usedDays / totalBalance) * 100 : 0;
-  
+
   // Sweet spot: 50-75% utilization
   if (utilizationRate >= 50 && utilizationRate <= 75) return 100;
   if (utilizationRate < 25) return 70; // Not using leave (burnout risk)
@@ -249,7 +285,7 @@ function calculateLeaveHistoryScore(leaves: any[], user: any): number {
   return 85;
 }
 
-function calculateWorkloadScore(overlappingLeaves: any[]): number {
+function calculateWorkloadScore(overlappingLeaves: LeaveRequest[]): number {
   if (overlappingLeaves.length === 0) return 100;
   if (overlappingLeaves.length === 1) return 85;
   if (overlappingLeaves.length === 2) return 70;
@@ -262,11 +298,11 @@ function generateFactors(
   behScore: number,
   leaveScore: number,
   workScore: number,
-  metrics: any,
-  notes: any[],
-  leaves: any[],
-  overlapping: any[],
-  user: any
+  metrics: PerformanceMetrics | null,
+  notes: EmployeeNote[],
+  leaves: LeaveRequest[],
+  overlapping: LeaveRequest[],
+  user: User
 ) {
   const positive = notes.filter(n => n.sentiment === "positive").length;
   const negative = notes.filter(n => n.sentiment === "negative").length;
@@ -300,7 +336,15 @@ function generateFactors(
   };
 }
 
-function generateReasoning(score: number, recommendation: string, factors: any): string {
+interface FactorsResult {
+  performance: string[];
+  attendance: string[];
+  behavior: string[];
+  leaveHistory: string[];
+  workload: string[];
+}
+
+function generateReasoning(score: number, _recommendation: string, _factors: FactorsResult): string {
   if (score >= 80) {
     return "Employee demonstrates strong performance, good attendance, and positive behavior. Leave request aligns with company policies and team capacity permits absence.";
   } else if (score >= 60) {

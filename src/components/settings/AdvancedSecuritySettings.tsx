@@ -107,7 +107,7 @@ export function AdvancedSecuritySettings() {
       }
       setSetupStep("backup");
       setTwoFactorEnabled(true);
-      toast.success('Two-factor authentication enabled!');
+      toast.success(t('toasts.twoFactorEnabled'));
     } catch (err: any) {
       setVerifyError(err.message || 'Verification failed');
       setVerifyCode("");
@@ -140,7 +140,7 @@ export function AdvancedSecuritySettings() {
       setTwoFactorEnabled(false);
       setShowDisableConfirm(false);
       setDisablePassword("");
-      toast.success('Two-factor authentication disabled');
+      toast.success(t('toasts.twoFactorDisabled'));
     } catch (err: any) {
       setDisableError(err.message || 'Failed to disable 2FA');
     } finally {

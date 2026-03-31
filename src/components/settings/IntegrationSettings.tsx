@@ -103,10 +103,10 @@ export function IntegrationSettings() {
   useEffect(() => {
     const status = searchParams.get("sharepoint");
     if (status === "connected") {
-      toast.success("SharePoint connected successfully");
+      toast.success(t("toasts.sharePointConnected"));
       checkSharepointStatus();
     } else if (status === "error") {
-      toast.error("Failed to connect SharePoint");
+      toast.error(t("toasts.sharePointConnectFailed"));
     }
   }, [searchParams, checkSharepointStatus]);
 
@@ -120,9 +120,9 @@ export function IntegrationSettings() {
       await fetch("/api/sharepoint/disconnect", { method: "POST" });
       setSharepointConnected(false);
       setSharepointEmail(null);
-      toast.success("SharePoint disconnected");
+      toast.success(t("toasts.sharePointDisconnected"));
     } catch {
-      toast.error("Failed to disconnect SharePoint");
+      toast.error(t("toasts.sharePointDisconnectFailed"));
     } finally {
       setSharepointDisconnecting(false);
     }
@@ -134,7 +134,7 @@ export function IntegrationSettings() {
       // We need adminId and organizationId — read from localStorage or session
       const storedUser = localStorage.getItem("currentUser");
       if (!storedUser) {
-        toast.error("Please log in first");
+        toast.error(t("toasts.pleaseLoginAgain"));
         return;
       }
       const user = JSON.parse(storedUser);
@@ -158,7 +158,7 @@ export function IntegrationSettings() {
           (data.errors?.length ? `, ${data.errors.length} errors` : "")
       );
     } catch {
-      toast.error("SharePoint sync failed");
+      toast.error(t("toasts.sharePointSyncFailed"));
     } finally {
       setSharepointSyncing(false);
     }

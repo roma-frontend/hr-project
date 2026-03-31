@@ -266,22 +266,22 @@ export function DriverRequestModal({
 
   const handleSubmit = async () => {
     if (!userId || !organizationId) {
-      toast.error("Please login to request a driver");
+      toast.error(t("toasts.pleaseLogin"));
       return;
     }
 
     if (!selectedDriver) {
-      toast.error("Please select a driver");
+      toast.error(t("toasts.pleaseSelectDriver"));
       return;
     }
 
     if (!startTime || !endTime) {
-      toast.error("Please select start and end time");
+      toast.error(t("toasts.pleaseSelectTime"));
       return;
     }
 
     if (!tripInfo.from || !tripInfo.to) {
-      toast.error("Please fill in pickup and dropoff locations");
+      toast.error(t("toasts.pleaseFillLocations"));
       return;
     }
 

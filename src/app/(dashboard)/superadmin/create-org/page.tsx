@@ -49,14 +49,14 @@ export default function SuperadminCreateOrgPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user?.id) {
-      toast.error("User ID not found");
+      toast.error(t("toasts.userIdNotFound"));
       return;
     }
 
     if (!formData.name || !formData.slug || !formData.adminEmail) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("toasts.pleaseFillAllFields"));
       return;
     }
 

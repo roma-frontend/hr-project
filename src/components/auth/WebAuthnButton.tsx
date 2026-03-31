@@ -26,11 +26,11 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
 
   const handleRegister = async () => {
     if (!isSupported()) {
-      toast.error("WebAuthn is not supported in this browser");
+      toast.error(t("toasts.webAuthnNotSupported"));
       return;
     }
     if (!userId) {
-      toast.error("Please complete registration first");
+      toast.error(t("toasts.completeRegistrationFirst"));
       return;
     }
 
@@ -78,12 +78,12 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
       localStorage.setItem("webauthn-user-id", userId);
 
       onSuccess?.(credentialId);
-      toast.success("Biometric authentication registered! 🎉");
+      toast.success(t("toasts.biometricRegistered"));
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "NotAllowedError") {
-        toast.error("Authentication cancelled");
+        toast.error(t("toasts.authCancelled"));
       } else {
-        toast.error("Failed to register biometric authentication");
+        toast.error(t("toasts.biometricRegFailed"));
         console.error(err);
       }
     } finally {
@@ -93,7 +93,7 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
 
   const handleLogin = async () => {
     if (!isSupported()) {
-      toast.error("WebAuthn is not supported in this browser");
+      toast.error(t("toasts.webAuthnNotSupported"));
       return;
     }
 
@@ -130,9 +130,9 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
       onSuccess?.(assertedCredentialId);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "NotAllowedError") {
-        toast.error("Authentication cancelled");
+        toast.error(t("toasts.authCancelled"));
       } else {
-        toast.error("Biometric login failed");
+        toast.error(t("toasts.biometricLoginFailed"));
         console.error(err);
       }
     } finally {

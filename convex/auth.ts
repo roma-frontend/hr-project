@@ -578,7 +578,7 @@ export const googleOAuthLogin = mutation({
       if (!org || !org.isActive) throw new Error("Your organization account is inactive. Contact support.");
 
       // Update avatar if not set, and update session
-      const patch: Record<string, any> = {
+      const patch: Record<string, string | number | undefined> = {
         sessionToken: args.sessionToken,
         sessionExpiry: args.sessionExpiry,
         lastLoginAt: Date.now(),

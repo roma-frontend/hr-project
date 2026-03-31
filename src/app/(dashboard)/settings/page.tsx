@@ -179,7 +179,7 @@ export default function SettingsPage() {
         ...allSettings,
       });
 
-      toast.success("Settings saved successfully!");
+      toast.success(t("toasts.settingsSaved"));
       console.log('Settings saved to store:', { ...user, ...allSettings });
     } catch (err) {
       console.error('Failed to save settings:', err);

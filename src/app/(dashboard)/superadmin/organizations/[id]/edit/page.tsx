@@ -129,7 +129,7 @@ export default function EditOrganizationPage() {
         industry: formData.industry || undefined,
       });
 
-      toast.success("Organization updated successfully!");
+      toast.success(t("toasts.orgUpdated"));
       router.push("/superadmin/organizations");
     } catch (error) {
       console.error("Failed to update organization:", error);

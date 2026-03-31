@@ -685,7 +685,7 @@ function InAppCallButton({
       if (remotePhone) {
         window.open(`tel:${remotePhone}`);
       } else {
-        toast.error("Failed to start call");
+        toast.error(t("toasts.callStartFailed"));
       }
     } finally {
       setCalling(false);
@@ -752,11 +752,11 @@ function DriverQuickMessage({
         type: "text",
         content: msg,
       });
-      toast.success("Message sent to passenger");
+      toast.success(t("toasts.messageSentToPassenger"));
       setOpen(false);
     } catch (error: any) {
       console.error("Failed to send message:", error);
-      toast.error("Failed to send message");
+      toast.error(t("toasts.messageFailedToSend"));
     }
   };
 
@@ -822,11 +822,11 @@ function PassengerQuickMessage({
         type: "text",
         content: message,
       });
-      toast.success("Message sent to driver");
+      toast.success(t("toasts.messageSentToDriver"));
       setOpen(false);
     } catch (error: any) {
       console.error("Failed to send message:", error);
-      toast.error("Failed to send message");
+      toast.error(t("toasts.messageFailedToSend"));
     }
   };
 
@@ -1086,6 +1086,36 @@ export default function DriversPage() {
   const [selectedDriver, setSelectedDriver] = useState<Id<"drivers"> | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
 
+  // Form state - declared before useEffect that uses them
+  const [tripInfo, setTripInfo] = useState<TripInfo>({
+    from: "",
+    to: "",
+    purpose: "",
+    passengerCount: 1,
+    notes: "",
+  });
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
+  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [calendarDriverId, setCalendarDriverId] = useState<Id<"drivers"> | null>(null);
+  const [selectedScheduleDetail, setSelectedScheduleDetail] = useState<any>(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
+  const [editTripInfo, setEditTripInfo] = useState<TripInfo>({ from: "", to: "", purpose: "", passengerCount: 1, notes: "" });
+  const [editStartTime, setEditStartTime] = useState("");
+  const [editEndTime, setEditEndTime] = useState("");
+  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
+
+  // Corporate features state
+  const [tripPriority, setTripPriority] = useState<"P0" | "P1" | "P2" | "P3">("P2");
+  const [tripCategory, setTripCategory] = useState<"client_meeting" | "airport" | "office_transfer" | "emergency" | "team_event" | "personal">("office_transfer");
+  const [costCenter, setCostCenter] = useState<string>("");
+  const [businessJustification, setBusinessJustification] = useState<string>("");
+  const [requiresApproval, setRequiresApproval] = useState<boolean>(false);
+
   // Set default start/end times when modal opens
   useEffect(() => {
     if (showRequestModal) {
@@ -1106,36 +1136,6 @@ export default function DriversPage() {
       setEndTime(formatDateTimeLocal(oneHourLater));
     }
   }, [showRequestModal]);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [calendarDriverId, setCalendarDriverId] = useState<Id<"drivers"> | null>(null);
-  const [selectedScheduleDetail, setSelectedScheduleDetail] = useState<any>(null);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
-  const [editTripInfo, setEditTripInfo] = useState<TripInfo>({ from: "", to: "", purpose: "", passengerCount: 1, notes: "" });
-  const [editStartTime, setEditStartTime] = useState("");
-  const [editEndTime, setEditEndTime] = useState("");
-  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
-
-  // Form state - declared before useEffect that uses them
-  const [tripInfo, setTripInfo] = useState<TripInfo>({
-    from: "",
-    to: "",
-    purpose: "",
-    passengerCount: 1,
-    notes: "",
-  });
-  const [startTime, setStartTime] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
-  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
-  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lng: number; address?: string } | undefined>();
-
-  // Corporate features state
-  const [tripPriority, setTripPriority] = useState<"P0" | "P1" | "P2" | "P3">("P2");
-  const [tripCategory, setTripCategory] = useState<"client_meeting" | "airport" | "office_transfer" | "emergency" | "team_event" | "personal">("office_transfer");
-  const [costCenter, setCostCenter] = useState<string>("");
-  const [businessJustification, setBusinessJustification] = useState<string>("");
-  const [requiresApproval, setRequiresApproval] = useState<boolean>(false);
 
   const handleLocationSelect = (location: { lat: number; lng: number; address?: string }, type: "pickup" | "dropoff") => {
     if (type === "pickup") {

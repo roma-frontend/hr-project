@@ -36,7 +36,7 @@ export function CheckInOutWidget() {
     if (!user?.id) return;
     try {
       await checkIn({ userId: user.id as any });
-      toast.success("Checked in successfully! 🎉");
+      toast.success(t("toasts.checkedInSuccess"));
     } catch (error: any) {
       toast.error(error.message || "Failed to check in");
     }
@@ -46,7 +46,7 @@ export function CheckInOutWidget() {
     if (!user?.id) return;
     try {
       await checkOut({ userId: user.id as any });
-      toast.success("Checked out successfully! Have a great day! 👋");
+      toast.success(t("toasts.checkedOutSuccess"));
     } catch (error: any) {
       toast.error(error.message || "Failed to check out");
     }

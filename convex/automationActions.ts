@@ -3,8 +3,8 @@
  */
 
 import { action } from "./_generated/server";
-import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 export const runAutomation = action({
   args: {},
@@ -19,7 +19,7 @@ export const runAutomation = action({
 
     // Update task status via internal mutation
     await ctx.runMutation(internal.automationMutations.completeAutomationTask, {
-      taskId: taskId as any,
+      taskId: taskId as Id<"automationTasks">,
     });
 
     return { success: true, taskId };

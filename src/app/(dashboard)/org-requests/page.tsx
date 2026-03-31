@@ -63,7 +63,7 @@ export default function OrgRequestsPage() {
     if (!user) return;
     try {
       await approveRequest({ superadminUserId: user.id as Id<"users">, requestId });
-      toast.success("Organization approved and created!");
+      toast.success(t("toasts.orgApprovedCreated"));
     } catch (error: any) {
       toast.error(error.message || "Failed to approve request");
     }
@@ -77,7 +77,7 @@ export default function OrgRequestsPage() {
         requestId: selectedRequest,
         reason: rejectionReason || undefined,
       });
-      toast.success("Request rejected");
+      toast.success(t("toasts.requestRejected"));
       setShowRejectModal(false);
       setRejectionReason("");
       setSelectedRequest(null);

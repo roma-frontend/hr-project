@@ -440,7 +440,7 @@ export function FaceLogin() {
         descriptor: user.faceDescriptor,
       }));
 
-      const bestMatch = findBestMatch(descriptor, knownFaces);
+      const bestMatch = await findBestMatch(descriptor, knownFaces);
       console.log("🎯 Best match found:", bestMatch);
 
       if (!bestMatch) {

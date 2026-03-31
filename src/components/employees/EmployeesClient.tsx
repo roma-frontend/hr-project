@@ -249,7 +249,7 @@ export function EmployeesClient() {
 
   const handleDelete = async (userId: string) => {
     if (!user?.id) {
-      toast.error("User ID not found");
+      toast.error(t("toasts.userIdNotFound"));
       return;
     }
     try {

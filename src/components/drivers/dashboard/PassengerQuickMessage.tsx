@@ -54,11 +54,11 @@ export function PassengerQuickMessage({
         type: "text",
         content: message,
       });
-      toast.success("Message sent to driver");
+      toast.success(t("toasts.messageSentToDriver"));
       setOpen(false);
     } catch (error) {
       console.error("Failed to send message:", error);
-      toast.error("Failed to send message");
+      toast.error(t("toasts.messageFailedToSend"));
     }
   };
 
