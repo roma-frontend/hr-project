@@ -797,8 +797,13 @@ export const getSuperadminDashboard = query({
     });
 
     allSubscriptions.forEach(sub => {
-      const orgId = sub.organizationId?.toString() || "no-org";
-      subscriptionByOrg.set(orgId, sub);
+      if (!sub.organizationId) return; // Skip subscriptions without organization
+      subscriptionByOrg.set(sub.organizationId.toString(), {
+        plan: sub.plan,
+        status: sub.status,
+        currentPeriodEnd: sub.currentPeriodEnd,
+        organizationId: sub.organizationId,
+      });
     });
 
     // Build dashboard data
