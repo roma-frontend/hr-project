@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 
 // ── Calculate Employee Score ──────────────────────────────────────────────
 export const calculateEmployeeScore = query({
@@ -306,26 +307,26 @@ function generateFactors(
 ) {
   const positive = notes.filter(n => n.sentiment === "positive").length;
   const negative = notes.filter(n => n.sentiment === "negative").length;
-  
+
   return {
     performance: [
       perfScore >= 90 ? "✅ Excellent KPI performance" : perfScore >= 70 ? "✅ Good KPI performance" : "⚠️ Below target KPIs",
-      metrics?.projectCompletion >= 95 ? "✅ High project completion rate" : "⚠️ Some projects incomplete",
-      metrics?.deadlineAdherence >= 90 ? "✅ Consistently meets deadlines" : "⚠️ Occasional deadline misses",
+      (metrics?.projectCompletion ?? 0) >= 95 ? "✅ High project completion rate" : "⚠️ Some projects incomplete",
+      (metrics?.deadlineAdherence ?? 0) >= 90 ? "✅ Consistently meets deadlines" : "⚠️ Occasional deadline misses",
     ],
     attendance: [
       attScore >= 90 ? "✅ Excellent attendance record" : "⚠️ Some attendance concerns",
-      metrics?.lateArrivals <= 2 ? "✅ Punctual" : `⚠️ ${metrics?.lateArrivals} late arrivals`,
-      metrics?.absenceRate <= 3 ? "✅ Low absence rate" : "⚠️ Higher than average absences",
+      (metrics?.lateArrivals ?? 0) <= 2 ? "✅ Punctual" : `⚠️ ${metrics?.lateArrivals ?? 0} late arrivals`,
+      (metrics?.absenceRate ?? 0) <= 3 ? "✅ Low absence rate" : "⚠️ Higher than average absences",
     ],
     behavior: [
       positive > 5 ? "✅ Strong positive manager feedback" : positive > 0 ? "✅ Positive manager feedback" : "⚠️ Limited feedback",
       negative === 0 ? "✅ No disciplinary issues" : `❌ ${negative} concern(s) noted`,
-      metrics?.teamworkRating >= 4.5 ? "✅ Excellent team collaboration" : "⚠️ Team collaboration could improve",
+      (metrics?.teamworkRating ?? 0) >= 4.5 ? "✅ Excellent team collaboration" : "⚠️ Team collaboration could improve",
     ],
     leaveHistory: [
       leaves.length > 0 ? `✅ Used ${leaves.filter(l => l.status === "approved").reduce((s, l) => s + l.days, 0)} days this year` : "⚠️ No leave taken yet",
-      user.paidLeaveBalance >= 12 ? "✅ Good leave balance remaining" : "⚠️ Low leave balance",
+      (user.paidLeaveBalance ?? 0) >= 12 ? "✅ Good leave balance remaining" : "⚠️ Low leave balance",
       "✅ No unusual leave patterns detected",
     ],
     workload: [
