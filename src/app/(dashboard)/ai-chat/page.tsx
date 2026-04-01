@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "@/lib/cssMotion";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -111,13 +112,27 @@ export default function AIChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+
+  // Update sidebar state when screen size changes
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  // Handle conversation selection - close sidebar on mobile
+  const handleSelectConversation = (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
 
   // Convex queries
   const savedConversations = useQuery(
@@ -178,7 +193,7 @@ export default function AIChatPage() {
 
   // Load conversations from Convex
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  
+
   useEffect(() => {
     if (savedConversations) {
       const convs = savedConversations.map(c => ({
@@ -253,14 +268,14 @@ export default function AIChatPage() {
   // ═══════════════════════════════════════════════════════════════
   const handleDeleteConversation = async (conversationId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     try {
       // Start animation
       setDeletingConversationId(conversationId);
-      
+
       // Wait for animation
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       // Delete from Convex (also deletes all messages)
       await deleteConversation({ conversationId: conversationId as Id<"aiConversations"> });
 
@@ -398,10 +413,10 @@ export default function AIChatPage() {
       let fullContent = '';
 
       const assistantId = `ai-${Date.now()}`;
-      setMessages(prev => [...prev, { 
-        id: assistantId, 
-        role: 'assistant', 
-        content: '', 
+      setMessages(prev => [...prev, {
+        id: assistantId,
+        role: 'assistant',
+        content: '',
         timestamp: new Date(),
         actions: [],
         suggestions: [],
@@ -462,17 +477,17 @@ export default function AIChatPage() {
       setMessages(prev => prev.map(m =>
         m.id === assistantId
           ? {
-              ...m,
-              content: cleanContent.replace(/<NAVIGATE>.*?<\/NAVIGATE>/g, '').trim(),
-              actions,
-              suggestions,
-            }
+            ...m,
+            content: cleanContent.replace(/<NAVIGATE>.*?<\/NAVIGATE>/g, '').trim(),
+            actions,
+            suggestions,
+          }
           : m
       ));
     } catch (error) {
       console.error('[AI Chat Page] Error:', error);
       toast.error(t("aiChat.error") || "Failed to get response");
-      
+
       // Add error message
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
@@ -508,30 +523,76 @@ export default function AIChatPage() {
   return (
     <div className="flex h-full bg-gradient-to-br from-[var(--background)] via-[var(--background)] to-[var(--primary)]/[0.02]" style={{ contain: "layout" }}>
       {/* Sidebar */}
-      <motion.aside
-        initial={{ width: 300 }}
-        animate={{
-          width: sidebarOpen ? 300 : 0,
-          opacity: sidebarOpen ? 1 : 0
+      <aside
+        className={`fixed md:relative z-50 h-full bg-[var(--card)] border-r border-[var(--border)] flex-shrink-0 overflow-hidden ${
+          isMobile ? "w-full" : ""
+        }`}
+        style={{
+          position: isMobile ? 'fixed' : 'relative',
+          top: 0,
+          left: 0,
+          height: '100%',
+          width: sidebarOpen ? (isMobile ? '100vw' : 300) : 0,
+          transform: isMobile ? `translateX(${sidebarOpen ? '0' : '-100%'})` : 'none',
+          opacity: sidebarOpen ? 1 : 0,
+          willChange: 'width',
+          pointerEvents: sidebarOpen || !isMobile ? 'auto' : 'none',
+          transition: isMobile
+            ? 'transform 300ms ease-in-out, opacity 300ms ease-in-out'
+            : `width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 600ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
         }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="border-r border-[var(--border)] bg-[var(--card)] flex-shrink-0 overflow-hidden"
       >
-        <div className="p-4 h-full flex flex-col" style={{ width: sidebarOpen ? 300 : 0 }}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold text-[var(--text-primary)] flex items-center gap-2 truncate">
-              <MessageSquare className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">{t("aiChat.conversations") || "Conversations"}</span>
-            </h2>
+        <div className="p-4 h-full flex flex-col" style={{ width: '100%' }}>
+          {/* Mobile close button */}
+          {isMobile && (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-[var(--text-primary)] flex items-center gap-2 truncate">
+                <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{t("aiChat.conversations") || "Conversations"}</span>
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSidebarOpen(false);
+                }}
+                className="h-8 w-8 p-0 flex-shrink-0 z-50 relative"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Desktop header */}
+          {!isMobile && (
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-semibold text-[var(--text-primary)] flex items-center gap-2 truncate">
+                <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{t("aiChat.conversations") || "Conversations"}</span>
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNewConversation}
+                className="h-8 w-8 p-0 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile new chat button */}
+          {isMobile && (
             <Button
-              variant="ghost"
-              size="sm"
+              variant="secondary"
               onClick={handleNewConversation}
-              className="h-8 w-8 p-0 flex-shrink-0"
+              className="w-full mb-4"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-2" />
+              {t("aiChat.newChat") || "New Chat"}
             </Button>
-          </div>
+          )}
 
           <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
             <AnimatePresence>
@@ -547,12 +608,11 @@ export default function AIChatPage() {
                 conversations.map(conv => (
                   <div
                     key={conv._id}
-                    className={`group relative flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-all ${
-                      activeConversationId === conv._id
+                    className={`group relative flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-all ${activeConversationId === conv._id
                         ? "bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20"
                         : "hover:bg-[var(--background-subtle)] border border-transparent"
-                    }`}
-                    onClick={() => setActiveConversationId(conv._id)}
+                      }`}
+                    onClick={() => handleSelectConversation(conv._id)}
                   >
                     <MessageSquare className="w-4 h-4 flex-shrink-0" />
 
@@ -616,10 +676,10 @@ export default function AIChatPage() {
             </AnimatePresence>
           </div>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Chat */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <main className={`flex-1 flex flex-col min-w-0 h-full overflow-hidden ${!isMobile && !sidebarOpen ? 'md:ml-0' : ''}`}>
         {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--card)]/50 backdrop-blur flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -691,7 +751,7 @@ export default function AIChatPage() {
               </motion.div>
             </div>
           ) : (
-            <div className="space-y-4 max-w-4xl mx-auto p-4">
+            <div className="space-y-4 max-w-4xl mx-auto mt-4 p-4">
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
@@ -707,11 +767,10 @@ export default function AIChatPage() {
                   </Avatar>
 
                   <div className={`flex-1 max-w-[80%] ${message.role === "user" ? "text-right" : ""}`}>
-                    <Card className={`p-4 border-0 shadow-sm ${
-                      message.role === "user"
+                    <Card className={`p-4 border-0 shadow-sm ${message.role === "user"
                         ? "bg-[var(--primary)] text-white"
                         : "bg-[var(--card)] border-[var(--border)]"
-                    }`}>
+                      }`}>
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     </Card>
 
