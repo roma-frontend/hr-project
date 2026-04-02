@@ -1,0 +1,436 @@
+convex/corporate.ts(378,17): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/corporate.ts(386,17): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/corporate.ts(401,24): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/corporate.ts(402,26): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/corporate.ts(408,41): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/corporate.ts(421,39): error TS18048: 'assignedDriver' is possibly 'undefined'.
+convex/driverAI.ts(332,45): error TS2304: Cannot find name 'Doc'.
+convex/drivers.ts(173,30): error TS18048: 'workStartHour' is possibly 'undefined'.
+convex/drivers.ts(173,51): error TS18048: 'workStartMin' is possibly 'undefined'.
+convex/drivers.ts(174,28): error TS18048: 'workEndHour' is possibly 'undefined'.
+convex/drivers.ts(174,47): error TS18048: 'workEndMin' is possibly 'undefined'.
+convex/drivers.ts(520,25): error TS18048: 'endDateStr' is possibly 'undefined'.
+convex/drivers.ts(520,51): error TS18048: 'startDateStr' is possibly 'undefined'.
+convex/drivers.ts(578,43): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'ExpressionOrValue<Value>'.
+  Type 'undefined' is not assignable to type 'ExpressionOrValue<Value>'.
+convex/drivers.ts(579,41): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'ExpressionOrValue<Value>'.
+  Type 'undefined' is not assignable to type 'ExpressionOrValue<Value>'.
+convex/drivers.ts(699,41): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'ExpressionOrValue<Value>'.
+  Type 'undefined' is not assignable to type 'ExpressionOrValue<Value>'.
+convex/drivers.ts(700,39): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'ExpressionOrValue<Value>'.
+  Type 'undefined' is not assignable to type 'ExpressionOrValue<Value>'.
+convex/drivers.ts(709,54): error TS18048: 'leave' is possibly 'undefined'.
+convex/drivers.ts(709,76): error TS18048: 'leave' is possibly 'undefined'.
+convex/drivers.ts(710,22): error TS18048: 'leave' is possibly 'undefined'.
+convex/drivers.ts(711,22): error TS18048: 'leave' is possibly 'undefined'.
+convex/drivers.ts(712,20): error TS18048: 'leave' is possibly 'undefined'.
+convex/drivers.ts(1028,18): error TS2345: Argument of type '"by_clerk_id"' is not assignable to parameter of type '"by_email" | "by_org" | "by_org_role" | "by_org_active" | "by_org_approval" | "by_role" | "by_supervisor" | "by_approval" | "by_org_email" | "by_org_created" | keyof SystemIndexes'.
+convex/drivers.ts(1028,45): error TS2345: Argument of type '"clerkId"' is not assignable to parameter of type '"_creationTime" | "organizationId" | "email" | "role" | "supervisorId" | "isApproved" | "_id"'.
+convex/drivers.ts(1688,33): error TS18048: 'wsh' is possibly 'undefined'.
+convex/drivers.ts(1688,44): error TS18048: 'wsm' is possibly 'undefined'.
+convex/drivers.ts(1688,67): error TS18048: 'weh' is possibly 'undefined'.
+convex/drivers.ts(1688,78): error TS18048: 'wem' is possibly 'undefined'.
+convex/drivers.ts(1865,26): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+convex/drivers.ts(1867,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+convex/leaves.ts(584,56): error TS18048: 'today' is possibly 'undefined'.
+convex/leaves.ts(584,78): error TS18048: 'today' is possibly 'undefined'.
+convex/leaves.ts(891,7): error TS2739: Type 'Query<{ document: { _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes: { ...; }; searchIndexes: {}; vectorInd...' is missing the following properties from type 'QueryInitializer<{ document: { _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes: { ...; }; searchIndexes: {}...': fullTableScan, withIndex, withSearchIndex
+convex/leaves.ts(896,5): error TS2739: Type 'OrderedQuery<{ document: { _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes: { ...; }; searchIndexes: {}; ve...' is missing the following properties from type 'QueryInitializer<{ document: { _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes: { ...; }; searchIndexes: {}...': fullTableScan, withIndex, withSearchIndex, order
+convex/organizations.ts(55,7): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+convex/productivity.ts(173,39): error TS18048: 'today' is possibly 'undefined'.
+convex/productivity.ts(173,48): error TS18048: 'today' is possibly 'undefined'.
+convex/scripts/createTestTicket.ts(23,42): error TS2345: Argument of type '"helpTickets"' is not assignable to parameter of type 'TableNamesInDataModel<{ organizations: { document: { _id: Id<"organizations">; _creationTime: number; logoUrl?: string | undefined; primaryColor?: string | undefined; timezone?: string | undefined; country?: string | undefined; ... 8 more ...; updatedAt: number; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes...'.
+convex/scripts/createTestTicket.ts(41,25): error TS2345: Argument of type '"helpTicketComments"' is not assignable to parameter of type 'TableNamesInDataModel<{ organizations: { document: { _id: Id<"organizations">; _creationTime: number; logoUrl?: string | undefined; primaryColor?: string | undefined; timezone?: string | undefined; country?: string | undefined; ... 8 more ...; updatedAt: number; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes...'.
+convex/sla.ts(375,22): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/sla.ts(376,19): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/sla.ts(380,19): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/sla.ts(382,19): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/sla.ts(386,19): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/sla.ts(387,19): error TS2538: Type 'undefined' cannot be used as an index type.
+convex/subscriptions_admin.ts(87,38): error TS2345: Argument of type 'Id<"organizations"> | undefined' is not assignable to parameter of type 'Id<"organizations">'.
+  Type 'undefined' is not assignable to type 'Id<"organizations">'.
+    Type 'undefined' is not assignable to type 'string'.
+convex/superadmin.ts(107,30): error TS2339: Property 'createdBy' does not exist on type '{ _id: Id<"tasks">; _creationTime: number; description?: string | undefined; organizationId?: Id<"organizations"> | undefined; attachments?: { name: string; type: string; uploadedAt: number; url: string; size: number; uploadedBy: Id<...>; }[] | undefined; ... 10 more ...; assignedBy: Id<...>; }'.
+convex/superadmin.ts(107,64): error TS2339: Property 'createdBy' does not exist on type '{ _id: Id<"tasks">; _creationTime: number; description?: string | undefined; organizationId?: Id<"organizations"> | undefined; attachments?: { name: string; type: string; uploadedAt: number; url: string; size: number; uploadedBy: Id<...>; }[] | undefined; ... 10 more ...; assignedBy: Id<...>; }'.
+convex/superadmin.ts(110,33): error TS2339: Property 'name' does not exist on type '{ _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; } | ... 55 more ... | { ...; }'.
+  Property 'name' does not exist on type '{ _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }'.
+convex/superadmin.ts(121,31): error TS2339: Property 'name' does not exist on type '{ _id: Id<"drivers">; _creationTime: number; isOnShift?: boolean | undefined; lastStatusUpdateAt?: number | undefined; kpiMetrics?: { onTimeRate: number; customerSatisfaction: number; tripsPerShift: number; completionRate: number; } | undefined; ... 17 more ...; totalTrips: number; }'.
+convex/superadmin.ts(122,32): error TS2339: Property 'phone' does not exist on type '{ _id: Id<"drivers">; _creationTime: number; isOnShift?: boolean | undefined; lastStatusUpdateAt?: number | undefined; kpiMetrics?: { onTimeRate: number; customerSatisfaction: number; tripsPerShift: number; completionRate: number; } | undefined; ... 17 more ...; totalTrips: number; }'.
+convex/superadmin.ts(269,26): error TS2339: Property 'ipAddress' does not exist on type '{ _id: Id<"loginAttempts">; _creationTime: number; country?: string | undefined; organizationId?: Id<"organizations"> | undefined; userId?: Id<"users"> | undefined; ip?: string | undefined; ... 9 more ...; method: "password" | ... 2 more ... | "google"; }'.
+convex/superadmin.ts(533,7): error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type 'PatchValue<{ _id: Id<"impersonationSessions">; _creationTime: number; endedAt?: number | undefined; isActive: boolean; organizationId: Id<"organizations">; reason: string; superadminId: Id<...>; targetUserId: Id<...>; token: string; expiresAt: number; startedAt: number; }>'.
+convex/superadmin.ts(568,41): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(569,41): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(572,18): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(580,15): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(581,18): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(582,18): error TS18048: 'session' is possibly 'undefined'.
+convex/superadmin.ts(753,33): error TS2339: Property 'name' does not exist on type '{ _id: Id<"drivers">; _creationTime: number; isOnShift?: boolean | undefined; lastStatusUpdateAt?: number | undefined; kpiMetrics?: { onTimeRate: number; customerSatisfaction: number; tripsPerShift: number; completionRate: number; } | undefined; ... 17 more ...; totalTrips: number; }'.
+convex/superadmin.ts(768,32): error TS2339: Property 'createdBy' does not exist on type '{ _id: Id<"tasks">; _creationTime: number; description?: string | undefined; organizationId?: Id<"organizations"> | undefined; attachments?: { name: string; type: string; uploadedAt: number; url: string; size: number; uploadedBy: Id<...>; }[] | undefined; ... 10 more ...; assignedBy: Id<...>; }'.
+convex/superadmin.ts(768,66): error TS2339: Property 'createdBy' does not exist on type '{ _id: Id<"tasks">; _creationTime: number; description?: string | undefined; organizationId?: Id<"organizations"> | undefined; attachments?: { name: string; type: string; uploadedAt: number; url: string; size: number; uploadedBy: Id<...>; }[] | undefined; ... 10 more ...; assignedBy: Id<...>; }'.
+convex/superadmin.ts(772,35): error TS2339: Property 'name' does not exist on type '{ _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; } | ... 55 more ... | { ...; }'.
+  Property 'name' does not exist on type '{ _id: Id<"leaveRequests">; _creationTime: number; reviewedBy?: Id<"users"> | undefined; reviewedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; ... 11 more ...; reason: string; }'.
+convex/superadmin.ts(823,31): error TS2349: This expression is not callable.
+  Type 'RegisteredQuery<"public", { limit?: number | undefined; query: string; }, Promise<{ users: { _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<...> | undefined; ... 61 more ...; familyLeaveBalance: number; }[]; ... 5 more ...; total: number; }>>' has no call signatures.
+convex/tickets.ts(34,22): error TS2532: Object is possibly 'undefined'.
+convex/timeTracking.ts(31,39): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(year: number, monthIndex?: number | undefined, date?: number | undefined, hours?: number | undefined, minutes?: number | undefined, seconds?: number | undefined, ms?: number | undefined): number', gave the following error.
+    Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+  Overload 2 of 2, '(year: number, monthIndex: number, date?: number | undefined, hours?: number | undefined, minutes?: number | undefined, seconds?: number | undefined, ms?: number | undefined): number', gave the following error.
+    Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+      Type 'undefined' is not assignable to type 'number'.
+convex/timeTracking.ts(31,45): error TS18048: 'month' is possibly 'undefined'.
+convex/timeTracking.ts(33,48): error TS18048: 'startHour' is possibly 'undefined'.
+convex/timeTracking.ts(33,65): error TS18048: 'startMin' is possibly 'undefined'.
+convex/timeTracking.ts(34,48): error TS18048: 'endHour' is possibly 'undefined'.
+convex/timeTracking.ts(34,65): error TS18048: 'endMin' is possibly 'undefined'.
+convex/timeTracking.ts(51,80): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(68,69): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(96,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(118,80): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(136,91): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(184,80): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(222,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(279,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/timeTracking.ts(325,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+convex/users.ts(233,43): error TS2532: Object is possibly 'undefined'.
+convex/users.ts(766,27): error TS18048: 'today' is possibly 'undefined'.
+convex/users.ts(766,36): error TS18048: 'today' is possibly 'undefined'.
+convex/users/index.ts(15,3): error TS2305: Module '"./queries"' has no exported member 'getMyEmployees'.
+convex/users/index.ts(16,3): error TS2305: Module '"./queries"' has no exported member 'getUsersForAssignment'.
+convex/users/index.ts(17,3): error TS2305: Module '"./queries"' has no exported member 'getPendingUsers'.
+convex/users/index.ts(18,3): error TS2305: Module '"./queries"' has no exported member 'getUserCount'.
+convex/users/index.ts(25,3): error TS2305: Module '"./mutations"' has no exported member 'updateUser'.
+convex/users/index.ts(26,3): error TS2305: Module '"./mutations"' has no exported member 'deleteUser'.
+convex/users/index.ts(27,3): error TS2305: Module '"./mutations"' has no exported member 'approveUser'.
+convex/users/index.ts(28,3): error TS2305: Module '"./mutations"' has no exported member 'rejectUser'.
+convex/users/index.ts(29,3): error TS2305: Module '"./mutations"' has no exported member 'assignSupervisor'.
+convex/users/index.ts(30,3): error TS2305: Module '"./mutations"' has no exported member 'updatePresenceStatus'.
+src/app/(auth)/forgot-password/page.tsx(144,21): error TS2322: Type '{ children: string | Element; type: string; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(auth)/register-org/create/page.tsx(429,15): error TS2322: Type '{ children: Element; type: string; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(auth)/register-org/pending/page.tsx(41,39): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/app/(auth)/register-org/request/page.tsx(536,15): error TS2322: Type '{ children: Element; type: string; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(auth)/register/page.tsx(433,21): error TS2322: Type '{ children: (string | Element)[]; type: string; onClick: () => void; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(auth)/register/page.tsx(553,21): error TS2322: Type '{ children: string | Element; type: string; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(auth)/reset-password/page.tsx(280,21): error TS2322: Type '{ children: string | Element; type: string; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { background: string; }; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/app/(dashboard)/admin/join-requests/page.tsx(166,27): error TS2322: Type 'string' is not assignable to type '"success" | "default" | "warning" | "info" | "destructive" | "outline" | "secondary" | "pink" | "purple" | null | undefined'.
+src/app/(dashboard)/ai-chat/page.tsx(72,33): error TS2532: Object is possibly 'undefined'.
+src/app/(dashboard)/ai-chat/page.tsx(243,33): error TS2532: Object is possibly 'undefined'.
+src/app/(dashboard)/analytics/page.tsx(101,7): error TS2322: Type 'string' is not assignable to type 'keyof PlanFeatures'.
+src/app/(dashboard)/drivers/page.tsx(2196,33): error TS2322: Type 'string' is not assignable to type '"success" | "default" | "warning" | "info" | "destructive" | "outline" | "secondary" | "pink" | "purple" | null | undefined'.
+src/app/(dashboard)/join-requests/page.tsx(326,27): error TS2322: Type 'string' is not assignable to type '"success" | "default" | "warning" | "info" | "destructive" | "outline" | "secondary" | "pink" | "purple" | null | undefined'.
+src/app/(dashboard)/superadmin/automation/page.tsx(33,23): error TS2554: Expected 2 arguments, but got 1.
+src/app/(dashboard)/superadmin/security/page.tsx(462,41): error TS18048: 'colors' is possibly 'undefined'.
+src/app/(dashboard)/superadmin/security/page.tsx(463,45): error TS18048: 'colors' is possibly 'undefined'.
+src/app/(dashboard)/superadmin/security/page.tsx(469,45): error TS18048: 'colors' is possibly 'undefined'.
+src/app/(dashboard)/superadmin/security/page.tsx(469,74): error TS18048: 'colors' is possibly 'undefined'.
+src/app/(dashboard)/superadmin/subscriptions/page.tsx(46,57): error TS2339: Property 'cancelSubscription' does not exist on type '{ createManualSubscription: FunctionReference<"mutation", "public", { notes?: string | undefined; customPrice?: number | undefined; plan: "starter" | "professional" | "enterprise"; organizationId: Id<...>; }, { ...; }, string | undefined>; listAllWithUsers: FunctionReference<...>; }'.
+src/app/(dashboard)/superadmin/users/[userId]/page.tsx(189,20): error TS2304: Cannot find name 't'.
+src/app/(dashboard)/superadmin/users/[userId]/page.tsx(202,20): error TS2304: Cannot find name 't'.
+src/app/(dashboard)/superadmin/users/[userId]/page.tsx(214,20): error TS2304: Cannot find name 't'.
+src/app/(dashboard)/superadmin/users/[userId]/page.tsx(220,20): error TS2304: Cannot find name 't'.
+src/app/api/ai-site-editor/route.ts(306,22): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(308,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(309,32): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(318,24): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(320,51): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(321,34): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(332,11): error TS18048: 'content' is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(332,50): error TS18048: 'content' is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(334,25): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(335,24): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(335,34): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/ai-site-editor/route.ts(384,22): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(385,22): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(386,22): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(396,24): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(397,24): error TS2532: Object is possibly 'undefined'.
+src/app/api/ai-site-editor/route.ts(398,24): error TS2532: Object is possibly 'undefined'.
+src/app/api/chat/full-context/route.ts(31,74): error TS18048: 'now' is possibly 'undefined'.
+src/app/api/chat/full-context/route.ts(31,94): error TS18048: 'now' is possibly 'undefined'.
+src/app/api/chat/full-context/route.ts(33,43): error TS18048: 'now' is possibly 'undefined'.
+src/app/api/chat/full-context/route.ts(136,67): error TS18048: 'now' is possibly 'undefined'.
+src/app/api/chat/full-context/route.ts(136,89): error TS18048: 'in90Days' is possibly 'undefined'.
+src/app/api/chat/insights/route.ts(119,22): error TS18048: 'todayStr' is possibly 'undefined'.
+src/app/api/chat/insights/route.ts(120,24): error TS18048: 'next60Str' is possibly 'undefined'.
+src/app/api/chat/insights/route.ts(149,33): error TS18048: 'weekEndStr' is possibly 'undefined'.
+src/app/api/chat/insights/route.ts(149,60): error TS18048: 'dateStr' is possibly 'undefined'.
+src/app/api/chat/weekly-digest/route.ts(39,61): error TS18048: 'weekEndStr' is possibly 'undefined'.
+src/app/api/chat/weekly-digest/route.ts(39,88): error TS18048: 'weekStartStr' is possibly 'undefined'.
+src/app/api/chat/weekly-digest/route.ts(52,40): error TS18048: 'weekStartStr' is possibly 'undefined'.
+src/app/api/chat/weekly-digest/route.ts(52,66): error TS18048: 'weekEndStr' is possibly 'undefined'.
+src/app/api/security/face-verify/route.ts(18,55): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(138,33): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(337,28): error TS18048: 'last' is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(337,28): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(421,19): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(421,19): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(422,13): error TS2532: Object is possibly 'undefined'.
+src/components/ai/ChatWidget.tsx(1005,27): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/ai/SiteEditorChat.tsx(102,5): error TS2353: Object literal may only specify known properties, and 'organizationId' does not exist in type '{ userId: Id<"users">; }'.
+src/components/attendance/AttendanceDetailModal.tsx(110,27): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/attendance/EmployeeAttendanceDrawer.tsx(79,32): error TS18048: 'month' is possibly 'undefined'.
+src/components/attendance/EmployeeAttendanceDrawer.tsx(105,27): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/attendance/EmployeeAttendanceDrawer.tsx(195,33): error TS18048: 'mo' is possibly 'undefined'.
+src/components/attendance/SupervisorRatingForm.tsx(100,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(101,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(102,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(103,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(104,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(105,9): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/components/attendance/SupervisorRatingForm.tsx(170,36): error TS2532: Object is possibly 'undefined'.
+src/components/auth/FaceLogin.tsx(72,29): error TS2532: Object is possibly 'undefined'.
+src/components/auth/FaceRegistration.tsx(50,29): error TS2532: Object is possibly 'undefined'.
+src/components/auth/PasswordStrengthIndicator.tsx(116,33): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/auth/SmartEmailInput.tsx(94,29): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/auth/SmartErrorMessage.tsx(60,23): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/auth/SmartErrorMessage.tsx(67,13): error TS2353: Object literal may only specify known properties, and 'background' does not exist in type '{ opacity?: number | undefined; x?: string | number | undefined; y?: string | number | undefined; scale?: number | undefined; width?: string | number | undefined; height?: string | number | undefined; rotate?: number | undefined; }'.
+src/components/auth/SmartErrorMessage.tsx(73,38): error TS2353: Object literal may only specify known properties, and 'repeat' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/auth/SmartErrorMessage.tsx(81,27): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/auth/SmartPasswordInput.tsx(75,13): error TS2322: Type '{ children: (string | Element)[]; whileHover: { scale: number; }; whileTap: { scale: number; }; onClick: () => void; type: string; className: string; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/components/auth/SmartPasswordInput.tsx(113,17): error TS2322: Type '{ children: Element; initial: { scale: number; opacity: number; }; animate: { scale: number; opacity: number; }; exit: { scale: number; opacity: number; }; whileHover: { scale: number; }; whileTap: { ...; }; onClick: () => Promise<...>; type: string; className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/components/auth/SmartPasswordInput.tsx(148,13): error TS2322: Type '{ children: Element; whileHover: { scale: number; }; whileTap: { scale: number; }; onClick: () => void; type: string; className: string; title: string; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/components/auth/WebAuthnButton.tsx(29,19): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(33,19): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(79,21): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(82,21): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(84,21): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(94,19): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(129,21): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(131,21): error TS2304: Cannot find name 't'.
+src/components/auth/WebAuthnButton.tsx(143,7): error TS2322: Type '{ children: (false | Element)[]; type: string; onClick: () => Promise<void>; disabled: boolean; whileHover: { scale: number; }; whileTap: { scale: number; }; className: string; style: { ...; }; title: string; }' is not assignable to type 'IntrinsicAttributes & MotionProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & MotionProps'.
+src/components/chat/CallModal.tsx(239,11): error TS2322: Type 'MediaStream | undefined' is not assignable to type 'MediaProvider | null'.
+  Type 'undefined' is not assignable to type 'MediaProvider | null'.
+src/components/chat/CallModal.tsx(243,11): error TS2322: Type 'MediaStream | undefined' is not assignable to type 'MediaProvider | null'.
+  Type 'undefined' is not assignable to type 'MediaProvider | null'.
+src/components/chat/ChatWindow.tsx(147,54): error TS2339: Property 'name' does not exist on type '{ membership: { _id: Id<"chatMembers">; _creationTime: number; isArchived?: boolean | undefined; isDeleted?: boolean | undefined; deletedAt?: number | undefined; lastReadAt?: number | undefined; ... 7 more ...; joinedAt: number; } | undefined; ... 9 more ...; isPinned?: boolean | undefined; }'.
+src/components/chat/ChatWindow.tsx(213,11): error TS2532: Object is possibly 'undefined'.
+src/components/chat/ChatWindow.tsx(213,56): error TS2532: Object is possibly 'undefined'.
+src/components/chat/ChatWindow.tsx(282,13): error TS2532: Object is possibly 'undefined'.
+src/components/chat/ChatWindow.tsx(293,29): error TS2532: Object is possibly 'undefined'.
+src/components/chat/ChatWindow.tsx(461,36): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/chat/ChatWindow.tsx(566,46): error TS2339: Property 'name' does not exist on type '{ membership: { _id: Id<"chatMembers">; _creationTime: number; isArchived?: boolean | undefined; isDeleted?: boolean | undefined; deletedAt?: number | undefined; lastReadAt?: number | undefined; ... 7 more ...; joinedAt: number; } | undefined; ... 9 more ...; isPinned?: boolean | undefined; }'.
+src/components/chat/ChatWindow.tsx(640,20): error TS2339: Property 'name' does not exist on type '{ membership: { _id: Id<"chatMembers">; _creationTime: number; isArchived?: boolean | undefined; isDeleted?: boolean | undefined; deletedAt?: number | undefined; lastReadAt?: number | undefined; ... 7 more ...; joinedAt: number; } | undefined; ... 9 more ...; isPinned?: boolean | undefined; }'.
+src/components/chat/ChatWindow.tsx(804,53): error TS2339: Property 'name' does not exist on type '{ membership: { _id: Id<"chatMembers">; _creationTime: number; isArchived?: boolean | undefined; isDeleted?: boolean | undefined; deletedAt?: number | undefined; lastReadAt?: number | undefined; ... 7 more ...; joinedAt: number; } | undefined; ... 9 more ...; isPinned?: boolean | undefined; }'.
+src/components/chat/NewConversationModal.tsx(143,11): error TS2322: Type 'Id<"users"> | undefined' is not assignable to type 'Id<"users">'.
+  Type 'undefined' is not assignable to type 'Id<"users">'.
+    Type 'undefined' is not assignable to type 'string'.
+src/components/chat/NewConversationModal.tsx(163,13): error TS2322: Type 'Id<"organizations"> | undefined' is not assignable to type 'Id<"organizations">'.
+  Type 'undefined' is not assignable to type 'Id<"organizations">'.
+    Type 'undefined' is not assignable to type 'string'.
+src/components/chat/NewConversationModal.tsx(168,13): error TS2322: Type 'Id<"organizations"> | undefined' is not assignable to type 'Id<"organizations">'.
+  Type 'undefined' is not assignable to type 'Id<"organizations">'.
+    Type 'undefined' is not assignable to type 'string'.
+src/components/chat/SmartReply.tsx(42,18): error TS2345: Argument of type 'string[] | undefined' is not assignable to parameter of type 'SetStateAction<string[]>'.
+  Type 'undefined' is not assignable to type 'SetStateAction<string[]>'.
+src/components/dashboard/DashboardBanners.tsx(72,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/dashboard/DashboardClient.tsx(228,23): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/dashboard/StatsCard.tsx(107,30): error TS2353: Object literal may only specify known properties, and 'transition' does not exist in type '{ scale?: number | undefined; x?: number | undefined; y?: number | undefined; rotate?: number | undefined; background?: string | undefined; opacity?: number | undefined; }'.
+src/components/drivers/DriverCalendar.tsx(375,32): error TS2345: Argument of type 'Date | undefined' is not assignable to parameter of type 'Date'.
+  Type 'undefined' is not assignable to type 'Date'.
+src/components/drivers/DriverCalendar.tsx(376,33): error TS2345: Argument of type 'Date | undefined' is not assignable to parameter of type 'Date'.
+  Type 'undefined' is not assignable to type 'Date'.
+src/components/drivers/DriverCalendar.tsx(442,53): error TS2345: Argument of type 'Date | undefined' is not assignable to parameter of type 'string | number | Date'.
+  Type 'undefined' is not assignable to type 'string | number | Date'.
+src/components/drivers/PlaceAutocomplete.tsx(139,20): error TS2345: Argument of type 'PlaceSuggestion | undefined' is not assignable to parameter of type 'PlaceSuggestion'.
+  Type 'undefined' is not assignable to type 'PlaceSuggestion'.
+src/components/drivers/RequestDriverWizard.tsx(33,25): error TS7053: Element implicitly has an 'any' type because expression of type '"users/queries"' can't be used to index type '{ organizations: { createOrganization: FunctionReference<"mutation", "public", { timezone?: string | undefined; country?: string | undefined; industry?: string | undefined; name: string; slug: string; plan: "starter" | ... 1 more ... | "enterprise"; superadminUserId: Id<...>; }, { ...; }, string | undefined>; ... 18...'.
+  Property 'users/queries' does not exist on type '{ organizations: { createOrganization: FunctionReference<"mutation", "public", { timezone?: string | undefined; country?: string | undefined; industry?: string | undefined; name: string; slug: string; plan: "starter" | ... 1 more ... | "enterprise"; superadminUserId: Id<...>; }, { ...; }, string | undefined>; ... 18...'.
+src/components/employees/TeamSidebar.tsx(65,15): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(80,15): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(211,15): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(232,21): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(250,21): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(268,61): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(284,60): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(300,61): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(317,62): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(337,61): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(348,60): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(378,25): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(430,61): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(443,60): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/TeamSidebar.tsx(456,61): error TS2322: Type 'number[]' is not assignable to type 'string'.
+src/components/employees/VirtualizedEmployeeList.tsx(120,41): error TS18048: 'emp' is possibly 'undefined'.
+src/components/employees/VirtualizedEmployeeList.tsx(127,22): error TS18048: 'emp' is possibly 'undefined'.
+src/components/employees/VirtualizedEmployeeList.tsx(139,19): error TS2322: Type 'Employee | undefined' is not assignable to type 'Employee'.
+  Type 'undefined' is not assignable to type 'Employee'.
+src/components/employees/VirtualizedEmployeeList.tsx(140,19): error TS2322: Type 'RoleConfig | undefined' is not assignable to type 'RoleConfig'.
+  Type 'undefined' is not assignable to type 'RoleConfig'.
+src/components/employees/VirtualizedEmployeeList.tsx(141,19): error TS2322: Type 'TypeConfig | undefined' is not assignable to type 'TypeConfig'.
+  Type 'undefined' is not assignable to type 'TypeConfig'.
+src/components/employees/VirtualizedEmployeeList.tsx(172,39): error TS18048: 'emp' is possibly 'undefined'.
+src/components/employees/VirtualizedEmployeeList.tsx(179,20): error TS18048: 'emp' is possibly 'undefined'.
+src/components/employees/VirtualizedEmployeeList.tsx(189,17): error TS2322: Type 'Employee | undefined' is not assignable to type 'Employee'.
+  Type 'undefined' is not assignable to type 'Employee'.
+src/components/employees/VirtualizedEmployeeList.tsx(190,17): error TS2322: Type 'RoleConfig | undefined' is not assignable to type 'RoleConfig'.
+  Type 'undefined' is not assignable to type 'RoleConfig'.
+src/components/employees/VirtualizedEmployeeList.tsx(191,17): error TS2322: Type 'TypeConfig | undefined' is not assignable to type 'TypeConfig'.
+  Type 'undefined' is not assignable to type 'TypeConfig'.
+src/components/events/CreateEventWizard.tsx(117,15): error TS2322: Type '"date"' is not assignable to type '"number" | "email" | "password" | "text" | undefined'.
+src/components/events/CreateEventWizard.tsx(125,15): error TS2322: Type '"time"' is not assignable to type '"number" | "email" | "password" | "text" | undefined'.
+src/components/events/CreateEventWizard.tsx(146,9): error TS2353: Object literal may only specify known properties, and 'title' does not exist in type '{ description?: string | undefined; priority?: "low" | "medium" | "high" | undefined; isAllDay?: boolean | undefined; requiredEmployeeIds?: Id<"users">[] | undefined; notifyDaysBefore?: number | undefined; ... 6 more ...; eventType: "other" | ... 5 more ... | "holiday"; }'.
+src/components/help/CreateTicketWizard.tsx(175,9): error TS2322: Type 'string' is not assignable to type '"technical" | "billing" | "access" | "feature_request" | "bug" | "other"'.
+src/components/KeyboardShortcutsModal.tsx(61,29): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/landing/FAQSection.tsx(21,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/FeatureCard.tsx(34,13): error TS18048: 'entry' is possibly 'undefined'.
+src/components/landing/LandingClient.tsx(711,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/LandingClient.tsx(762,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/NewsletterSection.tsx(17,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/PricingPreview.tsx(113,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/SocialProof.tsx(29,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/landing/StatsCard.tsx(39,13): error TS18048: 'entry' is possibly 'undefined'.
+src/components/landing/StatsCard.tsx(51,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/landing/TestimonialsSection.tsx(22,13): error TS18048: 'e' is possibly 'undefined'.
+src/components/lazy/LazyFaceRecognition.tsx(11,16): error TS2307: Cannot find module '@/components/attendance/FaceRecognition' or its corresponding type declarations.
+src/components/lazy/LazyMap.tsx(11,16): error TS2307: Cannot find module '@/components/maps/MapView' or its corresponding type declarations.
+src/components/lazy/LazyThreeScene.tsx(11,16): error TS2307: Cannot find module '@/components/three/ThreeScene' or its corresponding type declarations.
+src/components/leaves/CreateLeaveWizard.tsx(37,11): error TS2339: Property 'id' does not exist on type '{ _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; googleId?: string | undefined; ... 60 more ...; familyLeaveBalance: number; }'.
+src/components/leaves/CreateLeaveWizard.tsx(37,31): error TS2339: Property 'id' does not exist on type '{ _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; googleId?: string | undefined; ... 60 more ...; familyLeaveBalance: number; }'.
+src/components/leaves/CreateLeaveWizard.tsx(101,15): error TS2322: Type '"date"' is not assignable to type '"number" | "email" | "password" | "text" | undefined'.
+src/components/leaves/CreateLeaveWizard.tsx(109,15): error TS2322: Type '"date"' is not assignable to type '"number" | "email" | "password" | "text" | undefined'.
+src/components/leaves/CreateLeaveWizard.tsx(168,14): error TS2304: Cannot find name 'CheckCircle'.
+src/components/MaintenanceBanner.tsx(150,35): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/MaintenanceScreen.tsx(390,35): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/notifications/NotificationBanner.tsx(62,16): error TS18048: 'latest' is possibly 'undefined'.
+src/components/notifications/NotificationBanner.tsx(63,18): error TS18048: 'latest' is possibly 'undefined'.
+src/components/notifications/NotificationBanner.tsx(64,15): error TS18048: 'latest' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(366,34): error TS18048: 'anim' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(366,49): error TS18048: 'anim' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(391,34): error TS18048: 'step' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(392,29): error TS2339: Property 'rect' does not exist on type '{ div: ({ children, className, initial, animate, exit, transition, whileHover, whileTap, onAnimationComplete, layout, variants, onClick, ...restProps }: MotionProps) => Element; button: ({ children, className, initial, animate, exit, transition, whileHover, whileTap, onAnimationComplete, layout, variants, onClick, ....'.
+src/components/onboarding/OnboardingTour.tsx(417,28): error TS18048: 'step' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(421,31): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/onboarding/OnboardingTour.tsx(440,27): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/onboarding/OnboardingTour.tsx(468,22): error TS18048: 'step' is possibly 'undefined'.
+src/components/onboarding/OnboardingTour.tsx(488,18): error TS18048: 'step' is possibly 'undefined'.
+src/components/PerformanceMonitor.tsx(54,20): error TS18048: 'lastEntry' is possibly 'undefined'.
+src/components/PerformanceMonitor.tsx(56,15): error TS18048: 'lastEntry' is possibly 'undefined'.
+src/components/PerformanceMonitor.tsx(58,19): error TS18048: 'lastEntry' is possibly 'undefined'.
+src/components/PerformanceMonitor.tsx(61,20): error TS18048: 'lastEntry' is possibly 'undefined'.
+src/components/settings/DashboardCustomization.tsx(150,49): error TS18048: 'widget' is possibly 'undefined'.
+src/components/settings/DashboardCustomization.tsx(153,26): error TS18048: 'widget' is possibly 'undefined'.
+src/components/settings/DashboardCustomization.tsx(155,79): error TS18048: 'widget' is possibly 'undefined'.
+src/components/status/StatusIndicator.tsx(83,9): error TS18048: 'config' is possibly 'undefined'.
+src/components/status/StatusIndicator.tsx(86,14): error TS18048: 'config' is possibly 'undefined'.
+src/components/status/StatusIndicator.tsx(88,45): error TS18048: 'config' is possibly 'undefined'.
+src/components/status/StatusIndicator.tsx(88,61): error TS18048: 'config' is possibly 'undefined'.
+src/components/status/StatusIndicator.tsx(90,70): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(76,16): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(81,28): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(81,50): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(87,41): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(90,52): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(94,47): error TS18048: 'config' is possibly 'undefined'.
+src/components/StatusUpdateBanner.tsx(104,112): error TS18048: 'config' is possibly 'undefined'.
+src/components/superadmin/CreateManualSubscriptionWizard.tsx(35,28): error TS2554: Expected 2 arguments, but got 1.
+src/components/superadmin/CreateManualSubscriptionWizard.tsx(120,13): error TS2322: Type '{ stepData: {}; updateStepData: () => void; field: string; label: string; placeholder: string; rows: number; }' is not assignable to type 'IntrinsicAttributes & TextInputStepProps'.
+  Property 'rows' does not exist on type 'IntrinsicAttributes & TextInputStepProps'.
+src/components/superadmin/CreateManualSubscriptionWizard.tsx(132,9): error TS2353: Object literal may only specify known properties, and 'price' does not exist in type '{ notes?: string | undefined; customPrice?: number | undefined; plan: "starter" | "professional" | "enterprise"; organizationId: Id<"organizations">; }'.
+src/components/superadmin/CreateSupportTicketWizard.tsx(169,9): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ organizationId?: Id<"organizations"> | undefined; relatedLeaveId?: Id<"leaveRequests"> | undefined; relatedDriverRequestId?: Id<"driverRequests"> | undefined; ... 5 more ...; createdBy: Id<...>; }'.
+src/components/tasks/CreateTaskWizard.tsx(27,16): error TS2554: Expected 2 arguments, but got 1.
+src/components/tasks/CreateTaskWizard.tsx(30,21): error TS2554: Expected 2 arguments, but got 1.
+src/components/tasks/CreateTaskWizard.tsx(84,13): error TS2322: Type '"date"' is not assignable to type '"number" | "email" | "password" | "text" | undefined'.
+src/components/tasks/CreateTaskWizard.tsx(102,48): error TS2339: Property 'id' does not exist on type '{ _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; googleId?: string | undefined; ... 60 more ...; familyLeaveBalance: number; }'.
+src/components/tasks/CreateTaskWizard.tsx(109,45): error TS2339: Property 'id' does not exist on type '{ _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; googleId?: string | undefined; ... 60 more ...; familyLeaveBalance: number; }'.
+src/components/tasks/CreateTaskWizard.tsx(119,9): error TS2561: Object literal may only specify known properties, but 'assigneeId' does not exist in type '{ description?: string | undefined; tags?: string[] | undefined; deadline?: number | undefined; title: string; priority: "low" | "medium" | "high" | "urgent"; assignedTo: Id<"users">; assignedBy: Id<...>; }'. Did you mean to write 'assignedTo'?
+src/components/tasks/CreateTaskWizard.tsx(120,27): error TS2339: Property 'id' does not exist on type '{ _id: Id<"users">; _creationTime: number; timezone?: string | undefined; updatedAt?: number | undefined; organizationId?: Id<"organizations"> | undefined; googleId?: string | undefined; ... 60 more ...; familyLeaveBalance: number; }'.
+src/components/ui/SmartBanner.tsx(94,25): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/ui/SmartBanner.tsx(101,15): error TS2353: Object literal may only specify known properties, and 'background' does not exist in type '{ opacity?: number | undefined; x?: string | number | undefined; y?: string | number | undefined; scale?: number | undefined; width?: string | number | undefined; height?: string | number | undefined; rotate?: number | undefined; }'.
+src/components/ui/SmartBanner.tsx(107,40): error TS2353: Object literal may only specify known properties, and 'repeat' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/ui/SmartBanner.tsx(128,29): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ duration?: number | undefined; delay?: number | undefined; ease?: string | undefined; }'.
+src/components/ui/wizard-step-components.tsx(58,9): error TS2322: Type 'string | number | true' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'true' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/components/ui/wizard-step-components.tsx(101,9): error TS2322: Type 'string | number | true' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'true' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/components/ui/wizard-step-components.tsx(144,9): error TS2322: Type 'string | number | true' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+src/components/ui/wizard-step-components.tsx(298,9): error TS2322: Type 'string | number | true' is not assignable to type 'string | null | undefined'.
+  Type 'number' is not assignable to type 'string'.
+src/components/ui/wizard-step-components.tsx(349,30): error TS2339: Property 'includes' does not exist on type 'string | number | true | string[]'.
+  Property 'includes' does not exist on type 'number'.
+src/components/ui/wizard-step-components.tsx(350,16): error TS2339: Property 'filter' does not exist on type 'string | number | true | string[]'.
+  Property 'filter' does not exist on type 'string'.
+src/components/ui/wizard-step-components.tsx(351,13): error TS2488: Type 'string | number | true | string[]' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/components/ui/wizard-step-components.tsx(364,36): error TS2339: Property 'includes' does not exist on type 'string | number | true | string[]'.
+  Property 'includes' does not exist on type 'number'.
+src/components/ui/wizard.tsx(57,10): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/components/ui/wizard.tsx(58,12): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/components/ui/wizard.tsx(186,18): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/components/ui/wizard.tsx(188,16): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/components/ui/wizard.tsx(190,20): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/components/ui/wizard.tsx(197,17): error TS18048: 'currentStepData' is possibly 'undefined'.
+src/hooks/useKeystrokeDynamics.ts(54,22): error TS2532: Object is possibly 'undefined'.
+src/hooks/useKeystrokeDynamics.ts(54,38): error TS2532: Object is possibly 'undefined'.
+src/hooks/useMaintenanceAutoLogout.ts(14,5): error TS2345: Argument of type '"skip" | { organizationId: string; }' is not assignable to parameter of type '{ organizationId: Id<"organizations">; } | "skip"'.
+  Type '{ organizationId: string; }' is not assignable to type '{ organizationId: Id<"organizations">; } | "skip"'.
+    Types of property 'organizationId' are incompatible.
+      Type 'string' is not assignable to type 'Id<"organizations">'.
+        Type 'string' is not assignable to type '{ __tableName: "organizations"; }'.
+src/hooks/useOptimizedHooks.ts(91,13): error TS18048: 'entry' is possibly 'undefined'.
+src/lib/convex-types.ts(34,11): error TS2344: Type '"leaves"' does not satisfy the constraint 'TableNames | SystemTableNames'.
+src/lib/convex-types.ts(78,11): error TS2344: Type '"events"' does not satisfy the constraint 'TableNames | SystemTableNames'.
+src/lib/convex-types.ts(92,11): error TS2344: Type '"admin"' does not satisfy the constraint 'TableNames | SystemTableNames'.
+src/lib/convex-types.ts(103,18): error TS2430: Interface 'LeaveEnriched' incorrectly extends interface 'Leave'.
+  Types of property 'userEmployeeType' are incompatible.
+    Type 'string' is not assignable to type '"staff" | "contract" | "full-time" | "part-time" | undefined'.
+src/lib/faceApi.ts(65,29): error TS18047: 'faceapi' is possibly 'null'.
+src/lib/faceApi.ts(108,13): error TS2532: Object is possibly 'undefined'.
+src/lib/faceApi.ts(109,11): error TS2532: Object is possibly 'undefined'.
+src/lib/faceApi.ts(110,51): error TS2532: Object is possibly 'undefined'.
+src/lib/faceApi.ts(114,58): error TS2532: Object is possibly 'undefined'.
+src/lib/faceApi.ts(117,17): error TS2532: Object is possibly 'undefined'.
+src/lib/faceApi.ts(118,15): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(258,25): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(259,25): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(260,23): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(261,23): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(265,25): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(272,15): error TS2532: Object is possibly 'undefined'.
+src/lib/security.ts(273,6): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/lib/security.ts(273,14): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/lib/sharepoint-sync.ts(201,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

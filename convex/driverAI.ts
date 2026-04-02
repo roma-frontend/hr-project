@@ -1,20 +1,20 @@
 /**
  * AI Assistant for Driver Management
- * 
+ *
  * Features:
  * - Natural language queries about driver availability
  * - Calendar visibility queries
  * - Smart suggestions based on context
  */
 
-import { v } from "convex/values";
-import { query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
-import type { QueryCtx } from "./_generated/server";
+import { v } from 'convex/values';
+import { query } from './_generated/server';
+import type { Id, Doc } from './_generated/dataModel';
+import type { QueryCtx } from './_generated/server';
 
 // Types for AI responses
 interface DriverAvailability {
-  _id: Id<"drivers">;
+  _id: Id<'drivers'>;
   userName: string;
   availability: { available: boolean; nextAvailable?: number };
   vehicleInfo: { model: string; plateNumber: string; capacity: number };
@@ -24,8 +24,14 @@ interface DriverAvailability {
 interface AvailabilityResponse {
   text: { en: string; ru: string; hy: string };
   type: string;
-  suggestions?: Array<{ driverId: Id<"drivers">; driverName: string; nextAvailable: string }>;
-  availableDrivers?: Array<{ driverId: Id<"drivers">; driverName: string; vehicle: string; capacity: number; rating: number }>;
+  suggestions?: Array<{ driverId: Id<'drivers'>; driverName: string; nextAvailable: string }>;
+  availableDrivers?: Array<{
+    driverId: Id<'drivers'>;
+    driverName: string;
+    vehicle: string;
+    capacity: number;
+    rating: number;
+  }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +40,7 @@ interface AvailabilityResponse {
 
 /**
  * Process natural language query about driver availability
- * 
+ *
  * Examples:
  * - "Покажи мне занятность водителя Армена"
  * - "Show me driver availability for tomorrow"
@@ -42,9 +48,9 @@ interface AvailabilityResponse {
  */
 export const queryDriverAvailability = query({
   args: {
-    userId: v.id("users"),
-    organizationId: v.id("organizations"),
-    query: v.string(),           // Natural language query
+    userId: v.id('users'),
+    organizationId: v.id('organizations'),
+    query: v.string(), // Natural language query
     contextDate: v.optional(v.number()), // Reference date (default: now)
   },
   handler: async (ctx, { userId, organizationId, query, contextDate }) => {
@@ -56,8 +62,10 @@ export const queryDriverAvailability = query({
 
     // Get all available drivers
     const drivers = await ctx.db
-      .query("drivers")
-      .withIndex("by_org_available", (q) => q.eq("organizationId", organizationId).eq("isAvailable", true))
+      .query('drivers')
+      .withIndex('by_org_available', (q) =>
+        q.eq('organizationId', organizationId).eq('isAvailable', true),
+      )
       .collect();
 
     // Filter by driver name if mentioned
@@ -70,26 +78,26 @@ export const queryDriverAvailability = query({
     const enrichedDrivers = await Promise.all(
       drivers.map(async (driver) => {
         const user = await ctx.db.get(driver.userId);
-        
+
         // Check availability for the requested time range
         const timeRange = intent.timeRange || { start: now, end: now + 24 * 60 * 60 * 1000 };
-        
+
         const availability = await checkDriverAvailability(
           ctx,
           driver._id,
           timeRange.start,
-          timeRange.end
+          timeRange.end,
         );
 
         return {
           ...driver,
-          userName: user?.name ?? "Unknown",
+          userName: user?.name ?? 'Unknown',
           userAvatar: user?.avatarUrl,
           userPhone: user?.phone,
           userPosition: user?.position,
           availability,
         };
-      })
+      }),
     );
 
     // Generate AI response
@@ -108,25 +116,23 @@ export const queryDriverAvailability = query({
  */
 export const getDriverScheduleWithSummary = query({
   args: {
-    driverId: v.id("drivers"),
-    userId: v.id("users"),
+    driverId: v.id('drivers'),
+    userId: v.id('users'),
     startTime: v.number(),
     endTime: v.number(),
   },
   handler: async (ctx, { driverId, userId, startTime, endTime }) => {
     // Check calendar access
     const driver = await ctx.db.get(driverId);
-    if (!driver) throw new Error("Driver not found");
+    if (!driver) throw new Error('Driver not found');
 
     const access = await ctx.db
-      .query("calendarAccess")
-      .withIndex("by_owner_viewer", (q) => 
-        q.eq("ownerId", driver.userId).eq("viewerId", userId)
-      )
+      .query('calendarAccess')
+      .withIndex('by_owner_viewer', (q) => q.eq('ownerId', driver.userId).eq('viewerId', userId))
       .first();
 
-    const hasFullAccess = access?.isActive && access.accessLevel === "full";
-    const hasBusyOnlyAccess = access?.isActive && access.accessLevel === "busy_only";
+    const hasFullAccess = access?.isActive && access.accessLevel === 'full';
+    const hasBusyOnlyAccess = access?.isActive && access.accessLevel === 'busy_only';
 
     if (!access || !access.isActive) {
       throw new Error("No access to this driver's calendar. Please request access first.");
@@ -134,13 +140,10 @@ export const getDriverScheduleWithSummary = query({
 
     // Get schedule
     const schedules = await ctx.db
-      .query("driverSchedules")
-      .withIndex("by_driver_time", (q) => q.eq("driverId", driverId))
+      .query('driverSchedules')
+      .withIndex('by_driver_time', (q) => q.eq('driverId', driverId))
       .filter((q) =>
-        q.and(
-          q.gte(q.field("startTime"), startTime),
-          q.lte(q.field("startTime"), endTime)
-        )
+        q.and(q.gte(q.field('startTime'), startTime), q.lte(q.field('startTime'), endTime)),
       )
       .collect();
 
@@ -182,9 +185,9 @@ function extractIntent(query: string) {
   const intent: {
     driverName?: string;
     timeRange?: { start: number; end: number };
-    action: "availability" | "schedule" | "booking";
+    action: 'availability' | 'schedule' | 'booking';
   } = {
-    action: "availability",
+    action: 'availability',
   };
 
   // Extract time references
@@ -192,19 +195,19 @@ function extractIntent(query: string) {
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
-  if (query.includes("сегодня") || query.includes("today")) {
+  if (query.includes('сегодня') || query.includes('today')) {
     intent.timeRange = {
       start: today.getTime(),
       end: today.getTime() + 24 * 60 * 60 * 1000,
     };
-  } else if (query.includes("завтра") || query.includes("tomorrow")) {
+  } else if (query.includes('завтра') || query.includes('tomorrow')) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     intent.timeRange = {
       start: tomorrow.getTime(),
       end: tomorrow.getTime() + 24 * 60 * 60 * 1000,
     };
-  } else if (query.includes("недел") || query.includes("week")) {
+  } else if (query.includes('недел') || query.includes('week')) {
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
     intent.timeRange = {
@@ -233,39 +236,30 @@ function extractIntent(query: string) {
  */
 async function checkDriverAvailability(
   ctx: QueryCtx,
-  driverId: Id<"drivers">,
+  driverId: Id<'drivers'>,
   startTime: number,
-  endTime: number
+  endTime: number,
 ) {
   // Check for overlapping schedules
   const overlapping = await ctx.db
-    .query("driverSchedules")
-    .withIndex("by_driver_time", (q) => q.eq("driverId", driverId))
+    .query('driverSchedules')
+    .withIndex('by_driver_time', (q) => q.eq('driverId', driverId))
     .filter((q) =>
       q.and(
-        q.eq(q.field("status"), "scheduled"),
+        q.eq(q.field('status'), 'scheduled'),
         q.or(
-          q.and(
-            q.lte(q.field("startTime"), startTime),
-            q.gte(q.field("endTime"), startTime)
-          ),
-          q.and(
-            q.lte(q.field("startTime"), endTime),
-            q.gte(q.field("endTime"), endTime)
-          ),
-          q.and(
-            q.gte(q.field("startTime"), startTime),
-            q.lte(q.field("endTime"), endTime)
-          )
-        )
-      )
+          q.and(q.lte(q.field('startTime'), startTime), q.gte(q.field('endTime'), startTime)),
+          q.and(q.lte(q.field('startTime'), endTime), q.gte(q.field('endTime'), endTime)),
+          q.and(q.gte(q.field('startTime'), startTime), q.lte(q.field('endTime'), endTime)),
+        ),
+      ),
     )
     .collect();
 
   if (overlapping.length > 0) {
     return {
       available: false,
-      reason: "busy",
+      reason: 'busy',
       conflicts: overlapping,
     };
   }
@@ -278,15 +272,19 @@ async function checkDriverAvailability(
 /**
  * Generate natural language response about availability
  */
-function generateAvailabilityResponse(drivers: DriverAvailability[], _intent: { driverName?: string; timeRange?: { start: number; end: number } }, _query: string): AvailabilityResponse {
+function generateAvailabilityResponse(
+  drivers: DriverAvailability[],
+  _intent: { driverName?: string; timeRange?: { start: number; end: number } },
+  _query: string,
+): AvailabilityResponse {
   if (drivers.length === 0) {
     return {
       text: {
-        en: "No available drivers found.",
-        ru: "Нет доступных водителей.",
-        hy: "Ազատ վարորդներ չեն գտնվել:",
+        en: 'No available drivers found.',
+        ru: 'Нет доступных водителей.',
+        hy: 'Ազատ վարորդներ չեն գտնվել:',
       },
-      type: "no_drivers",
+      type: 'no_drivers',
     };
   }
 
@@ -296,15 +294,15 @@ function generateAvailabilityResponse(drivers: DriverAvailability[], _intent: { 
   if (availableDrivers.length === 0) {
     return {
       text: {
-        en: "All drivers are busy at the moment. Next available times:",
-        ru: "Все водители заняты. Ближайшее свободное время:",
-        hy: "Բոլոր վարորդները զբաղված են: Հաջորդ ազատ ժամանակը:",
+        en: 'All drivers are busy at the moment. Next available times:',
+        ru: 'Все водители заняты. Ближайшее свободное время:',
+        hy: 'Բոլոր վարորդները զբաղված են: Հաջորդ ազատ ժամանակը:',
       },
-      type: "all_busy",
+      type: 'all_busy',
       suggestions: busyDrivers.map((d) => ({
         driverId: d._id,
         driverName: d.userName,
-        nextAvailable: "Tomorrow 9:00 AM", // Would calculate from schedule
+        nextAvailable: 'Tomorrow 9:00 AM', // Would calculate from schedule
       })),
     };
   }
@@ -315,7 +313,7 @@ function generateAvailabilityResponse(drivers: DriverAvailability[], _intent: { 
       ru: `Найдено ${availableDrivers.length} доступных водителей:`,
       hy: `Գտնվել է ${availableDrivers.length} ազատ վարորդ:`,
     },
-    type: "available",
+    type: 'available',
     availableDrivers: availableDrivers.map((d) => ({
       driverId: d._id,
       driverName: d.userName,
@@ -329,13 +327,13 @@ function generateAvailabilityResponse(drivers: DriverAvailability[], _intent: { 
 /**
  * Generate AI summary for driver schedule
  */
-function generateScheduleSummary(schedules: Doc<"driverSchedules">[], hasFullAccess: boolean) {
+function generateScheduleSummary(schedules: Doc<'driverSchedules'>[], hasFullAccess: boolean) {
   const totalHours = schedules.reduce((sum, s) => {
     return sum + (s.endTime - s.startTime) / (1000 * 60 * 60);
   }, 0);
 
-  const tripCount = schedules.filter((s) => s.type === "trip").length;
-  const blockedCount = schedules.filter((s) => s.type === "blocked").length;
+  const tripCount = schedules.filter((s) => s.type === 'trip').length;
+  const blockedCount = schedules.filter((s) => s.type === 'blocked').length;
 
   const summary = {
     totalHours: Math.round(totalHours * 10) / 10,

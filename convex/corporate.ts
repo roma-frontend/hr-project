@@ -1,6 +1,6 @@
 /**
  * Corporate Driver Management Features
- * 
+ *
  * - Manager approval workflow
  * - Priority-based assignment
  * - Shift management
@@ -8,11 +8,11 @@
  * - Business justification
  */
 
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
+import type { Id } from './_generated/dataModel';
 
-const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGER APPROVAL WORKFLOW
@@ -23,28 +23,28 @@ const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
  */
 export const approveRequest = mutation({
   args: {
-    requestId: v.id("driverRequests"),
-    managerId: v.id("users"),
+    requestId: v.id('driverRequests'),
+    managerId: v.id('users'),
   },
   handler: async (ctx, { requestId, managerId }) => {
     const request = await ctx.db.get(requestId);
-    if (!request) throw new Error("Request not found");
+    if (!request) throw new Error('Request not found');
 
     const manager = await ctx.db.get(managerId);
-    if (!manager) throw new Error("Manager not found");
+    if (!manager) throw new Error('Manager not found');
 
     // Verify manager has approval rights
     const isSuperadmin = manager.email?.toLowerCase() === SUPERADMIN_EMAIL;
-    const isAdmin = manager.role === "admin";
-    const isSupervisor = manager.role === "supervisor";
-    
+    const isAdmin = manager.role === 'admin';
+    const isSupervisor = manager.role === 'supervisor';
+
     // Check if manager is in same organization (unless superadmin)
     if (!isSuperadmin && manager.organizationId !== request.organizationId) {
-      throw new Error("Access denied: cannot approve requests from other organizations");
+      throw new Error('Access denied: cannot approve requests from other organizations');
     }
 
     if (!isSuperadmin && !isAdmin && !isSupervisor) {
-      throw new Error("Only managers, supervisors, or admins can approve requests");
+      throw new Error('Only managers, supervisors, or admins can approve requests');
     }
 
     // Update request
@@ -52,16 +52,16 @@ export const approveRequest = mutation({
       approvedBy: managerId,
       approvedAt: Date.now(),
       requiresApproval: false,
-      status: "approved", // Auto-approve so driver can see it
+      status: 'approved', // Auto-approve so driver can see it
       updatedAt: Date.now(),
     });
 
     // Notify requester
-    await ctx.db.insert("notifications", {
+    await ctx.db.insert('notifications', {
       organizationId: request.organizationId,
       userId: request.requesterId,
-      type: "system",
-      title: "✅ Trip Request Approved",
+      type: 'system',
+      title: '✅ Trip Request Approved',
       message: `Your trip request has been approved by ${manager.name}. Driver will be assigned soon.`,
       isRead: false,
       relatedId: `driver_request:${requestId}`,
@@ -70,30 +70,30 @@ export const approveRequest = mutation({
 
     // Notify drivers (priority-based)
     const drivers = await ctx.db
-      .query("drivers")
-      .withIndex("by_org", (q) => q.eq("organizationId", request.organizationId))
+      .query('drivers')
+      .withIndex('by_org', (q) => q.eq('organizationId', request.organizationId))
       .collect();
 
     // Sort by priority and availability
     const availableDrivers = drivers
-      .filter(d => d.isAvailable && d.isOnShift)
+      .filter((d) => d.isAvailable && d.isOnShift)
       .sort((a, b) => {
         // Priority: P0 > P1 > P2 > P3
         const priorityOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
-        const aPriority = request.priority || "P2";
-        const bPriority = request.priority || "P2";
-        
+        const aPriority = request.priority || 'P2';
+        const bPriority = request.priority || 'P2';
+
         // For now, just sort by rating
         return b.rating - a.rating;
       });
 
     // Notify top 3 available drivers
     for (const driver of availableDrivers.slice(0, 3)) {
-      await ctx.db.insert("notifications", {
+      await ctx.db.insert('notifications', {
         organizationId: request.organizationId,
         userId: driver.userId,
-        type: "driver_request",
-        title: `🚗 New ${request.priority || "Standard"} Trip Request`,
+        type: 'driver_request',
+        title: `🚗 New ${request.priority || 'Standard'} Trip Request`,
         message: `${request.tripInfo.purpose}: ${request.tripInfo.from} → ${request.tripInfo.to}`,
         isRead: false,
         relatedId: `driver_request:${requestId}`,
@@ -110,39 +110,39 @@ export const approveRequest = mutation({
  */
 export const rejectRequest = mutation({
   args: {
-    requestId: v.id("driverRequests"),
-    managerId: v.id("users"),
+    requestId: v.id('driverRequests'),
+    managerId: v.id('users'),
     reason: v.string(),
   },
   handler: async (ctx, { requestId, managerId, reason }) => {
     const request = await ctx.db.get(requestId);
-    if (!request) throw new Error("Request not found");
+    if (!request) throw new Error('Request not found');
 
     const manager = await ctx.db.get(managerId);
-    if (!manager) throw new Error("Manager not found");
+    if (!manager) throw new Error('Manager not found');
 
     const isSuperadmin = manager.email?.toLowerCase() === SUPERADMIN_EMAIL;
-    const isAdmin = manager.role === "admin";
-    const isSupervisor = manager.role === "supervisor";
+    const isAdmin = manager.role === 'admin';
+    const isSupervisor = manager.role === 'supervisor';
 
     if (!isSuperadmin && !isAdmin && !isSupervisor) {
-      throw new Error("Only managers, supervisors, or admins can reject requests");
+      throw new Error('Only managers, supervisors, or admins can reject requests');
     }
 
     // Update request
     await ctx.db.patch(requestId, {
-      status: "declined",
+      status: 'declined',
       declineReason: reason,
       reviewedAt: Date.now(),
       updatedAt: Date.now(),
     });
 
     // Notify requester
-    await ctx.db.insert("notifications", {
+    await ctx.db.insert('notifications', {
       organizationId: request.organizationId,
       userId: request.requesterId,
-      type: "system",
-      title: "❌ Trip Request Declined",
+      type: 'system',
+      title: '❌ Trip Request Declined',
       message: `Your trip request has been declined: ${reason}`,
       isRead: false,
       relatedId: `driver_request:${requestId}`,
@@ -158,15 +158,15 @@ export const rejectRequest = mutation({
  */
 export const getPendingApprovals = query({
   args: {
-    managerId: v.id("users"),
+    managerId: v.id('users'),
   },
   handler: async (ctx, { managerId }) => {
     const manager = await ctx.db.get(managerId);
-    if (!manager) throw new Error("Manager not found");
+    if (!manager) throw new Error('Manager not found');
 
     const isSuperadmin = manager.email?.toLowerCase() === SUPERADMIN_EMAIL;
-    const isAdmin = manager.role === "admin";
-    const isSupervisor = manager.role === "supervisor";
+    const isAdmin = manager.role === 'admin';
+    const isSupervisor = manager.role === 'supervisor';
 
     if (!isSuperadmin && !isAdmin && !isSupervisor) {
       return []; // Only managers can see pending approvals
@@ -174,12 +174,12 @@ export const getPendingApprovals = query({
 
     // Get requests requiring approval
     const requests = await ctx.db
-      .query("driverRequests")
-      .withIndex("by_org_status", (q) => 
-        q.eq("organizationId", manager.organizationId!).eq("status", "pending")
+      .query('driverRequests')
+      .withIndex('by_org_status', (q) =>
+        q.eq('organizationId', manager.organizationId!).eq('status', 'pending'),
       )
-      .filter((q) => q.eq(q.field("requiresApproval"), true))
-      .order("desc")
+      .filter((q) => q.eq(q.field('requiresApproval'), true))
+      .order('desc')
       .take(50);
 
     // Enrich with requester info
@@ -192,16 +192,18 @@ export const getPendingApprovals = query({
           requesterEmail: requester?.email,
           requesterDepartment: requester?.department,
         };
-      })
+      }),
     );
 
     // Sort by priority
     const priorityOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
     enriched.sort((a, b) => {
-      const aPriority = a.priority || "P2";
-      const bPriority = b.priority || "P2";
-      return priorityOrder[aPriority as keyof typeof priorityOrder] - 
-             priorityOrder[bPriority as keyof typeof priorityOrder];
+      const aPriority = a.priority || 'P2';
+      const bPriority = b.priority || 'P2';
+      return (
+        priorityOrder[aPriority as keyof typeof priorityOrder] -
+        priorityOrder[bPriority as keyof typeof priorityOrder]
+      );
     });
 
     return enriched;
@@ -217,7 +219,7 @@ export const getPendingApprovals = query({
  */
 export const calculateDriverKPI = query({
   args: {
-    driverId: v.id("drivers"),
+    driverId: v.id('drivers'),
     days: v.number(), // last N days
   },
   handler: async (ctx, { driverId, days }) => {
@@ -225,48 +227,48 @@ export const calculateDriverKPI = query({
     if (!driver) return null;
 
     const now = Date.now();
-    const startDate = now - (days * 24 * 60 * 60 * 1000);
+    const startDate = now - days * 24 * 60 * 60 * 1000;
 
     // Get completed trips
     const schedules = await ctx.db
-      .query("driverSchedules")
-      .withIndex("by_driver", (q) => q.eq("driverId", driverId))
-      .filter((q) => q.and(
-        q.eq(q.field("status"), "completed"),
-        q.gte(q.field("updatedAt"), startDate)
-      ))
+      .query('driverSchedules')
+      .withIndex('by_driver', (q) => q.eq('driverId', driverId))
+      .filter((q) =>
+        q.and(q.eq(q.field('status'), 'completed'), q.gte(q.field('updatedAt'), startDate)),
+      )
       .collect();
 
     // Calculate metrics
     const totalTrips = schedules.length;
 
     // On-time rate (trips that started on time)
-    const onTimeTrips = schedules.filter(s => {
+    const onTimeTrips = schedules.filter((s) => {
       const scheduledStart = s.startTime;
       const actualStart = s.arrivedAt || s.createdAt;
-      const isOnTime = actualStart <= scheduledStart + (10 * 60 * 1000); // 10 min grace
+      const isOnTime = actualStart <= scheduledStart + 10 * 60 * 1000; // 10 min grace
       return isOnTime;
     }).length;
 
     const onTimeRate = totalTrips > 0 ? Math.round((onTimeTrips / totalTrips) * 100) : 100;
 
     // Customer satisfaction (from ratings)
-    const ratedTrips = schedules.filter(s => s.driverFeedback?.rating);
-    const avgRating = ratedTrips.length > 0
-      ? ratedTrips.reduce((sum, s) => sum + (s.driverFeedback!.rating || 0), 0) / ratedTrips.length
-      : driver.rating;
+    const ratedTrips = schedules.filter((s) => s.driverFeedback?.rating);
+    const avgRating =
+      ratedTrips.length > 0
+        ? ratedTrips.reduce((sum, s) => sum + (s.driverFeedback!.rating || 0), 0) /
+          ratedTrips.length
+        : driver.rating;
 
     // Completion rate
     const allSchedules = await ctx.db
-      .query("driverSchedules")
-      .withIndex("by_driver", (q) => q.eq("driverId", driverId))
-      .filter((q) => q.gte(q.field("updatedAt"), startDate))
+      .query('driverSchedules')
+      .withIndex('by_driver', (q) => q.eq('driverId', driverId))
+      .filter((q) => q.gte(q.field('updatedAt'), startDate))
       .collect();
 
-    const completedSchedules = allSchedules.filter(s => s.status === "completed").length;
-    const completionRate = allSchedules.length > 0
-      ? Math.round((completedSchedules / allSchedules.length) * 100)
-      : 100;
+    const completedSchedules = allSchedules.filter((s) => s.status === 'completed').length;
+    const completionRate =
+      allSchedules.length > 0 ? Math.round((completedSchedules / allSchedules.length) * 100) : 100;
 
     return {
       onTimeRate,
@@ -284,38 +286,39 @@ export const calculateDriverKPI = query({
  */
 export const updateDriverKPI = mutation({
   args: {
-    driverId: v.id("drivers"),
+    driverId: v.id('drivers'),
   },
   handler: async (ctx, { driverId }) => {
     const driver = await ctx.db.get(driverId);
-    if (!driver) throw new Error("Driver not found");
+    if (!driver) throw new Error('Driver not found');
 
     // Calculate KPI for last 30 days (inline to avoid circular dependency)
     const now = Date.now();
-    const startDate = now - (30 * 24 * 60 * 60 * 1000);
+    const startDate = now - 30 * 24 * 60 * 60 * 1000;
 
     const schedules = await ctx.db
-      .query("driverSchedules")
-      .withIndex("by_driver", (q) => q.eq("driverId", driverId))
-      .filter((q) => q.and(
-        q.eq(q.field("status"), "completed"),
-        q.gte(q.field("updatedAt"), startDate)
-      ))
+      .query('driverSchedules')
+      .withIndex('by_driver', (q) => q.eq('driverId', driverId))
+      .filter((q) =>
+        q.and(q.eq(q.field('status'), 'completed'), q.gte(q.field('updatedAt'), startDate)),
+      )
       .collect();
 
     const totalTrips = schedules.length;
-    const onTimeTrips = schedules.filter(s => {
+    const onTimeTrips = schedules.filter((s) => {
       const scheduledStart = s.startTime;
       const actualStart = s.arrivedAt || s.createdAt;
-      return actualStart <= scheduledStart + (10 * 60 * 1000);
+      return actualStart <= scheduledStart + 10 * 60 * 1000;
     }).length;
-    
+
     const onTimeRate = totalTrips > 0 ? Math.round((onTimeTrips / totalTrips) * 100) : 100;
-    
-    const ratedTrips = schedules.filter(s => s.driverFeedback?.rating);
-    const avgRating = ratedTrips.length > 0
-      ? ratedTrips.reduce((sum, s) => sum + (s.driverFeedback!.rating || 0), 0) / ratedTrips.length
-      : driver.rating;
+
+    const ratedTrips = schedules.filter((s) => s.driverFeedback?.rating);
+    const avgRating =
+      ratedTrips.length > 0
+        ? ratedTrips.reduce((sum, s) => sum + (s.driverFeedback!.rating || 0), 0) /
+          ratedTrips.length
+        : driver.rating;
 
     await ctx.db.patch(driverId, {
       kpiMetrics: {
@@ -340,30 +343,30 @@ export const updateDriverKPI = mutation({
  */
 export const autoAssignDriver = mutation({
   args: {
-    requestId: v.id("driverRequests"),
+    requestId: v.id('driverRequests'),
   },
   handler: async (ctx, { requestId }) => {
     const request = await ctx.db.get(requestId);
-    if (!request) throw new Error("Request not found");
+    if (!request) throw new Error('Request not found');
 
     // Get available drivers
     const drivers = await ctx.db
-      .query("drivers")
-      .withIndex("by_org", (q) => q.eq("organizationId", request.organizationId))
+      .query('drivers')
+      .withIndex('by_org', (q) => q.eq('organizationId', request.organizationId))
       .collect();
 
     // Filter available and on shift
-    const availableDrivers = drivers.filter(d => d.isAvailable && d.isOnShift);
+    const availableDrivers = drivers.filter((d) => d.isAvailable && d.isOnShift);
 
     if (availableDrivers.length === 0) {
-      throw new Error("No available drivers on shift");
+      throw new Error('No available drivers on shift');
     }
 
     // Sort by priority match and rating
-    const priority = request.priority || "P2";
+    const priority = request.priority || 'P2';
     const sortedDrivers = availableDrivers.sort((a, b) => {
       // For P0/P1, prioritize highest rating
-      if (priority === "P0" || priority === "P1") {
+      if (priority === 'P0' || priority === 'P1') {
         return b.rating - a.rating;
       }
       // For P2/P3, balance workload (fewer trips first)
@@ -372,23 +375,26 @@ export const autoAssignDriver = mutation({
 
     // Assign to first available
     const assignedDriver = sortedDrivers[0];
+    if (!assignedDriver) {
+      throw new Error('No available drivers found');
+    }
 
     // Update request
     await ctx.db.patch(requestId, {
       driverId: assignedDriver._id,
-      status: "approved",
+      status: 'approved',
       updatedAt: Date.now(),
     });
 
     // Create schedule entry
-    await ctx.db.insert("driverSchedules", {
+    await ctx.db.insert('driverSchedules', {
       organizationId: request.organizationId,
       driverId: assignedDriver._id,
       userId: request.requesterId,
       startTime: request.startTime,
       endTime: request.endTime,
-      type: "trip",
-      status: "scheduled",
+      type: 'trip',
+      status: 'scheduled',
       tripInfo: {
         ...request.tripInfo,
         passengerPhone: (await ctx.db.get(request.requesterId))?.phone,
@@ -399,7 +405,7 @@ export const autoAssignDriver = mutation({
 
     // Update driver's current trips
     await ctx.db.patch(assignedDriver._id, {
-      currentTripsToday: assignedDriver.currentTripsToday + 1,
+      currentTripsToday: (assignedDriver.currentTripsToday ?? 0) + 1,
       updatedAt: Date.now(),
     });
 
@@ -407,11 +413,11 @@ export const autoAssignDriver = mutation({
     const requester = await ctx.db.get(request.requesterId);
     const driverUser = await ctx.db.get(assignedDriver.userId);
 
-    await ctx.db.insert("notifications", {
+    await ctx.db.insert('notifications', {
       organizationId: request.organizationId,
       userId: request.requesterId,
-      type: "system",
-      title: "✅ Driver Assigned",
+      type: 'system',
+      title: '✅ Driver Assigned',
       message: `${driverUser?.name} will pick you up at ${request.tripInfo.from}`,
       isRead: false,
       relatedId: `driver_request:${requestId}`,
