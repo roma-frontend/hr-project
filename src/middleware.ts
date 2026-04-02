@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit, isBlocked, blockKey } from '@/lib/redis';
+import { type NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, isBlocked, blockKey } from '@/lib/redis'
 
 // ═══════════════════════════════════════════════════════════════
 // SECURITY CONFIGURATION
@@ -49,8 +49,8 @@ function getClientIP(request: NextRequest): string {
 }
 
 function isSuspiciousPath(pathname: string): boolean {
-  return SECURITY_CONFIG.SUSPICIOUS_PATHS.some((path) =>
-    pathname.toLowerCase().includes(path.toLowerCase()),
+  return SECURITY_CONFIG.SUSPICIOUS_PATHS.some(path =>
+    pathname.toLowerCase().includes(path.toLowerCase())
   );
 }
 
@@ -86,7 +86,7 @@ function addSecurityHeaders(response: NextResponse, nonce: string): NextResponse
       "form-action 'self'",
       "frame-ancestors 'none'",
       "manifest-src 'self'",
-    ].join('; '),
+    ].join('; ')
   );
 
   // Pass nonce to the app via header (for Next.js Script components)
@@ -108,10 +108,7 @@ function addSecurityHeaders(response: NextResponse, nonce: string): NextResponse
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Permissions policy
-  response.headers.set(
-    'Permissions-Policy',
-    'camera=(self), microphone=(self), geolocation=(), interest-cohort=()',
-  );
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(), interest-cohort=()');
 
   // Remove X-Powered-By
   response.headers.delete('X-Powered-By');
@@ -124,7 +121,7 @@ function addSecurityHeaders(response: NextResponse, nonce: string): NextResponse
 // ═══════════════════════════════════════════════════════════════
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl
   const ip = getClientIP(request);
 
   // 1. Check blocked IPs (persistent via Redis)
@@ -146,11 +143,7 @@ export async function middleware(request: NextRequest) {
   // 3. Rate Limiting with Redis (with fallback)
   let rateLimitResult;
   try {
-    rateLimitResult = await checkRateLimit(
-      ip,
-      SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS,
-      SECURITY_CONFIG.RATE_LIMIT_WINDOW,
-    );
+    rateLimitResult = await checkRateLimit(ip, SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS, SECURITY_CONFIG.RATE_LIMIT_WINDOW);
   } catch (_error) {
     // Fallback: allow request if Redis is unavailable
     rateLimitResult = { allowed: true, remaining: 100, resetAt: Date.now() };
@@ -167,10 +160,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 4. DDoS Protection (check request volume) - block IP persistently via Redis
-  if (
-    rateLimitResult.remaining <
-    SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS - SECURITY_CONFIG.DDOS_THRESHOLD
-  ) {
+  if (rateLimitResult.remaining < SECURITY_CONFIG.RATE_LIMIT_MAX_REQUESTS - SECURITY_CONFIG.DDOS_THRESHOLD) {
     try {
       await blockKey(`ip:${ip}`, 60 * 60 * 1000, 'Potential DDoS attack');
     } catch (_error) {
@@ -189,7 +179,7 @@ export async function middleware(request: NextRequest) {
             error: 'Too many login attempts',
             message: 'Blocked for 15 minutes',
           }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } },
+          { status: 429, headers: { 'Content-Type': 'application/json' } }
         );
       }
     } catch (_error) {
@@ -206,7 +196,7 @@ export async function middleware(request: NextRequest) {
     ];
 
     for (const [, value] of url.searchParams.entries()) {
-      if (suspiciousPatterns.some((pattern) => pattern.test(value))) {
+      if (suspiciousPatterns.some(pattern => pattern.test(value))) {
         try {
           await blockKey(`ip:${ip}`, 24 * 60 * 60 * 1000, 'SQL/XSS injection attempt');
         } catch (_error) {
@@ -219,31 +209,19 @@ export async function middleware(request: NextRequest) {
 
   // 7. Auth logic
   const token = request.cookies.get('hr-auth-token')?.value;
-  const nextAuthToken =
-    request.cookies.get('next-auth.session-token')?.value ||
-    request.cookies.get('__Secure-next-auth.session-token')?.value;
+  const nextAuthToken = request.cookies.get('next-auth.session-token')?.value ||
+                        request.cookies.get('__Secure-next-auth.session-token')?.value;
 
-  const isAuthRoute = AUTH_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-  const isProtectedRoute = PROTECTED_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-  const isPublicRoute = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  const isAuthRoute = AUTH_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`));
 
   // If user is authenticated and visits auth routes (/login, /register)
   if (isAuthRoute && (token || nextAuthToken)) {
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
 
-    if (
-      from &&
-      from.startsWith('/') &&
-      !from.startsWith('/login') &&
-      !from.startsWith('/register')
-    ) {
+    if (from && from.startsWith('/') && !from.startsWith('/login') && !from.startsWith('/register')) {
       return NextResponse.redirect(new URL(from, request.url));
     }
 
@@ -275,4 +253,4 @@ export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|favicon.svg|icon.svg|robots.txt|sitemap.xml|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|txt|xml|json)$).*)',
   ],
-};
+}
