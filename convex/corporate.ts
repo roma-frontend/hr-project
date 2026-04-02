@@ -374,10 +374,7 @@ export const autoAssignDriver = mutation({
     });
 
     // Assign to first available
-    const assignedDriver = sortedDrivers[0];
-    if (!assignedDriver) {
-      throw new Error('No available drivers found');
-    }
+    const assignedDriver = sortedDrivers[0]!;
 
     // Update request
     await ctx.db.patch(requestId, {
