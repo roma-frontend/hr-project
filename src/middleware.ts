@@ -12,7 +12,7 @@ const SECURITY_CONFIG = {
   LOGIN_BLOCK_DURATION: 15 * 60 * 1000, // 15 minutes
   DDOS_THRESHOLD: 200,
   SUSPICIOUS_PATHS: ['/admin/php', '/wp-admin', '/phpmyadmin', '/.env', '/.git', '/config'],
-};
+} as const;
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
@@ -30,13 +30,13 @@ const PROTECTED_ROUTES = [
   '/admin',
   '/superadmin',
   '/ai-site-editor',
-]
+] as const;
 
 // Auth routes
-const AUTH_ROUTES = ['/login', '/register']
+const AUTH_ROUTES = ['/login', '/register'] as const;
 
 // Public routes that should NOT redirect authenticated users
-const PUBLIC_ROUTES = ['/', '/contact', '/privacy', '/terms', '/test-i18n']
+const PUBLIC_ROUTES = ['/', '/contact', '/privacy', '/terms', '/test-i18n'] as const;
 
 // ═══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -55,16 +55,26 @@ function isSuspiciousPath(pathname: string): boolean {
 }
 
 /**
+ * Generate a nonce for CSP script-src to replace unsafe-eval.
+ * In production, this nonce allows only scripts tagged with it.
+ */
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Buffer.from(array).toString('base64');
+}
+
+/**
  * SINGLE SOURCE OF TRUTH for all security headers.
  * These are NOT duplicated in next.config.js headers().
  */
-function addSecurityHeaders(response: NextResponse): NextResponse {
-  // Content-Security-Policy — comprehensive policy
+function addSecurityHeaders(response: NextResponse, nonce: string): NextResponse {
+  // Content-Security-Policy — uses nonce instead of unsafe-eval
   response.headers.set(
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com https://js.stripe.com https://maps.googleapis.com https://*.sentry.io https://*.vercel.app https://*.vercel-scripts.com",
+      `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com https://js.stripe.com https://maps.googleapis.com https://*.sentry.io https://*.vercel.app https://*.vercel-scripts.com`,
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
       "font-src 'self' https://fonts.gstatic.com data:",
@@ -78,6 +88,9 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
       "manifest-src 'self'",
     ].join('; ')
   );
+
+  // Pass nonce to the app via header (for Next.js Script components)
+  response.headers.set('x-nonce', nonce);
 
   // Transport security
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
@@ -230,9 +243,10 @@ export async function middleware(request: NextRequest) {
   // 8. Role-based access control is handled CLIENT-SIDE by each page component
   // The middleware only handles authentication gating (step 7 above), NOT authorization.
 
-  // 9. Add security headers and return
+  // 9. Generate nonce and add security headers
+  const nonce = generateNonce();
   const response = NextResponse.next();
-  return addSecurityHeaders(response);
+  return addSecurityHeaders(response, nonce);
 }
 
 export const config = {
