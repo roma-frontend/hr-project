@@ -13,19 +13,17 @@
   "lint-staged": {
     "**/*.{ts,tsx}": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "**/*.{json,md,css}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "scripts": {
     "dev": "next dev --turbo",
     "dev:webpack": "next dev",
     "build": "next build",
-    "build:analyze": "set ANALYZE=true && next build --webpack",
+    "build:analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "lint:strict": "eslint --max-warnings 0",
