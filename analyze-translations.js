@@ -1,50 +1,44 @@
 const fs = require('fs');
+const path = require('path');
 
-const ru = JSON.parse(fs.readFileSync('src/i18n/locales/ru.json', 'utf8'));
-const en = JSON.parse(fs.readFileSync('src/i18n/locales/en.json', 'utf8'));
-const hy = JSON.parse(fs.readFileSync('src/i18n/locales/hy.json', 'utf8'));
+// Load translation files
+const ruPath = path.join(__dirname, 'public/locales/ru/translation.json');
+const enPath = path.join(__dirname, 'public/locales/en/translation.json');
 
-console.log('=== ՓՆՏՐՈՒՄ ԵՆՔ ՉՈՒՆԻՖԻԿԱՑՎԱԾ ԲԱՆԱԼԻՆԵՐ ===\n');
-
-// Find duplicate keys across sections
-const allKeys = {};
-const sections = Object.keys(ru);
-
-sections.forEach(section => {
-  if (typeof ru[section] === 'object') {
-    Object.keys(ru[section]).forEach(key => {
-      const fullKey = `${section}.${key}`;
-      if (!allKeys[fullKey]) allKeys[fullKey] = [];
-      allKeys[fullKey].push(section);
-    });
-  }
-});
-
-// Find similar keys (case insensitive, plurals, etc.)
-const keyMap = {};
-sections.forEach(section => {
-  if (typeof ru[section] === 'object') {
-    Object.keys(ru[section]).forEach(key => {
-      const lowerKey = key.toLowerCase();
-      const normalizedKey = `${section}.${lowerKey}`;
-      if (!keyMap[normalizedKey]) keyMap[normalizedKey] = [];
-      keyMap[normalizedKey].push(`${section}.${key}`);
-    });
-  }
-});
+const ru = JSON.parse(fs.readFileSync(ruPath, 'utf8'));
+const en = JSON.parse(fs.readFileSync(enPath, 'utf8'));
 
 // Find duplicates
 const duplicates = {};
-Object.keys(keyMap).forEach(key => {
-  if (keyMap[key].length > 1) {
-    duplicates[key] = keyMap[key];
-  }
-});
 
-console.log('🔴 ԳՏՆՎԱԾ ԴՈՒԲԼԻԿԱՏՆԵՐ ԵՆ ՆՄԱՆ ԲԱՆԱԼԻՆԵՐ:\n');
-Object.keys(duplicates).slice(0, 30).forEach(key => {
+function findDuplicates(obj, prefix = '') {
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === 'object' && value !== null) {
+      findDuplicates(value, fullKey);
+    } else {
+      if (!duplicates[value]) {
+        duplicates[value] = [];
+      }
+      duplicates[value].push(fullKey);
+    }
+  }
+}
+
+findDuplicates(ru);
+
+// Filter only actual duplicates
+const actualDuplicates = {};
+for (const [value, keys] of Object.entries(duplicates)) {
+  if (keys.length > 1) {
+    actualDuplicates[value] = keys;
+  }
+}
+
+console.log('\n\n🔴 DUPLICATE TRANSLATION VALUES:\n');
+Object.keys(actualDuplicates).forEach(key => {
   console.log(`  ${key}:`);
-  duplicates[key].forEach(variant => {
+  actualDuplicates[key].forEach(variant => {
     console.log(`    - ${variant}`);
   });
 });
@@ -80,7 +74,7 @@ const commonKeys = {
   'starter': ['starter', 'superadmin.starter', 'plan.starter'],
 };
 
-console.log('\n\n🔵 ՊՈՏԵՆՑԻԱԼ ՈՒՆԻՖԻԿԱՑԻԱՅԻ ԿԱՐԻՔ ՈՒՆԵՑՈՂ ԲԱՆԱԼԻՆԵՐ:\n');
+console.log('\n\n🔵 KEYS THAT POTENTIALLY NEED UNIFICATION:\n');
 Object.keys(commonKeys).forEach(baseKey => {
   const variants = commonKeys[baseKey];
   const found = [];
@@ -98,4 +92,4 @@ Object.keys(commonKeys).forEach(baseKey => {
 
 // Save analysis
 fs.writeFileSync('translation-analysis.json', JSON.stringify({ duplicates, commonKeys }, null, 2));
-console.log('\n\n💾 Վերլուծությունը պահպանված է translation-analysis.json ֆայլում');
+console.log('\n\n💾 Analysis saved to translation-analysis.json');

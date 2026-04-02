@@ -148,7 +148,7 @@ export const detectConflicts = query({
         const end = new Date(leave.endDate);
 
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split("T")[0] ?? "";
+          const dateStr = d.toISOString().split('T')[0] ?? '';
           if (!dateOverlaps.has(dateStr)) {
             dateOverlaps.set(dateStr, new Set());
           }
