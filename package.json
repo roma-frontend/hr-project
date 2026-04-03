@@ -137,6 +137,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.183.1",
+    "commitlint": "^20.5.0",
     "critters": "^0.0.23",
     "dotenv": "^17.3.1",
     "eslint": "^9",
