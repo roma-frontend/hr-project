@@ -1,13 +1,16 @@
 import crypto from 'crypto';
 
-const CSRF_SECRET = process.env.CSRF_SECRET;
-if (!CSRF_SECRET) {
-  throw new Error(
-    '[Security] CSRF_SECRET is not set. Generate one with: openssl rand -base64 32',
-  );
-}
+const CSRF_SECRET =
+  process.env.CSRF_SECRET ||
+  (process.env.NODE_ENV === 'production'
+    ? (() => {
+        throw new Error(
+          '[Security] CSRF_SECRET is required in production. Generate one with: openssl rand -base64 32',
+        );
+      })()
+    : 'dev-csrf-secret-do-not-use-in-production-min-32-chars');
 
-// Assert for TypeScript — guaranteed to be set by the check above
+// Assert for TypeScript — guaranteed to be a string
 const secret: string = CSRF_SECRET;
 const CSRF_TOKEN_NAME = 'X-CSRF-Token';
 const CSRF_COOKIE_NAME = 'csrf-token';

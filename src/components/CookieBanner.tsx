@@ -68,7 +68,7 @@ export default function CookieBanner() {
                           defaultValue: 'Learn more about our privacy policy',
                         })}
                       >
-                        {t('cookies.learnMore')}
+                        {t('cookies.learnMore', { defaultValue: 'Learn more about privacy' })}
                       </Link>
                       {t('cookies.or')}
                       <Link

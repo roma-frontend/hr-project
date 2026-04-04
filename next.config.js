@@ -79,102 +79,115 @@ const nextConfig = {
     ],
     optimizeCss: true,
     scrollRestoration: true,
+    turbo: {
+      rules: {
+        '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
+      },
+    },
   },
 
-  // Silence "webpack config but no turbopack config" warning
-  turbopack: {},
+  // Enable Turbopack for production builds (faster, smaller bundles)
+  turbopack: {
+    rules: {
+      '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SWC Minification — faster and smaller output
+  // ═══════════════════════════════════════════════════════════════
+  swcMinify: true,
 
   // ═══════════════════════════════════════════════════════════════
   // WEBPACK — OPTIMIZED FOR PERFORMANCE
   // ═══════════════════════════════════════════════════════════════
   webpack(config, { isServer, dev }) {
     if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        concatenateModules: !dev,
-        usedExports: true,
-        sideEffects: true,
-        splitChunks: {
-          chunks: 'all',
-          minSize: 20000,
-          maxSize: 244000,
-          maxAsyncRequests: 30,
-          maxInitialRequests: 25,
-          minChunks: 1,
-          cacheGroups: {
-            framework: {
-              name: 'framework',
-              test: /[\\/]node_modules[\\/](react|react-dom|next|scheduler|next-server)[\\/]/,
-              priority: 50,
-              chunks: 'all',
-              enforce: true,
-              reuseExistingChunk: true,
-            },
-            ui: {
-              name: 'ui-vendor',
-              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react|class-variance-authority|tailwind-merge|clsx)[\\/]/,
-              priority: 40,
-              chunks: 'all',
-              enforce: true,
-              reuseExistingChunk: true,
-            },
-            framerMotion: {
-              name: 'framer-motion',
-              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-              priority: 35,
-              chunks: 'async',
-              reuseExistingChunk: true,
-            },
-            charts: {
-              name: 'recharts',
-              test: /[\\/]node_modules[\\/](recharts|d3-)[\\/]/,
-              priority: 30,
-              chunks: 'async',
-              reuseExistingChunk: true,
-            },
-            aiSdk: {
-              name: 'ai-sdk',
-              test: /[\\/]node_modules[\\/](@ai-sdk|ai|openai)[\\/]/,
-              priority: 30,
-              chunks: 'async',
-              reuseExistingChunk: true,
-            },
-            convex: {
-              name: 'convex',
-              test: /[\\/]node_modules[\\/]convex[\\/]/,
-              priority: 25,
-              chunks: 'all',
-              reuseExistingChunk: true,
-            },
-            i18n: {
-              name: 'i18n',
-              test: /[\\/]node_modules[\\/](react-i18next|i18next)[\\/]/,
-              priority: 20,
-              chunks: 'all',
-              reuseExistingChunk: true,
-            },
-            vendors: {
-              name: 'vendors',
-              test: /[\\/]node_modules[\\/]/,
-              priority: 10,
-              chunks: 'all',
-              reuseExistingChunk: true,
-            },
-            common: {
-              name: 'common',
-              minChunks: 2,
-              priority: 5,
-              chunks: 'all',
-              reuseExistingChunk: true,
-            },
+      // Enable tree shaking
+      config.optimization.sideEffects = true;
+      config.optimization.usedExports = true;
+      
+      // More aggressive code splitting
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        minChunks: 1,
+        cacheGroups: {
+          framework: {
+            name: 'framework',
+            test: /[\\/]node_modules[\\/](react|react-dom|next|scheduler|next-server)[\\/]/,
+            priority: 60,
+            chunks: 'all',
+            enforce: true,
+            reuseExistingChunk: true,
+          },
+          commons: {
+            name: 'commons',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 50,
+            chunks: 'all',
+            minChunks: 2,
+            reuseExistingChunk: true,
+          },
+          ui: {
+            name: 'ui-vendor',
+            test: /[\\/]node_modules[\\/](@radix-ui|lucide-react|class-variance-authority|tailwind-merge|clsx)[\\/]/,
+            priority: 40,
+            chunks: 'all',
+            enforce: true,
+            reuseExistingChunk: true,
+          },
+          framerMotion: {
+            name: 'framer-motion',
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            priority: 35,
+            chunks: 'async',
+            reuseExistingChunk: true,
+          },
+          charts: {
+            name: 'recharts',
+            test: /[\\/]node_modules[\\/](recharts|d3-)[\\/]/,
+            priority: 30,
+            chunks: 'async',
+            reuseExistingChunk: true,
+          },
+          aiSdk: {
+            name: 'ai-sdk',
+            test: /[\\/]node_modules[\\/](@ai-sdk|ai|openai)[\\/]/,
+            priority: 30,
+            chunks: 'async',
+            reuseExistingChunk: true,
+          },
+          convex: {
+            name: 'convex',
+            test: /[\\/]node_modules[\\/]convex[\\/]/,
+            priority: 25,
+            chunks: 'async',
+            reuseExistingChunk: true,
+          },
+          i18n: {
+            name: 'i18n',
+            test: /[\\/]node_modules[\\/](react-i18next|i18next)[\\/]/,
+            priority: 20,
+            chunks: 'async',
+            reuseExistingChunk: true,
+          },
+          vendors: {
+            name: 'vendors',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 10,
+            chunks: 'async',
+            reuseExistingChunk: true,
           },
         },
-        minimizer: config.optimization.minimizer,
       };
     }
 
     if (!dev) {
-      config.devtool = 'hidden-source-map';
+      config.devtool = false; // Disable source maps in production for smaller bundle
     }
 
     return config;
@@ -218,7 +231,7 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=self, microphone=self, geolocation=self' },
+          { key: 'Permissions-Policy', value: 'camera=self, microphone=self, geolocation=self, fullscreen=self, clipboard=self, payment=(), usb=()' },
         ],
       },
       // Face recognition models — immutable cache

@@ -93,9 +93,9 @@ export const metadata: Metadata = {
     siteName: 'HR Office',
     images: [
       {
-        url: '/icon-192x192.png',
-        width: 192,
-        height: 192,
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
         alt: 'HR Office — All-in-One HR Management Platform',
         type: 'image/png',
       },
@@ -106,7 +106,7 @@ export const metadata: Metadata = {
     title: 'HR Office — All-in-One HR Management Platform',
     description:
       'Manage your entire workforce with real-time attendance, AI-powered analytics, and smart task management.',
-    images: ['/icon-192x192.png'],
+    images: ['/opengraph-image'],
     creator: '@hrofficeapp',
   },
   robots: {
