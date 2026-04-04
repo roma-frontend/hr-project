@@ -4009,6 +4009,7 @@
     "filterAll": "All"
   },
   "driver": {
+    "driverBookings": "Driver Bookings",
     "booking": "Driver Booking",
     "bookingDesc": "Book a driver for your business trips and transfers",
     "requestDriver": "Request Driver",

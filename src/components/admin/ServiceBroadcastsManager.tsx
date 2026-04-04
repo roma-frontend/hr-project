@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,7 +78,9 @@ export function ServiceBroadcastsManager({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">Загрузка...</div>
+          <div className="flex items-center justify-center py-8">
+            <ShieldLoader size="sm" />
+          </div>
         </CardContent>
       </Card>
     );

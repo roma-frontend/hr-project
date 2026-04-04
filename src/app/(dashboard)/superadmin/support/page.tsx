@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Dialog,
   DialogContent,
@@ -108,7 +109,7 @@ export default function SupportTicketsPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-muted-foreground">Загрузка...</div>
+        <ShieldLoader size="lg" />
       </div>
     );
   }

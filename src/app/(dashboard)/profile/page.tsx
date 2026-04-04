@@ -37,6 +37,7 @@ import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -435,7 +436,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div className="flex items-center justify-center py-8">
-              <div className="w-8 h-8 border-3 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+              <ShieldLoader size="sm" />
             </div>
           )}
         </CardContent>
@@ -530,7 +531,7 @@ export default function ProfilePage() {
             >
               {deleting ? (
                 <>
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <ShieldLoader size="xs" variant="inline" />
                   {t('ui.deleting') || 'Deleting...'}
                 </>
               ) : (

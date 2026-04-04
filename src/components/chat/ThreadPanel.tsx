@@ -195,22 +195,6 @@ export function ThreadPanel({
           </button>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes slide-in-right {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .animate-slide-in-right {
-          animation: slide-in-right 0.25s ease-out both;
-        }
-      `}</style>
     </div>
   );
 }

@@ -1625,3 +1625,127 @@ html.dark .quick-action-slate {
 html.dark .quick-action-slate:hover {
   background: linear-gradient(135deg, #475569, #334155);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Additional keyframes (migrated from styled-jsx blocks)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Sidebar: slide-in animation for notification badges */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Sidebar: chat badge pulse animation */
+@keyframes chat-badge {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.animate-chat-badge {
+  animation: chat-badge 1.2s ease-in-out infinite;
+}
+
+/* ThreadPanel: slide-in from right */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out both;
+}
+
+/* ConversationList: conversation item entrance animation */
+@keyframes conv-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* MessageBubble: message entrance animation */
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-msg-in {
+  animation: msg-in 0.2s ease-out both;
+}
+
+/* MessageBubble: slide-up animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.18s ease-out both;
+}
+
+/* MessageBubble: fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out both;
+}
+
+/* Utility: hide scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

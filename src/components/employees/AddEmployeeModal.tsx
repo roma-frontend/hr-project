@@ -17,6 +17,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Select,
   SelectContent,
@@ -607,7 +608,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
               >
                 {submitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <ShieldLoader size="xs" variant="inline" />
                     {t('employees.adding') || 'Adding...'}
                   </>
                 ) : (

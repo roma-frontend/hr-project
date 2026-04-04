@@ -10,6 +10,7 @@ import { api } from '../../../../convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -98,7 +99,7 @@ export default function ApprovalsPage() {
       {isLoading ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <div className="w-8 h-8 border-3 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin mx-auto" />
+            <ShieldLoader size="sm" />
           </CardContent>
         </Card>
       ) : pendingUsers && pendingUsers.length === 0 ? (

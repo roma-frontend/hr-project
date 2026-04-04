@@ -9,6 +9,7 @@ import EmployeeProfileDetail from '@/components/employees/EmployeeProfileDetail'
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import Link from 'next/link';
 import { motion } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +27,7 @@ export default function EmployeeProfilePage() {
   if (employee === undefined) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-12 h-12 border-4 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }

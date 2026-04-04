@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Users, Shield, Building2, CheckCircle, Eye, LogOut } from 'lucide-react';
@@ -161,7 +162,7 @@ export default function AdminPage() {
           >
             {isAssigning ? (
               <>
-                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
                 {t('admin.assigning')}
               </>
             ) : (
@@ -185,12 +186,7 @@ export default function AdminPage() {
         <CardContent>
           {!organizations ? (
             <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 border-3 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
-                <span className="text-sm text-[var(--text-muted)]">
-                  {t('admin.loadingOrganizations')}
-                </span>
-              </div>
+              <ShieldLoader size="sm" />
             </div>
           ) : organizations.length === 0 ? (
             <p className="text-[var(--text-muted)] text-center py-8">

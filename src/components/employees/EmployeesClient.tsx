@@ -308,9 +308,9 @@ export function EmployeesClient() {
     <div
       className="space-y-6"
       style={{
-        transition: isMobile ? 'none' : 'padding-inline 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-        willChange: isMobile ? 'auto' : 'padding-inline',
-        paddingInline: isMobile ? '.4rem' : isPanelOpen ? '19rem' : '5rem',
+        transition: isMobile ? 'none' : 'padding-right 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+        willChange: isMobile ? 'auto' : 'padding-right',
+        paddingRight: isMobile ? '0' : isPanelOpen ? '19rem' : '5rem',
       }}
     >
       {/* Header */}
@@ -371,7 +371,7 @@ export function EmployeesClient() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid xs:grid-cols-2 sm:grid-cols-3 gap-3"
+        className="grid gap-3"
       >
         <div className="relative flex-1">
           <Search
@@ -569,7 +569,7 @@ export function EmployeesClient() {
           <>
             {/* GRID VIEW */}
             {viewMode === 'grid' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                 <AnimatePresence>
                   {filtered.map((emp: any, i: any) => {
                     const roleConf = ROLE_CONFIG[emp.role as keyof typeof ROLE_CONFIG];

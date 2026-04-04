@@ -1317,19 +1317,6 @@ export const ChatWindow = React.memo(function ChatWindow({
             </div>
           </div>
         )}
-
-        <style jsx>{`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-          }
-        `}</style>
       </div>
 
       {/* Thread Panel — slides in from right */}

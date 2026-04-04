@@ -525,56 +525,6 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-
-      {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--border);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: var(--text-disabled);
-        }
-
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-50%) translateX(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(-50%) translateX(0);
-          }
-        }
-        @keyframes chat-badge {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          25% {
-            transform: scale(1.3);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1);
-            opacity: 0.6;
-          }
-          75% {
-            transform: scale(1.2);
-            opacity: 1;
-          }
-        }
-        .animate-chat-badge {
-          animation: chat-badge 1.2s ease-in-out infinite;
-        }
-      `}</style>
     </aside>
   );
 }
@@ -862,23 +812,6 @@ export function MobileSidebar() {
             </div>
           </div>
         </div>
-
-        {/* Custom Scrollbar */}
-        <style jsx>{`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: var(--text-disabled);
-          }
-        `}</style>
       </aside>
     </>
   );

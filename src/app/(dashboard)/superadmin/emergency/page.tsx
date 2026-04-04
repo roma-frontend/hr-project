@@ -179,11 +179,10 @@ export default function EmergencyDashboardPage() {
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto flex-col sm:flex-row">
               <Button
-                variant="outline"
                 size="icon"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="border-[var(--border)] bg-[var(--background)] hover:bg-[var(--background-subtle)] text-[var(--foreground)] w-full sm:w-auto"
+                className="text-[var(--foreground)] w-full sm:w-auto"
               >
                 {isRefreshing ? (
                   <ShieldLoader size="xs" variant="inline" />

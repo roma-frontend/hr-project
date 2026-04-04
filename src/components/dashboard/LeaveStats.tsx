@@ -8,6 +8,7 @@ import React from 'react';
 import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Id } from '../../../convex/_generated/dataModel';
 import { Calendar, AlertTriangle, CheckCircle, TrendingUp, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -103,7 +104,11 @@ export default React.memo(
     }, [analytics, user]);
 
     if (!analytics || !user || !stats) {
-      return <div className="text-center p-8">Загрузка...</div>;
+      return (
+        <div className="flex items-center justify-center p-8">
+          <ShieldLoader size="sm" />
+        </div>
+      );
     }
 
     const burnoutRisk = stats.daysSinceLastLeave !== null && stats.daysSinceLastLeave > 180;

@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
 type Tab = 'today' | 'all' | 'rating';
@@ -384,7 +385,7 @@ export default function AttendancePage() {
             <CardContent>
               {allEmployeesOverview === undefined ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="w-6 h-6 border-2 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+                  <ShieldLoader size="sm" />
                 </div>
               ) : filteredEmployees.length === 0 ? (
                 <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>

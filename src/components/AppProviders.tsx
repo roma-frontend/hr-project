@@ -9,7 +9,6 @@ import { StatusUpdateProvider } from '@/context/StatusUpdateContext';
 import { ConvexClientProvider } from '@/lib/convex';
 import { AuthSyncProvider } from '@/components/providers/AuthSyncProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { JsonLdScript } from '@/components/JsonLdScript';
 import { Toaster } from 'sonner';
 import { MaintenanceAutoLogout } from '@/components/MaintenanceAutoLogout';
 
@@ -34,7 +33,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     disableTransitionOnChange
                   >
                     {children}
-                    <JsonLdScript />
                     <Toaster
                       position="top-right"
                       closeButton

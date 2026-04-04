@@ -83,6 +83,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -209,7 +210,7 @@ function DriverDashboard({
   if (driver === undefined) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-12 h-12 border-4 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -1734,7 +1735,7 @@ export default function DriversPage() {
   if (!mounted) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-12 h-12 border-4 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -1895,7 +1896,7 @@ export default function DriversPage() {
         <CardContent>
           {availableDrivers === undefined ? (
             <div className="text-center py-8">
-              <div className="w-8 h-8 border-3 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin inline-block" />
+              <ShieldLoader size="sm" />
             </div>
           ) : filteredDrivers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -2995,7 +2996,7 @@ export default function DriversPage() {
           <div className="flex-1 overflow-y-auto p-6">
             {calendarSchedule === undefined ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-3 border-[var(--border)] border-t-[var(--primary)] rounded-full animate-spin" />
+                <ShieldLoader size="sm" />
               </div>
             ) : calendarSchedule.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">

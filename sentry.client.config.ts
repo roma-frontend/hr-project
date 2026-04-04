@@ -56,6 +56,8 @@ export function initSentryClient() {
         // Reduce replay payload size
         maxReplayDuration: 30000, // 30 seconds max
         maskAllInputs: true,
+        // Use simple buffer instead of compression worker to avoid CSP issues
+        useCompression: false,
       }),
     ],
 
