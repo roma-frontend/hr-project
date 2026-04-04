@@ -1,24 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, Montserrat, Work_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
+import { IBM_Plex_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
 import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
-import { ConvexClientProvider } from '@/lib/convex';
-import { SessionProvider } from '@/components/providers/SessionProvider';
-import { AuthSyncProvider } from '@/components/providers/AuthSyncProvider';
-import { MonitoringProvider } from '@/components/providers/MonitoringProvider';
-import { JsonLdScript } from '@/components/JsonLdScript';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { Toaster } from 'sonner';
-import { I18nProvider } from '@/components/I18nProvider';
-import { StatusUpdateProvider } from '@/context/StatusUpdateContext';
+import { AppProviders } from '@/components/AppProviders';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
-import { MaintenanceAutoLogout } from '@/components/MaintenanceAutoLogout';
-import { GlobalErrorBoundaryProvider } from '@/components/error/GlobalErrorBoundaryProvider';
 
 // Validate environment variables at startup
 validateEnvironment();
 
-// Corporate & Professional - IBM PLEX SANS (Primary font - preload)
+// Primary text font — IBM Plex Sans (Corporate & Professional)
 const ibmPlexSans = IBM_Plex_Sans({
   variable: '--font-ibm-plex',
   subsets: ['latin', 'cyrillic'],
@@ -29,29 +19,7 @@ const ibmPlexSans = IBM_Plex_Sans({
   adjustFontFallback: true,
 });
 
-// Modern & Bold - MONTSERRAT (Secondary - no preload to reduce initial load)
-const montserrat = Montserrat({
-  variable: '--font-montserrat',
-  subsets: ['latin', 'cyrillic'],
-  display: 'swap',
-  preload: false, // Lazy load
-  weight: ['400', '500', '600', '700'],
-  fallback: ['sans-serif'],
-  adjustFontFallback: true,
-});
-
-// Clean & Serious - WORK SANS (No preload)
-const workSans = Work_Sans({
-  variable: '--font-work-sans',
-  subsets: ['latin'],
-  display: 'swap',
-  preload: false, // Lazy load
-  weight: ['400', '500', '600', '700'],
-  fallback: ['sans-serif'],
-  adjustFontFallback: true,
-});
-
-// Inter for UI elements (Primary - preload)
+// UI elements — Inter (clean, highly legible)
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'cyrillic'],
@@ -62,12 +30,12 @@ const inter = Inter({
   adjustFontFallback: true,
 });
 
-// Armenian script support (No preload - only used when Armenian text is present)
+// Armenian language support (lazy loaded — only used for Armenian text)
 const notoSansArmenian = Noto_Sans_Armenian({
   variable: '--font-armenian',
   subsets: ['armenian'],
   display: 'swap',
-  preload: false, // Lazy load - only needed for Armenian content
+  preload: false,
   weight: ['400', '500', '600', '700'],
   fallback: ['sans-serif'],
 });
@@ -197,48 +165,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body
-        className={`${ibmPlexSans.variable} ${montserrat.variable} ${workSans.variable} ${inter.variable} ${notoSansArmenian.variable} antialiased`}
+        className={`${ibmPlexSans.variable} ${inter.variable} ${notoSansArmenian.variable} antialiased`}
         suppressHydrationWarning
       >
-        <GlobalErrorBoundaryProvider>
-          <MonitoringProvider>
-            <SessionProvider>
-              <I18nProvider>
-                <StatusUpdateProvider>
-                  <ConvexClientProvider>
-                    <AuthSyncProvider>
-                      <MaintenanceAutoLogout />
-                      <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem={true}
-                        disableTransitionOnChange
-                      >
-                        {children}
-                        {/* JSON-LD Structured Data */}
-                        <JsonLdScript />
-                        <Toaster
-                          position="top-right"
-                          closeButton
-                          expand={false}
-                          duration={4000}
-                          toastOptions={{
-                            style: {
-                              background: 'var(--card)',
-                              border: '1px solid var(--border)',
-                              color: 'var(--foreground)',
-                            },
-                            className: 'sonner-toast',
-                          }}
-                        />
-                      </ThemeProvider>
-                    </AuthSyncProvider>
-                  </ConvexClientProvider>
-                </StatusUpdateProvider>
-              </I18nProvider>
-            </SessionProvider>
-          </MonitoringProvider>
-        </GlobalErrorBoundaryProvider>
+        <AppProviders>{children}</AppProviders>
         {/* Performance monitoring (только в dev) */}
         {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       </body>

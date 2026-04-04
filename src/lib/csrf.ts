@@ -1,6 +1,14 @@
 import crypto from 'crypto';
 
-const CSRF_SECRET = process.env.CSRF_SECRET || 'your_csrf_secret_here';
+const CSRF_SECRET = process.env.CSRF_SECRET;
+if (!CSRF_SECRET) {
+  throw new Error(
+    '[Security] CSRF_SECRET is not set. Generate one with: openssl rand -base64 32',
+  );
+}
+
+// Assert for TypeScript — guaranteed to be set by the check above
+const secret: string = CSRF_SECRET;
 const CSRF_TOKEN_NAME = 'X-CSRF-Token';
 const CSRF_COOKIE_NAME = 'csrf-token';
 
@@ -16,7 +24,7 @@ export function generateCsrfToken(): string {
  */
 export function createCsrfToken(): { token: string; signature: string } {
   const token = generateCsrfToken();
-  const signature = crypto.createHmac('sha256', CSRF_SECRET).update(token).digest('hex');
+  const signature = crypto.createHmac('sha256', secret).update(token).digest('hex');
 
   return { token, signature };
 }
@@ -25,7 +33,7 @@ export function createCsrfToken(): { token: string; signature: string } {
  * Verify CSRF token
  */
 export function verifyCsrfToken(token: string, signature: string): boolean {
-  const expectedSignature = crypto.createHmac('sha256', CSRF_SECRET).update(token).digest('hex');
+  const expectedSignature = crypto.createHmac('sha256', secret).update(token).digest('hex');
 
   // Use constant-time comparison to prevent timing attacks
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
