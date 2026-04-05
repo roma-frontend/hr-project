@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/ThemeProvider';
 import { useTranslation } from 'react-i18next';
 // framer-motion removed — replaced with CSS transitions to reduce main-thread work,
 // eliminate forced reflow from JS-driven animations, and defer the framer-motion bundle

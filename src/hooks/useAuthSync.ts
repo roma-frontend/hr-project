@@ -156,22 +156,78 @@ export function useAuthSync() {
 
       console.log('[useAuthSync] 📤 Syncing to useAuthStore from Convex...');
 
-      // Sync to useAuthStore — only from Convex data (never from incomplete session data)
-      const { login } = useAuthStore.getState();
-      login({
-        id: currentUser._id,
-        name: finalName,
-        email: currentUser.email,
-        role: currentUser.role,
-        avatar: currentUser.avatarUrl,
-        department: currentUser.department,
-        position: currentUser.position,
-        employeeType: currentUser.employeeType,
-        organizationId: currentUser.organizationId,
-        isApproved: currentUser.isApproved,
-      });
+      // Create JWT session cookie via oauth-session API (required for server-side auth)
+      const syncSession = async () => {
+        try {
+          const res = await fetch('/api/auth/oauth-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: currentUser.email,
+              name: finalName,
+              avatarUrl: currentUser.avatarUrl || session?.user?.image || undefined,
+            }),
+          });
 
-      console.log('[useAuthSync] ✅ User logged into useAuthStore:', {
+          if (res.ok) {
+            const data = await res.json();
+            console.log('[useAuthSync] ✅ JWT session cookie created');
+            if (data.session) {
+              // Use server response data (more complete)
+              const { login } = useAuthStore.getState();
+              login({
+                id: data.session.userId,
+                name: data.session.name,
+                email: data.session.email,
+                role: data.session.role,
+                avatar: data.session.avatar,
+                department: data.session.department,
+                position: data.session.position,
+                employeeType: data.session.employeeType,
+                organizationId: data.session.organizationId,
+              });
+
+              console.log('[useAuthSync] ✅ User logged into useAuthStore from oauth-session:', {
+                id: data.session.userId,
+                name: data.session.name,
+                email: data.session.email,
+                role: data.session.role,
+              });
+
+              // Mark as synced
+              lastSyncedUserRef.current = currentUser.email;
+              prevUserState.current = {
+                organizationId: data.session.organizationId,
+                isApproved: currentUser.isApproved,
+              };
+
+              return; // Skip fallback login below
+            }
+          } else {
+            console.error('[useAuthSync] ❌ OAuth session API failed:', res.status);
+          }
+        } catch (error) {
+          console.error('[useAuthSync] ❌ Error creating JWT session:', error);
+        }
+
+        // Fallback: sync to useAuthStore from Convex data (no JWT cookie)
+        const { login } = useAuthStore.getState();
+        login({
+          id: currentUser._id,
+          name: finalName,
+          email: currentUser.email,
+          role: currentUser.role,
+          avatar: currentUser.avatarUrl,
+          department: currentUser.department,
+          position: currentUser.position,
+          employeeType: currentUser.employeeType,
+          organizationId: currentUser.organizationId,
+          isApproved: currentUser.isApproved,
+        });
+      };
+      syncSession();
+
+      console.log('[useAuthSync] ✅ User logged into useAuthStore (fallback):', {
         id: currentUser._id,
         name: finalName,
         email: currentUser.email,

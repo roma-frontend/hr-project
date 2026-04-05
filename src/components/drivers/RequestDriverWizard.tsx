@@ -20,6 +20,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface RequestDriverWizardProps {
   userId: Id<'users'>;
@@ -30,10 +31,11 @@ interface RequestDriverWizardProps {
 export function RequestDriverWizard({ userId, onComplete, onCancel }: RequestDriverWizardProps) {
   const { t } = useTranslation();
   const requestDriver = useMutation(api.drivers.requests_mutations.requestDriver);
-  const user = useQuery(api.users.queries.getCurrentUser, {});
+  const { user } = useAuthStore();
+  const organizationId = user?.organizationId as Id<'organizations'> | undefined;
   const drivers = useQuery(
     api.drivers.queries.getAvailableDrivers,
-    user?.organizationId ? { organizationId: user.organizationId } : 'skip',
+    organizationId ? { organizationId } : 'skip',
   );
 
   const [wizardData, setWizardData] = useState<Record<string, string | number | boolean | null>>(
@@ -204,7 +206,7 @@ export function RequestDriverWizard({ userId, onComplete, onCancel }: RequestDri
 
   const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
     try {
-      if (!user?.organizationId) {
+      if (!organizationId) {
         toast.error(t('driverWizard.toast.noOrg'));
         return;
       }
@@ -215,7 +217,7 @@ export function RequestDriverWizard({ userId, onComplete, onCancel }: RequestDri
       const endTime = startTime + 3600000; // +1 hour default
 
       const result = await requestDriver({
-        organizationId: user.organizationId,
+        organizationId,
         requesterId: userId,
         driverId: data.driverId as Id<'drivers'>,
         startTime,

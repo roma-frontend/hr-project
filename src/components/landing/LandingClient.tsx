@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/components/ThemeProvider';
 // framer-motion removed — all animations now use CSS + IntersectionObserver
 import {
   Calendar,

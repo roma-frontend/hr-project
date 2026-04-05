@@ -2106,6 +2106,7 @@
     "yourActivity": "Ваша активность",
     "saveChanges": "Сохранить изменения",
     "saving": "Сохранение...",
+    "saveAllChanges": "Сохранить все изменения",
     "discardChanges": "Отменить изменения",
     "notCheckedInWarning": "Вы не отметились сегодня",
     "comprehensiveAnalysis": "Полный анализ",
@@ -4192,6 +4193,7 @@
     "status": {
       "pending": "Ожидание",
       "approved": "Одобрено",
+      "rejected": "Отклонено",
       "declined": "Отклонено",
       "cancelled": "Отменено",
       "completed": "Выполнено",

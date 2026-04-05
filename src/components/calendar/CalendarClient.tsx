@@ -561,7 +561,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                             isSameMonth(new Date(r.startDate), currentMonth),
                         ).length
                       }{' '}
-                      approved
+                      {t('leave.approved')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -574,7 +574,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                             isSameMonth(new Date(r.startDate), currentMonth),
                         ).length
                       }{' '}
-                      pending
+                      {t('leave.pending')}
                     </span>
                   </div>
                 </div>
@@ -1120,7 +1120,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                           : 'secondary'
                     }
                   >
-                    {selectedDriverEvent.status}
+                    {t(`driver.status.${selectedDriverEvent.status}`, selectedDriverEvent.status)}
                   </Badge>
                 </div>
               </div>

@@ -193,16 +193,22 @@ export function Wizard({
             </div>
 
             <div className="space-y-3 md:space-y-4">
-              {React.cloneElement(
-                currentStepData?.content as React.ReactElement<{
-                  stepData: Record<string, string | number | boolean | null>;
-                  updateStepData: (key: string, value: string | number | boolean | null) => void;
-                }>,
-                {
-                  stepData,
-                  updateStepData,
-                },
-              )}
+              {React.isValidElement(currentStepData?.content) &&
+              typeof currentStepData.content.type !== 'string'
+                ? React.cloneElement(
+                    currentStepData.content as React.ReactElement<{
+                      stepData: Record<string, string | number | boolean | null>;
+                      updateStepData: (
+                        key: string,
+                        value: string | number | boolean | null,
+                      ) => void;
+                    }>,
+                    {
+                      stepData,
+                      updateStepData,
+                    },
+                  )
+                : currentStepData?.content}
             </div>
           </motion.div>
         </AnimatePresence>

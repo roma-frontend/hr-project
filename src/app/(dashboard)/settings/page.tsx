@@ -29,6 +29,7 @@ import { api } from '@/convex/_generated/api';
 import dynamic from 'next/dynamic';
 import { SubscriptionPlanCard } from '@/components/subscription/SubscriptionPlanCard';
 import { CookiePreferences } from '@/components/settings/CookiePreferences';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
@@ -433,10 +434,19 @@ export default function SettingsPage() {
           onClick={handleSave}
           disabled={saving}
           size="lg"
-          className="shadow-lg shadow-[var(--primary)]/20"
+          className="shadow-lg shadow-[var(--primary)]/20 w-full sm:w-auto"
         >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? t('ui.saving') : t('ui.saveAllChanges')}
+          {saving ? (
+            <>
+              <ShieldLoader size="xs" variant="inline" className="mr-2" />
+              {t('ui.saving')}
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              {t('ui.saveAllChanges')}
+            </>
+          )}
         </Button>
       </motion.div>
     </motion.div>

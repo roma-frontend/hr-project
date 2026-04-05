@@ -4222,6 +4222,7 @@
     "status": {
       "pending": "Սպասման մեջ",
       "approved": "Հաստատված",
+      "rejected": "Մերժված",
       "declined": "Մերժված",
       "cancelled": "Չեղարկված",
       "completed": "Ավարտված",

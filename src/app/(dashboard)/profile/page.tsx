@@ -443,7 +443,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Save Button */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
         <Button
           variant="outline"
           onClick={() => {
@@ -451,10 +451,11 @@ export default function ProfilePage() {
             setEmail(user?.email ?? '');
             toast.info(t('toasts.changesDiscarded'));
           }}
+          className="w-full sm:w-auto"
         >
           {t('ui.discardChanges')}
         </Button>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
           {saving ? t('ui.saving') : t('ui.saveChanges')}
         </Button>
