@@ -102,7 +102,6 @@ export const createTask = mutation({
     });
 
     // Notify the person who assigned the task (skip superadmin)
-    const assigner = await ctx.db.get(args.assignedBy);
     if (assigner?.role !== 'superadmin') {
       await ctx.db.insert('notifications', {
         userId: args.assignedBy,
