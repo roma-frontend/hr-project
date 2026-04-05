@@ -274,7 +274,9 @@
     "destructive": "Destructive",
     "assignee": "Assignee",
     "unknown": "Unknown",
-    "none": "None"
+    "none": "None",
+    "name": "Name",
+    "step": "Step"
   },
   "nav": {
     "home": "Home",
@@ -1336,6 +1338,7 @@
     "role": "Role",
     "organization": "Organization",
     "selectOrganization": "Select organization",
+    "selectOrgDescription": "Choose which organization to add this employee to",
     "employeeType": "Employee Type",
     "travelAllowance": "Travel Allowance",
     "enterDetails": "Enter the employee details",

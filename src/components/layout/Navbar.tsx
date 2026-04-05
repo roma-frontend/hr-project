@@ -136,6 +136,7 @@ export function Navbar() {
   const user = useAuthStore(useShallow((state: { user: UserType | null }) => state.user));
   const logout = useAuthStore((state) => state.logout);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [toasts, setToasts] = useState<ToastNotif[]>([]);
   const [statusExpanded, setStatusExpanded] = useState(false);
@@ -431,7 +432,7 @@ export function Navbar() {
           </Button>
 
           {/* User dropdown */}
-          <DropdownMenu>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-[var(--background-subtle)] transition-colors outline-none focus-visible:outline-none focus:outline-none"
@@ -466,6 +467,14 @@ export function Navbar() {
               collisionPadding={{ top: 72, bottom: 16, left: 16, right: 16 }}
               className="w-[calc(100vw-2rem)] sm:w-80 max-h-[calc(100vh-90px)] overflow-y-auto bg-[var(--card)] border-[var(--border)] shadow-xl"
             >
+              {/* Mobile close button */}
+              <button
+                className="sm:hidden absolute top-3 right-3 p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--background-subtle)] transition-colors z-10"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
               {/* Productivity Widgets */}
               {mounted && user && (
                 <>

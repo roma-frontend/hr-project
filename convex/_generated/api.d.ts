@@ -65,6 +65,7 @@ import type * as messenger_search from "../messenger/search.js";
 import type * as messenger_threads from "../messenger/threads.js";
 import type * as messenger_typing from "../messenger/typing.js";
 import type * as messenger_unread from "../messenger/unread.js";
+import type * as migrateTaskOrgId from "../migrateTaskOrgId.js";
 import type * as migrations from "../migrations.js";
 import type * as notifications from "../notifications.js";
 import type * as organizationJoinRequests from "../organizationJoinRequests.js";
@@ -188,6 +189,7 @@ declare const fullApi: ApiFromModules<{
   "messenger/threads": typeof messenger_threads;
   "messenger/typing": typeof messenger_typing;
   "messenger/unread": typeof messenger_unread;
+  migrateTaskOrgId: typeof migrateTaskOrgId;
   migrations: typeof migrations;
   notifications: typeof notifications;
   organizationJoinRequests: typeof organizationJoinRequests;

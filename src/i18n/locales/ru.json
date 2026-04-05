@@ -274,7 +274,9 @@
     "destructive": "Опасный",
     "assignee": "Исполнитель",
     "unknown": "Неизвестно",
-    "none": "Нет"
+    "none": "Нет",
+    "name": "Имя",
+    "step": "Шаг"
   },
   "nav": {
     "home": "Главная",
@@ -1295,6 +1297,7 @@
     "role": "роль",
     "organization": "Организация",
     "selectOrganization": "Выберите организацию",
+    "selectOrgDescription": "Выберите организацию, в которую нужно добавить этого сотрудника",
     "employeeType": "Тип сотрудника",
     "travelAllowance": "Командировочные",
     "enterDetails": "Введите данные сотрудника",
