@@ -399,48 +399,52 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
         </td>
       </tr>
 
-      {/* Mobile card */}
-      <div
-        onClick={onOpen}
-        className="sm:hidden p-4 border-b border-[var(--border)] last:border-0 bg-[var(--card)] active:bg-[var(--background-subtle)]"
-      >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
-              <span className={`font-semibold text-sm text-[var(--text-primary)] line-clamp-2`}>
-                {task.title}
-              </span>
+      {/* Mobile card — wrapped in <tr> for valid HTML */}
+      <tr className="sm:hidden group">
+        <td colSpan={6} className="p-0">
+          <div
+            onClick={onOpen}
+            className="p-4 border-b border-[var(--border)] last:border-0 bg-[var(--card)] active:bg-[var(--background-subtle)]"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${statusCfg.dot}`} />
+                  <span className={`font-semibold text-sm text-[var(--text-primary)] line-clamp-2`}>
+                    {task.title}
+                  </span>
+                </div>
+                {task.description && (
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-2">
+                    {task.description}
+                  </p>
+                )}
+              </div>
+              <Avatar
+                name={task.assignedToUser?.name ?? '?'}
+                url={task.assignedToUser?.avatarUrl}
+                size="sm"
+              />
             </div>
-            {task.description && (
-              <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-2">
-                {task.description}
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}
+              >
+                {priorityCfg.icon} {t(priorityCfg.labelKey)}
+              </span>
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.color}`}
+              >
+                {t(statusCfg.labelKey)}
+              </span>
+              <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
+              {task.commentCount > 0 && (
+                <span className="text-xs text-[var(--text-muted)]">💬 {task.commentCount}</span>
+              )}
+            </div>
           </div>
-          <Avatar
-            name={task.assignedToUser?.name ?? '?'}
-            url={task.assignedToUser?.avatarUrl}
-            size="sm"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`text-xs font-semibold px-2 py-0.5 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}
-          >
-            {priorityCfg.icon} {t(priorityCfg.labelKey)}
-          </span>
-          <span
-            className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusCfg.bg} ${statusCfg.color}`}
-          >
-            {t(statusCfg.labelKey)}
-          </span>
-          <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
-          {task.commentCount > 0 && (
-            <span className="text-xs text-[var(--text-muted)]">💬 {task.commentCount}</span>
-          )}
-        </div>
-      </div>
+        </td>
+      </tr>
     </>
   );
 }

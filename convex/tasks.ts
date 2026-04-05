@@ -519,3 +519,19 @@ export const getTaskComments = query({
     }));
   },
 });
+
+// ── Migration: Backfill organizationId on existing tasks ───────────────────
+export const backfillTaskOrg = mutation({
+  args: { taskId: v.id('tasks'), organizationId: v.optional(v.id('organizations')) },
+  handler: async (ctx, { taskId, organizationId }) => {
+    await ctx.db.patch(taskId, { organizationId });
+  },
+});
+
+// ── Get ALL tasks raw (for migration only) ────────────────────────────────
+export const getAllTasksRaw = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query('tasks').collect();
+  },
+});
