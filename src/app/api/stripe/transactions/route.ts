@@ -8,7 +8,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const isDev = process.env.NODE_ENV === 'development';
-const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
 async function verifySuperadmin(req: NextRequest): Promise<boolean> {
   if (isDev) return true;
@@ -21,7 +20,6 @@ async function verifySuperadmin(req: NextRequest): Promise<boolean> {
 
     // Verify with Convex using getCurrentUser
     const user = await fetchQuery(
-      CONVEX_URL,
       api.users.getCurrentUser,
       {},
       {

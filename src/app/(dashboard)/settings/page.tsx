@@ -305,7 +305,7 @@ export default function SettingsPage() {
               isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
           >
-            <TabsList className="inline-flex w-auto min-w-full gap-1 bg-transparent h-auto">
+            <TabsList className="inline-flex w-auto min-w-full gap-1 bg-transparent h-auto flex-nowrap">
               {tabs.map((tab: any) => {
                 const Icon = tab.icon;
                 return (
