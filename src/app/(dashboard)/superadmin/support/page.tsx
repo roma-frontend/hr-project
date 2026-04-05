@@ -58,7 +58,6 @@ export default function SupportTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(searchParams.get('new') === 'true');
 
-  // @ts-expect-error - Convex type instantiation issue
   const tickets = useQuery(api.tickets.getAllTickets, user?.id ? {} : 'skip') as any;
 
   const stats = useQuery(api.tickets.getTicketStats);
