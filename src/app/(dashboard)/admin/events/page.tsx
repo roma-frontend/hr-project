@@ -341,7 +341,7 @@ export default function CompanyEventsPage() {
             <DialogTitle>{t('events.editEvent', 'Edit Event')}</DialogTitle>
           </DialogHeader>
           {selectedEvent && (
-            <div className="space-y-4">
+            <div className="space-y-4 p-6">
               <div>
                 <Label>{t('events.eventName', 'Event Name')}</Label>
                 <Input defaultValue={selectedEvent.name} id="edit-name" />
@@ -373,7 +373,7 @@ export default function CompanyEventsPage() {
                 </div>
               </div>
               <div>
-                <Label>{t('events.priority', 'Priority')}</Label>
+                <Label>{t('admin.editPriority', 'Priority')}</Label>
                 <Select
                   defaultValue={selectedEvent.priority || 'medium'}
                   onValueChange={(value) => {

@@ -397,8 +397,6 @@ export async function getSessionAction() {
 }
 
 export async function updateSessionProfileAction(userId: string, name: string, email: string) {
-  'use server';
-
   try {
     const cookieStore = await cookies();
     const jwt = cookieStore.get('hr-auth-token')?.value;

@@ -660,8 +660,7 @@
         "reason": "Պատճառ",
         "expiresAt": "Ժամկետը լրանում է",
         "targetUser": "Թիրախային օգտատեր"
-      },
-      "searchDesc": "Մուտքագրեք էլ. փոստ կամ անուն փնտրելու համար"
+      }
     },
     "bulkActions": {
       "title": "Զանգվածային գործողություններ",
@@ -1208,7 +1207,11 @@
       "unpaid": "Անվճար",
       "sick": "Հիվանդության",
       "family": "Ընտանեկան",
-      "doctor": "Բժշկի այց"
+      "doctor": "Բժշկի այց",
+      "paidDesc": "Annual vacation",
+      "sickDesc": "Illness or medical appointment",
+      "familyDesc": "Family circumstances",
+      "unpaidDesc": "Leave without pay"
     }
   },
   "leaveRequest": {
@@ -1687,7 +1690,8 @@
     "security": "Անվտանգություն",
     "appearance": "Արտաքին տեսք",
     "language": "Լեզու",
-    "timezone": "Ժամային գոտի"
+    "timezone": "Ժամային գոտի",
+    "regenerate": "Regenerate"
   },
   "aiSiteEditor": {
     "title": "AI կայքի խմբագրիչ",
@@ -1743,7 +1747,10 @@
     "tip1": "Եղեք կոնկրետ փոփոխությունները նկարագրելիս",
     "tip2": "Նշեք կոնկրետ կոմպոնենտներ կամ էջեր",
     "tip3": "Բարդ առաջադրանքները բաժանեք մի քանի քայլերի",
-    "tip4": "Ստուգեք առաջարկվող կոդը նախքան կիրառելը"
+    "tip4": "Ստուգեք առաջարկվող կոդը նախքան կիրառելը",
+    "comingSoon": "Coming Soon",
+    "comingSoonDesc": "AI Site Editor is currently available only for super administrators. This feature will be available for all users in the future.",
+    "superadminOnly": "Super Admin Only"
   },
   "buttons": {
     "send": "Ուղարկել",
@@ -3530,36 +3537,55 @@
     "stripe": "Stripe"
   },
   "stripe": {
-    "title": "Stripe տվյալների կենտրոն",
-    "subtitle": "Կառավարել Stripe ինտեգրացիան և բաժանորդագրերի տվյալները",
-    "accessDenied": "Մուտքը արգելված է — միայն սուպերադմին",
-    "mrr": "MRR (ամսական կրկնվող եկամուտ)",
-    "activeSubscriptions": "Ակտիվ բաժանորդագրումներ",
-    "totalCustomers": "Ընդհատված հաճախորդներ",
-    "churnRate": "Հեռացված հաճախորդների հարցություն",
-    "viewTransactions": "Դիտել տրանզակցիաներ",
-    "exportExcel": "Արտահանել Excel",
-    "exportPdf": "Արտահանել PDF",
-    "growthChart": "Զարգացման գրաֆիկ",
-    "syncData": "Սինխրոնիզացնել տվյալները",
-    "checkTrials": "Ստուգել փորձաշրջանները",
-    "addTestData": "Ավելացնել թեստային տվյալներ",
-    "revenueBreakdown": "Եկամուտի բաժանում",
-    "byPlan": "Պլանի հիմքով",
-    "byStatus": "Վիճակի հիմքով",
-    "recentSubscriptions": "Նոր բաժանորդագրումներ",
+    "dashboard": "Stripe Վահանակ",
+    "backToDashboard": "← Հետ վահանակ",
+    "realTimeAnalytics": "Բաժանորդագրությունների վերլուծություն իրական ժամանակում",
+    "refresh": "Թարմացնել",
+    "accessDenied": "Մուտքը մերժված է",
+    "accessDeniedDesc": "Այս էջը հասանելի է միայն սուպեր-ադմինիստրատորին:",
+    "restrictedAccess": "Վարումների և բաժանորդագրությունների կառավարումը հասանելի է միայն լիազորված անձնակազմին:",
+    "totalSubscriptions": "Ընդամենը բաժանորդագրություններ",
+    "activeTrialing": "{{active}} ակտիվ, {{trialing}} փորձնական",
+    "monthlyRevenue": "Ամսական եկամուտ (MRR)",
+    "fromActiveSubs": "{{active}} ակտիվ բաժանորդագրություններից",
+    "growthRate": "Աճի տեմպ",
+    "last30Days": "Վերջին 30 օրվա ընթացքում",
+    "trialEndingSoon": "Փորձնական ժամկետը լրանում է",
+    "within7Days": "7 օրվա ընթացքում",
+    "stripeCommands": "Stripe Հրամաններ",
+    "executeOperations": "Կատարեք Stripe գործողություններ ուղղակիորեն վահանակից",
+    "viewTransactions": "Դիտել գործարքները",
+    "displayAllTransactions": "Ցուցադրել բոլոր Stripe գործարքները",
+    "exportToExcel": "Արտահանել Excel",
+    "exportDataXlsx": "Արտահանել տվյալները XLSX ձևաչափով",
+    "exportToPdf": "Արտահանել PDF",
+    "exportDataPdf": "Արտահանել տվյալները PDF ձևաչափով",
+    "growthChart": "Աճի գրաֆիկ",
+    "generateGrowthViz": "Ստեղծել աճի վիզուալիզացիա",
+    "syncData": "Սինխրոնացում",
+    "syncWithStripe": "Սինխրոնացնել Stripe API-ի հետ",
+    "checkTrials": "Ստուգել փորձնականները",
+    "checkTrialReminders": "Ստուգել փորձնական հիշեցումները",
+    "addTestData": "Ավելացնել թեստային",
+    "addSampleSubs": "Ավելացնել օրինակելի բաժանորդագրություններ",
+    "output": "Արդյունք:",
+    "subscriptionsByStatus": "Բաժանորդագրություններ ըստ կարգավիճակի",
+    "statusDistribution": "Բաժանորդագրությունների կարգավիճակների ներկայիս բաշխում",
+    "subscriptionsByPlan": "Բաժանորդագրություններ ըստ պլանի",
+    "planDistribution": "Բաշխում ըստ գնային կատեգորիաների",
+    "perMonth": "${price}/ամիս",
+    "recentSubscriptions": "Վերջին բաժանորդագրություններ",
+    "latestActivity": "Բաանորդագրությունների վերջին ակտիվություն",
     "customer": "Հաճախորդ",
     "plan": "Պլան",
-    "status": "Վիճակ",
-    "created": "Ստեղծվել է",
-    "running": "Կատարվում է...",
-    "success": "Հաջողությամբ կատարվել է",
-    "error": "Սխալ կատարման ընթացքում",
-    "trialEndingSoon": "Փորձնական տարբերակը շուտով ավարտվում է",
-    "exportToExcel": "Արտահանել Excel",
-    "exportToPdf": "Արտահանել PDF",
-    "exportDataXlsx": "Արտահանել տվյալները XLSX ձևաչափով",
-    "exportDataPdf": "Արտահանել տվյալները PDF ձևափոխով"
+    "status": "Կարգավիճակ",
+    "mrr": "MRR",
+    "periodEnd": "Ժամկետի ավարտ",
+    "noEmail": "Էլ. փոստ չկա",
+    "running": "Կատարվում է {{script}}...",
+    "completed": "✅ {{script}} հաջողությամբ ավարտվեց",
+    "failed": "❌ {{script}} ձախողվեց",
+    "error": "❌ Սխալ: {{message}}"
   },
   "security": {
     "ddosAttempt": "🚨 DDoS հարձակման հանդես տալու հայտնաբերված",
@@ -4616,15 +4642,39 @@
     "steps": {
       "dates": {
         "title": "Ընտրեք ձեր արձակուրդի ամսաթվերը",
-        "short": "Ամսաթվեր"
+        "short": "Ամսաթվեր",
+        "description": "Select start and end dates",
+        "startDateLabel": "Start Date *",
+        "endDateLabel": "End Date *",
+        "totalDays": "Total Days",
+        "calculating": "Calculating..."
       },
       "details": {
         "title": "Հայտի մանրամասներ",
-        "short": "Մանրամասներ"
+        "short": "Մանրամասներ",
+        "description": "Provide additional information",
+        "reasonLabel": "Reason *",
+        "reasonPlaceholder": "e.g., Annual vacation",
+        "commentLabel": "Comment",
+        "commentPlaceholder": "Additional information (optional)",
+        "balanceInfo": "Your balance: {{balance}} days"
       },
       "confirm": {
         "title": "Հաստատել հայտ",
-        "short": "Հաստատել"
+        "short": "Հաստատել",
+        "description": "Review and submit",
+        "summary": "Summary",
+        "type": "Type",
+        "typeValue": "Leave Type",
+        "dates": "Dates",
+        "datesValue": "Date Range",
+        "days": "Days",
+        "daysValue": "Number of Days"
+      },
+      "type": {
+        "title": "Leave Type",
+        "description": "Select the type of leave",
+        "typeLabel": "Leave Type"
       }
     },
     "info": {
@@ -4665,7 +4715,28 @@
     "inputPlaceholder": "Հարցրեք ինչ ուզում եք...",
     "disclaimer": "AI-ը կարող է սխալներ թույլ տալ: Խնդրում ենք ստուգել կարևոր տեղեկատվությունը:",
     "copied": "Պատճենված է բուֆեր!",
-    "noConversations": "Դեռ զրույցներ չկան"
+    "noConversations": "Դեռ զրույցներ չկան",
+    "conversations": "Conversations",
+    "newChatCreated": "New chat created",
+    "createError": "Failed to create chat",
+    "chatDeleted": "Chat deleted",
+    "deleteError": "Failed to delete chat",
+    "titleUpdated": "Title updated",
+    "updateError": "Failed to update title",
+    "leaveRequestCreated": "Leave request created!",
+    "leaveRequestError": "Failed to create leave request",
+    "leaveBalance": "Your leave balance",
+    "taskCreated": "Task created!",
+    "taskError": "Failed to create task",
+    "yourTasks": "Your tasks",
+    "teamMembers": "Team members",
+    "attendance": "Attendance",
+    "defaultGreeting": "Hello!",
+    "error": "Failed to get response",
+    "quickLeave": "Leave",
+    "quickTasks": "Tasks",
+    "quickTeam": "Team",
+    "quickAttendance": "Attendance"
   },
   "automation": {
     "runSuccess": "Ավտոմատացումը հաջողությամբ մեկնարկեց",
@@ -4831,57 +4902,6 @@
     "orgUpdated": "Կազմակերպությունը հաջողությամբ թարմացվել է!",
     "orgUpdateFailed": "Չհաջողվեց թարմացնել կազմակերպությունը"
   },
-  "stripe": {
-    "dashboard": "Stripe Վահանակ",
-    "backToDashboard": "← Հետ վահանակ",
-    "realTimeAnalytics": "Բաժանորդագրությունների վերլուծություն իրական ժամանակում",
-    "refresh": "Թարմացնել",
-    "accessDenied": "Մուտքը մերժված է",
-    "accessDeniedDesc": "Այս էջը հասանելի է միայն սուպեր-ադմինիստրատորին:",
-    "restrictedAccess": "Վարումների և բաժանորդագրությունների կառավարումը հասանելի է միայն լիազորված անձնակազմին:",
-    "totalSubscriptions": "Ընդամենը բաժանորդագրություններ",
-    "activeTrialing": "{{active}} ակտիվ, {{trialing}} փորձնական",
-    "monthlyRevenue": "Ամսական եկամուտ (MRR)",
-    "fromActiveSubs": "{{active}} ակտիվ բաժանորդագրություններից",
-    "growthRate": "Աճի տեմպ",
-    "last30Days": "Վերջին 30 օրվա ընթացքում",
-    "trialEndingSoon": "Փորձնական ժամկետը լրանում է",
-    "within7Days": "7 օրվա ընթացքում",
-    "stripeCommands": "Stripe Հրամաններ",
-    "executeOperations": "Կատարեք Stripe գործողություններ ուղղակիորեն վահանակից",
-    "viewTransactions": "Դիտել գործարքները",
-    "displayAllTransactions": "Ցուցադրել բոլոր Stripe գործարքները",
-    "exportToExcel": "Արտահանել Excel",
-    "exportDataXlsx": "Արտահանել տվյալները XLSX ձևաչափով",
-    "exportToPdf": "Արտահանել PDF",
-    "exportDataPdf": "Արտահանել տվյալները PDF ձևաչափով",
-    "growthChart": "Աճի գրաֆիկ",
-    "generateGrowthViz": "Ստեղծել աճի վիզուալիզացիա",
-    "syncData": "Սինխրոնացում",
-    "syncWithStripe": "Սինխրոնացնել Stripe API-ի հետ",
-    "checkTrials": "Ստուգել փորձնականները",
-    "checkTrialReminders": "Ստուգել փորձնական հիշեցումները",
-    "addTestData": "Ավելացնել թեստային",
-    "addSampleSubs": "Ավելացնել օրինակելի բաժանորդագրություններ",
-    "output": "Արդյունք:",
-    "subscriptionsByStatus": "Բաժանորդագրություններ ըստ կարգավիճակի",
-    "statusDistribution": "Բաժանորդագրությունների կարգավիճակների ներկայիս բաշխում",
-    "subscriptionsByPlan": "Բաժանորդագրություններ ըստ պլանի",
-    "planDistribution": "Բաշխում ըստ գնային կատեգորիաների",
-    "perMonth": "${price}/ամիս",
-    "recentSubscriptions": "Վերջին բաժանորդագրություններ",
-    "latestActivity": "Բաանորդագրությունների վերջին ակտիվություն",
-    "customer": "Հաճախորդ",
-    "plan": "Պլան",
-    "status": "Կարգավիճակ",
-    "mrr": "MRR",
-    "periodEnd": "Ժամկետի ավարտ",
-    "noEmail": "Էլ. փոստ չկա",
-    "running": "Կատարվում է {{script}}...",
-    "completed": "✅ {{script}} հաջողությամբ ավարտվեց",
-    "failed": "❌ {{script}} ձախողվեց",
-    "error": "❌ Սխալ: {{message}}"
-  },
   "impersonate": {
     "exit": "Ելք",
     "loginAs": "Մուտք որպես",
@@ -4998,5 +5018,231 @@
     "review": "Վերանայում",
     "previous": "Նախորդ",
     "next": "Հաջորդ"
+  },
+  "taskWizard": {
+    "submit": "Create Task",
+    "steps": {
+      "details": {
+        "title": "Task Details",
+        "description": "What needs to be done?",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Brief task description",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Detailed task description..."
+      },
+      "priority": {
+        "title": "Priority & Deadline",
+        "description": "How urgent is it?",
+        "priorityLabel": "Priority",
+        "priorityPlaceholder": "Select priority",
+        "deadlineLabel": "Deadline",
+        "deadlineDescription": "When should it be completed?"
+      },
+      "assignee": {
+        "title": "Assign To",
+        "description": "Who should complete this task?",
+        "assigneeLabel": "Assignee *",
+        "assigneePlaceholder": "Select employee"
+      }
+    },
+    "toast": {
+      "success": "Task created successfully!",
+      "error": "Failed to create task"
+    }
+  },
+  "eventWizard": {
+    "submit": "Create Event",
+    "steps": {
+      "type": {
+        "title": "Event Type",
+        "description": "What type of event?",
+        "typeLabel": "Event Type"
+      },
+      "details": {
+        "title": "Event Details",
+        "description": "Describe your event",
+        "titleLabel": "Event Name *",
+        "titlePlaceholder": "e.g., Team Building",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What's this event about?"
+      },
+      "datetime": {
+        "title": "Date & Time",
+        "description": "When will it take place?",
+        "dateLabel": "Date *",
+        "timeLabel": "Time *",
+        "locationLabel": "Location",
+        "locationPlaceholder": "Where will it be?"
+      }
+    },
+    "toast": {
+      "success": "Event created successfully!",
+      "error": "Failed to create event"
+    }
+  },
+  "driverWizard": {
+    "submit": "Request Driver",
+    "steps": {
+      "type": {
+        "title": "Trip Type",
+        "description": "What type of trip do you need?",
+        "typeLabel": "Trip Type"
+      },
+      "route": {
+        "title": "Route",
+        "description": "Where do you need to go?",
+        "fromLabel": "From *",
+        "fromPlaceholder": "Pickup location",
+        "toLabel": "To *",
+        "toPlaceholder": "Destination"
+      },
+      "datetime": {
+        "title": "Date & Time",
+        "description": "When do you need the driver?",
+        "dateLabel": "Date *",
+        "timeLabel": "Time *",
+        "notesLabel": "Additional Notes",
+        "notesPlaceholder": "Any special instructions..."
+      }
+    },
+    "types": {
+      "oneWay": "One Way",
+      "oneWayDesc": "Single trip",
+      "roundTrip": "Round Trip",
+      "roundTripDesc": "Return journey",
+      "corporate": "Corporate Event",
+      "corporateDesc": "Company event transportation"
+    },
+    "toast": {
+      "success": "Driver request submitted!",
+      "error": "Failed to request driver"
+    }
+  },
+  "supportWizard": {
+    "submit": "Create Ticket",
+    "steps": {
+      "type": {
+        "title": "Ticket Type",
+        "description": "What type of ticket?",
+        "typeLabel": "Ticket Type"
+      },
+      "details": {
+        "title": "Ticket Details",
+        "description": "Describe the issue",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Brief summary",
+        "descriptionLabel": "Description *",
+        "descriptionPlaceholder": "Detailed description..."
+      },
+      "priority": {
+        "title": "Priority & Category",
+        "description": "How urgent is it?",
+        "priorityLabel": "Priority",
+        "priorityPlaceholder": "Select priority",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select category"
+      }
+    },
+    "types": {
+      "question": "Question",
+      "questionDesc": "General inquiry",
+      "issue": "Issue",
+      "issueDesc": "Something's not working",
+      "bug": "Bug Report",
+      "bugDesc": "Report a bug",
+      "feature": "Feature Request",
+      "featureDesc": "Suggest a feature"
+    },
+    "toast": {
+      "success": "Ticket created successfully!",
+      "error": "Failed to create ticket"
+    }
+  },
+  "incidentWizard": {
+    "submit": "Create Incident",
+    "steps": {
+      "severity": {
+        "title": "Severity Level",
+        "description": "How severe is the incident?",
+        "severityLabel": "Severity"
+      },
+      "details": {
+        "title": "Incident Details",
+        "description": "Describe the incident",
+        "titleLabel": "Title *",
+        "titlePlaceholder": "Brief summary",
+        "descriptionLabel": "Description *",
+        "descriptionPlaceholder": "Detailed description..."
+      },
+      "impact": {
+        "title": "Impact",
+        "description": "Who is affected?",
+        "affectedUsersLabel": "Affected Users",
+        "affectedOrgsLabel": "Affected Organizations",
+        "notice": "This information helps prioritize the incident response"
+      }
+    },
+    "severity": {
+      "low": "Low",
+      "lowDesc": "Minor issue",
+      "medium": "Medium",
+      "mediumDesc": "Moderate impact",
+      "high": "High",
+      "highDesc": "Significant impact",
+      "critical": "Critical",
+      "criticalDesc": "Severe impact"
+    },
+    "toast": {
+      "success": "Incident created successfully!",
+      "error": "Failed to create incident"
+    }
+  },
+  "subscriptionWizard": {
+    "submit": "Create Subscription",
+    "steps": {
+      "organization": {
+        "title": "Organization",
+        "description": "Which organization?",
+        "organizationLabel": "Organization *",
+        "organizationPlaceholder": "Select organization"
+      },
+      "plan": {
+        "title": "Subscription Plan",
+        "description": "Choose a plan",
+        "planLabel": "Plan"
+      },
+      "pricing": {
+        "title": "Pricing",
+        "description": "Custom pricing (optional)",
+        "priceLabel": "Custom Price (USD)",
+        "priceDescription": "Leave empty for standard pricing",
+        "notesLabel": "Internal Notes",
+        "notesPlaceholder": "Add internal notes..."
+      }
+    },
+    "plans": {
+      "starter": "Starter",
+      "starterDesc": "Free plan",
+      "professional": "Professional",
+      "professionalDesc": "$29/month",
+      "enterprise": "Enterprise",
+      "enterpriseDesc": "Custom pricing"
+    },
+    "toast": {
+      "success": "Subscription created successfully!",
+      "error": "Failed to create subscription"
+    }
+  },
+  "event": {
+    "types": {
+      "meeting": "Meeting",
+      "meetingDesc": "Team or company meeting",
+      "training": "Training",
+      "trainingDesc": "Educational event",
+      "celebration": "Celebration",
+      "celebrationDesc": "Party or celebration",
+      "other": "Other",
+      "otherDesc": "Something else"
+    }
   }
 }
