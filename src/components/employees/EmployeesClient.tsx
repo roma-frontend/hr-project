@@ -405,7 +405,7 @@ export function EmployeesClient() {
             </button>
           )}
         </div>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 scrollbar-hide flex-nowrap sm:flex-wrap">
           {[
             {
               value: filterRole,
@@ -444,7 +444,7 @@ export function EmployeesClient() {
                 key={label}
                 value={value}
                 onChange={(e) => setter(e.target.value)}
-                className="px-3 py-2 rounded-xl border text-sm outline-none capitalize"
+                className="px-3 py-2 rounded-xl border text-sm outline-none capitalize flex-shrink-0"
                 style={{
                   background: 'var(--card)',
                   borderColor: 'var(--border)',
@@ -460,7 +460,7 @@ export function EmployeesClient() {
             );
           })}
           {/* View toggle */}
-          <div className="flex rounded-xl" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex rounded-xl flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
             <button
               onClick={() => setViewMode('grid')}
               className={`p-2.5 transition-colors ${viewMode === 'grid' ? 'text-white rounded-lg' : ''} rounded-lg`}
