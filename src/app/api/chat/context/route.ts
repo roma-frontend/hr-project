@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { fetchQuery } from 'convex/nextjs';
+import { api } from '@/convex/_generated/api';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
 // Opt out of static generation — uses cookies
 export const revalidate = 0;
-
-async function convexQuery(name: string, args: Record<string, unknown>) {
-  const res = await fetch(`${CONVEX_URL}/api/query`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path: name, args }),
-  });
-  const data = await res.json();
-  if (data.status === 'error') throw new Error(data.errorMessage ?? 'Convex error');
-  return data.value;
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,8 +15,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get user session
-    const session = await convexQuery('auth:getSession', { sessionToken });
+    // Get user session using Convex
+    const session = await fetchQuery(api.auth.getSession, { sessionToken });
 
     if (!session) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
@@ -35,19 +26,19 @@ export async function GET(req: NextRequest) {
     const userId = session.userId;
 
     // Fetch user's leave data
-    const userLeaves = await convexQuery('leaves:getUserLeaves', { userId });
-    const analytics = await convexQuery('analytics:getUserAnalytics', { userId });
-    const teamCalendar = await convexQuery('analytics:getTeamCalendar', { requesterId: userId });
+    const userLeaves = await fetchQuery(api.leaves.getUserLeaves, { userId });
+    const analytics = await fetchQuery(api.analytics.getUserAnalytics, { userId });
+    const teamCalendar = await fetchQuery(api.analytics.getTeamCalendar, { requesterId: userId });
 
     // Build context for AI
     const context = {
       user: {
-        id: userId, // ← Добавили userId
+        id: userId,
         name: session.name,
         email: session.email,
         role: session.role,
         department: session.department,
-        organizationId: session.organizationId, // ← Добавили organizationId
+        organizationId: session.organizationId,
       },
       leaveBalances: {
         paid: analytics.balances.paid,
@@ -58,19 +49,21 @@ export async function GET(req: NextRequest) {
         totalDaysTaken: analytics.totalDaysTaken,
         pendingDays: analytics.pendingDays,
       },
-      recentLeaves: analytics.userLeaves.slice(0, 5).map((l: any) => ({
-        type: l.type,
-        startDate: l.startDate,
-        endDate: l.endDate,
-        status: l.status,
-        days: l.days,
-      })),
-      teamAvailability: teamCalendar.slice(0, 10).map((l: any) => ({
-        userName: l.userName,
-        department: l.userDepartment,
-        startDate: l.startDate,
-        endDate: l.endDate,
-      })),
+      recentLeaves:
+        analytics.userLeaves?.slice(0, 5).map((l: any) => ({
+          type: l.type,
+          startDate: l.startDate,
+          endDate: l.endDate,
+          status: l.status,
+          days: l.days,
+        })) || [],
+      teamAvailability:
+        teamCalendar?.slice(0, 10).map((l: any) => ({
+          userName: l.userName,
+          department: l.userDepartment,
+          startDate: l.startDate,
+          endDate: l.endDate,
+        })) || [],
     };
 
     return NextResponse.json(context);
