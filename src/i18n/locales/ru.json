@@ -5049,7 +5049,7 @@
   },
   "stripe": {
     "dashboard": "Панель Stripe",
-    "backToDashboard": "← Назад к панели",
+    "backToDashboard: ,": "← Назад к панели",
     "realTimeAnalytics": "Аналитика подписок в реальном времени",
     "refresh": "Обновить",
     "accessDenied": "Доступ запрещен",

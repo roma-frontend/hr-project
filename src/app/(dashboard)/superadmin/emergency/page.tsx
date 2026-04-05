@@ -86,7 +86,7 @@ export default function EmergencyDashboardPage() {
   if (!data || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-muted-foreground">{t('loading')}</div>
+        <ShieldLoader size="lg" />
       </div>
     );
   }

@@ -66,7 +66,7 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               <div className="border-b border-[var(--border)] bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 px-6 py-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500 shadow-lg">
                       <Keyboard className="h-6 w-6 text-white" />
                     </div>
                     <div>

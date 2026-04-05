@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,102 +14,102 @@ import {
   RefreshCw,
   Calendar,
   CreditCard,
-  Play,
-  Terminal,
-  FileSpreadsheet,
-  FileText,
-  BarChart3,
-  RefreshCcw,
-  Bell,
   ShieldAlert,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
-import { useState, useMemo } from 'react';
-import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
 
-interface Subscription {
-  _id: string;
-  _creationTime: number;
-  stripeCustomerId: string;
-  stripeSubscriptionId: string;
-  stripePriceId: string;
-  stripeCurrentPeriodEnd: number;
+interface StripeMetrics {
+  totalSubscriptions: number;
+  active: number;
+  trialing: number;
+  canceled: number;
+  pastDue: number;
+  mrr: number;
+  totalRevenue: number;
+  last30DaysRevenue: number;
+  growth: string;
+  trialEnding: number;
+}
+
+interface StripeSubscription {
+  id: string;
   status: string;
   plan: string;
-  userEmail?: string;
-  organizationId?: string;
-  userId?: string;
-  cancelAtPeriodEnd?: boolean;
-  currentPeriodStart?: number;
+  amount: number;
+  customer: { email: string; name: string };
+  currentPeriodEnd: number;
+  currentPeriodStart: number;
+  cancelAtPeriodEnd: boolean;
   trialEnd?: number;
+  created: number;
+}
+
+interface StripeTransaction {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  customer: string;
+  date: string;
+  description: string;
+}
+
+interface StripeData {
+  metrics: StripeMetrics;
+  subscriptions: StripeSubscription[];
+  recentTransactions: StripeTransaction[];
 }
 
 export default function StripeDashboardPage() {
-  // All hooks MUST be at the top, before any conditional returns
   const { t } = useTranslation();
-  const subscriptions = useQuery(api.subscriptions.listAll) as Subscription[] | undefined;
+  const router = useRouter();
   const { user: currentUser } = useAuthStore();
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [runningScript, setRunningScript] = useState<string | null>(null);
-  const [scriptOutput, setScriptOutput] = useState<string>('');
+  const [data, setData] = useState<StripeData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = useMemo(() => {
-    if (!subscriptions) return null;
+  const fetchStripeData = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
 
-    const planPrices: Record<string, number> = {
-      starter: 0,
-      professional: 29,
-      enterprise: 199,
-    };
+    try {
+      const response = await fetch('/api/stripe/transactions');
+      const result = await response.json();
 
-    const byStatus: Record<string, number> = {};
-    const byPlan: Record<string, number> = {};
-    let mrr = 0;
-    let totalRevenue = 0;
-
-    subscriptions.forEach((sub) => {
-      byStatus[sub.status] = (byStatus[sub.status] || 0) + 1;
-      byPlan[sub.plan] = (byPlan[sub.plan] || 0) + 1;
-
-      if (sub.status === 'active') {
-        const price = planPrices[sub.plan] || 0;
-        mrr += price;
-        totalRevenue += price;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch data');
       }
-    });
 
-    // Calculate growth
-    const now = Date.now();
-    const lastMonth = now - 30 * 24 * 60 * 60 * 1000;
-    const lastMonthSubs = subscriptions.filter((s) => s._creationTime < lastMonth);
-    const growth =
-      ((subscriptions.length - lastMonthSubs.length) / Math.max(lastMonthSubs.length, 1)) * 100;
+      setData(result);
+      if (isRefresh) {
+        toast.success('Данные обновлены');
+      }
+    } catch (err: any) {
+      setError(err.message);
+      if (isRefresh) {
+        toast.error('Ошибка при обновлении данных');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-    // Trial reminders
-    const trialEnding = subscriptions.filter((sub) => {
-      if (sub.status !== 'trialing' || !sub.trialEnd) return false;
-      const daysLeft = Math.ceil((sub.trialEnd - now) / (1000 * 60 * 60 * 24));
-      return daysLeft >= 0 && daysLeft <= 7;
-    });
+  useEffect(() => {
+    fetchStripeData();
+  }, []);
 
-    return {
-      total: subscriptions.length,
-      byStatus,
-      byPlan,
-      mrr,
-      totalRevenue,
-      growth: growth.toFixed(1),
-      trialEnding: trialEnding.length,
-      active: byStatus.active || 0,
-      trialing: byStatus.trialing || 0,
-      canceled: byStatus.canceled || 0,
-    };
-  }, [subscriptions]);
-
-  // Guard clauses AFTER all hooks
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -140,42 +140,39 @@ export default function StripeDashboardPage() {
     );
   }
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // Simulate refresh
-    setTimeout(() => setRefreshing(false), 1000);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <ShieldLoader size="lg" />
+      </div>
+    );
+  }
 
-  const handleRunScript = async (script: string) => {
-    setRunningScript(script);
-    setScriptOutput('');
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card className="border-red-500/50">
+          <CardHeader>
+            <CardTitle className="text-red-500 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Ошибка загрузки данных
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => fetchStripeData()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Попробовать снова
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-    try {
-      toast.loading(`Running ${script}...`, { id: script });
+  if (!data) return null;
 
-      const response = await fetch('/api/stripe/run-script', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ script }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setScriptOutput(data.output);
-        toast.success(`✅ ${script} completed successfully`, { id: script });
-      } else {
-        setScriptOutput(data.output || data.error);
-        toast.error(`❌ ${script} failed`, { id: script });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setScriptOutput(message);
-      toast.error(`❌ Error: ${message}`, { id: script });
-    } finally {
-      setRunningScript(null);
-    }
-  };
+  const { metrics, subscriptions, recentTransactions } = data;
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -188,44 +185,26 @@ export default function StripeDashboardPage() {
     return colors[status] || 'bg-gray-500';
   };
 
-  const getStatusEmoji = (status: string) => {
-    const emojis: Record<string, string> = {
-      active: '✅',
-      trialing: '🆓',
-      canceled: '❌',
-      past_due: '⚠️',
-      incomplete: '⏳',
+  const getStatusBadge = (status: string) => {
+    const variants: Record<
+      string,
+      { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+    > = {
+      active: { label: 'Активна', variant: 'default' },
+      trialing: { label: 'Триал', variant: 'default' },
+      canceled: { label: 'Отменена', variant: 'destructive' },
+      past_due: { label: 'Просрочена', variant: 'outline' },
+      incomplete: { label: 'Неполная', variant: 'secondary' },
     };
-    return emojis[status] || '❓';
+    return variants[status] || { label: status, variant: 'secondary' as const };
   };
-
-  const getPlanEmoji = (plan: string) => {
-    const emojis: Record<string, string> = {
-      starter: '🚀',
-      professional: '💼',
-      enterprise: '🏢',
-    };
-    return emojis[plan] || '📦';
-  };
-
-  if (subscriptions === undefined) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <ShieldLoader size="lg" />
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <Button
-            variant="ghost"
-            onClick={() => window.history.back()}
-            className="mb-4 -ml-2 text-sm"
-          >
+          <Button variant="ghost" onClick={() => router.back()} className="mb-4 -ml-2 text-sm">
             {t('stripe.backToDashboard')}
           </Button>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">💳 {t('stripe.dashboard')}</h1>
@@ -234,7 +213,10 @@ export default function StripeDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
+          <Button variant="outline" onClick={() => router.push('/superadmin/data-studio')}>
+            📊 Data Studio
+          </Button>
+          <Button variant="outline" onClick={() => fetchStripeData(true)} disabled={refreshing}>
             {refreshing && <ShieldLoader size="xs" variant="inline" />}
             {!refreshing && <RefreshCw className="w-4 h-4 mr-2" />}
             {t('stripe.refresh')}
@@ -243,334 +225,246 @@ export default function StripeDashboardPage() {
       </div>
 
       {/* Key Metrics */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t('stripe.totalSubscriptions')}
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('stripe.activeTrialing', { active: stats.active, trialing: stats.trialing })}
-              </p>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('stripe.totalSubscriptions')}</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.totalSubscriptions}</div>
+            <p className="text-xs text-muted-foreground">
+              {metrics.active} активных, {metrics.trialing} триальных
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('stripe.monthlyRevenue')}</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${stats.mrr}</div>
-              <p className="text-xs text-muted-foreground">
-                {t('stripe.fromActiveSubs', { active: stats.active })}
-              </p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('stripe.monthlyRevenue')}</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${metrics.mrr}</div>
+            <p className="text-xs text-muted-foreground">
+              За 30 дней: ${metrics.last30DaysRevenue}
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('stripe.growthRate')}</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.growth}%</div>
-              <p className="text-xs text-muted-foreground">{t('stripe.last30Days')}</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('stripe.growthRate')}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold flex items-center gap-2">
+              {metrics.growth}%
+              {parseFloat(metrics.growth) >= 0 ? (
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
+              ) : (
+                <ArrowDownRight className="w-4 h-4 text-red-500" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">{t('stripe.last30Days')}</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('stripe.trialEndingSoon')}</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.trialEnding}</div>
-              <p className="text-xs text-muted-foreground">{t('stripe.within7Days')}</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('stripe.trialEndingSoon')}</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.trialEnding}</div>
+            <p className="text-xs text-muted-foreground">{t('stripe.within7Days')}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Stripe Commands Section */}
-      <Card className="border-2 border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+      {/* Revenue Summary */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            {t('stripe.stripeCommands')}
-          </CardTitle>
-          <CardDescription>{t('stripe.executeOperations')}</CardDescription>
+          <CardTitle>Общая выручка</CardTitle>
+          <CardDescription>Всего получено от всех подписок</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Button
-              onClick={() => handleRunScript('stripe:view')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-blue-500/10 hover:border-blue-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Terminal className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="font-semibold">{t('stripe.viewTransactions')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                {t('stripe.displayAllTransactions')}
-              </p>
-              {runningScript === 'stripe:view' && <ShieldLoader size="xs" variant="inline" />}
-            </Button>
+          <div className="text-3xl font-bold text-green-600">${metrics.totalRevenue}</div>
+        </CardContent>
+      </Card>
 
-            <Button
-              onClick={() => handleRunScript('stripe:export')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-green-500/10 hover:border-green-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <span className="font-semibold">{t('stripe.exportToExcel')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                {t('stripe.exportDataXlsx')}
-              </p>
-              {runningScript === 'stripe:export' && <ShieldLoader size="xs" variant="inline" />}
-            </Button>
-
-            <Button
-              onClick={() => handleRunScript('stripe:export-pdf')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-red-500/10 hover:border-red-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <FileText className="w-4 h-4 text-red-600 dark:text-red-400" />
-                <span className="font-semibold">{t('stripe.exportToPdf')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">{t('stripe.exportDataPdf')}</p>
-              {runningScript === 'stripe:export-pdf' && <ShieldLoader size="xs" variant="inline" />}
-            </Button>
-
-            <Button
-              onClick={() => handleRunScript('stripe:growth-chart')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-purple-500/10 hover:border-purple-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <span className="font-semibold">{t('stripe.growthChart')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                {t('stripe.generateGrowthViz')}
-              </p>
-              {runningScript === 'stripe:growth-chart' && (
-                <ShieldLoader size="xs" variant="inline" />
-              )}
-            </Button>
-
-            <Button
-              onClick={() => handleRunScript('stripe:sync')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-orange-500/10 hover:border-orange-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <RefreshCcw className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                <span className="font-semibold">{t('stripe.syncData')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                {t('stripe.syncWithStripe')}
-              </p>
-              {runningScript === 'stripe:sync' && <ShieldLoader size="xs" variant="inline" />}
-            </Button>
-
-            <Button
-              onClick={() => handleRunScript('stripe:check-trials')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-yellow-500/10 hover:border-yellow-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Bell className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                <span className="font-semibold">{t('stripe.checkTrials')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">
-                {t('stripe.checkTrialReminders')}
-              </p>
-              {runningScript === 'stripe:check-trials' && (
-                <ShieldLoader size="xs" variant="inline" />
-              )}
-            </Button>
-
-            <Button
-              onClick={() => handleRunScript('stripe:add-test-data')}
-              disabled={runningScript !== null}
-              variant="outline"
-              className="h-auto flex-col items-start gap-2 p-4 hover:bg-pink-500/10 hover:border-pink-500/50"
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Play className="w-4 h-4 text-pink-600 dark:text-pink-400" />
-                <span className="font-semibold">{t('stripe.addTestData')}</span>
-              </div>
-              <p className="text-xs text-muted-foreground text-left">{t('stripe.addSampleSubs')}</p>
-              {runningScript === 'stripe:add-test-data' && (
-                <ShieldLoader size="xs" variant="inline" />
-              )}
-            </Button>
-          </div>
-
-          {/* Output Display */}
-          {scriptOutput && (
-            <div className="mt-4 p-4 bg-slate-900 dark:bg-slate-950 rounded-lg border border-slate-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Terminal className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold text-emerald-400">{t('stripe.output')}</span>
-              </div>
-              <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono overflow-x-auto">
-                {scriptOutput}
-              </pre>
+      {/* Recent Transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Последние транзакции
+          </CardTitle>
+          <CardDescription>
+            Последние {recentTransactions.length} платежей из Stripe
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {recentTransactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>Нет транзакций</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="pb-3 font-semibold">Клиент</th>
+                    <th className="pb-3 font-semibold">Сумма</th>
+                    <th className="pb-3 font-semibold">Статус</th>
+                    <th className="pb-3 font-semibold">Описание</th>
+                    <th className="pb-3 font-semibold">Дата</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.map((tx) => (
+                    <tr key={tx.id} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="py-3">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">{tx.customer}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 font-semibold">${tx.amount}</td>
+                      <td className="py-3">
+                        <Badge
+                          variant={
+                            tx.status === 'succeeded'
+                              ? 'default'
+                              : tx.status === 'failed'
+                                ? 'destructive'
+                                : 'secondary'
+                          }
+                          className="capitalize"
+                        >
+                          {tx.status === 'succeeded'
+                            ? 'Успешно'
+                            : tx.status === 'failed'
+                              ? 'Ошибка'
+                              : tx.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-sm text-muted-foreground">{tx.description}</td>
+                      <td className="py-3 text-sm text-muted-foreground">
+                        {new Date(tx.date).toLocaleDateString('ru-RU')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Status Breakdown */}
-        {stats && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('stripe.subscriptionsByStatus')}</CardTitle>
-              <CardDescription>{t('stripe.statusDistribution')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(stats.byStatus).map(([status, count]) => (
-                <div key={status} className="flex  items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{getStatusEmoji(status)}</span>
-                    <span className="capitalize font-medium">{status}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-secondary rounded-full h-2">
-                      <div
-                        className={`${getStatusColor(status)} h-2 rounded-full transition-all`}
-                        style={{ width: `${(count / stats.total) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold w-12 text-right">{count}</span>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Plan Breakdown */}
-        {stats && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('stripe.subscriptionsByPlan')}</CardTitle>
-              <CardDescription>{t('stripe.planDistribution')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(stats.byPlan).map(([plan, count]) => {
-                const prices: Record<string, number> = {
-                  starter: 0,
-                  professional: 29,
-                  enterprise: 199,
-                };
-                const price = prices[plan] || 0;
-
-                return (
-                  <div key={plan} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{getPlanEmoji(plan)}</span>
-                      <span className="capitalize font-medium">{plan}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {t('stripe.perMonth', { price })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-32 bg-secondary rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{ width: `${(count / stats.total) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-bold w-12 text-right">{count}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Recent Subscriptions Table */}
+      {/* Active Subscriptions */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('stripe.recentSubscriptions')}</CardTitle>
-          <CardDescription>{t('stripe.latestActivity')}</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            Активные подписки
+          </CardTitle>
+          <CardDescription>
+            {subscriptions.filter((s) => s.status === 'active').length} активных подписок
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="pb-3 font-semibold">{t('stripe.customer')}</th>
-                  <th className="pb-3 font-semibold">{t('stripe.plan')}</th>
-                  <th className="pb-3 font-semibold">{t('stripe.status')}</th>
-                  <th className="pb-3 font-semibold">{t('stripe.mrr')}</th>
-                  <th className="pb-3 font-semibold">{t('stripe.periodEnd')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions?.slice(0, 10).map((sub) => {
-                  const prices: Record<string, number> = {
-                    starter: 0,
-                    professional: 29,
-                    enterprise: 199,
-                  };
-                  const price = prices[sub.plan] || 0;
+          {subscriptions.filter((s) => s.status === 'active').length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>Нет активных подписок</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="pb-3 font-semibold">Клиент</th>
+                    <th className="pb-3 font-semibold">План</th>
+                    <th className="pb-3 font-semibold">Сумма/мес</th>
+                    <th className="pb-3 font-semibold">Период заканчивается</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions
+                    .filter((s) => s.status === 'active')
+                    .map((sub) => (
+                      <tr key={sub.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-muted-foreground" />
+                            <div>
+                              <span className="font-medium text-sm block">
+                                {sub.customer.email}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {sub.customer.name}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <Badge variant="outline" className="capitalize">
+                            {sub.plan}
+                          </Badge>
+                        </td>
+                        <td className="py-3 font-semibold">${sub.amount}</td>
+                        <td className="py-3 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(sub.currentPeriodEnd).toLocaleDateString('ru-RU')}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                  return (
-                    <tr key={sub._id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">
-                            {sub.userEmail || t('stripe.noEmail')}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <span className="capitalize">
-                          {getPlanEmoji(sub.plan)} {sub.plan}
-                        </span>
-                      </td>
-                      <td className="py-3">
-                        <Badge variant="outline" className="capitalize">
-                          {getStatusEmoji(sub.status)} {sub.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 font-semibold">${price}</td>
-                      <td className="py-3 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(sub.stripeCurrentPeriodEnd).toLocaleDateString()}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+      {/* All Subscriptions by Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Все подписки по статусу</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {[
+            { label: 'Активные', count: metrics.active, color: 'bg-green-500', icon: CheckCircle },
+            { label: 'Триальные', count: metrics.trialing, color: 'bg-blue-500', icon: Clock },
+            {
+              label: 'Просроченные',
+              count: metrics.pastDue,
+              color: 'bg-yellow-500',
+              icon: AlertCircle,
+            },
+            { label: 'Отмененные', count: metrics.canceled, color: 'bg-red-500', icon: XCircle },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <item.icon className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">{item.label}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-32 bg-muted rounded-full h-2">
+                  <div
+                    className={`${item.color} h-2 rounded-full transition-all`}
+                    style={{
+                      width: `${metrics.totalSubscriptions > 0 ? (item.count / metrics.totalSubscriptions) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-sm font-bold w-12 text-right">{item.count}</span>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

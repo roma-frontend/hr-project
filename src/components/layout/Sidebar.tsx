@@ -291,9 +291,11 @@ export function Sidebar() {
               <div
                 style={{
                   opacity: collapsed ? 0 : 1,
-                  transition: `opacity 150ms ${
-                    collapsed ? '' : '600ms'
-                  }, all 600ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+                  transform: collapsed ? 'translateX(-8px)' : 'translateX(0)',
+                  transition: `opacity 250ms ease-in-out ${collapsed ? '0ms' : '350ms'}, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1) ${collapsed ? '0ms' : '350ms'}`,
+                  width: collapsed ? 0 : 'auto',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <h1 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -509,8 +511,8 @@ export function Sidebar() {
             )}
             style={{
               transition: collapsed
-                ? 'opacity 150ms, width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), visibility 150ms'
-                : 'opacity 150ms 600ms, width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0ms 600ms',
+                ? 'opacity 150ms ease-in-out, width 150ms ease-in-out, visibility 150ms ease-in-out'
+                : 'opacity 250ms ease-in-out 350ms, width 150ms ease-in-out 350ms, visibility 0ms 350ms',
             }}
           >
             <p

@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 export default function BulkActionsPage() {
@@ -130,7 +131,7 @@ export default function BulkActionsPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-muted-foreground">{t('loading')}</div>
+        <ShieldLoader size="lg" />
       </div>
     );
   }

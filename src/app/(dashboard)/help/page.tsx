@@ -30,19 +30,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { CreateTicketWizard } from '@/components/help/CreateTicketWizard';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { t } from 'i18next';
 
 export default function HelpSupportPage() {
@@ -51,12 +42,11 @@ export default function HelpSupportPage() {
   const { user } = useAuthStore();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showPlanLimit, setShowPlanLimit] = useState(false);
-  const [useWizard, setUseWizard] = useState(true); // Переключатель Wizard vs обычная форма
 
   const myTickets = useQuery(
     api.tickets.getMyTickets,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
-  );
+  ) as any[] | undefined;
 
   const stats = useQuery(api.tickets.getTicketStats);
 
@@ -88,7 +78,7 @@ export default function HelpSupportPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-muted-foreground">{t('loading')}</div>
+        <ShieldLoader size="lg" />
       </div>
     );
   }
@@ -170,40 +160,19 @@ export default function HelpSupportPage() {
                 </DialogTrigger>
                 <DialogContent className="max-w-[95vw] md:max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <span className="text-base md:text-lg">{t('help.createTicket')}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setUseWizard(!useWizard)}
-                          className="text-xs w-full sm:w-auto"
-                        >
-                          {useWizard ? '📝 Обычная форма' : '✨ Wizard'}
-                        </Button>
-                      </div>
+                    <DialogTitle className="text-base md:text-lg">
+                      {t('help.createTicket')}
                     </DialogTitle>
                     <DialogDescription className="text-xs md:text-sm">
                       {t('help.subtitle')}
                     </DialogDescription>
                   </DialogHeader>
 
-                  {useWizard ? (
-                    <CreateTicketWizard
-                      userId={user.id as Id<'users'>}
-                      onComplete={() => setCreateDialogOpen(false)}
-                      onCancel={() => setCreateDialogOpen(false)}
-                    />
-                  ) : (
-                    <CreateTicketDialog
-                      open={createDialogOpen}
-                      onOpenChange={setCreateDialogOpen}
-                      userId={user.id as Id<'users'>}
-                      organizationId={user.organizationId as Id<'organizations'>}
-                      canUseCriticalPriority={canUseCriticalPriority}
-                      hasSLA={hasSLA}
-                    />
-                  )}
+                  <CreateTicketWizard
+                    userId={user.id as Id<'users'>}
+                    onComplete={() => setCreateDialogOpen(false)}
+                    onCancel={() => setCreateDialogOpen(false)}
+                  />
                 </DialogContent>
               </Dialog>
               {/* Upgrade Plan button — only for admins and superadmins */}
@@ -454,170 +423,6 @@ function QuickHelpCard({
       </h4>
       <p className="text-xs md:text-sm text-muted-foreground">{description}</p>
     </div>
-  );
-}
-
-// Create Ticket Dialog Component (упрощенная версия для сотрудников)
-function CreateTicketDialog({
-  open,
-  onOpenChange,
-  userId,
-  organizationId,
-  canUseCriticalPriority,
-  hasSLA,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  userId: Id<'users'>;
-  organizationId?: Id<'organizations'>;
-  canUseCriticalPriority: boolean;
-  hasSLA: boolean;
-}) {
-  const { t } = useTranslation();
-  const createTicket = useMutation(api.tickets.createTicket);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
-  const [category, setCategory] = useState<
-    'technical' | 'billing' | 'access' | 'feature_request' | 'bug' | 'other'
-  >('technical');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim() || !description.trim()) {
-      toast.error(t('error.fillRequiredFields'));
-      return;
-    }
-
-    try {
-      const result = await createTicket({
-        organizationId,
-        createdBy: userId,
-        title,
-        description,
-        priority,
-        category,
-      });
-
-      toast.success(t('help.ticketCreated', { ticketNumber: result.ticketNumber }));
-      onOpenChange(false);
-      setTitle('');
-      setDescription('');
-      setPriority('medium');
-      setCategory('technical');
-    } catch (error) {
-      toast.error(t('help.createError'));
-      console.error(error);
-    }
-  };
-
-  return (
-    <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[90vh] overflow-y-auto">
-      <form onSubmit={handleSubmit}>
-        <DialogHeader>
-          <DialogTitle className="text-base md:text-lg">{t('help.create.title')}</DialogTitle>
-          <DialogDescription className="text-xs md:text-sm">
-            {t('help.create.description')}
-            {hasSLA && (
-              <p className="text-green-600 text-xs md:text-sm mt-2">
-                ✅ {t('help.create.slaNotice')}
-              </p>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 md:space-y-4 py-4">
-          <div>
-            <Label htmlFor="title" className="text-sm">
-              {t('help.create.titleLabel')}
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('help.create.titlePlaceholder')}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <div>
-              <Label htmlFor="priority" className="text-sm">
-                {t('help.create.priorityLabel')}
-              </Label>
-              <Select value={priority} onValueChange={(v: any) => setPriority(v)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">{t('priority.low')}</SelectItem>
-                  <SelectItem value="medium">{t('priority.medium')}</SelectItem>
-                  {canUseCriticalPriority && (
-                    <>
-                      <SelectItem value="high">{t('priority.high')}</SelectItem>
-                      <SelectItem value="critical">{t('priority.critical')}</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-              {!canUseCriticalPriority && (
-                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                  🔒 {t('help.create.priorityLimit')}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="category" className="text-sm">
-                {t('help.create.categoryLabel')}
-              </Label>
-              <Select value={category} onValueChange={(v: any) => setCategory(v)}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technical">{t('category.technical')}</SelectItem>
-                  <SelectItem value="billing">{t('category.billing')}</SelectItem>
-                  <SelectItem value="access">{t('category.access')}</SelectItem>
-                  <SelectItem value="feature_request">{t('category.featureRequest')}</SelectItem>
-                  <SelectItem value="bug">{t('category.bug')}</SelectItem>
-                  <SelectItem value="other">{t('category.other')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor={t('common.description')} className="text-sm">
-              {t('help.create.descriptionLabel')}
-            </Label>
-            <Textarea
-              id={t('common.description')}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('help.create.descriptionPlaceholder')}
-              rows={6}
-              className="text-sm"
-            />
-          </div>
-        </div>
-
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto"
-          >
-            {t('actions.cancel')}
-          </Button>
-          <Button type="submit" className="w-full sm:w-auto">
-            {t('help.create.submit')}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
   );
 }
 

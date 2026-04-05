@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -111,7 +112,7 @@ export default function ImpersonationPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center text-muted-foreground">{t('loading')}</div>
+        <ShieldLoader size="lg" />
       </div>
     );
   }
