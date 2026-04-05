@@ -1,35 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
+import { fetchQuery } from 'convex/nextjs';
+import { api } from '@/convex/_generated/api';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-02-25.clover',
 });
 
-// Skip auth in development if STRIPE_SECRET_KEY is set
 const isDev = process.env.NODE_ENV === 'development';
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
-async function verifySuperadmin(): Promise<boolean> {
-  // Allow in dev mode for testing
+async function verifySuperadmin(req: NextRequest): Promise<boolean> {
   if (isDev) return true;
 
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('oauth-session');
-    if (!sessionCookie) return false;
+    // Get the Convex token from the request cookie
+    const convexToken = req.cookies.get('__convex_token')?.value;
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-fallback-secret');
-    const { payload } = await jwtVerify(sessionCookie.value, secret);
+    if (!convexToken) return false;
 
-    return payload.role === 'superadmin';
-  } catch {
+    // Verify with Convex using getCurrentUser
+    const user = await fetchQuery(
+      CONVEX_URL,
+      api.users.getCurrentUser,
+      {},
+      {
+        token: convexToken,
+      },
+    );
+
+    if (!user) return false;
+
+    const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+    return user.email?.toLowerCase() === SUPERADMIN_EMAIL || user.role === 'superadmin';
+  } catch (error) {
+    console.error('[Stripe Auth] Error:', error);
     return false;
   }
 }
 
 export async function GET(req: NextRequest) {
-  if (!(await verifySuperadmin())) {
+  if (!(await verifySuperadmin(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
