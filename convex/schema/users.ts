@@ -103,7 +103,9 @@ export const users = {
     .index('by_approval', ['isApproved'])
     .index('by_clerk_id', ['clerkId'])
     .index('by_org_email', ['organizationId', 'email'])
-    .index('by_org_created', ['organizationId', 'createdAt']),
+    .index('by_org_created', ['organizationId', 'createdAt'])
+    .index('by_session_token', ['sessionToken'])
+    .index('by_reset_token', ['resetPasswordToken']),
 
   webauthnCredentials: defineTable({
     userId: v.id('users'),

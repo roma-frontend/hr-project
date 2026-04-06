@@ -340,7 +340,6 @@ export const sendServiceBroadcast = mutation({
     scheduledFor: v.optional(v.number()), // optional timestamp for scheduling
   },
   handler: async (ctx, args) => {
-
     // Verify user is superadmin
     const user = await ctx.db.get(args.userId);
     if (!user || user.role !== 'superadmin') {
@@ -767,14 +766,15 @@ export const assignUserAsOrgAdmin = mutation({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPERADMIN DASHBOARD — All organizations statistics
-// OPTIMIZED: Batch loading for performance
+// NOTE: Uses .collect() intentionally for superadmin global view
+// TODO: Add pagination when org count grows beyond 100
 // ─────────────────────────────────────────────────────────────────────────────
 export const getSuperadminDashboard = query({
   handler: async (ctx) => {
     // Get all organizations
     const orgs = await ctx.db.query('organizations').collect();
 
-    // Batch load all data
+    // Batch load all data (superadmin needs global view)
     const allUsers = await ctx.db.query('users').collect();
     const allLeaves = await ctx.db.query('leaveRequests').collect();
     const allSubscriptions = await ctx.db.query('subscriptions').collect();

@@ -90,11 +90,13 @@ export const getPendingLeaves = query({
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Requester not found');
 
-    // Superadmin sees all pending leaves
+    // Superadmin sees all pending leaves — use status filter
     let leaves;
     if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
-      const allLeaves = await ctx.db.query('leaveRequests').collect();
-      leaves = allLeaves.filter((l) => l.status === 'pending');
+      leaves = await ctx.db
+        .query('leaveRequests')
+        .filter((q) => q.eq(q.field('status'), 'pending'))
+        .collect();
     } else {
       if (!requester.organizationId) throw new Error('User does not belong to an organization');
       leaves = await ctx.db

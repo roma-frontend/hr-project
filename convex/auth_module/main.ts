@@ -33,31 +33,36 @@ const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
  * Primary check: user.role === "superadmin"
  * Fallback: email match (for legacy compatibility)
  */
-export function isSuperadmin(user: {
-  role?: string;
-  email?: string;
-} | null | undefined): boolean {
+export function isSuperadmin(
+  user:
+    | {
+        role?: string;
+        email?: string;
+      }
+    | null
+    | undefined,
+): boolean {
   if (!user) return false;
-  return (
-    user.role === "superadmin" ||
-    user.email?.toLowerCase() === SUPERADMIN_EMAIL
-  );
+  return user.role === 'superadmin' || user.email?.toLowerCase() === SUPERADMIN_EMAIL;
 }
 
 /**
  * Assert that a user is a superadmin, throw otherwise.
  */
-export function assertSuperadmin(user: {
-  role?: string;
-  email?: string;
-} | null | undefined, action: string = "perform this action"): void {
+export function assertSuperadmin(
+  user:
+    | {
+        role?: string;
+        email?: string;
+      }
+    | null
+    | undefined,
+  action: string = 'perform this action',
+): void {
   if (!isSuperadmin(user)) {
     throw new Error(`Only superadmin can ${action}`);
   }
 }
-
-
-
 
 // ── Helper: build safe user return object ────────────────────────────────────
 function safeUser(user: {
@@ -355,8 +360,10 @@ export const logout = mutation({
 export const verifySession = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, { sessionToken }) => {
-    const users = await ctx.db.query('users').collect();
-    const user = users.find((u) => u.sessionToken === sessionToken);
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_session_token', (q) => q.eq('sessionToken', sessionToken))
+      .unique();
     if (!user) return null;
     if (user.sessionExpiry && user.sessionExpiry < Date.now()) return null;
     if (!user.organizationId) return null;
@@ -378,8 +385,10 @@ export const verifySession = query({
 export const getSession = query({
   args: { sessionToken: v.string() },
   handler: async (ctx, { sessionToken }) => {
-    const users = await ctx.db.query('users').collect();
-    const user = users.find((u) => u.sessionToken === sessionToken);
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_session_token', (q) => q.eq('sessionToken', sessionToken))
+      .unique();
     if (!user) return null;
     if (user.sessionExpiry && user.sessionExpiry < Date.now()) return null;
     if (!user.organizationId) return null;
@@ -436,8 +445,10 @@ export const requestPasswordReset = mutation({
 export const resetPassword = mutation({
   args: { token: v.string(), newPassword: v.string() },
   handler: async (ctx, { token, newPassword }) => {
-    const users = await ctx.db.query('users').collect();
-    const user = users.find((u) => u.resetPasswordToken === token);
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_reset_token', (q) => q.eq('resetPasswordToken', token))
+      .unique();
 
     if (!user) throw new Error('Invalid or expired reset token');
     if (!user.resetPasswordExpiry || user.resetPasswordExpiry < Date.now()) {
@@ -461,8 +472,10 @@ export const resetPassword = mutation({
 export const verifyResetToken = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    const users = await ctx.db.query('users').collect();
-    const user = users.find((u) => u.resetPasswordToken === token);
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_reset_token', (q) => q.eq('resetPasswordToken', token))
+      .unique();
 
     if (!user) return { valid: false };
     if (!user.resetPasswordExpiry || user.resetPasswordExpiry < Date.now()) {
