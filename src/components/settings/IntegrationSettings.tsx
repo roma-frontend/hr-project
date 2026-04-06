@@ -267,10 +267,10 @@ export function IntegrationSettings() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-[var(--primary)]" />
-            <CardTitle>SharePoint Employee Sync</CardTitle>
+            <CardTitle>{t('settingsIntegration.sharepointEmployeeSync') || 'SharePoint Employee Sync'}</CardTitle>
           </div>
           <CardDescription>
-            Sync employee list from SharePoint to keep your team roster up to date
+            {t('settingsIntegration.sharepointSyncDesc') || 'Sync employee list from SharePoint to keep your team roster up to date'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -282,7 +282,7 @@ export function IntegrationSettings() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-medium text-[var(--text-primary)]">
-                    Microsoft SharePoint
+                    {t('settingsIntegration.microsoftSharePoint') || 'Microsoft SharePoint'}
                   </p>
                   {sharepointConnected && (
                     <Badge variant="default" className="text-xs gap-1">
@@ -292,7 +292,7 @@ export function IntegrationSettings() {
                   )}
                 </div>
                 <p className="text-xs text-[var(--text-muted)] mt-1">
-                  Automatically sync employees from your SharePoint List
+                  {t('settingsIntegration.sharepointAutoSync') || 'Automatically sync employees from your SharePoint List'}
                 </p>
                 {sharepointConnected && sharepointEmail && (
                   <p className="text-xs text-[var(--text-muted)] mt-1">{sharepointEmail}</p>

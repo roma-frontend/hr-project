@@ -2,12 +2,13 @@
   "name": "HR Office",
   "short_name": "HR Office",
   "description": "All-in-One HR Management Platform with real-time attendance, leave management, task tracking, and AI assistant.",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a1a",
   "theme_color": "#2563eb",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "lang": "en",
+  "dir": "ltr",
   "categories": ["business", "productivity"],
   "icons": [
     {
@@ -21,9 +22,9 @@
       "type": "image/svg+xml"
     },
     {
-      "src": "/apple-touch-icon.svg",
+      "src": "/apple-touch-icon.png",
       "sizes": "180x180",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
@@ -33,27 +34,51 @@
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
       "name": "Dashboard",
       "url": "/dashboard",
-      "description": "Go to Dashboard"
+      "description": "Go to Dashboard",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
     },
     {
       "name": "Attendance",
       "url": "/attendance",
-      "description": "Check in / Check out"
+      "description": "Check in / Check out",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
     },
     {
       "name": "Tasks",
       "url": "/tasks",
-      "description": "View your tasks"
+      "description": "View your tasks",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
     }
   ],
   "screenshots": [
@@ -63,6 +88,13 @@
       "type": "image/png",
       "form_factor": "wide",
       "label": "HR Office Dashboard"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "HR Office Mobile"
     }
   ],
   "prefer_related_applications": false
