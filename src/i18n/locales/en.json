@@ -2729,7 +2729,7 @@
     "loginAlerts": "Login Alerts",
     "loginAlertsDesc": "Get notified when someone logs into your account",
     "securityTip": "Security Tip",
-    "securityTipDesc": "Use a strong, unique password and enable 2FA for maximum security. Never share your credentials with anyone."
+    "securityTipDesc": "Use a strong, unique password and enable 2FA for maximum security. Regularly review your login history for any suspicious activity."
   },
   "tasksClient": {
     "list": "List",

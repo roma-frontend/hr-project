@@ -1297,23 +1297,7 @@ input[type='date']:focus {
   animation: spin-slow 1.5s linear infinite;
 }
 
-/* Pulse dot animation for loader — defined once */
-@keyframes pulse-dot {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-
-  50% {
-    transform: scale(1.5);
-    opacity: 1;
-  }
-}
-
-.animate-pulse-dot {
-  animation: pulse-dot 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
+/* Pulse dot animation — single definition kept above */
 
 /* ═══════════════════════════════════════════════════════════════
    Additional Animation Utilities
@@ -1678,6 +1662,8 @@ html.dark .quick-action-slate:hover {
     transform: translateX(0);
   }
 }
+
+/* Slide in from right — defined once above */
 
 .animate-slide-in-right {
   animation: slide-in-right 0.25s ease-out both;
