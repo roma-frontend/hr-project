@@ -155,10 +155,14 @@ export function EmployeesClient() {
 
   const usersPage = allUsersDirect; // For compatibility
 
-  const supervisors = useQuery(
-    api.tasks.getSupervisors,
-    user?.id ? { requesterId: user.id as Id<'users'> } : 'skip',
-  );
+  // Build supervisor lookup map from allUsers (more reliable than separate query)
+  const supervisorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (allUsers || [])
+      .filter((u) => u.role === 'supervisor' || u.role === 'admin')
+      .forEach((u) => map.set(u._id, u.name));
+    return map;
+  }, [allUsers]);
   const deleteUser = useMutation(api.users.deleteUser);
 
   // Load more function
@@ -651,8 +655,8 @@ export function EmployeesClient() {
                             <div className="flex items-center gap-2">
                               <UserCog className="w-3 h-3 flex-shrink-0 text-blue-400" />
                               <span className="truncate text-blue-500 font-medium">
-                                {supervisors?.find((s) => s._id === (emp as any).supervisorId)
-                                  ?.name ?? t('employees.noSupervisor')}
+                                {supervisorMap.get((emp as any).supervisorId) ??
+                                  t('employees.noSupervisor')}
                               </span>
                             </div>
                           )}
@@ -670,8 +674,8 @@ export function EmployeesClient() {
                             </span>
                             {(emp as any).supervisorId && (
                               <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-500">
-                                {supervisors?.find((s) => s._id === (emp as any).supervisorId)
-                                  ?.name ?? t('employees.noSupervisor')}
+                                {supervisorMap.get((emp as any).supervisorId) ??
+                                  t('employees.noSupervisor')}
                               </span>
                             )}
                           </div>
@@ -686,9 +690,15 @@ export function EmployeesClient() {
                               </span>
                             ) : (
                               <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${presence?.cls ?? ''}`}
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  emp.isActive
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
                               >
-                                {t(presence?.labelKey ?? 'common.unknown')}
+                                {emp.isActive
+                                  ? t('common.active', { defaultValue: 'Активен' })
+                                  : t('common.inactive', { defaultValue: 'Неактивен' })}
                               </span>
                             )}
                           </div>
@@ -839,9 +849,15 @@ export function EmployeesClient() {
                             </span>
                           )}
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${presence?.cls ?? ''}`}
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              emp.isActive
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
                           >
-                            {t(presence?.labelKey ?? 'common.unknown')}
+                            {emp.isActive
+                              ? t('common.active', { defaultValue: 'Активен' })
+                              : t('common.inactive', { defaultValue: 'Неактивен' })}
                           </span>
                           <span
                             className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -862,17 +878,22 @@ export function EmployeesClient() {
                         {/* Supervisor - desktop only */}
                         <div className="hidden sm:block sm:col-span-2 text-sm truncate text-blue-500 font-medium">
                           {(emp as any).supervisorId
-                            ? (supervisors?.find((s) => s._id === (emp as any).supervisorId)
-                                ?.name ?? t('common.none'))
+                            ? (supervisorMap.get((emp as any).supervisorId) ?? t('common.none'))
                             : t('common.none')}
                         </div>
 
-                        {/* Presence status - desktop only */}
+                        {/* Account status - desktop only */}
                         <div className="hidden sm:block sm:col-span-2">
                           <span
-                            className={`text-xs px-2 py-1 rounded-full font-medium ${presence?.cls ?? ''}`}
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              emp.isActive
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
                           >
-                            {t(presence?.labelKey ?? 'common.unknown')}
+                            {emp.isActive
+                              ? t('common.active', { defaultValue: 'Активен' })
+                              : t('common.inactive', { defaultValue: 'Неактивен' })}
                           </span>
                         </div>
 

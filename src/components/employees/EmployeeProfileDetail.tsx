@@ -316,7 +316,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                Latest Performance Rating
+                {t('employeeProfile.latestPerformanceRating')}
               </CardTitle>
               <div className="text-right">
                 <p className="text-2xl font-bold text-[var(--primary)]">

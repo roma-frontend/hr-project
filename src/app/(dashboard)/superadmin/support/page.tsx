@@ -297,6 +297,7 @@ export default function SupportTicketsPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t('superadmin.support.createTicket')}</DialogTitle>
+            <DialogDescription>Создайте новый тикет в службу поддержки</DialogDescription>
           </DialogHeader>
           <CreateSupportTicketWizard
             userId={user.id as Id<'users'>}

@@ -213,7 +213,10 @@ export default function StripeDashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push('/superadmin/data-studio')}>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/superadmin/stripe-dashboard/data-studio')}
+          >
             📊 Data Studio
           </Button>
           <Button variant="outline" onClick={() => fetchStripeData(true)} disabled={refreshing}>

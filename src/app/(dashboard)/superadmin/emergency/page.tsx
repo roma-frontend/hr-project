@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CreateIncidentWizard } from '@/components/superadmin/CreateIncidentWizard';
 
@@ -537,6 +537,7 @@ export default function EmergencyDashboardPage() {
       <Dialog open={createIncidentOpen} onOpenChange={setCreateIncidentOpen}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogTitle className="sr-only">{t('superadmin.emergency.createIncident')}</DialogTitle>
+          <DialogDescription className="sr-only">Создание нового инцидента</DialogDescription>
           <CreateIncidentWizard
             userId={user.id as Id<'users'>}
             onComplete={() => setCreateIncidentOpen(false)}

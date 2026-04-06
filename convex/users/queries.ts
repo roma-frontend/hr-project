@@ -210,34 +210,32 @@ export const getUserById = query({
 // GET SUPERVISORS — scoped to org
 // ─────────────────────────────────────────────────────────────────────────────
 export const getSupervisors = query({
-  args: { requesterId: v.id('users') },
-  handler: async (ctx, { requesterId }) => {
+  args: {
+    requesterId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
+  },
+  handler: async (ctx, { requesterId, organizationId }) => {
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Not found');
 
-    // Superadmin sees all supervisors/admins across all orgs
-    if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
-      const allUsers = await ctx.db.query('users').collect();
-      return allUsers.filter(
-        (u) =>
-          u.isActive && (u.role === 'supervisor' || u.role === 'admin' || u.role === 'superadmin'),
-      );
-    }
+    // Determine target org: explicit param > requester's own org
+    const targetOrgId = organizationId ?? requester.organizationId;
 
-    const orgId = requester.organizationId;
-    if (!orgId) return [];
+    if (!targetOrgId) return [];
 
     const supervisors = await ctx.db
       .query('users')
-      .withIndex('by_org_role', (q) => q.eq('organizationId', orgId).eq('role', 'supervisor'))
+      .withIndex('by_org_role', (q) => q.eq('organizationId', targetOrgId).eq('role', 'supervisor'))
       .collect();
 
     const admins = await ctx.db
       .query('users')
-      .withIndex('by_org_role', (q) => q.eq('organizationId', orgId).eq('role', 'admin'))
+      .withIndex('by_org_role', (q) => q.eq('organizationId', targetOrgId).eq('role', 'admin'))
       .collect();
 
-    return [...supervisors, ...admins].filter((u) => u.isActive);
+    return [...supervisors, ...admins]
+      .filter((u) => u.isActive)
+      .map((u) => ({ _id: u._id, name: u.name, role: u.role, email: u.email }));
   },
 });
 

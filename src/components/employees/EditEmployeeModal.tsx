@@ -101,20 +101,28 @@ const TOTAL_STEPS = 3;
 export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModalProps) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const updateUser = useMutation(api.users.mutations.updateUser);
-  const supervisors = useQuery(
-    api.users.queries.getSupervisors,
-    user?.id ? { requesterId: user.id as Id<'users'> } : 'skip',
-  );
-  const organizations = useQuery(
-    api.organizations.getAllOrganizations,
-    user?.role === 'superadmin' ? {} : 'skip',
-  );
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState(employee.organizationId ?? '');
+
+  const isSuperadmin = user?.role === 'superadmin';
+  const targetOrgId = isSuperadmin ? selectedOrgId : (employee.organizationId ?? '');
+  const supervisors = useQuery(
+    api.users.queries.getSupervisors,
+    user?.id && targetOrgId
+      ? {
+          requesterId: user.id as Id<'users'>,
+          organizationId: targetOrgId as Id<'organizations'>,
+        }
+      : 'skip',
+  );
+  const updateUser = useMutation(api.users.mutations.updateUser);
+  const organizations = useQuery(
+    api.organizations.getAllOrganizations,
+    user?.role === 'superadmin' ? {} : 'skip',
+  );
   const [form, setForm] = useState({
     name: employee.name,
     role: employee.role,
@@ -133,7 +141,6 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
   const canEditRole = user?.role === 'admin' || user?.role === 'superadmin';
   const currentUser = useAuthStore((s) => s.user);
   const isActualAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL;
-  const isSuperadmin = user?.role === 'superadmin';
 
   const effectiveTotalSteps = isSuperadmin ? TOTAL_STEPS + 1 : TOTAL_STEPS;
 
@@ -159,6 +166,16 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
       setErrors({});
     }
   }, [open, employee]);
+
+  // Reset supervisorId when organization changes (can't have supervisor from another org)
+  useEffect(() => {
+    if (isSuperadmin && supervisors && supervisors.length > 0) {
+      const supIds = supervisors.map((s: any) => s._id);
+      if (form.supervisorId && !supIds.includes(form.supervisorId)) {
+        setForm((prev) => ({ ...prev, supervisorId: '' }));
+      }
+    }
+  }, [targetOrgId, isSuperadmin]);
 
   const validateStep = (currentStep: number): boolean => {
     const errs: Record<string, string> = {};
@@ -307,9 +324,6 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
         paidLeaveBalance: form.paidLeaveBalance,
         sickLeaveBalance: form.sickLeaveBalance,
         familyLeaveBalance: form.familyLeaveBalance,
-        ...(isSuperadmin && selectedOrgId
-          ? { organizationId: selectedOrgId as Id<'organizations'> }
-          : {}),
       });
       toast.success(t('modals.editEmployee.updatedSuccess'));
       onClose();

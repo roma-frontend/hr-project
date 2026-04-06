@@ -5243,6 +5243,8 @@
   },
   "employeeProfile": {
     "aiScore": "AI Score",
+    "latestPerformanceRating": "Latest Performance Rating",
+    "efficiencyBreakdown": "Efficiency Breakdown",
     "ratePerformance": "Rate Performance",
     "cancelRating": "Cancel Rating",
     "email": "Email",
@@ -5295,11 +5297,18 @@
   "wizard": {
     "back": "Back",
     "next": "Next",
+    "previous": "Previous",
     "processing": "Processing...",
     "submit": "Submit",
     "cancel": "Cancel",
     "step": "Step",
-    "of": "of"
+    "of": "of",
+    "personalInfo": "Personal Information",
+    "personalInfoDesc": "Basic details about the employee",
+    "workDetails": "Work Details",
+    "workDetailsDesc": "Department and position information",
+    "review": "Review",
+    "reviewDesc": "Confirm the details before saving"
   },
   "faceLogin": {
     "title": "Face ID Login",

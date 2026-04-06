@@ -5294,6 +5294,8 @@
   },
   "employeeProfile": {
     "aiScore": "AI Score",
+    "latestPerformanceRating": "Последняя оценка эффективности",
+    "efficiencyBreakdown": "Детализация эффективности",
     "ratePerformance": "Оценить эффективность",
     "cancelRating": "Отменить оценку",
     "email": "Email",
@@ -5346,11 +5348,18 @@
   "wizard": {
     "back": "Назад",
     "next": "Далее",
+    "previous": "Назад",
     "processing": "Обработка...",
     "submit": "Отправить",
     "cancel": "Отмена",
     "step": "Шаг",
-    "of": "из"
+    "of": "из",
+    "personalInfo": "Личная информация",
+    "personalInfoDesc": "Основные данные о сотруднике",
+    "workDetails": "Рабочие данные",
+    "workDetailsDesc": "Отдел и информация о должности",
+    "review": "Проверка",
+    "reviewDesc": "Подтвердите данные перед сохранением"
   },
   "faceLogin": {
     "title": "Вход по Face ID",
