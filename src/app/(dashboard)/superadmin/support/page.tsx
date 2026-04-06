@@ -389,7 +389,7 @@ function TicketRow({
         {/* Main Info */}
         <div className="flex-1 min-w-0">
           {/* Top Row: Number + Badges */}
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center flex-wrap gap-2 mb-2">
             <span
               className="font-mono text-xs transition-colors duration-200"
               style={{ color: 'var(--text-secondary)' }}

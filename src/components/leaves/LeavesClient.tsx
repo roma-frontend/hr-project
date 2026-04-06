@@ -305,17 +305,19 @@ export function LeavesClient() {
               {/* Only show count for admins, not superadmin */}
               {isAdmin && (
                 <CardTitle className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider">
-                  {isLoading
-                    ? <ShieldLoader />
-                    : `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`}
+                  {isLoading ? (
+                    <ShieldLoader />
+                  ) : (
+                    `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`
+                  )}
                 </CardTitle>
               )}
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-12 text-center text-(--text-muted) text-sm">
-                {t('ui.loadingFromConvex')}
+              <div className="p-12 flex items-center justify-center">
+                <ShieldLoader size="lg" />
               </div>
             ) : filtered.length === 0 ? (
               <div className="p-12 text-center">

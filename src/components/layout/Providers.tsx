@@ -9,11 +9,8 @@ import { useShallow } from 'zustand/shallow';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { usePathname } from 'next/navigation';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
-import { StatusUpdateProvider } from '@/context/StatusUpdateContext';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { ReactQueryProvider } from '@/components/providers/ReactQueryProvider';
-// StatusUpdateProvider is already in root layout (src/app/layout.tsx)
-// import { StatusUpdateProvider } from "@/context/StatusUpdateContext";
 
 function SidebarSkeleton() {
   return (
@@ -195,7 +192,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               ) : isAIChatPage ? (
                 <div className="flex flex-col flex-1 min-h-0 h-full p-0">{children}</div>
               ) : (
-                <div className="p-3 sm:p-4 md:p-6 mx-auto">{children}</div>
+                <div className="p-3 sm:p-4 md:p-6 mx-auto max-w-7xl w-full">{children}</div>
               )}
             </main>
           </div>
