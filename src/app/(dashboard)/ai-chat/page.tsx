@@ -833,7 +833,7 @@ export default function AIChatPage() {
               </motion.div>
             </div>
           ) : (
-            <div className="space-y-4 max-w-4xl mx-auto mt-4 p-4">
+            <div className="space-y-4 max-w-[800px] mx-auto mt-4 px-4 sm:px-6 lg:px-8">
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
@@ -859,7 +859,7 @@ export default function AIChatPage() {
                   </Avatar>
 
                   <div
-                    className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}
+                    className={`flex-1 max-w-[85%] sm:max-w-[75%] ${message.role === 'user' ? 'text-right' : ''}`}
                   >
                     <Card
                       className={`p-4 border-0 shadow-sm ${

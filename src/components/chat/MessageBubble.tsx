@@ -660,7 +660,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
         <div
           className={cn(
-            'flex flex-col max-w-[88%] xs:max-w-[85%] sm:max-w-[75%] md:max-w-[65%] min-w-0',
+            'flex flex-col max-w-[95%] xs:max-w-[90%] sm:max-w-[80%] md:max-w-[65%] min-w-0',
             isOwn ? 'items-end' : 'items-start',
           )}
         >
@@ -692,7 +692,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
           {/* Bubble */}
           <div
-            className="relative rounded-2xl px-3 py-2 text-sm break-words transition-all duration-200 hover:brightness-105"
+            className="relative rounded-2xl px-3 py-2 text-sm break-words transition-all duration-200 hover:brightness-105 max-w-[260px] xs:max-w-[280px] sm:max-w-[320px] md:max-w-[360px] w-full min-w-[180px]"
             style={{
               background: isOwn
                 ? 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)'
@@ -909,7 +909,7 @@ export const MessageBubble = React.memo(function MessageBubble({
           {/* Poll UI */}
           {message.poll && (
             <div
-              className="mt-1 rounded-xl overflow-hidden border w-full max-w-[200px] xs:max-w-[220px] sm:max-w-[240px] animate-fade-in"
+              className="mt-1 rounded-xl overflow-hidden border w-full min-w-[180px] xs:min-w-[200px] sm:min-w-[220px] max-w-[260px] xs:max-w-[280px] sm:max-w-[320px] animate-fade-in"
               style={{ borderColor: 'var(--border)', background: 'var(--background-subtle)' }}
             >
               <div
@@ -917,7 +917,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                 style={{ borderColor: 'var(--border)' }}
               >
                 <p
-                  className="text-xs xs:text-sm font-semibold"
+                  className="text-xs xs:text-sm font-semibold break-words"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   📊 {message.poll.question}
@@ -967,7 +967,7 @@ export const MessageBubble = React.memo(function MessageBubble({
                         />
                         <div className="relative flex items-center justify-between px-2.5 xs:px-3 py-2 min-h-[36px] xs:min-h-[32px]">
                           <span
-                            className="text-[10px] xs:text-[11px] font-medium flex items-center gap-1 truncate"
+                            className="text-[10px] xs:text-[11px] font-medium flex items-center gap-1 truncate max-w-[75%]"
                             style={{ color: isVoted ? 'var(--primary)' : 'var(--text-primary)' }}
                           >
                             {isVoted && (

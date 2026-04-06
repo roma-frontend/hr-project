@@ -525,7 +525,7 @@ export function AdvancedSecuritySettings() {
               </div>
               <CardDescription>{t('settingsAdvancedSecurity.activeSessionsDesc')}</CardDescription>
             </div>
-            <Badge variant="secondary">{activeSessions.length} active</Badge>
+            <Badge variant="secondary">{activeSessions.length} {t('settingsAdvancedSecurity.active') || 'active'}</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -559,7 +559,7 @@ export function AdvancedSecuritySettings() {
               </div>
               {!session.current && (
                 <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">
-                  Sign Out
+                  {t('settingsAdvancedSecurity.signOut')}
                 </Button>
               )}
             </div>
@@ -567,7 +567,7 @@ export function AdvancedSecuritySettings() {
 
           <Button variant="outline" className="w-full" size="sm">
             <AlertTriangle className="w-4 h-4 mr-2" />
-            Sign Out All Other Sessions
+            {t('settingsAdvancedSecurity.signOutAll')}
           </Button>
         </CardContent>
       </Card>
@@ -577,9 +577,9 @@ export function AdvancedSecuritySettings() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-[var(--primary)]" />
-            <CardTitle>Login History</CardTitle>
+            <CardTitle>{t('settingsAdvancedSecurity.loginHistory')}</CardTitle>
           </div>
-          <CardDescription>Recent login attempts and activity</CardDescription>
+          <CardDescription>{t('settingsAdvancedSecurity.loginHistoryDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -606,7 +606,9 @@ export function AdvancedSecuritySettings() {
                     variant={login.status === 'success' ? 'default' : 'destructive'}
                     className="text-xs"
                   >
-                    {login.status === 'success' ? '✓ Success' : '✗ Failed'}
+                    {login.status === 'success'
+                      ? `✓ ${t('settingsAdvancedSecurity.success')}`
+                      : `✗ ${t('settingsAdvancedSecurity.failed')}`}
                   </Badge>
                 </div>
                 {idx < loginHistory.length - 1 && (
@@ -623,18 +625,18 @@ export function AdvancedSecuritySettings() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-[var(--warning)]" />
-            <CardTitle>Security Alerts</CardTitle>
+            <CardTitle>{t('settingsAdvancedSecurity.securityAlerts')}</CardTitle>
           </div>
-          <CardDescription>Get notified of suspicious activity</CardDescription>
+          <CardDescription>{t('settingsAdvancedSecurity.securityAlertsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-lg bg-[var(--surface-hover)] border border-[var(--border)]">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🔔</span>
               <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Login Alerts</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">{t('settingsAdvancedSecurity.loginAlerts')}</p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  Get notified when someone logs into your account
+                  {t('settingsAdvancedSecurity.loginAlertsDesc')}
                 </p>
               </div>
             </div>
@@ -645,10 +647,9 @@ export function AdvancedSecuritySettings() {
             <div className="flex items-start gap-3">
               <span className="text-xl">💡</span>
               <div>
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Security Tip</p>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">{t('settingsAdvancedSecurity.securityTip')}</p>
                 <p className="text-xs text-[var(--text-muted)] mt-1">
-                  Use a strong, unique password and enable 2FA for maximum security. Regularly
-                  review your login history for any suspicious activity.
+                  {t('settingsAdvancedSecurity.securityTipDesc')}
                 </p>
               </div>
             </div>

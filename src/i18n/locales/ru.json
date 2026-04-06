@@ -2747,20 +2747,20 @@
     "emailCode": "Email Code",
     "authenticatorApp": "Authenticator App (Google, Microsoft)",
     "activeSessions": "Активные сессии",
-    "activeSessionsDesc": "Manage devices currently logged into your account",
-    "lastActive": "Last active:",
-    "signOut": "Sign Out",
-    "signOutAll": "Sign Out All Other Sessions",
+    "activeSessionsDesc": "Управление устройствами, вошедшими в вашу учетную запись",
+    "active": "активных",
+    "lastActive": "Последняя активность:",
+    "signOut": "Выйти",
+    "signOutAll": "Выйти из всех других сессий",
     "loginHistory": "История входов",
-    "loginHistoryDesc": "Recent login attempts and activity",
-    "success": "Success",
-    "failed": "Failed",
-    "securityAlerts": "Security Alerts",
-    "securityAlertsDesc": "Get notified of suspicious activity",
-    "loginAlerts": "Login Alerts",
-    "loginAlertsDesc": "Get notified when someone logs into your account",
-    "securityTip": "Security Tip",
-    "securityTipDesc": "Use a strong, unique password and enable 2FA for maximum security. Never share your credentials with anyone."
+    "loginHistoryDesc": "Последние попытки входа в систему",
+    "success": "Успешно",
+    "failed": "Неудачно",
+    "securityAlerts": "Оповещения безопасности",
+    "securityAlertsDesc": "Получать уведомления о подозрительной активности",
+    "loginAlerts": "Оповещения о входах",
+    "loginAlertsDesc": "Получать уведомления, когда кто-то входит в вашу учетную запись",
+    "securityTip": "Совет по безопасности",
   },
   "tasksClient": {
     "list": "Список",
@@ -3722,7 +3722,19 @@
       "completed": "Завершено",
       "cancelled": "Отменено"
     },
-    "priority": "Приоритет"
+    "priority": "Приоритет",
+    "priorityLabels": {
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий",
+      "urgent": "Срочный"
+    }
+  },
+  "tasks.priority": {
+    "high": "Высокий",
+    "low": "Низкий",
+    "medium": "Средний",
+    "urgent": "Срочный"
   },
   "superadminSecurity": {
     "securityControl": "Центр управления безопасностью",
@@ -5293,7 +5305,7 @@
     "complete": "✓ Завершить"
   },
   "employeeProfile": {
-    "aiScore": "AI Score",
+    "aiScore": "Оценка AI",
     "latestPerformanceRating": "Последняя оценка эффективности",
     "efficiencyBreakdown": "Детализация эффективности",
     "ratePerformance": "Оценить эффективность",
@@ -5435,3 +5447,4 @@
     "awaitingReview": "ожидают проверки"
   }
 }
+  

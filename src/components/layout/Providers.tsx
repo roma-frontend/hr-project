@@ -187,10 +187,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
             >
               {isChatPage ? (
                 <div className="flex flex-col flex-1 min-h-0 h-full p-0 sm:p-3 md:p-4">
-                  {children}
+                  <div className="flex flex-col flex-1 min-h-0 h-full mx-auto w-full max-w-[1400px]">
+                    {children}
+                  </div>
                 </div>
               ) : isAIChatPage ? (
-                <div className="flex flex-col flex-1 min-h-0 h-full p-0">{children}</div>
+                <div className="flex flex-col flex-1 min-h-0 h-full p-0">
+                  <div className="flex flex-col flex-1 min-h-0 h-full mx-auto w-full max-w-[1400px]">
+                    {children}
+                  </div>
+                </div>
               ) : (
                 <div className="p-3 sm:p-4 md:p-6 mx-auto max-w-7xl w-full">{children}</div>
               )}
