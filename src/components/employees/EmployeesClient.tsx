@@ -134,20 +134,9 @@ export function EmployeesClient() {
       : 'skip',
   );
 
-  console.log('[EmployeesClient] allUsersDirect:', {
-    length: allUsersDirect?.length,
-    value: allUsersDirect,
-    mounted,
-    hasUserId: !!user?.id,
-    useOrgFilter,
-    selectedOrgId,
-  });
-
   // Use direct load for now
   React.useEffect(() => {
-    console.log('[EmployeesClient] useEffect allUsersDirect:', allUsersDirect?.length);
     if (allUsersDirect && allUsersDirect.length > 0) {
-      console.log('[EmployeesClient] Setting allUsers:', allUsersDirect.length);
       setAllUsers(allUsersDirect);
       setHasMore(false);
     }
@@ -182,49 +171,18 @@ export function EmployeesClient() {
 
   // Check if current user can delete a specific employee
   const canDeleteEmployee = (emp: any) => {
-    if (!canManage) {
-      console.log(`[canDelete] ${emp.name}: false - not a manager`);
-      return false;
-    }
+    if (!canManage) return false;
+    if (emp._id === user?.id) return false;
 
-    // Cannot delete yourself
-    if (emp._id === user?.id) {
-      console.log(`[canDelete] ${emp.name}: false - cannot delete self`);
-      return false;
-    }
-
-    // Superadmin (by role OR email) can delete anyone (except themselves)
     const isSuperadminUser =
       isSuperadmin || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
     const isSuperadminEmployee =
       emp.role === 'superadmin' || emp.email?.toLowerCase() === 'romangulanyan@gmail.com';
 
-    console.log(`[canDelete] ${emp.name}:`, {
-      userIsSuperadmin: isSuperadminUser,
-      empIsSuperadmin: isSuperadminEmployee,
-      empRole: emp.role,
-      empEmail: emp.email,
-    });
+    if (isSuperadminUser) return true;
+    if (isSuperadminEmployee) return false;
+    if (emp.role === 'admin') return false;
 
-    if (isSuperadminUser) {
-      console.log(`[canDelete] ${emp.name}: true - you are superadmin`);
-      return true;
-    }
-
-    // Non-superadmin cannot delete superadmin (by role OR email)
-    if (isSuperadminEmployee) {
-      console.log(`[canDelete] ${emp.name}: false - target is superadmin`);
-      return false;
-    }
-
-    // Non-superadmin cannot delete other admins
-    if (emp.role === 'admin') {
-      console.log(`[canDelete] ${emp.name}: false - target is admin`);
-      return false;
-    }
-
-    // Admin/supervisor can delete employees and supervisors
-    console.log(`[canDelete] ${emp.name}: true - can delete employee/supervisor`);
     return true;
   };
 
