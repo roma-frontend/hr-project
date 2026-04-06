@@ -120,6 +120,14 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en-US': '/en',
+      'ru-RU': '/ru',
+      'hy-AM': '/hy',
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon-animated.svg?v=3', type: 'image/svg+xml' },
