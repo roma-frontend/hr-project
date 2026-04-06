@@ -86,7 +86,7 @@ export class ValidationError extends UserError {
   ) {
     super(message);
     this.name = 'ValidationError';
-    this.code = 'VALIDATION_ERROR';
+    Object.defineProperty(this, 'code', { value: 'VALIDATION_ERROR', enumerable: true });
     this.fieldErrors = fieldErrors;
   }
 }

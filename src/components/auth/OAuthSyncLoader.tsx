@@ -43,6 +43,7 @@ export function OAuthSyncLoader() {
         setIsSyncing(false);
       }, 300);
     }
+    return undefined;
   }, [status, isAuthenticated, pathname]);
 
   // Show loader during sync

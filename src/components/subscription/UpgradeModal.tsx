@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -291,6 +292,7 @@ export function UpgradeModal({
   featureDescription,
   recommendedPlan = 'professional',
 }: UpgradeModalProps) {
+  const { t } = useTranslation();
   const { plan: currentPlan } = useSubscription();
 
   return (
@@ -309,10 +311,10 @@ export function UpgradeModal({
             </div>
             <div>
               <DialogTitle className="text-base font-bold leading-tight">
-                {featureTitle ? `Unlock ${featureTitle}` : 'Upgrade your plan'}
+                {featureTitle ? t('billing.unlockFeature', { feature: featureTitle }) : t('billing.upgradeYourPlan')}
               </DialogTitle>
               <DialogDescription className="text-xs mt-0.5">
-                {featureDescription ?? 'Choose a plan to unlock this feature and more.'}
+                {featureDescription ?? t('billing.upgradeDescription')}
               </DialogDescription>
             </div>
           </div>

@@ -229,7 +229,7 @@ function calculatePerformanceScore(metrics: PerformanceMetrics): number {
   return Math.round((kpi + completion + deadline) / 3);
 }
 
-function calculateAttendanceScore(metrics: PerformanceMetrics | null, leaves: LeaveRequest[], timeRecords?: TimeRecord[]): number {
+function calculateAttendanceScore(metrics: PerformanceMetrics | null, _leaves: LeaveRequest[], timeRecords?: TimeRecord[]): number {
   // If we have real time tracking data, use it
   if (timeRecords && timeRecords.length > 0) {
     const totalDays = timeRecords.length;

@@ -31,7 +31,7 @@ interface State {
  * ```
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = {
+  override state: State = {
     hasError: false,
     error: null,
     errorInfo: null,

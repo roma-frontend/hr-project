@@ -77,14 +77,17 @@ export function SubscriptionPlanCard() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const featureList = [
-    { label: 'Advanced Analytics', enabled: features.advancedAnalytics },
-    { label: 'Reports & CSV Export', enabled: features.exportReports },
-    { label: 'AI Leave Assistant', enabled: features.aiChat },
-    { label: 'SLA Management', enabled: features.slaSettings },
-    { label: 'Calendar Sync', enabled: features.calendarSync },
-    { label: 'Integrations', enabled: features.integrations },
+    { label: t('billing.advancedAnalytics'), enabled: features.advancedAnalytics },
+    { label: t('billing.reportsCsvExport'), enabled: features.exportReports },
+    { label: t('billing.aiLeaveAssistant'), enabled: features.aiChat },
+    { label: t('billing.slaManagement'), enabled: features.slaSettings },
+    { label: t('billing.calendarSync'), enabled: features.calendarSync },
+    { label: t('billing.integrations'), enabled: features.integrations },
     {
-      label: `Up to ${features.maxEmployees === Infinity ? '∞' : features.maxEmployees} employees`,
+      label:
+        features.maxEmployees === Infinity
+          ? t('billing.unlimitedEmployees')
+          : t('billing.upToEmployees', { count: features.maxEmployees }),
       enabled: true,
     },
   ];
@@ -137,12 +140,13 @@ export function SubscriptionPlanCard() {
               {isTrialing && trialDaysLeft !== null && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm">
                   <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    <strong>
-                      {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}
-                    </strong>{' '}
-                    remaining in your free trial
-                  </span>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: t('billing.trialDaysRemaining', {
+                        days: trialDaysLeft,
+                      }),
+                    }}
+                  />
                 </div>
               )}
 
@@ -150,9 +154,7 @@ export function SubscriptionPlanCard() {
               {isPastDue && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    Payment failed. Please update your billing info to keep your plan active.
-                  </span>
+                  <span>{t('billing.paymentFailed')}</span>
                 </div>
               )}
 
@@ -160,9 +162,11 @@ export function SubscriptionPlanCard() {
               {subscription?.cancelAtPeriodEnd && periodEndStr && (
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-sm">
                   <RefreshCw className="w-4 h-4 flex-shrink-0" />
-                  <span>
-                    Cancels on <strong>{periodEndStr}</strong>. You&apos;ll keep access until then.
-                  </span>
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: t('billing.cancelsOn', { date: periodEndStr }),
+                    }}
+                  />
                 </div>
               )}
 
@@ -199,7 +203,7 @@ export function SubscriptionPlanCard() {
                     className="flex items-center gap-2 text-sm font-semibold text-[var(--primary)] hover:underline"
                   >
                     <Zap className="w-4 h-4" />
-                    Upgrade your plan
+                    {t('billing.upgradeYourPlan')}
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

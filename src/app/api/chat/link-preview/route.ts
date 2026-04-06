@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
         const m = html.match(re);
         if (m?.[1]) return m[1].trim();
       }
+      return undefined;
     };
 
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);

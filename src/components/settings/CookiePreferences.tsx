@@ -31,36 +31,33 @@ interface CookieCategory {
   color: string;
 }
 
-const cookieCategories: CookieCategory[] = [
+const cookieCategories: (category: ReturnType<typeof useTranslation>['t']) => CookieCategory[] = (t) => [
   {
     id: 'necessary',
-    name: 'Essential Cookies',
-    description:
-      'Required for core functionality like authentication, security, and session management. These cannot be disabled.',
+    name: t('cookies.essentialCookies'),
+    description: t('cookies.essentialDesc'),
     icon: Shield,
     required: true,
     color: 'text-green-500',
   },
   {
     id: 'analytics',
-    name: 'Analytics Cookies',
-    description:
-      'Help us understand how you use our platform to improve performance and user experience.',
+    name: t('cookies.analyticsCookies'),
+    description: t('cookies.analyticsDesc'),
     icon: BarChart3,
     color: 'text-blue-500',
   },
   {
     id: 'marketing',
-    name: 'Marketing Cookies',
-    description: 'Used to deliver relevant advertisements and measure campaign effectiveness.',
+    name: t('cookies.marketingCookies'),
+    description: t('cookies.marketingDesc'),
     icon: Target,
     color: 'text-orange-500',
   },
   {
     id: 'preferences',
-    name: 'Preference Cookies',
-    description:
-      'Remember your settings like theme, language, and layout preferences for a personalized experience.',
+    name: t('cookies.preferenceCookies'),
+    description: t('cookies.preferenceDesc'),
     icon: Palette,
     color: 'text-orange-500',
   },
@@ -71,6 +68,8 @@ export function CookiePreferences() {
   const { hasConsent, preferences, savePreferences, resetConsent } = useCookieConsent();
   const [localPreferences, setLocalPreferences] = useState<CookiePrefs>(preferences);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const categories = cookieCategories(t);
 
   useEffect(() => {
     setLocalPreferences(preferences);
@@ -116,7 +115,7 @@ export function CookiePreferences() {
   };
 
   const handleReset = () => {
-    if (confirm('This will reset your cookie consent and show the banner again. Continue?')) {
+    if (confirm(t('cookies.resetConfirm') || 'This will reset your cookie consent and show the banner again. Continue?')) {
       resetConsent();
       toast.info(t('toasts.cookieConsentReset'));
     }
@@ -152,7 +151,7 @@ export function CookiePreferences() {
             >
               {t('cookies.privacyPolicy')}
             </Link>
-            {' and '}
+            {t('cookies.and')}
             <Link
               href="/terms"
               target="_blank"
@@ -166,7 +165,7 @@ export function CookiePreferences() {
 
         {/* Cookie Categories */}
         <div className="space-y-3">
-          {cookieCategories.map((category) => {
+          {categories.map((category) => {
             const Icon = category.icon;
             const isEnabled = localPreferences[category.id];
 
@@ -224,10 +223,10 @@ export function CookiePreferences() {
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2 pt-2">
           <Button variant="outline" size="sm" onClick={handleAcceptAll} className="text-xs">
-            Accept All
+            {t('cookies.acceptAll')}
           </Button>
           <Button variant="outline" size="sm" onClick={handleRejectAll} className="text-xs">
-            Reject Optional
+            {t('cookies.rejectOptional')}
           </Button>
           <Button
             variant="ghost"
@@ -236,7 +235,7 @@ export function CookiePreferences() {
             className="text-xs text-[var(--text-muted)]"
           >
             <RotateCcw className="w-3 h-3 mr-1" />
-            Reset Consent
+            {t('cookies.resetConsent')}
           </Button>
         </div>
 
@@ -245,7 +244,7 @@ export function CookiePreferences() {
           <div className="pt-2 border-t border-[var(--border)]">
             <Button onClick={handleSave} className="w-full" size="sm">
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              Save Cookie Preferences
+              {t('cookies.savePreferences')}
             </Button>
           </div>
         )}

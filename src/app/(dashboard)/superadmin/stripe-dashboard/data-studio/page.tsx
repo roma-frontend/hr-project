@@ -125,8 +125,11 @@ export default function StripeSupportStudio() {
     });
   }, [data, searchQuery]);
 
-  const handleExport = () => {
-    if (!filteredData.length) return toast.error('Нет данных для экспорта');
+  const handleExport = (): void => {
+    if (!filteredData.length) {
+      toast.error('Нет данных для экспорта');
+      return;
+    }
 
     const headers = ['ID', 'Customer', 'Amount', 'Status', 'Date', 'Card', 'Description'];
     const csvContent = [

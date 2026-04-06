@@ -143,6 +143,7 @@ export function MotionDiv({
       const timer = setTimeout(onAnimationComplete, (transition.duration || 0.3) * 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [exiting, exitObj, onAnimationComplete, transition.duration]);
 
   // Handle layout animation (simplified - just applies transition)
