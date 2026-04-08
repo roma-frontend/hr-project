@@ -120,7 +120,7 @@ const navItems = [
     href: '/superadmin/automation',
     labelKey: 'nav.automation',
     icon: Cpu,
-    roles: ['superadmin', 'admin', 'supervisor'],
+    roles: ['superadmin'],
   },
   {
     href: '/help',

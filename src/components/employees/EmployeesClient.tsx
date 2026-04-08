@@ -291,15 +291,13 @@ export function EmployeesClient() {
           </p>
         </div>
         {canManage && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-lg"
             style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
           >
             <Plus className="w-5 h-5" /> {t('employees.addEmployee')}
-          </motion.button>
+          </button>
         )}
       </motion.div>
 

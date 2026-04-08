@@ -24,15 +24,43 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+// Isolate Convex API refs to avoid infinite type instantiation
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getStatsApi: any = api.automation.getStats;
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getRecentTasksApi: any = api.automation.getRecentTasks;
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getActiveWorkflowsApi: any = api.automation.getActiveWorkflows;
+
 export default function AutomationPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [isRunning, setIsRunning] = useState(false);
 
+  // Only superadmin can access
+  if (user?.role !== 'superadmin') {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
+            {t('common.accessDenied') || 'Access Denied'}
+          </h2>
+          <p className="text-[var(--text-muted)]">
+            {t('common.onlySuperadminAccess') || 'Only superadmin can access this page'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch automation stats
-  const stats = useQuery(api.automation.getStats);
-  const recentTasks = useQuery(api.automation.getRecentTasks, {});
-  const activeWorkflows = useQuery(api.automation.getActiveWorkflows);
+  const stats = useQuery(getStatsApi);
+  const recentTasks = useQuery(getRecentTasksApi, {});
+  const activeWorkflows = useQuery(getActiveWorkflowsApi);
 
   // Mutations
   const runAutomationAction = useAction(api.automationActions.runAutomation);
@@ -190,7 +218,7 @@ export default function AutomationPage() {
                           : 'secondary'
                     }
                   >
-                    {task.status}
+                    {String(t(`automation.status.${task.status}`, task.status))}
                   </Badge>
                 </div>
               ))}

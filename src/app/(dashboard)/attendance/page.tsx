@@ -19,6 +19,20 @@ import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
+// Isolate Convex API refs to avoid infinite type instantiation
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getTodaySummaryApi: any = api.timeTracking.getTodayAttendanceSummary;
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getCurrentlyAtWorkApi: any = api.timeTracking.getCurrentlyAtWork;
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getTodayAllAttendanceApi: any = api.timeTracking.getTodayAttendance;
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getNeedsRatingApi: any = api.timeTracking.getEmployeesNeedingRating;
+
 type Tab = 'today' | 'all' | 'rating';
 
 export default function AttendancePage() {
@@ -46,25 +60,25 @@ export default function AttendancePage() {
   // Admin/Supervisor: fetch today's attendance summary and employees needing rating
   // Use user?.id as dependency so queries only run after localStorage hydration
   const todaySummary = useQuery(
-    api.timeTracking.getTodayAttendanceSummary,
+    getTodaySummaryApi,
     user?.id && (isAdminOrSupervisor || isSuperadmin)
       ? { adminId: user.id as Id<'users'> }
       : 'skip',
   );
   const currentlyAtWork = useQuery(
-    api.timeTracking.getCurrentlyAtWork,
+    getCurrentlyAtWorkApi,
     user?.id && (isAdminOrSupervisor || isSuperadmin)
       ? { adminId: user.id as Id<'users'> }
       : 'skip',
   );
   const todayAllAttendance = useQuery(
-    api.timeTracking.getTodayAllAttendance,
+    getTodayAllAttendanceApi,
     user?.id && (isAdminOrSupervisor || isSuperadmin)
       ? { adminId: user.id as Id<'users'> }
       : 'skip',
   );
   const needsRating = useQuery(
-    api.supervisorRatings.getEmployeesNeedingRating,
+    getNeedsRatingApi,
     user?.id && (isAdminOrSupervisor || isSuperadmin)
       ? { supervisorId: user.id as Id<'users'> }
       : 'skip',
@@ -178,7 +192,7 @@ export default function AttendancePage() {
               <CardContent className="p-5 text-center">
                 <p className="text-3xl font-bold text-green-500">{todaySummary.checkedIn}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  At Work Now
+                  {t('common.atWorkNow', 'At Work Now')}
                 </p>
               </CardContent>
             </Card>
@@ -186,7 +200,7 @@ export default function AttendancePage() {
               <CardContent className="p-5 text-center">
                 <p className="text-3xl font-bold text-blue-500">{todaySummary.checkedOut}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Left Today
+                  {t('common.leftToday', 'Left Today')}
                 </p>
               </CardContent>
             </Card>
@@ -202,7 +216,7 @@ export default function AttendancePage() {
               <CardContent className="p-5 text-center">
                 <p className="text-3xl font-bold text-orange-500">{todaySummary.late}</p>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Late Arrivals
+                  {t('common.lateArrivals', 'Late Arrivals')}
                 </p>
               </CardContent>
             </Card>
@@ -224,7 +238,7 @@ export default function AttendancePage() {
                   month: 'long',
                 })}
                 <Badge className="ml-auto bg-blue-500/10 text-blue-500 border-blue-500/30">
-                  {todayAllAttendance.length} recorded
+                  {todayAllAttendance.length} {t('common.recorded', 'recorded')}
                 </Badge>
               </CardTitle>
             </CardHeader>

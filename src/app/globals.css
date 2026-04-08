@@ -675,24 +675,6 @@ body {
   animation: spin-slow 20s linear infinite;
 }
 
-/* Pulsing dot */
-@keyframes pulse-dot {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-
-  50% {
-    transform: scale(1.4);
-    opacity: 1;
-  }
-}
-
-.pulse-dot {
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
 /* Badge shimmer sweep */
 @keyframes badge-shimmer {
   0% {
@@ -1265,29 +1247,15 @@ input[type='date']:focus {
   transform: translateZ(0);
 }
 
-/* Fade-in animation - replaces framer-motion for bundle size optimization */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+/* ═══════════════════════════════════════════════════════════════
+   Animation Classes (used by ShieldLoader and other components)
+   ═══════════════════════════════════════════════════════════════ */
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* Slow spin animation for loader — defined once */
+/* Slow spin animation for loader */
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
@@ -1297,7 +1265,25 @@ input[type='date']:focus {
   animation: spin-slow 1.5s linear infinite;
 }
 
-/* Pulse dot animation — single definition kept above */
+/* Pulse dot animation */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 1; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Additional Animation Utilities
@@ -1714,17 +1700,13 @@ html.dark .quick-action-slate:hover {
 }
 
 /* MessageBubble: fade-in animation */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes bubble-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out both;
+.animate-bubble-fade-in {
+  animation: bubble-fade-in 0.2s ease-out both;
 }
 
 /* Utility: hide scrollbar */

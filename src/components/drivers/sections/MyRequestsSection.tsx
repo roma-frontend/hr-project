@@ -61,6 +61,16 @@ interface MyRequestsSectionProps {
   onRequestDriver: () => void;
 }
 
+const statusLabel = (status: string, t: (key: string, fallback: string) => string) => {
+  const labels: Record<string, string> = {
+    pending: t('driver.status.pending', 'Pending'),
+    approved: t('driver.status.approved', 'Approved'),
+    completed: t('driver.status.completed', 'Completed'),
+    cancelled: t('driver.status.cancelled', 'Cancelled'),
+  };
+  return labels[status] || status;
+};
+
 const RequestItem = memo(function RequestItem({
   request,
   onViewDetails,
@@ -76,6 +86,7 @@ const RequestItem = memo(function RequestItem({
   onDelete?: () => void;
   onCancel?: () => void;
 }) {
+  const { t } = useTranslation();
   const statusColors: Record<string, string> = {
     completed: 'bg-green-500',
     pending: 'bg-amber-500',
@@ -110,7 +121,7 @@ const RequestItem = memo(function RequestItem({
                 }
                 className="text-xs"
               >
-                {request.status}
+                {statusLabel(request.status, t)}
               </Badge>
             </div>
             {request.startTime && (

@@ -122,11 +122,11 @@ export function SupervisorRatingForm({
 
   return (
     <Card className="w-full max-w-3xl">
-      <CardHeader className="bg-gradient-to-r from-sky-400 to-pink-500 text-white">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-white">Performance Rating</CardTitle>
-            <CardDescription className="text-white/90">
+            <CardTitle>Performance Rating</CardTitle>
+            <CardDescription>
               Evaluate {employeeName}'s performance
             </CardDescription>
           </div>
@@ -187,9 +187,9 @@ export function SupervisorRatingForm({
         </div>
 
         {/* Average Score */}
-        <div className="p-4 rounded-lg bg-gradient-to-r from-sky-50 to-pink-50 dark:from-sky-950 dark:to-pink-950">
+        <div className="p-4 rounded-lg bg-[var(--input)]">
           <div className="flex items-center justify-between">
-            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+            <span className="font-medium text-black/70 dark:text-white/70">
               Overall Average
             </span>
             <div className="flex items-center gap-2">

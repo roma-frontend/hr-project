@@ -282,7 +282,9 @@
     "review": "Վերանայում",
     "save": "Save Changes",
     "or": "կամ",
-    "close": "Փակել"
+    "close": "Փակել",
+    "actions": "Գործողություններ",
+    "recorded": "գրանցված"
   },
   "nav": {
     "home": "Գլխավոր",
@@ -2230,7 +2232,11 @@
     "saveChanges": "Պահպանել փոփոխությունները",
     "saveAllChanges": "Պահպանել բոլոր փոփոխությունները",
     "discardChanges": "Հրաժարվել փոփոխություններից",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "allCaughtUp": "Ամեն ինչ պատրաստ է",
+    "noPendingApprovals": "Չկան սպասվող հաստատումներ",
+    "userApprovals": "Օգտատերերի հաստատում",
+    "approvalsPageDescription": "Դիտարկեք և հաստատեք սպասվող գրանցումները"
   },
   "reportsAnalytics": {
     "reportsAnalytics": "Հաշվետվություններ և վերլուծություն",

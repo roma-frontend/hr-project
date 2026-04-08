@@ -52,7 +52,7 @@ import { Input } from '../ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 // Isolate Convex API ref to avoid infinite type instantiation
-// @ts-ignore TS2589
+// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getDriverScheduleApi: any = api.drivers.queries.getDriverSchedule;
 
