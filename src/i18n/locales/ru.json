@@ -284,7 +284,9 @@
     "or": "или",
     "close": "Закрыть",
     "actions": "Действия",
-    "recorded": "записей"
+    "recorded": "записей",
+    "cancel": "Отмена",
+    "employee": "Сотрудник"
   },
   "nav": {
     "home": "Главная",
@@ -5775,5 +5777,24 @@
     "request": "запрос",
     "requests": "запросов",
     "awaitingReview": "ожидают проверки"
+  },
+  "rating": {
+    "performanceRating": "Оценка эффективности",
+    "evaluatePerformance": "Оцените эффективность сотрудника {{name}}",
+    "ratePerformance": "Оценка (1-5)",
+    "qualityOfWorkDesc": "Точность, тщательность и внимание к деталям",
+    "efficiencyDesc": "Скорость и продуктивность выполнения задач",
+    "teamworkDesc": "Сотрудничество и поддержка коллег",
+    "initiativeDesc": "Инициативность и самомотивация",
+    "communicationDesc": "Ясность и эффективность в общении",
+    "reliabilityDesc": "Надёжность и последовательность",
+    "overallAverage": "Средний балл",
+    "writtenFeedback": "Письменный отзыв (необязательно)",
+    "submitRating": "Отправить оценку",
+    "submitting": "Отправка...",
+    "submittedSuccess": "Оценка для {{name}} отправлена!",
+    "submitFailed": "Не удалось отправить оценку",
+    "lastRated": "Последняя оценка",
+    "rate": "Оценить"
   }
 }

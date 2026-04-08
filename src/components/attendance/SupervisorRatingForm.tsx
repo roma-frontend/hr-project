@@ -40,32 +40,32 @@ export function SupervisorRatingForm({
     {
       key: 'qualityOfWork',
       label: t('dashboard.qualityOfWork'),
-      description: 'Accuracy, thoroughness, and attention to detail',
+      description: t('rating.qualityOfWorkDesc', 'Accuracy, thoroughness, and attention to detail'),
     },
     {
       key: 'efficiency',
       label: t('dashboard.efficiency'),
-      description: 'Speed and productivity in completing tasks',
+      description: t('rating.efficiencyDesc', 'Speed and productivity in completing tasks'),
     },
     {
       key: 'teamwork',
       label: t('dashboard.teamwork'),
-      description: 'Collaboration and support for colleagues',
+      description: t('rating.teamworkDesc', 'Collaboration and support for colleagues'),
     },
     {
       key: 'initiative',
       label: t('dashboard.initiative'),
-      description: 'Proactiveness and self-motivation',
+      description: t('rating.initiativeDesc', 'Proactiveness and self-motivation'),
     },
     {
       key: 'communication',
       label: t('dashboard.communication'),
-      description: 'Clarity and effectiveness in communication',
+      description: t('rating.communicationDesc', 'Clarity and effectiveness in communication'),
     },
     {
       key: 'reliability',
       label: t('dashboard.reliability'),
-      description: 'Dependability and consistency',
+      description: t('rating.reliabilityDesc', 'Dependability and consistency'),
     },
   ];
   const { user } = useAuthStore();
@@ -108,11 +108,11 @@ export function SupervisorRatingForm({
         generalComments: generalComments || undefined,
       });
 
-      toast.success(`Rating submitted for ${employeeName}! 🌟`);
+      toast.success(t('rating.submittedSuccess', 'Rating submitted for {{name}}!', { name: employeeName }));
       onSuccess?.();
       onClose?.();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit rating');
+      toast.error(error.message || t('rating.submitFailed', 'Failed to submit rating'));
     } finally {
       setIsSubmitting(false);
     }
@@ -125,9 +125,9 @@ export function SupervisorRatingForm({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Performance Rating</CardTitle>
+            <CardTitle>{t('rating.performanceRating', 'Performance Rating')}</CardTitle>
             <CardDescription>
-              Evaluate {employeeName}'s performance
+              {t('rating.evaluatePerformance', "Evaluate {{name}}'s performance", { name: employeeName })}
             </CardDescription>
           </div>
           {onClose && (
@@ -147,7 +147,7 @@ export function SupervisorRatingForm({
         {/* Rating Categories */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-            Rate Performance (1-5)
+            {t('rating.ratePerformance', 'Rate Performance (1-5)')}
           </h3>
 
           {categories.map((category) => (
@@ -190,7 +190,7 @@ export function SupervisorRatingForm({
         <div className="p-4 rounded-lg bg-[var(--input)]">
           <div className="flex items-center justify-between">
             <span className="font-medium text-black/70 dark:text-white/70">
-              Overall Average
+              {t('rating.overallAverage', 'Overall Average')}
             </span>
             <div className="flex items-center gap-2">
               <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
@@ -205,13 +205,13 @@ export function SupervisorRatingForm({
         {/* Text Feedback */}
         <div className="space-y-4">
           <h3 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-            Written Feedback (Optional)
+            {t('rating.writtenFeedback', 'Written Feedback (Optional)')}
           </h3>
 
           <div className="space-y-2">
             <Label>{t('labels.strengths')}</Label>
             <Textarea
-              placeholder={t('placeholders.whatDoesWell')}
+              placeholder={t('placeholders.whatDoesWell', 'What does this employee do well?')}
               value={strengths}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setStrengths(e.target.value)}
               rows={2}
@@ -221,7 +221,7 @@ export function SupervisorRatingForm({
           <div className="space-y-2">
             <Label>{t('labels.areasForImprovement')}</Label>
             <Textarea
-              placeholder={t('placeholders.canImprove')}
+              placeholder={t('placeholders.canImprove', 'What areas can be improved?')}
               value={areasForImprovement}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setAreasForImprovement(e.target.value)
@@ -233,7 +233,7 @@ export function SupervisorRatingForm({
           <div className="space-y-2">
             <Label>{t('labels.generalComments')}</Label>
             <Textarea
-              placeholder={t('placeholders.additionalFeedbackNotes')}
+              placeholder={t('placeholders.additionalFeedbackNotes', 'Any additional feedback or notes...')}
               value={generalComments}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setGeneralComments(e.target.value)
@@ -247,20 +247,21 @@ export function SupervisorRatingForm({
         <div className="flex gap-3 pt-4">
           {onClose && (
             <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
           )}
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 bg-gradient-to-r from-sky-400 to-pink-500 hover:from-sky-500 hover:to-pink-600 text-white"
+            className="flex-1"
+            variant="info"
           >
             {isSubmitting ? (
-              'Submitting...'
+              t('rating.submitting', 'Submitting...')
             ) : (
               <>
                 <Send className="w-4 h-4 mr-2" />
-                Submit Rating
+                {t('rating.submitRating', 'Submit Rating')}
               </>
             )}
           </Button>

@@ -571,7 +571,7 @@ export default function AttendancePage() {
                             {employee.name}
                           </p>
                           <p className="text-xs text-[var(--text-muted)]">
-                            {employee.position ?? employee.department ?? 'Employee'} · Last rated:{' '}
+                            {employee.position ?? employee.department ?? t('common.employee', 'Employee')} · {t('rating.lastRated', 'Last rated')}:{' '}
                             {lastRated}
                           </p>
                         </div>
@@ -585,7 +585,7 @@ export default function AttendancePage() {
                         }
                       >
                         <UserCheck className="w-4 h-4 mr-1" />
-                        Rate
+                        {t('rating.rate', 'Rate')}
                       </Button>
                     </div>
                   ))}

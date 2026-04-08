@@ -300,20 +300,6 @@ export function LeavesClient() {
         transition={{ delay: 0.1 }}
       >
         <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              {/* Only show count for admins, not superadmin */}
-              {isAdmin && (
-                <CardTitle className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider">
-                  {isLoading ? (
-                    <ShieldLoader />
-                  ) : (
-                    `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`
-                  )}
-                </CardTitle>
-              )}
-            </div>
-          </CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
               <div className="p-12 flex items-center justify-center">

@@ -135,20 +135,20 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                     )}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold" style={{ color: 'var(--text-on-primary)' }}>
+                    <h2 className="text-xl font-bold">
                       {employee.name}
                     </h2>
                     {employee.position && (
-                      <p className="text-blue-200 text-sm">{employee.position}</p>
+                      <p className="text-sm">{employee.position}</p>
                     )}
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       {employee.department && (
-                        <span className="flex items-center gap-1 text-xs text-blue-200">
+                        <span className="flex items-center gap-1 text-xs">
                           <Building2 className="w-3 h-3" /> {employee.department}
                         </span>
                       )}
                       {employee.supervisorName && (
-                        <span className="flex items-center gap-1 text-xs text-blue-200">
+                        <span className="flex items-center gap-1 text-xs">
                           <UserCog className="w-3 h-3" /> {employee.supervisorName}
                         </span>
                       )}

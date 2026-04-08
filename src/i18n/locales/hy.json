@@ -284,7 +284,9 @@
     "or": "կամ",
     "close": "Փակել",
     "actions": "Գործողություններ",
-    "recorded": "գրանցված"
+    "recorded": "գրանցված",
+    "cancel": "Չեղարկել",
+    "employee": "Աշխատակից"
   },
   "nav": {
     "home": "Գլխավոր",
@@ -5532,5 +5534,24 @@
     "request": "request",
     "requests": "requests",
     "awaitingReview": "awaiting review"
+  },
+  "rating": {
+    "performanceRating": "Արդյունավետության գնահատում",
+    "evaluatePerformance": "Գնահատեք {{name}}-ի արդյունավետությունը",
+    "ratePerformance": "Գնահատում (1-5)",
+    "qualityOfWorkDesc": "Ճշգրտություն, մանրակրկիտ աշխատանք և ուշադրություն մանրուքներին",
+    "efficiencyDesc": "Արագություն և արտադրողականություն առաջադրանքները կատարելիս",
+    "teamworkDesc": "Համագործակցություն և գործընկերների աջակցություն",
+    "initiativeDesc": "Նախաձեռնություն և ինքնամոտիվացիա",
+    "communicationDesc": "Հաղորդակցման պարզություն և արդյունավետություն",
+    "reliabilityDesc": "Հուսալիություն և հետևողականություն",
+    "overallAverage": "Միջին գնահատական",
+    "writtenFeedback": "Գրավոր կարծիք (ըստ ցանկության)",
+    "submitRating": "Ուղարկել գնահատումը",
+    "submitting": "Ուղարկում...",
+    "submittedSuccess": "Գնահատումը {{name}}-ի համար ուղարկված է!",
+    "submitFailed": "Չհաջողվեց ուղարկել գնահատումը",
+    "lastRated": "Վերջին գնահատումը",
+    "rate": "Գնահատել"
   }
 }

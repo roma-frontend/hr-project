@@ -282,7 +282,9 @@
     "review": "Review",
     "close": "Close",
     "actions": "Actions",
-    "recorded": "recorded"
+    "recorded": "recorded",
+    "cancel": "Cancel",
+    "employee": "Employee"
   },
   "nav": {
     "home": "Home",
@@ -5551,5 +5553,24 @@
     "request": "request",
     "requests": "requests",
     "awaitingReview": "awaiting review"
+  },
+  "rating": {
+    "performanceRating": "Performance Rating",
+    "evaluatePerformance": "Evaluate {{name}}'s performance",
+    "ratePerformance": "Rate Performance (1-5)",
+    "qualityOfWorkDesc": "Accuracy, thoroughness, and attention to detail",
+    "efficiencyDesc": "Speed and productivity in completing tasks",
+    "teamworkDesc": "Collaboration and support for colleagues",
+    "initiativeDesc": "Proactiveness and self-motivation",
+    "communicationDesc": "Clarity and effectiveness in communication",
+    "reliabilityDesc": "Dependability and consistency",
+    "overallAverage": "Overall Average",
+    "writtenFeedback": "Written Feedback (Optional)",
+    "submitRating": "Submit Rating",
+    "submitting": "Submitting...",
+    "submittedSuccess": "Rating submitted for {{name}}!",
+    "submitFailed": "Failed to submit rating",
+    "lastRated": "Last rated",
+    "rate": "Rate"
   }
 }
