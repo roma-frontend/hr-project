@@ -24,6 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +34,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -273,8 +273,8 @@ export default function ImpersonationPage() {
           </CardHeader>
           <CardContent>
             {impersonationHistory === undefined ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('impersonate.loading')}
+              <div className="flex items-center justify-center py-8">
+                <ShieldLoader />
               </div>
             ) : impersonationHistory.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

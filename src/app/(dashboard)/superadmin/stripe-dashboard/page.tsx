@@ -77,6 +77,20 @@ export default function StripeDashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<StripeData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Wait for hydration
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <ShieldLoader size="lg" />
+      </div>
+    );
+  }
 
   const fetchStripeData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
