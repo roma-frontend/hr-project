@@ -25,13 +25,10 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 // Isolate Convex API refs to avoid infinite type instantiation
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getStatsApi: any = api.automation.getStats;
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getRecentTasksApi: any = api.automation.getRecentTasks;
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getActiveWorkflowsApi: any = api.automation.getActiveWorkflows;
 

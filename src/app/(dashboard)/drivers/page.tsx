@@ -20,13 +20,10 @@ import {
 import { toast } from 'sonner';
 
 // Isolate Convex API refs at module level to avoid infinite type instantiation
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addFavoriteApi: any = api.drivers.driver_registration.addFavoriteDriver;
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const removeFavoriteApi: any = api.drivers.driver_registration.removeFavoriteDriver;
-// @ts-expect-error TS2589 - Convex types cause infinite instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const registerAsDriverApi: any = api.drivers.driver_registration.registerAsDriver;
 

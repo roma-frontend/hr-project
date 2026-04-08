@@ -4405,14 +4405,13 @@
       "accessRequested": "Օրացույցի հասանելիությունը հարցված է"
     },
     "status": {
-      "pending": "Սպասման մեջ",
+      "scheduled": "Նախատեսված",
+      "pending": "Սպասում է",
       "approved": "Հաստատված",
       "rejected": "Մերժված",
-      "declined": "Մերժված",
-      "cancelled": "Չեղարկված",
+      "inProgress": "Ընթացքում է",
       "completed": "Ավարտված",
-      "in_progress": "Ընթացքի մեջ",
-      "scheduled": "Պլանավորված"
+      "cancelled": "Չեղարկված"
     },
     "active": "Ակտիվ",
     "history": "Պատմություն",
@@ -4554,15 +4553,6 @@
     "scheduleDetails": "Գրաֆիկի մանրամասներ",
     "weekOf": "Շաբաթվանից",
     "driverScheduleCalendar": "Վարորդի գրաֆիկի օրացույց",
-    "status": {
-      "scheduled": "Նախատեսված",
-      "pending": "Սպասում է",
-      "approved": "Հաստատված",
-      "rejected": "Մերժված",
-      "inProgress": "Ընթացքում է",
-      "completed": "Ավարտված",
-      "cancelled": "Չեղարկված"
-    },
     "trip": "Ուղևորություն",
     "blocked": "Արգելափակված",
     "passengerCountLabel": "ուղևորներ",
@@ -4800,43 +4790,43 @@
     "afterLeave": "Արձակուրդից հետո",
     "balanceAfter": "Մնացորդ հետո",
     "submit": "Ներկայացնել հայտ",
-    "submitting": "Ներկայացնելը...",
+    "submitting": "Ներկայացնում է...",
     "steps": {
       "dates": {
-        "title": "Ընտրեք ձեր արձակուրդի ամսաթվերը",
+        "title": "Ամսաթվեր",
         "short": "Ամսաթվեր",
-        "description": "Select start and end dates",
-        "startDateLabel": "Start Date *",
-        "endDateLabel": "End Date *",
-        "totalDays": "Total Days",
-        "calculating": "Calculating..."
+        "description": "Ընտրեք սկսման և ավարտման ամսաթվերը",
+        "startDateLabel": "Սկսման ամսաթիվ *",
+        "endDateLabel": "Ավարտման ամսաթիվ *",
+        "totalDays": "Ընդամենը օրեր",
+        "calculating": "Հաշվարկվում է..."
       },
       "details": {
         "title": "Հայտի մանրամասներ",
         "short": "Մանրամասներ",
-        "description": "Provide additional information",
-        "reasonLabel": "Reason *",
-        "reasonPlaceholder": "e.g., Annual vacation",
-        "commentLabel": "Comment",
-        "commentPlaceholder": "Additional information (optional)",
-        "balanceInfo": "Your balance: {{balance}} days"
+        "description": "Տրամադրեք լրացուցիչ տեղեկատվություն",
+        "reasonLabel": "Պատճառ *",
+        "reasonPlaceholder": "օրինակ՝ Տարեկան արձակուրդ",
+        "commentLabel": "Մեկնաբանություն",
+        "commentPlaceholder": "Լրացուցիչ տեղեկատվություն (ընտրովի)",
+        "balanceInfo": "Ձեր մնացորդը՝ {{balance}} օր"
       },
       "confirm": {
         "title": "Հաստատել հայտ",
         "short": "Հաստատել",
-        "description": "Review and submit",
-        "summary": "Summary",
-        "type": "Type",
-        "typeValue": "Leave Type",
-        "dates": "Dates",
-        "datesValue": "Date Range",
-        "days": "Days",
-        "daysValue": "Number of Days"
+        "description": "Վերանայեք և ներկայացրեք",
+        "summary": "Ամփոում",
+        "type": "եսակ",
+        "typeValue": "Արձակուրդի տեսակ",
+        "dates": "Ամսաթվեր",
+        "datesValue": "Ամսաթվերի միջակայք",
+        "days": "Օրեր",
+        "daysValue": "Օրերի քանակ"
       },
       "type": {
-        "title": "Leave Type",
-        "description": "Select the type of leave",
-        "typeLabel": "Leave Type"
+        "title": "Արձակուրդի տեսակ",
+        "description": "Ընտրեք արձակուրդի տեսակը",
+        "typeLabel": "Արձակուրդի տեսակ"
       }
     },
     "info": {

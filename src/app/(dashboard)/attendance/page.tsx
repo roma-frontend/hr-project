@@ -25,9 +25,9 @@ const getTodaySummaryApi: any = api.timeTracking.getTodayAttendanceSummary;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getCurrentlyAtWorkApi: any = api.timeTracking.getCurrentlyAtWork;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getTodayAllAttendanceApi: any = api.timeTracking.getTodayAttendance;
+const getTodayAllAttendanceApi: any = api.timeTracking.getTodayAllAttendance;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getNeedsRatingApi: any = api.timeTracking.getEmployeesNeedingRating;
+const getNeedsRatingApi: any = api.supervisorRatings.getEmployeesNeedingRating;
 
 type Tab = 'today' | 'all' | 'rating';
 
