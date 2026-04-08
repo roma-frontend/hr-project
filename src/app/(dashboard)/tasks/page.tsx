@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useAuthStore } from '@/store/useAuthStore';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 const TasksClient = dynamic(() => import('@/components/tasks/TasksClient'), {
   ssr: false,
@@ -16,7 +17,16 @@ const TasksClient = dynamic(() => import('@/components/tasks/TasksClient'), {
 });
 
 export default function TasksPage() {
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
-  return <TasksClient userId={user?.id ?? ''} userRole={user?.role ?? 'employee'} />;
+  // Show loader while user is loading
+  if (!isAuthenticated || !user?.id || !user?.role) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <ShieldLoader size="lg" />
+      </div>
+    );
+  }
+
+  return <TasksClient userId={user.id} userRole={user.role} />;
 }

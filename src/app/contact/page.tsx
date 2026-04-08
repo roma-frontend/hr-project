@@ -97,7 +97,7 @@ export default function ContactPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 md:py-24 mt-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 mt-12">
         {/* Back link */}
         <Link
           href="/#pricing"

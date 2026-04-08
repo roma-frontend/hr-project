@@ -1,12 +1,12 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
+import { Id } from './_generated/dataModel';
 
 // ── Create/Update Supervisor Rating ──────────────────────────────────────
 export const createRating = mutation({
   args: {
-    employeeId: v.id("users"),
-    supervisorId: v.id("users"),
+    employeeId: v.id('users'),
+    supervisorId: v.id('users'),
     qualityOfWork: v.number(), // 1-5
     efficiency: v.number(), // 1-5
     teamwork: v.number(), // 1-5
@@ -30,7 +30,7 @@ export const createRating = mutation({
     ];
 
     if (ratings.some((r) => r < 1 || r > 5)) {
-      throw new Error("All ratings must be between 1 and 5");
+      throw new Error('All ratings must be between 1 and 5');
     }
 
     // Calculate overall rating
@@ -39,7 +39,7 @@ export const createRating = mutation({
     // Use current month if period not specified
     const period = args.ratingPeriod || new Date().toISOString().slice(0, 7); // "2026-02"
 
-    const ratingId = await ctx.db.insert("supervisorRatings", {
+    const ratingId = await ctx.db.insert('supervisorRatings', {
       employeeId: args.employeeId,
       supervisorId: args.supervisorId,
       qualityOfWork: args.qualityOfWork,
@@ -66,14 +66,14 @@ export const createRating = mutation({
 // ── Get Employee's Ratings History ───────────────────────────────────────
 export const getEmployeeRatings = query({
   args: {
-    employeeId: v.id("users"),
+    employeeId: v.id('users'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const ratings = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
-      .order("desc")
+      .query('supervisorRatings')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .order('desc')
       .take(args.limit || 12); // Last 12 months by default
 
     // Get supervisor info for each rating
@@ -84,7 +84,7 @@ export const getEmployeeRatings = query({
           ...rating,
           supervisor,
         };
-      })
+      }),
     );
 
     return withSupervisors;
@@ -94,13 +94,13 @@ export const getEmployeeRatings = query({
 // ── Get Latest Rating for Employee ───────────────────────────────────────
 export const getLatestRating = query({
   args: {
-    employeeId: v.id("users"),
+    employeeId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const rating = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
-      .order("desc")
+      .query('supervisorRatings')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .order('desc')
       .first();
 
     if (!rating) return null;
@@ -117,13 +117,13 @@ export const getLatestRating = query({
 // ── Get Average Ratings for Employee ─────────────────────────────────────
 export const getAverageRatings = query({
   args: {
-    employeeId: v.id("users"),
+    employeeId: v.id('users'),
     months: v.optional(v.number()), // Last N months, default 3
   },
   handler: async (ctx, args) => {
     const allRatings = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
+      .query('supervisorRatings')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
       .collect();
 
     if (allRatings.length === 0) {
@@ -168,14 +168,14 @@ export const getAverageRatings = query({
 // ── Get Ratings by Supervisor ────────────────────────────────────────────
 export const getRatingsBySupervisor = query({
   args: {
-    supervisorId: v.id("users"),
+    supervisorId: v.id('users'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const ratings = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_supervisor", (q) => q.eq("supervisorId", args.supervisorId))
-      .order("desc")
+      .query('supervisorRatings')
+      .withIndex('by_supervisor', (q) => q.eq('supervisorId', args.supervisorId))
+      .order('desc')
       .take(args.limit || 50);
 
     // Get employee info for each rating
@@ -186,7 +186,7 @@ export const getRatingsBySupervisor = query({
           ...rating,
           employee,
         };
-      })
+      }),
     );
 
     return withEmployees;
@@ -196,14 +196,14 @@ export const getRatingsBySupervisor = query({
 // ── Get Rating Trends (for charts) ───────────────────────────────────────
 export const getRatingTrends = query({
   args: {
-    employeeId: v.id("users"),
+    employeeId: v.id('users'),
     months: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const ratings = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.employeeId))
-      .order("desc")
+      .query('supervisorRatings')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.employeeId))
+      .order('desc')
       .take(args.months || 6);
 
     return ratings.reverse(); // Chronological order for charts
@@ -211,15 +211,11 @@ export const getRatingTrends = query({
 });
 
 // ── Helper: Update Performance Metrics ───────────────────────────────────
-async function updatePerformanceMetrics(
-  ctx: any,
-  employeeId: Id<"users">,
-  updatedBy: Id<"users">
-) {
+async function updatePerformanceMetrics(ctx: any, employeeId: Id<'users'>, updatedBy: Id<'users'>) {
   // Get average ratings
   const ratings = await ctx.db
-    .query("supervisorRatings")
-    .withIndex("by_employee", (q: any) => q.eq("employeeId", employeeId))
+    .query('supervisorRatings')
+    .withIndex('by_employee', (q: any) => q.eq('employeeId', employeeId))
     .collect();
 
   if (ratings.length === 0) return;
@@ -236,8 +232,8 @@ async function updatePerformanceMetrics(
 
   // Get or create performance metrics
   const existing = await ctx.db
-    .query("performanceMetrics")
-    .withIndex("by_user", (q: any) => q.eq("userId", employeeId))
+    .query('performanceMetrics')
+    .withIndex('by_user', (q: any) => q.eq('userId', employeeId))
     .first();
 
   const metricsData = {
@@ -254,7 +250,7 @@ async function updatePerformanceMetrics(
       updatedBy,
     });
   } else {
-    await ctx.db.insert("performanceMetrics", {
+    await ctx.db.insert('performanceMetrics', {
       userId: employeeId,
       updatedBy,
       ...metricsData,
@@ -270,37 +266,40 @@ async function updatePerformanceMetrics(
 // ── Get All Employees Needing Rating ─────────────────────────────────────
 export const getEmployeesNeedingRating = query({
   args: {
-    supervisorId: v.id("users"),
+    supervisorId: v.id('users'),
   },
   handler: async (ctx, args) => {
     const supervisor = await ctx.db.get(args.supervisorId);
-    if (!supervisor) throw new Error("Supervisor not found");
+    if (!supervisor) throw new Error('Supervisor not found');
 
-    const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+    const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
     const isSuperadmin = supervisor.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     const currentPeriod = new Date().toISOString().slice(0, 7);
 
     // Get all active employees
-    let allUsers = await ctx.db.query("users").collect();
-    
+    let allUsers = await ctx.db.query('users').collect();
+
     // Filter by organization if not superadmin
     if (!isSuperadmin) {
       if (!supervisor.organizationId) {
-        throw new Error("User does not belong to an organization");
+        throw new Error('User does not belong to an organization');
       }
-      allUsers = allUsers.filter(u => u.organizationId === supervisor.organizationId);
+      allUsers = allUsers.filter((u) => u.organizationId === supervisor.organizationId);
     }
-    
-    const activeEmployees = allUsers.filter((u) => u.isActive && u.role !== "admin");
+
+    // Exclude superadmins and admins from rating list
+    const activeEmployees = allUsers.filter(
+      (u) => u.isActive && u.role !== 'admin' && u.role !== 'superadmin',
+    );
 
     // Check which ones don't have a rating this month
     const needsRating = await Promise.all(
       activeEmployees.map(async (employee) => {
         const rating = await ctx.db
-          .query("supervisorRatings")
-          .withIndex("by_employee", (q) => q.eq("employeeId", employee._id))
-          .order("desc")
+          .query('supervisorRatings')
+          .withIndex('by_employee', (q) => q.eq('employeeId', employee._id))
+          .order('desc')
           .first();
 
         const needsRatingThisMonth = !rating || rating.ratingPeriod !== currentPeriod;
@@ -310,10 +309,10 @@ export const getEmployeesNeedingRating = query({
             ...employee,
             avatarUrl: employee.avatarUrl ?? employee.faceImageUrl,
           },
-          lastRated: rating?.ratingPeriod || "Never",
+          lastRated: rating?.ratingPeriod || 'Never',
           needsRating: needsRatingThisMonth,
         };
-      })
+      }),
     );
 
     return needsRating.filter((item) => item.needsRating);

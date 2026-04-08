@@ -1,0 +1,309 @@
+/**
+ * Drivers Page - Beautiful Visual Redesign
+ * Simple, effective CSS that transforms the UI
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE HEADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Add beautiful gradient background to the header section */
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start {
+  position: relative;
+  padding: 2rem 2.5rem;
+  margin-bottom: 2rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    color-mix(in srgb, var(--primary) 70%, black) 100%
+  );
+  overflow: hidden;
+}
+
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -5%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start h1 {
+  color: white !important;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+}
+
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start p {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Make header buttons white/transparent */
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start button {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+.max-w-\[1600px\] .flex.flex-col.sm\:flex-row.items-start button:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATS CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Remove default card borders and add beautiful shadow */
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div {
+  border: none !important;
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div:hover,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* Color the stat values with gradients */
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div:first-child .text-2xl,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div:first-child .text-2xl {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div:nth-child(2) .text-2xl,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div:nth-child(2) .text-2xl {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div:nth-child(3) .text-2xl,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div:nth-child(3) .text-2xl {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div:nth-child(4) .text-2xl {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Add colored backgrounds to icon containers */
+.grid.grid-cols-2.gap-3.sm\:gap-4.md\:grid-cols-4.mb-8 > div .w-4.h-4.text-muted-foreground,
+.grid.grid-cols-2.gap-3.sm\:gap-4.sm\:grid-cols-3.mb-6 > div .w-4.h-4.text-muted-foreground {
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DRIVER CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Modern glass-morphism card design */
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div {
+  position: relative;
+  border: 1px solid rgba(99, 102, 241, 0.1) !important;
+  border-radius: 1.25rem !important;
+  background: linear-gradient(
+    165deg,
+    var(--card) 0%,
+    color-mix(in srgb, var(--card) 95%, var(--primary)) 100%
+  );
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Gradient top border on hover */
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    color-mix(in srgb, var(--primary) 50%, #22d3ee),
+    var(--primary)
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div:hover::before {
+  opacity: 1;
+}
+
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(99, 102, 241, 0.12);
+  border-color: var(--primary) !important;
+}
+
+/* Avatar glow on hover */
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div:hover .w-12.h-12 {
+  box-shadow:
+    0 0 0 4px rgba(99, 102, 241, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Name hover effect */
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div h3.font-semibold {
+  transition: color 0.2s ease;
+}
+
+.grid.gap-3.sm\:gap-4.sm\:grid-cols-2.lg\:grid-cols-3 > div:hover h3.font-semibold {
+  color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.inline-flex.h-10.items-center.justify-center.rounded-md.bg-muted.p-1.text-muted-foreground {
+  background: var(--background-subtle) !important;
+  border-radius: 1rem !important;
+  padding: 0.375rem !important;
+  gap: 0.25rem;
+}
+
+.inline-flex.h-10.items-center.justify-center.rounded-md.bg-muted.p-1.text-muted-foreground button {
+  border-radius: 0.75rem !important;
+  transition: all 0.3s ease;
+}
+
+.inline-flex.h-10.items-center.justify-center.rounded-md.bg-muted.p-1.text-muted-foreground
+  button[data-state='active'] {
+  background: var(--primary) !important;
+  color: white !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REQUEST CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.space-y-3 > div.p-4,
+.space-y-3 .p-4.rounded-xl {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: all 0.3s ease;
+}
+
+.space-y-3 > div.p-4:hover,
+.space-y-3 .p-4.rounded-xl:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  transform: translateX(4px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEARCH & FILTERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.relative.w-full.sm\:w-64 input {
+  border-radius: 1rem !important;
+  background: var(--background-subtle) !important;
+}
+
+.relative.w-full.sm\:w-64 input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+.flex.flex-wrap.items-center.gap-2 select,
+.flex.flex-wrap.items-center.gap-2 button {
+  border-radius: 0.75rem !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATUS INDICATORS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.w-2.h-2.rounded-full.bg-green-500 {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.w-2.h-2.rounded-full.bg-amber-500 {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.w-2.h-2.rounded-full.bg-blue-500 {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.text-center.py-12 {
+  padding: 3rem 2rem;
+  border-radius: 1.5rem;
+  background: var(--background-subtle);
+  border: 2px dashed var(--border);
+  transition: all 0.3s ease;
+}
+
+.text-center.py-12:hover {
+  border-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 5px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

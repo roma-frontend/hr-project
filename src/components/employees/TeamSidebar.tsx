@@ -150,6 +150,11 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
   // Calculate stats
   const stats = allUsers?.reduce(
     (acc, user) => {
+      // Skip superadmins from all counts
+      if (user.role === 'superadmin') {
+        return acc;
+      }
+
       if (!user.isActive) {
         acc.inactive++;
         return acc;

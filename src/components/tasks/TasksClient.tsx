@@ -471,26 +471,24 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
   const isSuperadmin = userRole === 'superadmin';
   const selectedOrgId = useSelectedOrganization();
 
-  // For superadmin, use selectedOrgId if available
+  // For superadmin, use selectedOrgId if available; for admin, use their org from user
   const effectiveOrgId = isSuperadmin && selectedOrgId ? selectedOrgId : undefined;
 
   // DnD sensors — require 5px movement before drag starts (prevents accidental drags)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const updateStatus = useMutation(api.tasks.updateTaskStatus);
 
-  // Queries - for superadmin, filter by selected organization
+  // Queries - for admin/superadmin, get all tasks in their organization
   const adminTasks = useQuery(
     api.tasks.getAllTasks,
-    userRole === 'admin' && effectiveOrgId
-      ? { requesterId: convexId, selectedOrganizationId: effectiveOrgId as Id<'organizations'> }
-      : userRole === 'superadmin'
-        ? {
-            requesterId: convexId,
-            selectedOrganizationId: selectedOrgId
-              ? (selectedOrgId as Id<'organizations'>)
-              : undefined,
-          }
-        : 'skip',
+    (userRole === 'admin' || userRole === 'superadmin') && convexId
+      ? {
+          requesterId: convexId,
+          selectedOrganizationId: effectiveOrgId
+            ? (effectiveOrgId as Id<'organizations'>)
+            : undefined,
+        }
+      : 'skip',
   );
   const supervisorTasks = useQuery(
     api.tasks.getTasksAssignedBy,

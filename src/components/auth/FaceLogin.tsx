@@ -628,9 +628,12 @@ export function FaceLogin() {
         throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
       }
 
-      // Redirect to dashboard
+      // Redirect to dashboard or callback URL
       console.log('🔍 Step 6: Redirecting to dashboard...');
-      window.location.href = '/dashboard';
+      const params = new URLSearchParams(window.location.search);
+      const nextUrl = params.get('next');
+      const redirectUrl = nextUrl || '/dashboard';
+      window.location.href = redirectUrl;
     } catch (error: any) {
       console.error('❌ Error during face login:', error);
       console.error('Error name:', error?.name);

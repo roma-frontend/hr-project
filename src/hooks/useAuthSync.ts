@@ -381,10 +381,14 @@ export function useAuthSync() {
             return;
           }
 
+          // Check for callback URL parameter
+          const callbackUrl = params.get('next');
+          const redirectTarget = callbackUrl || '/dashboard';
+
           if (!isDashboardPage && !isAuthPage && !isPublicRoute) {
-            console.log('[useAuthSync] ⚠️ WOULD Redirect from', path, 'to dashboard');
+            console.log('[useAuthSync] ⚠️ WOULD Redirect from', path, 'to', redirectTarget);
             // TEMP: Disabled for debugging
-            // window.location.href = '/dashboard';
+            // window.location.href = redirectTarget;
           } else {
             console.log('[useAuthSync] ✅ No redirect needed:', {
               isDashboardPage,

@@ -153,8 +153,8 @@ export function SmartPasswordInput({
               {showPassword ? (
                 <motion.div
                   key="hide"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 1, rotate: -180 }}
+                  animate={{ scale: 1.1, rotate: 0 }}
                   exit={{ scale: 0, rotate: 180 }}
                 >
                   <EyeOff className="w-4 h-4 text-[var(--text-muted)]" />
@@ -162,8 +162,8 @@ export function SmartPasswordInput({
               ) : (
                 <motion.div
                   key="show"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
+                  initial={{ scale: 1, rotate: -180 }}
+                  animate={{ scale: 1.1, rotate: 0 }}
                   exit={{ scale: 0, rotate: 180 }}
                 >
                   <Eye className="w-4 h-4 text-[var(--text-muted)]" />

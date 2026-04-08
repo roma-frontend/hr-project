@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Build rich employee map with leave info
-    const employeeData = (users as any[]).map((u: any) => {
+    // Filter out superadmins from employee data
+    const filteredUsers = (users as any[]).filter((u: any) => u.role !== 'superadmin');
+
+    const employeeData = filteredUsers.map((u: any) => {
       const userLeaves = (leaves as any[]).filter((l: any) => l.userId === u._id);
       const todayRecord = (todayAttendance as any[]).find((t: any) => t.userId === u._id);
 
@@ -131,7 +134,8 @@ export async function GET(req: NextRequest) {
 
     // Calendar events — all approved leaves next 90 days
     const now = new Date().toISOString().split('T')[0] || '';
-    const in90Days = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '';
+    const in90Days =
+      new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '';
     const calendarEvents = (leaves as any[])
       .filter((l: any) => l.status === 'approved' && l.endDate >= now && l.startDate <= in90Days)
       .map((l: any) => {
@@ -175,7 +179,7 @@ export async function GET(req: NextRequest) {
       employees: employeeData,
       calendarEvents,
       todayAttendance: presentToday,
-      totalEmployees: users.length,
+      totalEmployees: filteredUsers.length,
       currentlyAtWork: presentToday.filter((t: any) => t.status === 'checked_in').length,
       onLeaveToday: employeeData.filter((e: any) => e.currentLeave).length,
     });

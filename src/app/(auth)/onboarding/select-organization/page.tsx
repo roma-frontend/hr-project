@@ -57,7 +57,12 @@ export default function SelectOrganizationPage() {
         organizationId: freshUserData.organizationId,
         isApproved: freshUserData.isApproved,
       });
-      window.location.href = '/dashboard';
+
+      // Check for callback URL
+      const params = new URLSearchParams(window.location.search);
+      const nextUrl = params.get('next');
+      const redirectUrl = nextUrl || '/dashboard';
+      window.location.href = redirectUrl;
       return;
     }
 
@@ -66,7 +71,12 @@ export default function SelectOrganizationPage() {
       console.log(
         '[SelectOrganization] ✅ Store data shows user is approved - redirecting to dashboard',
       );
-      window.location.href = '/dashboard';
+
+      // Check for callback URL
+      const params = new URLSearchParams(window.location.search);
+      const nextUrl = params.get('next');
+      const redirectUrl = nextUrl || '/dashboard';
+      window.location.href = redirectUrl;
     }
   }, [user, freshUserData, setUser]);
 

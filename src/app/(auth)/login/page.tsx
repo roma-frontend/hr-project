@@ -387,9 +387,13 @@ export default function LoginPage() {
           );
         }
 
-        // Redirect to dashboard
+        // Redirect to dashboard or callback URL
         console.log('🔄 Redirecting to dashboard...');
-        window.location.href = '/dashboard';
+        const params = new URLSearchParams(window.location.search);
+        const nextUrl = params.get('next');
+        const redirectUrl = nextUrl || '/dashboard';
+        console.log('🔄 Redirect URL:', redirectUrl);
+        window.location.href = redirectUrl;
       } catch (err) {
         console.error('❌ Login failed:', err);
         setError(err instanceof Error ? err.message : 'Login failed');
@@ -421,7 +425,12 @@ export default function LoginPage() {
 
       login(userData);
       sessionStorage.setItem('just_logged_in', 'true');
-      router.push('/dashboard');
+
+      // Check for callback URL
+      const params = new URLSearchParams(window.location.search);
+      const nextUrl = params.get('next');
+      const redirectUrl = nextUrl || '/dashboard';
+      router.push(redirectUrl);
     } catch (err) {
       console.error('❌ WebAuthn login failed:', err);
       setError(err instanceof Error ? err.message : 'WebAuthn login failed');
@@ -464,7 +473,12 @@ export default function LoginPage() {
 
         login(userData);
         sessionStorage.setItem('just_logged_in', 'true');
-        window.location.href = '/dashboard';
+
+        // Check for callback URL
+        const params = new URLSearchParams(window.location.search);
+        const nextUrl = params.get('next');
+        const redirectUrl = nextUrl || '/dashboard';
+        window.location.href = redirectUrl;
       } catch (err) {
         setTwoFactorError(err instanceof Error ? err.message : 'Verification failed');
         setTotpCode('');

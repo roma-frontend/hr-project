@@ -95,9 +95,12 @@ export const listAll = query({
           .withIndex('by_org', (q) => q.eq('organizationId', org._id))
           .collect();
 
+        // Filter out superadmins from employee counts
+        const filteredEmployees = employees.filter((e) => e.role !== 'superadmin');
+
         return {
           ...org,
-          employeeCount: employees.length,
+          employeeCount: filteredEmployees.length,
         };
       }),
     );
@@ -128,15 +131,17 @@ export const getAllOrganizations = query({
           .withIndex('by_org', (q) => q.eq('organizationId', org._id))
           .collect();
 
-        const admins = employees.filter((u) => u.role === 'admin');
-        const activeCount = employees.filter((u) => u.isActive && u.isApproved).length;
+        // Filter out superadmins from employee counts
+        const filteredEmployees = employees.filter((e) => e.role !== 'superadmin');
+        const admins = filteredEmployees.filter((u) => u.role === 'admin');
+        const activeCount = filteredEmployees.filter((u) => u.isActive && u.isApproved).length;
 
         return {
           ...org,
-          totalEmployees: employees.length,
+          totalEmployees: filteredEmployees.length,
           activeEmployees: activeCount,
           adminNames: admins.map((a) => a.name),
-          memberCount: employees.length,
+          memberCount: filteredEmployees.length,
         };
       }),
     );
@@ -238,9 +243,12 @@ export const getOrganizationById = query({
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
       .collect();
 
+    // Filter out superadmins from employee count
+    const filteredMembers = members.filter((m) => m.role !== 'superadmin');
+
     return {
       ...org,
-      employeeCount: members.length,
+      employeeCount: filteredMembers.length,
     };
   },
 });

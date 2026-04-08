@@ -47,7 +47,12 @@ export default function PendingApprovalPage() {
         organizationId: freshUserData.organizationId,
         isApproved: freshUserData.isApproved,
       });
-      window.location.href = '/dashboard';
+
+      // Check for callback URL
+      const params = new URLSearchParams(window.location.search);
+      const nextUrl = params.get('next');
+      const redirectUrl = nextUrl || '/dashboard';
+      window.location.href = redirectUrl;
     }
   }, [freshUserData, setUser]);
 

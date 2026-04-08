@@ -2,9 +2,10 @@
 
 import { useTranslation } from 'react-i18next';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useCookieConsent } from '@/store/cookieConsentStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Cookie, Settings, Shield, BarChart3, Target, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import { useRouter } from 'next/navigation';
 export default function CookieBanner() {
   const { t } = useTranslation();
   const { hasConsent, showBanner, acceptAll, rejectAll } = useCookieConsent();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -21,6 +23,22 @@ export default function CookieBanner() {
     const timer = setTimeout(() => setMounted(true), 0);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleSettingsClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (!isAuthenticated) {
+        // Not authenticated - redirect to login with callback URL
+        const currentPath = '/settings';
+        router.push(`/login?next=${encodeURIComponent(currentPath)}`);
+      } else {
+        // Authenticated - go directly to settings
+        router.push('/settings');
+      }
+    },
+    [isAuthenticated, router],
+  );
 
   if (!mounted || hasConsent || !showBanner) {
     return null;
@@ -70,14 +88,14 @@ export default function CookieBanner() {
                       >
                         {t('cookies.learnMore', { defaultValue: 'Learn more about privacy' })}
                       </Link>
-                      {t('cookies.or')}
-                      <Link
-                        href="/settings"
-                        className="inline-flex items-center gap-1 font-medium text-[var(--primary)] hover:underline"
+                      {t('cookies.or')}{' '}
+                      <button
+                        onClick={handleSettingsClick}
+                        className="inline-flex items-center gap-1 font-medium text-[var(--primary)] hover:underline bg-transparent border-none p-0 cursor-pointer"
                       >
                         {t('cookies.customizeSettings')}
                         <Settings className="h-3 w-3" />
-                      </Link>
+                      </button>
                     </p>
 
                     {/* Cookie categories preview */}
@@ -117,7 +135,7 @@ export default function CookieBanner() {
                   </Button>
 
                   <Button
-                    onClick={() => router.push('/settings')}
+                    onClick={handleSettingsClick}
                     variant="secondary"
                     size="lg"
                     className="shadow-sm"

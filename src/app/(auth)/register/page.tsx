@@ -294,7 +294,12 @@ function RegisterPageContent() {
             });
           }
           toast.success(t('toasts.welcomeAccountReady'));
-          router.push('/dashboard');
+
+          // Check for callback URL
+          const params = new URLSearchParams(window.location.search);
+          const nextUrl = params.get('next');
+          const redirectUrl = nextUrl || '/dashboard';
+          router.push(redirectUrl);
         }
       } catch (err) {
         setError(

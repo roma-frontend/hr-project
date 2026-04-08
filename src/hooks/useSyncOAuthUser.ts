@@ -118,9 +118,12 @@ export function useSyncOAuthUser() {
               role: data.session.role,
             });
 
-            // 4. Navigate to dashboard — use window.location to avoid SSL issues on localhost
-            console.log('[useSyncOAuthUser] 🎯 Redirecting to /dashboard');
-            window.location.href = '/dashboard';
+            // 4. Navigate to dashboard or callback URL — use window.location to avoid SSL issues on localhost
+            const params = new URLSearchParams(window.location.search);
+            const nextUrl = params.get('next');
+            const redirectUrl = nextUrl || '/dashboard';
+            console.log('[useSyncOAuthUser] 🎯 Redirecting to', redirectUrl);
+            window.location.href = redirectUrl;
             return;
           }
         }
@@ -131,7 +134,10 @@ export function useSyncOAuthUser() {
           res.status,
           await res.text(),
         );
-        window.location.href = '/dashboard';
+        const params = new URLSearchParams(window.location.search);
+        const nextUrl = params.get('next');
+        const redirectUrl = nextUrl || '/dashboard';
+        window.location.href = redirectUrl;
       } catch (error) {
         console.error('[useSyncOAuthUser] ❌ Error syncing OAuth user:', error);
         syncingRef.current = false;

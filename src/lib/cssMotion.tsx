@@ -311,11 +311,57 @@ export function AnimatePresence({ children, mode }: AnimatePresenceProps) {
   return <>{children}</>;
 }
 
+/**
+ * MotionButton - Renders as actual <button> element
+ */
+export function MotionButton({
+  children,
+  className = '',
+  whileHover,
+  whileTap,
+  ...restProps
+}: MotionProps) {
+  const hoverClass = whileHover?.scale ? 'hover:scale-110 transition-transform' : '';
+  const tapClass = whileTap?.scale ? 'active:scale-90 transition-transform' : '';
+
+  return (
+    <button
+      className={`${className} ${hoverClass} ${tapClass}`.trim()}
+      {...(restProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * MotionSpan - Renders as actual <span> element
+ */
+export function MotionSpan({
+  children,
+  className = '',
+  whileHover,
+  whileTap,
+  ...restProps
+}: MotionProps) {
+  const hoverClass = whileHover?.scale ? 'hover:scale-110 transition-transform' : '';
+  const tapClass = whileTap?.scale ? 'active:scale-90 transition-transform' : '';
+
+  return (
+    <span
+      className={`${className} ${hoverClass} ${tapClass}`.trim()}
+      {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
+    >
+      {children}
+    </span>
+  );
+}
+
 // Re-export common motion components as MotionDiv
 export const motion = {
   div: MotionDiv,
-  button: MotionDiv,
-  span: MotionDiv,
+  button: MotionButton,
+  span: MotionSpan,
   p: MotionDiv,
   aside: MotionDiv,
   header: MotionDiv,

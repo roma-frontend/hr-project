@@ -808,6 +808,9 @@ export const getSuperadminDashboard = query({
     >();
 
     allUsers.forEach((user) => {
+      // Skip superadmins from organization counts
+      if (user.role === 'superadmin') return;
+
       const orgId = user.organizationId?.toString() || 'no-org';
       if (!usersByOrg.has(orgId)) usersByOrg.set(orgId, []);
       usersByOrg.get(orgId)!.push(user);

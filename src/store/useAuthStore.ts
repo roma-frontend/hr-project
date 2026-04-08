@@ -15,6 +15,7 @@ export interface User {
   employeeType?: 'staff' | 'contractor';
   organizationId?: string;
   isApproved?: boolean;
+  phone?: string;
 }
 
 interface AuthState {

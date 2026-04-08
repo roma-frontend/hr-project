@@ -233,7 +233,7 @@ export default function AttendancePage() {
                 <div className="text-center py-8">
                   <Clock className="w-10 h-10 mx-auto mb-3 text-[var(--text-muted)] opacity-40" />
                   <p className="text-sm text-[var(--text-muted)]">
-                    No attendance records yet today
+                    {t('attendance.noRecordsToday')}
                   </p>
                   <p className="text-xs text-[var(--text-muted)] mt-1">
                     {t('emptyStates.employeesWillAppear')}
@@ -448,7 +448,7 @@ export default function AttendancePage() {
                             {stats.totalDays}
                           </p>
                           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            Days
+                            {t('attendance.days')}
                           </p>
                         </div>
                         <div>
@@ -464,7 +464,7 @@ export default function AttendancePage() {
                             {stats.totalWorkedHours}h
                           </p>
                           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            Worked
+                            {t('attendance.worked')}
                           </p>
                         </div>
                         <div>
@@ -474,7 +474,7 @@ export default function AttendancePage() {
                             {stats.punctualityRate}%
                           </p>
                           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            Punct.
+                            {t('attendance.punctuality')}
                           </p>
                         </div>
                       </div>
@@ -608,9 +608,11 @@ export default function AttendancePage() {
               <CardContent className="p-6 text-center">
                 <UserCheck className="w-10 h-10 text-green-500 mx-auto mb-2" />
                 <p className="text-sm font-medium text-[var(--text-primary)]">
-                  All employees rated this month! ✅
+                  {t('attendance.allEmployeesRated')}
                 </p>
-                <p className="text-xs text-[var(--text-muted)] mt-1">Check back next month</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  {t('attendance.checkBackNextMonth')}
+                </p>
               </CardContent>
             </Card>
           </div>

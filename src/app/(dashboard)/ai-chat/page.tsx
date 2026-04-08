@@ -833,7 +833,7 @@ export default function AIChatPage() {
               </motion.div>
             </div>
           ) : (
-            <div className="space-y-4 max-w-[800px] mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+            <div className="space-y-4 max-w-[800px] mx-auto mt-6 px-4 sm:px-6 lg:px-8">
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
