@@ -48,7 +48,12 @@ export function RatingModal({
     3: t('driver.ratingOkay', 'Okay'),
     4: t('driver.ratingGood', 'Good'),
     5: t('driver.ratingExcellent', 'Excellent'),
-  };
+  } as const;
+
+  const currentRating = hoveredRating || rating;
+  const ratingKey = (
+    currentRating >= 1 && currentRating <= 5 ? currentRating : 5
+  ) as keyof typeof ratingLabels;
 
   return (
     <motion.div
@@ -137,7 +142,7 @@ export function RatingModal({
                   exit={{ opacity: 0, y: -5 }}
                   className="text-sm font-medium text-[var(--primary)]"
                 >
-                  {ratingLabels[hoveredRating || (rating as keyof typeof ratingLabels)]}
+                  {ratingLabels[ratingKey]}
                 </motion.p>
               )}
             </AnimatePresence>

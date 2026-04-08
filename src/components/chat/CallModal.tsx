@@ -20,6 +20,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { ActiveCall } from './ChatClient';
 
+export type { ActiveCall };
+
 interface Props {
   call: ActiveCall;
   currentUserId: Id<'users'>;

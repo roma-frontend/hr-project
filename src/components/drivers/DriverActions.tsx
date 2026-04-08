@@ -140,7 +140,7 @@ export function InAppCallButton({
         type: 'audio',
         isInitiator: true,
         remoteUserId,
-        remoteName,
+        remoteUserName: remoteName,
       });
     } catch (error: any) {
       toast.error(error.message || t('driver.callStartFailed', 'Failed to start call'));
@@ -218,8 +218,8 @@ export function DriverQuickMessage({
     try {
       const conversationId = await getOrCreateDM({
         organizationId,
-        userId1: driverUserId,
-        userId2: passengerUserId,
+        currentUserId: driverUserId,
+        targetUserId: passengerUserId,
       });
       await sendMessage({
         conversationId,
@@ -301,8 +301,8 @@ export function PassengerQuickMessage({
     try {
       const conversationId = await getOrCreateDM({
         organizationId,
-        userId1: passengerUserId,
-        userId2: driverUserId,
+        currentUserId: passengerUserId,
+        targetUserId: driverUserId,
       });
       await sendMessage({
         conversationId,

@@ -27,9 +27,15 @@ interface RequestDriverWizardProps {
   userId: Id<'users'>;
   onComplete?: () => void;
   onCancel?: () => void;
+  preselectedDriverId?: string;
 }
 
-export function RequestDriverWizard({ userId, onComplete, onCancel }: RequestDriverWizardProps) {
+export function RequestDriverWizard({
+  userId,
+  onComplete,
+  onCancel,
+  preselectedDriverId,
+}: RequestDriverWizardProps) {
   const { t } = useTranslation();
   const requestDriver = useMutation(api.drivers.requests_mutations.requestDriver);
   const { user } = useAuthStore();
