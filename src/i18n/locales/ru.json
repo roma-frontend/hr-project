@@ -4923,6 +4923,24 @@
     "description": "Описание",
     "startDate": "Дата начала",
     "endDate": "Дата окончания",
+    "searchPlaceholder": "Поиск мероприятий...",
+    "noResults": "Нет мероприятий по вашим фильтрам",
+    "resetFilters": "Сбросить",
+    "fillRequired": "Заполните все обязательные поля",
+    "eventUpdated": "Мероприятие обновлено",
+    "updateFailed": "Не удалось обновить мероприятие",
+    "stats": {
+      "totalEvents": "Всего мероприятий",
+      "upcoming": "Предстоящие",
+      "highPriority": "Высокий приоритет",
+      "thisMonth": "В этом месяце"
+    },
+    "filters": {
+      "allPriorities": "Все приоритеты",
+      "allTypes": "Все типы",
+      "priority": "Приоритет",
+      "type": "Тип"
+    },
     "priority": {
       "high": "Высокий",
       "medium": "Средний",

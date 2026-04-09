@@ -4703,6 +4703,22 @@
     "description": "Description",
     "startDate": "Start Date",
     "endDate": "End Date",
+    "searchPlaceholder": "Search events...",
+    "noResults": "No events match your filters",
+    "resetFilters": "Reset",
+    "fillRequired": "Please fill required fields",
+    "stats": {
+      "totalEvents": "Total Events",
+      "upcoming": "Upcoming",
+      "highPriority": "High Priority",
+      "thisMonth": "This Month"
+    },
+    "filters": {
+      "allPriorities": "All Priorities",
+      "allTypes": "All Types",
+      "priority": "Priority",
+      "type": "Type"
+    },
     "priority": {
       "high": "High",
       "medium": "Medium",

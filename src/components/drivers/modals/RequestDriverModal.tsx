@@ -4,6 +4,7 @@
  * Request Driver Modal - Wrapper for RequestDriverWizard
  */
 
+import { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RequestDriverWizard } from '../RequestDriverWizard';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -21,6 +22,18 @@ export function RequestDriverModal({
   userId,
   preselectedDriverId,
 }: RequestDriverModalProps) {
+  // Block body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      };
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-4xl max-h-[90vh] flex flex-col">

@@ -161,7 +161,33 @@ export default function DriversPage() {
     [availableDrivers, myRequests],
   );
 
-  // 7. Callback hooks (MUST be before early returns!)
+  // 7. Effect for scroll blocking when wizard or trip details are open
+  useEffect(() => {
+    if (showRequestWizard || showTripDetails) {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+      const mainContent = document.querySelector<HTMLElement>('main, [role="main"]');
+      if (mainContent) mainContent.style.overflow = 'hidden';
+
+      const preventScroll = (e: WheelEvent | TouchEvent) => {
+        const target = e.target as HTMLElement;
+        const isInsideModal = target.closest('[class*="max-h-"]');
+        if (!isInsideModal) e.preventDefault();
+      };
+      document.addEventListener('wheel', preventScroll, { passive: false });
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+
+      return () => {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (mainContent) mainContent.style.overflow = '';
+        document.removeEventListener('wheel', preventScroll);
+        document.removeEventListener('touchmove', preventScroll);
+      };
+    }
+  }, [showRequestWizard, showTripDetails]);
+
+  // 8. Callback hooks (MUST be before early returns!)
   const handleBook = useCallback((id: string) => {
     setSelectedDriverId(id);
     setShowRequestWizard(true);
