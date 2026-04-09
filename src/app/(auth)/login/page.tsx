@@ -848,7 +848,7 @@ export default function LoginPage() {
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {t('common.or')}
+                      {t('common.or', 'or')}
                     </span>
                     <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
                   </div>
