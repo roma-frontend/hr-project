@@ -93,7 +93,7 @@ export function Wizard({
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className={cn('flex flex-col max-h-[calc(100vh-8rem)] md:max-h-[85vh] overflow-hidden', className)}>
+    <div className={cn('flex flex-col h-full', className)}>
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 scrollbar-thin">
         {/* Stepper */}

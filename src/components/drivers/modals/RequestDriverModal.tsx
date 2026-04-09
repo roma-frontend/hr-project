@@ -23,11 +23,11 @@ export function RequestDriverModal({
 }: RequestDriverModalProps) {
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-4xl max-h-[90vh] md:max-h-[95vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-4xl max-h-[90vh] md:max-h-[95vh] p-0 flex flex-col">
         <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 pb-3 md:pb-4 flex-shrink-0">
           <DialogTitle className="text-base md:text-xl">Request Driver</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <RequestDriverWizard
             userId={userId}
             onComplete={onClose}

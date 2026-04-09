@@ -535,10 +535,10 @@ export default function EmergencyDashboardPage() {
 
       {/* Create Incident Wizard Dialog */}
       <Dialog open={createIncidentOpen} onOpenChange={setCreateIncidentOpen}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] md:max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] md:max-h-[95vh] p-0 flex flex-col">
           <DialogTitle className="sr-only">{t('superadmin.emergency.createIncident')}</DialogTitle>
           <DialogDescription className="sr-only">Создание нового инцидента</DialogDescription>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
           <CreateIncidentWizard
             userId={user.id as Id<'users'>}
             onComplete={() => setCreateIncidentOpen(false)}
