@@ -9,6 +9,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
+import { cn } from '@/lib/utils';
 import {
   Plus,
   Search,
@@ -39,8 +40,6 @@ import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { AddEmployeeModal } from './AddEmployeeModal';
 import { EditEmployeeModal } from './EditEmployeeModal';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
-import { EmployeeCard, EmployeeMenu } from './EmployeeCard';
-import { VirtualizedEmployeeList } from './VirtualizedEmployeeList';
 import { TeamSidebar } from './TeamSidebar';
 import { toast } from 'sonner';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
@@ -424,24 +423,24 @@ export function EmployeesClient() {
           <div className="flex rounded-xl flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2.5 transition-colors ${viewMode === 'grid' ? 'text-white rounded-lg' : ''} rounded-lg`}
-              style={{
-                background:
-                  viewMode === 'grid' ? 'linear-gradient(135deg,#2563eb,#0ea5e9)' : 'var(--card)',
-                color: viewMode === 'grid' ? 'white' : 'var(--text-muted)',
-              }}
+              className={cn(
+                'p-2.5 transition-colors rounded-lg',
+                viewMode === 'grid'
+                  ? 'bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) text-white'
+                  : 'bg-[var(--card)] text-[var(--text-muted)]',
+              )}
               title={t('ariaLabels.gridView')}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className="p-2.5 transition-colors rounded-lg"
-              style={{
-                background:
-                  viewMode === 'list' ? 'linear-gradient(135deg,#2563eb,#0ea5e9)' : 'var(--card)',
-                color: viewMode === 'list' ? 'white' : 'var(--text-muted)',
-              }}
+              className={cn(
+                'p-2.5 transition-colors rounded-lg',
+                viewMode === 'list'
+                  ? 'bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) text-white'
+                  : 'bg-[var(--card)] text-[var(--text-muted)]',
+              )}
               title={t('ariaLabels.listView')}
             >
               <List className="w-4 h-4" />

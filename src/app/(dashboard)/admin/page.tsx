@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Users, Shield, Building2, CheckCircle, Eye, LogOut } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { cn } from '@/lib/utils';
 
 export default function AdminPage() {
   const { t } = useTranslation();
@@ -157,7 +158,7 @@ export default function AdminPage() {
           <Button
             onClick={handleAssign}
             disabled={isAssigning || !assignEmail.trim() || !selectedOrgId}
-            className="w-full"
+            className={cn("flex items-center gap-2 justify-center mx-auto", assignEmail ? "bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) text-white hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg" : "")}
             size="lg"
           >
             {isAssigning ? (
