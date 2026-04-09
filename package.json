@@ -86,6 +86,7 @@
     "@tanstack/react-query-devtools": "^5.95.2",
     "@tanstack/react-virtual": "^3.13.23",
     "@upstash/redis": "^1.37.0",
+    "@vercel/analytics": "^2.0.1",
     "@vladmandic/face-api": "^1.7.15",
     "ai": "^6.0.97",
     "bcryptjs": "^3.0.3",

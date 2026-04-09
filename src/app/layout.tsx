@@ -4,6 +4,7 @@ import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
 import { AppProviders } from '@/components/AppProviders';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
+import { Analytics } from '@vercel/analytics/next';
 
 // Validate environment variables at startup
 validateEnvironment();
@@ -169,7 +170,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className={`${ibmPlexSans.variable} ${inter.variable} ${notoSansArmenian.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>{children}<Analytics /></AppProviders>
         {/* Performance monitoring (только в dev) */}
         {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       </body>

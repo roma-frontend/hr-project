@@ -502,7 +502,7 @@ export default function CompanyEventsPage() {
 
       {/* Create Event Dialog */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="text-lg md:text-xl">{t('events.createEvent', 'Create Event')}</DialogTitle>
           </DialogHeader>
@@ -528,7 +528,7 @@ export default function CompanyEventsPage() {
           if (!open) setSelectedEvent(null);
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader className="px-6 pt-6 pb-4">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Edit className="w-5 h-5" />
