@@ -245,7 +245,7 @@ export default function SupportTicketsPage() {
                     }}
                   >
                     <X className="w-3.5 h-3.5 mr-1" />
-                    Сбросить
+                    {t('superadmin.support.resetFilters')}
                   </Button>
                 )}
               </div>
@@ -297,7 +297,7 @@ export default function SupportTicketsPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t('superadmin.support.createTicket')}</DialogTitle>
-            <DialogDescription>Создайте новый тикет в службу поддержки</DialogDescription>
+            <DialogDescription>{t('superadmin.support.createDescription')}</DialogDescription>
           </DialogHeader>
           <CreateSupportTicketWizard
             userId={user.id as Id<'users'>}
@@ -374,9 +374,9 @@ function TicketRow({
     const ticketDate = new Date(date);
     const diffDays = Math.floor((now.getTime() - ticketDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return 'Сегодня';
-    if (diffDays === 1) return 'Вчера';
-    if (diffDays < 7) return `${diffDays} дн. назад`;
+    if (diffDays === 0) return t('superadmin.support.dateToday');
+    if (diffDays === 1) return t('superadmin.support.dateYesterday');
+    if (diffDays < 7) return t('superadmin.support.daysAgo', { count: diffDays });
     return ticketDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
@@ -399,26 +399,27 @@ function TicketRow({
             <Badge
               className={`${getStatusColor(ticket.status)} text-xs px-2 py-0 transition-all duration-200`}
             >
-              {ticket.status === 'open' && 'Открыт'}
-              {ticket.status === 'in_progress' && 'В работе'}
-              {ticket.status === 'waiting_customer' && 'Ждет клиента'}
-              {ticket.status === 'resolved' && 'Решен'}
-              {ticket.status === 'closed' && 'Закрыт'}
+              {ticket.status === 'open' && t('superadmin.support.statusOpen')}
+              {ticket.status === 'in_progress' && t('superadmin.support.statusInProgress')}
+              {ticket.status === 'waiting_customer' &&
+                t('superadmin.support.statusWaitingCustomer')}
+              {ticket.status === 'resolved' && t('superadmin.support.statusResolved')}
+              {ticket.status === 'closed' && t('superadmin.support.statusClosed')}
             </Badge>
             <Badge
               className={`${getPriorityColor(ticket.priority)} text-xs px-2 py-0 transition-all duration-200`}
             >
-              {ticket.priority === 'critical' && 'Критичный'}
-              {ticket.priority === 'high' && 'Высокий'}
-              {ticket.priority === 'medium' && 'Средний'}
-              {ticket.priority === 'low' && 'Низкий'}
+              {ticket.priority === 'critical' && t('superadmin.support.priorityCritical')}
+              {ticket.priority === 'high' && t('superadmin.support.priorityHigh')}
+              {ticket.priority === 'medium' && t('superadmin.support.priorityMedium')}
+              {ticket.priority === 'low' && t('superadmin.support.priorityLow')}
             </Badge>
             {ticket.isOverdue && (
               <Badge
                 variant="destructive"
                 className="text-xs px-2 py-0 transition-all duration-200"
               >
-                Просрочен
+                {t('superadmin.support.overdue')}
               </Badge>
             )}
           </div>
@@ -444,7 +445,9 @@ function TicketRow({
               </>
             )}
             <span>•</span>
-            <span>{ticket.commentCount} комм.</span>
+            <span>
+              {ticket.commentCount} {t('superadmin.support.commentsShort')}
+            </span>
             <span>•</span>
             <span>{formatDate(ticket.createdAt)}</span>
           </div>
@@ -635,14 +638,14 @@ function TicketDetailDialog({
         isInternal: isInternal,
       });
       setCommentText('');
-      toast.success('Комментарий добавлен');
+      toast.success(t('superadmin.support.commentAdded'));
     } catch (error) {
-      toast.error('Ошибка при добавлении комментария');
+      toast.error(t('superadmin.support.errorAddingComment'));
     }
   };
 
   const handleResolve = async () => {
-    const resolution = prompt('Введите решение:');
+    const resolution = prompt(t('superadmin.support.enterResolution'));
     if (!resolution) return;
 
     try {
@@ -651,10 +654,10 @@ function TicketDetailDialog({
         resolution,
         userId,
       });
-      toast.success('Тикет решен');
+      toast.success(t('superadmin.support.ticketResolved'));
       onOpenChange(false);
     } catch (error) {
-      toast.error('Ошибка при решении тикета');
+      toast.error(t('superadmin.support.errorResolvingTicket'));
     }
   };
 
@@ -704,23 +707,24 @@ function TicketDetailDialog({
             <Badge
               className={`${getStatusColor(ticket.status)} text-xs transition-all duration-200`}
             >
-              {ticket.status === 'open' && 'Открыт'}
-              {ticket.status === 'in_progress' && 'В работе'}
-              {ticket.status === 'waiting_customer' && 'Ждет клиента'}
-              {ticket.status === 'resolved' && 'Решен'}
-              {ticket.status === 'closed' && 'Закрыт'}
+              {ticket.status === 'open' && t('superadmin.support.statusOpen')}
+              {ticket.status === 'in_progress' && t('superadmin.support.statusInProgress')}
+              {ticket.status === 'waiting_customer' &&
+                t('superadmin.support.statusWaitingCustomer')}
+              {ticket.status === 'resolved' && t('superadmin.support.statusResolved')}
+              {ticket.status === 'closed' && t('superadmin.support.statusClosed')}
             </Badge>
             <Badge
               className={`${getPriorityColor(ticket.priority)} text-xs transition-all duration-200`}
             >
-              {ticket.priority === 'critical' && 'Критичный'}
-              {ticket.priority === 'high' && 'Высокий'}
-              {ticket.priority === 'medium' && 'Средний'}
-              {ticket.priority === 'low' && 'Низкий'}
+              {ticket.priority === 'critical' && t('superadmin.support.priorityCritical')}
+              {ticket.priority === 'high' && t('superadmin.support.priorityHigh')}
+              {ticket.priority === 'medium' && t('superadmin.support.priorityMedium')}
+              {ticket.priority === 'low' && t('superadmin.support.priorityLow')}
             </Badge>
             {ticketWithOverdue.isOverdue && (
               <Badge variant="destructive" className="text-xs transition-all duration-200">
-                Просрочен
+                {t('superadmin.support.overdue')}
               </Badge>
             )}
           </div>
@@ -751,7 +755,9 @@ function TicketDetailDialog({
               })}
             </span>
             <span>•</span>
-            <span>{ticket.comments?.length || 0} комментариев</span>
+            <span>
+              {ticket.comments?.length || 0} {t('superadmin.detail.comments')}
+            </span>
           </div>
         </div>
 
@@ -770,8 +776,10 @@ function TicketDetailDialog({
               >
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  <span className="hidden sm:inline">Комментарии</span>
-                  <span className="sm:hidden">Комм.</span>
+                  <span className="hidden sm:inline">
+                    {t('superadmin.support.detail.comments')}
+                  </span>
+                  <span className="sm:hidden">{t('superadmin.detail.comments')}</span>
                   {ticket.comments?.length > 0 && (
                     <span className="px-1.5 py-0.5 text-xs rounded-full bg-[var(--background-subtle)]">
                       {ticket.comments.length}
@@ -796,8 +804,8 @@ function TicketDetailDialog({
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="hidden sm:inline">Детали</span>
-                  <span className="sm:hidden">Инфо</span>
+                  <span className="hidden sm:inline">{t('superadmin.support.detail.details')}</span>
+                  <span className="sm:hidden">{t('superadmin.support.detail.info')}</span>
                 </div>
               </button>
             </div>
@@ -833,7 +841,7 @@ function TicketDetailDialog({
                               variant="secondary"
                               className="text-xs transition-all duration-200"
                             >
-                              Внутренний
+                              {t('superadmin.support.internal')}
                             </Badge>
                           )}
                         </div>
@@ -856,7 +864,7 @@ function TicketDetailDialog({
                   {(!ticket.comments || ticket.comments.length === 0) && (
                     <div className="text-center py-8 text-muted-foreground">
                       <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30 transition-transform duration-200" />
-                      <p>Пока нет комментариев</p>
+                      <p>{t('superadmin.support.noCommentsYet')}</p>
                     </div>
                   )}
                 </div>
@@ -890,7 +898,7 @@ function TicketDetailDialog({
                           d="M4 6h16M4 12h16M4 18h7"
                         />
                       </svg>
-                      Описание
+                      {t('superadmin.support.detail.description')}
                     </h4>
                     <div className="p-4 rounded-lg bg-[var(--background-subtle)] transition-all duration-200 hover:shadow-sm">
                       <p className="text-sm leading-relaxed">{ticket.description}</p>
@@ -915,7 +923,7 @@ function TicketDetailDialog({
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                         />
                       </svg>
-                      Информация о тикете
+                      {t('superadmin.support.ticketInfo')}
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 rounded-lg bg-[var(--background-subtle)] transition-colors duration-300 hover:bg-[var(--card)]">
@@ -923,16 +931,18 @@ function TicketDetailDialog({
                           className="text-xs mb-1 transition-colors duration-200"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          Статус
+                          {t('superadmin.support.detail.status')}
                         </p>
                         <Badge
                           className={`${getStatusColor(ticket.status)} text-xs transition-all duration-200`}
                         >
-                          {ticket.status === 'open' && 'Открыт'}
-                          {ticket.status === 'in_progress' && 'В работе'}
-                          {ticket.status === 'waiting_customer' && 'Ждет клиента'}
-                          {ticket.status === 'resolved' && 'Решен'}
-                          {ticket.status === 'closed' && 'Закрыт'}
+                          {ticket.status === 'open' && t('superadmin.support.statusOpen')}
+                          {ticket.status === 'in_progress' &&
+                            t('superadmin.support.statusInProgress')}
+                          {ticket.status === 'waiting_customer' &&
+                            t('superadmin.support.statusWaitingCustomer')}
+                          {ticket.status === 'resolved' && t('superadmin.support.statusResolved')}
+                          {ticket.status === 'closed' && t('superadmin.support.statusClosed')}
                         </Badge>
                       </div>
                       <div className="p-3 rounded-lg bg-[var(--background-subtle)] transition-colors duration-300 hover:bg-[var(--card)]">
@@ -940,15 +950,16 @@ function TicketDetailDialog({
                           className="text-xs mb-1 transition-colors duration-200"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          Приоритет
+                          {t('superadmin.support.detail.priority')}
                         </p>
                         <Badge
                           className={`${getPriorityColor(ticket.priority)} text-xs transition-all duration-200`}
                         >
-                          {ticket.priority === 'critical' && 'Критичный'}
-                          {ticket.priority === 'high' && 'Высокий'}
-                          {ticket.priority === 'medium' && 'Средний'}
-                          {ticket.priority === 'low' && 'Низкий'}
+                          {ticket.priority === 'critical' &&
+                            t('superadmin.support.priorityCritical')}
+                          {ticket.priority === 'high' && t('superadmin.support.priorityHigh')}
+                          {ticket.priority === 'medium' && t('superadmin.support.priorityMedium')}
+                          {ticket.priority === 'low' && t('superadmin.support.priorityLow')}
                         </Badge>
                       </div>
                       <div className="p-3 rounded-lg bg-[var(--background-subtle)] transition-colors duration-300 hover:bg-[var(--card)]">
@@ -956,7 +967,7 @@ function TicketDetailDialog({
                           className="text-xs mb-1 transition-colors duration-200"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          Категория
+                          {t('superadmin.support.detail.category')}
                         </p>
                         <p className="text-sm font-medium transition-colors duration-200">
                           {ticket.category}
@@ -967,7 +978,7 @@ function TicketDetailDialog({
                           className="text-xs mb-1 transition-colors duration-200"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          Создан
+                          {t('superadmin.support.detail.created')}
                         </p>
                         <p className="text-sm font-medium transition-colors duration-200">
                           {new Date(ticket.createdAt).toLocaleDateString('ru-RU')}
@@ -985,7 +996,7 @@ function TicketDetailDialog({
                 <Textarea
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Добавить комментарий..."
+                  placeholder={t('superadmin.support.detail.addComment')}
                   rows={3}
                   className="resize-none transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
@@ -998,7 +1009,7 @@ function TicketDetailDialog({
                       className="rounded transition-all duration-200"
                     />
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Внутренний (не видно клиенту)
+                      {t('superadmin.support.internalLabel')}
                     </span>
                   </label>
                   <Button
@@ -1007,7 +1018,7 @@ function TicketDetailDialog({
                     disabled={!commentText.trim()}
                     className="transition-all duration-200 hover:scale-105 active:scale-95"
                   >
-                    Отправить
+                    {t('superadmin.support.detail.send')}
                   </Button>
                 </div>
               </div>
@@ -1020,7 +1031,7 @@ function TicketDetailDialog({
                   className="text-sm font-medium mb-3 transition-colors duration-200"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  Изменить статус
+                  {t('superadmin.support.changeStatus')}
                 </h4>
                 <Select
                   value={ticket.status}
@@ -1030,7 +1041,7 @@ function TicketDetailDialog({
                       status: value,
                       userId,
                     });
-                    toast.success('Статус обновлен');
+                    toast.success(t('superadmin.support.detail.status'));
                   }}
                 >
                   <SelectTrigger className="w-full shadow-none transition-all duration-200 hover:shadow-sm">
@@ -1038,19 +1049,19 @@ function TicketDetailDialog({
                   </SelectTrigger>
                   <SelectContent className="select-dropdown-animate">
                     <SelectItem value="open" className="transition-all duration-150">
-                      Открытый
+                      {t('superadmin.support.statusOpenOption')}
                     </SelectItem>
                     <SelectItem value="in_progress" className="transition-all duration-150">
-                      В работе
+                      {t('superadmin.support.statusInProgress')}
                     </SelectItem>
                     <SelectItem value="waiting_customer" className="transition-all duration-150">
-                      Ждет ответа
+                      {t('superadmin.support.statusWaitingResponse')}
                     </SelectItem>
                     <SelectItem value="resolved" className="transition-all duration-150">
-                      Решен
+                      {t('superadmin.support.statusResolved')}
                     </SelectItem>
                     <SelectItem value="closed" className="transition-all duration-150">
-                      Закрыт
+                      {t('superadmin.support.statusClosed')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -1063,7 +1074,7 @@ function TicketDetailDialog({
                   className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] hover:shadow-sm"
                 >
                   <CheckCircle className="w-4 h-4 mr-2 transition-transform duration-200" />
-                  Решить тикет
+                  {t('superadmin.support.resolveTicket')}
                 </Button>
               )}
 
@@ -1072,11 +1083,13 @@ function TicketDetailDialog({
                   className="text-sm font-medium mb-3 transition-colors duration-200"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  Информация
+                  {t('superadmin.support.info')}
                 </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between transition-all duration-200 hover:bg-[var(--background-subtle)] rounded p-1">
-                    <span style={{ color: 'var(--text-muted)' }}>Приоритет:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      {t('superadmin.support.detail.priority')}:
+                    </span>
                     <span
                       className="font-medium transition-colors duration-200"
                       style={{ color: 'var(--text-primary)' }}
@@ -1085,7 +1098,9 @@ function TicketDetailDialog({
                     </span>
                   </div>
                   <div className="flex justify-between transition-all duration-200 hover:bg-[var(--background-subtle)] rounded p-1">
-                    <span style={{ color: 'var(--text-muted)' }}>Категория:</span>
+                    <span style={{ color: 'var(--text-muted)' }}>
+                      {t('superadmin.support.detail.category')}:
+                    </span>
                     <span
                       className="font-medium transition-colors duration-200"
                       style={{ color: 'var(--text-primary)' }}
