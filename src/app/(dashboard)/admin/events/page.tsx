@@ -25,7 +25,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react';
-import { CreateEventModal } from '@/components/events/CreateEventModal';
+import { CreateEventWizard } from '@/components/events/CreateEventWizard';
 import { LeaveConflictAlerts } from '@/components/events/LeaveConflictAlerts';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
@@ -317,16 +317,25 @@ export default function CompanyEventsPage() {
         <LeaveConflictAlerts organizationId={effectiveOrgId as any} userId={userId!} />
       )}
 
-      {/* Create Event Modal */}
-      <CreateEventModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        organizationId={effectiveOrgId as any}
-        userId={userId!}
-        onSuccess={() => {
-          toast.success(t('events.eventCreated', 'Event created successfully'));
-        }}
-      />
+      {/* Create Event Wizard Dialog */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-lg md:text-xl">{t('events.createEvent', 'Create Event')}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <CreateEventWizard
+              organizationId={effectiveOrgId as any}
+              userId={userId!}
+              onComplete={() => {
+                setShowCreateModal(false);
+                toast.success(t('events.eventCreated', 'Event created successfully'));
+              }}
+              onCancel={() => setShowCreateModal(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Event Modal */}
       <Dialog

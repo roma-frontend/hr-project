@@ -5270,33 +5270,45 @@
     }
   },
   "eventWizard": {
-    "submit": "Create Event",
+    "submit": "Միջոցառում ստեղծել",
     "steps": {
       "type": {
-        "title": "Event Type",
-        "description": "What type of event?",
-        "typeLabel": "Event Type"
+        "title": "Միջոցառման տեսակ",
+        "description": "Ի՞նչ տեսակի միջոցառում եք կազմակերպում:",
+        "typeLabel": "Միջոցառման տեսակ"
       },
       "details": {
-        "title": "Event Details",
-        "description": "Describe your event",
-        "titleLabel": "Event Name *",
-        "titlePlaceholder": "e.g., Team Building",
-        "descriptionLabel": "Description",
-        "descriptionPlaceholder": "What's this event about?"
+        "title": "Միջոցառման մանրամասներ",
+        "description": "Ներկայացրեք տեղեկություն միջոցառման մասին",
+        "titleLabel": "Անվանում *",
+        "titlePlaceholder": "օր․՝ Տարեկան IT կոնֆերանս 2025",
+        "descriptionLabel": "Նկարագրություն",
+        "descriptionPlaceholder": "Միջոցառման համառոտ նկարագրություն..."
       },
       "datetime": {
-        "title": "Date & Time",
-        "description": "When will it take place?",
-        "dateLabel": "Date *",
-        "timeLabel": "Time *",
-        "locationLabel": "Location",
-        "locationPlaceholder": "Where will it be?"
+        "title": "Ամսաթիվ և վայր",
+        "description": "Ե՞րբ և որտե՞ղ այն կկայանա:",
+        "startLabel": "Սկզբի ամսաթիվ *",
+        "endLabel": "Ավարտի ամսաթիվ *",
+        "locationLabel": "Վայր",
+        "locationPlaceholder": "օր․՝ Կոնֆերանսների դահլիճ A"
+      },
+      "priority": {
+        "title": "Կարևորության մակարդակ",
+        "description": "Որքա՞ն կարևոր է այս միջոցառումը:",
+        "priorityLabel": "Միջոցառման առաջնահերթություն"
+      },
+      "departments": {
+        "title": "Թիրախային բաժիններ",
+        "description": "Ո՞վքեր պետք է մասնակցեն:",
+        "departmentsLabel": "Պահանջվող բաժիններ *",
+        "notifyLabel": "Ծանուցել օր առաջ"
       }
     },
     "toast": {
-      "success": "Event created successfully!",
-      "error": "Failed to create event"
+      "success": "Միջոցառումը հաջողությամբ ստեղծվեց:",
+      "error": "Սխալ միջոցառումը ստեղծելիս",
+      "selectDepartments": "Խնդրում ենք ընտրել գոնե մեկ բաժին"
     }
   },
   "driverWizard": {
@@ -5464,14 +5476,26 @@
   },
   "event": {
     "types": {
-      "meeting": "Meeting",
-      "meetingDesc": "Team or company meeting",
-      "training": "Training",
-      "trainingDesc": "Educational event",
-      "celebration": "Celebration",
-      "celebrationDesc": "Party or celebration",
-      "other": "Other",
-      "otherDesc": "Something else"
+      "meeting": "Հանդիպում",
+      "meetingDesc": "Թիմային կամ ընդհանուր հանդիպում",
+      "conference": "Կոնֆերանս",
+      "conferenceDesc": "Մասնագիտական կոնֆերանս կամ սեմինար",
+      "training": "Ուսուցում",
+      "trainingDesc": "Կրթական միջոցառում կամ արհեստանոց",
+      "holiday": "Տոն",
+      "holidayDesc": "Ընկերության տոն կամ հանգստյան օր",
+      "celebration": "Տոնակատարություն",
+      "celebrationDesc": "Երեկույթ կամ տոնակատարություն",
+      "other": "Այլ",
+      "otherDesc": "Ինչ-որ այլ բան"
+    },
+    "priority": {
+      "high": "Բարձր",
+      "highDesc": "Պարտադիր ներկայություն",
+      "medium": "Միջին",
+      "mediumDesc": "Խորհուրդ է տրվում ներկայություն",
+      "low": "Ցածր",
+      "lowDesc": "Ոչ պարտադիր ներկայություն"
     }
   },
   "faceLogin": {

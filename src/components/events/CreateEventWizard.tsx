@@ -13,24 +13,43 @@ import {
   TextareaStep,
   SelectStep,
   CardSelectionStep,
+  RadioGroupStep,
+  CheckboxStep,
 } from '@/components/ui/wizard-step-components';
-import { Calendar, Clock, Users, MapPin } from 'lucide-react';
-import { useMutation, useQuery } from 'convex/react';
+import { Calendar, Clock, Users, MapPin, Bell, AlertCircle } from 'lucide-react';
+import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 
 interface CreateEventWizardProps {
+  organizationId: Id<'organizations'>;
+  userId: Id<'users'>;
   onComplete?: () => void;
   onCancel?: () => void;
 }
 
-export function CreateEventWizard({ onComplete, onCancel }: CreateEventWizardProps) {
+const DEPARTMENTS = [
+  { value: 'IT', label: 'IT', description: 'Information Technology' },
+  { value: 'Finance', label: 'Finance', description: 'Finance & Accounting' },
+  { value: 'HR', label: 'HR', description: 'Human Resources' },
+  { value: 'Marketing', label: 'Marketing', description: 'Marketing & PR' },
+  { value: 'Sales', label: 'Sales', description: 'Sales & Business Development' },
+  { value: 'Operations', label: 'Operations', description: 'Operations & Logistics' },
+  { value: 'Legal', label: 'Legal', description: 'Legal & Compliance' },
+  { value: 'Support', label: 'Support', description: 'Customer Support' },
+  { value: 'Management', label: 'Management', description: 'Executive Management' },
+  { value: 'Other', label: 'Other', description: 'Other departments' },
+];
+
+export function CreateEventWizard({
+  organizationId,
+  userId,
+  onComplete,
+  onCancel,
+}: CreateEventWizardProps) {
   const { t } = useTranslation();
   const createEvent = useMutation(api.events.createCompanyEvent);
-  const user = useQuery(api.users.queries.getCurrentUser, {});
-  const selectedOrgId = useSelectedOrganization();
-  const organizationId = (selectedOrgId ?? user?.organizationId) as any;
 
   const steps: WizardStep[] = [
     {
@@ -53,25 +72,25 @@ export function CreateEventWizard({ onComplete, onCancel }: CreateEventWizardPro
               color: 'bg-blue-500/10 text-blue-600',
             },
             {
-              value: 'training',
-              title: t('event.types.training'),
-              description: t('event.types.trainingDesc'),
-              icon: <Calendar className="w-6 h-6" />,
-              color: 'bg-green-500/10 text-green-600',
-            },
-            {
-              value: 'celebration',
-              title: t('event.types.celebration'),
-              description: t('event.types.celebrationDesc'),
-              icon: <Clock className="w-6 h-6" />,
+              value: 'conference',
+              title: t('event.types.conference'),
+              description: t('event.types.conferenceDesc'),
+              icon: <MapPin className="w-6 h-6" />,
               color: 'bg-purple-500/10 text-purple-600',
             },
             {
-              value: 'other',
-              title: t('event.types.other'),
-              description: t('event.types.otherDesc'),
-              icon: <MapPin className="w-6 h-6" />,
-              color: 'bg-gray-500/10 text-gray-600',
+              value: 'training',
+              title: t('event.types.training'),
+              description: t('event.types.trainingDesc'),
+              icon: <Clock className="w-6 h-6" />,
+              color: 'bg-green-500/10 text-green-600',
+            },
+            {
+              value: 'holiday',
+              title: t('event.types.holiday'),
+              description: t('event.types.holidayDesc'),
+              icon: <Calendar className="w-6 h-6" />,
+              color: 'bg-orange-500/10 text-orange-600',
             },
           ]}
           columns={2}
@@ -112,21 +131,21 @@ export function CreateEventWizard({ onComplete, onCancel }: CreateEventWizardPro
       icon: <Clock className="w-5 h-5" />,
       content: (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextInputStep
               stepData={{}}
               updateStepData={() => {}}
-              field="date"
-              label={t('eventWizard.steps.datetime.dateLabel')}
+              field="startDate"
+              label={t('eventWizard.steps.datetime.startLabel')}
               type="date"
               required
             />
             <TextInputStep
               stepData={{}}
               updateStepData={() => {}}
-              field="time"
-              label={t('eventWizard.steps.datetime.timeLabel')}
-              type="time"
+              field="endDate"
+              label={t('eventWizard.steps.datetime.endLabel')}
+              type="date"
               required
             />
           </div>
@@ -140,22 +159,91 @@ export function CreateEventWizard({ onComplete, onCancel }: CreateEventWizardPro
         </div>
       ),
     },
+    {
+      id: 'priority',
+      title: t('eventWizard.steps.priority.title'),
+      description: t('eventWizard.steps.priority.description'),
+      icon: <AlertCircle className="w-5 h-5" />,
+      content: (
+        <RadioGroupStep
+          stepData={{}}
+          updateStepData={() => {}}
+          field="priority"
+          label={t('eventWizard.steps.priority.priorityLabel')}
+          options={[
+            {
+              value: 'high',
+              label: t('event.priority.high'),
+              description: t('event.priority.highDesc'),
+            },
+            {
+              value: 'medium',
+              label: t('event.priority.medium'),
+              description: t('event.priority.mediumDesc'),
+            },
+            {
+              value: 'low',
+              label: t('event.priority.low'),
+              description: t('event.priority.lowDesc'),
+            },
+          ]}
+          defaultValue="medium"
+        />
+      ),
+    },
+    {
+      id: 'departments',
+      title: t('eventWizard.steps.departments.title'),
+      description: t('eventWizard.steps.departments.description'),
+      icon: <Users className="w-5 h-5" />,
+      content: (
+        <div className="space-y-4">
+          <CheckboxStep
+            stepData={{}}
+            updateStepData={() => {}}
+            field="departments"
+            label={t('eventWizard.steps.departments.departmentsLabel')}
+            options={DEPARTMENTS}
+          />
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-(--muted-foreground)" />
+              <TextInputStep
+                stepData={{}}
+                updateStepData={() => {}}
+                field="notifyDays"
+                label={t('eventWizard.steps.departments.notifyLabel')}
+                type="number"
+                defaultValue="3"
+              />
+            </div>
+          </div>
+        </div>
+      ),
+    },
   ];
 
   const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
     try {
-      const dateTime = new Date(`${String(data.date)}T${String(data.time)}`);
-      const endDate = new Date(dateTime.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+      const departments = (data.departments as string[]) || [];
+      
+      if (departments.length === 0) {
+        toast.error(t('eventWizard.toast.selectDepartments'));
+        return;
+      }
 
       await createEvent({
         organizationId,
-        userId: user?._id as any,
+        userId,
         name: String(data.title),
         description: String(data.description) || '',
-        eventType: String(data.type) as 'meeting' | 'holiday' | 'training' | 'conference',
-        startDate: dateTime.getTime(),
-        endDate: endDate.getTime(),
-        requiredDepartments: [],
+        startDate: new Date(String(data.startDate)).getTime(),
+        endDate: new Date(String(data.endDate)).getTime(),
+        isAllDay: true,
+        eventType: String(data.type) as any,
+        priority: (data.priority as 'high' | 'medium' | 'low') || 'medium',
+        requiredDepartments: departments,
+        notifyDaysBefore: parseInt(String(data.notifyDays)) || 3,
       });
 
       toast.success(t('eventWizard.toast.success'));

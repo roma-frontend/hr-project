@@ -5161,29 +5161,41 @@
     "steps": {
       "type": {
         "title": "Тип мероприятия",
-        "description": "Какой тип мероприятия?",
+        "description": "Какой тип мероприятия вы организуете?",
         "typeLabel": "Тип мероприятия"
       },
       "details": {
         "title": "Детали мероприятия",
-        "description": "Опишите ваше мероприятие",
+        "description": "Предоставьте информацию о мероприятии",
         "titleLabel": "Название *",
-        "titlePlaceholder": "например, Тимбилдинг",
+        "titlePlaceholder": "например, Ежегодная IT конференция 2025",
         "descriptionLabel": "Описание",
-        "descriptionPlaceholder": "О чем это мероприятие?"
+        "descriptionPlaceholder": "Краткое описание мероприятия..."
       },
       "datetime": {
-        "title": "Дата и время",
-        "description": "Когда оно состоится?",
-        "dateLabel": "Дата *",
-        "timeLabel": "Время *",
+        "title": "Дата и место",
+        "description": "Когда и где оно состоится?",
+        "startLabel": "Дата начала *",
+        "endLabel": "Дата окончания *",
         "locationLabel": "Место проведения",
-        "locationPlaceholder": "Где оно будет?"
+        "locationPlaceholder": "например, Конференц-зал А"
+      },
+      "priority": {
+        "title": "Уровень важности",
+        "description": "Насколько важно это мероприятие?",
+        "priorityLabel": "Приоритет мероприятия"
+      },
+      "departments": {
+        "title": "Целевые отделы",
+        "description": "Кто должен присутствовать?",
+        "departmentsLabel": "Требуемые отделы *",
+        "notifyLabel": "Уведомить за дней до"
       }
     },
     "toast": {
       "success": "Мероприятие успешно создано!",
-      "error": "Ошибка при создании мероприятия"
+      "error": "Ошибка при создании мероприятия",
+      "selectDepartments": "Выберите хотя бы один отдел"
     }
   },
   "driverWizard": {
@@ -5359,12 +5371,24 @@
     "types": {
       "meeting": "Встреча",
       "meetingDesc": "Командная или общая встреча",
+      "conference": "Конференция",
+      "conferenceDesc": "Профессиональная конференция или семинар",
       "training": "Обучение",
-      "trainingDesc": "Образовательное мероприятие",
+      "trainingDesc": "Образовательное мероприятие или воркшоп",
+      "holiday": "Праздник",
+      "holidayDesc": "Корпоративный праздник или выходной",
       "celebration": "Празднование",
       "celebrationDesc": "Вечеринка или торжество",
       "other": "Другое",
       "otherDesc": "Что-то еще"
+    },
+    "priority": {
+      "high": "Высокий",
+      "highDesc": "Обязательное присутствие",
+      "medium": "Средний",
+      "mediumDesc": "Рекомендуемое присутствие",
+      "low": "Низкий",
+      "lowDesc": "Необязательное присутствие"
     }
   },
   "aiChat": {

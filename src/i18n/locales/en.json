@@ -4938,29 +4938,41 @@
     "steps": {
       "type": {
         "title": "Event Type",
-        "description": "What type of event?",
+        "description": "What type of event are you organizing?",
         "typeLabel": "Event Type"
       },
       "details": {
         "title": "Event Details",
-        "description": "Describe your event",
+        "description": "Provide event information",
         "titleLabel": "Event Name *",
-        "titlePlaceholder": "e.g., Team Building",
+        "titlePlaceholder": "e.g., Annual IT Conference 2025",
         "descriptionLabel": "Description",
-        "descriptionPlaceholder": "What's this event about?"
+        "descriptionPlaceholder": "Brief description of the event..."
       },
       "datetime": {
-        "title": "Date & Time",
-        "description": "When will it take place?",
-        "dateLabel": "Date *",
-        "timeLabel": "Time *",
+        "title": "Date & Location",
+        "description": "When and where will it take place?",
+        "startLabel": "Start Date *",
+        "endLabel": "End Date *",
         "locationLabel": "Location",
-        "locationPlaceholder": "Where will it be?"
+        "locationPlaceholder": "e.g., Conference Hall A"
+      },
+      "priority": {
+        "title": "Priority Level",
+        "description": "How important is this event?",
+        "priorityLabel": "Event Priority"
+      },
+      "departments": {
+        "title": "Target Departments",
+        "description": "Who should attend this event?",
+        "departmentsLabel": "Required Departments *",
+        "notifyLabel": "Notify Days Before"
       }
     },
     "toast": {
       "success": "Event created successfully!",
-      "error": "Failed to create event"
+      "error": "Failed to create event",
+      "selectDepartments": "Please select at least one department"
     }
   },
   "driverWizard": {
@@ -5136,12 +5148,24 @@
     "types": {
       "meeting": "Meeting",
       "meetingDesc": "Team or company meeting",
+      "conference": "Conference",
+      "conferenceDesc": "Professional conference or seminar",
       "training": "Training",
-      "trainingDesc": "Educational event",
+      "trainingDesc": "Educational event or workshop",
+      "holiday": "Holiday",
+      "holidayDesc": "Company holiday or day off",
       "celebration": "Celebration",
       "celebrationDesc": "Party or celebration",
       "other": "Other",
       "otherDesc": "Something else"
+    },
+    "priority": {
+      "high": "High",
+      "highDesc": "Critical attendance required",
+      "medium": "Medium",
+      "mediumDesc": "Recommended attendance",
+      "low": "Low",
+      "lowDesc": "Optional attendance"
     }
   },
   "aiChat": {
