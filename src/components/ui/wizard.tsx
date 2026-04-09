@@ -94,13 +94,13 @@ export function Wizard({
 
   return (
     <div className={cn('flex flex-col', className)}>
-      {/* Content Area */}
-      <div className="flex-1 px-3 py-4 md:px-6 md:py-6">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
         {/* Stepper */}
         {showStepper && (
-          <div className="mb-4 md:mb-6">
+          <div className="mb-5 md:mb-6">
             {/* Progress Bar */}
-            <div className="relative h-1.5 bg-(--background-subtle) rounded-full overflow-hidden mb-3 md:mb-5">
+            <div className="relative h-1.5 md:h-2 bg-(--background-subtle) rounded-full overflow-hidden mb-4 md:mb-5">
               <motion.div
                 className="absolute inset-y-0 left-0 bg-(--primary)"
                 initial={{ width: 0 }}
@@ -120,7 +120,7 @@ export function Wizard({
                     <div className="flex flex-col items-center flex-1 min-w-0">
                       <motion.div
                         className={cn(
-                          'w-6 h-6 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-colors shrink-0',
+                          'w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-colors shrink-0',
                           isCompleted
                             ? 'bg-(--primary) border-(--primary) text-white'
                             : isCurrent
@@ -132,22 +132,22 @@ export function Wizard({
                         transition={{ duration: 0.2 }}
                       >
                         {isCompleted ? (
-                          <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
+                          <CheckCircle className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         ) : (
-                          <span className="text-[10px] md:text-xs font-semibold">{index + 1}</span>
+                          <span className="text-[11px] md:text-xs font-semibold">{index + 1}</span>
                         )}
                       </motion.div>
-                      <div className="mt-1 md:mt-1.5 text-center w-full px-0.5">
+                      <div className="mt-1.5 md:mt-2 text-center w-full px-1">
                         <p
                           className={cn(
-                            'text-[8px] md:text-[10px] font-medium transition-colors leading-tight',
+                            'text-[10px] md:text-xs font-medium transition-colors leading-tight',
                             isCurrent ? 'text-(--primary)' : 'text-(--muted-foreground)',
                           )}
                         >
                           {step.title}
                         </p>
                         {step.description && (
-                          <p className="text-[7px] md:text-[9px] text-(--muted-foreground) mt-0.5 hidden md:block truncate">
+                          <p className="text-[9px] md:text-[10px] text-(--muted-foreground) mt-0.5 hidden sm:block truncate">
                             {step.description}
                           </p>
                         )}
@@ -155,7 +155,7 @@ export function Wizard({
                     </div>
 
                     {index < steps.length - 1 && (
-                      <div className="flex-1 h-0.5 bg-(--border) mx-0.5 md:mx-1.5 max-w-4 md:max-w-none">
+                      <div className="flex-1 h-0.5 bg-(--border) mx-1 md:mx-2 max-w-6 md:max-w-none">
                         <motion.div
                           className={cn(
                             'h-full transition-colors',
@@ -183,12 +183,12 @@ export function Wizard({
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
           >
-            <div className="mb-4 md:mb-5">
-              <h2 className="text-base md:text-xl font-bold text-(--text-primary) mb-1 md:mb-2">
+            <div className="mb-4 md:mb-6">
+              <h2 className="text-lg md:text-xl font-bold text-(--text-primary) mb-1.5 md:mb-2">
                 {currentStepData?.title}
               </h2>
               {currentStepData?.description && (
-                <p className="text-xs md:text-sm text-(--text-muted)">
+                <p className="text-sm md:text-base text-(--text-muted)">
                   {currentStepData?.description}
                 </p>
               )}
@@ -216,20 +216,20 @@ export function Wizard({
         </AnimatePresence>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex-shrink-0 px-3 py-3 md:px-6 md:py-4 border-t mt-4">
-        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
+      {/* Navigation Buttons - Fixed at bottom */}
+      <div className="flex-shrink-0 px-4 py-4 md:px-6 md:py-5 border-t border-(--border) bg-(--background)">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={handleBack}
             disabled={currentStep === 0 || isSubmitting}
             className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground) w-full sm:w-auto text-sm"
           >
-            <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+            <ChevronLeft className="w-4 h-4 mr-1" />
             {t('wizard.back', 'Back')}
           </Button>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             {onCancel && (
               <Button
                 variant="outline"
@@ -244,12 +244,7 @@ export function Wizard({
             <Button
               onClick={handleNext}
               disabled={!canGoNext() || isSubmitting}
-              className={cn(
-                'gap-1 md:gap-2 w-full sm:w-auto text-sm',
-                currentStep === steps.length - 1
-                  ? 'bg-(--primary) hover:bg-(--primary-hover) text-white'
-                  : 'bg-(--primary) hover:bg-(--primary-hover) text-white',
-              )}
+              className="bg-(--primary) hover:bg-(--primary-hover) text-white gap-2 w-full sm:w-auto text-sm"
             >
               {isSubmitting ? (
                 t('wizard.processing', 'Processing...')
@@ -258,7 +253,7 @@ export function Wizard({
               ) : (
                 <>
                   {t('wizard.next', 'Next')}
-                  <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                  <ChevronRight className="w-4 h-4" />
                 </>
               )}
             </Button>

@@ -294,12 +294,12 @@ export default function SupportTicketsPage() {
 
       {/* Create Ticket Dialog - Using Wizard */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] md:max-h-[95vh]">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-base md:text-xl">{t('superadmin.support.createTicket')}</DialogTitle>
-            <DialogDescription className="text-xs md:text-sm">{t('superadmin.support.createDescription')}</DialogDescription>
+            <DialogTitle className="text-lg md:text-xl">{t('superadmin.support.createTicket')}</DialogTitle>
+            <DialogDescription className="text-sm">{t('superadmin.support.createDescription')}</DialogDescription>
           </DialogHeader>
-          <div className="-mx-6">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <CreateSupportTicketWizard
             userId={user.id as Id<'users'>}
             organizationId={user.organizationId as Id<'organizations'>}
