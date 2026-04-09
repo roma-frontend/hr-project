@@ -2285,6 +2285,7 @@
     "removeAdminConfirm": "Are you sure you want to remove admin role from <0>{{name}}</0> (<1>{{email}}</1>)? They will be demoted to regular employee.",
     "makeAdminTitle": "Make Admin?",
     "removeAdminTitle": "Remove Admin Role?",
+    "cancel": "Cancel",
     "processing": "Processing..."
   },
   "reportsAnalytics": {
@@ -2624,7 +2625,7 @@
     "fair": "Fair",
     "good": "Good",
     "strong": "Strong",
-    "searching": "SearchingР В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В Р Р‹Р Р†РІР‚С›РЎС›Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В¦",
+    "searching": "Searching for your organization...",
     "noOrgFoundFor": "No organization found for",
     "askAdmin": "Ask your administrator to set up the organization first.",
     "typeToSearch": "Type at least 2 characters to search for your organization",
@@ -2864,7 +2865,7 @@
     "deactivatedNoAccess": "Deactivated — no access"
   },
   "employeesExtra": {
-    "contractorTip": "Tip: include \"contractor\" in email Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р РЋРІвЂћСћР В Р’В Р В РІР‚В Р В Р вЂ Р В РІР‚С™Р РЋРІР‚С”Р В Р Р‹Р РЋРІР‚С” auto-sets contractor type (12,000 Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р Р†Р вЂљРІвЂћСћР В РІР‚в„ўР вЂ™Р’В¦Р В Р’В Р вЂ™Р’В Р В РІР‚в„ўР вЂ™Р’В Р В Р’В Р вЂ™Р’В Р В Р’В Р В Р РЏ allowance)",
+    "contractorTip": "Contractors are external workers with limited access, while staff are full employees with complete access to the system.",
     "basedOn": "Based on",
     "contractorType": "contractor",
     "staffType": "staff",
@@ -3030,7 +3031,7 @@
     "generating": "Generating AI Digest...",
     "analyzing": "Analyzing attendance, leaves & patterns",
     "clickRefresh": "Click refresh to generate digest",
-    "poweredBy": "?? Powered by AI Р В Р’В Р вЂ™Р’В Р В Р Р‹Р Р†Р вЂљРІР‚СњР В Р’В Р В Р вЂ№Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљР В Р’В Р вЂ™Р’В Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В¦ for informational purposes only",
+    "poweredBy": "Powered by AI",
     "refresh": "Refresh"
   },
   "departmentStats": {
@@ -3061,9 +3062,9 @@
     "activeAlerts": "Active Alerts",
     "critical": "Critical",
     "warning": "Warning",
-    "onTime": "Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р В Р вЂ№Р В Р Р‹Р Р†РІР‚С›РЎС›Р В Р’В Р В РІР‚В Р В Р’В Р Р†Р вЂљРЎв„ўР В РІР‚в„ўР вЂ™Р’В¦ On Time",
-    "pending": "Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р вЂ™Р’В Р В Р’В Р В Р РЏР В Р’В Р В Р вЂ№Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™ Pending",
-    "breached": "Р В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В Р В Р’В Р В Р вЂ№Р В Р Р‹Р РЋРІвЂћСћР В Р’В Р вЂ™Р’В Р В Р’В Р Р†Р вЂљР’В° Breached",
+    "onTime": "On Time",
+    "pending": "Pending",
+    "breached": "Breached",
     "ofTotal": "of total",
     "hours": "hours",
     "target": "Target: {hours}h",
