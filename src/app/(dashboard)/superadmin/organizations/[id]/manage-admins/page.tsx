@@ -5,7 +5,7 @@ import { api } from '../../../../../../../convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   ArrowLeft,
   Shield,
@@ -16,18 +16,21 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  ShieldAlert,
+  ShieldCheck,
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { motion } from '@/lib/cssMotion';
 
 interface Member {
   _id: string;
@@ -97,13 +100,13 @@ export default function ManageAdminsPage() {
         organizationId: orgId as any,
       });
 
-      toast.success(t('ui.adminAssignedSuccessfully') || 'Admin assigned successfully!');
+      toast.success(t('ui.adminAssignedSuccessfully'));
       setShowConfirm(false);
       setSelectedMemberId(null);
       setActionType(null);
     } catch (error) {
       console.error('Error promoting admin:', error);
-      toast.error((error as any).message || t('ui.errorAssigningAdmin') || 'Error assigning admin');
+      toast.error((error as any).message || t('ui.errorAssigningAdmin'));
     } finally {
       setIsLoading(false);
     }
@@ -119,13 +122,13 @@ export default function ManageAdminsPage() {
         userId: selectedMemberId as any,
       });
 
-      toast.success(t('ui.adminRemovedSuccessfully') || 'Admin removed successfully!');
+      toast.success(t('ui.adminRemovedSuccessfully'));
       setShowConfirm(false);
       setSelectedMemberId(null);
       setActionType(null);
     } catch (error) {
       console.error('Error removing admin:', error);
-      toast.error((error as any).message || t('ui.errorRemovingAdmin') || 'Error removing admin');
+      toast.error((error as any).message || t('ui.errorRemovingAdmin'));
     } finally {
       setIsLoading(false);
     }
@@ -424,52 +427,92 @@ export default function ManageAdminsPage() {
       </div>
 
       {/* Confirmation Dialog */}
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType === 'promote' ? 'Make Admin?' : 'Remove Admin Role?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <DialogHeader className="pb-4">
+              {/* Icon Badge */}
+              <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+                style={{
+                  background: actionType === 'promote'
+                    ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05))'
+                    : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))',
+                }}
+              >
+                {actionType === 'promote' ? (
+                  <ShieldCheck className="w-7 h-7 text-green-600 dark:text-green-400" />
+                ) : (
+                  <ShieldAlert className="w-7 h-7 text-red-600 dark:text-red-400" />
+                )}
+              </div>
+
+              <DialogTitle className="text-center text-lg">
+                {actionType === 'promote'
+                  ? t('ui.makeAdminTitle')
+                  : t('ui.removeAdminTitle')}
+              </DialogTitle>
+            </DialogHeader>
+
+            <DialogDescription className="text-center text-sm text-muted-foreground pb-4">
               {actionType === 'promote' ? (
-                <span>
-                  Are you sure you want to make <strong>{selectedMember?.name}</strong> (
-                  {selectedMember?.email}) an administrator of <strong>{organization.name}</strong>?
-                  <br />
-                  <br />
-                  They will have full control over this organization.
-                </span>
+                <Trans
+                  i18nKey="ui.makeAdminConfirm"
+                  values={{ name: selectedMember?.name, email: selectedMember?.email, org: organization.name }}
+                  components={[
+                    <strong key="name" className="text-foreground" />,
+                    <span key="email" className="text-muted-foreground" />,
+                    <strong key="org" className="text-foreground" />,
+                  ]}
+                />
               ) : (
-                <span>
-                  Are you sure you want to remove admin role from{' '}
-                  <strong>{selectedMember?.name}</strong> ({selectedMember?.email})?
-                  <br />
-                  <br />
-                  They will be demoted to regular employee.
-                </span>
+                <Trans
+                  i18nKey="ui.removeAdminConfirm"
+                  values={{ name: selectedMember?.name, email: selectedMember?.email }}
+                  components={[
+                    <strong key="name" className="text-foreground" />,
+                    <span key="email" className="text-muted-foreground" />,
+                  ]}
+                />
               )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex gap-3 justify-end">
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={actionType === 'promote' ? handlePromoteAdmin : handleRemoveAdmin}
-              disabled={isLoading}
-              className={
-                actionType === 'promote'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'
-              }
-            >
-              {isLoading
-                ? 'Processing...'
-                : actionType === 'promote'
-                  ? 'Make Admin'
-                  : 'Remove Admin'}
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+            </DialogDescription>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirm(false)}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading ? t('ui.processing') : t('ui.cancel')}
+              </Button>
+              <Button
+                onClick={actionType === 'promote' ? handlePromoteAdmin : handleRemoveAdmin}
+                disabled={isLoading}
+                className="flex-1"
+                style={{
+                  background: actionType === 'promote'
+                    ? 'linear-gradient(135deg, #16a34a, #15803d)'
+                    : 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <ShieldLoader size="xs" variant="inline" className="mr-2" />
+                    {t('ui.processing')}
+                  </>
+                ) : actionType === 'promote'
+                  ? t('ui.makeAdmin')
+                  : t('ui.removeAdmin')}
+              </Button>
+            </DialogFooter>
+          </motion.div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

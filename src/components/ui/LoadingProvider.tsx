@@ -7,8 +7,9 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Sync with preloader duration (2.7s total)
-    const timer = setTimeout(() => setShowContent(true), 2500);
+    // Start fading in content when preloader starts exiting (2s)
+    // Content fade-in (0.8s) overlaps with preloader exit animation (0.7s)
+    const timer = setTimeout(() => setShowContent(true), 2000);
     return () => clearTimeout(timer);
   }, []);
 

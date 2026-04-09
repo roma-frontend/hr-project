@@ -2993,7 +2993,19 @@
     "pro": "Pro",
     "noUpcoming": "No upcoming leaves to export",
     "exportSuccess": "Calendar exported successfully!",
-    "exportError": "Failed to export calendar"
+    "exportError": "Failed to export calendar",
+    "adminAssignedSuccessfully": "Admin assigned successfully!",
+    "adminRemovedSuccessfully": "Admin removed successfully!",
+    "errorAssigningAdmin": "Error assigning admin",
+    "errorRemovingAdmin": "Error removing admin",
+    "makeAdmin": "Make Admin",
+    "removeAdmin": "Remove Admin",
+    "makeAdminConfirm": "Are you sure you want to make <0>{{name}}</0> (<1>{{email}}</1>) an administrator of <2>{{org}}</2>? They will have full control over this organization.",
+    "removeAdminConfirm": "Are you sure you want to remove admin role from <0>{{name}}</0> (<1>{{email}}</1>)? They will be demoted to regular employee.",
+    "makeAdminTitle": "Make Admin?",
+    "removeAdminTitle": "Remove Admin Role?",
+    "cancel": "Cancel",
+    "processing": "Processing..."
   },
   "sla": {
     "title": "SLA Configuration",
