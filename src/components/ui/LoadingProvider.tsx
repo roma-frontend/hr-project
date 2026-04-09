@@ -1,24 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Preloader } from '@/components/ui/Preloader';
+import Preloader from './Preloader';
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Simulate initial load or wait for window load
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500); // Show preloader for at least 1.5s for branding
-
+    // Sync with preloader duration (2.7s total)
+    const timer = setTimeout(() => setShowContent(true), 2500);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <>
-      <Preloader isLoading={isLoading} />
-      {children}
+      <Preloader />
+      <div
+        style={{
+          opacity: showContent ? 1 : 0,
+          visibility: showContent ? 'visible' : 'hidden',
+          transition: 'opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
+        {children}
+      </div>
     </>
   );
 }

@@ -10,9 +10,16 @@ function getStripe(): Stripe | null {
   return new Stripe(key, { apiVersion: '2026-02-25.clover' });
 }
 
+// Safe Resend initialization
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const resend = new Resend(process.env.RESEND_API_KEY!);
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL!;
+const resend = getResend();
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || '';
 
 // ── Processed event IDs cache (in-memory deduplication) ──────────────────────
 const processedEvents = new Map<string, number>();
@@ -51,6 +58,8 @@ async function notifyManager({
   subscriptionId: string;
   trialEnd?: number;
 }) {
+  if (!resend) return; // Resend not configured
+
   const managerEmail = process.env.MANAGER_EMAIL;
   if (!managerEmail) return;
 

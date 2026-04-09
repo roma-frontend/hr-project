@@ -1267,8 +1267,15 @@ input[type='date']:focus {
 
 /* Pulse dot animation */
 @keyframes pulse-dot {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.4); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
 }
 
 .animate-pulse-dot {
@@ -1277,8 +1284,14 @@ input[type='date']:focus {
 
 /* Fade in animation */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -1701,8 +1714,12 @@ html.dark .quick-action-slate:hover {
 
 /* MessageBubble: fade-in animation */
 @keyframes bubble-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-bubble-fade-in {
@@ -1748,4 +1765,55 @@ html.dark .quick-action-slate:hover {
 
 .select-dropdown-animate {
   animation: select-dropdown-in 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Preloader Animations ──────────────────────────────────────── */
+@keyframes preloader-logo {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes preloader-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes preloader-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes preloader-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
