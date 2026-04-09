@@ -158,8 +158,8 @@ export default function HelpSupportPage() {
                     <span className="sm:hidden">{t('help.createTicket')}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] md:max-h-[95vh] p-0 flex flex-col">
-                  <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 pb-3 md:pb-4 flex-shrink-0">
+                <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] md:max-h-[95vh]">
+                  <DialogHeader>
                     <DialogTitle className="text-base md:text-lg">
                       {t('help.createTicket')}
                     </DialogTitle>
@@ -167,7 +167,7 @@ export default function HelpSupportPage() {
                       {t('help.subtitle')}
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex-1 min-h-0 overflow-hidden">
+                  <div className="-mx-6">
                   <CreateTicketWizard
                     userId={user.id as Id<'users'>}
                     onComplete={() => setCreateDialogOpen(false)}

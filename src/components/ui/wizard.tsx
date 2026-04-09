@@ -93,9 +93,9 @@ export function Wizard({
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 scrollbar-thin">
+    <div className={cn('flex flex-col', className)}>
+      {/* Content Area */}
+      <div className="flex-1 px-3 py-4 md:px-6 md:py-6">
         {/* Stepper */}
         {showStepper && (
           <div className="mb-4 md:mb-6">
@@ -216,8 +216,8 @@ export function Wizard({
         </AnimatePresence>
       </div>
 
-      {/* Fixed Navigation Buttons */}
-      <div className="flex-shrink-0 px-3 py-3 md:px-6 md:py-4 border-t border-(--border) bg-(--background)">
+      {/* Navigation Buttons */}
+      <div className="flex-shrink-0 px-3 py-3 md:px-6 md:py-4 border-t mt-4">
         <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <Button
             variant="outline"
