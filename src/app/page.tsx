@@ -12,20 +12,16 @@ import {
 
 export default function RootPage() {
   return (
-    <>
-      <LoadingProvider>
-        <div className="min-h-screen" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
-          {/* JSON-LD Structured Data for SEO */}
-          <SoftwareApplicationJsonLd />
-          <OrganizationJsonLd />
-          <FAQPageJsonLd />
+    <LoadingProvider cookieBanner={<CookieBanner />}>
+      <div className="min-h-screen" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
+        {/* JSON-LD Structured Data for SEO */}
+        <SoftwareApplicationJsonLd />
+        <OrganizationJsonLd />
+        <FAQPageJsonLd />
 
-          <LandingClient />
-          <ScrollToTop />
-        </div>
-      </LoadingProvider>
-      {/* CookieBanner outside LoadingProvider to show immediately after preloader */}
-      <CookieBanner />
-    </>
+        <LandingClient />
+        <ScrollToTop />
+      </div>
+    </LoadingProvider>
   );
 }

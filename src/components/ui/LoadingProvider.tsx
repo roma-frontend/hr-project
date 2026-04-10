@@ -6,7 +6,13 @@ import Preloader from './Preloader';
 // Track if timer has been set (persists across StrictMode remounts)
 let timerSet = false;
 
-export function LoadingProvider({ children }: { children: React.ReactNode }) {
+export function LoadingProvider({
+  children,
+  cookieBanner,
+}: {
+  children: React.ReactNode;
+  cookieBanner?: React.ReactNode;
+}) {
   const timerSetRef = useRef(false);
   const [isDone, setIsDone] = useState(false);
 
@@ -40,6 +46,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
         }}
       >
         {children}
+        {isDone && cookieBanner}
       </div>
     </>
   );
