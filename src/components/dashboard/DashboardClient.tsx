@@ -289,7 +289,7 @@ export default function DashboardClient() {
             {format(today, 'EEEE, MMMM d, yyyy')}
           </motion.p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           {user?.role === 'superadmin' && (
             <>
               <Button asChild size="sm" variant="outline">
