@@ -219,8 +219,14 @@ export function RequestDriverWizard({
         return;
       }
 
-      const dateStr = String(data.date);
-      const timeStr = String(data.time);
+      const dateStr = String(data.date || '').trim();
+const timeStr = String(data.time || '').trim();
+
+if (!dateStr || !timeStr) {
+  toast.error('Please fill in both date and time fields.');
+  return;
+}
+
 const parsedDate = new Date(`${dateStr}T${timeStr}`);
 const startTime = parsedDate.getTime();
 
