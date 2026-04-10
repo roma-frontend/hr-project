@@ -19,13 +19,8 @@ import {
 } from '@/components/drivers/modals';
 import { toast } from 'sonner';
 
-// Isolate Convex API refs at module level to avoid infinite type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addFavoriteApi: any = api.drivers.driver_registration.addFavoriteDriver;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const removeFavoriteApi: any = api.drivers.driver_registration.removeFavoriteDriver;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const registerAsDriverApi: any = api.drivers.driver_registration.registerAsDriver;
+// @ts-ignore - Convex drivers API type causes infinite instantiation
+const driversApi = (api as any).drivers;
 
 export default function DriversPage() {
   const { t } = useTranslation();
@@ -51,9 +46,9 @@ export default function DriversPage() {
   const orgId = user?.organizationId as Id<'organizations'> | undefined;
 
   // 2. Mutation hooks
-  const addFavorite = useMutation(addFavoriteApi);
-  const removeFavorite = useMutation(removeFavoriteApi);
-  const registerAsDriver = useMutation(registerAsDriverApi);
+  const addFavorite = useMutation(driversApi.driver_registration.addFavoriteDriver);
+  const removeFavorite = useMutation(driversApi.driver_registration.removeFavoriteDriver);
+  const registerAsDriver = useMutation(driversApi.driver_registration.registerAsDriver);
 
   // 3. Effect hooks
   useEffect(() => {
@@ -66,22 +61,22 @@ export default function DriversPage() {
 
   // 4. Query hooks
   const driverRecord = useQuery(
-    api.drivers.queries.getDriverByUserId,
+    driversApi.queries.getDriverByUserId,
     userId && orgId ? { userId } : 'skip',
   );
 
   const availableDrivers = useQuery(
-    api.drivers.queries.getAvailableDrivers,
+    driversApi.queries.getAvailableDrivers,
     orgId ? { organizationId: orgId } : 'skip',
   );
 
   const myRequests = useQuery(
-    api.drivers.requests_queries.getMyRequests,
+    driversApi.requests_queries.getMyRequests,
     userId ? { userId } : 'skip',
   );
 
   const favoriteDrivers = useQuery(
-    api.drivers.requests_queries.getFavoriteDrivers,
+    driversApi.requests_queries.getFavoriteDrivers,
     userId ? { userId } : 'skip',
   );
 
@@ -99,7 +94,7 @@ export default function DriversPage() {
   }, [favoriteDrivers, initialized]);
 
   const recurringTrips = useQuery(
-    api.drivers.recurring_trips.getRecurringTrips,
+    driversApi.recurring_trips.getRecurringTrips,
     userId ? { userId } : 'skip',
   );
 

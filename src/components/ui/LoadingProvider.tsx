@@ -1,17 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Preloader from './Preloader';
 
 // Track if timer has been set (persists across StrictMode remounts)
 let timerSet = false;
-
-// Context to track content readiness
-const LoadingContext = createContext<(() => void) | null>(null);
-
-export function useLoadingReady() {
-  return useContext(LoadingContext);
-}
 
 export function LoadingProvider({
   children,
@@ -22,49 +15,24 @@ export function LoadingProvider({
 }) {
   const timerSetRef = useRef(false);
   const [showContent, setShowContent] = useState(false);
-  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
-  const contentReadyRef = useRef(false);
 
   useEffect(() => {
     // Skip if already set (StrictMode double-mount protection)
     if (timerSet || timerSetRef.current) {
       setShowContent(true);
-      contentReadyRef.current = true;
-      setMinTimeElapsed(true);
       return;
     }
     timerSet = true;
     timerSetRef.current = true;
 
-    // Minimum display time: 2s for smooth UX
-    const minTimer = setTimeout(() => setMinTimeElapsed(true), 2000);
-
-    // Fallback: force show after 5s max
-    const fallbackTimer = setTimeout(() => setShowContent(true), 5000);
-
-    return () => {
-      clearTimeout(minTimer);
-      clearTimeout(fallbackTimer);
-    };
+    // Preloader displays for 2s minimum, then content fades in
+    // Content (including dynamic imports) shows loading skeletons while chunks load
+    const timer = setTimeout(() => setShowContent(true), 2000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const markReady = useCallback(() => {
-    contentReadyRef.current = true;
-    // If min time already elapsed, show content immediately
-    if (minTimeElapsed) {
-      setShowContent(true);
-    }
-  }, [minTimeElapsed]);
-
-  // When min time elapses, check if content is ready
-  useEffect(() => {
-    if (minTimeElapsed && contentReadyRef.current) {
-      setShowContent(true);
-    }
-  }, [minTimeElapsed]);
-
   return (
-    <LoadingContext.Provider value={markReady}>
+    <>
       <Preloader />
       <div
         style={{
@@ -79,6 +47,6 @@ export function LoadingProvider({
         {children}
         {showContent && cookieBanner}
       </div>
-    </LoadingContext.Provider>
+    </>
   );
 }

@@ -145,11 +145,11 @@ test.describe('Leave Request Flow', () => {
       // Set start date to tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      await startDateInput.fill(tomorrow.toISOString().split('T')[0]);
+      await startDateInput.fill(tomorrow.toISOString().split('T')[0] ?? '');
 
       // Try to set end date before start
       const yesterday = new Date();
-      await endDateInput.fill(yesterday.toISOString().split('T')[0]);
+      await endDateInput.fill(yesterday.toISOString().split('T')[0] ?? '');
 
       // Submit and check validation
       const submitBtn = page.locator('button[type="submit"], text=submit, text=Submit').first();

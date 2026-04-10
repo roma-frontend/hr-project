@@ -30,7 +30,6 @@ import StatsCard from './StatsCard';
 import FeatureCard from './FeatureCard';
 import MobileMenu from './MobileMenu';
 import { Button } from '@/components/ui/button';
-import ReadyMarker from '@/components/ui/ReadyMarker';
 
 const FloatingParticles = dynamic(() => import('./FloatingParticles'), {
   ssr: false,
@@ -1098,7 +1097,6 @@ function Footer() {
 export default function LandingClient() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
-      <ReadyMarker />
       {/* Background layers - lowest z-index, fixed to viewport */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <GradientOrbs />
