@@ -835,8 +835,29 @@ export const deleteConversation = mutation({
       deletedAt: Date.now(),
       unreadCount: 0,
     });
+
+    // Hide all existing messages from this user (clear chat history for them)
+    const messages = await ctx.db
+      .query('chatMessages')
+      .withIndex('by_conversation_created', (q) =>
+        q.eq('conversationId', args.conversationId),
+      )
+      .collect();
+
+    await Promise.all(
+      messages.map(async (msg) => {
+        const deletedForUsers: Id<'users'>[] =
+          (msg.deletedForUsers as Id<'users'>[] | undefined) ?? [];
+        if (!deletedForUsers.includes(args.userId)) {
+          await ctx.db.patch(msg._id, {
+            deletedForUsers: [...deletedForUsers, args.userId],
+          });
+        }
+      }),
+    );
   },
 });
+
 
 /** Restore a deleted conversation (per-user) */
 export const restoreConversation = mutation({
