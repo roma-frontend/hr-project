@@ -348,7 +348,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
             </Button>
           </div>
           <div className="hidden sm:block">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="text-sm font-semibold text-white">
               {format(weekStart, 'MMM d')} — {format(new Date(weekEnd), 'MMM d, yyyy')}
             </h3>
           </div>
@@ -364,7 +364,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
 
       {/* Week Range for Mobile */}
       <div className="sm:hidden text-center">
-        <p className="text-sm font-semibold text-foreground">
+        <p className="text-sm font-semibold text-white">
           {format(weekStart, 'MMM d')} — {format(new Date(weekEnd), 'MMM d, yyyy')}
         </p>
       </div>
