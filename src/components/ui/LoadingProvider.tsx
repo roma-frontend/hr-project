@@ -28,12 +28,24 @@ export function LoadingProvider({
     // Preloader: starts exiting at 2s, fully done at 2.7s
     // Show content exactly when Preloader is done (2.7s)
     const timer = setTimeout(() => setShowContent(true), 2700);
-    return () => clearTimeout(timer);
+    
+    // Guaranteed fallback: force show after 5s no matter what.
+    // In production, JS chunks may take longer to download on slow connections.
+    // This ensures the user never waits more than 5 seconds.
+    const guaranteedShow = setTimeout(() => setShowContent(true), 5000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(guaranteedShow);
+    };
   }, []);
 
   return (
     <>
       <Preloader />
+      {/* Content is ALWAYS rendered, but hidden behind Preloader.
+          This ensures hydration happens immediately, not waiting for dynamic imports.
+          When showContent becomes true, we just change opacity from 0 to 1. */}
       <div
         style={{
           opacity: showContent ? 1 : 0,
