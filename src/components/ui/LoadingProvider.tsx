@@ -25,9 +25,9 @@ export function LoadingProvider({
     timerSet = true;
     timerSetRef.current = true;
 
-    // Preloader displays for 2s minimum, then content fades in
-    // Content (including dynamic imports) shows loading skeletons while chunks load
-    const timer = setTimeout(() => setShowContent(true), 0);
+    // Preloader: starts exiting at 2s, fully done at 2.7s
+    // Show content exactly when Preloader is done (2.7s)
+    const timer = setTimeout(() => setShowContent(true), 2700);
     return () => clearTimeout(timer);
   }, []);
 
@@ -37,7 +37,7 @@ export function LoadingProvider({
       <div
         style={{
           opacity: showContent ? 1 : 0,
-          transition: 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: showContent ? 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
           position: 'relative',
           width: '100%',
           minHeight: '100vh',
