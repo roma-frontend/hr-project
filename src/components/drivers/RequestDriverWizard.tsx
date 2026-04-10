@@ -221,8 +221,16 @@ export function RequestDriverWizard({
 
       const dateStr = String(data.date);
       const timeStr = String(data.time);
-      const startTime = new Date(`${dateStr}T${timeStr}`).getTime();
-      const endTime = startTime + 3600000; // +1 hour default
+const parsedDate = new Date(`${dateStr}T${timeStr}`);
+const startTime = parsedDate.getTime();
+
+if (isNaN(startTime)) {
+  toast.error('Invalid date or time. Please use YYYY-MM-DD and HH:MM formats.');
+  return;
+}
+
+const endTime = startTime + 3600000;
+
 
       const result = await requestDriver({
         organizationId,
