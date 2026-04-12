@@ -79,11 +79,6 @@ const nextConfig = {
     ],
     optimizeCss: true,
     scrollRestoration: true,
-    turbo: {
-      rules: {
-        '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
-      },
-    },
   },
 
   // Enable Turbopack for production builds (faster, smaller bundles)
@@ -92,11 +87,6 @@ const nextConfig = {
       '*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
     },
   },
-
-  // ═══════════════════════════════════════════════════════════════
-  // SWC Minification — faster and smaller output
-  // ═══════════════════════════════════════════════════════════════
-  swcMinify: true,
 
   // ═══════════════════════════════════════════════════════════════
   // WEBPACK — OPTIMIZED FOR PERFORMANCE

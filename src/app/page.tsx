@@ -1,47 +1,21 @@
-// Server Component — renders immediately, no Preloader.
-// Content appears as soon as the page loads.
+// Server Component — SSR renders the full landing page instantly.
+// Client islands handle interactivity (auth, theme, animations).
 
-import dynamic from 'next/dynamic';
 import {
   SoftwareApplicationJsonLd,
   OrganizationJsonLd,
   FAQPageJsonLd,
 } from '@/components/seo/JsonLd';
-
-// Separate chunk for LandingClient
-const LandingClient = dynamic(() => import('@/components/landing/LandingClient'), {
-  loading: () => (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center gap-6"
-      style={{ background: 'var(--landing-bg)' }}
-    >
-      <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-20 h-20 rounded-2xl" style={{ background: 'var(--primary)', opacity: 0.3 }} />
-        <div className="h-8 w-64 rounded-lg" style={{ background: 'var(--border)' }} />
-        <div className="h-4 w-48 rounded" style={{ background: 'var(--border)' }} />
-        <div className="flex gap-4 mt-4">
-          <div className="h-12 w-40 rounded-xl" style={{ background: 'var(--primary)', opacity: 0.2 }} />
-          <div className="h-12 w-40 rounded-xl" style={{ background: 'var(--border)' }} />
-        </div>
-      </div>
-    </div>
-  ),
-});
-
-const ScrollToTop = dynamic(() => import('@/components/landing/ScrollToTop'));
-const CookieBanner = dynamic(() => import('@/components/CookieBanner'));
+import LandingClient from '@/components/landing/LandingClient';
 
 export default function RootPage() {
   return (
-    <div className="min-h-screen" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
-      {/* JSON-LD Structured Data for SEO */}
+    <main id="main-content" className="min-h-screen" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
       <SoftwareApplicationJsonLd />
       <OrganizationJsonLd />
       <FAQPageJsonLd />
 
       <LandingClient />
-      <ScrollToTop />
-      <CookieBanner />
-    </div>
+    </main>
   );
 }
