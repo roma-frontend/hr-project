@@ -33,14 +33,19 @@ export default function NewsletterSection() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const { ref, visible } = useReveal();
+  const inputId = 'newsletter-email';
+  const errorId = 'newsletter-email-error';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
+      setHasError(true);
       toast.error(t('newsletter.invalidEmail'));
       return;
     }
+    setHasError(false);
     setIsLoading(true);
     setTimeout(() => {
       setIsSubmitted(true);
@@ -105,9 +110,10 @@ export default function NewsletterSection() {
               className="flex items-center flex-col sm:flex-row gap-3 max-w-md mx-auto"
             >
               <input
+                id={inputId}
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setHasError(false); }}
                 placeholder={t('newsletter.emailPlaceholder')}
                 className="flex-1 px-5 py-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                 style={{
@@ -117,7 +123,14 @@ export default function NewsletterSection() {
                 }}
                 disabled={isLoading}
                 aria-label={t('ariaLabels.emailAddress')}
+                aria-invalid={hasError ? 'true' : 'false'}
+                aria-describedby={hasError ? errorId : undefined}
               />
+              {hasError && (
+                <span id={errorId} className="text-sm text-red-500 sr-only" role="alert">
+                  {t('newsletter.invalidEmail')}
+                </span>
+              )}
               <Button
                 type="submit"
                 variant="cta"

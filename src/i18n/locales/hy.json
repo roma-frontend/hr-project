@@ -82,7 +82,7 @@
     "mostPopular": "Ամենահայտնի",
     "getStarted": "Սկսել",
     "contactSales": "Կապվել վաճառքի թիմի հետ",
-    "free": "Անվճար",
+    "free": "Անվճար/",
     "starter": "Սկսնակ",
     "professional": "Պրոֆեսիոնալ",
     "enterprise": "Կորպորատիվ",
@@ -111,7 +111,7 @@
     "training": "Ուսուցման սեսիաներ",
     "sla": "SLA երաշխիք",
     "freeTrial": "անվճար փորձաշրջան",
-    "currentPlan": "ընթացիկ պլան",
+    "currentPlan": "Ընթացիկ պլան",
     "allPlansInclude": "բոլոր պլանները ներառում են",
     "footerNote": "Ծանոթագրություն",
     "upTo10Employees": "Մինչև 10 աշխատակից",
@@ -1006,7 +1006,7 @@
     "forgotPassword": "Մոռացե՞լ եք գաղտնաբառը",
     "resetPassword": "Վերականգնել գաղտնաբառը",
     "rememberMe": "Հիշել ինձ",
-    "signIn": "Sign in",
+    "signIn": "Մուտք գործել",
     "signUp": "Գրանցվել",
     "firstName": "Անուն",
     "lastName": "Ազգանուն",
@@ -1237,7 +1237,7 @@
     "analytics": "Վերլուծություն",
     "reports": "Հաշվետվություններ",
     "metrics": "Չափումներ",
-    "kpi": "KPI",
+    "kpi": "Կառավարման հիմնական ցուցանիշներ",
     "widgets": "Վիջեթներ",
     "recent": "Վերջին",
     "upcoming": "Առաջիկա",
@@ -1307,10 +1307,10 @@
       "sick": "Հիվանդության",
       "family": "Ընտանեկան",
       "doctor": "Բժշկի այց",
-      "paidDesc": "Annual vacation",
-      "sickDesc": "Illness or medical appointment",
-      "familyDesc": "Family circumstances",
-      "unpaidDesc": "Leave without pay"
+      "paidDesc": "Տարվա արձակուրդ",
+      "sickDesc": "Հիվանդություն կամ բժշկի այց",
+      "familyDesc": "Ընտանեկան հանգամանքներ",
+      "unpaidDesc": "Արձակուրդ առանց վճարման"
     }
   },
   "leaveRequest": {
@@ -1854,9 +1854,9 @@
     "tip2": "Նշեք կոնկրետ կոմպոնենտներ կամ էջեր",
     "tip3": "Բարդ առաջադրանքները բաժանեք մի քանի քայլերի",
     "tip4": "Ստուգեք առաջարկվող կոդը նախքան կիրառելը",
-    "comingSoon": "Coming Soon",
-    "comingSoonDesc": "AI Site Editor is currently available only for super administrators. This feature will be available for all users in the future.",
-    "superadminOnly": "Super Admin Only"
+    "comingSoon": "Շուտով",
+    "comingSoonDesc": "AI Site Editor-ը հասանելի է միայն սուպեր ադմինիստրատորների համար: Այս ֆունկցիան ապագայում հասանելի կլինի բոլոր օգտվողների համար:",
+    "superadminOnly": "Միայն սուպեր ադմինիստրատոր"
   },
   "buttons": {
     "send": "Ուղարկել",
@@ -1959,7 +1959,7 @@
     "noEvents": "Իրադարձություններ չկան",
     "addToCalendar": "Ավելացնել օրացույցում",
     "selectADay": "Օր զտիչ",
-    "unknown": "Неизвестно",
+    "unknown": "Անհայտ",
     "newLeave": "Նոր արձակուրդ"
   },
   "labels": {
@@ -3100,12 +3100,12 @@
     "listening": "Բեռնում...",
     "pendingApprovals": "Սպասման մեջ Օգտատերերի",
     "placeholder": "Ուղարկել հաղորդագրություն...",
-    "showBalance": "Ցույց Leave Balances",
+    "showBalance": "Ցույց տալ արձակուրդի մնացորդները",
     "stopListening": "Փակել",
     "teamStats": "Թիմի ներկայություն",
-    "updateLeave": "Թարմացվում Արձակուրդի",
+    "updateLeave": "Թարմացնել արձակուրդը",
     "viewUpcoming": "Դիտել բոլորը",
-    "voiceInput": "Голосовой ввод",
+    "voiceInput": "Ձայնային մուտք",
     "whoOnLeave": "Այսօր արձակուրդում?",
     "whoOnLeaveToday": "Այսօր արձակուրդում այսօր?",
     "subtitle": "Ձեր խելացի HR-օգնականը",
@@ -3551,7 +3551,7 @@
     "uptime": "99.9% աշխատանքի երաշխիք",
     "backToPricing": "Հետ գնագոյացում",
     "contactHeader": "Կապվել վաճառքի թիմի հետ",
-    "directContact": "Прямой контакт",
+    "directContact": "Նախագահի հետ կապ",
     "enterpriseSubtitle": "Ընտրեք ձեր կարիքներին համապատասխան պլանը",
     "fillAllFields": "Այս դաշտը պարտադիր է",
     "messageSentDesc": "Հաջողությամբ պահպանվել է",
@@ -3618,8 +3618,8 @@
     "dataUpdatesInstantly": "Տվյալները թարմացվում են անմիջապես",
     "dashboardWidgetsDesc": "Ընտրեք, թե որ էջը ցույց տալ մուտքից հետո",
     "dataRefreshesEvery": "Թարմացվում է...",
-    "every15Minutes": "Каждые 15 минут",
-    "every30Minutes": "Каждые 30 минут",
+    "every15Minutes": "Ամեն 15 րոպե մեկ",
+    "every30Minutes": "Ամեն 30 րոպե մեկ",
     "realtimeUpdates": "Թարմացվում է...",
     "refreshDataManually": "Թարմացվում է..."
   },
@@ -3909,9 +3909,9 @@
     "paris": "Փարիզ",
     "tokyo": "Տոկիո",
     "yerevan": "Երևան",
-    "starterFree": "Starter (Անվճար)",
-    "professionalPaid": "Professional ($29/ամիս)",
-    "enterpriseCustom": "Enterprise (Անհատական)"
+    "starterFree": "Սկսնակ (Անվճար)",
+    "professionalPaid": "Պրոֆեսիոնալ ($29/ամիս)",
+    "enterpriseCustom": "Կորպորատիվ (Անհատական)"
   },
   "editOrganization": {
     "editOrganization": "Խմբագրել կազմակերպությունը",
@@ -3921,9 +3921,9 @@
     "organizationUpdatedError": "Չհաջողվեց թարմացնել կազմակերպությունը"
   },
   "planNames": {
-    "starter": "Starter",
-    "professional": "Professional",
-    "enterprise": "Enterprise"
+    "starter": "Սկսնակ",
+    "professional": "Պրոֆեսիոնալ",
+    "enterprise": "Կորպորատիվ"
   },
   "reportsExtended": {
     "departments": "Բաժիններ",
@@ -5431,9 +5431,9 @@
         "descriptionPlaceholder": "Մանրամասն նկարագրություն..."
       },
       "priority": {
-        "title": "Prioritet & Վերջնաժամկետ",
+        "title": "Առաջնահերթություն և Վերջնաժամկետ",
         "description": "Որքան շտապ է դա:",
-        "priorityLabel": "Prioritet",
+        "priorityLabel": "Առաջնահերթություն",
         "priorityPlaceholder": "Ընտրել առաջնահերթություն",
         "categoryLabel": "Կատեգորիա",
         "categoryPlaceholder": "Ընտրել կատեգորիա"
@@ -5520,7 +5520,7 @@
       "starter": "Սկսնակ",
       "starterDesc": "Ազատ պլան",
       "professional": "Պրոֆեսիոնալ",
-      "professionalDesc": "$29/ամիս",
+      "professionalDesc": "$29/ամսեկան",
       "enterprise": "Մեծ ձեռնարկություն",
       "enterpriseDesc": "Անհատական գին"
     },

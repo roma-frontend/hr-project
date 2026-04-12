@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
@@ -17,10 +17,7 @@ import {
   Search,
   Filter,
   Plus,
-  User,
-  Building2,
   MessageSquare,
-  Eye,
   X,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

@@ -3091,11 +3091,11 @@
     "more": "Больше"
   },
   "responseSLA": {
-    "title": "Response Time SLA",
-    "compliance": "SLA Compliance",
-    "avgResponseTime": "Avg Response Time",
-    "avgScore": "Average SLA Score",
-    "activeAlerts": "Active Alerts",
+    "title": "SLA по времени ответа",
+    "compliance": "Соблюдение SLA",
+    "avgResponseTime": "Среднее время ответа",
+    "avgScore": "",
+    "activeAlerts": "Активные оповещения",
     "critical": "Критический",
     "warning": "Предупреждение",
     "onTime": "Своевременно",
@@ -3385,7 +3385,7 @@
     "leaveRequest": "Подать заявку на отпуск",
     "leaveRequestDesc": "Создать новый запрос",
     "checkIn": "Отметиться",
-    "checkInDesc": "Check-in / Check-out",
+    "checkInDesc": "Отметиться на работе",
     "chat": "Чат",
     "chatDesc": "Написать сообщение",
     "tasks": "Задачи",
@@ -3962,9 +3962,9 @@
     "paris": "Париж",
     "tokyo": "Токио",
     "yerevan": "Ереван",
-    "starterFree": "Starter (Бесплатно)",
-    "professionalPaid": "Professional ($29/мес)",
-    "enterpriseCustom": "Enterprise (Индивидуально)"
+    "starterFree": "Стартер (Бесплатно)",
+    "professionalPaid": "Профессиональный ($29/мес)",
+    "enterpriseCustom": "Корпоративный (Индивидуально)"
   },
   "editOrganization": {
     "editOrganization": "Редактировать организацию",
@@ -3974,9 +3974,9 @@
     "organizationUpdatedError": "Не удалось обновить организацию"
   },
   "planNames": {
-    "starter": "Starter",
-    "professional": "Professional",
-    "enterprise": "Enterprise"
+    "starter": "Стартер",
+    "professional": "Профессиональный",
+    "enterprise": "Корпоративный"
   },
   "reportsExtended": {
     "departments": "Отделы",

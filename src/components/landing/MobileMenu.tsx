@@ -55,12 +55,40 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     }
   }, [isOpen]);
 
-  // Close on Escape
+  // Close on Escape + focus trap
   useEffect(() => {
+    if (!isOpen || !menuRef.current) return;
+
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape') onClose();
+
+      // Focus trap
+      if (e.key === 'Tab') {
+        const focusable = menuRef.current!.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
     };
     document.addEventListener('keydown', handler);
+
+    // Focus first element when opened
+    const focusable = menuRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length > 0) {
+      focusable[0]?.focus();
+    }
+
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, isOpen]);
 
@@ -175,7 +203,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   key={item.key}
                   href={item.href}
                   onClick={(e) => handleNavigate(e, item.href)}
-                  className="group flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 relative"
+                  className="group flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {/* Hover background effect */}
                   <div

@@ -54,10 +54,8 @@ function FAQItem({ faq, delay }: { faq: FAQ; delay: number }) {
         aria-controls={`faq-answer-${faq.id}`}
       >
         <span
-          className="font-semibold text-lg pr-4 transition-colors"
+          className="font-semibold text-lg pr-4 transition-colors hover:text-[var(--primary)]"
           style={{ color: 'var(--landing-text-primary)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--primary)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--landing-text-primary)')}
         >
           {t(faq.questionKey)}
         </span>
@@ -162,20 +160,13 @@ export default function FAQSection() {
           </p>
           <a
             href="mailto:support@hroffice.io"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border transition-all font-medium"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border transition-all font-medium hover:bg-[var(--card-hover)] hover:text-[var(--primary)]"
             style={{
               backgroundColor: 'var(--landing-card-bg)',
               borderColor: 'var(--landing-card-border)',
               color: 'var(--landing-text-primary)',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--card-hover)';
-              e.currentTarget.style.color = 'var(--primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--landing-card-bg)';
-              e.currentTarget.style.color = 'var(--landing-text-primary)';
-            }}
+            aria-label="Contact support via email"
           >
             {t('faq.contactSupport')}
           </a>
