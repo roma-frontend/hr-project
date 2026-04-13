@@ -179,7 +179,7 @@ export default function EmergencyDashboardPage() {
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto flex-col sm:flex-row">
               <Button
-                size="icon"
+                variant="outline"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 className="text-[var(--foreground)] w-full sm:w-auto"
