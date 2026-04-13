@@ -67,3 +67,19 @@ build-errors.log
 scripts/
 .vercel
 .env*.local
+
+# Lighthouse reports and analysis (temporary)
+lighthouse-report-*.json
+lighthouse-report-*.html
+lighthouse-report*.json
+lighthouse-report*.html
+run-lighthouse.js
+analyze-lighthouse.js
+
+# JSON analysis files (temporary)
+*-report.json
+*-analysis.json
+
+# Windows
+Thumbs.db
+desktop.ini

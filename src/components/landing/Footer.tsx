@@ -91,6 +91,13 @@ export default function Footer() {
                       href={link.href}
                       className="text-sm transition-colors hover:underline underline-offset-4"
                       style={{ color: 'var(--landing-text-secondary)' }}
+                      aria-label={
+                        link.href === '/privacy'
+                          ? t('landingExtra.footerPrivacyDesc', { defaultValue: 'View our privacy policy and data protection information' })
+                          : link.href === '/terms'
+                            ? t('landingExtra.footerTermsDesc', { defaultValue: 'Read our terms of service and conditions' })
+                            : undefined
+                      }
                     >
                       {t(link.nameKey)}
                     </Link>

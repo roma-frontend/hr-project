@@ -103,9 +103,14 @@ export function ThemeProvider({
         el.textContent = '*{transition:none!important;animation:none!important;}';
         document.head.appendChild(el);
         applyTheme(newTheme);
-        // Force reflow
-        document.documentElement.offsetHeight;
-        requestAnimationFrame(() => el.remove());
+        // Defer reflow to not block main thread during page load
+        // Use double rAF to ensure style has been applied before reading offsetHeight
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            document.documentElement.offsetHeight;
+            el.remove();
+          });
+        });
       } else {
         applyTheme(newTheme);
       }

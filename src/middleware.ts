@@ -135,8 +135,8 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   // SECURITY: In production, remove 'unsafe-eval' to prevent XSS attacks.
   // In development, keep it because React/Next.js requires eval() for debugging features.
   const scriptSrc = isProduction
-    ? "script-src 'self' 'unsafe-inline' https://*.sentry.io https://vercel.live blob:"
-    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://vercel.live blob:";
+    ? "script-src 'self' 'unsafe-inline' https://*.sentry.io https://vercel.live https://va.vercel-scripts.com https://vercel-analytics.vercel.app https://*.vitals.vercel-insights.com blob:"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://vercel.live https://va.vercel-scripts.com https://vercel-analytics.vercel.app https://*.vitals.vercel-insights.com blob: https://vitals.vercel-insights.com";
 
   response.headers.set(
     'Content-Security-Policy',
@@ -144,9 +144,9 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
       "default-src 'self'",
       scriptSrc,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' blob: data: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.sentry.io",
+      "img-src 'self' blob: data: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.sentry.io https://vercel.live https://va.vercel-scripts.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.sentry.io https://vercel.live https://*.stripe.com https://*.js.stripe.com wss://*.convex.cloud wss://*.vercel.live",
+      "connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.sentry.io https://vercel.live https://*.stripe.com https://*.js.stripe.com https://va.vercel-scripts.com https://vitals.vercel-insights.com wss://*.convex.cloud wss://*.vercel.live",
       "worker-src 'self' blob:",
       "frame-src 'none'",
       "object-src 'none'",

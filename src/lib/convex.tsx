@@ -1,37 +1,30 @@
 'use client';
 
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+// Singleton — only created when actually needed
+let convexInstance: ConvexReactClient | null = null;
+
+function getConvexClient() {
+  if (!convexInstance) {
+    convexInstance = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!, {
+      unsavedChangesWarning: false,
+    });
+  }
+  return convexInstance;
+}
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  // Dynamically preconnect to Convex only when the provider mounts
-  // (avoids Lighthouse "unused preconnect" warning on static pages)
-  useEffect(() => {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!convexUrl) return;
+  const client = getConvexClient();
 
-    const extractOrigin = (url: string) => {
-      try {
-        return new URL(url).origin;
-      } catch {
-        return null;
-      }
-    };
-    const origin = extractOrigin(convexUrl);
-    if (!origin) return;
+  return <ConvexProvider client={client}>{children}</ConvexProvider>;
+}
 
-    const link = document.createElement('link');
-    link.rel = 'preconnect';
-    link.href = origin;
-    link.crossOrigin = 'anonymous';
-    document.head.appendChild(link);
-
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []);
-
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+/**
+ * Hook to check if Convex is ready.
+ * Now always returns true since ConvexProvider is always mounted.
+ */
+export function useConvexAuthReady(): boolean {
+  return true;
 }

@@ -1,14 +1,11 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 import Navbar from './Navbar';
-import HeroSection from './HeroSection';
-import StatsSection from './StatsSection';
-import FeaturesSection from './FeaturesSection';
-import CTABanner from './CTABanner';
-import Footer from './Footer';
 import FloatingParticlesClient from './FloatingParticlesClient';
 import LandingExtras from './LandingExtras';
 
-// Below-fold sections - lazy loaded for performance
+// Below-fold sections - lazy loaded for performance with SSR
 const TestimonialsSection = dynamic(() => import('./TestimonialsSection'), {
   loading: () => (
     <div className="h-96 animate-pulse rounded-3xl" style={{ backgroundColor: 'var(--landing-card-bg)' }} />
@@ -34,7 +31,7 @@ const PricingPreview = dynamic(() => import('./PricingPreview'), {
   loading: () => (
     <div className="h-96 animate-pulse rounded-3xl" style={{ backgroundColor: 'var(--landing-card-bg)' }} />
   ),
-  ssr: true,
+  ssr: false, // Uses Convex useQuery hook — can't SSR before ConvexProvider activates
 });
 
 const SocialProof = dynamic(() => import('./SocialProof'), {
@@ -43,6 +40,12 @@ const SocialProof = dynamic(() => import('./SocialProof'), {
   ),
   ssr: true,
 });
+
+// StatsSection, FeaturesSection, CTABanner are statically imported (render synchronously)
+import StatsSection from './StatsSection';
+import FeaturesSection from './FeaturesSection';
+import CTABanner from './CTABanner';
+import Footer from './Footer';
 
 // Pure CSS gradient orbs - no JS needed
 function GradientOrbs() {
@@ -79,9 +82,9 @@ function GradientOrbs() {
   );
 }
 
-export default function LandingClient() {
+export default function LandingBelowFold() {
   return (
-    <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
+    <>
       {/* Background layers */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <GradientOrbs />
@@ -93,7 +96,6 @@ export default function LandingClient() {
 
       {/* Page content */}
       <main className="relative">
-        <HeroSection />
         <div className="section-lazy"><SocialProof /></div>
         <div className="section-lazy"><StatsSection /></div>
         <div className="section-lazy"><FeaturesSection /></div>
@@ -106,6 +108,6 @@ export default function LandingClient() {
 
       <Footer />
       <LandingExtras />
-    </div>
+    </>
   );
 }

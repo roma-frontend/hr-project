@@ -1,13 +1,11 @@
-"use client"
-
-
-import { useTranslation } from 'react-i18next';
+// Server Component — renders instantly without waiting for JS hydration
 import HeroCTA from './HeroCTA';
+import { getServerTranslation } from '@/lib/i18n/server-translation';
 
 // Static trusted companies list
 const TRUSTED = ['Acme Corp', 'GlobalTech', 'NovaSoft', 'Meridian Co.', 'Apex Industries'];
 
-// Inline SVG icons to avoid lucide-react import on server
+// Inline SVG icons
 function SparklesIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -20,8 +18,9 @@ function SparklesIcon() {
   );
 }
 
-export default function HeroSection() {
-  const { t } = useTranslation();
+export default async function HeroSection() {
+  // Get translation on the server
+  const { t, locale } = await getServerTranslation('landing');
 
   return (
     <div
@@ -66,7 +65,7 @@ export default function HeroSection() {
         <SparklesIcon />
       </div>
 
-      {/* Title — CSS fade-up stagger */}
+      {/* Title — rendered as static HTML, no JS needed */}
       <h1 className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-6 relative">
         <span
           className="hero-word-1 relative text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-none"

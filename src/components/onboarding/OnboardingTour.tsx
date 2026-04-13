@@ -226,6 +226,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
         // Update position using requestAnimationFrame for smooth updates
         let frameId: number;
         const updateCallback = () => {
+          // Read first, then write to avoid forced reflow
           const updatedRect = element.getBoundingClientRect();
           setTargetRect(updatedRect);
           positionTooltip(updatedRect, step.placement || 'bottom');
@@ -234,7 +235,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
         // Start updating after a minimal delay (let scroll start)
         setTimeout(() => {
           frameId = requestAnimationFrame(updateCallback);
-        }, 50);
+        }, 100);
 
         return () => cancelAnimationFrame(frameId);
       } else {

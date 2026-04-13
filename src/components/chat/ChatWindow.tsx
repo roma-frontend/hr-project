@@ -452,8 +452,10 @@ export const ChatWindow = React.memo(function ChatWindow({
     const value = e.target.value;
     setInput(value);
     handleTyping();
+    // Avoid forced reflow: read scrollHeight before writing style
+    const scrollHeight = e.target.scrollHeight;
     e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    e.target.style.height = Math.min(scrollHeight, 120) + 'px';
 
     // Detect @mention — look backward from cursor for '@'
     const cursorPos = e.target.selectionStart;

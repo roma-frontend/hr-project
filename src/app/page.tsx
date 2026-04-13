@@ -1,4 +1,5 @@
 // Server Component — SSR renders the full landing page instantly.
+// HeroSection is now a Server Component (renders without JS).
 // Client islands handle interactivity (auth, theme, animations).
 
 import {
@@ -6,7 +7,8 @@ import {
   OrganizationJsonLd,
   FAQPageJsonLd,
 } from '@/components/seo/JsonLd';
-import LandingClient from '@/components/landing/LandingClient';
+import HeroSection from '@/components/landing/HeroSection';
+import LandingBelowFold from '@/components/landing/LandingBelowFold';
 
 export default function RootPage() {
   return (
@@ -15,7 +17,11 @@ export default function RootPage() {
       <OrganizationJsonLd />
       <FAQPageJsonLd />
 
-      <LandingClient />
+      {/* Hero renders immediately, no JS required */}
+      <HeroSection />
+      
+      {/* Below-fold sections loaded with Suspense boundaries */}
+      <LandingBelowFold />
     </main>
   );
 }

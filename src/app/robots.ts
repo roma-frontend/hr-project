@@ -4,31 +4,23 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://hroffice.app';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: ['/', '/auth/login', '/auth/register'],
-        disallow: [
-          '/dashboard/',
-          '/attendance/',
-          '/employees/',
-          '/leaves/',
-          '/analytics/',
-          '/reports/',
-          '/tasks/',
-          '/calendar/',
-          '/approvals/',
-          '/settings/',
-          '/api/',
-        ],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: ['/', '/auth/login', '/auth/register'],
-        disallow: ['/api/'],
-      },
-    ],
+    rules: {
+      userAgent: '*',
+      allow: ['/', '/auth/login', '/auth/register'],
+      disallow: [
+        '/dashboard/',
+        '/attendance/',
+        '/employees/',
+        '/leaves/',
+        '/analytics/',
+        '/reports/',
+        '/tasks/',
+        '/calendar/',
+        '/approvals/',
+        '/settings/',
+        '/api/',
+      ],
+    },
     sitemap: `${APP_URL}/sitemap.xml`,
-    host: APP_URL,
   };
 }

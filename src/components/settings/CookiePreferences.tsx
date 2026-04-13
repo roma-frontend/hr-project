@@ -148,6 +148,7 @@ export function CookiePreferences() {
               href="/privacy"
               target="_blank"
               className="font-semibold underline hover:text-blue-700 dark:hover:text-blue-300"
+              aria-label={t('cookies.privacyPolicyLabel', { defaultValue: 'Privacy Policy - learn how we collect, use and protect your personal data' })}
             >
               {t('cookies.privacyPolicy')}
             </Link>
@@ -156,6 +157,7 @@ export function CookiePreferences() {
               href="/terms"
               target="_blank"
               className="font-semibold underline hover:text-blue-700 dark:hover:text-blue-300"
+              aria-label={t('cookies.termsLabel', { defaultValue: 'Terms of Service - read the legal terms for using our platform' })}
             >
               {t('cookies.termsOfService')}
             </Link>

@@ -11,7 +11,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false, // Disable to reduce bundle size
 
   // TypeScript: DO NOT ignore build errors — catch type issues early
   typescript: { ignoreBuildErrors: false },
@@ -177,8 +177,8 @@ const nextConfig = {
     }
 
     if (!dev) {
-      // Keep source maps for Lighthouse debugging (hidden-source-map is smaller)
-      config.devtool = 'hidden-source-map';
+      // No source maps in production for smaller bundles
+      config.devtool = false;
     }
 
     return config;
@@ -203,12 +203,12 @@ const nextConfig = {
               // SECURITY: 'unsafe-eval' is needed in development for React debugging features.
               // In production, the middleware applies a stricter CSP without 'unsafe-eval'.
               process.env.NODE_ENV === 'production'
-                ? "script-src 'self' 'unsafe-inline' https://*.sentry.io https://vercel.live blob:"
-                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://vercel.live blob:",
+                ? "script-src 'self' 'unsafe-inline' https://*.sentry.io https://vercel.live https://va.vercel-scripts.com blob:"
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://vercel.live https://va.vercel-scripts.com blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' blob: data: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.sentry.io",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.sentry.io https://vercel.live https://*.stripe.com https://*.js.stripe.com wss://*.convex.cloud wss://*.vercel.live",
+              "connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.sentry.io https://vercel.live https://*.stripe.com https://*.js.stripe.com https://va.vercel-scripts.com wss://*.convex.cloud wss://*.vercel.live",
               "worker-src 'self' blob:",
               "frame-src 'none'",
               "object-src 'none'",
