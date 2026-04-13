@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create session token
-    const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionToken = crypto.randomUUID();
 
     // Set cookies
     const cookieStore = await cookies();

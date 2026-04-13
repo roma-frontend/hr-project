@@ -11,6 +11,7 @@ import {
   Bell,
   Sun,
   Moon,
+  Monitor,
   LogOut,
   User,
   Settings,
@@ -37,6 +38,11 @@ const PRESENCE_CONFIG: Record<PresenceStatus, { labelKey: string; dot: string; i
   out_of_office: { labelKey: 'presence.outOfOffice', dot: 'bg-rose-500', icon: '🏠' },
   busy: { labelKey: 'presence.busy', dot: 'bg-orange-500', icon: '⛔' },
 };
+
+// Accessibility: emoji icon component with aria-hidden
+function PresenceEmoji({ emoji }: { emoji: string }) {
+  return <span aria-hidden="true">{emoji}</span>;
+}
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useSidebarStore } from '@/store/useSidebarStore';
@@ -415,21 +421,50 @@ export function Navbar() {
           {/* Language Switcher */}
           <LanguageSwitcher />
 
-          {/* Theme toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            title={resolvedTheme === 'dark' ? t('settings.lightMode') : t('settings.darkMode')}
-            aria-label={
-              resolvedTheme === 'dark'
-                ? t('settings.lightMode', { defaultValue: 'Switch to light mode' })
-                : t('settings.darkMode', { defaultValue: 'Switch to dark mode' })
-            }
-          >
-            {resolvedTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </Button>
+          {/* Theme selector dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                title={t('settings.theme', { defaultValue: 'Theme' })}
+                aria-label={t('settings.theme', { defaultValue: 'Select theme' })}
+              >
+                {resolvedTheme === 'dark' ? (
+                  <Moon className="w-5 h-5" />
+                ) : (
+                  <Sun className="w-5 h-5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setTheme('light')}
+                className={theme === 'light' ? 'bg-[var(--accent)]/10' : ''}
+              >
+                <Sun className="w-4 h-4 mr-2" />
+                {t('settings.lightMode', { defaultValue: 'Light' })}
+                {theme === 'light' && <span className="ml-auto">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme('dark')}
+                className={theme === 'dark' ? 'bg-[var(--accent)]/10' : ''}
+              >
+                <Moon className="w-4 h-4 mr-2" />
+                {t('settings.darkMode', { defaultValue: 'Dark' })}
+                {theme === 'dark' && <span className="ml-auto">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme('system')}
+                className={theme === 'system' ? 'bg-[var(--accent)]/10' : ''}
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                {t('settings.systemMode', { defaultValue: 'System' })}
+                {theme === 'system' && <span className="ml-auto">✓</span>}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* User dropdown */}
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
@@ -455,7 +490,7 @@ export function Navbar() {
                     {user?.name ?? 'User'}
                   </p>
                   <p className="text-[10px] text-[var(--text-muted)] capitalize">
-                    {presenceCfg.icon} {presenceLabel}
+                    <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
                   </p>
                 </div>
                 <ChevronDown className="w-3 h-3 text-[var(--text-muted)] hidden sm:block" />
@@ -571,7 +606,7 @@ export function Navbar() {
               >
                 <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${presenceCfg.dot}`} />
                 <span className="flex-1 text-left font-medium text-[var(--text-primary)]">
-                  {presenceCfg.icon} {presenceLabel}
+                  <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 text-[var(--text-muted)] transition-transform duration-200 ${

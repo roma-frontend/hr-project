@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { applyRateLimit, PASSWORD_RESET_RATE_LIMIT } from '@/lib/rate-limit';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
@@ -14,6 +15,10 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limiting: 3 requests per hour
+  const rateLimitResponse = await applyRateLimit(req, PASSWORD_RESET_RATE_LIMIT, 'reset-password');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { token, newPassword } = await req.json();
     if (!token || !newPassword) {

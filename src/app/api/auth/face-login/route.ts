@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signJWT } from '@/lib/jwt';
 import { log } from '@/lib/logger';
+import { applyRateLimit, FACE_LOGIN_RATE_LIMIT } from '@/lib/rate-limit';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -32,6 +33,10 @@ async function convexQuery(name: string, args: Record<string, unknown>) {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limiting: 10 attempts per 15 minutes
+  const rateLimitResponse = await applyRateLimit(request, FACE_LOGIN_RATE_LIMIT, 'face-login');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
     const { email, isFaceLogin } = body;
@@ -42,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionToken = crypto.randomUUID();
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
     // Call Convex login mutation

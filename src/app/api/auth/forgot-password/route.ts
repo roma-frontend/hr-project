@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { applyRateLimit, PASSWORD_RESET_RATE_LIMIT } from '@/lib/rate-limit';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -16,6 +17,10 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limiting: 3 requests per hour
+  const rateLimitResponse = await applyRateLimit(req, PASSWORD_RESET_RATE_LIMIT, 'forgot-password');
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { email } = await req.json();
     if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -24,7 +29,16 @@ export async function POST(req: NextRequest) {
     const result = await convexMutation('auth:requestPasswordReset', { email });
 
     // If user not found, still return success (security)
+    // SECURITY: Add timing attack mitigation — constant delay regardless of user existence
+    const startTime = Date.now();
+
     if (!result.token) {
+      // Wait a fixed amount of time to prevent timing-based email enumeration
+      const elapsed = Date.now() - startTime;
+      const minDelay = 500; // minimum 500ms delay
+      if (elapsed < minDelay) {
+        await new Promise((r) => setTimeout(r, minDelay - elapsed));
+      }
       return NextResponse.json({ success: true });
     }
 

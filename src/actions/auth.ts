@@ -151,7 +151,7 @@ export async function registerAction(formData: FormData) {
   }
 
   // Auto-login after register (for admin users)
-  const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const sessionToken = crypto.randomUUID();
   const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
   const loginResult = await convexMutation('auth:login', {
@@ -247,7 +247,7 @@ export async function loginAction(
       throw new Error('Email and password required');
     }
 
-    const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionToken = crypto.randomUUID();
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
     log.api.call('POST', 'auth:login', { email, isFaceLogin });

@@ -207,7 +207,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.sentry.io https://vercel.live blob:",
+              "script-src 'self' 'unsafe-inline' https://*.sentry.io https://vercel.live blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' blob: data: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.sentry.io",
               "font-src 'self' https://fonts.gstatic.com",

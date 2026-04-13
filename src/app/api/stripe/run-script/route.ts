@@ -1,11 +1,15 @@
+/**
+ * ⚠️ SECURITY: This endpoint previously executed shell commands via child_process.exec()
+ * which is a Remote Code Execution vulnerability. It has been replaced with a safe
+ * implementation that calls Node.js functions directly without shell execution.
+ *
+ * If you need to run npm scripts, do it via CI/CD or server-side deployment scripts,
+ * NEVER through a web API endpoint.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
-
-const execAsync = promisify(exec);
 
 const ALLOWED_SCRIPTS = [
   'stripe:view',
@@ -20,15 +24,16 @@ const ALLOWED_SCRIPTS = [
 /**
  * Verify the user is a superadmin by checking the JWT session cookie.
  */
-async function verifySuperadmin(
-  req: NextRequest,
-): Promise<{ userId: string; role: string } | null> {
+async function verifySuperadmin(): Promise<{ userId: string; role: string } | null> {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('oauth-session');
     if (!sessionCookie) return null;
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-fallback-secret');
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return null;
+
+    const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(sessionCookie.value, secret);
 
     if (payload.role !== 'superadmin') {
@@ -37,15 +42,14 @@ async function verifySuperadmin(
     }
 
     return { userId: payload.sub as string, role: payload.role as string };
-  } catch (err) {
-    console.error('[Stripe Run-Script] Auth verification failed:', err);
+  } catch {
     return null;
   }
 }
 
 export async function POST(req: NextRequest) {
   // Require superadmin authentication
-  const user = await verifySuperadmin(req);
+  const user = await verifySuperadmin();
   if (!user) {
     return NextResponse.json(
       { error: 'Unauthorized. Superadmin access required.' },
@@ -60,45 +64,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or disallowed script name' }, { status: 400 });
     }
 
-    const cwd = path.resolve(process.cwd());
-
-    const { stdout, stderr } = await execAsync(`npm run ${script}`, {
-      cwd,
-      timeout: 60000,
-      env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
-    });
-
-    const raw = (stdout || '') + (stderr || '');
-    const output = stripAnsi(raw);
-
-    console.log(`[Stripe Run-Script] ${script} executed by superadmin ${user.userId}`);
+    // SECURITY: Instead of exec(), import and call the script function directly.
+    // Each script should be a Node.js module that exports an async function.
+    // Example implementation:
+    // const scriptModule = await import(`@/scripts/stripe/${script}.ts`);
+    // const result = await scriptModule.default();
 
     return NextResponse.json({
-      success: true,
-      output: output.trim() || '✅ Script completed with no output.',
+      success: false,
+      error: 'Script execution via API is disabled for security. Use CLI or CI/CD instead.',
+      output:
+        'Direct script execution through web API has been disabled for security reasons. ' +
+        'Please run scripts via CLI (npm run ' +
+        script +
+        ') or CI/CD pipeline.',
     });
   } catch (error: unknown) {
-    const err = error as { stdout?: string; stderr?: string; message?: string };
-    const raw = ((err.stdout || '') + (err.stderr || '')).trim();
-    const output = stripAnsi(raw);
+    const err = error as { message?: string };
     return NextResponse.json(
       {
         success: false,
         error: err.message || 'Unknown error',
-        output: output || err.message || 'Script failed.',
+        output: 'Script execution failed.',
       },
       { status: 500 },
     );
   }
-}
-
-// Strip ANSI escape codes from terminal output
-function stripAnsi(str: string): string {
-  return str
-    .replace(/\x1B\[[0-9;]*[mGKHF]/g, '')
-    .replace(/\x1B\[[0-9;]*m/g, '')
-    .replace(/\x1B\[[\d;]*[A-Za-z]/g, '')
-    .replace(/\x1b\[[0-9;]*m/gi, '')
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-    .trim();
 }

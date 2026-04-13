@@ -1,0 +1,41 @@
+
+> office@0.1.0 build
+> next build
+
+Warning: Custom Cache-Control headers detected for the following routes:
+  - /_next/static/:path*
+
+Setting a custom Cache-Control header can break Next.js development behavior.
+▲ Next.js 16.2.2 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ✓ optimizeCss
+  · optimizePackageImports
+  ✓ scrollRestoration
+  · serverActions
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+  Using external babel configuration from C:\Users\namel\Desktop\office\babel.config.js
+[BABEL] Note: The code generator has deoptimised the styling of C:\Users\namel\Desktop\office\node_modules\@vladmandic\face-api\dist\face-api.esm.js as it exceeds the max of 500KB.
+Turbopack build encountered 1 warnings:
+./next.config.js
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.js
+    ./src/app/api/ai-site-editor/apply/route.ts
+
+
+✓ Compiled successfully in 3.1min
+  Running TypeScript ...
+Next.js build worker exited with code: 3221225786 and signal: null

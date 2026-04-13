@@ -11,6 +11,7 @@ import { AuthSyncProvider } from '@/components/providers/AuthSyncProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from 'sonner';
 import { MaintenanceAutoLogout } from '@/components/MaintenanceAutoLogout';
+import { HtmlLangUpdater } from '@/components/HtmlLangUpdater';
 
 /**
  * Combined app provider to reduce nesting depth in layout.
@@ -22,6 +23,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <MonitoringProvider>
         <SessionProvider>
           <I18nProvider>
+            <HtmlLangUpdater />
             <StatusUpdateProvider>
               <ConvexClientProvider>
                 <AuthSyncProvider>

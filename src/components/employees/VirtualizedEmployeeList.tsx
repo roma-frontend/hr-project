@@ -106,7 +106,7 @@ export function VirtualizedEmployeeList({
     return (
       <div
         ref={parentRef}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-[600px] overflow-auto"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-[400px] sm:h-[500px] lg:h-[600px] overflow-auto"
       >
         <div
           style={{
@@ -163,7 +163,7 @@ export function VirtualizedEmployeeList({
   return (
     <div
       ref={parentRef}
-      className="rounded-2xl border overflow-hidden h-[600px] overflow-auto"
+      className="rounded-2xl border overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] overflow-auto"
       style={{ borderColor: 'var(--border)' }}
     >
       <div style={{ height: `${totalHeight}px`, position: 'relative' }}>

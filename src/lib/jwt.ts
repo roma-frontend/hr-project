@@ -2,14 +2,16 @@ import { SignJWT, jwtVerify } from 'jose';
 
 const jwtSecret = process.env.JWT_SECRET;
 
-// Validate JWT_SECRET in production
-if (process.env.NODE_ENV === 'production' && (!jwtSecret || jwtSecret.length < 32)) {
-  throw new Error('JWT_SECRET must be at least 32 characters in production');
+// SECURITY: JWT_SECRET is mandatory in all environments
+// No dev fallback allowed — this prevents unauthorized token creation
+if (!jwtSecret || jwtSecret.length < 32) {
+  throw new Error(
+    'JWT_SECRET environment variable is required and must be at least 32 characters long. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+  );
 }
 
-const secret = new TextEncoder().encode(
-  jwtSecret || 'dev-secret-change-me-in-production-min-32-chars',
-);
+const secret = new TextEncoder().encode(jwtSecret);
 
 export interface JWTPayload {
   userId: string;

@@ -77,7 +77,11 @@ export async function checkRateLimit(
     return { allowed, remaining, resetAt };
   } catch (error) {
     console.error('Redis rate limit error:', error);
-    // Fail open - allow request if Redis fails
+    // SECURITY: Fail closed in production — deny request if Redis fails
+    // In development, allow the request to avoid blocking local work
+    if (process.env.NODE_ENV === 'production') {
+      return { allowed: false, remaining: 0, resetAt: Date.now() + windowMs };
+    }
     return { allowed: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
   }
 }

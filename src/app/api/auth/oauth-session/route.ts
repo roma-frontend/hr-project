@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Create session via mutation (bypasses password — OAuth is trusted)
-    const sessionToken = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionToken = crypto.randomUUID();
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
     console.log('[oauth-session] Creating login session...');

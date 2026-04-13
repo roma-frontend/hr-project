@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
@@ -13,7 +15,33 @@ async function convexMutation(path: string, args: Record<string, unknown>) {
   return data.value;
 }
 
+/**
+ * Verify JWT auth token.
+ */
+async function verifyAuth(): Promise<{ userId: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
+    if (!token) return null;
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return null;
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token.value, secret);
+    return { userId: payload.sub as string, role: (payload.role as string) || 'employee' };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
+  // SECURITY: Require authentication
+  const auth = await verifyAuth();
+  if (!auth) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId, event, details } = await req.json();
     if (!userId || !event) {

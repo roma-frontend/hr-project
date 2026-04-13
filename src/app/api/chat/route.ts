@@ -2,11 +2,43 @@ import { groq } from '@ai-sdk/groq';
 import { streamText } from 'ai';
 import { buildRoleBasedPrompt, detectIntent } from '@/lib/aiAssistant';
 import type { UserRole } from '@/lib/aiAssistant';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 // Remove edge runtime to see better errors
 // export const runtime = 'edge';
 
+/**
+ * Verify JWT auth token for chat API.
+ * Chat requires authentication but we don't want to block the stream.
+ */
+async function verifyChatAuth(): Promise<{ userId: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
+    if (!token) return null;
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return null;
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token.value, secret);
+    return { userId: payload.sub as string, role: (payload.role as string) || 'employee' };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
+  // SECURITY: Require authentication for AI chat (costly API)
+  const auth = await verifyChatAuth();
+  if (!auth) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Please log in to use AI chat.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     console.log('🤖 AI Chat request received');
     const { messages, userId, lang } = await req.json();
