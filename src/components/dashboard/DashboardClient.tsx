@@ -194,12 +194,12 @@ export default function DashboardClient() {
 
   const pieData = useMemo(() => {
     const data = (Object.keys(LEAVE_TYPE_COLORS) as LeaveType[]).map((key) => ({
-      name: LEAVE_TYPE_LABELS[key],
+      name: t(`leaveTypes.${key}`) || LEAVE_TYPE_LABELS[key],
       value: leaves?.filter((r) => r.type === key).length ?? 0,
       color: LEAVE_TYPE_COLORS[key],
     }));
     return data.filter((d) => d.value > 0);
-  }, [leaves]);
+  }, [leaves, t]);
 
   const monthlyTrend = useMemo(() => {
     const months: Record<
