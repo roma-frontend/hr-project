@@ -252,21 +252,14 @@ export function Sidebar() {
     <aside
       data-tour="sidebar"
       className={cn(
-        'relative hidden lg:flex flex-col h-screen border-r z-60 shrink-0',
+        'relative hidden lg:flex flex-col h-screen border-r z-60 shrink-0 bg-sidebar-bg border-sidebar-border',
         collapsed ? 'w-18' : 'w-60',
+        'transition-[width] duration-500 ease-in-out',
+        'will-change-[width]',
       )}
-      style={{
-        background: 'var(--sidebar-bg)',
-        borderColor: 'var(--sidebar-border)',
-        transition: 'width 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-        willChange: 'width',
-      }}
     >
       {/* Header with Logo */}
-      <div
-        className="flex items-center justify-center h-16 px-4 border-b"
-        style={{ borderColor: 'var(--sidebar-border)' }}
-      >
+      <div className="flex items-center justify-center h-16 px-4 border-b border-sidebar-border">
         {!collapsed ? (
           <div
             className="flex items-center justify-between w-full gap-3"
@@ -298,10 +291,10 @@ export function Sidebar() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                <h1 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                <h1 className="text-sm font-bold text-text-primary">
                   {t('sidebar.appName')}
                 </h1>
-                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                <p className="text-[10px] text-text-muted">
                   {t('sidebar.subtitle')}
                 </p>
               </div>
@@ -315,22 +308,9 @@ export function Sidebar() {
                 'border transition-all duration-300 hover:scale-105',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 group',
                 'shadow-sm hover:shadow-md',
+                'border-border text-text-muted bg-background',
+                'hover:bg-sidebar-item-hover hover:border-primary hover:text-primary',
               )}
-              style={{
-                borderColor: 'var(--border)',
-                color: 'var(--text-muted)',
-                backgroundColor: 'var(--background)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--sidebar-item-hover)';
-                e.currentTarget.style.borderColor = 'var(--primary)';
-                e.currentTarget.style.color = 'var(--primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--background)';
-                e.currentTarget.style.borderColor = 'var(--border)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-              }}
               onFocus={(e) => {
                 e.currentTarget.style.outlineColor = 'var(--primary)';
               }}
@@ -348,25 +328,9 @@ export function Sidebar() {
               'border transition-all duration-300 hover:scale-105',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 group',
               'shadow-sm hover:shadow-md',
+              'border-border text-text-muted bg-background',
+              'hover:bg-sidebar-item-hover hover:border-primary hover:text-primary',
             )}
-            style={{
-              borderColor: 'var(--border)',
-              color: 'var(--text-muted)',
-              backgroundColor: 'var(--background)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--sidebar-item-hover)';
-              e.currentTarget.style.borderColor = 'var(--primary)';
-              e.currentTarget.style.color = 'var(--primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--background)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text-muted)';
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.outlineColor = 'var(--primary)';
-            }}
             aria-label={t('sidebar.expandSidebar')}
             title={t('sidebar.expandSidebar')}
           >

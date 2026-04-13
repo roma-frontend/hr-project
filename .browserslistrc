@@ -1,8 +1,0 @@
-# Target modern evergreen browsers only — no polyfills for legacy features
-# This eliminates ~24 KiB of unnecessary polyfills (Array.at, Array.flat, etc.)
-last 2 Chrome versions
-last 2 Firefox versions
-last 2 Safari versions
-last 2 Edge versions
-not dead
-not IE 11
