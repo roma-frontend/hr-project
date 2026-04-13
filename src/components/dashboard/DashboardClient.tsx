@@ -120,7 +120,7 @@ const LeaveTypeBadge = React.memo(({ type }: { type: LeaveType }) => {
 });
 LeaveTypeBadge.displayName = 'LeaveTypeBadge';
 
-const StatusBadgeMemo = React.memo(({ status }: { status: LeaveStatus }) => {
+const StatusBadgeMemo = React.memo(({ status, label }: { status: LeaveStatus; label: string }) => {
   const variants: Record<LeaveStatus, 'warning' | 'success' | 'destructive'> = {
     pending: 'warning',
     approved: 'success',
@@ -128,7 +128,7 @@ const StatusBadgeMemo = React.memo(({ status }: { status: LeaveStatus }) => {
   };
   return (
     <Badge variant={variants[status]} className="capitalize">
-      {status}
+      {label}
     </Badge>
   );
 });
@@ -340,7 +340,7 @@ export default function DashboardClient() {
               >
                 <Link href="/superadmin/security">
                   <ShieldCheck className="w-4 h-4" />
-                  Security Center
+                  {t('landingExtra.securityCenter')}
                 </Link>
               </Button>
             </>
@@ -450,7 +450,7 @@ export default function DashboardClient() {
                     className="text-xs sm:text-sm font-semibold"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    Security Center
+                    {t('landingExtra.securityCenter')}
                   </span>
                   <span
                     className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full"
@@ -470,12 +470,12 @@ export default function DashboardClient() {
                     }}
                   >
                     {(securityStats?.highRisk ?? 0) >= 10
-                      ? '⚠ Critical'
+                      ? t('landingExtra.securityCritical')
                       : (securityStats?.highRisk ?? 0) >= 3
-                        ? '⚠ Elevated'
+                        ? t('landingExtra.securityElevated')
                         : (securityStats?.failed ?? 0) >= 20
-                          ? '⚠ Moderate'
-                          : '✓ Normal'}
+                          ? t('landingExtra.securityModerate')
+                          : t('landingExtra.securityNormal')}
                   </span>
                 </div>
                 <div
@@ -485,9 +485,9 @@ export default function DashboardClient() {
                   <span className="flex items-center gap-1">
                     <Activity className="w-3 h-3" />
                     <span className="hidden sm:inline">
-                      {securityStats?.total ?? 0} logins (24h)
+                      {securityStats?.total ?? 0} {t('landingExtra.logins24h')}
                     </span>
-                    <span className="sm:hidden">{securityStats?.total ?? 0} logins</span>
+                    <span className="sm:hidden">{securityStats?.total ?? 0} {t('landingExtra.loginsShort')}</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <XCircle
@@ -496,7 +496,7 @@ export default function DashboardClient() {
                         color: securityStats?.failed ? 'var(--destructive)' : 'var(--text-muted)',
                       }}
                     />
-                    {securityStats?.failed ?? 0} failed
+                    {securityStats?.failed ?? 0} {t('landingExtra.failedLogins')}
                   </span>
                   <span className="flex items-center gap-1">
                     <ShieldAlert
@@ -505,7 +505,7 @@ export default function DashboardClient() {
                         color: securityStats?.highRisk ? 'var(--warning)' : 'var(--text-muted)',
                       }}
                     />
-                    {securityStats?.highRisk ?? 0} high risk
+                    {securityStats?.highRisk ?? 0} {t('landingExtra.highRiskAlerts')}
                   </span>
                 </div>
               </div>
@@ -660,7 +660,16 @@ export default function DashboardClient() {
                           {formatDate(leave.endDate, 'MMM d')}
                         </p>
                       </div>
-                      <StatusBadgeMemo status={leave.status} />
+                      <StatusBadgeMemo
+                        status={leave.status}
+                        label={
+                          leave.status === 'approved'
+                            ? t('titles.leaveStatus.approved')
+                            : leave.status === 'pending'
+                              ? t('titles.leaveStatus.pending')
+                              : t('titles.leaveStatus.rejected')
+                        }
+                      />
                     </li>
                   ))}
                 </ul>

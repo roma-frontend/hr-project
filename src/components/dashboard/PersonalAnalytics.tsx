@@ -151,7 +151,9 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
                           : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                     }`}
                   >
-                    {leave.status}
+                    {leave.status === 'approved' && t('titles.leaveStatus.approved')}
+                    {leave.status === 'pending' && t('titles.leaveStatus.pending')}
+                    {leave.status === 'rejected' && t('titles.leaveStatus.rejected')}
                   </span>
                 </div>
               ))

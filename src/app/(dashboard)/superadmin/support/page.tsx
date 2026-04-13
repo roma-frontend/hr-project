@@ -757,7 +757,7 @@ function TicketDetailDialog({
             </span>
             <span>•</span>
             <span>
-              {ticket.comments?.length || 0} {t('superadmin.detail.comments')}
+              {ticket.comments?.length || 0} {t('superadmin.support.detail.comments')}
             </span>
           </div>
         </div>
@@ -780,7 +780,7 @@ function TicketDetailDialog({
                   <span className="hidden sm:inline">
                     {t('superadmin.support.detail.comments')}
                   </span>
-                  <span className="sm:hidden">{t('superadmin.detail.comments')}</span>
+                  <span className="sm:hidden">{t('superadmin.support.detail.comments')}</span>
                   {ticket.comments?.length > 0 && (
                     <span className="px-1.5 py-0.5 text-xs rounded-full bg-[var(--background-subtle)]">
                       {ticket.comments.length}

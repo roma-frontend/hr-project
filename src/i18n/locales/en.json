@@ -1806,6 +1806,11 @@
     "totalEmployeesCount": "Total Employees",
     "pendingApprovals": "Pending Approvals",
     "leaveRequests": "Leave Requests",
+    "leaveStatus": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
     "avgApprovalTime": "Avg. Approval Time",
     "dashboard": "Dashboard",
     "employees": "Employees",

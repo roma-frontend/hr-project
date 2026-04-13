@@ -1812,6 +1812,11 @@
     "totalEmployeesCount": "Всего сотрудников",
     "pendingApprovals": "Ожидают одобрения",
     "leaveRequests": "Запросы на отпуск",
+    "leaveStatus": {
+      "approved": "Одобрено",
+      "pending": "В ожидании",
+      "rejected": "Отклонено"
+    },
     "avgApprovalTime": "Ср. время одобрения",
     "dashboard": "Панель управления",
     "employees": "Сотрудники",

@@ -1781,6 +1781,11 @@
     "totalEmployeesCount": "Ընդհանուր աշխատակիցներ",
     "pendingApprovals": "Սպասում են հաստատման",
     "leaveRequests": "Արձակուրդի հայտեր",
+    "leaveStatus": {
+      "approved": "Հաստատված",
+      "pending": "Սպասվում է",
+      "rejected": "Մերժված"
+    },
     "avgApprovalTime": "Միջին հաստատման ժամանակ",
     "dashboard": "Վահանակ",
     "employees": "Աշխատակիցներ",
