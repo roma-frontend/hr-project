@@ -575,7 +575,7 @@ export function EmployeesClient() {
                           )}
                         </div>
                         <div
-                          className="flex flex-wrap gap-2W items-center justify-between mt-4 pt-3 border-t"
+                          className="flex flex-wrap gap-2 items-center justify-between mt-4 pt-3 border-t"
                           style={{ borderColor: 'var(--border)' }}
                         >
                           <div className="flex gap-2">
