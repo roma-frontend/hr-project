@@ -30,7 +30,7 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
 
   // Data for pie chart
   const pieData = Object.entries(leavesByType).map(([type, days]: any) => ({
-    name: type.charAt(0).toUpperCase() + type.slice(1),
+    name: t(`leaveTypes.${type}`) || type.charAt(0).toUpperCase() + type.slice(1),
     value: days as number,
   }));
 
@@ -81,7 +81,7 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
             style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
           >
             <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
-              📊 Leave Distribution
+              📊 {t('dashboard.leaveDistribution')}
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -120,7 +120,7 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
           style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
         >
           <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">
-            📅 Recent Requests
+            📅 {t('dashboard.recentRequests')}
           </h3>
           <div className="space-y-3">
             {recentLeaves.length === 0 ? (
