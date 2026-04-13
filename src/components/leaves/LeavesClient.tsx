@@ -453,10 +453,11 @@ export function LeavesClient() {
 
       {/* Leave Request Wizard (New) */}
       {wizardOpen && user?.id && (
-        <LeaveRequestWizard 
-          userId={user.id as Id<'users'>} 
+        <LeaveRequestWizard
+          userId={user.id as Id<'users'>}
           isSuperadmin={isSuperadmin}
-          onCancel={() => setWizardOpen(false)} 
+          selectedOrgId={selectedOrgId as Id<'organizations'> | undefined}
+          onCancel={() => setWizardOpen(false)}
         />
       )}
 
