@@ -695,7 +695,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setLoginMode('email')}
-                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center ${
                           loginMode === 'email' ? 'shadow-sm' : ''
                         }`}
                         style={{
@@ -710,7 +710,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setLoginMode('face')}
-                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center ${
                           loginMode === 'face' ? 'shadow-sm' : ''
                         }`}
                         style={{
@@ -724,7 +724,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setLoginMode('touch')}
-                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center ${
                           loginMode === 'touch' ? 'shadow-sm' : ''
                         }`}
                         style={{
