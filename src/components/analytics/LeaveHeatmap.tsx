@@ -81,7 +81,7 @@ export function LeaveHeatmap({ leaves, month = new Date() }: LeaveHeatmapProps) 
       <div className="flex items-center gap-4 mt-4 text-xs text-[var(--text-muted)]">
         <span>{t('leaveHeatmap.less')}</span>
         <div className="flex gap-1">
-          <div className="w-4 h-4 rounded bg-[var(--background-subtle)]" />
+          <div className="w-4 h-4 rounded bg-[var(--background-subtle-calendar)]" />
           <div className="w-4 h-4 rounded bg-green-500" />
           <div className="w-4 h-4 rounded bg-yellow-500" />
           <div className="w-4 h-4 rounded bg-orange-500" />

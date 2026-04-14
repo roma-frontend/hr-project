@@ -1292,7 +1292,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               </button>
             </div>
             <p
-              className="text-[8px] xs:text-[9px] mt-1 text-center"
+              className="text-[10px] xs:text-[12px] mt-1 text-center"
               style={{ color: 'var(--text-disabled)' }}
             >
               {t('chat.enterHint')}

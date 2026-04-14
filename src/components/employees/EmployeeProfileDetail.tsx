@@ -121,7 +121,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
                 {(employee as any).avatarUrl ? (
                   <img
@@ -155,9 +155,9 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-start sm:items-end gap-2">
               {score && (
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p className="text-xs text-[var(--text-muted)]">{t('employeeProfile.aiScore')}</p>
                   <p className="text-3xl font-bold text-[var(--primary)]">
                     {score.overallScore}/100
