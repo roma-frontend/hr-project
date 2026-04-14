@@ -9,19 +9,23 @@ import {
 } from '@/components/seo/JsonLd';
 import HeroSection from '@/components/landing/HeroSection';
 import LandingBelowFold from '@/components/landing/LandingBelowFold';
+import NavbarWrapper from '@/components/landing/NavbarWrapper';
 
 export default function RootPage() {
   return (
-    <main id="main-content" className="min-h-screen" style={{ maxWidth: '100vw', overflowX: 'clip' }}>
+    <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
       <SoftwareApplicationJsonLd />
       <OrganizationJsonLd />
       <FAQPageJsonLd />
 
+      {/* Navigation — sticky at top */}
+      <NavbarWrapper />
+
       {/* Hero renders immediately, no JS required */}
       <HeroSection />
-      
+
       {/* Below-fold sections loaded with Suspense boundaries */}
       <LandingBelowFold />
-    </main>
+    </div>
   );
 }

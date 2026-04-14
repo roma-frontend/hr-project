@@ -1,8 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import Navbar from './Navbar';
-import FloatingParticlesClient from './FloatingParticlesClient';
 import LandingExtras from './LandingExtras';
 
 // Below-fold sections - lazy loaded for performance with SSR
@@ -47,53 +45,9 @@ import FeaturesSection from './FeaturesSection';
 import CTABanner from './CTABanner';
 import Footer from './Footer';
 
-// Pure CSS gradient orbs - no JS needed
-function GradientOrbs() {
-  return (
-    <>
-      <div
-        className="fixed top-[-10%] left-[-5%] w-[700px] h-[700px] rounded-full pointer-events-none orb-pulse-1"
-        style={{
-          background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          zIndex: 0,
-          willChange: 'transform',
-        }}
-      />
-      <div
-        className="fixed top-[30%] right-[-10%] w-[600px] h-[600px] rounded-full pointer-events-none orb-pulse-2"
-        style={{
-          background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          zIndex: 0,
-          willChange: 'transform',
-        }}
-      />
-      <div
-        className="fixed bottom-[10%] left-[20%] w-[500px] h-[500px] rounded-full pointer-events-none orb-pulse-3"
-        style={{
-          background: 'radial-gradient(circle, var(--landing-orb-3) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          zIndex: 0,
-          willChange: 'transform',
-        }}
-      />
-    </>
-  );
-}
-
 export default function LandingBelowFold() {
   return (
     <>
-      {/* Background layers */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <GradientOrbs />
-        <FloatingParticlesClient />
-      </div>
-
-      {/* Navigation */}
-      <Navbar />
-
       {/* Page content */}
       <main className="relative">
         <div className="section-lazy"><SocialProof /></div>

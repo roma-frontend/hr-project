@@ -83,3 +83,27 @@ analyze-lighthouse.js
 # Windows
 Thumbs.db
 desktop.ini
+
+# Lighthouse scripts and reports
+lighthouse-report*.json
+lighthouse-report*.html
+run-lighthouse-direct.mjs
+run-lighthouse-puppeteer.mjs
+
+# Temporary test/debug files
+*.test-results.json
+playwright-report/
+test-results/
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

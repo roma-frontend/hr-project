@@ -162,6 +162,7 @@
     "patch-package": "^8.0.1",
     "pdfkit": "^0.17.2",
     "prettier": "^3.5.3",
+    "puppeteer-core": "^24.40.0",
     "shadcn": "^3.8.5",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",

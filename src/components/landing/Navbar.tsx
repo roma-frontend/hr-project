@@ -77,23 +77,28 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`nav-animate sticky top-0 z-[100] flex items-center justify-between px-4 md:px-8 lg:px-12 transition-all duration-300 border-b ${
+        className={`sticky top-0 z-[100] flex items-center justify-between px-4 md:px-8 lg:px-12 transition-all duration-500 ease-in-out border-b ${
           scrolled ? 'py-2 md:py-3 shadow-lg' : 'py-3 md:py-4'
         }`}
         role="navigation"
         aria-label="Main navigation"
-        style={{ borderColor: 'var(--landing-card-border)' }}
+        style={{
+          borderColor: 'var(--landing-card-border)',
+          willChange: 'padding, box-shadow',
+          transitionProperty: 'padding, box-shadow, background-color',
+        }}
       >
         <div
-          className="absolute inset-0 backdrop-blur-xl border-b transition-all duration-300"
+          className="absolute inset-0 backdrop-blur-xl border-b transition-all duration-500 ease-in-out"
           style={{
             background: scrolled
               ? 'rgba(var(--landing-navbar-bg-rgb, 15, 23, 42), 0.98)'
               : 'rgba(var(--landing-navbar-bg-rgb, 15, 23, 42), 0.7)',
             borderColor: 'var(--landing-card-border)',
+            transitionProperty: 'box-shadow, background',
             boxShadow: scrolled
               ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
-              : 'none',
+              : '0 0 0 0 rgba(0, 0, 0, 0)',
           }}
         />
 
