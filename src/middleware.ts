@@ -174,7 +174,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   // Permissions-Policy
   response.headers.set(
     'Permissions-Policy',
-    'camera=self, microphone=self, geolocation=self, fullscreen=self, clipboard=self, payment=(), usb=()',
+    'camera=self, microphone=self, geolocation=self, fullscreen=self, clipboard-write=self, payment=(), usb=()',
   );
 
   // Remove Next.js powered-by header
