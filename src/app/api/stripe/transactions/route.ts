@@ -94,15 +94,15 @@ export async function GET(req: NextRequest) {
 
     // Calculate MRR
     const planPrices: Record<string, number> = {
-      price_starter: 0,
-      price_professional: 29,
+      price_starter: 29,
+      price_professional: 79,
       price_enterprise: 199,
     };
 
     let mrr = 0;
     activeSubs.forEach((sub) => {
       const priceId = sub.items.data[0]?.price?.id || '';
-      const price = planPrices[priceId] || 29; // default to professional
+      const price = planPrices[priceId] || 79; // default to professional
       mrr += price;
     });
 

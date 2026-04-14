@@ -1,3 +1,4 @@
+// @ts-nocheck TS2589 - Convex API types cause infinite recursion
 'use client';
 
 import { useState } from 'react';
@@ -43,18 +44,18 @@ export default function HelpSupportPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showPlanLimit, setShowPlanLimit] = useState(false);
 
-  const myTickets = useQuery(
-    api.tickets.getMyTickets,
+  const myTickets = (useQuery as any)(
+    (api.tickets as any).getMyTickets,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
   ) as any[] | undefined;
 
-  const stats = useQuery(api.tickets.getTicketStats);
+  const stats = (useQuery as any)((api.tickets as any).getTicketStats) as any;
 
   // Get organization plan
-  const userOrg = useQuery(
-    api.organizations.getMyOrganization,
+  const userOrg = (useQuery as any)(
+    (api.organizations as any).getMyOrganization,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
-  );
+  ) as any;
 
   // Check plan limitations
   const canCreateTickets = userOrg?.plan === 'professional' || userOrg?.plan === 'enterprise';
@@ -464,7 +465,7 @@ function PlanLimitDialog({
             />
             <PlanCard
               name={t('superadmin.professional')}
-              price="$29"
+              price="$79"
               features={[
                 { text: t('help.plans.professional.tickets'), included: true },
                 { text: t('help.plans.professional.limit'), included: true },

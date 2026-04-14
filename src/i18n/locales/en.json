@@ -111,7 +111,7 @@
     "training": "Training sessions",
     "sla": "SLA guarantee",
     "freeTrial": "free trial",
-    "currentPlan": "current plan",
+    "currentPlan": "Current plan",
     "allPlansInclude": "all plans include",
     "footerNote": "Note",
     "upTo10Employees": "Up to 10 employees",
@@ -3951,8 +3951,8 @@
     "paris": "Paris",
     "tokyo": "Tokyo",
     "yerevan": "Yerevan",
-    "starterFree": "Starter (Free)",
-    "professionalPaid": "Professional ($29/mo)",
+    "starterFree": "Starter ($29/mo)",
+    "professionalPaid": "Professional ($79/mo)",
     "enterpriseCustom": "Enterprise (Custom)"
   },
   "editOrganization": {
@@ -4129,7 +4129,7 @@
     "status": "Status",
     "periodEnd": "Period End"
   },
-  "$29": "$29/month",
+  "$79": "$79/month",
   "Custom": "Custom plan",
   "maintenance": {
     "title": "Maintenance",
@@ -5220,9 +5220,9 @@
     },
     "plans": {
       "starter": "Starter",
-      "starterDesc": "Free plan",
+      "starterDesc": "14-day free trial, then $29/mo",
       "professional": "Professional",
-      "professionalDesc": "$29/month",
+      "professionalDesc": "$79/month",
       "enterprise": "Enterprise",
       "enterpriseDesc": "Custom pricing"
     },

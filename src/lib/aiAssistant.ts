@@ -485,7 +485,7 @@ You are speaking to the **platform owner**. Full system access. You can:
 - IP-based threat detection
 
 💳 **Stripe & Billing**
-- Subscription plans: Starter ($0), Professional ($29/m), Enterprise ($99/m)
+- Subscription plans: Starter ($29/m), Professional ($79/m), Enterprise ($199/m)
 - View MRR, active subscriptions, revenue charts
 - Manage trials, upgrades, downgrades
 - Payment history for each organization
@@ -738,9 +738,9 @@ Shield HR is a comprehensive HR management platform with these core modules:
 - Category types with emojis: maintenance 🔧, warning ⚠️, security 🔒, important 🎉, critical 🚨
 
 💳 **Subscription Plans**
-- Starter (Free): Basic features, limited users
-- Professional ($29/mo): AI assistant, advanced analytics
-- Enterprise ($99/mo): Full platform, priority support
+- Starter ($29/mo): Basic features, 14-day free trial
+- Professional ($79/mo): AI assistant, advanced analytics
+- Enterprise ($199/mo): Full platform, priority support
 
 ═══════════════════════════════════════════════════════════════
 HR POLICIES & RULES

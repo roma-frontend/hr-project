@@ -23,9 +23,9 @@ export function useSubscription() {
 
   // Get organization to determine plan
   const organization = useQuery(
-    api.organizations.getMyOrganization,
+    api.organizations.getMyOrganization as any,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
-  );
+  ) as any;
 
   // NOTE: subscriptions functionality is not implemented yet
   // Using organization plan instead

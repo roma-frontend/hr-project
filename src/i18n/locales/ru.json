@@ -3991,8 +3991,8 @@
     "paris": "Париж",
     "tokyo": "Токио",
     "yerevan": "Ереван",
-    "starterFree": "Стартер (Бесплатно)",
-    "professionalPaid": "Профессиональный ($29/мес)",
+    "starterFree": "Стартер ($29/мес)",
+    "professionalPaid": "Профессиональный ($79/мес)",
     "enterpriseCustom": "Корпоративный (Индивидуально)"
   },
   "editOrganization": {
@@ -5442,9 +5442,9 @@
     },
     "plans": {
       "starter": "Стартовый",
-      "starterDesc": "Бесплатный план",
+      "starterDesc": "14-дневный бесплатный пробный период, затем $29/мес",
       "professional": "Профессиональный",
-      "professionalDesc": "$29/месяц",
+      "professionalDesc": "$79/месяц",
       "enterprise": "Корпоративный",
       "enterpriseDesc": "Индивидуальная цена"
     },

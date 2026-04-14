@@ -3938,8 +3938,8 @@
     "paris": "Փարիզ",
     "tokyo": "Տոկիո",
     "yerevan": "Երևան",
-    "starterFree": "Սկսնակ (Անվճար)",
-    "professionalPaid": "Պրոֆեսիոնալ ($29/ամիս)",
+    "starterFree": "Սկսնակ ($29/ամիս)",
+    "professionalPaid": "Պրոֆեսիոնալ ($79/ամիս)",
     "enterpriseCustom": "Կորպորատիվ (Անհատական)"
   },
   "editOrganization": {
@@ -4116,7 +4116,7 @@
     "status": "Կարգավիճակ",
     "periodEnd": "Ժամանակաշրջանի ավարտ"
   },
-  "$29": "$29/",
+  "$79": "$79/",
   "Custom": "Անհատական",
   "maintenance": {
     "title": "Սպասարկում",
@@ -5547,9 +5547,9 @@
     },
     "plans": {
       "starter": "Սկսնակ",
-      "starterDesc": "Ազատ պլան",
+      "starterDesc": "14-օրվա անվճար փորձաշրջան, այնուհետև $29/ամիս",
       "professional": "Պրոֆեսիոնալ",
-      "professionalDesc": "$29/ամսեկան",
+      "professionalDesc": "$79/ամսեկան",
       "enterprise": "Մեծ ձեռնարկություն",
       "enterpriseDesc": "Անհատական գին"
     },

@@ -1,3 +1,4 @@
+// @ts-nocheck TS2589 - Convex API types cause infinite recursion
 'use client';
 import Image from 'next/image';
 
@@ -105,12 +106,14 @@ export const ChatWindow = React.memo(function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesParentRef = useRef<HTMLDivElement>(null);
 
-  // @ts-expect-error TS2589 - Convex API types cause infinite recursion
-  const messages = useQuery(api.chat.queries.getMessages, {
-    conversationId,
-    userId: currentUserId,
-    limit: 200,
-  });
+  const messages = (useQuery as any)(
+    (api.chat.queries as any).getMessages,
+    {
+      conversationId,
+      userId: currentUserId,
+      limit: 200,
+    },
+  ) as any;
 
   // Debug: Log first message sender
   if (messages && messages.length > 0 && !messages[0]?.sender) {

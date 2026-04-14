@@ -35,7 +35,7 @@ export default function RegisterOrgPage() {
     {
       id: 'professional' as Plan,
       name: t('auth.plans.professional.name', 'Professional'),
-      price: '$29' + t('auth.plans.perMonth', '/mo'),
+      price: '$79' + t('auth.plans.perMonth', '/mo'),
       description: t('auth.plans.professional.desc', 'For growing teams with advanced needs'),
       icon: Building2,
       color: 'from-blue-500 to-cyan-500',

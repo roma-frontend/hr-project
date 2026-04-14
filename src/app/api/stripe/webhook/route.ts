@@ -64,8 +64,8 @@ async function notifyManager({
   if (!managerEmail) return;
 
   const planLabels: Record<string, string> = {
-    starter: 'Starter (Free)',
-    professional: 'Professional ($29/mo)',
+    starter: 'Starter ($29/mo)',
+    professional: 'Professional ($79/mo)',
     enterprise: 'Enterprise ($199/mo)',
   };
 

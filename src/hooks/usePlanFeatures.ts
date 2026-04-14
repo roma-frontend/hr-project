@@ -109,14 +109,14 @@ export const PLAN_LABELS: Record<PlanType, string> = {
 };
 
 export const PLAN_PRICES: Record<PlanType, string> = {
-  starter: 'Free',
+  starter: '$29/mo',
   professional: '$79/mo',
   enterprise: 'Custom',
 };
 
 export const PLAN_UPGRADE_URL: Record<PlanType, string> = {
-  starter: process.env.NEXT_PUBLIC_STRIPE_CHECKOUT_PROFESSIONAL ?? '/contact',
-  professional: '/contact',
+  starter: '/api/stripe/checkout',
+  professional: '/api/stripe/checkout',
   enterprise: '/contact',
 };
 

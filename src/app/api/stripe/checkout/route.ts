@@ -9,7 +9,7 @@ function getStripe(): Stripe | null {
 }
 
 const PLANS: Record<string, { priceId: string; name: string }> = {
-  // Starter is now free, so no Stripe checkout needed
+  starter: { priceId: process.env.STRIPE_PRICE_STARTER!, name: 'Starter' },
   professional: { priceId: process.env.STRIPE_PRICE_PROFESSIONAL!, name: 'Professional' },
   enterprise: { priceId: process.env.STRIPE_PRICE_ENTERPRISE!, name: 'Enterprise' },
 };
@@ -25,17 +25,6 @@ export async function POST(req: NextRequest) {
 
   try {
     const { plan, email, organizationId } = await req.json();
-
-    // Starter plan is free, redirect to direct signup
-    if (plan === 'starter') {
-      return NextResponse.json(
-        {
-          error: 'Starter plan is free. Please use the direct signup instead.',
-          redirect: '/register-org/create?plan=starter',
-        },
-        { status: 400 },
-      );
-    }
 
     if (!plan || !PLANS[plan]) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });

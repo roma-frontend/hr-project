@@ -5,12 +5,12 @@
 export const STRIPE_PLANS = {
   starter: {
     name: 'Starter',
-    priceMonthly: 0,
+    priceMonthly: 29,
     priceIdEnv: 'STRIPE_PRICE_STARTER',
   },
   professional: {
     name: 'Professional',
-    priceMonthly: 29,
+    priceMonthly: 79,
     priceIdEnv: 'STRIPE_PRICE_PROFESSIONAL',
   },
   enterprise: {

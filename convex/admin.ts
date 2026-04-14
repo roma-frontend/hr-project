@@ -846,7 +846,7 @@ export const getSuperadminDashboard = query({
 
       // Calculate revenue based on plan
       const monthlyRevenue =
-        subscription?.plan === 'professional' ? 99 : subscription?.plan === 'enterprise' ? 299 : 0;
+        subscription?.plan === 'starter' ? 29 : subscription?.plan === 'professional' ? 79 : subscription?.plan === 'enterprise' ? 199 : 0;
 
       // Calculate utilization
       const utilization =

@@ -190,7 +190,7 @@ export default function RequestOrgPage() {
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {plan === 'enterprise'
                   ? 'Custom pricing • 100+ employees'
-                  : '$29/mo • Up to 50 employees'}{' '}
+                  : '$79/mo • Up to 50 employees'}{' '}
                 • Approved within 24h
               </p>
             </div>

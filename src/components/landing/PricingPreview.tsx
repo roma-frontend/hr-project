@@ -86,8 +86,8 @@ const pricingTiers: PricingTier[] = [
   {
     id: 'starter',
     nameKey: 'pricing.starter',
-    priceKey: 'pricing.free',
-    priceMonthly: 0,
+    priceKey: '$29',
+    priceMonthly: 29,
     descriptionKey: 'pricing.starterDesc',
     icon: <ZapIcon size={22} />,
     featureKeys: [
@@ -106,8 +106,8 @@ const pricingTiers: PricingTier[] = [
   {
     id: 'professional',
     nameKey: 'pricing.professional',
-    priceKey: '$29',
-    priceMonthly: 29,
+    priceKey: '$79',
+    priceMonthly: 79,
     descriptionKey: 'pricing.professionalDesc',
     icon: <BuildingIcon size={22} />,
     featureKeys: [

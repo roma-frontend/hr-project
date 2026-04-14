@@ -47,10 +47,11 @@ const ALL_TIERS: PlanTier[] = [
       'Mobile app access',
       'Standard support',
     ],
-    buttonText: 'Current Plan',
+    buttonText: 'Start Free Trial',
     accentFrom: '#6366f1',
     accentTo: '#8b5cf6',
     glowColor: 'rgba(99,102,241,0.2)',
+    checkoutPlan: 'starter',
   },
   {
     id: 'professional',

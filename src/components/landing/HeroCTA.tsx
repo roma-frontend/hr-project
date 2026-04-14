@@ -63,7 +63,7 @@ export default function HeroCTA() {
           <ArrowRightIcon />
         </Button>
         <Button
-          onClick={() => router.push('/dashboard')}
+          onClick={() => router.push('/analytics')}
           variant="ctaSecondary"
           size="2xl"
           className="gap-3"
