@@ -105,6 +105,7 @@ export const ChatWindow = React.memo(function ChatWindow({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesParentRef = useRef<HTMLDivElement>(null);
 
+  // @ts-expect-error TS2589 - Convex API types cause infinite recursion
   const messages = useQuery(api.chat.queries.getMessages, {
     conversationId,
     userId: currentUserId,
