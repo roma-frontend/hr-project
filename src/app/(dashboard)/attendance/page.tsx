@@ -158,7 +158,7 @@ export default function AttendancePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id ? 'shadow-sm' : 'hover:opacity-80'
                 }`}
                 style={
@@ -167,8 +167,8 @@ export default function AttendancePage() {
                     : { color: 'var(--text-muted)' }
                 }
               >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
+                <tab.icon className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{tab.label}</span>
                 {tab.id === 'rating' && needsRating && needsRating.length > 0 && (
                   <span className="bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                     {needsRating.length}
