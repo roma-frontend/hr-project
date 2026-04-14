@@ -581,7 +581,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
             {canManage && (
               <button
                 onClick={() => setShowCreate(true)}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-700 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all w-full sm:w-auto"
               >
                 {t('tasksClient.newTask')}
               </button>

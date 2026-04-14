@@ -31,7 +31,7 @@ export function LeaveHeatmap({ leaves, month = new Date() }: LeaveHeatmapProps) 
   const maxCount = Math.max(...days.map(getLeaveCount), 1);
 
   const getColor = (count: number) => {
-    if (count === 0) return 'bg-[var(--background-subtle)]';
+    if (count === 0) return 'bg-[var(--background-subtle-calendar)]';
     const intensity = count / maxCount;
     if (intensity > 0.75) return 'bg-red-500';
     if (intensity > 0.5) return 'bg-orange-500';

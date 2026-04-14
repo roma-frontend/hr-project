@@ -439,7 +439,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
             animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
             exit={getAnimationDirection(currentStep, 'exit')}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed z-[10000] rounded-2xl shadow-2xl border"
+            className="fixed z-[10000] rounded-2xl shadow-2xl border overflow-hidden"
             style={{
               left: tooltipPosition.x,
               top: tooltipPosition.y,
@@ -449,7 +449,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
             }}
           >
             {/* Progress bar */}
-            <div className="h-0.5 rounded-t-2xl bg-muted overflow-hidden">
+            <div className="h-0.5 rounded-t-2xl bg-muted">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
                 initial={{ width: 0 }}

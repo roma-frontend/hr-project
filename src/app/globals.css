@@ -129,6 +129,7 @@ html.light {
   /* Base */
   --background: #f0f6ff;
   --background-subtle: #e8f0fe;
+  --background-subtle-calendar: #4a6ea5e4;
   --foreground: #0c1a2e;
 
   /* Card / Surface */

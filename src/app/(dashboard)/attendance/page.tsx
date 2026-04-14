@@ -224,8 +224,8 @@ export default function AttendancePage() {
       {isAdminOrSupervisor && activeTab === 'today' && todayAllAttendance !== undefined && (
         <div>
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="flex">
+              <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
                 {t('attendance.todaysAttendance')} —{' '}
                 {new Date().toLocaleDateString('en-GB', {
@@ -233,7 +233,7 @@ export default function AttendancePage() {
                   day: 'numeric',
                   month: 'long',
                 })}
-                <Badge className="ml-auto bg-blue-500/10 text-blue-500 border-blue-500/30">
+                <Badge className="ml-0 sm:ml-auto bg-blue-500/10 text-blue-500 border-blue-500/30">
                   {todayAllAttendance.length} {t('common.recorded', 'recorded')}
                 </Badge>
               </CardTitle>
