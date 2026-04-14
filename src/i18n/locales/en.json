@@ -136,7 +136,11 @@
     "sslSecured": "SSL Secured",
     "noSetupFees": "No setup fees",
     "cancelAnytime": "Cancel anytime",
-    "gdprCompliant": "GDPR Compliant"
+    "gdprCompliant": "GDPR Compliant",
+    "starterPrice": "$29",
+    "professionalPrice": "$79",
+    "calendarIntegrations": "Google & Outlook calendar sync",
+    "priorityProcessing": "Priority AI processing"
   },
   "testimonials": {
     "eyebrow": "Testimonials",

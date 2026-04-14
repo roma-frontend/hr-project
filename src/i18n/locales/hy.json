@@ -136,7 +136,11 @@
     "sslSecured": "SSL պաշտպանված",
     "noSetupFees": "Առանց տեղակայման վճարի",
     "cancelAnytime": "Չեղարկել ցանկացած պահի",
-    "gdprCompliant": "GDPR համապատասխան"
+    "gdprCompliant": "GDPR համապատասխան",
+    "starterPrice": "$29",
+    "professionalPrice": "$79",
+    "calendarIntegrations": "Google և Outlook օրացույցների սինխրոնիզացիա",
+    "priorityProcessing": "AI առաջնահերթ մշակում"
   },
   "testimonials": {
     "eyebrow": "Վկայություններ",

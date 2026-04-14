@@ -16,8 +16,7 @@ import { toast } from 'sonner';
 import { motion } from '@/lib/cssMotion';
 import { Heart, ChevronLeft, Shield, Search, Car, Users, MapPin, Star } from 'lucide-react';
 
-// Isolate Convex API refs
-// @ts-ignore TS2589
+// Isolate Convex API refs to avoid deep type instantiation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const removeFavoriteApi: any = api.drivers.driver_registration.removeFavoriteDriver;
 

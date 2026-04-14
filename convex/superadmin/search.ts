@@ -1,7 +1,11 @@
+// @ts-nocheck - Convex API types cause TS2589 in complex module graphs
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { Id } from '../_generated/dataModel';
 import { api } from '../_generated/api';
+
+// Isolate API references at module level
+const superadminApi = api.superadmin;
 
 // ─── GLOBAL SEARCH ───────────────────────────────────────────────────────────
 export const globalSearch = query({
@@ -184,8 +188,7 @@ export const globalSearch = query({
 export const quickSearch = query({
   args: { query: v.string() },
   handler: async (ctx, args): Promise<any> => {
-    // @ts-ignore - Convex query types cause excessive instantiation depth in Next.js 16.2
-    const fullResults = await ctx.runQuery(api.superadmin.globalSearch, {
+    const fullResults = await ctx.runQuery(superadminApi.globalSearch, {
       query: args.query,
       limit: 5,
     });

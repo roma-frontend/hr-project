@@ -1,4 +1,3 @@
-// @ts-nocheck TS2589 - Convex API types cause infinite recursion
 'use client';
 import Image from 'next/image';
 

@@ -1,7 +1,11 @@
-// @ts-nocheck - Convex API types cause TS2589: excessive type instantiation depth
+// @ts-nocheck - Convex API types cause TS2589 in complex module graphs
 import { action } from './_generated/server';
 import { api } from './_generated/api';
 import { v } from 'convex/values';
+
+// Isolate API references at module level to avoid deep type instantiation in handler
+const usersApi = api.users;
+const leavesApi = api.leaves;
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
@@ -35,12 +39,12 @@ export const sendChatMessage = action({
     try {
       if (userEmail) {
         // Get user profile via email (safe string lookup)
-        userProfile = await ctx.runQuery(api.users.queries.getUserByEmail, { email: userEmail });
+        userProfile = await ctx.runQuery(usersApi.queries.getUserByEmail, { email: userEmail });
         const resolvedUserId = userProfile?._id;
 
         // Get user's own leaves
         const userLeaves = resolvedUserId
-          ? await ctx.runQuery(api.leaves.getUserLeaves, { userId: resolvedUserId })
+          ? await ctx.runQuery(leavesApi.getUserLeaves, { userId: resolvedUserId })
           : [];
         const myLeaves = Array.isArray(userLeaves) ? userLeaves : [];
 
@@ -130,12 +134,12 @@ ${
       const organizationId = userProfile?.organizationId;
       // If requesterId is not available, use organizationId directly
       const allLeaves = requesterId
-        ? await ctx.runQuery(api.leaves.getAllLeaves, { requesterId })
+        ? await ctx.runQuery(leavesApi.getAllLeaves, { requesterId })
         : organizationId
-          ? await ctx.runQuery(api.leaves.getAllLeaves, { organizationId })
+          ? await ctx.runQuery(leavesApi.getAllLeaves, { organizationId })
           : [];
       const allUsers = requesterId
-        ? await ctx.runQuery(api.users.queries.getAllUsers, { requesterId })
+        ? await ctx.runQuery(usersApi.queries.getAllUsers, { requesterId })
         : [];
 
       const leavesArr = Array.isArray(allLeaves) ? allLeaves : [];

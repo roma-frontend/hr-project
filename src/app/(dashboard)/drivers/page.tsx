@@ -19,7 +19,7 @@ import {
 } from '@/components/drivers/modals';
 import { toast } from 'sonner';
 
-// @ts-ignore - Convex drivers API type causes infinite instantiation
+// Isolate Convex API reference to avoid deep type instantiation
 const driversApi = (api as any).drivers;
 
 export default function DriversPage() {

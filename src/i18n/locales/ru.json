@@ -136,7 +136,11 @@
     "sslSecured": "Защищено SSL",
     "noSetupFees": "Без платы за установку",
     "cancelAnytime": "Отменить в любое время",
-    "gdprCompliant": "Соответствует GDPR"
+    "gdprCompliant": "Соответствует GDPR",
+    "starterPrice": "$29",
+    "professionalPrice": "$79",
+    "calendarIntegrations": "Синхронизация с Google и Outlook календарём",
+    "priorityProcessing": "Приоритетная обработка AI"
   },
   "testimonials": {
     "eyebrow": "Отзывы",

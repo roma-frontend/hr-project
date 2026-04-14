@@ -79,6 +79,7 @@ interface PricingTier {
   accentFrom: string;
   accentTo: string;
   glowColor: string;
+  trialEligible?: boolean;
 }
 
 // ── Plans ─────────────────────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: 'starter',
     nameKey: 'pricing.starter',
-    priceKey: '$29',
+    priceKey: 'pricing.starterPrice',
     priceMonthly: 29,
     descriptionKey: 'pricing.starterDesc',
     icon: <ZapIcon size={22} />,
@@ -102,11 +103,12 @@ const pricingTiers: PricingTier[] = [
     accentFrom: '#10b981',
     accentTo: '#059669',
     glowColor: 'rgba(16,185,129,0.35)',
+    trialEligible: true,
   },
   {
     id: 'professional',
     nameKey: 'pricing.professional',
-    priceKey: '$79',
+    priceKey: 'pricing.professionalPrice',
     priceMonthly: 79,
     descriptionKey: 'pricing.professionalDesc',
     icon: <BuildingIcon size={22} />,
@@ -116,8 +118,7 @@ const pricingTiers: PricingTier[] = [
       'pricing.aiPoweredInsights',
       'pricing.customReports',
       'pricing.prioritySupport',
-      'pricing.apiAccess',
-      'pricing.customIntegrations',
+      'pricing.calendarIntegrations',
     ],
     buttonTextKey: 'pricing.startFreeTrial',
     popular: true,
@@ -125,6 +126,7 @@ const pricingTiers: PricingTier[] = [
     accentFrom: '#3b82f6',
     accentTo: '#2563eb',
     glowColor: 'rgba(59,130,246,0.4)',
+    trialEligible: false,
   },
   {
     id: 'enterprise',
@@ -135,12 +137,11 @@ const pricingTiers: PricingTier[] = [
     featureKeys: [
       'pricing.unlimitedEmployees',
       'pricing.everythingInProfessional',
-      'pricing.customBranding',
       'pricing.dedicatedSupport',
-      'pricing.customIntegrations',
-      'pricing.prioritySupport',
       'pricing.slaAgreement',
       'pricing.advancedSecurity',
+      'pricing.prioritySupport',
+      'pricing.priorityProcessing',
     ],
     buttonTextKey: 'pricing.contactSales',
     accentFrom: '#0ea5e9',
@@ -328,7 +329,7 @@ function PricingCard({
                 </span>
               )}
             </div>
-            {tier.priceMonthly !== undefined && tier.priceMonthly >= 0 && (
+            {tier.priceMonthly !== undefined && tier.priceMonthly >= 0 && tier.trialEligible && (
               <p
                 className="text-xs mt-2 flex items-center gap-1.5"
                 style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
