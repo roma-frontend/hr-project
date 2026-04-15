@@ -453,13 +453,9 @@ export const ChatWindow = React.memo(function ChatWindow({
     setInput(value);
     handleTyping();
 
-    // Use requestAnimationFrame to avoid forced reflow
-    requestAnimationFrame(() => {
-      if (e.target) {
-        e.target.style.height = 'auto';
-        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-      }
-    });
+    // Use CSS-based auto-resize to avoid forced reflow
+    // The textarea uses CSS max-height and resize: none with overflow-y: auto
+    // No JS height calculation needed
 
     // Detect @mention — look backward from cursor for '@'
     const cursorPos = e.target.selectionStart;
