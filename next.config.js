@@ -43,28 +43,6 @@ const nextConfig = {
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // MODERNIZE — Target modern browsers only (no legacy polyfills)
-  // ═══════════════════════════════════════════════════════════════
-  // This tells Next.js to target modern browsers, reducing polyfill bloat
-  // Array.prototype.at, flat, flatMap, fromEntries, etc. are supported in all modern browsers
-  // This can save ~24 KiB of unnecessary polyfills (per Lighthouse report)
-  env: {
-    // Disable unnecessary polyfills for modern browsers
-    __NEXT_MODERN_BUILD: 'true',
-  },
-
-  // ═══════════════════════════════════════════════════════════════
-  // MODERNIZE — Target modern browsers only (no legacy polyfills)
-  // ═══════════════════════════════════════════════════════════════
-  // This tells Next.js to target modern browsers, reducing polyfill bloat
-  // Array.prototype.at, flat, flatMap, fromEntries, etc. are supported in all modern browsers
-  // This can save ~24 KiB of unnecessary polyfills (per Lighthouse report)
-  env: {
-    // Disable unnecessary polyfills for modern browsers
-    __NEXT_MODERN_BUILD: 'true',
-  },
-
-  // ═══════════════════════════════════════════════════════════════
   // EXPERIMENTAL — OPTIMIZED
   // ═══════════════════════════════════════════════════════════════
   experimental: {
