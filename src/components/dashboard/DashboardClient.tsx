@@ -32,7 +32,7 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-} from '@/lib/dynamic-imports';
+} from 'recharts';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
 import { useQuery } from 'convex/react';

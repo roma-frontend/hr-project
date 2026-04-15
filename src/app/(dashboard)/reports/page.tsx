@@ -18,7 +18,7 @@ import {
   Legend,
   AreaChart,
   Area,
-} from '@/lib/dynamic-imports';
+} from 'recharts';
 import { Download, TrendingUp, Users, CalendarDays, FileText } from 'lucide-react';
 import { PlanGate } from '@/components/subscription/PlanGate';
 import { useQuery } from 'convex/react';

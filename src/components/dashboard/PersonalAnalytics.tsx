@@ -4,7 +4,7 @@ import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/lib/dynamic-imports';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Calendar, TrendingUp, Clock } from 'lucide-react';
 
 interface PersonalAnalyticsProps {

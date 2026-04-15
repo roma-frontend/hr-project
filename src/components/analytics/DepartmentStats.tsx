@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from '@/lib/dynamic-imports';
+} from 'recharts';
 
 interface User {
   department?: string;

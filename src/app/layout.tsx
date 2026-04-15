@@ -154,9 +154,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* Safari pinned tab */}
         <link rel="mask-icon" href="/favicon.svg?v=3" color="#2563eb" />
 
-        {/* ── Resource hints: only preconnect to origins actually used on initial load ── */}
-        {/* Fonts are loaded via next/font, no preconnect needed */}
-        {/* DNS prefetch for external resources used after hydration */}
+        {/* ── Resource hints: preconnect to critical origins ── */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />

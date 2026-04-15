@@ -11,8 +11,7 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
-  // Enable source maps for debugging in production (hidden from public via middleware)
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false,
 
   // TypeScript: DO NOT ignore build errors — catch type issues early
   typescript: { ignoreBuildErrors: false },
@@ -175,11 +174,9 @@ const nextConfig = {
       };
     }
 
-    // Source maps configuration
     if (!dev) {
-      // Use hidden-source-map for production (source maps generated but not exposed to browser)
-      // This allows Sentry to use them for error reporting without public access
-      config.devtool = 'hidden-source-map';
+      // No source maps in production for smaller bundles
+      config.devtool = false;
     }
 
     return config;
