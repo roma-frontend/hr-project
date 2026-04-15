@@ -140,7 +140,15 @@ export default function Navbar() {
         </div>
 
         <div className="relative flex items-center gap-2 md:gap-3">
-          {mounted && <LanguageSwitcher />}
+          {mounted && (
+            <span
+              style={{ color: 'var(--landing-text-primary)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--landing-text-primary)'; }}
+            >
+              <LanguageSwitcher />
+            </span>
+          )}
 
           {mounted && (
             <button
@@ -213,7 +221,9 @@ export default function Navbar() {
               <Link
                 href="/register"
                 className="hidden lg:inline-flex items-center gap-2 text-sm font-semibold px-4 lg:px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #93c5fd)', color: '#ffffff' }}
+                style={{ background: 'linear-gradient(135deg, #2563eb, #93c5fd)', color: 'var(--primary-foreground)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--primary-foreground)'; }}
               >
                 {t('landingExtra.getStarted')}
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

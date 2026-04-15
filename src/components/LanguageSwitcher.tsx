@@ -48,7 +48,14 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          style={{ color: 'var(--text-primary)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+        >
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">
             {languages[currentLang as keyof typeof languages]?.flag}{' '}

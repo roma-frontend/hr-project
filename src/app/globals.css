@@ -1,3 +1,10 @@
+/* Force black text for LanguageSwitcher button in both themes */
+.language-switcher-btn {
+  color: var(--text-primary) !important;
+}
+.language-switcher-btn:hover {
+  color: var(--text-primary) !important;
+}
 @import 'tailwindcss';
 @import '../styles/animations.css';
 
@@ -78,7 +85,7 @@
   --color-primary: #2563eb;
   --color-primary-light: #60a5fa;
   --color-primary-dark: #1d4ed8;
-  --color-accent: #38bdf8;
+  --color-accent: #0e6de9;
   --color-slate-400: #94a3b8;
   --color-slate-600: #475569;
 }
@@ -275,7 +282,7 @@ html.light {
   --muted-foreground: #7ab3f5;
 
   /* Accent */
-  --accent: #38bdf8;
+  --accent: #0ea5e9;
   --accent-foreground: #ffffff;
 
   /* Loader - яркий цвет для тёмной темы */
@@ -651,7 +658,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #2563eb, #0ea5e9, #38bdf8);
+  background: linear-gradient(135deg, #2563eb, #0ea5e9, #0ea5e9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

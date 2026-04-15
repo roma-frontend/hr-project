@@ -441,7 +441,7 @@ export function Navbar() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setTheme('light')}
-                className={theme === 'light' ? 'bg-[var(--accent)]/10' : ''}
+                className={theme === 'light' ? 'bg-[#38bdf8]/10' : ''}
               >
                 <Sun className="w-4 h-4 mr-2" />
                 {t('settings.lightMode', { defaultValue: 'Light' })}
@@ -449,7 +449,7 @@ export function Navbar() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setTheme('dark')}
-                className={theme === 'dark' ? 'bg-[var(--accent)]/10' : ''}
+                className={theme === 'dark' ? 'bg-[#0ea5e9]/10' : ''}
               >
                 <Moon className="w-4 h-4 mr-2" />
                 {t('settings.darkMode', { defaultValue: 'Dark' })}
@@ -457,7 +457,7 @@ export function Navbar() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setTheme('system')}
-                className={theme === 'system' ? 'bg-[var(--accent)]/10' : ''}
+                className={theme === 'system' ? (resolvedTheme === 'dark' ? 'bg-[#0ea5e9]/10' : 'bg-[#38bdf8]/10') : ''}
               >
                 <Monitor className="w-4 h-4 mr-2" />
                 {t('settings.systemMode', { defaultValue: 'System' })}
