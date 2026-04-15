@@ -40,7 +40,6 @@ export function verifyCSRFToken(token: string): boolean {
   const expectedSignature = createHmac('sha256', CSRF_SECRET).update(tokenPart).digest('hex');
 
   // Use timing-safe comparison to prevent timing attacks
-  if (signature.length !== expectedSignature.length) return false;
   return timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expectedSignature, 'utf8'));
 }
 
@@ -259,7 +258,7 @@ export function generateSecurePassword(length: number = 16): string {
   const rand2 = crypto.getRandomValues(new Uint8Array(1))[0] ?? 0;
   const rand3 = crypto.getRandomValues(new Uint8Array(1))[0] ?? 0;
   const rand4 = crypto.getRandomValues(new Uint8Array(1))[0] ?? 0;
-  
+
   password += lowercase[rand1 % lowercase.length];
   password += uppercase[rand2 % uppercase.length];
   password += numbers[rand3 % numbers.length];

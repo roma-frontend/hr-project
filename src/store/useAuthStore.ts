@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
 import React from 'react';
 import { validateToken, isTokenExpired } from '@/lib/jwt-utils';
@@ -20,78 +19,60 @@ export interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   needsOnboarding: boolean;
 
   // Actions
   setUser: (user: User) => void;
-  setToken: (token: string) => void;
   login: (user: User) => void;
   logout: () => void;
   checkOnboarding: () => void;
   validateAndCleanup: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      needsOnboarding: false,
+export const useAuthStore = create<AuthState>()((set, get) => ({
+  user: null,
+  isAuthenticated: false,
+  needsOnboarding: false,
 
-      setUser: (user: User) => {
-        const needsOnboarding = !user.organizationId || !user.isApproved;
-        set({ user, isAuthenticated: true, needsOnboarding });
-      },
+  setUser: (user: User) => {
+    const needsOnboarding = !user.organizationId || !user.isApproved;
+    set({ user, isAuthenticated: true, needsOnboarding });
+  },
 
-      setToken: (token: string) => set({ token }),
+  login: (user: User) => {
+    const needsOnboarding = !user.organizationId || !user.isApproved;
+    set({ user, isAuthenticated: true, needsOnboarding });
+  },
 
-      login: (user: User) => {
-        const needsOnboarding = !user.organizationId || !user.isApproved;
-        set({ user, isAuthenticated: true, needsOnboarding });
-      },
+  checkOnboarding: () => {
+    const { user } = get();
+    const needsOnboarding = !user?.organizationId || !user?.isApproved;
+    set({ needsOnboarding });
+  },
 
-      checkOnboarding: () => {
-        const { user } = get();
-        const needsOnboarding = !user?.organizationId || !user?.isApproved;
-        set({ needsOnboarding });
-      },
+  validateAndCleanup: () => {
+    const { isAuthenticated } = get();
 
-      validateAndCleanup: () => {
-        const { token, isAuthenticated } = get();
+    // If not authenticated, nothing to validate
+    if (!isAuthenticated) return;
 
-        // If not authenticated, nothing to validate
-        if (!isAuthenticated) return;
+    // Token validation is now handled server-side via httpOnly cookies
+    // Client just checks if user data exists
+    if (!get().user) {
+      get().logout();
+    }
+  },
 
-        // If token is expired or invalid, logout
-        if (!validateToken(token)) {
-          get().logout();
-        }
-      },
-
-      logout: () => {
-        // Clear Zustand state
-        set({ user: null, token: null, isAuthenticated: false, needsOnboarding: false });
-        // Also clear localStorage to prevent hydration of stale data
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('hr-auth-storage');
-        }
-      },
-    }),
-    {
-      name: 'hr-auth-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
-      skipHydration: true,
-    },
-  ),
-);
+  logout: () => {
+    // Clear Zustand state
+    set({ user: null, isAuthenticated: false, needsOnboarding: false });
+    // Clear httpOnly cookies via API call
+    if (typeof window !== 'undefined') {
+      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    }
+  },
+}));
 
 /**
  * Оптимизированный хук для использования auth store с shallow comparison
@@ -102,18 +83,16 @@ export const useAuthStore = create<AuthState>()(
  */
 export function useAuthStoreShallow() {
   const user = useAuthStore(useShallow((state) => state.user));
-  const token = useAuthStore(useShallow((state) => state.token));
   const isAuthenticated = useAuthStore(useShallow((state) => state.isAuthenticated));
   const needsOnboarding = useAuthStore(useShallow((state) => state.needsOnboarding));
 
   return React.useMemo(
     () => ({
       user,
-      token,
       isAuthenticated,
       needsOnboarding,
     }),
-    [user, token, isAuthenticated, needsOnboarding],
+    [user, isAuthenticated, needsOnboarding],
   );
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
+import React, { Suspense } from 'react';
 import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
 import { AppProviders } from '@/components/AppProviders';
@@ -163,7 +164,19 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className={`${ibmPlexSans.variable} ${inter.variable} ${notoSansArmenian.variable} antialiased`}
         suppressHydrationWarning
       >
-        <AppProviders>{children}<Analytics /><SpeedInsights /></AppProviders>
+        <Suspense
+          fallback={
+            <div className="flex h-screen items-center justify-center bg-[var(--background)]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary)]" />
+            </div>
+          }
+        >
+          <AppProviders>
+            {children}
+            <Analytics />
+            <SpeedInsights />
+          </AppProviders>
+        </Suspense>
         {/* Performance monitoring (только в dev) */}
         {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
       </body>

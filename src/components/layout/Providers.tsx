@@ -112,12 +112,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     // This prevents SSR/client mismatch (hydration errors) from localStorage state
     useSidebarStore.persist.rehydrate();
 
-    // Rehydrate auth store from localStorage for email/password login sessions.
-    // Email/password login saves user data to localStorage but after page reload
-    // the store is empty (skipHydration: true). We need to restore it here.
-    // For OAuth sessions, useAuthSync will overwrite with fresh data anyway,
-    // so rehydrating stale data first is harmless.
-    useAuthStore.persist.rehydrate();
+    // Auth store no longer persists to localStorage (security: JWT in httpOnly cookies).
+    // User state is restored from server-side session cookies via useAuthSync.
 
     // Mark as hydrated after rehydration
     // This is a necessary use case for setState in effect - synchronizing with external system
