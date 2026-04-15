@@ -11,7 +11,8 @@ const nextConfig = {
   reactStrictMode: true,
   compress: true,
   poweredByHeader: false,
-  productionBrowserSourceMaps: false, // Disable to reduce bundle size
+  // Enable source maps for debugging in production (hidden from public via middleware)
+  productionBrowserSourceMaps: true,
 
   // TypeScript: DO NOT ignore build errors — catch type issues early
   typescript: { ignoreBuildErrors: false },
@@ -39,9 +40,7 @@ const nextConfig = {
   // COMPILER — strip console.log in production
   // ═══════════════════════════════════════════════════════════════
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
-      ? { exclude: ['error', 'warn'] }
-      : false,
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -96,7 +95,7 @@ const nextConfig = {
       // Enable tree shaking
       config.optimization.sideEffects = true;
       config.optimization.usedExports = true;
-      
+
       // More aggressive code splitting
       config.optimization.splitChunks = {
         chunks: 'all',
@@ -176,9 +175,11 @@ const nextConfig = {
       };
     }
 
+    // Source maps configuration
     if (!dev) {
-      // No source maps in production for smaller bundles
-      config.devtool = false;
+      // Use hidden-source-map for production (source maps generated but not exposed to browser)
+      // This allows Sentry to use them for error reporting without public access
+      config.devtool = 'hidden-source-map';
     }
 
     return config;
@@ -218,30 +219,36 @@ const nextConfig = {
             ].join('; '),
           },
           // CORS
-          { key: 'Access-Control-Allow-Origin', value: process.env.NEXT_PUBLIC_APP_URL || 'https://hr-project.vercel.app' },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: process.env.NEXT_PUBLIC_APP_URL || 'https://hr-project.vercel.app',
+          },
           { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With' },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Requested-With',
+          },
           { key: 'Access-Control-Max-Age', value: '86400' },
           // Security headers
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=self, microphone=self, geolocation=self, fullscreen=self, clipboard-write=self, payment=(), usb=()' },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'camera=self, microphone=self, geolocation=self, fullscreen=self, clipboard-write=self, payment=(), usb=()',
+          },
         ],
       },
       // Face recognition models — immutable cache
       {
         source: '/models/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Static Next.js assets — immutable cache
       {
         source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Images — cache 7 days + stale-while-revalidate
       {
@@ -253,9 +260,7 @@ const nextConfig = {
       // Fonts — immutable cache
       {
         source: '/:path*.{woff,woff2,ttf,otf,eot}',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // Landing page — fast repeat visits
       {
@@ -275,9 +280,7 @@ const nextConfig = {
       // API routes — no cache
       {
         source: '/api/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, max-age=0' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }],
       },
       // Chat pages — stale-while-revalidate for fast updates
       {

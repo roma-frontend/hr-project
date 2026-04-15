@@ -32,7 +32,7 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
 import { useQuery } from 'convex/react';
@@ -292,7 +292,12 @@ export default function DashboardClient() {
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           {user?.role === 'superadmin' && (
             <>
-              <Button asChild size="sm" variant="outline" className="hover:text-[var(--text-primary)] transition-colors">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="hover:text-[var(--text-primary)] transition-colors"
+              >
                 <Link href="/superadmin/organizations">
                   <Building2 className="w-4 h-4" />
                   {t('dashboard.manageOrgs')}
@@ -345,13 +350,23 @@ export default function DashboardClient() {
               </Button>
             </>
           )}
-          <Button asChild size="sm" variant="outline" className="hover:text-[var(--text-primary)] transition-colors">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="hover:text-[var(--text-primary)] transition-colors"
+          >
             <Link href="/calendar">
               <CalendarDays className="w-4 h-4" />
               {t('nav.calendar')}
             </Link>
           </Button>
-          <Button asChild size="sm" variant="default" className="flex items-center gap-2 w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg">
+          <Button
+            asChild
+            size="sm"
+            variant="default"
+            className="flex items-center gap-2 w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg"
+          >
             <Link href="/leaves">
               <Plus className="w-4 h-4" />
               {t('dashboard.newRequest')}
@@ -487,7 +502,9 @@ export default function DashboardClient() {
                     <span className="hidden sm:inline">
                       {securityStats?.total ?? 0} {t('landingExtra.logins24h')}
                     </span>
-                    <span className="sm:hidden">{securityStats?.total ?? 0} {t('landingExtra.loginsShort')}</span>
+                    <span className="sm:hidden">
+                      {securityStats?.total ?? 0} {t('landingExtra.loginsShort')}
+                    </span>
                   </span>
                   <span className="flex items-center gap-1">
                     <XCircle

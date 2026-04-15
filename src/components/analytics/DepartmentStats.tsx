@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 
 interface User {
   department?: string;

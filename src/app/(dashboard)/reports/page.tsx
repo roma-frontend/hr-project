@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useTranslation } from 'react-i18next';
 import React, { useState, useMemo } from 'react';
@@ -18,7 +18,7 @@ import {
   Legend,
   AreaChart,
   Area,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 import { Download, TrendingUp, Users, CalendarDays, FileText } from 'lucide-react';
 import { PlanGate } from '@/components/subscription/PlanGate';
 import { useQuery } from 'convex/react';
@@ -171,250 +171,371 @@ export default function ReportsPage() {
     >
       <WidgetErrorBoundary name="ReportsPage">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-        >
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-              {t('reportsAnalytics.reportsAnalytics')}
-            </h2>
-            <p className="text-[var(--text-muted)] text-sm mt-1">{t('ui.comprehensiveAnalysis')}</p>
-          </div>
-          <Button variant="outline" onClick={handleExport} disabled={isLoading} className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg">
-            <Download className="w-4 h-4" /> Export CSV
-          </Button>
-        </motion.div>
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          >
+            <div>
+              <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+                {t('reportsAnalytics.reportsAnalytics')}
+              </h2>
+              <p className="text-[var(--text-muted)] text-sm mt-1">
+                {t('ui.comprehensiveAnalysis')}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={isLoading}
+              className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
+            >
+              <Download className="w-4 h-4" /> Export CSV
+            </Button>
+          </motion.div>
 
-        {/* KPI Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {[
-            {
-              label: t('reports.totalRequests'),
-              value: isLoading ? '—' : totalLeaves,
-              icon: FileText,
-              color: 'text-[var(--primary)]',
-              bg: 'bg-[var(--primary)]/10',
-            },
-            {
-              label: t('reports.approvalRate'),
-              value: isLoading ? '—' : `${approvalRate}%`,
-              icon: TrendingUp,
-              color: 'text-[var(--success)]',
-              bg: 'bg-[var(--success)]/10',
-            },
-            {
-              label: t('reports.avgDuration'),
-              value: isLoading ? '—' : `${avgDays}${t('common.daysShort')}`,
-              icon: CalendarDays,
-              color: 'text-[var(--warning)]',
-              bg: 'bg-[var(--warning)]/10',
-            },
-            {
-              label: t('organization.activeEmployees'),
-              value: isLoading ? '—' : (users?.length ?? 0),
-              icon: Users,
-              color: 'text-[var(--text-secondary)]',
-              bg: 'bg-[var(--background-subtle)]',
-            },
-          ].map((kpi) => (
-            <Card key={kpi.label}>
-              <CardContent className="pt-5 pb-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
-                      {kpi.label}
-                    </p>
-                    <p className={`text-2xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
-                  </div>
-                  <div className={`w-9 h-9 rounded-lg ${kpi.bg} flex items-center justify-center`}>
-                    <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </motion.div>
-
-        {/* Tabs */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="w-full mb-6 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
-              <TabsTrigger
-                value="overview"
-                className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
-              >
-                <FileText className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{t('reports.overview')} Overview</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="departments"
-                className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
-              >
-                <Users className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{t('reportsExtended.departments')}</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="trends"
-                className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
-              >
-                <TrendingUp className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{t('reportsExtended.trends')}</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Overview */}
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reportsPage.leaveDistribution')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {pieData.length === 0 ? (
-                      <div className="h-[220px] flex items-center justify-center text-[var(--text-muted)] text-sm">
-                        {t('emptyStates.noDataYet')}
-                      </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                          <Pie
-                            data={pieData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            innerRadius={50}
-                            dataKey="value"
-                            paddingAngle={3}
-                          >
-                            {pieData.map((entry, i) => (
-                              <Cell key={i} fill={entry.color} stroke="transparent" />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{
-                              background: 'var(--card)',
-                              border: '1px solid var(--border)',
-                              borderRadius: '8px',
-                              color: 'var(--text-primary)',
-                            }}
-                            itemStyle={{ color: 'var(--text-primary)' }}
-                            labelStyle={{ color: 'var(--text-primary)' }}
-                          />
-                          <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reportsExtended.requestStatusBreakdown')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-2">
-                    {[
-                      {
-                        label: t('statuses.approved'),
-                        count: approvedCount,
-                        color: '#10b981',
-                        variant: 'success' as const,
-                      },
-                      {
-                        label: t('statuses.pending'),
-                        count: pendingCount,
-                        color: '#f59e0b',
-                        variant: 'warning' as const,
-                      },
-                      {
-                        label: t('statuses.rejected'),
-                        count: rejectedCount,
-                        color: '#ef4444',
-                        variant: 'destructive' as const,
-                      },
-                    ].map((s) => (
-                      <div key={s.label}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ background: s.color }}
-                            />
-                            <span className="text-sm text-[var(--text-secondary)]">{s.label}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={s.variant}>{s.count}</Badge>
-                            <span className="text-xs text-[var(--text-muted)]">
-                              {totalLeaves > 0 ? Math.round((s.count / totalLeaves) * 100) : 0}%
-                            </span>
-                          </div>
-                        </div>
-                        <Progress
-                          value={totalLeaves > 0 ? (s.count / totalLeaves) * 100 : 0}
-                          className="h-1.5"
-                        />
-                      </div>
-                    ))}
-
-                    <div className="mt-6 pt-4 border-t border-[var(--border)]">
-                      <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-3">
-                        {t('reports.workforceComposition')}
+          {/* KPI Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {[
+              {
+                label: t('reports.totalRequests'),
+                value: isLoading ? '—' : totalLeaves,
+                icon: FileText,
+                color: 'text-[var(--primary)]',
+                bg: 'bg-[var(--primary)]/10',
+              },
+              {
+                label: t('reports.approvalRate'),
+                value: isLoading ? '—' : `${approvalRate}%`,
+                icon: TrendingUp,
+                color: 'text-[var(--success)]',
+                bg: 'bg-[var(--success)]/10',
+              },
+              {
+                label: t('reports.avgDuration'),
+                value: isLoading ? '—' : `${avgDays}${t('common.daysShort')}`,
+                icon: CalendarDays,
+                color: 'text-[var(--warning)]',
+                bg: 'bg-[var(--warning)]/10',
+              },
+              {
+                label: t('organization.activeEmployees'),
+                value: isLoading ? '—' : (users?.length ?? 0),
+                icon: Users,
+                color: 'text-[var(--text-secondary)]',
+                bg: 'bg-[var(--background-subtle)]',
+              },
+            ].map((kpi) => (
+              <Card key={kpi.label}>
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">
+                        {kpi.label}
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
-                          <p className="text-xl font-bold text-[var(--primary)]">{staffCount}</p>
-                          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                            {t('employees.staff')}
-                          </p>
-                        </div>
-                        <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
-                          <p className="text-xl font-bold text-[var(--warning)]">
-                            {contractorCount}
-                          </p>
-                          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                            {t('employees.contractors')}
-                          </p>
-                        </div>
-                      </div>
+                      <p className={`text-2xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+                    <div
+                      className={`w-9 h-9 rounded-lg ${kpi.bg} flex items-center justify-center`}
+                    >
+                      <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </motion.div>
 
-            {/* Departments */}
-            <TabsContent value="departments">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reports.leavesByDepartment')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {deptData.length === 0 ? (
-                      <div className="h-[250px] flex items-center justify-center text-[var(--text-muted)] text-sm">
-                        No department data yet
+          {/* Tabs */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="w-full mb-6 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
+                <TabsTrigger
+                  value="overview"
+                  className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
+                >
+                  <FileText className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('reports.overview')} Overview</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="departments"
+                  className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
+                >
+                  <Users className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('reportsExtended.departments')}</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="trends"
+                  className="w-full px-5 py-3 rounded-xl data-[state=active]:bg-[var(--primary)] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] data-[state=inactive]:hover:bg-[var(--background-hover)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
+                >
+                  <TrendingUp className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('reportsExtended.trends')}</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Overview */}
+              <TabsContent value="overview">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reportsPage.leaveDistribution')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {pieData.length === 0 ? (
+                        <div className="h-[220px] flex items-center justify-center text-[var(--text-muted)] text-sm">
+                          {t('emptyStates.noDataYet')}
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={220}>
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              innerRadius={50}
+                              dataKey="value"
+                              paddingAngle={3}
+                            >
+                              {pieData.map((entry, i) => (
+                                <Cell key={i} fill={entry.color} stroke="transparent" />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                background: 'var(--card)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '8px',
+                                color: 'var(--text-primary)',
+                              }}
+                              itemStyle={{ color: 'var(--text-primary)' }}
+                              labelStyle={{ color: 'var(--text-primary)' }}
+                            />
+                            <Legend
+                              wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reportsExtended.requestStatusBreakdown')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-2">
+                      {[
+                        {
+                          label: t('statuses.approved'),
+                          count: approvedCount,
+                          color: '#10b981',
+                          variant: 'success' as const,
+                        },
+                        {
+                          label: t('statuses.pending'),
+                          count: pendingCount,
+                          color: '#f59e0b',
+                          variant: 'warning' as const,
+                        },
+                        {
+                          label: t('statuses.rejected'),
+                          count: rejectedCount,
+                          color: '#ef4444',
+                          variant: 'destructive' as const,
+                        },
+                      ].map((s) => (
+                        <div key={s.label}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full"
+                                style={{ background: s.color }}
+                              />
+                              <span className="text-sm text-[var(--text-secondary)]">
+                                {s.label}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={s.variant}>{s.count}</Badge>
+                              <span className="text-xs text-[var(--text-muted)]">
+                                {totalLeaves > 0 ? Math.round((s.count / totalLeaves) * 100) : 0}%
+                              </span>
+                            </div>
+                          </div>
+                          <Progress
+                            value={totalLeaves > 0 ? (s.count / totalLeaves) * 100 : 0}
+                            className="h-1.5"
+                          />
+                        </div>
+                      ))}
+
+                      <div className="mt-6 pt-4 border-t border-[var(--border)]">
+                        <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-3">
+                          {t('reports.workforceComposition')}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
+                            <p className="text-xl font-bold text-[var(--primary)]">{staffCount}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                              {t('employees.staff')}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-[var(--background-subtle)] border border-[var(--border)] p-3 text-center">
+                            <p className="text-xl font-bold text-[var(--warning)]">
+                              {contractorCount}
+                            </p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                              {t('employees.contractors')}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    ) : (
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Departments */}
+              <TabsContent value="departments">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reports.leavesByDepartment')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {deptData.length === 0 ? (
+                        <div className="h-[250px] flex items-center justify-center text-[var(--text-muted)] text-sm">
+                          No department data yet
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart
+                            data={deptData}
+                            margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                            <XAxis
+                              dataKey="dept"
+                              tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                background: 'var(--card)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '8px',
+                                color: 'var(--text-primary)',
+                              }}
+                              itemStyle={{ color: 'var(--text-primary)' }}
+                              labelStyle={{ color: 'var(--text-primary)' }}
+                            />
+                            <Bar
+                              dataKey="approved"
+                              name={t('statuses.approved')}
+                              fill="#10b981"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                            />
+                            <Bar
+                              dataKey="pending"
+                              name={t('statuses.pending')}
+                              fill="#f59e0b"
+                              radius={[4, 4, 0, 0]}
+                              stackId="a"
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reportsExtended.departmentDetails')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {deptData.length === 0 ? (
+                        <p className="text-xs text-[var(--text-muted)]">
+                          {t('emptyStates.noDataYet')}
+                        </p>
+                      ) : (
+                        deptData.map((d) => (
+                          <div
+                            key={d.dept}
+                            className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0"
+                          >
+                            <div>
+                              <p className="text-sm font-medium text-[var(--text-primary)]">
+                                {d.fullName}
+                              </p>
+                              <p className="text-xs text-[var(--text-muted)]">
+                                {d.total} {t('reports.totalRequests').toLowerCase()}
+                              </p>
+                            </div>
+                            <div className="flex gap-1.5">
+                              <Badge variant="success" className="text-xs">
+                                {d.approved}
+                              </Badge>
+                              <Badge variant="warning" className="text-xs">
+                                {d.pending}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              {/* Trends */}
+              <TabsContent value="trends">
+                <div className="grid grid-cols-1 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reportsPage.attendanceTrends')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <ResponsiveContainer width="100%" height={250}>
-                        <BarChart
-                          data={deptData}
+                        <AreaChart
+                          data={monthlyTrend}
                           margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
                         >
+                          <defs>
+                            <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis
-                            dataKey="dept"
+                            dataKey="month"
                             tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
                             axisLine={false}
                             tickLine={false}
@@ -434,198 +555,90 @@ export default function ReportsPage() {
                             itemStyle={{ color: 'var(--text-primary)' }}
                             labelStyle={{ color: 'var(--text-primary)' }}
                           />
-                          <Bar
+                          <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
+                          <Area
+                            type="monotone"
                             dataKey="approved"
                             name={t('statuses.approved')}
-                            fill="#10b981"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
+                            stroke="#10b981"
+                            fill="url(#colorApproved)"
+                            strokeWidth={2}
                           />
-                          <Bar
+                          <Area
+                            type="monotone"
                             dataKey="pending"
                             name={t('statuses.pending')}
-                            fill="#f59e0b"
-                            radius={[4, 4, 0, 0]}
-                            stackId="a"
+                            stroke="#f59e0b"
+                            fill="url(#colorPending)"
+                            strokeWidth={2}
                           />
-                        </BarChart>
+                        </AreaChart>
                       </ResponsiveContainer>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reportsExtended.departmentDetails')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {deptData.length === 0 ? (
-                      <p className="text-xs text-[var(--text-muted)]">
-                        {t('emptyStates.noDataYet')}
-                      </p>
-                    ) : (
-                      deptData.map((d) => (
-                        <div
-                          key={d.dept}
-                          className="flex items-center justify-between py-2 border-b border-[var(--border)] last:border-0"
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {t('reportsExtended.cumulativeLeaveDays')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart
+                          data={cumulativeData}
+                          margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
                         >
-                          <div>
-                            <p className="text-sm font-medium text-[var(--text-primary)]">
-                              {d.fullName}
-                            </p>
-                            <p className="text-xs text-[var(--text-muted)]">
-                              {d.total} {t('reports.totalRequests').toLowerCase()}
-                            </p>
-                          </div>
-                          <div className="flex gap-1.5">
-                            <Badge variant="success" className="text-xs">
-                              {d.approved}
-                            </Badge>
-                            <Badge variant="warning" className="text-xs">
-                              {d.pending}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Trends */}
-            <TabsContent value="trends">
-              <div className="grid grid-cols-1 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reportsPage.attendanceTrends')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <AreaChart
-                        data={monthlyTrend}
-                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            background: 'var(--card)',
-                            border: '1px solid var(--border)',
-                            borderRadius: '8px',
-                            color: 'var(--text-primary)',
-                          }}
-                          itemStyle={{ color: 'var(--text-primary)' }}
-                          labelStyle={{ color: 'var(--text-primary)' }}
-                        />
-                        <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
-                        <Area
-                          type="monotone"
-                          dataKey="approved"
-                          name={t('statuses.approved')}
-                          stroke="#10b981"
-                          fill="url(#colorApproved)"
-                          strokeWidth={2}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="pending"
-                          name={t('statuses.pending')}
-                          stroke="#f59e0b"
-                          fill="url(#colorPending)"
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                      {t('reportsExtended.cumulativeLeaveDays')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <AreaChart
-                        data={cumulativeData}
-                        margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                        <XAxis
-                          dataKey="month"
-                          tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            background: 'var(--card)',
-                            border: '1px solid var(--border)',
-                            borderRadius: '8px',
-                            color: 'var(--text-primary)',
-                          }}
-                          itemStyle={{ color: 'var(--text-primary)' }}
-                          labelStyle={{ color: 'var(--text-primary)' }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="cumulative"
-                          name={t('leave.requests')}
-                          stroke="#2563eb"
-                          fill="#2563eb"
-                          fillOpacity={0.1}
-                          strokeWidth={2}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="days"
-                          name={t('leave.days')}
-                          stroke="#0ea5e9"
-                          fill="#0ea5e9"
-                          fillOpacity={0.1}
-                          strokeWidth={2}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              background: 'var(--card)',
+                              border: '1px solid var(--border)',
+                              borderRadius: '8px',
+                              color: 'var(--text-primary)',
+                            }}
+                            itemStyle={{ color: 'var(--text-primary)' }}
+                            labelStyle={{ color: 'var(--text-primary)' }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="cumulative"
+                            name={t('leave.requests')}
+                            stroke="#2563eb"
+                            fill="#2563eb"
+                            fillOpacity={0.1}
+                            strokeWidth={2}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="days"
+                            name={t('leave.days')}
+                            stroke="#0ea5e9"
+                            fill="#0ea5e9"
+                            fillOpacity={0.1}
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </WidgetErrorBoundary>
-  </PlanGate>
+      </WidgetErrorBoundary>
+    </PlanGate>
   );
 }

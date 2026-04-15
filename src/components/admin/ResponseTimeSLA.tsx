@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'convex/react';
@@ -18,7 +18,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 
 interface SLAStatsProps {
   startDate?: number;
