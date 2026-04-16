@@ -384,7 +384,11 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
             style={{ pointerEvents: 'auto' }}
           >
             {/* Dark overlay with spotlight cutout */}
-            <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'auto' }}>
+            <svg
+              width="100%"
+              height="100%"
+              style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'auto' }}
+            >
               <defs>
                 <mask id="spotlight-mask">
                   <rect width="100%" height="100%" fill="white" />
@@ -521,8 +525,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
                     onClick={handleNext}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-1.5 rounded-lg font-semibold text-xs text-white flex items-center gap-1.5"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="px-4 py-1.5 rounded-lg font-semibold text-xs text-white flex items-center gap-1.5 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                   >
                     {currentStep === steps.length - 1 ? (
                       <>

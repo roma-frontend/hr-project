@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
         >
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-(--primary) to-(--primary-dark,var(--primary)) flex items-center justify-center shadow-lg">
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -143,13 +143,10 @@ export default function ForgotPasswordPage() {
                     )}
                   </AnimatePresence>
 
-                  <motion.button
+                  <button
                     type="submit"
                     disabled={isPending}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
                   >
                     {isPending ? (
                       <>
@@ -159,7 +156,7 @@ export default function ForgotPasswordPage() {
                     ) : (
                       t('auth.sendResetLink')
                     )}
-                  </motion.button>
+                  </button>
                 </form>
               </motion.div>
             ) : (

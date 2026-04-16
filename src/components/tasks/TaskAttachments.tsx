@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import Image from 'next/image';
 
 import { useTranslation } from 'react-i18next';
@@ -141,8 +141,7 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl text-white transition-all disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-xl text-white disabled:opacity-50 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
           >
             {uploading ? <ShieldLoader size="xs" variant="inline" /> : <>+ Attach File</>}
           </button>
@@ -256,8 +255,7 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
                     download={preview.name}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs font-medium px-3 py-1.5 rounded-xl text-white"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="text-xs font-medium px-3 py-1.5 rounded-xl text-white bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     ⬇ Download
@@ -297,8 +295,7 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
                       download={preview.name}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl text-white"
-                      style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                      className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl text-white bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                     >
                       ⬇ Download to view
                     </a>

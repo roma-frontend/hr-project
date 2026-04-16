@@ -119,7 +119,7 @@ export const DriverCard = memo(function DriverCard({
               onClick={() => onCalendar(driver._id)}
               className="drivers-btn-hover"
             >
-              <Calendar className="w-4 h-4 text-black" />
+              <Calendar className="w-4 h-4 text-black dark:text-white" />
             </Button>
             <Button
               size="sm"

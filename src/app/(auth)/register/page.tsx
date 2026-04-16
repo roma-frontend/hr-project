@@ -341,10 +341,7 @@ function RegisterPageContent() {
           >
             {/* Logo */}
             <div className="flex flex-col items-center mb-6">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
-              >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity">
                 <Building2 className="w-7 h-7 text-white" />
               </div>
               <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -449,8 +446,7 @@ function RegisterPageContent() {
                     disabled={!selectedOrg && !inviteToken}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {t('auth.continue', 'Continue')}
                     <ChevronRight className="w-4 h-4" />
@@ -569,8 +565,7 @@ function RegisterPageContent() {
                     disabled={isPending}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                   >
                     {isPending ? (
                       <>

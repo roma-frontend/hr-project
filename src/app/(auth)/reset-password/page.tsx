@@ -143,8 +143,7 @@ function ResetPasswordForm() {
                 </p>
                 <Link
                   href="/forgot-password"
-                  className="inline-block py-2.5 px-6 rounded-xl font-semibold text-sm text-white"
-                  style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                  className="inline-block py-2.5 px-6 rounded-xl font-semibold text-sm text-white bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                 >
                   Request new link
                 </Link>
@@ -281,8 +280,7 @@ function ResetPasswordForm() {
                     disabled={isPending}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                    className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                   >
                     {isPending ? (
                       <>

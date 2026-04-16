@@ -59,10 +59,7 @@ export default function PendingPage() {
               className="flex items-start gap-3 p-4 rounded-xl"
               style={{ background: 'rgba(37,99,235,0.05)' }}
             >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
-              >
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary))">
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -145,8 +142,7 @@ export default function PendingPage() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
               >
                 {t('auth.pending.goToLogin', 'Go to Login')}
                 <ArrowRight className="w-4 h-4" />

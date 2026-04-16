@@ -560,10 +560,7 @@ export default function LoginPage() {
               >
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-6">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-lg"
-                    style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
-                  >
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-lg bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90">
                     <Building2 className="w-6 h-6 text-white" />
                   </div>
                   <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -646,8 +643,7 @@ export default function LoginPage() {
                       {isBackupCode && (
                         <button
                           type="submit"
-                          className="w-full py-2 rounded-xl font-semibold text-sm text-white transition-all hover:scale-[1.01] active:scale-[0.99]"
-                          style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                          className="w-full py-2 rounded-xl font-semibold text-sm text-white bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity"
                         >
                           Verify Backup Code
                         </button>
@@ -816,8 +812,7 @@ export default function LoginPage() {
                         <button
                           type="submit"
                           disabled={isPending}
-                          className="w-full py-2 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70 hover:scale-[1.01] active:scale-[0.99]"
-                          style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
+                          className="bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity w-full py-2 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-70"
                         >
                           {isPending ? (
                             <>

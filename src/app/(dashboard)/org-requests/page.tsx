@@ -103,10 +103,7 @@ export default function OrgRequestsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #2563eb, #0ea5e9)' }}
-          >
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary))">
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <div>
