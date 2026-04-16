@@ -273,7 +273,7 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
           setIsPanelCollapsed(newCollapsedState);
           onToggle?.(!newCollapsedState);
         }}
-        className="fixed top-20 sm:top-9 right-3 sm:right-6 z-[100] w-10 h-10 sm:w-9 sm:h-9 rounded-full shadow-lg flex items-center justify-center transition-colors"
+        className="fixed top-34 sm:top-25 right-3 sm:right-6 z-[100] w-10 h-10 sm:w-9 sm:h-9 rounded-full shadow-lg flex items-center justify-center transition-colors"
         style={{
           background: 'var(--primary)',
           color: 'var(--primary-foreground)',
