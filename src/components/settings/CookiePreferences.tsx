@@ -185,7 +185,7 @@ export function CookiePreferences() {
                     <div
                       className={`flex h-9 w-9 items-center justify-center rounded-lg ${
                         isEnabled
-                          ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
+                          ? 'bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity'
                           : 'bg-[var(--background-subtle)] border border-[var(--border)]'
                       }`}
                     >

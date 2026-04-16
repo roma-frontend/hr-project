@@ -35,7 +35,7 @@ export function StatsCard({ title, value, icon: Icon, trend, color = 'blue' }: S
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ duration: 0.2 }}
-      className="bg-[var(--background)] rounded-2xl p-3 sm:p-4 md:p-6 shadow-lg border border-[var(--border)] relative overflow-hidden"
+      className="bg-[var(--background)] rounded-2xl p-3 sm:p-4 shadow-lg border border-[var(--border)] relative overflow-hidden"
     >
       <div className="relative z-10">
         <div className="flex items-start justify-between">
@@ -58,7 +58,7 @@ export function StatsCard({ title, value, icon: Icon, trend, color = 'blue' }: S
           </div>
 
           <div className={`p-3 rounded-xl ${colorMap[color].bg}`}>
-            <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${colorMap[color].icon}`} />
+            <Icon className={`w-5 h-5 ${colorMap[color].icon}`} />
           </div>
         </div>
       </div>

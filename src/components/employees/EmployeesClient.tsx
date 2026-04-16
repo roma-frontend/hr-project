@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -136,7 +136,6 @@ export function EmployeesClient() {
       setHasMore(false);
     }
   }, [allUsersDirect]);
-
 
   // Build supervisor lookup map from allUsers (more reliable than separate query)
   const supervisorMap = useMemo(() => {
@@ -322,7 +321,7 @@ export function EmployeesClient() {
             </button>
           )}
         </div>
-        <div className="flex gap-2 items-center overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 scrollbar-hide flex-nowrap sm:flex-wrap">
+        <div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-hide w-full">
           {[
             {
               value: filterRole,
@@ -361,12 +360,7 @@ export function EmployeesClient() {
                 key={label}
                 value={value}
                 onChange={(e) => setter(e.target.value)}
-                className="px-3 py-2 rounded-xl border text-sm outline-none capitalize flex-shrink-0"
-                style={{
-                  background: 'var(--card)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                }}
+                className="bg-[var(--card)] border-[var(--border)] text-[var(--text-primary)] px-3 py-2 rounded-xl border text-sm outline-none capitalize flex-1 min-w-[100px]"
               >
                 {options.map((o: any) => (
                   <option key={o} value={o} className="capitalize">
