@@ -353,7 +353,7 @@ export default function CompanyEventsPage() {
             </div>
             <div className="flex gap-2">
               <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full sm:w-36">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder={t('events.filters.priority', 'Priority')} />
                 </SelectTrigger>
@@ -367,7 +367,7 @@ export default function CompanyEventsPage() {
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full sm:w-36">
                   <SelectValue placeholder={t('events.filters.type', 'Type')} />
                 </SelectTrigger>
                 <SelectContent>

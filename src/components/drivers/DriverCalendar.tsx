@@ -48,6 +48,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -214,13 +215,15 @@ function TripCard({
 }
 
 export function DriverCalendar({ driverId, organizationId, userId }: DriverCalendarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [blockType, setBlockType] = useState<'vacation' | 'sick' | 'personal'>('vacation');
   const [blockReason, setBlockReason] = useState('');
   const [blockStartTime, setBlockStartTime] = useState('');
   const [blockEndTime, setBlockEndTime] = useState('');
+
+  const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
 
   // Get current week
   const weekStart = useMemo(() => {
@@ -308,7 +311,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
   const [mobileViewDay, setMobileViewDay] = useState<number>(0);
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       {/* Calendar Header - Modern Design */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -331,7 +334,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                 setMobileViewDay(0);
               }}
             >
-              {t('common.today', 'Today')}
+              {t('driverCalendar.today', 'Today')}
             </Button>
             <Button
               variant="ghost"
@@ -345,7 +348,8 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
           </div>
           <div className="hidden sm:block">
             <h3 className="text-sm font-semibold text-white">
-              {format(weekStart, 'MMM d')} — {format(new Date(weekEnd), 'MMM d, yyyy')}
+              {format(weekStart, 'MMM d', { locale: dateFnsLocale })} —{' '}
+              {format(new Date(weekEnd), 'MMM d, yyyy', { locale: dateFnsLocale })}
             </h3>
           </div>
         </div>
@@ -361,7 +365,8 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
       {/* Week Range for Mobile */}
       <div className="sm:hidden text-center">
         <p className="text-sm font-semibold text-white">
-          {format(weekStart, 'MMM d')} — {format(new Date(weekEnd), 'MMM d, yyyy')}
+          {format(weekStart, 'MMM d', { locale: dateFnsLocale })} —{' '}
+          {format(new Date(weekEnd), 'MMM d, yyyy', { locale: dateFnsLocale })}
         </p>
       </div>
 
@@ -389,7 +394,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                         today ? 'text-primary' : 'text-muted-foreground'
                       }`}
                     >
-                      {format(day, 'EEE')}
+                      {format(day, 'EEE', { locale: dateFnsLocale })}
                     </div>
                     <div
                       className={`text-2xl font-bold mt-1 ${
@@ -453,7 +458,7 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                           isSelected ? 'opacity-80' : 'text-muted-foreground'
                         }`}
                       >
-                        {format(day, 'EEE')}
+                        {format(day, 'EEE', { locale: dateFnsLocale })}
                       </span>
                       <span
                         className={`text-xl font-bold mt-0.5 ${
@@ -496,7 +501,9 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                   {t('driverCalendar.noTripsScheduled')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {format(weekDays[mobileViewDay] ?? new Date(), 'EEEE, MMM d')}
+                  {format(weekDays[mobileViewDay] ?? new Date(), 'EEEE, MMM d', {
+                    locale: dateFnsLocale,
+                  })}
                 </p>
               </div>
             )}

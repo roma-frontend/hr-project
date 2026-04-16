@@ -101,21 +101,21 @@ export default function SuperadminCreateOrgPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
+      className="min-h-screen flex items-center justify-center"
       style={{ background: 'var(--background)' }}
     >
       <div className="w-full max-w-2xl">
         <div
-          className="rounded-2xl shadow-xl p-8"
+          className="rounded-2xl shadow-xl p-4 sm:p-8"
           style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
         >
           <h1
-            className="text-3xl font-bold text-center mb-2"
+            className="text-3xl font-bold text-left sm:text-center mb-2"
             style={{ color: 'var(--text-primary)' }}
           >
-            🏢 {t('superadmin.organizations.createTitle')}
+            {t('superadmin.organizations.createTitle')}
           </h1>
-          <p className="text-center mb-8" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-left sm:text-center mb-8" style={{ color: 'var(--text-secondary)' }}>
             {t('superadmin.organizations.createSubtitle')}
           </p>
 
@@ -300,8 +300,7 @@ export default function SuperadminCreateOrgPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 text-white font-semibold rounded-xl transition-all disabled:opacity-50 hover:opacity-90"
-              style={{ background: 'var(--accent-gradient)' }}
+              className="w-full bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity py-3 px-4 text-white font-semibold rounded-xl transition-all disabled:opacity-50 hover:opacity-90"
             >
               {loading
                 ? t('superadmin.organizations.creating')

@@ -211,7 +211,7 @@ export default function ProfilePage() {
           <CardDescription>{t('ui.profilePictureUpload')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* Avatar */}
             <div className="relative">
               <AvatarUpload

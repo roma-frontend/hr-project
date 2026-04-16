@@ -525,7 +525,7 @@ export default function LoginPage() {
           )}
 
           <div
-            className="min-h-screen flex items-center justify-center p-4"
+            className="min-h-screen flex items-center justify-center"
             style={{
               display: isOAuthSyncing ? 'none' : 'flex',
               background: 'var(--background)',

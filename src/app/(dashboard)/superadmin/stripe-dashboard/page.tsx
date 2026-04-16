@@ -215,7 +215,7 @@ export default function StripeDashboardPage() {
           <Button variant="ghost" onClick={() => router.back()} className="mb-4 -ml-2 text-sm">
             {t('stripe.backToDashboard')}
           </Button>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">💳 {t('stripe.dashboard')}</h1>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">{t('stripe.dashboard')}</h1>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             {t('stripe.realTimeAnalytics')}
           </p>

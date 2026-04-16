@@ -359,7 +359,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                   : t('aiSiteEditor.enterprisePlan')}
               </h4>
               <p className="text-sm">
-                ✨ {t('aiSiteEditor.unlimited')} · {t('aiSiteEditor.aiAutoApplies')}
+                {t('aiSiteEditor.unlimited')} · {t('aiSiteEditor.aiAutoApplies')}
               </p>
             </div>
           </div>

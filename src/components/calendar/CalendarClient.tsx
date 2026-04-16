@@ -177,7 +177,7 @@ function DayCell({
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
       className={[
-        'relative w-full min-h-[80px] sm:min-h-[90px] rounded-xl p-1.5 text-left transition-all duration-200 border',
+        'relative w-full min-h-[40px] sm:min-h-[90px] rounded-xl p-1.5 text-left transition-all duration-200 border',
         isSelected
           ? 'bg-[var(--primary)] border-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/20'
           : isTodayDate

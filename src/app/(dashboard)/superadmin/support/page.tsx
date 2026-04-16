@@ -201,8 +201,8 @@ export default function SupportTicketsPage() {
               </div>
               <div className="flex flex-wrap gap-3 flex-1">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[160px] h-9">
-                    <Filter className="w-3.5 h-3.5 mr-2" />
+                  <SelectTrigger className="w-full sm:w-[160px] h-9">
+                    <Filter className="hidden sm:block w-3.5 h-3.5 mr-2" />
                     <SelectValue placeholder={t('superadmin.support.allStatuses')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -219,7 +219,7 @@ export default function SupportTicketsPage() {
                   </SelectContent>
                 </Select>
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-full sm:w-[160px] h-9">
                     <SelectValue placeholder={t('superadmin.support.allPriorities')} />
                   </SelectTrigger>
                   <SelectContent>

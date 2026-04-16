@@ -314,7 +314,7 @@ function RegisterPageContent() {
   return (
     <I18nProvider>
       <div
-        className="min-h-screen flex items-center justify-center p-4"
+        className="min-h-screen flex items-center justify-center"
         style={{ background: 'var(--background)' }}
       >
         {/* Background blobs */}
