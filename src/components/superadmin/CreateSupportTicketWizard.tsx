@@ -151,7 +151,9 @@ export function CreateSupportTicketWizard({
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       await createTicket({
         organizationId,

@@ -100,7 +100,7 @@ export function MaintenanceBanner() {
           borderColor: 'var(--maintenance-banner-border, #fde68a)',
         }}
       >
-        <div className="max-w-[1600px] mx-auto px-3 sm:px-4 py-2.5 flex items-center gap-3">
+        <div className="max-w-400 mx-auto px-3 sm:px-4 py-2.5 flex items-center gap-3">
           {/* Content */}
           <div className="flex-1 min-w-0">
             <p

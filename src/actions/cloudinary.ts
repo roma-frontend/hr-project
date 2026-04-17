@@ -170,6 +170,9 @@ export async function deleteTaskAttachmentFromCloudinary(url: string): Promise<v
     // Get the public_id (folder/filename without extension and version)
     const folder = urlParts[folderIndex];
     const filenameWithVersion = urlParts[folderIndex + 1];
+    if (!filenameWithVersion) {
+      throw new Error('Invalid task attachment URL: missing filename');
+    }
     const filename = filenameWithVersion.replace(/^v\d+_/, '').split('.')[0];
     const publicId = `hr-office/${folder}/${filename}`;
 

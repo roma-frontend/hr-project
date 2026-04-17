@@ -138,7 +138,9 @@ export function CreateIncidentWizard({ userId, onComplete, onCancel }: CreateInc
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       await createIncident({
         createdBy: userId,

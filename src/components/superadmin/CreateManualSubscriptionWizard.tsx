@@ -125,7 +125,9 @@ export function CreateManualSubscriptionWizard({
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       await createManual({
         organizationId: String(data.organizationId) as Id<'organizations'>,

@@ -174,25 +174,19 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
             </h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-(--text-muted)">
-                  {t('leaveWizard.steps.confirm.type')}:
-                </span>
+                <span className="text-(--text-muted)">{t('leaveWizard.steps.confirm.type')}:</span>
                 <span className="font-medium text-(--text-primary)">
                   {t('leaveWizard.steps.confirm.typeValue')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-(--text-muted)">
-                  {t('leaveWizard.steps.confirm.dates')}:
-                </span>
+                <span className="text-(--text-muted)">{t('leaveWizard.steps.confirm.dates')}:</span>
                 <span className="font-medium text-(--text-primary)">
                   {t('leaveWizard.steps.confirm.datesValue')}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-(--text-muted)">
-                  {t('leaveWizard.steps.confirm.days')}:
-                </span>
+                <span className="text-(--text-muted)">{t('leaveWizard.steps.confirm.days')}:</span>
                 <span className="font-medium text-(--text-primary)">
                   {t('leaveWizard.steps.confirm.daysValue')}
                 </span>
@@ -204,7 +198,9 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       const days = calculateDays(String(data.startDate), String(data.endDate));
 

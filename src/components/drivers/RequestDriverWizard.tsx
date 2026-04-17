@@ -212,7 +212,9 @@ export function RequestDriverWizard({
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       const mergedData = { ...wizardData, ...data };
 

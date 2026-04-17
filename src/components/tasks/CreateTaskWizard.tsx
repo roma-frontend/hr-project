@@ -114,7 +114,9 @@ export function CreateTaskWizard({ assigneeId, onComplete, onCancel }: CreateTas
     },
   ];
 
-  const handleSubmit = async (data: Record<string, string | number | boolean | null>) => {
+  const handleSubmit = async (
+    data: Record<string, string | number | boolean | string[] | null>,
+  ) => {
     try {
       await createTask({
         assignedTo: String(data.assigneeId) as Id<'users'>,

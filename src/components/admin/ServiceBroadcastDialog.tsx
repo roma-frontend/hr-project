@@ -122,12 +122,14 @@ export function ServiceBroadcastDialog({
 
   const nextStep = () => {
     const idx = STEPS.findIndex((s) => s.id === currentStep);
-    if (idx < STEPS.length - 1) setCurrentStep(STEPS[idx + 1].id);
+    const nextStepData = STEPS[idx + 1];
+    if (idx >= 0 && nextStepData) setCurrentStep(nextStepData.id);
   };
 
   const prevStep = () => {
     const idx = STEPS.findIndex((s) => s.id === currentStep);
-    if (idx > 0) setCurrentStep(STEPS[idx - 1].id);
+    const prevStepData = STEPS[idx - 1];
+    if (idx > 0 && prevStepData) setCurrentStep(prevStepData.id);
   };
 
   const handleSend = async () => {
