@@ -517,15 +517,8 @@ export default function DriversPage() {
       )}
 
       {showTripDetails && selectedRequest && (
-        <div className="fixed inset-0 z-9999">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowTripDetails(false);
-              setSelectedRequest(null);
-            }}
-          />
-          <div className="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-(--card) shadow-2xl overflow-y-auto">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
+          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl bg-(--card) shadow-2xl">
             <TripDetailsModal
               schedule={{
                 type: 'trip',

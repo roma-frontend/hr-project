@@ -98,9 +98,9 @@ export function TripDetailsModal({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="w-full max-h-[85vh] flex flex-col"
+      className="w-full"
     >
-      <div className="bg-(--card) rounded-2xl shadow-2xl overflow-hidden flex flex-col h-full w-full">
+      <div className="bg-(--card) rounded-2xl shadow-2xl overflow-hidden w-full">
         {/* Header with gradient */}
         <div
           className={`relative p-6 ${
