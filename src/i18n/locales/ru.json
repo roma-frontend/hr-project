@@ -2976,7 +2976,11 @@
     "noAttachments": "Нет вложений",
     "download": "Скачать",
     "downloadToView": "Скачать для просмотра",
-    "previewNotAvailable": "Предпросмотр недоступен для этого типа файла"
+    "previewNotAvailable": "Предпросмотр недоступен для этого типа файла",
+    "confirmDeleteTitle": "Удалить вложение",
+    "confirmDeleteSubtitle": "Это действие нельзя отменить",
+    "confirmDeleteWarning": "Файл будет удалён навсегда",
+    "deleteFile": "Удалить файл"
   },
   "cookies": {
     "title": "Мы ценим вашу конфиденциальность",

@@ -1,22 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertCircle, CheckCircle, Clock, Power } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Power,
+  Users,
+  MessageSquare,
+  Calendar,
+  Send,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { motion, AnimatePresence } from '@/lib/cssMotion';
 
 interface ServiceBroadcastDialogProps {
   open: boolean;
@@ -26,18 +33,18 @@ interface ServiceBroadcastDialogProps {
 }
 
 const BROADCAST_ICONS = [
-  { icon: 'ℹ️', label: 'Information' },
-  { icon: '⚠️', label: 'Warning' },
-  { icon: '🔧', label: 'Maintenance' },
-  { icon: '🚨', label: 'Urgent' },
-  { icon: '🎉', label: 'Announcement' },
-  { icon: '🔒', label: 'Security' },
-  { icon: '📢', label: 'Broadcast' },
-  { icon: '🔄', label: 'Update' },
+  { icon: 'ℹ️', label: 'Information', color: '#3b82f6' },
+  { icon: '⚠️', label: 'Warning', color: '#f59e0b' },
+  { icon: '🔧', label: 'Maintenance', color: '#6b7280' },
+  { icon: '🚨', label: 'Urgent', color: '#ef4444' },
+  { icon: '🎉', label: 'Announcement', color: '#8b5cf6' },
+  { icon: '🔒', label: 'Security', color: '#10b981' },
+  { icon: '📢', label: 'Broadcast', color: '#ec4899' },
+  { icon: '🔄', label: 'Update', color: '#06b6d4' },
 ];
 
 const DURATION_OPTIONS = [
-  { label: '30 минут', value: '30 minutes' },
+  { label: '30 мин', value: '30 minutes' },
   { label: '1 час', value: '1 hour' },
   { label: '2 часа', value: '2 hours' },
   { label: '3 часа', value: '3 hours' },
@@ -45,12 +52,22 @@ const DURATION_OPTIONS = [
   { label: 'Неизвестно', value: undefined },
 ];
 
+const STEPS = [
+  { id: 'audience', label: 'Аудитория', icon: Users },
+  { id: 'message', label: 'Сообщение', icon: MessageSquare },
+  { id: 'schedule', label: 'Расписание', icon: Calendar },
+  { id: 'review', label: 'Отправка', icon: Send },
+];
+
+type StepId = (typeof STEPS)[number]['id'];
+
 export function ServiceBroadcastDialog({
   open,
   onOpenChange,
   organizationId,
   userId,
 }: ServiceBroadcastDialogProps) {
+  const [currentStep, setCurrentStep] = useState<StepId>('audience');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('⚠️');
@@ -75,6 +92,44 @@ export function ServiceBroadcastDialog({
   const sendBroadcast = useMutation(api.admin.sendServiceBroadcast);
   const enableMaintenanceMode = useMutation(api.admin.enableMaintenanceMode);
 
+  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
+
+  const selectedOrg = organizations?.find((o) => o._id === selectedOrgId);
+  const targetOrgCount = broadcastScope === 'all' ? (organizations?.length ?? 0) : 1;
+
+  const canProceed = useMemo(() => {
+    switch (currentStep) {
+      case 'audience':
+        return broadcastScope === 'all' || (broadcastScope === 'specific' && selectedOrgId);
+      case 'message':
+        return title.trim().length > 0 && content.trim().length > 0;
+      case 'schedule':
+        return !scheduleMaintenance || (scheduleMaintenance && scheduleDateTime);
+      case 'review':
+        return true;
+      default:
+        return true;
+    }
+  }, [
+    currentStep,
+    broadcastScope,
+    selectedOrgId,
+    title,
+    content,
+    scheduleMaintenance,
+    scheduleDateTime,
+  ]);
+
+  const nextStep = () => {
+    const idx = STEPS.findIndex((s) => s.id === currentStep);
+    if (idx < STEPS.length - 1) setCurrentStep(STEPS[idx + 1].id);
+  };
+
+  const prevStep = () => {
+    const idx = STEPS.findIndex((s) => s.id === currentStep);
+    if (idx > 0) setCurrentStep(STEPS[idx - 1].id);
+  };
+
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) {
       setStatus('error');
@@ -88,9 +143,9 @@ export function ServiceBroadcastDialog({
       return;
     }
 
-    if (!organizationId || !userId) {
+    if (!userId) {
       setStatus('error');
-      setErrorMessage('Организация не загружена');
+      setErrorMessage('Пользователь не загружен');
       return;
     }
 
@@ -98,24 +153,14 @@ export function ServiceBroadcastDialog({
     setStatus('idle');
 
     try {
-      // Determine which organizations to broadcast to
       const targetOrgs =
         broadcastScope === 'all'
           ? (organizations?.map((o) => o._id) ?? [])
           : [selectedOrgId as Id<'organizations'>];
 
-      console.log(`[ServiceBroadcast] Broadcasting to ${targetOrgs.length} organizations`);
-      console.log(`[ServiceBroadcast] Scope: ${broadcastScope}`);
-      if (organizations) {
-        console.log(`[ServiceBroadcast] Available organizations: ${organizations.length}`);
-        organizations.forEach((org) => console.log(`  - ${org.name || org._id}`));
-      }
-
-      // Calculate delay if scheduled maintenance
       const now = Date.now();
       const scheduledTime = scheduleDateTime ? new Date(scheduleDateTime).getTime() : now;
 
-      // Build message content with maintenance timing if enabled
       let broadcastContent = content.trim();
       if (scheduleMaintenance && scheduleDateTime) {
         const scheduledDate = new Date(scheduledTime);
@@ -132,9 +177,7 @@ export function ServiceBroadcastDialog({
         }
       }
 
-      // Send broadcast immediately to all organizations
       for (const orgId of targetOrgs) {
-        console.log(`[ServiceBroadcast] Sending broadcast to organization: ${orgId}`);
         await sendBroadcast({
           organizationId: orgId,
           userId: userId as Id<'users'>,
@@ -144,9 +187,6 @@ export function ServiceBroadcastDialog({
         });
       }
 
-      // Create maintenance mode record immediately in DB
-      // The record stores startTime — useMaintenanceAutoLogout on clients
-      // will trigger logout when startTime is reached (no client-side setTimeout needed)
       if (scheduleMaintenance && scheduleDateTime) {
         for (const orgId of targetOrgs) {
           await enableMaintenanceMode({
@@ -159,10 +199,6 @@ export function ServiceBroadcastDialog({
             icon: selectedIcon,
           });
         }
-        console.log(
-          '[ServiceBroadcast] Maintenance mode created in DB, will trigger at:',
-          new Date(scheduledTime).toISOString(),
-        );
       }
 
       setStatus('success');
@@ -172,12 +208,14 @@ export function ServiceBroadcastDialog({
       setScheduleDateTime('');
       setEstimatedDuration(undefined);
       setScheduleMaintenance(false);
+      setBroadcastScope('specific');
+      setSelectedOrgId(organizationId as string);
 
-      // Close dialog after 2 seconds
       setTimeout(() => {
         onOpenChange(false);
         setStatus('idle');
-      }, 2000);
+        setCurrentStep('audience');
+      }, 2500);
     } catch (error) {
       setStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Ошибка при отправке');
@@ -186,273 +224,548 @@ export function ServiceBroadcastDialog({
     }
   };
 
-  // Get minimum datetime (now)
   const now = new Date();
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Отправить сервисное сообщение</DialogTitle>
-          <DialogDescription>
-            Отправьте официальное объявление всем пользователям организации
-          </DialogDescription>
-        </DialogHeader>
+  const resetState = () => {
+    setCurrentStep('audience');
+    setStatus('idle');
+    setErrorMessage('');
+  };
 
-        <div className="space-y-6">
-          {/* Organization Selection */}
-          <div>
-            <label className="text-sm font-medium block mb-3">Целевая аудитория</label>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  id="broadcast-all"
-                  name="broadcast-scope"
-                  checked={broadcastScope === 'all'}
-                  onChange={() => setBroadcastScope('all')}
-                  disabled={loading}
-                  className="w-4 h-4"
-                />
-                <label htmlFor="broadcast-all" className="text-sm cursor-pointer font-medium">
-                  📢 Все организации ({organizations?.length ?? 0})
-                </label>
-              </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  id="broadcast-specific"
-                  name="broadcast-scope"
-                  checked={broadcastScope === 'specific'}
-                  onChange={() => setBroadcastScope('specific')}
-                  disabled={loading}
-                  className="w-4 h-4"
-                />
-                <label htmlFor="broadcast-specific" className="text-sm cursor-pointer font-medium">
-                  🏢 Конкретная организация
-                </label>
-              </div>
+  // ── Step 1: Audience ────────────────────────────────────────────
+  const renderAudienceStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-3">
+          <Users className="w-8 h-8 text-blue-400" />
+        </div>
+        <h3 className="text-lg font-semibold">Кто получит сообщение?</h3>
+        <p className="text-sm text-(--text-muted) mt-1">Выберите целевую аудиторию для рассылки</p>
+      </div>
 
-              {broadcastScope === 'specific' && organizations && (
-                <div className="ml-7 mt-2">
-                  <select
-                    value={selectedOrgId as string}
-                    onChange={(e) => setSelectedOrgId(e.target.value)}
-                    disabled={loading}
-                    className="w-full px-3 py-2 rounded-lg border text-sm"
-                    style={{
-                      borderColor: 'var(--border)',
-                      background: 'var(--background-subtle)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {organizations.map((org: any) => (
-                      <option key={org._id} value={org._id}>
-                        {org.name} ({org.activeEmployees ?? org.memberCount ?? 0} сотрудников)
-                      </option>
-                    ))}
-                  </select>
+      <div className="space-y-3">
+        {/* All organizations */}
+        <button
+          onClick={() => setBroadcastScope('all')}
+          className={cn(
+            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            broadcastScope === 'all'
+              ? 'border-blue-500 bg-blue-500/10'
+              : 'border-(--border) hover:border-(--border-hover,var(--border))',
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                broadcastScope === 'all' ? 'border-blue-500 bg-blue-500' : 'border-(--border)',
+              )}
+            >
+              {broadcastScope === 'all' && <Check className="w-3 h-3 text-white" />}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">📢 Все организации</p>
+              <p className="text-xs text-(--text-muted)">
+                {organizations?.length ?? 0} организаций
+              </p>
+            </div>
+          </div>
+        </button>
+
+        {/* Specific organization */}
+        <button
+          onClick={() => setBroadcastScope('specific')}
+          className={cn(
+            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            broadcastScope === 'specific'
+              ? 'border-blue-500 bg-blue-500/10'
+              : 'border-(--border) hover:border-(--border-hover,var(--border))',
+          )}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                broadcastScope === 'specific' ? 'border-blue-500 bg-blue-500' : 'border-(--border)',
+              )}
+            >
+              {broadcastScope === 'specific' && <Check className="w-3 h-3 text-white" />}
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-sm">🏢 Конкретная организация</p>
+              <p className="text-xs text-(--text-muted)">Выберите одну организацию</p>
+            </div>
+          </div>
+        </button>
+
+        {broadcastScope === 'specific' && organizations && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="ml-2"
+          >
+            <select
+              value={selectedOrgId as string}
+              onChange={(e) => setSelectedOrgId(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              style={{
+                borderColor: 'var(--border)',
+                background: 'var(--background-subtle)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              {organizations.map((org: any) => (
+                <option key={org._id} value={org._id}>
+                  {org.name} ({org.activeEmployees ?? org.memberCount ?? 0} сотрудников)
+                </option>
+              ))}
+            </select>
+            {selectedOrg && (
+              <div className="mt-2 p-3 rounded-lg bg-(--background-subtle) border border-(--border)">
+                <p className="text-xs text-(--text-muted)">
+                  📊 {selectedOrg.activeEmployees ?? selectedOrg.memberCount ?? 0} активных
+                  пользователей получат сообщение
+                </p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Step 2: Message ─────────────────────────────────────────────
+  const renderMessageStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-3">
+          <MessageSquare className="w-8 h-8 text-purple-400" />
+        </div>
+        <h3 className="text-lg font-semibold">Содержание сообщения</h3>
+        <p className="text-sm text-(--text-muted) mt-1">Напишите заголовок и текст сообщения</p>
+      </div>
+
+      {/* Icon Selection */}
+      <div>
+        <label className="text-sm font-medium block mb-3">Иконка сообщения</label>
+        <div className="grid grid-cols-4 gap-2">
+          {BROADCAST_ICONS.map(({ icon, label, color }) => (
+            <button
+              key={icon}
+              onClick={() => setSelectedIcon(icon)}
+              className={cn(
+                'p-3 rounded-xl border-2 transition-all text-2xl hover:scale-105 relative',
+                selectedIcon === icon
+                  ? 'border-transparent'
+                  : 'border-transparent hover:border-(--border)',
+              )}
+              style={{
+                backgroundColor: selectedIcon === icon ? `${color}20` : 'var(--background-subtle)',
+              }}
+              title={label}
+            >
+              {icon}
+              {selectedIcon === icon && (
+                <div
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: color }}
+                >
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Title */}
+      <div>
+        <label className="text-sm font-medium block mb-2">Заголовок</label>
+        <Input
+          placeholder="Например: Плановое обслуживание системы"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          disabled={loading}
+          className="text-base"
+        />
+      </div>
+
+      {/* Content */}
+      <div>
+        <label className="text-sm font-medium block mb-2">Сообщение</label>
+        <Textarea
+          placeholder="Введите текст сообщения, которое получат все пользователи..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          disabled={loading}
+          rows={5}
+          className="resize-none text-sm"
+        />
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-(--text-muted)">
+            Все активные пользователи получат это в канале "System Announcements"
+          </p>
+          <p className="text-xs text-(--text-muted)">{content.length} символов</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Step 3: Schedule ────────────────────────────────────────────
+  const renderScheduleStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center mx-auto mb-3">
+          <Calendar className="w-8 h-8 text-orange-400" />
+        </div>
+        <h3 className="text-lg font-semibold">Расписание обслуживания</h3>
+        <p className="text-sm text-(--text-muted) mt-1">
+          Запланируйте автоматическое включение режима обслуживания
+        </p>
+      </div>
+
+      {/* Toggle */}
+      <button
+        onClick={() => setScheduleMaintenance(!scheduleMaintenance)}
+        className={cn(
+          'w-full p-4 rounded-xl border-2 transition-all text-left',
+          scheduleMaintenance
+            ? 'border-orange-500 bg-orange-500/10'
+            : 'border-(--border) hover:border-(--border-hover,var(--border))',
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'w-10 h-6 rounded-full transition-all flex items-center',
+              scheduleMaintenance ? 'bg-orange-500 justify-end' : 'bg-(--border) justify-start',
+            )}
+          >
+            <div className="w-5 h-5 rounded-full bg-white shadow-sm mx-0.5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Power
+                className="w-4 h-4"
+                style={{ color: scheduleMaintenance ? '#f97316' : 'var(--text-muted)' }}
+              />
+              <p
+                className="font-medium text-sm"
+                style={{ color: scheduleMaintenance ? '#f97316' : undefined }}
+              >
+                Запланировать техническое обслуживание
+              </p>
+            </div>
+            <p className="text-xs text-(--text-muted) mt-0.5">
+              Отправить сообщение сейчас, а режим обслуживания включить в определённое время
+            </p>
+          </div>
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {scheduleMaintenance && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-4"
+          >
+            {/* Schedule Time */}
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2 mb-2">
+                <Clock className="w-4 h-4" />
+                Время начала обслуживания
+              </label>
+              <Input
+                type="datetime-local"
+                value={scheduleDateTime}
+                onChange={(e) => setScheduleDateTime(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                disabled={loading}
+                className="text-base"
+              />
+              {scheduleDateTime && (
+                <div className="mt-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                  <p className="text-xs text-orange-400">
+                    ⏰ Обслуживание начнётся:{' '}
+                    {new Date(scheduleDateTime).toLocaleString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Divider */}
-          <div className="border-t" style={{ borderColor: 'var(--border)' }} />
-
-          {/* Icon Selection */}
-          <div>
-            <label className="text-sm font-medium block mb-3">Иконка</label>
-            <div className="grid grid-cols-4 gap-2">
-              {BROADCAST_ICONS.map(({ icon, label }: any) => (
-                <button
-                  key={icon}
-                  onClick={() => setSelectedIcon(icon)}
-                  className={cn('p-3 rounded-lg border-2 transition-all text-2xl hover:scale-105')}
-                  style={{
-                    borderColor: selectedIcon === icon ? 'var(--primary)' : 'transparent',
-                    backgroundColor: selectedIcon === icon ? 'var(--primary)' : 'var(--background)',
-                    opacity: selectedIcon === icon ? 0.15 : 1,
-                  }}
-                  title={label}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="text-sm font-medium block mb-2">Заголовок</label>
-            <Input
-              placeholder="Например: Плановое обслуживание системы"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={loading}
-              className="text-base"
-            />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label className="text-sm font-medium block mb-2">Сообщение</label>
-            <Textarea
-              placeholder="Введите текст сообщения, которое получат все пользователи..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              disabled={loading}
-              rows={5}
-              className="resize-none text-sm"
-            />
-            <div className="text-xs text-muted-foreground mt-1">
-              Все активные пользователи получат это сообщение в канале "System Announcements"
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div style={{ borderColor: 'var(--border)' }} className="border-t pt-4" />
-
-          {/* Maintenance Mode Schedule */}
-          <div
-            style={{
-              backgroundColor: 'rgba(249, 115, 22, 0.08)',
-              borderColor: '#f97316',
-            }}
-            className="p-4 rounded-lg border"
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex items-center gap-3 flex-1">
-                <Power className="w-5 h-5" style={{ color: '#f97316' }} />
-                <div className="flex-1">
-                  <label
-                    className="text-sm font-semibold block cursor-pointer"
-                    style={{ color: '#f97316' }}
+            {/* Estimated Duration */}
+            <div>
+              <label className="text-sm font-medium block mb-2">Примерная длительность</label>
+              <div className="grid grid-cols-3 gap-2">
+                {DURATION_OPTIONS.map((option: any) => (
+                  <button
+                    key={option.value || 'unknown'}
+                    onClick={() => setEstimatedDuration(option.value)}
+                    className={cn(
+                      'px-3 py-2.5 rounded-xl border-2 text-sm transition-all font-medium',
+                      estimatedDuration === option.value
+                        ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                        : 'border-(--border) bg-(--background-subtle) text-(--text-secondary) hover:border-(--border-hover,var(--border))',
+                    )}
                   >
-                    <input
-                      type="checkbox"
-                      checked={scheduleMaintenance}
-                      onChange={(e) => setScheduleMaintenance(e.target.checked)}
-                      disabled={loading}
-                      className="mr-2"
-                      style={{ accentColor: '#f97316' }}
-                    />
-                    📴 Запланировать техническое обслуживание
-                  </label>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Отправить сообщение сейчас, а режим обслуживания включить в определённое время
-                  </p>
-                </div>
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 
-            {scheduleMaintenance && (
-              <div className="mt-4 space-y-3 ml-8">
-                {/* Schedule Time */}
-                <div>
-                  <label className="text-sm font-medium flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4" />
-                    Время начала обслуживания
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={scheduleDateTime}
-                    onChange={(e) => setScheduleDateTime(e.target.value)}
-                    min={new Date().toISOString().slice(0, 16)}
-                    disabled={loading}
-                    className="text-base"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {scheduleDateTime
-                      ? `Обслуживание начнется: ${new Date(scheduleDateTime).toLocaleString('ru-RU')}`
-                      : 'Выберите время начала обслуживания'}
-                  </p>
-                </div>
+  // ── Step 4: Review ──────────────────────────────────────────────
+  const renderReviewStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-3">
+          <Send className="w-8 h-8 text-emerald-400" />
+        </div>
+        <h3 className="text-lg font-semibold">Проверьте и отправьте</h3>
+        <p className="text-sm text-(--text-muted) mt-1">Убедитесь, что всё верно перед отправкой</p>
+      </div>
 
-                {/* Estimated Duration */}
-                <div>
-                  <label className="text-sm font-medium block mb-2">Примерная длительность</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {DURATION_OPTIONS.map((option: any) => (
-                      <button
-                        key={option.value || 'unknown'}
-                        onClick={() => setEstimatedDuration(option.value)}
-                        className={cn(
-                          'px-3 py-2 rounded-lg border-2 text-sm transition-all',
-                          estimatedDuration === option.value
-                            ? 'border-orange-500 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
-                            : 'border-transparent bg-background hover:border-border text-foreground',
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* Summary Card */}
+      <div className="rounded-xl border border-(--border) overflow-hidden">
+        {/* Header with icon */}
+        <div
+          className="p-4 flex items-center gap-3"
+          style={{
+            backgroundColor: `${BROADCAST_ICONS.find((i) => i.icon === selectedIcon)?.color}15`,
+          }}
+        >
+          <span className="text-3xl">{selectedIcon}</span>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-sm truncate">{title || 'Без заголовка'}</h4>
+            <p className="text-xs text-(--text-muted) truncate">
+              {broadcastScope === 'all'
+                ? `📢 Все организации (${targetOrgCount})`
+                : `🏢 ${selectedOrg?.name ?? 'Организация'}`}
+            </p>
           </div>
+        </div>
 
-          {/* Status Messages */}
-          {status === 'error' && (
-            <div
-              className="flex items-center gap-2 p-3 rounded-lg"
-              style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                color: 'var(--destructive)',
-              }}
-            >
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span className="text-sm">{errorMessage}</span>
-            </div>
-          )}
+        {/* Content preview */}
+        <div className="p-4 border-t border-(--border)">
+          <p className="text-sm text-(--text-secondary) line-clamp-3">
+            {content || 'Без содержания'}
+          </p>
+        </div>
 
-          {status === 'success' && (
-            <div
-              className="flex items-center gap-2 p-3 rounded-lg"
-              style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                color: 'var(--success)',
-              }}
-            >
-              <CheckCircle className="w-4 h-4 shrink-0" />
-              <span className="text-sm">
-                {scheduleMaintenance
-                  ? 'Сообщение отправлено! Техническое обслуживание автоматически включится в указанное время.'
-                  : 'Сообщение успешно отправлено всем пользователям!'}
+        {/* Schedule info */}
+        {scheduleMaintenance && scheduleDateTime && (
+          <div className="p-4 border-t border-(--border) bg-orange-500/5">
+            <div className="flex items-center gap-2 text-xs text-orange-400">
+              <Clock className="w-3.5 h-3.5" />
+              <span>
+                Обслуживание: {new Date(scheduleDateTime).toLocaleString('ru-RU')}
+                {estimatedDuration && ` • ${estimatedDuration}`}
               </span>
             </div>
-          )}
+          </div>
+        )}
+      </div>
 
-          {/* Buttons */}
-          <div
-            className="flex gap-3 justify-end pt-2 border-t"
-            style={{ borderTopColor: 'var(--border)' }}
-          >
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Отмена
-            </Button>
-            <Button
-              onClick={handleSend}
-              disabled={
-                loading ||
-                !title.trim() ||
-                !content.trim() ||
-                (scheduleMaintenance && !scheduleDateTime)
-              }
-              className="gap-2"
-              style={{
-                backgroundColor: scheduleMaintenance ? '#f97316' : 'var(--primary)',
-                color: 'white',
-              }}
+      {/* Recipients count */}
+      <div className="p-3 rounded-lg bg-(--background-subtle) border border-(--border) flex items-center gap-3">
+        <Users className="w-5 h-5 text-(--text-muted)" />
+        <div>
+          <p className="text-sm font-medium">
+            {targetOrgCount} {targetOrgCount === 1 ? 'организация' : 'организации'}
+          </p>
+          <p className="text-xs text-(--text-muted)">
+            {broadcastScope === 'all'
+              ? 'Все активные пользователи всех организаций'
+              : `Активные пользователи ${selectedOrg?.name}`}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'audience':
+        return renderAudienceStep();
+      case 'message':
+        return renderMessageStep();
+      case 'schedule':
+        return renderScheduleStep();
+      case 'review':
+        return renderReviewStep();
+      default:
+        return null;
+    }
+  };
+
+  const currentStepData = STEPS[currentStepIndex];
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) resetState();
+        onOpenChange(val);
+      }}
+    >
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogTitle className="sr-only">Service Broadcast</DialogTitle>
+        {/* Progress Bar */}
+        <div className="px-6 pt-6 pb-2">
+          <div className="flex items-center justify-between mb-4">
+            {STEPS.map((step, idx) => {
+              const Icon = step.icon;
+              const isActive = step.id === currentStep;
+              const isCompleted = STEPS.findIndex((s) => s.id === currentStep) > idx;
+
+              return (
+                <React.Fragment key={step.id}>
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-full flex items-center justify-center transition-all',
+                        isActive
+                          ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                          : isCompleted
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-(--background-subtle) text-(--text-muted)',
+                      )}
+                    >
+                      {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                    </div>
+                    <span
+                      className={cn(
+                        'text-[10px] font-medium hidden sm:block',
+                        isActive ? 'text-blue-400' : 'text-(--text-muted)',
+                      )}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                  {idx < STEPS.length - 1 && (
+                    <div
+                      className={cn(
+                        'flex-1 h-0.5 rounded-full transition-all mb-5',
+                        isCompleted ? 'bg-emerald-500' : 'bg-(--border)',
+                      )}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 pb-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
             >
-              {loading && <ShieldLoader size="xs" variant="inline" />}
-              {loading
-                ? 'Отправка...'
-                : scheduleMaintenance
-                  ? 'Отправить и запланировать обслуживание'
-                  : 'Отправить всем'}
-            </Button>
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Status Messages */}
+          <AnimatePresence>
+            {status === 'error' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-3 rounded-lg mt-4"
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: 'var(--destructive)',
+                }}
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span className="text-sm">{errorMessage}</span>
+              </motion.div>
+            )}
+
+            {status === 'success' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-3 rounded-lg mt-4"
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  color: 'var(--success)',
+                }}
+              >
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <span className="text-sm">
+                  {scheduleMaintenance
+                    ? 'Сообщение отправлено! Техническое обслуживание автоматически включится в указанное время.'
+                    : 'Сообщение успешно отправлено всем пользователям!'}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="px-6 py-4 border-t border-(--border) flex items-center justify-between bg-(--background-subtle)">
+          <Button
+            variant="ghost"
+            onClick={prevStep}
+            disabled={currentStepIndex === 0 || loading || status === 'success'}
+            className="gap-1"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Назад
+          </Button>
+
+          <div className="flex items-center gap-2">
+            {currentStepIndex < STEPS.length - 1 ? (
+              <Button
+                onClick={nextStep}
+                disabled={!canProceed || loading || status === 'success'}
+                className="gap-1"
+              >
+                Далее
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSend}
+                disabled={loading || status === 'success'}
+                className="gap-2"
+                style={{
+                  backgroundColor: scheduleMaintenance ? '#f97316' : 'var(--primary)',
+                  color: 'white',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <ShieldLoader size="xs" variant="inline" />
+                    Отправка...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    {scheduleMaintenance ? 'Отправить и запланировать' : 'Отправить всем'}
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

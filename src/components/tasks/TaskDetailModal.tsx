@@ -8,6 +8,7 @@ import { TaskAttachments } from './TaskAttachments';
 import { Button } from '@/components/ui/button';
 import type { Id } from '../../../convex/_generated/dataModel';
 import Image from 'next/image';
+import { motion, AnimatePresence } from '@/lib/cssMotion';
 
 type Status = 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -81,6 +82,8 @@ function Avatar({ name, url }: { name: string; url?: string | null }) {
       {url ? (
         <Image
           src={url}
+          width={32}
+          height={32}
           alt={name}
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
@@ -104,6 +107,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDesc, setEditDesc] = useState(task.description ?? '');
   const [editPriority, setEditPriority] = useState<Priority>(task.priority);
@@ -113,6 +117,10 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
 
   const canManage = userRole === 'admin' || userRole === 'supervisor';
   const isAssignee = task.assignedTo === currentUserId;
+
+  // Fetch fresh task data (reactive to attachment changes)
+  const freshTask = useQuery(api.tasks.getTask, { taskId: task._id });
+  const taskData = freshTask ?? task;
 
   const comments = useQuery(api.tasks.getTaskComments, { taskId: task._id });
   const updateStatus = useMutation(api.tasks.updateTaskStatus);
@@ -134,14 +142,14 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
     };
   }, []);
 
-  const statusCfg = STATUS_STYLES[task.status as Status];
-  const priorityCfg = PRIORITY_STYLES[task.priority as Priority];
-  const statusLabel = getStatusLabel(task.status as Status, t);
-  const priorityLabel = getPriorityLabel(task.priority as Priority, t);
+  const statusCfg = STATUS_STYLES[taskData.status as Status];
+  const priorityCfg = PRIORITY_STYLES[taskData.priority as Priority];
+  const statusLabel = getStatusLabel(taskData.status as Status, t);
+  const priorityLabel = getPriorityLabel(taskData.priority as Priority, t);
 
   const transitions = canManage
-    ? MANAGER_TRANSITIONS[task.status as Status]
-    : EMPLOYEE_TRANSITIONS[task.status as Status];
+    ? MANAGER_TRANSITIONS[taskData.status as Status]
+    : EMPLOYEE_TRANSITIONS[taskData.status as Status];
 
   const handleStatusChange = async (newStatus: Status) => {
     await updateStatus({ taskId: task._id, status: newStatus, userId: currentUserId });
@@ -161,8 +169,12 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
   };
 
   const handleDelete = async () => {
-    if (!confirm(t('tasksClient.deleteConfirm'))) return;
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTaskAction = async () => {
     await deleteTask({ taskId: task._id });
+    setShowDeleteModal(false);
     onClose();
   };
 
@@ -175,7 +187,8 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
     setSubmitting(false);
   };
 
-  const deadlinePassed = task.deadline && task.deadline < Date.now() && task.status !== 'completed';
+  const deadlinePassed =
+    taskData.deadline && taskData.deadline < Date.now() && taskData.status !== 'completed';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -192,7 +205,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                   className="w-full bg-white/20 text-white placeholder-white/60 rounded-xl px-3 py-1.5 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-white/50"
                 />
               ) : (
-                <h2 className="text-xl font-bold leading-snug">{task.title}</h2>
+                <h2 className="text-xl font-bold leading-snug">{taskData.title}</h2>
               )}
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20">
@@ -270,7 +283,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                 />
               ) : (
                 <p className="text-(--text-secondary) text-sm leading-relaxed">
-                  {task.description || (
+                  {taskData.description || (
                     <span className="text-(--text-muted) italic">
                       {t('taskDetail.noDescription')}
                     </span>
@@ -287,15 +300,15 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                 </h3>
                 <div className="flex items-center gap-2">
                   <Avatar
-                    name={task.assignedToUser?.name ?? '?'}
-                    url={task.assignedToUser?.avatarUrl}
+                    name={taskData.assignedToUser?.name ?? '?'}
+                    url={taskData.assignedToUser?.avatarUrl}
                   />
                   <div>
                     <p className="text-sm font-medium text-(--text-primary)">
-                      {task.assignedToUser?.name ?? '—'}
+                      {taskData.assignedToUser?.name ?? '—'}
                     </p>
                     <p className="text-xs text-(--text-muted)">
-                      {task.assignedToUser?.position ?? ''}
+                      {taskData.assignedToUser?.position ?? ''}
                     </p>
                   </div>
                 </div>
@@ -306,14 +319,16 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                 </h3>
                 <div className="flex items-center gap-2">
                   <Avatar
-                    name={task.assignedByUser?.name ?? '?'}
-                    url={task.assignedByUser?.avatarUrl}
+                    name={taskData.assignedByUser?.name ?? '?'}
+                    url={taskData.assignedByUser?.avatarUrl}
                   />
                   <div>
                     <p className="text-sm font-medium text-(--text-primary)">
-                      {task.assignedByUser?.name ?? '—'}
+                      {taskData.assignedByUser?.name ?? '—'}
                     </p>
-                    <p className="text-xs text-(--text-muted)">{task.assignedByUser?.role ?? ''}</p>
+                    <p className="text-xs text-(--text-muted)">
+                      {taskData.assignedByUser?.role ?? ''}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -351,12 +366,12 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                     onChange={(e) => setEditDeadline(e.target.value)}
                     className="px-3 py-1.5 rounded-lg border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
-                ) : task.deadline ? (
+                ) : taskData.deadline ? (
                   <p
                     className={`text-sm font-medium ${deadlinePassed ? 'text-rose-400' : 'text-(--text-primary)'}`}
                   >
                     {deadlinePassed ? '⏰ ' : '📅 '}
-                    {new Date(task.deadline).toLocaleDateString('en-GB', {
+                    {new Date(taskData.deadline).toLocaleDateString('en-GB', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -369,13 +384,13 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
             </div>
 
             {/* Tags */}
-            {task.tags && task.tags.length > 0 && (
+            {taskData.tags && taskData.tags.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-(--text-muted) uppercase tracking-wide mb-2">
                   {t('taskDetail.tags')}
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {task.tags.map((tag: any) => (
+                  {taskData.tags.map((tag: any) => (
                     <span
                       key={tag}
                       className="text-xs bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-medium"
@@ -414,8 +429,8 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
             {/* Attachments */}
             <div>
               <TaskAttachments
-                taskId={task._id as Id<'tasks'>}
-                attachments={task.attachments ?? []}
+                taskId={taskData._id as Id<'tasks'>}
+                attachments={taskData.attachments ?? []}
                 currentUserId={currentUserId}
                 canUpload={true}
               />
@@ -475,6 +490,71 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
           </div>
         </div>
       </div>
+
+      {/* Delete task confirmation modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-(--card) border border-(--border) rounded-2xl overflow-hidden max-w-md w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-rose-500/10 border-b border-rose-500/20 px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-rose-500/20 flex items-center justify-center text-2xl">
+                    🗑️
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-rose-400">
+                      {t('tasksClient.deleteTask')}
+                    </h3>
+                    <p className="text-sm text-rose-400/70 mt-0.5">
+                      {t('taskAttachments.confirmDeleteSubtitle')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-(--background-subtle) border border-(--border)">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-(--text-primary) truncate">
+                      {task.title}
+                    </p>
+                    <p className="text-xs text-(--text-muted)">
+                      {t('taskAttachments.confirmDeleteWarning')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 pb-5 flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-(--border) text-(--text-secondary) text-sm font-medium hover:bg-(--background-subtle) transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={confirmDeleteTaskAction}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-md shadow-rose-500/20 transition-colors"
+                >
+                  {t('taskAttachments.deleteFile')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

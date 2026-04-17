@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef } from 'react';
 import { useMutation, useQuery } from 'convex/react';
@@ -26,6 +26,9 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [files, setFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{ uploaded: number; total: number } | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const employees = useQuery(api.tasks.getUsersForAssignment, { requesterId: currentUserId });
@@ -85,29 +88,32 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
 
       // Upload attachments if any
       if (files.length > 0 && taskId) {
-        await Promise.all(
-          files.map(async (file) => {
-            try {
-              const base64 = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              });
-              const url = await uploadTaskAttachment(base64, file.name);
-              await addAttachment({
-                taskId: taskId as Id<'tasks'>,
-                url,
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                uploadedBy: currentUserId,
-              });
-            } catch {
-              toast.error(`Failed to upload ${file.name}`);
-            }
-          }),
-        );
+        setUploadProgress({ uploaded: 0, total: files.length });
+        let uploaded = 0;
+        for (const file of files) {
+          try {
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            const url = await uploadTaskAttachment(base64, file.name);
+            await addAttachment({
+              taskId: taskId as Id<'tasks'>,
+              url,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              uploadedBy: currentUserId,
+            });
+            uploaded++;
+            setUploadProgress({ uploaded, total: files.length });
+          } catch {
+            toast.error(`Failed to upload ${file.name}`);
+          }
+        }
+        setUploadProgress(null);
       }
 
       onClose();
@@ -249,12 +255,71 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
             />
           </div>
 
+          {/* File attachments preview */}
+          <div>
+            <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">
+              {t('task.attachments')}
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={files.length >= 10}
+                  className="px-3 py-2 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-secondary) text-sm hover:bg-(--border) transition-colors disabled:opacity-50"
+                >
+                  📎 {t('task.addFiles')}
+                </button>
+                {files.length > 0 && (
+                  <span className="text-xs text-(--text-muted)">
+                    {files.length}/10 {t('task.filesSelected')}
+                  </span>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="*/*"
+                className="hidden"
+                onChange={handleFileAdd}
+              />
+              {files.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                  {files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="group relative flex items-center gap-2 p-2 rounded-lg border border-(--border) bg-(--background-subtle)"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-(--text-primary) truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-(--text-muted)">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-sm hover:bg-red-500/30 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-(--border) text-(--text-secondary) text-sm font-medium hover:bg-(--background-subtle) transition-colors"
+              disabled={loading}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-(--border) text-(--text-secondary) text-sm font-medium hover:bg-(--background-subtle) transition-colors disabled:opacity-50"
             >
               {t('common.cancel')}
             </button>
@@ -263,7 +328,11 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
               disabled={loading}
               className="flex-1 px-4 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-700 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60"
             >
-              {loading ? t('task.creating') : t('task.createTaskButton')}
+              {loading
+                ? uploadProgress
+                  ? `${t('task.uploading')} (${uploadProgress.uploaded}/${uploadProgress.total})`
+                  : t('task.creating')
+                : t('task.createTaskButton')}
             </button>
           </div>
         </form>

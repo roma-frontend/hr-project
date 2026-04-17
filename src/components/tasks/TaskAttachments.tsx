@@ -58,6 +58,7 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<Attachment | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ url: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addAttachment = useMutation(api.tasks.addAttachment);
   const removeAttachment = useMutation(api.tasks.removeAttachment);
@@ -112,11 +113,16 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
   };
 
   const handleRemove = async (url: string, name: string) => {
-    if (!confirm(t('toasts.confirmRemove', { name }))) return;
+    setConfirmDelete({ url, name });
+  };
+
+  const confirmRemove = async () => {
+    if (!confirmDelete) return;
     try {
-      await removeAttachment({ taskId, url });
+      await removeAttachment({ taskId, url: confirmDelete.url });
       toast.success(t('toasts.removed'));
-      if (preview?.url === url) setPreview(null);
+      if (preview?.url === confirmDelete.url) setPreview(null);
+      setConfirmDelete(null);
     } catch {
       toast.error(t('toasts.removeFailed'));
     }
@@ -305,6 +311,75 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
                     </a>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setConfirmDelete(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-(--card) border border-(--border) rounded-2xl overflow-hidden max-w-md w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Warning header */}
+              <div className="bg-rose-500/10 border-b border-rose-500/20 px-6 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-rose-500/20 flex items-center justify-center text-2xl">
+                    ⚠️
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-rose-400">
+                      {t('taskAttachments.confirmDeleteTitle')}
+                    </h3>
+                    <p className="text-sm text-rose-400/70 mt-0.5">
+                      {t('taskAttachments.confirmDeleteSubtitle')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* File info */}
+              <div className="px-6 py-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-(--background-subtle) border border-(--border)">
+                  <span className="text-2xl">📎</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-(--text-primary) truncate">
+                      {confirmDelete.name}
+                    </p>
+                    <p className="text-xs text-(--text-muted)">
+                      {t('taskAttachments.confirmDeleteWarning')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="px-6 pb-5 flex gap-3">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-(--border) text-(--text-secondary) text-sm font-medium hover:bg-(--background-subtle) transition-colors"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={confirmRemove}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold shadow-md shadow-rose-500/20 transition-colors"
+                >
+                  {t('taskAttachments.deleteFile')}
+                </button>
               </div>
             </motion.div>
           </motion.div>

@@ -535,3 +535,47 @@ export const getAllTasksRaw = query({
     return await ctx.db.query('tasks').collect();
   },
 });
+
+// ── Get single task by ID ─────────────────────────────────────────────────
+export const getTask = query({
+  args: { taskId: v.id('tasks') },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) return null;
+
+    // Load assigned user
+    const assignedTo = await ctx.db.get(task.assignedTo);
+    const assignedBy = await ctx.db.get(task.assignedBy);
+
+    // Load comments
+    const comments = await ctx.db
+      .query('taskComments')
+      .withIndex('by_task', (q) => q.eq('taskId', args.taskId))
+      .collect();
+
+    const commentAuthorIds = [...new Set(comments.map((c) => c.authorId))];
+    const commentAuthors = await Promise.all(commentAuthorIds.map((id) => ctx.db.get(id as any)));
+    const commentAuthorMap = new Map(commentAuthors.map((a) => [a?._id, a]));
+
+    return {
+      ...task,
+      assignedToUser: assignedTo
+        ? {
+            ...assignedTo,
+            avatarUrl: assignedTo.avatarUrl ?? assignedTo.faceImageUrl,
+          }
+        : null,
+      assignedByUser: assignedBy
+        ? {
+            ...assignedBy,
+            avatarUrl: assignedBy.avatarUrl ?? assignedBy.faceImageUrl,
+          }
+        : null,
+      comments: comments.map((c) => ({
+        ...c,
+        author: commentAuthorMap.get(c.authorId),
+      })),
+      commentCount: comments.length,
+    };
+  },
+});

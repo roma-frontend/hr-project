@@ -93,14 +93,26 @@ export function MaintenanceBanner() {
 
   return (
     <div className="w-full animate-in fade-in duration-300">
-      <div className="bg-amber-50 dark:bg-amber-500/10 border-b border-amber-300 dark:border-amber-500/30">
+      <div
+        className="border-b"
+        style={{
+          backgroundColor: 'var(--maintenance-banner-bg, #fef3c7)',
+          borderColor: 'var(--maintenance-banner-border, #fde68a)',
+        }}
+      >
         <div className="max-w-[1600px] mx-auto px-3 sm:px-4 py-2.5 flex items-center gap-3">
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 truncate">
+            <p
+              className="text-sm font-semibold truncate"
+              style={{ color: 'var(--maintenance-banner-text, #92400e)' }}
+            >
               {message}
             </p>
-            <div className="flex items-center gap-3 text-xs text-amber-700 dark:text-amber-400/80">
+            <div
+              className="flex items-center gap-3 text-xs mt-0.5"
+              style={{ color: 'var(--maintenance-banner-text-secondary, #a16207)' }}
+            >
               {detail && <span className="truncate">{detail}</span>}
               <span className="flex items-center gap-1 shrink-0">
                 <Clock className="w-3 h-3" />
@@ -114,8 +126,17 @@ export function MaintenanceBanner() {
 
           {/* Countdown badge */}
           {countdown && (
-            <div className="shrink-0 px-2.5 py-1 rounded-full bg-amber-200 dark:bg-amber-500/20 border border-amber-400 dark:border-amber-500/30">
-              <span className="text-xs font-bold text-amber-900 dark:text-amber-300 tabular-nums">
+            <div
+              className="shrink-0 px-2.5 py-1 rounded-full border"
+              style={{
+                backgroundColor: 'var(--maintenance-badge-bg, #fde68a)',
+                borderColor: 'var(--maintenance-badge-border, #f59e0b)',
+              }}
+            >
+              <span
+                className="text-xs font-bold tabular-nums"
+                style={{ color: 'var(--maintenance-banner-text, #92400e)' }}
+              >
                 {countdown}
               </span>
             </div>
@@ -124,10 +145,19 @@ export function MaintenanceBanner() {
           {/* Dismiss */}
           <button
             onClick={() => setDismissed(true)}
-            className="shrink-0 p-1 rounded-full hover:bg-amber-200 dark:hover:bg-amber-500/20 transition-colors"
+            className="shrink-0 p-1 rounded-full transition-colors"
+            style={{
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+            }}
             aria-label="Dismiss maintenance notice"
           >
-            <X className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <X className="w-4 h-4" style={{ color: 'var(--maintenance-banner-text, #92400e)' }} />
           </button>
         </div>
       </div>

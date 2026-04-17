@@ -2938,7 +2938,11 @@
     "noAttachments": "No attachments",
     "download": "Download",
     "downloadToView": "Download to view",
-    "previewNotAvailable": "Preview not available for this file type"
+    "previewNotAvailable": "Preview not available for this file type",
+    "confirmDeleteTitle": "Delete Attachment",
+    "confirmDeleteSubtitle": "This action cannot be undone",
+    "confirmDeleteWarning": "This file will be permanently removed",
+    "deleteFile": "Delete File"
   },
   "cookies": {
     "title": "We value your privacy",
@@ -3651,7 +3655,9 @@
     "attachmentsHint": "PDF, images, docs (max 10MB each)",
     "clickToAttach": "Click to attach files",
     "filesSelected": "files selected",
-    "removeFile": "Remove"
+    "removeFile": "Remove",
+    "addFiles": "Add Files",
+    "uploading": "Uploading..."
   },
   "settingsDashboard": {
     "defaultLandingPage": "Default Landing Page",

@@ -259,10 +259,8 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const isMaintenance = params.get('maintenance') === 'true';
-      console.error('🔧 useEffect check - isMaintenance:', isMaintenance);
 
       if (isMaintenance) {
-        console.error('✅ Setting maintenance banner to true in useEffect');
         setShowMaintenanceBanner(true);
         document.documentElement.style.opacity = '1';
         document.documentElement.style.transition = 'none';
@@ -281,7 +279,6 @@ export default function LoginPage() {
 
     // Don't redirect if in maintenance mode
     if (isMaintenance) {
-      console.error('[Login] Maintenance mode detected - not redirecting');
       return;
     }
 

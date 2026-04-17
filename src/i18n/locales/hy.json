@@ -2921,7 +2921,11 @@
     "noAttachments": "Կցված ֆայլեր չկան",
     "download": "Ներբեռնել",
     "downloadToView": "Ներբեռնել դիտելու համար",
-    "previewNotAvailable": "Նախադիտումը հասանելի չէ այս ֆայլի տեսակի համար"
+    "previewNotAvailable": "Նախադիտումը հասանելի չէ այս ֆայլի տեսակի համար",
+    "confirmDeleteTitle": "Ջնջել կցված ֆայլը",
+    "confirmDeleteSubtitle": "Այս գործողությունը հնարավոր չեղարկել",
+    "confirmDeleteWarning": "Ֆայլը մշտապես կջնջվի",
+    "deleteFile": "Ջնջել ֆայլը"
   },
   "cookies": {
     "title": "Մենք գնահատում ենք ձեր գաղտնիությունը",

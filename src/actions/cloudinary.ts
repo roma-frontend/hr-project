@@ -5,7 +5,7 @@ import { v2 as cloudinary } from 'cloudinary';
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -142,6 +142,42 @@ export async function deleteAvatarFromCloudinary(userId: string): Promise<void> 
     console.log('📤 Deleting from Cloudinary:', publicId);
 
     const result = await cloudinary.uploader.destroy(publicId);
+
+    console.log('✅ Delete result:', result);
+
+    if (result.result !== 'ok' && result.result !== 'not found') {
+      throw new Error(`Delete failed: ${result.result}`);
+    }
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    throw new Error(error instanceof Error ? error.message : 'Delete failed');
+  }
+}
+
+export async function deleteTaskAttachmentFromCloudinary(url: string): Promise<void> {
+  console.log('🗑️ Cloudinary task attachment delete starting...');
+  console.log('🔗 URL:', url);
+
+  try {
+    // Extract public_id from URL
+    // URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v1234567890/hr-office/task-attachments/task_1234567890_filename.pdf
+    const urlParts = url.split('/');
+    const folderIndex = urlParts.findIndex((part) => part === 'task-attachments');
+    if (folderIndex === -1) {
+      throw new Error('Invalid task attachment URL');
+    }
+
+    // Get the public_id (folder/filename without extension and version)
+    const folder = urlParts[folderIndex];
+    const filenameWithVersion = urlParts[folderIndex + 1];
+    const filename = filenameWithVersion.replace(/^v\d+_/, '').split('.')[0];
+    const publicId = `hr-office/${folder}/${filename}`;
+
+    console.log('📤 Deleting from Cloudinary:', publicId);
+
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: 'raw', // task attachments can be any file type
+    });
 
     console.log('✅ Delete result:', result);
 
