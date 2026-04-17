@@ -463,11 +463,10 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                           item={s}
                           onUpdateStatus={handleUpdateTripStatus}
                           onOpenDetails={(item) => {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                             const mainEl = document.querySelector<HTMLElement>('main');
                             if (mainEl) {
                               mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-                            } else {
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
                             setSelectedTrip(item);
                             setShowTripModal(true);

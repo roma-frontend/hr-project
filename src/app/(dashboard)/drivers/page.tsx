@@ -280,11 +280,10 @@ export default function DriversPage() {
   }, []);
 
   const handleViewRequestDetails = useCallback((request: any) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     const mainEl = document.querySelector<HTMLElement>('main');
     if (mainEl) {
       mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setSelectedRequest(request);
     setShowTripDetails(true);
@@ -519,7 +518,7 @@ export default function DriversPage() {
 
       {showTripDetails && selectedRequest && (
         <div
-          className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto overscroll-contain"
+          className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowTripDetails(false);
@@ -527,7 +526,7 @@ export default function DriversPage() {
             }
           }}
         >
-          <div className="w-full max-w-2xl min-h-screen sm:min-h-0 flex items-center justify-center">
+          <div className="w-full max-w-4xl flex items-center justify-center">
             <TripDetailsModal
               schedule={{
                 type: 'trip',
