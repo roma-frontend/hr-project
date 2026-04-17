@@ -41,6 +41,7 @@ import { format, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { TripDetailsModal } from './modals/TripDetailsModal';
 
 interface DriverCalendarProps {
   driverId: Id<'drivers'>;
@@ -67,12 +68,14 @@ interface ScheduleItem {
 function TripCard({
   item,
   onUpdateStatus,
+  onOpenDetails,
 }: {
   item: ScheduleItem;
   onUpdateStatus: (
     id: Id<'driverSchedules'>,
     status: 'in_progress' | 'completed' | 'cancelled',
   ) => void;
+  onOpenDetails?: (item: ScheduleItem) => void;
 }) {
   const { t } = useTranslation();
   const startTime = format(new Date(item.startTime), 'HH:mm');
@@ -187,7 +190,8 @@ function TripCard({
 
   return (
     <div
-      className={`group relative rounded-lg border ${config.border} ${config.bg} transition-all duration-200 hover:shadow-sm`}
+      className={`group relative rounded-lg border ${config.border} ${config.bg} transition-all duration-200 hover:shadow-sm cursor-pointer`}
+      onClick={() => onOpenDetails?.(item)}
     >
       {/* Left accent bar */}
       <div className={`absolute left-0 top-2 bottom-2 w-0.5 rounded-full ${config.accent}`} />
@@ -224,7 +228,10 @@ function TripCard({
         {/* Action Button */}
         {item.type === 'trip' && item.status === 'scheduled' && (
           <button
-            onClick={() => onUpdateStatus(item._id, 'in_progress')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateStatus(item._id, 'in_progress');
+            }}
             className={`w-full mt-1.5 h-6 text-[10px] font-semibold rounded-md ${config.btnBg} ${config.btnText} transition-colors flex items-center justify-center gap-1`}
           >
             <Play className="w-2.5 h-2.5" />
@@ -233,7 +240,10 @@ function TripCard({
         )}
         {item.type === 'trip' && item.status === 'in_progress' && (
           <button
-            onClick={() => onUpdateStatus(item._id, 'completed')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateStatus(item._id, 'completed');
+            }}
             className="w-full mt-1.5 h-6 text-[10px] font-semibold rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center justify-center gap-1"
           >
             <CheckCircle2 className="w-2.5 h-2.5" />
@@ -253,6 +263,8 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
   const [blockReason, setBlockReason] = useState('');
   const [blockStartTime, setBlockStartTime] = useState('');
   const [blockEndTime, setBlockEndTime] = useState('');
+  const [selectedTrip, setSelectedTrip] = useState<ScheduleItem | null>(null);
+  const [showTripModal, setShowTripModal] = useState(false);
 
   const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
 
@@ -443,7 +455,15 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                     daySchedule
                       .sort((a: ScheduleItem, b: ScheduleItem) => a.startTime - b.startTime)
                       .map((s: ScheduleItem) => (
-                        <TripCard key={s._id} item={s} onUpdateStatus={handleUpdateTripStatus} />
+                        <TripCard
+                          key={s._id}
+                          item={s}
+                          onUpdateStatus={handleUpdateTripStatus}
+                          onOpenDetails={(item) => {
+                            setSelectedTrip(item);
+                            setShowTripModal(true);
+                          }}
+                        />
                       ))
                   ) : (
                     <div className="text-center py-8">
@@ -523,7 +543,15 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
               getScheduleForDay(weekDays[mobileViewDay])
                 .sort((a: ScheduleItem, b: ScheduleItem) => a.startTime - b.startTime)
                 .map((s: ScheduleItem) => (
-                  <TripCard key={s._id} item={s} onUpdateStatus={handleUpdateTripStatus} />
+                  <TripCard
+                    key={s._id}
+                    item={s}
+                    onUpdateStatus={handleUpdateTripStatus}
+                    onOpenDetails={(item) => {
+                      setSelectedTrip(item);
+                      setShowTripModal(true);
+                    }}
+                  />
                 ))
             ) : (
               <div className="text-center py-12">
@@ -695,6 +723,29 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Trip Details Modal */}
+      {showTripModal && selectedTrip && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => {
+            setShowTripModal(false);
+            setSelectedTrip(null);
+          }}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <TripDetailsModal
+              schedule={selectedTrip}
+              currentTime={Date.now()}
+              onClose={() => {
+                setShowTripModal(false);
+                setSelectedTrip(null);
+              }}
+              userId={userId!}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
