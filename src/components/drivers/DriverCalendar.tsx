@@ -12,7 +12,6 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -86,74 +85,81 @@ function TripCard({
   const getStatusConfig = () => {
     if (isTimeOff)
       return {
-        gradient: 'from-purple-500/8 via-purple-500/3 to-transparent',
-        border: 'border-purple-500/20',
+        bg: 'bg-purple-50 dark:bg-purple-500/5',
+        border: 'border-purple-200 dark:border-purple-500/20',
         accent: 'bg-purple-500',
-        accentBg: 'bg-purple-500/10',
-        text: 'text-purple-600 dark:text-purple-400',
-        hover: 'hover:bg-purple-500/15',
-        shadow: 'shadow-purple-500/10',
+        dot: 'bg-purple-400',
+        text: 'text-purple-700 dark:text-purple-300',
+        textMuted: 'text-purple-500 dark:text-purple-400',
+        btnBg: 'bg-purple-500 hover:bg-purple-600',
+        btnText: 'text-white',
       };
     if (isBlocked)
       return {
-        gradient: 'from-slate-500/8 via-slate-500/3 to-transparent',
-        border: 'border-slate-500/20',
+        bg: 'bg-slate-50 dark:bg-slate-500/5',
+        border: 'border-slate-200 dark:border-slate-500/20',
         accent: 'bg-slate-500',
-        accentBg: 'bg-slate-500/10',
-        text: 'text-slate-600 dark:text-slate-400',
-        hover: 'hover:bg-slate-500/15',
-        shadow: 'shadow-slate-500/10',
+        dot: 'bg-slate-400',
+        text: 'text-slate-700 dark:text-slate-300',
+        textMuted: 'text-slate-500 dark:text-slate-400',
+        btnBg: 'bg-slate-500 hover:bg-slate-600',
+        btnText: 'text-white',
       };
     if (isMaintenance)
       return {
-        gradient: 'from-orange-500/8 via-orange-500/3 to-transparent',
-        border: 'border-orange-500/20',
+        bg: 'bg-orange-50 dark:bg-orange-500/5',
+        border: 'border-orange-200 dark:border-orange-500/20',
         accent: 'bg-orange-500',
-        accentBg: 'bg-orange-500/10',
-        text: 'text-orange-600 dark:text-orange-400',
-        hover: 'hover:bg-orange-500/15',
-        shadow: 'shadow-orange-500/10',
+        dot: 'bg-orange-400',
+        text: 'text-orange-700 dark:text-orange-300',
+        textMuted: 'text-orange-500 dark:text-orange-400',
+        btnBg: 'bg-orange-500 hover:bg-orange-600',
+        btnText: 'text-white',
       };
     switch (item.status) {
       case 'completed':
         return {
-          gradient: 'from-emerald-500/8 via-emerald-500/3 to-transparent',
-          border: 'border-emerald-500/20',
+          bg: 'bg-emerald-50 dark:bg-emerald-500/5',
+          border: 'border-emerald-200 dark:border-emerald-500/20',
           accent: 'bg-emerald-500',
-          accentBg: 'bg-emerald-500/10',
-          text: 'text-emerald-600 dark:text-emerald-400',
-          hover: 'hover:bg-emerald-500/15',
-          shadow: 'shadow-emerald-500/10',
+          dot: 'bg-emerald-400',
+          text: 'text-emerald-700 dark:text-emerald-300',
+          textMuted: 'text-emerald-500 dark:text-emerald-400',
+          btnBg: 'bg-emerald-500 hover:bg-emerald-600',
+          btnText: 'text-white',
         };
       case 'in_progress':
         return {
-          gradient: 'from-blue-500/8 via-blue-500/3 to-transparent',
-          border: 'border-blue-500/20',
+          bg: 'bg-blue-50 dark:bg-blue-500/5',
+          border: 'border-blue-200 dark:border-blue-500/20',
           accent: 'bg-blue-500',
-          accentBg: 'bg-blue-500/10',
-          text: 'text-blue-600 dark:text-blue-400',
-          hover: 'hover:bg-blue-500/15',
-          shadow: 'shadow-blue-500/10',
+          dot: 'bg-blue-400',
+          text: 'text-blue-700 dark:text-blue-300',
+          textMuted: 'text-blue-500 dark:text-blue-400',
+          btnBg: 'bg-blue-500 hover:bg-blue-600',
+          btnText: 'text-white',
         };
       case 'cancelled':
         return {
-          gradient: 'from-red-500/8 via-red-500/3 to-transparent',
-          border: 'border-red-500/20',
+          bg: 'bg-red-50 dark:bg-red-500/5',
+          border: 'border-red-200 dark:border-red-500/20',
           accent: 'bg-red-500',
-          accentBg: 'bg-red-500/10',
-          text: 'text-red-600 dark:text-red-400',
-          hover: 'hover:bg-red-500/15',
-          shadow: 'shadow-red-500/10',
+          dot: 'bg-red-400',
+          text: 'text-red-700 dark:text-red-300',
+          textMuted: 'text-red-500 dark:text-red-400',
+          btnBg: 'bg-red-500 hover:bg-red-600',
+          btnText: 'text-white',
         };
       default:
         return {
-          gradient: 'from-slate-500/8 via-slate-500/3 to-transparent',
-          border: 'border-slate-500/20',
+          bg: 'bg-slate-50 dark:bg-slate-500/5',
+          border: 'border-slate-200 dark:border-slate-500/20',
           accent: 'bg-slate-400',
-          accentBg: 'bg-slate-400/10',
-          text: 'text-slate-600 dark:text-slate-400',
-          hover: 'hover:bg-slate-400/15',
-          shadow: 'shadow-slate-400/10',
+          dot: 'bg-slate-400',
+          text: 'text-slate-700 dark:text-slate-300',
+          textMuted: 'text-slate-500 dark:text-slate-400',
+          btnBg: 'bg-blue-500 hover:bg-blue-600',
+          btnText: 'text-white',
         };
     }
   };
@@ -161,10 +167,10 @@ function TripCard({
   const config = getStatusConfig();
 
   const getTypeIcon = () => {
-    if (isTimeOff) return <Coffee className="w-3.5 h-3.5" />;
-    if (isBlocked) return <Shield className="w-3.5 h-3.5" />;
-    if (isMaintenance) return <Wrench className="w-3.5 h-3.5" />;
-    return <Car className="w-3.5 h-3.5" />;
+    if (isTimeOff) return <Coffee className="w-3 h-3" />;
+    if (isBlocked) return <Shield className="w-3 h-3" />;
+    if (isMaintenance) return <Wrench className="w-3 h-3" />;
+    return <Car className="w-3 h-3" />;
   };
 
   const getTypeLabel = () => {
@@ -174,91 +180,65 @@ function TripCard({
     return t('driverCalendar.trip');
   };
 
+  const routeText =
+    item.type === 'trip' && item.tripInfo
+      ? `${item.tripInfo.from ?? ''} → ${item.tripInfo.to ?? ''}`
+      : '';
+
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border ${config.border} bg-linear-to-br ${config.gradient} transition-all duration-300 hover:shadow-md ${config.shadow}`}
+      className={`group relative rounded-lg border ${config.border} ${config.bg} transition-all duration-200 hover:shadow-sm`}
     >
-      {/* Top accent bar */}
-      <div className={`h-0.5 w-full ${config.accent}`} />
+      {/* Left accent bar */}
+      <div className={`absolute left-0 top-2 bottom-2 w-0.5 rounded-full ${config.accent}`} />
 
-      <div className="p-3">
-        {/* Time & Type Row */}
-        <div className="flex items-center justify-between mb-2.5">
-          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${config.accentBg}`}>
-              <span className={config.text}>{getTypeIcon()}</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-sm font-bold text-foreground">{startTime}</span>
-              <span className="text-xs text-muted-foreground/60">—</span>
-              <span className="text-xs text-muted-foreground">{endTime}</span>
-            </div>
+      <div className="p-2.5 pl-3.5">
+        {/* Time & Status */}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Clock className={`w-3 h-3 ${config.textMuted}`} />
+            <span className={`text-xs font-semibold ${config.text}`}>{startTime}</span>
+            <span className="text-[10px] text-muted-foreground/50">{endTime}</span>
           </div>
-          <Badge
-            variant="outline"
-            className={`text-[10px] h-5 px-1.5 ${config.border} ${config.text} font-medium`}
-          >
-            {getTypeLabel()}
-          </Badge>
+          <div className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         </div>
 
-        {/* Route Info */}
+        {/* Route - single line, truncated */}
         {item.type === 'trip' && item.tripInfo ? (
-          <div className="space-y-2">
-            {/* From */}
-            <div className="flex items-start gap-2">
-              <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-500/20" />
-              <span className="text-xs font-medium text-foreground leading-tight">
-                {item.tripInfo.from}
-              </span>
-            </div>
-            {/* Connector line */}
-            <div className="flex items-center gap-2 pl-1">
-              <div className="w-px h-3 bg-border" />
-              <div className="flex-1 border-t border-dashed border-border/50" />
-            </div>
-            {/* To */}
-            <div className="flex items-start gap-2">
-              <div className="mt-1 w-2 h-2 rounded-full bg-red-500 shrink-0 ring-2 ring-red-500/20" />
-              <span className="text-xs font-medium text-foreground leading-tight">
-                {item.tripInfo.to}
-              </span>
-            </div>
-            {/* Purpose */}
+          <div className="mb-2">
+            <p className="text-[11px] font-medium text-foreground truncate leading-tight">
+              {routeText}
+            </p>
             {item.tripInfo.purpose && (
-              <div className="pt-1 pl-4">
-                <span className="text-[10px] text-muted-foreground italic">
-                  {item.tripInfo.purpose}
-                </span>
-              </div>
+              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                {item.tripInfo.purpose}
+              </p>
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground pl-4">{item.reason || getTypeLabel()}</p>
+          <p className="text-[11px] text-muted-foreground truncate">
+            {item.reason || getTypeLabel()}
+          </p>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Button */}
         {item.type === 'trip' && item.status === 'scheduled' && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className={`w-full mt-3 h-8 text-xs font-semibold gap-1.5 ${config.accentBg} ${config.hover} ${config.text}`}
+          <button
             onClick={() => onUpdateStatus(item._id, 'in_progress')}
+            className={`w-full mt-1.5 h-6 text-[10px] font-semibold rounded-md ${config.btnBg} ${config.btnText} transition-colors flex items-center justify-center gap-1`}
           >
-            <Play className="w-3.5 h-3.5" />
-            {t('driverCalendar.startTrip', 'Start Trip')}
-          </Button>
+            <Play className="w-2.5 h-2.5" />
+            {t('driverCalendar.startTrip', 'Start')}
+          </button>
         )}
         {item.type === 'trip' && item.status === 'in_progress' && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="w-full mt-3 h-8 text-xs font-semibold gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+          <button
             onClick={() => onUpdateStatus(item._id, 'completed')}
+            className="w-full mt-1.5 h-6 text-[10px] font-semibold rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center justify-center gap-1"
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <CheckCircle2 className="w-2.5 h-2.5" />
             {t('driverCalendar.completeTrip', 'Complete')}
-          </Button>
+          </button>
         )}
       </div>
     </div>
