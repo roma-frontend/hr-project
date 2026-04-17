@@ -517,8 +517,8 @@ export default function DriversPage() {
       )}
 
       {showTripDetails && selectedRequest && (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl bg-(--card) shadow-2xl">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="w-full max-w-3xl rounded-2xl bg-(--card) shadow-2xl flex flex-col max-h-[90vh]">
             <TripDetailsModal
               schedule={{
                 type: 'trip',
@@ -536,6 +536,7 @@ export default function DriversPage() {
                 setSelectedRequest(null);
               }}
               userId={userId!}
+              isAdmin={user?.role === 'admin' || user?.role === 'superadmin'}
             />
           </div>
         </div>

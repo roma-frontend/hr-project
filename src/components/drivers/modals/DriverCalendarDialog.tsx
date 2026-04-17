@@ -30,11 +30,11 @@ export function DriverCalendarDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="w-[95vw] sm:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-4 py-4 sm:p-6 border-b">
           <DialogTitle>{t('driverCalendar.dialogTitle', 'Driver Schedule')}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <DriverCalendar
             driverId={driverId as Id<'drivers'>}
             organizationId={organizationId}

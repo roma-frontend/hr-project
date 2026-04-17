@@ -29,6 +29,7 @@ interface TripDetailsModalProps {
   onMessage?: () => void;
   onCall?: () => void;
   userId: string;
+  isAdmin?: boolean;
 }
 
 export function TripDetailsModal({
@@ -40,7 +41,8 @@ export function TripDetailsModal({
   onMessage,
   onCall,
   userId,
-}: TripDetailsModalProps) {
+  isAdmin = false,
+}: TripDetailsModalProps & { isAdmin?: boolean }) {
   const { t } = useTranslation();
 
   // Block body scroll when modal is open
@@ -98,12 +100,12 @@ export function TripDetailsModal({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="w-full"
+      className="w-full h-full flex flex-col"
     >
-      <div className="bg-(--card) rounded-2xl shadow-2xl overflow-hidden w-full">
+      <div className="bg-(--card) rounded-2xl shadow-2xl overflow-hidden w-full h-full flex flex-col">
         {/* Header with gradient */}
         <div
-          className={`relative p-6 ${
+          className={`relative p-6 shrink-0 ${
             isTrip
               ? 'bg-linear-to-r from-(--primary) to-(--primary)/80'
               : 'bg-linear-to-r from-amber-500 to-orange-500'
@@ -150,8 +152,8 @@ export function TripDetailsModal({
           </div>
         </div>
 
-        {/* Content - No borders, clean design */}
-        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+        {/* Content - Scrollable area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {isTrip && schedule.tripInfo && (
             <>
               {/* Route */}
@@ -247,6 +249,34 @@ export function TripDetailsModal({
                 )}
               </div>
 
+              {/* Purpose */}
+              {schedule.tripInfo.purpose && (
+                <div className="rounded-xl bg-muted/30 p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Car className="w-4 h-4 text-(--primary)" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {t('driver.purpose', 'Purpose')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground">{schedule.tripInfo.purpose}</p>
+                </div>
+              )}
+
+              {/* Passenger Count */}
+              {schedule.tripInfo.passengerCount && (
+                <div className="rounded-xl bg-muted/30 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-(--primary)" />
+                    <p className="text-xs text-muted-foreground">
+                      {t('driver.passengers', 'Passengers')}
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold text-foreground">
+                    {schedule.tripInfo.passengerCount}
+                  </p>
+                </div>
+              )}
+
               {/* Notes */}
               {schedule.tripInfo.notes && (
                 <div className="rounded-xl bg-muted/30 p-5">
@@ -263,7 +293,7 @@ export function TripDetailsModal({
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-2 pt-4">
+          <div className="flex flex-wrap gap-2 pt-4 pb-2">
             {onMessage && (
               <Button variant="outline" size="sm" onClick={onMessage} className="gap-2">
                 <MessageSquare className="w-4 h-4" />

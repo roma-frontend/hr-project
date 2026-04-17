@@ -6,12 +6,13 @@
 
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { createPortal } from 'react-dom';
 import {
   Dialog,
   DialogContent,
@@ -740,28 +741,37 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
         </DialogContent>
       </Dialog>
 
-      {/* Trip Details Modal */}
-      {showTripModal && selectedTrip && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-          onClick={() => {
-            setShowTripModal(false);
-            setSelectedTrip(null);
-          }}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <TripDetailsModal
-              schedule={selectedTrip}
-              currentTime={Date.now()}
-              onClose={() => {
-                setShowTripModal(false);
-                setSelectedTrip(null);
-              }}
-              userId={userId!}
-            />
-          </div>
-        </div>
-      )}
+      {/* Trip Details Modal - Rendered via Portal outside Dialog */}
+      {showTripModal &&
+        selectedTrip &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+            style={{ pointerEvents: 'auto' }}
+            onClick={() => {
+              setShowTripModal(false);
+              setSelectedTrip(null);
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-3xl"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <TripDetailsModal
+                schedule={selectedTrip}
+                currentTime={Date.now()}
+                onClose={() => {
+                  setShowTripModal(false);
+                  setSelectedTrip(null);
+                }}
+                userId={userId!}
+                isAdmin={role === 'admin'}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

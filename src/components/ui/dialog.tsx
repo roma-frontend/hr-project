@@ -23,6 +23,7 @@ const DialogOverlay = React.forwardRef<
       'data-[state=closed]:duration-300 data-[state=open]:duration-200',
       className,
     )}
+    style={{ pointerEvents: 'auto' }}
     {...props}
   />
 ));
