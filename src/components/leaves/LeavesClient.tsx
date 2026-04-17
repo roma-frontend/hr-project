@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from '@/lib/cssMotion';
@@ -24,7 +24,12 @@ import { LeaveRequestModal } from '@/components/leaves/LeaveRequestModal';
 import { LeaveRequestWizard } from '@/components/leaves/LeaveRequestWizard';
 import { useAuthStore, type User } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
-import { LEAVE_TYPE_LABELS, getLeaveTypeLabel, type LeaveType, type LeaveStatus } from '@/lib/types';
+import {
+  LEAVE_TYPE_LABELS,
+  getLeaveTypeLabel,
+  type LeaveType,
+  type LeaveStatus,
+} from '@/lib/types';
 import dynamic from 'next/dynamic';
 import { playNotificationSound, sendBrowserNotification } from '@/lib/notificationSound';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
@@ -457,6 +462,7 @@ export function LeavesClient() {
           userId={user.id as Id<'users'>}
           isSuperadmin={isSuperadmin}
           selectedOrgId={selectedOrgId as Id<'organizations'> | undefined}
+          onComplete={() => setWizardOpen(false)}
           onCancel={() => setWizardOpen(false)}
         />
       )}

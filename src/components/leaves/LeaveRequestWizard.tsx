@@ -8,7 +8,18 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
-import { Calendar, Sun, Heart, Users, Briefcase, CheckCircle, User, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Calendar,
+  Sun,
+  Heart,
+  Users,
+  Briefcase,
+  CheckCircle,
+  User,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -58,7 +69,10 @@ export function LeaveRequestWizard({
     useOrgFilter ? api.organizations.getOrgMembers : api.users.queries.getAllUsers,
     userId
       ? useOrgFilter
-        ? { organizationId: selectedOrgId as Id<'organizations'>, superadminUserId: userId as Id<'users'> }
+        ? {
+            organizationId: selectedOrgId as Id<'organizations'>,
+            superadminUserId: userId as Id<'users'>,
+          }
         : { requesterId: userId as Id<'users'> }
       : 'skip',
   );
@@ -87,11 +101,16 @@ export function LeaveRequestWizard({
 
   const canGoNext = (): boolean => {
     switch (currentStepId) {
-      case 'employee': return !!stepData.selectedUserId;
-      case 'type': return !!stepData.type;
-      case 'dates': return !!stepData.startDate && !!stepData.endDate;
-      case 'details': return !!stepData.reason && stepData.reason.trim().length > 0;
-      default: return true;
+      case 'employee':
+        return !!stepData.selectedUserId;
+      case 'type':
+        return !!stepData.type;
+      case 'dates':
+        return !!stepData.startDate && !!stepData.endDate;
+      case 'details':
+        return !!stepData.reason && stepData.reason.trim().length > 0;
+      default:
+        return true;
     }
   };
 
@@ -110,9 +129,7 @@ export function LeaveRequestWizard({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const targetUserId = canSelectEmployee
-        ? (stepData.selectedUserId as Id<'users'>)
-        : userId;
+      const targetUserId = canSelectEmployee ? (stepData.selectedUserId as Id<'users'>) : userId;
       const days = calculateDays(String(stepData.startDate), String(stepData.endDate));
 
       await createLeave({
@@ -129,6 +146,7 @@ export function LeaveRequestWizard({
         description: t('leaveWizard.toast.waitingApproval', 'Waiting for manager approval'),
       });
       onComplete?.();
+      onCancel?.();
     } catch (error) {
       toast.error(t('leaveWizard.toast.error', 'Failed to submit request'));
     } finally {
@@ -140,7 +158,10 @@ export function LeaveRequestWizard({
     employee: { title: t('labels.employee', 'Employee'), icon: <User className="w-5 h-5" /> },
     type: { title: t('labels.leaveType', 'Leave Type'), icon: <Calendar className="w-5 h-5" /> },
     dates: { title: t('labels.dates', 'Dates'), icon: <CalendarDays className="w-5 h-5" /> },
-    details: { title: t('leaveWizard.confirm', 'Confirm'), icon: <CheckCircle className="w-5 h-5" /> },
+    details: {
+      title: t('leaveWizard.confirm', 'Confirm'),
+      icon: <CheckCircle className="w-5 h-5" />,
+    },
   };
 
   return (
@@ -171,8 +192,8 @@ export function LeaveRequestWizard({
                       isCompleted
                         ? 'bg-(--primary) border-(--primary) text-white'
                         : isCurrent
-                        ? 'border-(--primary) bg-(--background) text-(--primary)'
-                        : 'border-(--border) bg-(--background) text-(--muted-foreground)',
+                          ? 'border-(--primary) bg-(--background) text-(--primary)'
+                          : 'border-(--border) bg-(--background) text-(--muted-foreground)',
                     )}
                     animate={{ scale: isCurrent ? 1.1 : 1 }}
                     transition={{ duration: 0.2 }}
@@ -183,10 +204,12 @@ export function LeaveRequestWizard({
                       <span className="text-xs font-semibold">{idx + 1}</span>
                     )}
                   </motion.div>
-                  <p className={cn(
-                    'text-[10px] md:text-xs font-medium mt-1.5 text-center leading-tight truncate w-full px-1',
-                    isCurrent ? 'text-(--primary)' : 'text-(--muted-foreground)',
-                  )}>
+                  <p
+                    className={cn(
+                      'text-[10px] md:text-xs font-medium mt-1.5 text-center leading-tight truncate w-full px-1',
+                      isCurrent ? 'text-(--primary)' : 'text-(--muted-foreground)',
+                    )}
+                  >
                     {cfg?.title}
                   </p>
                 </div>
@@ -217,10 +240,17 @@ export function LeaveRequestWizard({
             transition={{ duration: 0.2 }}
           >
             {currentStepId === 'employee' && canSelectEmployee && (
-              <EmployeeStep allUsers={allUsers} value={stepData.selectedUserId} onChange={(v) => updateStepData('selectedUserId', v)} />
+              <EmployeeStep
+                allUsers={allUsers}
+                value={stepData.selectedUserId}
+                onChange={(v) => updateStepData('selectedUserId', v)}
+              />
             )}
             {currentStepId === 'type' && (
-              <TypeStep value={stepData.type} onChange={(v) => updateStepData('type', v as LeaveType)} />
+              <TypeStep
+                value={stepData.type}
+                onChange={(v) => updateStepData('type', v as LeaveType)}
+              />
             )}
             {currentStepId === 'dates' && (
               <DatesStep
@@ -278,9 +308,13 @@ export function LeaveRequestWizard({
               {isSubmitting ? (
                 t('wizard.processing', 'Processing...')
               ) : currentStepIdx === stepIds.length - 1 ? (
-                <>{t('leaveWizard.submit', 'Submit Request')} <CheckCircle className="w-4 h-4" /></>
+                <>
+                  {t('leaveWizard.submit', 'Submit Request')} <CheckCircle className="w-4 h-4" />
+                </>
               ) : (
-                <>{t('wizard.next', 'Next')} <ChevronRight className="w-4 h-4" /></>
+                <>
+                  {t('wizard.next', 'Next')} <ChevronRight className="w-4 h-4" />
+                </>
               )}
             </Button>
           </div>
@@ -319,7 +353,8 @@ function EmployeeStep({
         <option value="">{t('placeholders.selectEmployee', 'Select employee...')}</option>
         {allUsers?.map((emp: any) => (
           <option key={emp._id} value={emp._id}>
-            {emp.name}{emp.department ? ` · ${emp.department}` : ''}
+            {emp.name}
+            {emp.department ? ` · ${emp.department}` : ''}
           </option>
         ))}
       </select>
@@ -330,11 +365,41 @@ function EmployeeStep({
 // ─── Leave Type Step ─────────────────────────────────────────────────────
 function TypeStep({ value, onChange }: { value?: LeaveType; onChange: (v: LeaveType) => void }) {
   const { t } = useTranslation();
-  const types: { value: LeaveType; title: string; desc: string; icon: React.ReactNode; color: string }[] = [
-    { value: 'paid', title: t('leave.types.paid', 'Paid Leave'), desc: t('leave.types.paidDesc', 'From paid leave balance'), icon: <Sun className="w-5 h-5" />, color: 'yellow' },
-    { value: 'sick', title: t('leave.types.sick', 'Sick Leave'), desc: t('leave.types.sickDesc', 'Medical reasons'), icon: <Heart className="w-5 h-5" />, color: 'red' },
-    { value: 'family', title: t('leave.types.family', 'Family Leave'), desc: t('leave.types.familyDesc', 'Family emergencies'), icon: <Users className="w-5 h-5" />, color: 'purple' },
-    { value: 'unpaid', title: t('leave.types.unpaid', 'Unpaid Leave'), desc: t('leave.types.unpaidDesc', 'No pay, needs approval'), icon: <Briefcase className="w-5 h-5" />, color: 'gray' },
+  const types: {
+    value: LeaveType;
+    title: string;
+    desc: string;
+    icon: React.ReactNode;
+    color: string;
+  }[] = [
+    {
+      value: 'paid',
+      title: t('leave.types.paid', 'Paid Leave'),
+      desc: t('leave.types.paidDesc', 'From paid leave balance'),
+      icon: <Sun className="w-5 h-5" />,
+      color: 'yellow',
+    },
+    {
+      value: 'sick',
+      title: t('leave.types.sick', 'Sick Leave'),
+      desc: t('leave.types.sickDesc', 'Medical reasons'),
+      icon: <Heart className="w-5 h-5" />,
+      color: 'red',
+    },
+    {
+      value: 'family',
+      title: t('leave.types.family', 'Family Leave'),
+      desc: t('leave.types.familyDesc', 'Family emergencies'),
+      icon: <Users className="w-5 h-5" />,
+      color: 'purple',
+    },
+    {
+      value: 'unpaid',
+      title: t('leave.types.unpaid', 'Unpaid Leave'),
+      desc: t('leave.types.unpaidDesc', 'No pay, needs approval'),
+      icon: <Briefcase className="w-5 h-5" />,
+      color: 'gray',
+    },
   ];
 
   const colorMap: Record<string, string> = {
@@ -369,16 +434,30 @@ function TypeStep({ value, onChange }: { value?: LeaveType; onChange: (v: LeaveT
                   : 'border-(--border) bg-(--background) hover:bg-(--background-subtle)',
               )}
             >
-              <div className={cn('p-2.5 rounded-full', isSelected ? 'bg-(--primary) text-white' : colorMap[type.color])}>
+              <div
+                className={cn(
+                  'p-2.5 rounded-full',
+                  isSelected ? 'bg-(--primary) text-white' : colorMap[type.color],
+                )}
+              >
                 {type.icon}
               </div>
               <div>
-                <p className={cn('text-sm font-semibold', isSelected ? 'text-(--primary)' : 'text-(--text-primary)')}>
+                <p
+                  className={cn(
+                    'text-sm font-semibold',
+                    isSelected ? 'text-(--primary)' : 'text-(--text-primary)',
+                  )}
+                >
                   {type.title}
                 </p>
-                <p className="text-[10px] md:text-xs text-(--text-muted) mt-0.5 line-clamp-2">{type.desc}</p>
+                <p className="text-[10px] md:text-xs text-(--text-muted) mt-0.5 line-clamp-2">
+                  {type.desc}
+                </p>
               </div>
-              {isSelected && <Badge className="bg-(--primary) text-white text-[10px] px-2 py-0.5 mt-1">✓</Badge>}
+              {isSelected && (
+                <Badge className="bg-(--primary) text-white text-[10px] px-2 py-0.5 mt-1">✓</Badge>
+              )}
             </button>
           );
         })}
@@ -501,7 +580,10 @@ function DetailsStep({
     unpaid: 'text-gray-600 dark:text-gray-400',
   };
 
-  const days = stepData.startDate && stepData.endDate ? calculateDays(stepData.startDate, stepData.endDate) : 0;
+  const days =
+    stepData.startDate && stepData.endDate
+      ? calculateDays(stepData.startDate, stepData.endDate)
+      : 0;
 
   return (
     <div className="space-y-4">
@@ -512,8 +594,12 @@ function DetailsStep({
             {displayUser.name?.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-(--text-primary) truncate">{displayUser.name}</p>
-            {displayUser.department && <p className="text-xs text-(--text-muted) truncate">{displayUser.department}</p>}
+            <p className="text-sm font-semibold text-(--text-primary) truncate">
+              {displayUser.name}
+            </p>
+            {displayUser.department && (
+              <p className="text-xs text-(--text-muted) truncate">{displayUser.department}</p>
+            )}
           </div>
         </div>
       )}
@@ -522,7 +608,12 @@ function DetailsStep({
       {stepData.type && (
         <div className="flex items-center justify-between p-3 rounded-lg bg-(--background-subtle) border border-(--border)">
           <span className="text-sm text-(--text-muted)">{t('labels.leaveType', 'Leave Type')}</span>
-          <span className={cn('text-sm font-semibold', typeColors[stepData.type] || 'text-(--text-primary)')}>
+          <span
+            className={cn(
+              'text-sm font-semibold',
+              typeColors[stepData.type] || 'text-(--text-primary)',
+            )}
+          >
             {typeLabels[stepData.type] || stepData.type}
           </span>
         </div>
@@ -534,9 +625,12 @@ function DetailsStep({
           <span className="text-sm text-(--text-muted)">{t('labels.dates', 'Dates')}</span>
           <div className="text-right">
             <p className="text-sm font-medium text-(--text-primary)">
-              {format(new Date(stepData.startDate), 'MMM d')} – {format(new Date(stepData.endDate), 'MMM d, yyyy')}
+              {format(new Date(stepData.startDate), 'MMM d')} –{' '}
+              {format(new Date(stepData.endDate), 'MMM d, yyyy')}
             </p>
-            <p className="text-xs text-(--text-muted)">{days} {days === 1 ? t('leave.day', 'day') : t('leave.days', 'days')}</p>
+            <p className="text-xs text-(--text-muted)">
+              {days} {days === 1 ? t('leave.day', 'day') : t('leave.days', 'days')}
+            </p>
           </div>
         </div>
       )}
@@ -573,7 +667,8 @@ function DetailsStep({
       {currentUser && stepData.type === 'paid' && (
         <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
           <p className="text-sm text-blue-700 dark:text-blue-300">
-            💡 {t('leaveWizard.currentBalance', 'Your balance')}: {currentUser.paidLeaveBalance ?? 24} {t('leave.days', 'days')}
+            💡 {t('leaveWizard.currentBalance', 'Your balance')}:{' '}
+            {currentUser.paidLeaveBalance ?? 24} {t('leave.days', 'days')}
           </p>
         </div>
       )}
