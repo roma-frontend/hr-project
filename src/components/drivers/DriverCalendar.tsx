@@ -47,6 +47,7 @@ interface DriverCalendarProps {
   driverId: Id<'drivers'>;
   organizationId: Id<'organizations'>;
   userId?: Id<'users'>;
+  role?: 'admin' | 'driver';
 }
 
 interface ScheduleItem {
@@ -69,6 +70,7 @@ function TripCard({
   item,
   onUpdateStatus,
   onOpenDetails,
+  role,
 }: {
   item: ScheduleItem;
   onUpdateStatus: (
@@ -76,6 +78,7 @@ function TripCard({
     status: 'in_progress' | 'completed' | 'cancelled',
   ) => void;
   onOpenDetails?: (item: ScheduleItem) => void;
+  role?: 'admin' | 'driver';
 }) {
   const { t } = useTranslation();
   const startTime = format(new Date(item.startTime), 'HH:mm');
@@ -226,7 +229,7 @@ function TripCard({
         )}
 
         {/* Action Button */}
-        {item.type === 'trip' && item.status === 'scheduled' && (
+        {item.type === 'trip' && item.status === 'scheduled' && role !== 'admin' && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -238,7 +241,7 @@ function TripCard({
             {t('driverCalendar.startTrip', 'Start')}
           </button>
         )}
-        {item.type === 'trip' && item.status === 'in_progress' && (
+        {item.type === 'trip' && item.status === 'in_progress' && role !== 'admin' && (
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -255,7 +258,7 @@ function TripCard({
   );
 }
 
-export function DriverCalendar({ driverId, organizationId, userId }: DriverCalendarProps) {
+export function DriverCalendar({ driverId, organizationId, userId, role }: DriverCalendarProps) {
   const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -460,9 +463,16 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                           item={s}
                           onUpdateStatus={handleUpdateTripStatus}
                           onOpenDetails={(item) => {
+                            const mainEl = document.querySelector<HTMLElement>('main');
+                            if (mainEl) {
+                              mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            } else {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
                             setSelectedTrip(item);
                             setShowTripModal(true);
                           }}
+                          role={role}
                         />
                       ))
                   ) : (
@@ -548,9 +558,16 @@ export function DriverCalendar({ driverId, organizationId, userId }: DriverCalen
                     item={s}
                     onUpdateStatus={handleUpdateTripStatus}
                     onOpenDetails={(item) => {
+                      const mainEl = document.querySelector<HTMLElement>('main');
+                      if (mainEl) {
+                        mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
                       setSelectedTrip(item);
                       setShowTripModal(true);
                     }}
+                    role={role}
                   />
                 ))
             ) : (

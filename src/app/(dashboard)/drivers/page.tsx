@@ -512,6 +512,7 @@ export default function DriversPage() {
             onClose={() => setShowCalendarDialog(false)}
             driverId={selectedDriverId}
             organizationId={orgId}
+            role={user?.role as 'admin' | 'driver'}
           />
         </div>
       )}

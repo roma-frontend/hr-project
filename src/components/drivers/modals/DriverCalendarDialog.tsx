@@ -14,6 +14,7 @@ interface DriverCalendarDialogProps {
   onClose: () => void;
   driverId: string | null;
   organizationId: Id<'organizations'>;
+  role?: 'admin' | 'driver';
 }
 
 export function DriverCalendarDialog({
@@ -21,6 +22,7 @@ export function DriverCalendarDialog({
   onClose,
   driverId,
   organizationId,
+  role,
 }: DriverCalendarDialogProps) {
   const { t } = useTranslation();
 
@@ -33,7 +35,11 @@ export function DriverCalendarDialog({
           <DialogTitle>{t('driverCalendar.dialogTitle', 'Driver Schedule')}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto">
-          <DriverCalendar driverId={driverId as Id<'drivers'>} organizationId={organizationId} />
+          <DriverCalendar
+            driverId={driverId as Id<'drivers'>}
+            organizationId={organizationId}
+            role={role}
+          />
         </div>
       </DialogContent>
     </Dialog>

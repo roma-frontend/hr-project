@@ -94,6 +94,12 @@ export default function FavoritesPage() {
     (driverId: string) => {
       const driver = drivers.find((d) => d._id === driverId);
       if (!driver) return;
+      const mainEl = document.querySelector<HTMLElement>('main');
+      if (mainEl) {
+        mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       setSelectedRequest({
         type: 'trip',
         status: 'scheduled',
