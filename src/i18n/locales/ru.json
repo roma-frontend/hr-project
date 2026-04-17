@@ -4177,7 +4177,8 @@
     "filterUnread": "Непрочитанные",
     "filterGroups": "Группы",
     "filterPinned": "Закреплённые",
-    "filterArchived": "Архив"
+    "filterArchived": "Архив",
+    "noMessagesYet": "Сообщений пока нет"
   },
   "superadminStripe": {
     "accessDenied": "Доступ запрещен",
@@ -4564,6 +4565,8 @@
     "geocodeError": "Не удалось найти место на карте",
     "pickup": "Посадка",
     "dropoff": "Назначение",
+    "route": "Маршрут",
+    "time": "Время",
     "driverLocation": "Водитель",
     "currentLocation": "Текущее местоположение",
     "clickOnMap": "Нажмите на карту, чтобы выбрать место",
@@ -5801,7 +5804,17 @@
     "failedToBlockTime": "Не удалось заблокировать время",
     "tripStatusUpdated": "Статус поездки обновлён на {{status}}",
     "failedToUpdateStatus": "Не удалось обновить статус",
-    "blockTimeDesc": "Выберите даты и укажите причину, чтобы заблокировать свою доступность."
+    "blockTimeDesc": "Выберите даты и укажите причину, чтобы заблокировать свою доступность.",
+    "wizardSteps": {
+      "type": {
+        "title": "Выберите тип выходного",
+        "description": "Выберите тип времени, которое хотите заблокировать"
+      },
+      "datetime": {
+        "title": "Дата и время",
+        "description": "Укажите, когда вы будете недоступны"
+      }
+    }
   },
   "driversWizard": {
     "personalInfo": "Личная информация",

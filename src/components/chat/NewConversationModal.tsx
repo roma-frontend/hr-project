@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { useTranslation } from 'react-i18next';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { SUPERADMIN_EMAIL } from '../../../convex/lib/auth';
 
 interface Props {
   currentUserId: Id<'users'>;
@@ -56,7 +57,10 @@ export function NewConversationModal({
   const isAllOrgs = selectedOrgId === null;
 
   // For superadmin we can fetch all organizations to power the inline org picker.
-  const organizations = useQuery(api.organizations.getAllOrganizations, isSuperadmin ? {} : 'skip');
+  const organizations = useQuery(
+    api.organizations.getAllOrganizations,
+    isSuperadmin ? ({} as { superadminUserId?: Id<'users'> }) : 'skip',
+  );
 
   // For a specific organization we keep using the lightweight chat.getOrgUsers query.
   const orgScopedUsers = useQuery(
@@ -76,7 +80,10 @@ export function NewConversationModal({
     if (isAllOrgs) {
       const list = (allOrgUsers ?? []) as Doc<'users'>[];
       return list
-        .filter((u) => u._id !== currentUserId && u.isActive && u.isApproved)
+        .filter(
+          (u) =>
+            u._id !== currentUserId && u.isActive && u.isApproved && u.email !== SUPERADMIN_EMAIL,
+        )
         .map((u: any) => ({
           _id: u._id as Id<'users'>,
           name: u.name ?? '',

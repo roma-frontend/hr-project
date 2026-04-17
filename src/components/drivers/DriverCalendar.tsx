@@ -13,15 +13,6 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { createPortal } from 'react-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import type { FunctionReference } from 'convex/server';
 import {
@@ -41,6 +32,8 @@ import { enUS, ru, hy } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { TripDetailsModal } from './modals/TripDetailsModal';
+import { BlockTimeWizard } from './BlockTimeWizard';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface DriverCalendarProps {
   driverId: Id<'drivers'>;
@@ -171,7 +164,6 @@ function TripCard({
 
   const config = getStatusConfig();
 
-
   const getTypeLabel = () => {
     if (isTimeOff) return t('driverCalendar.timeOff');
     if (isBlocked) return t('driverCalendar.blocked');
@@ -255,10 +247,6 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
   const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showBlockModal, setShowBlockModal] = useState(false);
-  const [blockType, setBlockType] = useState<'vacation' | 'sick' | 'personal'>('vacation');
-  const [blockReason, setBlockReason] = useState('');
-  const [blockStartTime, setBlockStartTime] = useState('');
-  const [blockEndTime, setBlockEndTime] = useState('');
   const [selectedTrip, setSelectedTrip] = useState<ScheduleItem | null>(null);
   const [showTripModal, setShowTripModal] = useState(false);
 
@@ -280,37 +268,9 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
   );
 
   // Mutations
-  const blockTimeOff = useMutation(
-    api.drivers.driver_operations.blockTimeOff as FunctionReference<'mutation'>,
-  );
   const updateTripStatus = useMutation(
     api.drivers.driver_operations.updateTripStatus as FunctionReference<'mutation'>,
   );
-
-  const handleBlockTime = async () => {
-    if (!blockStartTime || !blockEndTime || !blockReason) {
-      toast.error(t('toasts.pleaseFillAllFields'));
-      return;
-    }
-
-    try {
-      await blockTimeOff({
-        driverId,
-        organizationId,
-        startTime: new Date(blockStartTime).getTime(),
-        endTime: new Date(blockEndTime).getTime(),
-        reason: blockReason,
-        type: blockType,
-      });
-      toast.success(t('toasts.timeBlockedSuccess'));
-      setShowBlockModal(false);
-      setBlockReason('');
-      setBlockStartTime('');
-      setBlockEndTime('');
-    } catch (error: any) {
-      toast.error(error.message || t('driverCalendar.failedToBlockTime', 'Failed to block time'));
-    }
-  };
 
   const handleUpdateTripStatus = async (
     scheduleId: Id<'driverSchedules'>,
@@ -392,13 +352,15 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
             </h3>
           </div>
         </div>
-        <Button
-          onClick={() => setShowBlockModal(true)}
-          className="w-full sm:w-auto gap-2 rounded-xl bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm hover:shadow-md transition-all"
-        >
-          <Shield className="w-4 h-4" />
-          {t('driverCalendar.blockTime', 'Block Time')}
-        </Button>
+        {role === 'driver' && (
+          <Button
+            onClick={() => setShowBlockModal(true)}
+            className="w-full sm:w-auto gap-2 rounded-xl bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm hover:shadow-md transition-all"
+          >
+            <Shield className="w-4 h-4" />
+            {t('driverCalendar.blockTime', 'Block Time')}
+          </Button>
+        )}
       </div>
 
       {/* Week Range for Mobile */}
@@ -603,142 +565,41 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
         </div>
       </div>
 
-      {/* Block Time Modal - Beautiful Design */}
-      <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
-        <DialogContent className="sm:max-w-120 p-0 overflow-hidden">
-          {/* Modal Header with Gradient */}
-          <div className="relative bg-linear-to-br from-primary/10 via-primary/5 to-transparent p-6 pb-5">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-primary/10">
-                  <Shield className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <DialogTitle className="text-lg font-semibold">
-                    {t('driverCalendar.blockTime')}
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                    {t(
-                      'driverCalendar.blockTimeDesc',
-                      'Select dates and provide a reason to block your availability.',
-                    )}
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-          </div>
-
-          {/* Modal Body */}
-          <div className="p-6 pt-5 space-y-5">
-            {/* Block Type Selection */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">{t('driverCalendar.type')}</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  {
-                    value: 'vacation',
-                    label: t('driverCalendar.vacation'),
-                    icon: <Coffee className="w-4 h-4" />,
-                  },
-                  {
-                    value: 'sick',
-                    label: t('driverCalendar.sickLeave'),
-                    icon: <Shield className="w-4 h-4" />,
-                  },
-                  {
-                    value: 'personal',
-                    label: t('driverCalendar.personal'),
-                    icon: <Clock className="w-4 h-4" />,
-                  },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setBlockType(option.value as 'vacation' | 'sick' | 'personal')}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
-                      blockType === option.value
-                        ? 'border-primary bg-primary/5 shadow-sm'
-                        : 'border-border/50 hover:border-border hover:bg-muted/30'
-                    }`}
-                  >
-                    <span
-                      className={
-                        blockType === option.value ? 'text-primary' : 'text-muted-foreground'
-                      }
-                    >
-                      {option.icon}
-                    </span>
-                    <span
-                      className={`text-xs font-medium ${blockType === option.value ? 'text-foreground' : 'text-muted-foreground'}`}
-                    >
-                      {option.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Time Range */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  {t('driverCalendar.startTime')}
-                </Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="datetime-local"
-                    value={blockStartTime}
-                    onChange={(e) => setBlockStartTime(e.target.value)}
-                    className="pl-10 rounded-xl border-border/50 focus:border-primary focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  {t('driverCalendar.endTime')}
-                </Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="datetime-local"
-                    value={blockEndTime}
-                    onChange={(e) => setBlockEndTime(e.target.value)}
-                    className="pl-10 rounded-xl border-border/50 focus:border-primary focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Reason */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">{t('driverCalendar.reason')}</Label>
-              <Textarea
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-                placeholder={t('driverCalendar.enterReason')}
-                rows={3}
-                className="resize-none rounded-xl border-border/50 focus:border-primary focus:ring-primary/20"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleBlockTime}
-              className="w-full h-11 rounded-xl bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm hover:shadow-md transition-all font-medium"
+      {showBlockModal &&
+        createPortal(
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto"
+            onClick={() => setShowBlockModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl pointer-events-auto"
             >
-              <Shield className="w-4 h-4 mr-2" />
-              {t('driverCalendar.blockTimeBtn')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <BlockTimeWizard
+                driverId={driverId}
+                organizationId={organizationId}
+                onComplete={() => setShowBlockModal(false)}
+                onCancel={() => setShowBlockModal(false)}
+              />
+            </motion.div>
+          </motion.div>,
+          document.body,
+        )}
 
       {/* Trip Details Modal - Rendered via Portal outside Dialog */}
       {showTripModal &&
         selectedTrip &&
         createPortal(
           <div
-            className="fixed inset-0 z-999999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
             style={{ pointerEvents: 'auto' }}
             onClick={() => {
               setShowTripModal(false);

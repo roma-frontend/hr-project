@@ -259,30 +259,35 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
   return createPortal(
     <>
       {/* Кнопка сворачивания/разворачивания панели */}
-      <motion.button
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        transition={{ duration: 0.2 }}
-        onClick={() => {
-          const newCollapsedState = !isPanelCollapsed;
-          setIsPanelCollapsed(newCollapsedState);
-          onToggle?.(!newCollapsedState);
-        }}
-        className="fixed top-34 sm:top-25 right-3 sm:right-6 z-100 w-10 h-10 sm:w-9 sm:h-9 rounded-full shadow-lg flex items-center justify-center transition-colors"
-        style={{
-          background: 'var(--primary)',
-          color: 'var(--primary-foreground)',
-          boxShadow: '0 4px 20px rgba(37, 99, 235, 0.5)',
-        }}
-      >
-        {isPanelCollapsed ? (
-          <PanelRightOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-        ) : (
-          <PanelRightClose className="w-4 h-4 sm:w-5 sm:h-5" />
+      <AnimatePresence>
+        {!(isMobile && !isPanelCollapsed) && (
+          <motion.button
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              const newCollapsedState = !isPanelCollapsed;
+              setIsPanelCollapsed(newCollapsedState);
+              onToggle?.(!newCollapsedState);
+            }}
+            className="fixed top-45 sm:top-39.5 right-3 sm:right-6 z-100 w-10 h-10 sm:w-9 sm:h-9 rounded-full shadow-lg flex items-center justify-center transition-colors"
+            style={{
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
+              boxShadow: '0 4px 20px rgba(37, 99, 235, 0.5)',
+            }}
+          >
+            {isPanelCollapsed ? (
+              <PanelRightOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+            ) : (
+              <PanelRightClose className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </motion.button>
         )}
-      </motion.button>
+      </AnimatePresence>
 
       {/* Backdrop для мобильных - закрывает по клику */}
       <AnimatePresence>
@@ -313,7 +318,7 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
               duration: isMobile ? 0.3 : 0.4,
               ease: isMobile ? 'easeInOut' : [0.34, 1.56, 0.64, 1],
             }}
-            className="fixed top-16 sm:top-24 right-0 sm:right-6 z-70 w-full sm:w-64 max-h-[calc(100vh-80px)] sm:max-h-[calc(100vh-180px)] overflow-y-auto space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-[var(--muted-foreground)] scrollbar-track-transparent lg:shadow-lg rounded-xl"
+            className="fixed top-16 sm:top-51 right-0 sm:right-6 z-70 w-80 sm:w-64 max-h-[calc(100vh-80px)] sm:max-h-[calc(100vh-180px)] overflow-y-auto space-y-3 sm:space-y-4 scrollbar-thin scrollbar-thumb-[var(--muted-foreground)] scrollbar-track-transparent lg:shadow-lg rounded-xl"
             style={{
               background: 'var(--card)',
               boxShadow: isMobile
@@ -467,9 +472,7 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
                       <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />{' '}
                       {t('employeeTypes.contractor')}
                     </span>
-                    <span className="font-semibold text-(--text-primary)">
-                      {stats.contractors}
-                    </span>
+                    <span className="font-semibold text-(--text-primary)">{stats.contractors}</span>
                   </BizierEasingCard>
                 </div>
               </CollapsibleSection>

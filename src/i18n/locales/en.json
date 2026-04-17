@@ -4132,7 +4132,8 @@
     "filterUnread": "Unread",
     "filterGroups": "Groups",
     "filterPinned": "Pinned",
-    "filterArchived": "Archived"
+    "filterArchived": "Archived",
+    "noMessagesYet": "No messages yet"
   },
   "superadminStripe": {
     "accessDenied": "Access Denied",
@@ -4340,6 +4341,7 @@
     "declineRequest": "Decline Request",
     "declineReason": "Decline Reason",
     "tripDetails": "Trip Details",
+    "timeBlock": "Time Block",
     "pickupLocation": "Pickup Location",
     "dropoffLocation": "Dropoff Location",
     "tripPurpose": "Trip Purpose",
@@ -4402,6 +4404,8 @@
     "geocodeError": "Could not find location on map",
     "pickup": "Pickup",
     "dropoff": "Destination",
+    "route": "Route",
+    "time": "Time",
     "driverLocation": "Driver",
     "currentLocation": "Current Location",
     "clickOnMap": "Click on map to select location",
@@ -5579,7 +5583,17 @@
     "failedToBlockTime": "Failed to block time",
     "tripStatusUpdated": "Trip status updated to {{status}}",
     "failedToUpdateStatus": "Failed to update status",
-    "blockTimeDesc": "Select dates and provide a reason to block your availability."
+    "blockTimeDesc": "Select dates and provide a reason to block your availability.",
+    "wizardSteps": {
+      "type": {
+        "title": "Select Time Off Type",
+        "description": "Choose the type of time you want to block"
+      },
+      "datetime": {
+        "title": "Date & Time",
+        "description": "Specify when you'll be unavailable"
+      }
+    }
   },
   "driversWizard": {
     "personalInfo": "Personal Information",

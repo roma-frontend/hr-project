@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { getUsersWithLeaveStatus } from './presence';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 // ─── CONVERSATIONS ────────────────────────────────────────────────────────────
 
@@ -527,7 +528,13 @@ export const getOrgUsers = query({
 
     return await Promise.all(
       users
-        .filter((u) => u._id !== args.currentUserId && u.isActive && u.isApproved)
+        .filter(
+          (u) =>
+            u._id !== args.currentUserId &&
+            u.isActive &&
+            u.isApproved &&
+            u.email !== SUPERADMIN_EMAIL,
+        )
         .map(async (u) => {
           // Check if user has an approved leave today
           let effectivePresenceStatus = u.presenceStatus ?? 'available';

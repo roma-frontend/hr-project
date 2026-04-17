@@ -779,7 +779,7 @@ export const ChatWindow = React.memo(function ChatWindow({
           ) : messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                No messages yet
+                {t('chat.noMessagesYet')}
               </p>
             </div>
           ) : (

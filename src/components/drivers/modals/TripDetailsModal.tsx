@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -43,7 +44,9 @@ export function TripDetailsModal({
   userId,
   isAdmin = false,
 }: TripDetailsModalProps & { isAdmin?: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
 
   // Block body scroll when modal is open
   useEffect(() => {
@@ -89,7 +92,7 @@ export function TripDetailsModal({
     pending: t('driver.status.pending', 'Pending'),
     approved: t('driver.status.approved', 'Approved'),
     rejected: t('driver.status.rejected', 'Rejected'),
-    in_progress: t('driver.status.inProgress', 'In Progress'),
+    in_progress: t('driver.status.in_progress', 'In Progress'),
     completed: t('driver.status.completed', 'Completed'),
     cancelled: t('driver.status.cancelled', 'Cancelled'),
   };
@@ -135,7 +138,9 @@ export function TripDetailsModal({
                     : t('driver.timeBlock', 'Time Block')}
                 </h2>
                 <p className="text-white/80 text-sm mt-1">
-                  {format(new Date(schedule.startTime), 'EEEE, MMMM dd, yyyy')}
+                  {format(new Date(schedule.startTime), 'EEEE, MMMM dd, yyyy', {
+                    locale: dateFnsLocale,
+                  })}
                 </p>
               </div>
             </div>

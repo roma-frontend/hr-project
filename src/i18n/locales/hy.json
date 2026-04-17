@@ -4119,7 +4119,8 @@
     "filterUnread": "Չկարդացված",
     "filterGroups": "Խմբեր",
     "filterPinned": "Ամրացված",
-    "filterArchived": "Արխիվ"
+    "filterArchived": "Արխիվ",
+    "noMessagesYet": "Հաղորդագրություններ դեռ չկան"
   },
   "superadminStripe": {
     "accessDenied": "Մուտքը արգելված է",
@@ -4389,7 +4390,9 @@
     "selectOnMap": "Ընտրել քարտեզի վրա",
     "geocodeError": "Չհաջողվեց գտնել վայրը քարտեզի վրա",
     "pickup": "Վայրէջք",
-    "dropoff": "Նշանակման վայր",
+    "dropoff": "Նշանակետ",
+    "route": "Ուղի",
+    "time": "Ժամանակ",
     "driverLocation": "Վարորդ",
     "currentLocation": "Ընթացիկ վայր",
     "clickOnMap": "Սեղմեք քարտեզի վրա՝ վայրն ընտրելու համար",
@@ -4519,7 +4522,7 @@
       "pending": "Սպասում է",
       "approved": "Հաստատված",
       "rejected": "Մերժված",
-      "inProgress": "Ընթացքում է",
+      "in_progress": "Ընթացքում է",
       "completed": "Ավարտված",
       "cancelled": "Չեղարկված"
     },
@@ -5257,7 +5260,17 @@
     "failedToBlockTime": "Չհաջողվեց արգելափակել ամանակը",
     "tripStatusUpdated": "Ուղևորության կարգավիճակը թարմացվեց {{status}}",
     "failedToUpdateStatus": "Չհաջողվեց թարմացնել կարգավիճակը",
-    "blockTimeDesc": "Ընտրեք ամսաթվերը և նշեք պատճառը՝ ձեր հասանելիությունը արգելափակելու համար:"
+    "blockTimeDesc": "Ընտրեք ամսաթվերը և նշեք պատճառը՝ ձեր հասանելիությունը արգելափակելու համար:",
+    "wizardSteps": {
+      "type": {
+        "title": "Ընտրեք հանգստի տեսակը",
+        "description": "Ընտրեք ժամանակի տեսակը, որը ցանկանում եք արգելափակել"
+      },
+      "datetime": {
+        "title": "Ամսաթիվ և ժամանակ",
+        "description": "Նշեք, թե երբ կլինեք անհասանելի"
+      }
+    }
   },
   "driversWizard": {
     "personalInfo": "Անձնական տվյալներ",

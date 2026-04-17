@@ -4,11 +4,16 @@ import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
-export function GoogleSignInButton() {
+interface GoogleSignInButtonProps {
+  onOAuthStart?: () => void;
+}
+
+export function GoogleSignInButton({ onOAuthStart }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     setIsLoading(true);
+    onOAuthStart?.();
     try {
       // Redirect to dashboard after successful Google sign in
       await signIn('google', {

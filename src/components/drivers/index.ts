@@ -47,3 +47,4 @@ export { PlaceAutocomplete } from './PlaceAutocomplete';
 export { DriverShiftControls } from './DriverShiftControls';
 export { ShiftHistory } from './ShiftHistory';
 export { RequestDriverWizard } from './RequestDriverWizard';
+export { BlockTimeWizard } from './BlockTimeWizard';

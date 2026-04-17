@@ -13,6 +13,16 @@ cloudinary.config({
 export async function uploadTaskAttachment(base64File: string, fileName: string): Promise<string> {
   try {
     const publicId = `task_${Date.now()}_${fileName.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40)}`;
+
+    // Validate file size (1MB limit for free tier)
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
+    const decodedSize = Math.round((base64File.length * 3) / 4);
+    if (decodedSize > MAX_FILE_SIZE) {
+      const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
+      throw new Error(
+        `File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.`,
+      );
+    }
     const result = await cloudinary.uploader.upload(base64File, {
       folder: 'hr-office/task-attachments',
       public_id: publicId,
@@ -35,6 +45,16 @@ export async function uploadAvatarToCloudinary(
 
   try {
     console.log('📤 Uploading to Cloudinary with SDK...');
+
+    // Validate file size (1MB limit for free tier)
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
+    const decodedSize = Math.round((base64Image.length * 3) / 4);
+    if (decodedSize > MAX_FILE_SIZE) {
+      const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
+      throw new Error(
+        `Avatar size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller image.`,
+      );
+    }
 
     const result = await cloudinary.uploader.upload(base64Image, {
       folder: 'hr-office/avatars',
@@ -82,6 +102,14 @@ export async function uploadChatAttachment(
 
   const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
   const publicId = `chat_${Date.now()}_${safeFileName}`;
+
+  // Validate file size (1MB limit for free tier)
+  const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB in bytes
+  const decodedSize = Math.round((base64File.length * 3) / 4);
+  if (decodedSize > MAX_FILE_SIZE) {
+    const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
+    throw new Error(`File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.`);
+  }
 
   // Determine resource type based on mime type
   let resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto';
