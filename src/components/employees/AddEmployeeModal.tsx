@@ -349,9 +349,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                       />
                     </div>
                     {errors.email && <p className="text-xs text-(--destructive)">{errors.email}</p>}
-                    <p className="text-xs text-(--text-muted)">
-                      {t('employees.contractorHint')}
-                    </p>
+                    <p className="text-xs text-(--text-muted)">{t('employees.contractorHint')}</p>
                   </div>
                 </motion.div>
               )}
@@ -442,6 +440,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                     <Select
                       value={role}
                       onValueChange={(v) => setRole(v as 'admin' | 'supervisor' | 'employee')}
+                      modal={false}
                     >
                       <SelectTrigger>
                         <SelectValue />

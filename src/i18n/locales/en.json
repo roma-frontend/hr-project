@@ -5657,6 +5657,8 @@
     "personalInfoDesc": "Basic details about the employee",
     "workDetails": "Work Details",
     "workDetailsDesc": "Department and position information",
+    "roleType": "Role & Type",
+    "roleTypeDesc": "Set role and employment type",
     "review": "Review",
     "reviewDesc": "Confirm the details before saving"
   },
