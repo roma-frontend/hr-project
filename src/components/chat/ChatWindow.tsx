@@ -926,10 +926,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 </button>
               </div>
             ))}
-            <p
-              className="w-full text-[11px] mt-5"
-              style={{ color: 'var(--text-disabled)' }}
-            >
+            <p className="w-full text-[11px] mt-5" style={{ color: 'var(--text-disabled)' }}>
               {pendingFiles.length}{' '}
               {pendingFiles.length > 1 ? t('chat.filesReadyToSend') : t('chat.fileReadyToSend')}
             </p>

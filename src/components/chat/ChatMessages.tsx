@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useTranslation } from 'react-i18next';
 
 interface ChatMessagesProps {
   messages: any[];
@@ -37,6 +38,7 @@ export function ChatMessages({
   messagesParentRef,
   isLoading,
 }: ChatMessagesProps) {
+  const { t } = useTranslation();
   const virtualizer = useVirtualizer({
     count: messages?.length ?? 0,
     getScrollElement: () => messagesParentRef.current,
