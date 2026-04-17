@@ -516,7 +516,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                   <div className="rounded-xl border border-(--border) bg-(--background-subtle) overflow-hidden">
                     {/* Avatar preview */}
                     <div className="flex items-center gap-4 p-4 border-b border-(--border)">
-                      <div className="w-14 h-14 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                      <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center text-xl font-bold shadow-lg">
                         {name.charAt(0).toUpperCase() || 'E'}
                       </div>
                       <div>

@@ -248,6 +248,7 @@
     "superadmin": "Superadmin",
     "user": "User",
     "email": "Email",
+    "phone": "Phone",
     "organization": "Organization",
     "requestedBy": "Requested by",
     "passenger": "Passenger",
