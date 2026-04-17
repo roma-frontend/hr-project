@@ -295,6 +295,13 @@
     "next": "Далее",
     "employee": "Сотрудник"
   },
+  "driver": {
+    "registered": "Зарегистрирован как водитель!",
+    "failedToRegister": "Не удалось зарегистрировать",
+    "removedFromFavorites": "Удалено из избранного",
+    "addedToFavorites": "Добавлено в избранное",
+    "failed": "Ошибка"
+  },
   "nav": {
     "home": "Главная",
     "dashboard": "Панель",

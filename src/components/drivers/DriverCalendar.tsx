@@ -83,44 +83,88 @@ function TripCard({
   const isBlocked = item.type === 'blocked';
   const isMaintenance = item.type === 'maintenance';
 
-  const getStatusGradient = () => {
-    if (isTimeOff) return 'from-purple-500/10 via-purple-500/5 to-transparent border-purple-500/20';
-    if (isBlocked) return 'from-slate-500/10 via-slate-500/5 to-transparent border-slate-500/20';
+  const getStatusConfig = () => {
+    if (isTimeOff)
+      return {
+        gradient: 'from-purple-500/8 via-purple-500/3 to-transparent',
+        border: 'border-purple-500/20',
+        accent: 'bg-purple-500',
+        accentBg: 'bg-purple-500/10',
+        text: 'text-purple-600 dark:text-purple-400',
+        hover: 'hover:bg-purple-500/15',
+        shadow: 'shadow-purple-500/10',
+      };
+    if (isBlocked)
+      return {
+        gradient: 'from-slate-500/8 via-slate-500/3 to-transparent',
+        border: 'border-slate-500/20',
+        accent: 'bg-slate-500',
+        accentBg: 'bg-slate-500/10',
+        text: 'text-slate-600 dark:text-slate-400',
+        hover: 'hover:bg-slate-500/15',
+        shadow: 'shadow-slate-500/10',
+      };
     if (isMaintenance)
-      return 'from-orange-500/10 via-orange-500/5 to-transparent border-orange-500/20';
+      return {
+        gradient: 'from-orange-500/8 via-orange-500/3 to-transparent',
+        border: 'border-orange-500/20',
+        accent: 'bg-orange-500',
+        accentBg: 'bg-orange-500/10',
+        text: 'text-orange-600 dark:text-orange-400',
+        hover: 'hover:bg-orange-500/15',
+        shadow: 'shadow-orange-500/10',
+      };
     switch (item.status) {
       case 'completed':
-        return 'from-emerald-500/10 via-emerald-500/5 to-transparent border-emerald-500/20';
+        return {
+          gradient: 'from-emerald-500/8 via-emerald-500/3 to-transparent',
+          border: 'border-emerald-500/20',
+          accent: 'bg-emerald-500',
+          accentBg: 'bg-emerald-500/10',
+          text: 'text-emerald-600 dark:text-emerald-400',
+          hover: 'hover:bg-emerald-500/15',
+          shadow: 'shadow-emerald-500/10',
+        };
       case 'in_progress':
-        return 'from-blue-500/10 via-blue-500/5 to-transparent border-blue-500/20';
+        return {
+          gradient: 'from-blue-500/8 via-blue-500/3 to-transparent',
+          border: 'border-blue-500/20',
+          accent: 'bg-blue-500',
+          accentBg: 'bg-blue-500/10',
+          text: 'text-blue-600 dark:text-blue-400',
+          hover: 'hover:bg-blue-500/15',
+          shadow: 'shadow-blue-500/10',
+        };
       case 'cancelled':
-        return 'from-red-500/10 via-red-500/5 to-transparent border-red-500/20';
+        return {
+          gradient: 'from-red-500/8 via-red-500/3 to-transparent',
+          border: 'border-red-500/20',
+          accent: 'bg-red-500',
+          accentBg: 'bg-red-500/10',
+          text: 'text-red-600 dark:text-red-400',
+          hover: 'hover:bg-red-500/15',
+          shadow: 'shadow-red-500/10',
+        };
       default:
-        return 'from-slate-500/10 via-slate-500/5 to-transparent border-slate-500/20';
+        return {
+          gradient: 'from-slate-500/8 via-slate-500/3 to-transparent',
+          border: 'border-slate-500/20',
+          accent: 'bg-slate-400',
+          accentBg: 'bg-slate-400/10',
+          text: 'text-slate-600 dark:text-slate-400',
+          hover: 'hover:bg-slate-400/15',
+          shadow: 'shadow-slate-400/10',
+        };
     }
   };
 
-  const getStatusAccentColor = () => {
-    if (isTimeOff) return 'bg-purple-500';
-    if (isBlocked) return 'bg-slate-500';
-    if (isMaintenance) return 'bg-orange-500';
-    switch (item.status) {
-      case 'completed':
-        return 'bg-emerald-500';
-      case 'in_progress':
-        return 'bg-blue-500';
-      case 'cancelled':
-        return 'bg-red-500';
-      default:
-        return 'bg-slate-500';
-    }
-  };
+  const config = getStatusConfig();
 
   const getTypeIcon = () => {
-    if (isTimeOff) return <Coffee className="w-3 h-3" />;
-    if (isBlocked) return <Shield className="w-3 h-3" />;
-    if (isMaintenance) return <Wrench className="w-3 h-3" />;
-    return <Car className="w-3 h-3" />;
+    if (isTimeOff) return <Coffee className="w-3.5 h-3.5" />;
+    if (isBlocked) return <Shield className="w-3.5 h-3.5" />;
+    if (isMaintenance) return <Wrench className="w-3.5 h-3.5" />;
+    return <Car className="w-3.5 h-3.5" />;
   };
 
   const getTypeLabel = () => {
@@ -132,49 +176,65 @@ function TripCard({
 
   return (
     <div
-      className={`group relative rounded-xl border bg-linear-to-br ${getStatusGradient()} backdrop-blur-sm transition-all duration-200 hover:shadow-lg hover:scale-[1.02]`}
+      className={`group relative overflow-hidden rounded-xl border ${config.border} bg-linear-to-br ${config.gradient} transition-all duration-300 hover:shadow-md ${config.shadow}`}
     >
-      {/* Status accent bar */}
-      <div
-        className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full ${getStatusAccentColor()}`}
-      />
+      {/* Top accent bar */}
+      <div className={`h-0.5 w-full ${config.accent}`} />
 
-      <div className="p-3 pl-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
+      <div className="p-3">
+        {/* Time & Type Row */}
+        <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${getStatusAccentColor()} bg-opacity-20`}>
-              {getTypeIcon()}
+            <div className={`p-1.5 rounded-lg ${config.accentBg}`}>
+              <span className={config.text}>{getTypeIcon()}</span>
             </div>
-            <div>
-              <span className="text-xs font-semibold text-foreground">{startTime}</span>
-              <span className="text-[10px] text-muted-foreground ml-1.5">— {endTime}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm font-bold text-foreground">{startTime}</span>
+              <span className="text-xs text-muted-foreground/60">—</span>
+              <span className="text-xs text-muted-foreground">{endTime}</span>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-current opacity-60">
+          <Badge
+            variant="outline"
+            className={`text-[10px] h-5 px-1.5 ${config.border} ${config.text} font-medium`}
+          >
             {getTypeLabel()}
           </Badge>
         </div>
 
-        {/* Content */}
+        {/* Route Info */}
         {item.type === 'trip' && item.tripInfo ? (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
+            {/* From */}
             <div className="flex items-start gap-2">
-              <MapPin className="w-3 h-3 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="flex items-center gap-1.5 text-xs">
-                <span className="font-medium text-foreground">{item.tripInfo.from}</span>
-                <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                <span className="font-medium text-foreground">{item.tripInfo.to}</span>
-              </div>
+              <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-500/20" />
+              <span className="text-xs font-medium text-foreground leading-tight">
+                {item.tripInfo.from}
+              </span>
             </div>
+            {/* Connector line */}
+            <div className="flex items-center gap-2 pl-1">
+              <div className="w-px h-3 bg-border" />
+              <div className="flex-1 border-t border-dashed border-border/50" />
+            </div>
+            {/* To */}
+            <div className="flex items-start gap-2">
+              <div className="mt-1 w-2 h-2 rounded-full bg-red-500 shrink-0 ring-2 ring-red-500/20" />
+              <span className="text-xs font-medium text-foreground leading-tight">
+                {item.tripInfo.to}
+              </span>
+            </div>
+            {/* Purpose */}
             {item.tripInfo.purpose && (
-              <p className="text-[11px] text-muted-foreground italic pl-5">
-                {item.tripInfo.purpose}
-              </p>
+              <div className="pt-1 pl-4">
+                <span className="text-[10px] text-muted-foreground italic">
+                  {item.tripInfo.purpose}
+                </span>
+              </div>
             )}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground pl-5">{item.reason || getTypeLabel()}</p>
+          <p className="text-xs text-muted-foreground pl-4">{item.reason || getTypeLabel()}</p>
         )}
 
         {/* Action Buttons */}
@@ -182,10 +242,10 @@ function TripCard({
           <Button
             size="sm"
             variant="ghost"
-            className="w-full mt-3 h-7 text-[11px] gap-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400"
+            className={`w-full mt-3 h-8 text-xs font-semibold gap-1.5 ${config.accentBg} ${config.hover} ${config.text}`}
             onClick={() => onUpdateStatus(item._id, 'in_progress')}
           >
-            <Play className="w-3 h-3" />
+            <Play className="w-3.5 h-3.5" />
             {t('driverCalendar.startTrip', 'Start Trip')}
           </Button>
         )}
@@ -193,10 +253,10 @@ function TripCard({
           <Button
             size="sm"
             variant="ghost"
-            className="w-full mt-3 h-7 text-[11px] gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+            className="w-full mt-3 h-8 text-xs font-semibold gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
             onClick={() => onUpdateStatus(item._id, 'completed')}
           >
-            <CheckCircle2 className="w-3 h-3" />
+            <CheckCircle2 className="w-3.5 h-3.5" />
             {t('driverCalendar.completeTrip', 'Complete')}
           </Button>
         )}

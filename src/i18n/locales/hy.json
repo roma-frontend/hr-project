@@ -295,6 +295,13 @@
     "next": "Հաջորդ",
     "employee": "Աշխատակից"
   },
+  "driver": {
+    "registered": "Գրանցված է որպես վարորդ:",
+    "failedToRegister": "Չհաջողվեց գրանցել",
+    "removedFromFavorites": "Հեռացվեց նախընտրելիներից",
+    "addedToFavorites": "Ավելացվեց նախընտրելիներին",
+    "failed": "Սխալ"
+  },
   "nav": {
     "home": "Գլխավոր",
     "dashboard": "Վահանակ",

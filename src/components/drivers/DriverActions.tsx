@@ -253,8 +253,8 @@ export function DriverQuickMessage({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs">
-          <PhoneCall className="w-3 h-3" />
-          {t('driverActions.call', 'Call')}
+          <MessageSquare className="w-3 h-3" />
+          {t('driverActions.message', 'Message')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
