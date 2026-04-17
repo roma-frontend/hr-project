@@ -7,11 +7,12 @@
 import { v } from 'convex/values';
 import { mutation } from '../_generated/server';
 
-/** Register as a driver - only organization admins can register drivers */
+/** Register as a driver - only organization admins can register drivers, or users can register themselves */
 export const registerAsDriver = mutation({
   args: {
     organizationId: v.id('organizations'),
     userId: v.id('users'),
+    adminId: v.id('users'), // Admin who is registering the driver (or the driver themselves for self-registration)
     vehicleInfo: v.object({
       model: v.string(),
       plateNumber: v.string(),
@@ -27,22 +28,19 @@ export const registerAsDriver = mutation({
     maxTripsPerDay: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
+    const admin = await ctx.db.get(args.adminId);
+    if (!admin) {
+      throw new Error('Admin not found');
     }
 
-    const requester = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first();
+    // Allow admins/superadmins to register drivers, OR allow users to register themselves as drivers
+    const isAdmin = admin.role === 'admin' || admin.role === 'superadmin';
+    const isSelfRegistration = admin._id === args.userId;
 
-    if (!requester) {
-      throw new Error('User not found');
-    }
-
-    if (requester.role !== 'admin') {
-      throw new Error('Only organization admins can register drivers');
+    if (!isAdmin && !isSelfRegistration) {
+      throw new Error(
+        'Only organization admins can register drivers, or users can register themselves',
+      );
     }
 
     const userToRegister = await ctx.db.get(args.userId);

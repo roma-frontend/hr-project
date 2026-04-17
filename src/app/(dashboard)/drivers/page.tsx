@@ -326,6 +326,7 @@ export default function DriversPage() {
         await registerAsDriver({
           userId,
           organizationId: orgId,
+          adminId: userId, // User is registering themselves
           vehicleInfo: {
             model: data.vehicleMake || '',
             year: data.vehicleYear ? parseInt(data.vehicleYear) : 2024,
