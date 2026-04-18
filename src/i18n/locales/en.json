@@ -59,6 +59,13 @@
     "title": "Tasks",
     "subtitle": "Manage your tasks and track progress"
   },
+  "driver": {
+    "shift": {
+      "endShiftDesc": "Complete your shift and submit final details",
+      "breakTimeHint": "Enter total break time taken during this shift",
+      "notesHint": "Add any important information about this shift"
+    }
+  },
   "socialProof": {
     "activeUsers": "Active Users",
     "customerRating": "Customer Rating",

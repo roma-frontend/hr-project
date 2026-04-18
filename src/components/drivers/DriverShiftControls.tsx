@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Clock, Play, Square, Pause, Coffee, History, TrendingUp } from 'lucide-react';
+import { Clock, Play, Square, Pause, Coffee, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -244,15 +244,27 @@ export function DriverShiftControls({
       {/* End Shift Modal */}
       <Dialog open={showEndShiftModal} onOpenChange={setShowEndShiftModal}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Square className="w-5 h-5" />
-              {t('driver.shift.endShift', 'End Shift')}
+          <DialogHeader className="pb-4 border-b border-(--border)">
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-(--destructive)/10">
+                <Square className="w-5 h-5 text-(--destructive)" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-(--text-primary)">
+                  {t('driver.shift.endShift', 'End Shift')}
+                </h2>
+                <p className="text-sm text-(--text-muted) mt-0.5">
+                  {t('driver.shift.endShiftDesc', 'Complete your shift and submit final details')}
+                </p>
+              </div>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5 py-4">
             <div>
-              <Label>{t('driver.shift.breakTime', 'Break Time (minutes)')}</Label>
+              <Label className="text-sm font-medium text-(--text-primary) flex items-center gap-2">
+                <Coffee className="w-4 h-4 text-(--warning)" />
+                {t('driver.shift.breakTime', 'Break Time (minutes)')}
+              </Label>
               <Input
                 type="number"
                 min="0"
@@ -260,10 +272,15 @@ export function DriverShiftControls({
                 value={breakTime}
                 onChange={(e) => setBreakTime(e.target.value)}
                 placeholder="0"
+                className="mt-2"
               />
+              <p className="text-xs text-(--text-muted) mt-1.5">
+                {t('driver.shift.breakTimeHint', 'Enter total break time taken during this shift')}
+              </p>
             </div>
             <div>
-              <Label>
+              <Label className="text-sm font-medium text-(--text-primary) flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-(--primary)" />
                 {t('driver.shift.notesLabel', 'Notes')} ({t('common.optional', 'Optional')})
               </Label>
               <Textarea
@@ -271,14 +288,21 @@ export function DriverShiftControls({
                 onChange={(e) => setDriverNotes(e.target.value)}
                 placeholder={t('driver.shift.notesPlaceholder', 'Any notes about this shift...')}
                 rows={3}
+                className="mt-2 resize-none"
               />
+              <p className="text-xs text-(--text-muted) mt-1.5">
+                {t('driver.shift.notesHint', 'Add any important information about this shift')}
+              </p>
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowEndShiftModal(false)}>
-                {t('common.cancel', 'Cancel')}
-              </Button>
-              <Button onClick={handleEndShift}>{t('driver.shift.endConfirm', 'End Shift')}</Button>
-            </div>
+          </div>
+          <div className="flex gap-3 justify-end pt-4 border-t border-(--border)">
+            <Button variant="outline" onClick={() => setShowEndShiftModal(false)}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="destructive" onClick={handleEndShift}>
+              <Square className="w-4 h-4 mr-2" />
+              {t('driver.shift.endConfirm', 'End Shift')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
