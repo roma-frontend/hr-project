@@ -203,7 +203,9 @@ export function middleware(request: NextRequest) {
   // Public paths — no auth check needed
   if (isPublicPath(pathname)) {
     // If user is already authenticated and tries to access login/register, redirect to dashboard
-    if (AUTH_PATHS.some((prefix) => pathname.startsWith(prefix)) && hasAuthCookie(request)) {
+    // BUT skip this redirect if maintenance mode is active (prevents infinite redirect loop)
+    const isMaintenance = request.nextUrl.searchParams.get('maintenance') === 'true';
+    if (AUTH_PATHS.some((prefix) => pathname.startsWith(prefix)) && hasAuthCookie(request) && !isMaintenance) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     const response = NextResponse.next();

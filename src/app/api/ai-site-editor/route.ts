@@ -41,11 +41,6 @@ import { Id } from '@/convex/_generated/dataModel';
 import fs from 'fs';
 import path from 'path';
 
-// Isolate API reference to avoid deep type instantiation
-// @ts-expect-error - Type instantiation is excessively deep
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const aiSiteEditorApi: any = (api as any).aiSiteEditor;
-
 // ─── Whitelist / Blacklist ────────────────────────────────────────────────────
 
 const ALLOWED_DIRECTORIES = ['src/app', 'src/components', 'src/i18n/locales'];
@@ -701,7 +696,8 @@ export async function POST(req: NextRequest) {
 
     // Проверяем лимиты плана
     console.log('[AI Site Editor] Checking limits...');
-    const canEdit = await fetchQuery(aiSiteEditorApi.canMakeEdit, {
+    // @ts-expect-error Convex type instantiation is too deep
+    const canEdit = await fetchQuery(api.aiSiteEditor.canMakeEdit, {
       userId: userId as Id<'users'>,
       organizationId: organizationId as Id<'organizations'>,
       editType,
@@ -716,7 +712,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Создаем сессию
-    const sessionId = await fetchMutation(aiSiteEditorApi.createSession, {
+    const sessionId = await fetchMutation(api.aiSiteEditor.createSession, {
       userId: userId as Id<'users'>,
       organizationId: organizationId as Id<'organizations'>,
       userMessage: message,
@@ -791,7 +787,9 @@ export async function POST(req: NextRequest) {
     const changesMade = appliedFiles;
 
     // Обновляем сессию в Convex
-    await fetchMutation(aiSiteEditorApi.updateSession, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateSessionMutation: any = api.aiSiteEditor.updateSession;
+    await fetchMutation(updateSessionMutation, {
       sessionId: sessionId as Id<'aiSiteEditorSessions'>,
       aiResponse: aiText,
       changesMade,
@@ -800,7 +798,9 @@ export async function POST(req: NextRequest) {
     });
 
     // Увеличиваем счётчик использования
-    await fetchMutation(aiSiteEditorApi.incrementUsage, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const incrementUsageMutation: any = api.aiSiteEditor.incrementUsage;
+    await fetchMutation(incrementUsageMutation, {
       userId: userId as Id<'users'>,
       organizationId: organizationId as Id<'organizations'>,
       editType,

@@ -39,8 +39,16 @@ export function ChatMessages({
   isLoading,
 }: ChatMessagesProps) {
   const { t } = useTranslation();
+  const dedupedMessages = React.useMemo(() => {
+    const seen = new Set();
+    return (messages || []).filter((msg) => {
+      if (seen.has(msg._id)) return false;
+      seen.add(msg._id);
+      return true;
+    });
+  }, [messages]);
   const virtualizer = useVirtualizer({
-    count: messages?.length ?? 0,
+    count: dedupedMessages.length,
     getScrollElement: () => messagesParentRef.current,
     estimateSize: () => 100,
     overscan: 5,
@@ -62,7 +70,7 @@ export function ChatMessages({
     );
   }
 
-  if (!messages || messages.length === 0) {
+  if (!dedupedMessages || dedupedMessages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -91,11 +99,11 @@ export function ChatMessages({
           }}
         >
           {virtualizer.getVirtualItems().map((virtualRow) => {
-            const msg = messages[virtualRow.index];
+            const msg = dedupedMessages[virtualRow.index];
             if (!msg) return null;
 
             const isOwn = msg.senderId === currentUserId;
-            const prevMsg = messages[virtualRow.index - 1];
+            const prevMsg = dedupedMessages[virtualRow.index - 1];
             const isFirstOfStreak = virtualRow.index === 0 || prevMsg?.senderId !== msg.senderId;
             const isSystemAnnouncements = conversation?.name === 'System Announcements';
             const showAvatar = isFirstOfStreak && !isSystemAnnouncements;

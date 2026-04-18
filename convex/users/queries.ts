@@ -134,22 +134,37 @@ export const getCurrentUser = query({
 
     const userEmail = identity?.email || email;
 
+    let user;
+
     // If userId provided, get user directly
     if (userId) {
-      const user = await ctx.db.get(userId);
-      return user;
+      user = await ctx.db.get(userId);
+    } else if (userEmail) {
+      user = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', userEmail.toLowerCase()))
+        .first();
     }
 
-    if (!userEmail) {
-      return null;
+    if (!user) return null;
+
+    // Get organization data
+    let organizationSlug: string | undefined;
+    let organizationName: string | undefined;
+    
+    if (user.organizationId) {
+      const org = await ctx.db.get(user.organizationId);
+      if (org) {
+        organizationSlug = org.slug;
+        organizationName = org.name;
+      }
     }
 
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_email', (q) => q.eq('email', userEmail.toLowerCase()))
-      .first();
-
-    return user;
+    return {
+      ...user,
+      organizationSlug,
+      organizationName,
+    };
   },
 });
 

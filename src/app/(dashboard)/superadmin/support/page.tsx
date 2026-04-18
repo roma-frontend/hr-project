@@ -179,7 +179,7 @@ export default function SupportTicketsPage() {
             />
             <StatCard
               title={t('superadmin.support.avgTime')}
-              value={`${stats.avgResponseTime}ч`}
+              value={`${stats.avgResponseTime}${t('common.hoursShort')}`}
               icon={TrendingUp}
               color="green"
             />
@@ -614,8 +614,14 @@ function TicketDetailDialog({
   userId: Id<'users'>;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const ticket = useQuery(
     api.tickets.getTicketById,
+    open ? { ticketId: ticketId as Id<'supportTickets'> } : 'skip',
+  );
+
+  const ticketChatStatus = useQuery(
+    api.tickets.getTicketChatStatus,
     open ? { ticketId: ticketId as Id<'supportTickets'> } : 'skip',
   );
 
@@ -623,10 +629,13 @@ function TicketDetailDialog({
   const assignTicket = useMutation(api.tickets.assignTicket);
   const addComment = useMutation(api.tickets.addTicketComment);
   const resolveTicket = useMutation(api.tickets.resolveTicket);
+  const createTicketChat = useMutation(api.tickets.createTicketChat);
+  const activateTicketChat = useMutation(api.tickets.activateTicketChat);
 
   const [commentText, setCommentText] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [activeTab, setActiveTab] = useState('comments');
+  const [creatingChat, setCreatingChat] = useState(false);
 
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
@@ -659,6 +668,53 @@ function TicketDetailDialog({
       onOpenChange(false);
     } catch (error) {
       toast.error(t('superadmin.support.errorResolvingTicket'));
+    }
+  };
+
+  const handleCreateChat = async () => {
+    if (!ticket) return;
+    setCreatingChat(true);
+    try {
+      console.log('[handleCreateChat] Creating chat for ticket:', ticketId);
+      const result = await createTicketChat({
+        ticketId: ticketId as Id<'supportTickets'>,
+        superadminId: userId,
+      });
+      console.log('[handleCreateChat] Chat created successfully:', result);
+      toast.success(t('superadmin.support.chatCreated', { chatName: result.chatName }));
+      router.refresh();
+    } catch (error: any) {
+      console.error('[handleCreateChat] Error:', error);
+      toast.error(t('superadmin.support.chatCreateError'));
+    } finally {
+      setCreatingChat(false);
+    }
+  };
+
+  const handleActivateChat = async () => {
+    if (!ticket) {
+      console.error('No ticket available');
+      return;
+    }
+    if (!ticket.chatId) {
+      console.error('No chatId found - chat may not have been created yet');
+      toast.error(t('superadmin.support.chatCreateFirst'));
+      return;
+    }
+    try {
+      // Use direct translated message to avoid storing translation keys
+      const defaultMessage = t('superadmin.support.chat.defaultActivateMessage', { 
+        ticketNumber: ticket.ticketNumber 
+      });
+      const result = await activateTicketChat({
+        ticketId: ticketId as Id<'supportTickets'>,
+        superadminId: userId,
+        message: defaultMessage,
+      });
+      router.push(`/chat?conversation=${result.chatId}`);
+    } catch (error: any) {
+      console.error('Error activating chat:', error);
+      toast.error(error.message || t('superadmin.support.chatActivateError'));
     }
   };
 
@@ -1078,6 +1134,82 @@ function TicketDetailDialog({
                   {t('superadmin.support.resolveTicket')}
                 </Button>
               )}
+
+              {/* Ticket Chat Section */}
+              <div className="pt-3 sm:pt-4 border-t border-(--border) transition-all duration-200">
+                <h4
+                  className="text-sm font-medium mb-3 flex items-center gap-2 transition-colors duration-200"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {ticketChatStatus?.hasChat ? t('superadmin.support.chat.title') : t('superadmin.support.chat.create')}
+                </h4>
+
+                {ticketChatStatus?.hasChat ? (
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg bg-(--background-subtle)">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {t('superadmin.support.chat.status')}
+                        </span>
+                        <Badge
+                          variant={ticketChatStatus.chatActivated ? 'default' : 'outline'}
+                          className="text-xs"
+                        >
+                          {ticketChatStatus.chatActivated ? t('superadmin.support.chat.active') : t('superadmin.support.chat.pending')}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {ticketChatStatus.chatActivated
+                          ? t('superadmin.support.chat.employeeSees')
+                          : t('superadmin.support.chat.employeeNotSee')}
+                      </p>
+
+                      {!ticketChatStatus.chatActivated && (
+                        <Button
+                          onClick={handleActivateChat}
+                          size="sm"
+                          className="w-full bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          {t('superadmin.support.chat.activate')}
+                        </Button>
+                      )}
+
+                      {ticketChatStatus.chatActivated && (
+                        <Button
+                          onClick={() => router.push(`/chat?conversation=${ticketChatStatus.chatId}`)}
+                          size="sm"
+                          variant="outline"
+                          className="w-full transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          <MessageSquare className="w-4 h-4 mr-2" />
+                          {t('superadmin.support.chat.open')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleCreateChat}
+                    size="sm"
+                    disabled={creatingChat}
+                    className="w-full bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
+                  >
+                    {creatingChat ? (
+                      <>
+                        <ShieldLoader size="sm" />
+                        {t('superadmin.support.chat.creating')}
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        {t('superadmin.support.chat.createBtn')}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
 
               <div className="pt-3 sm:pt-4 border-t border-(--border) transition-all duration-200">
                 <h4

@@ -24,7 +24,7 @@ export function IncomingCallProvider() {
 
   const conversations = useQuery(
     api.chat.queries.getMyConversations,
-    uid && effectiveOrgId ? { userId: uid, organizationId: effectiveOrgId } : 'skip',
+    uid ? { userId: uid, organizationId: effectiveOrgId } : 'skip',
   );
 
   const incomingCallData = useQuery(

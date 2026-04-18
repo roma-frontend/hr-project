@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForTokens } from '@/lib/calendar-sync';
+import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
 
 export async function GET(request: NextRequest) {
+  const validation = await validateRestrictedOrgFromRequest(request);
+
+  if (!validation.allowed) {
+    return NextResponse.json(validation.body, { status: validation.status });
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');

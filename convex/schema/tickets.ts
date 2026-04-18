@@ -39,6 +39,8 @@ export const tickets = {
     closedAt: v.optional(v.number()),
     slaDeadline: v.optional(v.number()),
     firstResponseAt: v.optional(v.number()),
+    chatId: v.optional(v.id('chatConversations')),
+    chatActivated: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

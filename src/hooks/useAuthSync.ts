@@ -64,6 +64,8 @@ async function createJwtSession(userData: any) {
           position: data.session.position,
           employeeType: data.session.employeeType,
           organizationId: data.session.organizationId,
+          organizationSlug: data.session.organizationSlug,
+          organizationName: data.session.organizationName,
         });
         return { success: true, data: data.session };
       }
@@ -154,6 +156,8 @@ export function useAuthSync() {
             position: currentUser.position,
             employeeType: currentUser.employeeType,
             organizationId: currentUser.organizationId,
+            organizationSlug: currentUser.organizationSlug,
+            organizationName: currentUser.organizationName,
             isApproved: currentUser.isApproved,
           });
         } else {

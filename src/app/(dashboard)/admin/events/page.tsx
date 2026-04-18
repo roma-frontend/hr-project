@@ -330,7 +330,7 @@ export default function CompanyEventsPage() {
             className={cn(
               'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
               activeTab === tab.key
-                ? 'bg-white dark:bg-(--card) shadow-sm text-(--foreground)'
+                ? 'bg-(--card) shadow-sm text-(--foreground)'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

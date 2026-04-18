@@ -20,7 +20,7 @@ export function NotificationBanner() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const router = useRouter();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   // Only admin users see the banner and hear the sound
   if (!isAdmin) return null;
@@ -111,10 +111,18 @@ export function NotificationBanner() {
               newNotification.type === 'ticket_created' ||
               newNotification.type === 'ticket_updated' ||
               newNotification.type === 'ticket' ||
+              newNotification.type === 'system' ||
               newNotification.message?.toLowerCase().includes('ticket') ||
-              newNotification.title?.toLowerCase().includes('ticket')
+              newNotification.title?.toLowerCase().includes('ticket') ||
+              newNotification.title?.toLowerCase().includes('тикет') ||
+              newNotification.title?.includes('🎫')
             ) {
-              router.push('/help');
+              // Redirect based on user role
+              if (user?.role === 'superadmin') {
+                router.push('/superadmin/support');
+              } else {
+                router.push('/help');
+              }
             } else {
               router.push('/dashboard');
             }

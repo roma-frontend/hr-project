@@ -21,10 +21,28 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { getGoogleCalendarAuthUrl } from '@/lib/calendar-sync';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useAuthStoreShallow } from '@/store/useAuthStore';
+import { isRestrictedOrganization } from '@/lib/restricted-org';
 
 export function IntegrationSettings() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const { user } = useAuthStoreShallow();
+
+  const isRestrictedOrg = user?.organizationSlug
+    ? isRestrictedOrganization(user.organizationSlug)
+    : false;
+
+  // Debug logging
+  console.log('[IntegrationSettings] User data:', {
+    id: user?.id,
+    name: user?.name,
+    organizationId: user?.organizationId,
+    organizationSlug: user?.organizationSlug,
+    organizationName: user?.organizationName,
+    isRestrictedOrg,
+  });
+
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(true);
@@ -222,9 +240,7 @@ export function IntegrationSettings() {
                 onClick={handleGoogleDisconnect}
                 disabled={disconnecting}
               >
-                {disconnecting ? (
-                  <ShieldLoader size="xs" variant="inline" />
-                ) : null}
+                {disconnecting ? <ShieldLoader size="xs" variant="inline" /> : null}
                 {t('settingsIntegration.disconnect')}
               </Button>
             ) : (
@@ -234,110 +250,116 @@ export function IntegrationSettings() {
             )}
           </div>
 
-          {/* Outlook Calendar — coming soon */}
-          <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
-            <div className="flex items-start gap-3 flex-1">
-              <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium text-(--text-primary)">
-                    {t('settingsIntegration.outlookCalendar')}
-                  </p>
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <Clock className="w-3 h-3" />
-                    {t('settingsIntegration.comingSoon')}
-                  </Badge>
+          {/* Outlook Calendar — RESTRICTED TO ADB-ARRM ONLY */}
+          {isRestrictedOrg && (
+            <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-blue-600" />
                 </div>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('settingsIntegration.outlookCalendarDesc')}
-                </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-(--text-primary)">
+                      {t('settingsIntegration.outlookCalendar')}
+                    </p>
+                    <Badge variant="outline" className="text-xs gap-1">
+                      <Clock className="w-3 h-3" />
+                      {t('settingsIntegration.comingSoon')}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-(--text-muted) mt-1">
+                    {t('settingsIntegration.outlookCalendarDesc')}
+                  </p>
+                </div>
               </div>
+              <Button variant="default" size="sm" disabled>
+                {t('settingsIntegration.connect')}
+              </Button>
             </div>
-            <Button variant="default" size="sm" disabled>
-              {t('settingsIntegration.connect')}
-            </Button>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* SharePoint Employee Sync */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-(--primary)" />
-            <CardTitle>{t('settingsIntegration.sharepointEmployeeSync') || 'SharePoint Employee Sync'}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('settingsIntegration.sharepointSyncDesc') || 'Sync employee list from SharePoint to keep your team roster up to date'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
-            <div className="flex items-start gap-3 flex-1">
-              <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-teal-500" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium text-(--text-primary)">
-                    {t('settingsIntegration.microsoftSharePoint') || 'Microsoft SharePoint'}
+      {/* SharePoint Employee Sync — RESTRICTED TO ADB-ARRM ONLY */}
+      {isRestrictedOrg && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-(--primary)" />
+              <CardTitle>
+                {t('settingsIntegration.sharepointEmployeeSync') || 'SharePoint Employee Sync'}
+              </CardTitle>
+            </div>
+            <CardDescription>
+              {t('settingsIntegration.sharepointSyncDesc') ||
+                'Sync employee list from SharePoint to keep your team roster up to date'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-teal-500" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-(--text-primary)">
+                      {t('settingsIntegration.microsoftSharePoint') || 'Microsoft SharePoint'}
+                    </p>
+                    {sharepointConnected && (
+                      <Badge variant="default" className="text-xs gap-1">
+                        <Check className="w-3 h-3" />
+                        {t('settingsIntegration.connected')}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-(--text-muted) mt-1">
+                    {t('settingsIntegration.sharepointAutoSync') ||
+                      'Automatically sync employees from your SharePoint List'}
                   </p>
-                  {sharepointConnected && (
-                    <Badge variant="default" className="text-xs gap-1">
-                      <Check className="w-3 h-3" />
-                      {t('settingsIntegration.connected')}
-                    </Badge>
+                  {sharepointConnected && sharepointEmail && (
+                    <p className="text-xs text-(--text-muted) mt-1">{sharepointEmail}</p>
                   )}
                 </div>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('settingsIntegration.sharepointAutoSync') || 'Automatically sync employees from your SharePoint List'}
-                </p>
-                {sharepointConnected && sharepointEmail && (
-                  <p className="text-xs text-(--text-muted) mt-1">{sharepointEmail}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {sharepointLoading ? (
+                  <ShieldLoader size="xs" variant="inline" />
+                ) : sharepointConnected ? (
+                  <>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSharepointSync}
+                      disabled={sharepointSyncing}
+                    >
+                      {sharepointSyncing ? (
+                        <ShieldLoader size="xs" variant="inline" />
+                      ) : (
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                      )}
+                      Sync Employees
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSharepointDisconnect}
+                      disabled={sharepointDisconnecting}
+                    >
+                      {sharepointDisconnecting ? <ShieldLoader size="xs" variant="inline" /> : null}
+                      {t('settingsIntegration.disconnect')}
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="default" size="sm" onClick={handleSharepointConnect}>
+                    {t('settingsIntegration.connect')}
+                  </Button>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {sharepointLoading ? (
-                <ShieldLoader size="xs" variant="inline" />
-              ) : sharepointConnected ? (
-                <>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSharepointSync}
-                    disabled={sharepointSyncing}
-                  >
-                    {sharepointSyncing ? (
-                      <ShieldLoader size="xs" variant="inline" />
-                    ) : (
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                    )}
-                    Sync Employees
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSharepointDisconnect}
-                    disabled={sharepointDisconnecting}
-                  >
-                    {sharepointDisconnecting ? (
-                      <ShieldLoader size="xs" variant="inline" />
-                    ) : null}
-                    {t('settingsIntegration.disconnect')}
-                  </Button>
-                </>
-              ) : (
-                <Button variant="default" size="sm" onClick={handleSharepointConnect}>
-                  {t('settingsIntegration.connect')}
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Email Integration */}
       <Card>

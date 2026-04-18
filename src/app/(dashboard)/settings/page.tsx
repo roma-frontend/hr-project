@@ -298,9 +298,7 @@ export default function SettingsPage() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
-            className={`bg-(--surface) p-1.5 rounded-xl border border-(--border) overflow-x-auto scrollbar-hide ${
-              isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
-            }`}
+            className="bg-(--surface) p-1.5 rounded-xl border border-(--border) overflow-x-auto scrollbar-hide"
           >
             <TabsList className="inline-flex w-auto min-w-full gap-1 bg-transparent h-auto flex-nowrap">
               {tabs.map((tab) => {

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshSharePointToken } from '@/lib/sharepoint-sync';
+import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
 
 export async function GET(request: NextRequest) {
+  const validation = await validateRestrictedOrgFromRequest(request);
+
+  if (!validation.allowed) {
+    return NextResponse.json(validation.body, { status: validation.status });
+  }
+
   const accessToken = request.cookies.get('sharepoint_access_token')?.value;
   const refreshToken = request.cookies.get('sharepoint_refresh_token')?.value;
 

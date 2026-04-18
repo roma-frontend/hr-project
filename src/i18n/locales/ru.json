@@ -188,6 +188,7 @@
   },
   "common": {
     "daysShort": "дн.",
+    "hoursShort": "ч",
     "current": "Текущий",
     "minutesAgo": "мин назад",
     "minutesActive": "мин активно",
@@ -603,7 +604,32 @@
       "statusOpenOption": "Открытый",
       "statusWaitingResponse": "Ждет ответа",
       "resolveTicket": "Решить тикет",
-      "info": "Информация"
+      "info": "Информация",
+      "chat": {
+        "title": "Чат тикета",
+        "create": "Создать чат",
+        "status": "Статус чата",
+        "active": "Активен",
+        "pending": "Ожидает",
+        "employeeSees": "Сотрудник видит этот чат",
+        "employeeNotSee": "Чат создан, но сотрудник его не видит",
+        "activate": "Активировать чат",
+        "open": "Открыть чат",
+        "createBtn": "Создать чат по тикету",
+        "creating": "Создание...",
+        "activateTitle": "Активировать чат тикета",
+        "activateDesc": "Напишите первое сообщение, чтобы активировать чат. После этого сотрудник увидит этот чат и сможет в нем общаться.",
+        "firstMessage": "Первое сообщение",
+        "placeholder": "Здравствуйте! Я суперадмин, готов помочь вам с этим тикетом...",
+        "cancel": "Отмена",
+        "activateAndSend": "Активировать и отправить",
+        "defaultActivateMessage": "Здравствуйте! Я суперадмин, готов помочь вам с тикетом {{ticketNumber}}."
+      },
+      "chatCreated": "Чат создан: {{chatName}}",
+      "chatCreateError": "Ошибка создания чата",
+      "chatActivated": "Чат активирован! Сотрудник теперь видит этот чат.",
+      "chatActivateError": "Ошибка активации чата",
+      "chatCreateFirst": "Пожалуйста, сначала создайте чат перед активацией"
     },
     "emergency": {
       "title": "Панель чрезвычайных ситуаций",
@@ -799,7 +825,9 @@
       "tickets": {
         "title": "Тикеты поддержки",
         "found": "тикетов найдено",
-        "noTickets": "Тикетов не найдено"
+        "noTickets": "Тикетов не найдено",
+        "chatCreated": "Чат создан для тикета {ticketNumber}. Вы увидите этот чат после первого сообщения от суперадмина.",
+        "chatCreatedShort": "Чат создан для тикета {ticketNumber}"
       },
       "activity": {
         "title": "Последняя активность",
@@ -1504,6 +1532,8 @@
     "role": "роль",
     "organization": "Организация",
     "selectOrganization": "Выберите организацию",
+    "selectOrg": "Выберите организацию",
+    "members": "участников",
     "selectOrgDescription": "Выберите организацию, в которую нужно добавить этого сотрудника",
     "employeeType": "Тип сотрудника",
     "travelAllowance": "Командировочные",
@@ -3886,7 +3916,8 @@
       "inProgress": "В процессе",
       "review": "На проверке",
       "completed": "Завершено",
-      "cancelled": "Отменено"
+      "cancelled": "Отменено",
+      "moved": "Перемещено в {{status}}"
     },
     "priority": "Приоритет",
     "priorityLabels": {

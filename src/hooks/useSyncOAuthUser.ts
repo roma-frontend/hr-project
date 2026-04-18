@@ -107,6 +107,8 @@ export function useSyncOAuthUser() {
               email: data.session.email,
               role: data.session.role,
               organizationId: data.session.organizationId,
+              organizationSlug: data.session.organizationSlug,
+              organizationName: data.session.organizationName,
               department: data.session.department,
               position: data.session.position,
               employeeType: data.session.employeeType,

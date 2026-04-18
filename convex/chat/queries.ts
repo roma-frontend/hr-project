@@ -1,7 +1,6 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
-import { getUsersWithLeaveStatus } from './presence';
 import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 // ─── CONVERSATIONS ────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ import { SUPERADMIN_EMAIL } from '../lib/auth';
 export const getMyConversations = query({
   args: {
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
     // Step 1: Get all memberships for this user
@@ -26,40 +25,83 @@ export const getMyConversations = query({
       .withIndex('by_user', (q) => q.eq('userId', args.userId))
       .collect();
 
-    // Step 2: Batch load all conversations
+    // Step 2: Check if user is a superadmin
+    const user = await ctx.db.get(args.userId);
+    const isSuperadmin = user ? (user.role === 'superadmin' || user.email === SUPERADMIN_EMAIL) : false;
+
+    // Debug: log memberships
+    if (isSuperadmin) {
+      console.log(`[getMyConversations] Superadmin ${args.userId} has ${memberships.length} memberships`);
+      memberships.forEach((m, idx) => {
+        console.log(`  Membership ${idx}: conversationId=${m.conversationId}, isDeleted=${m.isDeleted}`);
+      });
+    }
+
+    // Step 3: Batch load all conversations
     const conversationIds = memberships.map((m) => m.conversationId);
     const conversations = await Promise.all(conversationIds.map((id) => ctx.db.get(id)));
 
-    // Step 3: Filter valid conversations (same org, not deleted)
-    const validConvs = conversations.filter((conv, idx) => {
+    // Debug: log conversations
+    if (isSuperadmin) {
+      conversations.forEach((conv, idx) => {
+        console.log(`  Conversation ${idx}: ${conv?._id}, name=${conv?.name}, type=${conv?.type}`);
+      });
+    }
+
+    // Step 4: Filter valid conversations (not deleted)
+    const validConvs: Array<{ conv: Doc<'chatConversations'>; membership: Doc<'chatMembers'> }> = [];
+    conversations.forEach((conv, idx) => {
       const membership = memberships[idx];
-      if (!conv) return false;
-      if (membership?.isDeleted) return false;
-      if (conv.organizationId !== args.organizationId) return false;
-      return true;
+      if (!conv || !membership) return;
+      if (membership?.isDeleted) return;
+      
+      // Superadmins see all conversations they are members of
+      if (isSuperadmin) {
+        validConvs.push({ conv, membership });
+        return;
+      }
+      
+      // Regular users: check organization match
+      if (args.organizationId && conv.organizationId !== args.organizationId) {
+        return;
+      }
+      validConvs.push({ conv, membership });
     });
 
-    const validMemberships = memberships.filter((m, idx) => validConvs[idx] !== null);
-    const filteredConvs = validConvs.filter(Boolean) as Array<{
+    // Deduplicate conversations by _id (remove duplicates from duplicate memberships)
+    const seenIds = new Set<Id<'chatConversations'>>();
+    const dedupedConvs: Doc<'chatConversations'>[] = [];
+    const dedupedMemberships: Doc<'chatMembers'>[] = [];
+    validConvs.forEach(({ conv, membership }) => {
+      if (!seenIds.has(conv._id)) {
+        seenIds.add(conv._id);
+        dedupedConvs.push(conv);
+        dedupedMemberships.push(membership);
+      }
+    });
+
+    // Debug: log for superadmin
+    if (isSuperadmin) {
+      console.log(`[getMyConversations] Superadmin ${args.userId} has ${memberships.length} memberships, found ${validConvs.length} valid conversations, ${dedupedConvs.length} after dedup`);
+    }
+
+    const filteredConvs = dedupedConvs.filter(Boolean) as Array<{
       _id: Id<'chatConversations'>;
       type: 'direct' | 'group';
       createdBy: Id<'users'>;
-      organizationId: Id<'organizations'>;
+      organizationId?: Id<'organizations'>;
       lastMessageAt?: number;
       createdAt: number;
       isPinned?: boolean;
     }>;
 
-    // Step 4: Load ALL chat members first (needed to find DM participants)
+    // Step 5: Load ALL chat members
     const allChatMembers = await ctx.db.query('chatMembers').collect();
 
-    // Step 5: Collect all user IDs that we need to load (including DM other-participants)
+    // Step 6: Collect all user IDs
     const allUserIds = new Set<Id<'users'>>();
-
     filteredConvs.forEach((conv) => {
       allUserIds.add(conv.createdBy);
-
-      // For DMs: also add the other participant so their name is resolved
       if (conv.type === 'direct') {
         const members = allChatMembers.filter((m) => m.conversationId === conv._id);
         const otherMember = members.find((m) => m.userId !== args.userId);
@@ -69,22 +111,13 @@ export const getMyConversations = query({
       }
     });
 
-    // Step 6: Batch load all users with leave status
-    const usersWithLeaveStatus = await getUsersWithLeaveStatus(ctx, Array.from(allUserIds));
-    const userMap = usersWithLeaveStatus.userMap;
-    const userStatusMap = usersWithLeaveStatus.result;
+    // Step 7: Batch load all users
+    const users = await Promise.all(Array.from(allUserIds).map((id) => ctx.db.get(id)));
+    const userMap = new Map(users.map((u, i) => [Array.from(allUserIds)[i], u]));
 
-    // Step 7: Build group members map
+    // Step 8: Build group members map
     const groupConvs = filteredConvs.filter((c) => c.type === 'group');
-
-    const groupMembersMap = new Map<
-      Id<'chatConversations'>,
-      Array<{
-        _id: Id<'chatMembers'>;
-        userId: Id<'users'>;
-        conversationId: Id<'chatConversations'>;
-      }>
-    >();
+    const groupMembersMap = new Map<Id<'chatConversations'>, typeof allChatMembers>();
     groupConvs.forEach((conv) => {
       const members = allChatMembers.filter((m) => m.conversationId === conv._id);
       groupMembersMap.set(conv._id, members);
@@ -97,45 +130,46 @@ export const getMyConversations = query({
       .forEach((m) => groupMemberUserIds.add(m.userId));
 
     // Load group member users
-    const groupMemberUsers = await getUsersWithLeaveStatus(ctx, Array.from(groupMemberUserIds));
-    const groupMemberUserMap = groupMemberUsers.userMap;
+    const groupMemberUsers = await Promise.all(Array.from(groupMemberUserIds).map((id) => ctx.db.get(id)));
+    const groupMemberUserMap = new Map(Array.from(groupMemberUserIds).map((id, i) => [id, groupMemberUsers[i]]));
 
-    // Step 8: Build result with pre-loaded data
+    // Step 9: Build result
     const conversationsWithDetails = filteredConvs.map((conv, idx) => {
-      const membership = validMemberships[idx];
+      const membership = dedupedMemberships[idx];
 
-      // For DMs: get other user
       let otherUser = null;
       if (conv.type === 'direct') {
         const allMembers = allChatMembers.filter((m) => m.conversationId === conv._id);
         const otherMember = allMembers.find((m) => m.userId !== args.userId);
         if (otherMember) {
-          const status = userStatusMap.get(otherMember.userId);
+          const otherUserData = userMap.get(otherMember.userId);
           otherUser = {
             _id: otherMember.userId,
-            name: userMap.get(otherMember.userId)?.name || 'Unknown',
-            avatarUrl: userMap.get(otherMember.userId)?.avatarUrl,
-            presenceStatus: status?.presenceStatus || 'available',
+            name: otherUserData?.name || 'Unknown',
+            avatarUrl: otherUserData?.avatarUrl,
+            presenceStatus: otherUserData?.presenceStatus || 'available',
           };
         }
       }
 
-      // For groups: build members list
       let members: Array<{
         userId: Id<'users'>;
         user: { name: string; avatarUrl?: string } | null;
       }> = [];
       if (conv.type === 'group') {
         const groupMembers = groupMembersMap.get(conv._id) || [];
-        members = groupMembers.map((m) => ({
-          userId: m.userId,
-          user: groupMemberUserMap.get(m.userId)
-            ? {
-                name: groupMemberUserMap.get(m.userId)!.name,
-                avatarUrl: groupMemberUserMap.get(m.userId)!.avatarUrl,
-              }
-            : null,
-        }));
+        members = groupMembers.map((m) => {
+          const userData = groupMemberUserMap.get(m.userId);
+          return {
+            userId: m.userId,
+            user: userData
+              ? {
+                  name: userData.name,
+                  avatarUrl: userData.avatarUrl,
+                }
+              : null,
+          };
+        });
       }
 
       const memberCount = conv.type === 'group' ? groupMembersMap.get(conv._id)?.length || 0 : 2;
@@ -149,7 +183,7 @@ export const getMyConversations = query({
       };
     });
 
-    // Step 9: Sort (pinned first, then by last message time)
+    // Step 10: Sort
     return conversationsWithDetails.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;

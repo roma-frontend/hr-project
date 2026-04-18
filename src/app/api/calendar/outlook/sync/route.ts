@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOutlookCalendarEvent } from '@/lib/calendar-sync';
+import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
 
 export async function POST(request: NextRequest) {
   try {
+    const validation = await validateRestrictedOrgFromRequest(request);
+
+    if (!validation.allowed) {
+      return NextResponse.json(validation.body, { status: validation.status });
+    }
+
     const accessToken = request.cookies.get('outlook_access_token')?.value;
 
     if (!accessToken) {

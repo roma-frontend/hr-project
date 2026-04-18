@@ -188,6 +188,7 @@
   },
   "common": {
     "daysShort": "days",
+    "hoursShort": "h",
     "current": "Current",
     "minutesAgo": "min ago",
     "minutesActive": "min active",
@@ -595,7 +596,32 @@
       "statusOpenOption": "Open",
       "statusWaitingResponse": "Waiting for Response",
       "resolveTicket": "Resolve Ticket",
-      "info": "Information"
+      "info": "Information",
+      "chat": {
+        "title": "Ticket Chat",
+        "create": "Create Chat",
+        "status": "Chat Status",
+        "active": "Active",
+        "pending": "Pending",
+        "employeeSees": "Employee sees this chat",
+        "employeeNotSee": "Chat created, but employee cannot see it yet",
+        "activate": "Activate Chat",
+        "open": "Open Chat",
+        "createBtn": "Create Ticket Chat",
+        "creating": "Creating...",
+        "activateTitle": "Activate Ticket Chat",
+        "activateDesc": "Write the first message to activate the chat. After this, the employee will see this chat and be able to communicate in it.",
+        "firstMessage": "First Message",
+        "placeholder": "Hello! I am a superadmin, ready to help you with this ticket...",
+        "cancel": "Cancel",
+        "activateAndSend": "Activate and Send",
+        "defaultActivateMessage": "Hello! I'm a superadmin, ready to help you with ticket {{ticketNumber}}."
+      },
+      "chatCreated": "Chat created: {{chatName}}",
+      "chatCreateError": "Error creating chat",
+      "chatActivated": "Chat activated! Employee can now see this chat.",
+      "chatActivateError": "Error activating chat",
+      "chatCreateFirst": "Please create the chat first before activating it"
     },
     "emergency": {
       "title": "Emergency Dashboard",
@@ -789,7 +815,9 @@
       "tickets": {
         "title": "Support Tickets",
         "found": "tickets found",
-        "noTickets": "No tickets found"
+        "noTickets": "No tickets found",
+        "chatCreated": "Chat created for ticket {ticketNumber}. You will see this chat after the first message from superadmin.",
+        "chatCreatedShort": "Chat created for ticket {ticketNumber}"
       },
       "activity": {
         "title": "Recent Activity",
@@ -1491,6 +1519,8 @@
     "role": "Role",
     "organization": "Organization",
     "selectOrganization": "Select organization",
+    "selectOrg": "Select organization",
+    "members": "members",
     "selectOrgDescription": "Choose which organization to add this employee to",
     "employeeType": "Employee Type",
     "travelAllowance": "Travel Allowance",
@@ -3848,7 +3878,8 @@
       "inProgress": "In Progress",
       "review": "In Review",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "moved": "Moved to {{status}}"
     },
     "priority": {
       "low": "Low",

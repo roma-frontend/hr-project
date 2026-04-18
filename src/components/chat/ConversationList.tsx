@@ -161,21 +161,21 @@ export function ConversationList({
 
     if (!matchesSearch) return false;
 
-    const isHidden = c.membership.isArchived || c.isArchived || c.membership.isDeleted;
+    const isHidden = c.membership.isArchived || c.isArchived;
 
     switch (filter) {
       case 'chat':
-        return c.type === 'direct' && !isHidden;
+        return c.type === 'direct' && !isHidden && !c.membership.isDeleted;
       case 'unread':
-        return c.membership.unreadCount > 0 && !isHidden;
+        return c.membership.unreadCount > 0 && !isHidden && !c.membership.isDeleted;
       case 'groups':
-        return c.type === 'group' && !isHidden;
+        return c.type === 'group' && !isHidden && !c.membership.isDeleted;
       case 'pinned':
-        return c.isPinned && !isHidden;
+        return c.isPinned && !isHidden && !c.membership.isDeleted;
       case 'archived':
-        return isHidden;
+        return c.membership.isDeleted || isHidden;
       default:
-        return !isHidden; // "all" shows non-archived/deleted only
+        return !isHidden && !c.membership.isDeleted; // "all" shows non-archived/deleted only
     }
   });
 
@@ -543,7 +543,8 @@ export function ConversationList({
                             e.stopPropagation();
                             handleOperation(async () => {
                               await onRestore?.(conv._id);
-                              setFilter('chat');
+                              // Force refresh by switching to chat filter after a small delay
+                              setTimeout(() => setFilter('chat'), 100);
                             }, conv._id);
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-(--sidebar-item-hover)"

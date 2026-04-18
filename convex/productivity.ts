@@ -144,10 +144,10 @@ export const getTeamPresence = query({
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0] || '';
 
-    // Get only active users with presence status
+    // Get only active users with presence status (exclude superadmins)
     const onlineUsers = await Promise.all(
       users
-        .filter((u) => u.isActive && u.presenceStatus)
+        .filter((u) => u.isActive && u.presenceStatus && u.role !== 'superadmin')
         .map(async (u) => {
           // Check if user has an approved leave today
           let effectivePresenceStatus = u.presenceStatus!;

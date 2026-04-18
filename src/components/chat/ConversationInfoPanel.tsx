@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 interface Props {
   conversationId: Id<'chatConversations'>;
   currentUserId: Id<'users'>;
-  organizationId: Id<'organizations'>;
+  organizationId?: Id<'organizations'>;
   onClose: () => void;
 }
 
@@ -35,7 +35,7 @@ export function ConversationInfoPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<Id<'users'>[]>([]);
   const [adding, setAdding] = useState(false);
-  const [selectedOrgId, setSelectedOrgId] = useState<Id<'organizations'>>(organizationId);
+  const [selectedOrgId, setSelectedOrgId] = useState<Id<'organizations'> | undefined>(organizationId);
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
 
   const members = useQuery(api.chat.queries.getConversationMembers, { conversationId });
@@ -49,10 +49,10 @@ export function ConversationInfoPanel({
   const allOrganizations = useQuery(api.organizations.getAllOrganizations, {});
 
   // Fetch users from the selected organization using getOrgUsers (no permission restrictions)
-  const orgUsers = useQuery(api.chat.queries.getOrgUsers, {
-    organizationId: selectedOrgId,
-    currentUserId,
-  });
+  const orgUsers = useQuery(
+    api.chat.queries.getOrgUsers,
+    selectedOrgId ? { organizationId: selectedOrgId, currentUserId } : 'skip',
+  );
 
   const addMember = useMutation(api.chat.mutations.addMember);
 

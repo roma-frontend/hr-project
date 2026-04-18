@@ -722,7 +722,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
                 status: newStatus,
                 userId: convexId,
               });
-              toast.success(`Moved to ${t(STATUS_CONFIG[newStatus].labelKey)} ✓`, {
+              toast.success(t('tasks.status.moved', { status: t(STATUS_CONFIG[newStatus].labelKey) }), {
                 duration: 2000,
               });
             } catch {

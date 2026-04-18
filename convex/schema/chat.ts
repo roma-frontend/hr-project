@@ -3,7 +3,7 @@ import { v } from 'convex/values';
 
 export const chat = {
   chatConversations: defineTable({
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     type: v.union(v.literal('direct'), v.literal('group')),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -23,16 +23,16 @@ export const chat = {
   })
     .index('by_org', ['organizationId'])
     .index('by_org_last', ['organizationId', 'lastMessageAt'])
-    .index('by_dm_key', ['dmKey'])
-    .index('by_creator', ['createdBy'])
     .index('by_org_not_deleted', ['organizationId', 'isDeleted'])
     .index('by_org_pinned', ['organizationId', 'isPinned'])
-    .index('by_org_archived', ['organizationId', 'isArchived']),
+    .index('by_org_archived', ['organizationId', 'isArchived'])
+    .index('by_dm_key', ['dmKey'])
+    .index('by_creator', ['createdBy']),
 
   chatMembers: defineTable({
     conversationId: v.id('chatConversations'),
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     role: v.union(v.literal('owner'), v.literal('admin'), v.literal('member')),
     unreadCount: v.number(),
     lastReadAt: v.optional(v.number()),
@@ -50,7 +50,7 @@ export const chat = {
 
   chatMessages: defineTable({
     conversationId: v.id('chatConversations'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     senderId: v.id('users'),
     type: v.union(
       v.literal('text'),
@@ -149,7 +149,7 @@ export const chat = {
   chatTyping: defineTable({
     conversationId: v.id('chatConversations'),
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     updatedAt: v.number(),
   })
     .index('by_conversation', ['conversationId'])
@@ -157,7 +157,7 @@ export const chat = {
 
   chatCalls: defineTable({
     conversationId: v.id('chatConversations'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     initiatorId: v.id('users'),
     type: v.union(v.literal('audio'), v.literal('video')),
     status: v.union(

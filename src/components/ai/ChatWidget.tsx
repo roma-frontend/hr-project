@@ -1088,7 +1088,7 @@ export function ChatWidget() {
                         key={s}
                         onClick={() => handleSuggestion(s)}
                         disabled={isLoading}
-                        className="text-left px-3 py-2 rounded-xl border border-(--border) bg-(--background-subtle) hover:border-[#2563eb]/50 hover:bg-[#2563eb]/5 hover:text-[#2563eb] text-xs text-(--text-primary) transition-all duration-150 disabled:opacity-50"
+                        className="text-left px-3 py-2 rounded-xl border border-(--border) bg-(--background-subtle) hover:border-[#2563eb]/50 hover:bg-[#2563eb]/5 hover:text-[#3b82f6] text-xs text-(--text-primary) transition-all duration-150 disabled:opacity-50"
                       >
                         {s}
                       </button>
@@ -1392,7 +1392,7 @@ export function ChatWidget() {
                     className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors disabled:opacity-50 ${
                       isListening
                         ? 'text-[#2563eb] animate-pulse'
-                        : 'text-(--text-muted) hover:text-[#2563eb]'
+                        : 'text-(--text-muted) hover:text-[#3b82f6]'
                     }`}
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

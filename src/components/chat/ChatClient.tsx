@@ -54,32 +54,14 @@ export default function ChatClient({
 
   // Respect org selector: if a specific org is selected (e.g. superadmin), use it
   const { selectedOrgId } = useOrgSelectorStore();
-  const effectiveOrgId = selectedOrgId ? (selectedOrgId as Id<'organizations'>) : orgId;
+  // For superadmins, don't pass organizationId - they see all conversations they're members of
+  const effectiveOrgId = userRole === 'superadmin' ? undefined : (selectedOrgId ? (selectedOrgId as Id<'organizations'>) : orgId);
 
-  // Online/Offline detection
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    setIsOnline(navigator.onLine);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Send queued messages when back online
-  useEffect(() => {
-    if (isOnline && offlineMessages.length > 0) {
-      // Messages will be sent automatically via normal flow
-      setOfflineMessages([]);
-    }
-  }, [isOnline, offlineMessages.length]);
+  console.log('[ChatClient] userRole:', userRole, 'effectiveOrgId:', effectiveOrgId);
 
   const conversations = useQuery(
     api.chat.queries.getMyConversations,
-    uid && effectiveOrgId ? { userId: uid, organizationId: effectiveOrgId } : 'skip',
+    uid ? { userId: uid, organizationId: effectiveOrgId } : 'skip',
   );
 
   const initiateCallMutation = useMutation(api.chat.calls.initiateCall);
@@ -123,7 +105,7 @@ export default function ChatClient({
 
       const callId = await initiateCallMutation({
         conversationId: convId,
-        organizationId: effectiveOrgId,
+        organizationId: effectiveOrgId ?? undefined,
         initiatorId: uid,
         type,
         participantIds,
@@ -182,7 +164,7 @@ export default function ChatClient({
     previousTotalUnreadRef.current = totalUnread;
   }, [conversations, selectedConvId]);
 
-  if (!uid || !effectiveOrgId)
+  if (!uid)
     return (
       <div
         className="flex h-full items-center justify-center"

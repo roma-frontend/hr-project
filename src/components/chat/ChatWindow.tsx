@@ -39,7 +39,7 @@ import { getInitials, formatFileSize } from '@/lib/stringUtils';
 interface Props {
   conversationId: Id<'chatConversations'>;
   currentUserId: Id<'users'>;
-  organizationId: Id<'organizations'>;
+  organizationId?: Id<'organizations'>;
   currentUserName: string;
   currentUserAvatar?: string;
   onBack: () => void;
@@ -108,6 +108,17 @@ export const ChatWindow = React.memo(function ChatWindow({
     limit: 200,
   }) as any;
 
+  // Deduplicate messages to prevent duplicate key warnings
+  const dedupedMessages = React.useMemo(() => {
+    if (!messages) return messages;
+    const seen = new Set();
+    return messages.filter((msg: any) => {
+      if (seen.has(msg._id)) return false;
+      seen.add(msg._id);
+      return true;
+    });
+  }, [messages]);
+
   // Debug: Log first message sender
   if (messages && messages.length > 0 && !messages[0]?.sender) {
     console.warn('[ChatWindow] Message without sender:', messages[0]);
@@ -129,7 +140,7 @@ export const ChatWindow = React.memo(function ChatWindow({
 
   // Virtualization for messages
   const virtualizer = useVirtualizer({
-    count: messages?.length ?? 0,
+    count: dedupedMessages?.length ?? 0,
     getScrollElement: () => messagesParentRef.current,
     estimateSize: () => 100, // Estimate average message height
     overscan: 5,
@@ -168,8 +179,8 @@ export const ChatWindow = React.memo(function ChatWindow({
   }, [conversationId, markAsRead, currentUserId]);
 
   useEffect(() => {
-    if (messages === undefined) return;
-    const count = messages.filter(Boolean).length;
+    if (dedupedMessages === undefined) return;
+    const count = dedupedMessages.filter(Boolean).length;
     if (isFirstLoadRef.current) {
       // First load: jump instantly to bottom, no animation
       messagesEndRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
@@ -180,7 +191,7 @@ export const ChatWindow = React.memo(function ChatWindow({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       prevMsgCountRef.current = count;
     }
-  }, [messages]);
+  }, [dedupedMessages]);
 
   const handleTyping = useCallback(() => {
     setTyping({ conversationId, userId: currentUserId, organizationId, isTyping: true });
@@ -518,17 +529,17 @@ export const ChatWindow = React.memo(function ChatWindow({
 
   // Browser notification + sound for incoming messages
   useEffect(() => {
-    if (!messages || messages.length === 0) return;
+    if (!dedupedMessages || dedupedMessages.length === 0) return;
 
     // Skip sound on the very first load — just mark as loaded
     if (!initialLoadDoneRef.current) {
       initialLoadDoneRef.current = true;
-      const latest = messages[messages.length - 1];
+      const latest = dedupedMessages[dedupedMessages.length - 1];
       if (latest) lastPlayedMsgIdRef.current = latest._id;
       return;
     }
 
-    const latest = messages[messages.length - 1];
+    const latest = dedupedMessages[dedupedMessages.length - 1];
     if (!latest) return;
     // Don't play for own messages
     if (latest.senderId === currentUserId) return;
@@ -561,7 +572,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     } else if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, [messages, conv?.membership?.isMuted, currentUserId, conversationId, markAsRead]);
+  }, [dedupedMessages, conv?.membership?.isMuted, currentUserId, conversationId, markAsRead]);
 
   const canSend = (input.trim().length > 0 || pendingFiles.length > 0) && !sending;
 
@@ -761,7 +772,7 @@ export const ChatWindow = React.memo(function ChatWindow({
           className="flex-1 overflow-y-auto overflow-x-hidden px-2 xs:px-3 sm:px-4 py-3 xs:py-4 custom-scrollbar"
           style={{ background: 'var(--background)' }}
         >
-          {messages === undefined ? (
+          {dedupedMessages === undefined ? (
             <div className="space-y-3 animate-pulse" role="status" aria-label="Loading messages">
               {[...Array(5)].map((_: any, i: any) => (
                 <div key={i} className={cn('flex gap-3', i % 2 === 0 ? '' : 'flex-row-reverse')}>
@@ -773,7 +784,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 </div>
               ))}
             </div>
-          ) : messages.length === 0 ? (
+          ) : dedupedMessages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {t('chat.noMessagesYet')}
@@ -792,11 +803,11 @@ export const ChatWindow = React.memo(function ChatWindow({
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow: any) => {
-                const msg = messages[virtualRow.index];
+                const msg = dedupedMessages[virtualRow.index];
                 if (!msg) return null;
 
                 const isOwn = msg.senderId === currentUserId;
-                const prevMsg = messages[virtualRow.index - 1];
+                const prevMsg = dedupedMessages[virtualRow.index - 1];
                 const isFirstOfStreak =
                   virtualRow.index === 0 || prevMsg?.senderId !== msg.senderId;
                 const isSystemAnnouncements = (conv as any)?.name === 'System Announcements';

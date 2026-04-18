@@ -142,7 +142,7 @@ export function CookiePreferences() {
         {/* Info Banner */}
         <div className="flex gap-3 rounded-lg border border-blue-200 bg-(--primary)/15 p-3 dark:border-blue-900/50 dark:bg-blue-950/30">
           <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-          <div className="text-xs text-white">
+          <div className="text-xs">
             {t('cookies.respectPrivacy')}{' '}
             <Link
               href="/privacy"

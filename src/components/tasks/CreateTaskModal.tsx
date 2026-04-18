@@ -326,7 +326,7 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-sky-500 hover:from-blue-700 hover:to-sky-700 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60"
+              className="flex-1 px-4 py-2.5 rounded-xl bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60"
             >
               {loading
                 ? uploadProgress

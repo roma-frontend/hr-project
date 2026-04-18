@@ -444,13 +444,6 @@ export function Sidebar() {
 
                 {/* Label */}
                 <span className="flex-1 text-sm font-medium truncate">{t(item.labelKey)}</span>
-
-                {/* Chat unread badge (next to label, shown when sidebar expanded) */}
-                {item.href === '/chat' && chatBadgeCount > 0 && !collapsed && (
-                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-linear-to-r from-red-500 to-red-600 text-white text-[9px] font-bold flex items-center justify-center shadow-lg animate-chat-badge">
-                    {chatBadgeCount > 99 ? '99+' : chatBadgeCount}
-                  </span>
-                )}
               </Link>
             );
           })}

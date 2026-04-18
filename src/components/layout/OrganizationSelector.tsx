@@ -7,12 +7,14 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { Building2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface OrgSelectorProps {
   collapsed?: boolean;
 }
 
 export function OrganizationSelector({ collapsed = false }: OrgSelectorProps) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const store = useOrgSelectorStore();
   const [isOpen, setIsOpen] = useState(false);
@@ -60,12 +62,12 @@ export function OrganizationSelector({ collapsed = false }: OrgSelectorProps) {
             backgroundColor: selectedOrgId ? 'var(--primary)' : 'var(--background-subtle)',
             color: selectedOrgId ? 'white' : 'var(--text-primary)',
           }}
-          title={selectedOrg?.name || 'Select Organization'}
+          title={selectedOrg?.name || t('employees.selectOrg')}
         >
           <Building2 className="w-4 h-4 shrink-0" />
           {!collapsed && (
             <>
-              <span className="flex-1 truncate text-left">{selectedOrg?.name || 'Select Org'}</span>
+              <span className="flex-1 truncate text-left">{selectedOrg?.name || t('employees.selectOrg')}</span>
               <ChevronDown
                 className={cn(
                   'w-4 h-4 shrink-0 transition-transform duration-300',
@@ -102,7 +104,7 @@ export function OrganizationSelector({ collapsed = false }: OrgSelectorProps) {
                 borderColor: 'var(--border)',
               }}
             >
-              All Organizations
+              {t('superadmin.organizations.list.title')}
             </button>
 
             {/* Organization List */}
@@ -125,7 +127,7 @@ export function OrganizationSelector({ collapsed = false }: OrgSelectorProps) {
               >
                 <div className="truncate">{org.name}</div>
                 <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {org.memberCount || 0} members
+                  {org.memberCount || 0} {t('employees.members')}
                 </div>
               </button>
             ))}

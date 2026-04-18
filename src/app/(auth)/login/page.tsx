@@ -200,7 +200,7 @@ function MaintenanceBanner() {
               margin: '0',
             }}
           >
-            Обслуживание в процессе
+            {t('maintenance.bannerInProgress')}
           </p>
         </div>
       </div>
@@ -241,6 +241,43 @@ export default function LoginPage() {
     }
     return false;
   });
+
+  // Update maintenance banner state when URL changes
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const params = new URLSearchParams(window.location.search);
+      const isMaintenance = params.get('maintenance') === 'true';
+      setShowMaintenanceBanner(isMaintenance);
+    };
+
+    // Check on mount and on popstate (back/forward buttons)
+    handleUrlChange();
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
+  }, []);
+
+  // Check maintenance mode on initial load if org parameter is present
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const orgId = params.get('org');
+      
+      if (orgId && !showMaintenanceBanner) {
+        try {
+          const response = await fetch(`/api/maintenance/check?org=${orgId}`);
+          const data = await response.json();
+          if (data.isActive) {
+            // Redirect to maintenance mode URL
+            window.location.href = `/login?maintenance=true&org=${orgId}`;
+          }
+        } catch (error) {
+          console.error('Failed to check maintenance mode:', error);
+        }
+      }
+    };
+
+    checkMaintenanceMode();
+  }, [showMaintenanceBanner]);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const deviceFingerprintRef = useRef<string | undefined>(undefined);
   const { getSample, reset } = useKeystrokeDynamics();
@@ -254,19 +291,7 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  // Detect maintenance mode from URL
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const isMaintenance = params.get('maintenance') === 'true';
 
-      if (isMaintenance) {
-        setShowMaintenanceBanner(true);
-        document.documentElement.style.opacity = '1';
-        document.documentElement.style.transition = 'none';
-      }
-    }
-  }, []);
 
   // Check if OAuth sync is in progress OR redirecting
   const isOAuthSyncing = (status === 'authenticated' && !isAuthenticated) || isRedirecting;
@@ -293,6 +318,8 @@ export default function LoginPage() {
       router.push(destination);
     }
   }, [status, isAuthenticated, isRedirecting, router]);
+
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -517,17 +544,15 @@ export default function LoginPage() {
     }
   }, [totpCode, isBackupCode, twoFactorPending, handleTwoFactorSubmit]);
 
+  // Early return for maintenance mode to prevent any other rendering
+  if (showMaintenanceBanner) {
+    return <MaintenanceBanner />;
+  }
+
   return (
     <>
-      {/* Maintenance Banner - Show if maintenance mode is enabled */}
-      {showMaintenanceBanner && (
-        <>
-          <MaintenanceBanner />
-        </>
-      )}
-
       {/* Normal Login Flow */}
-      {!showMaintenanceBanner && (
+      {
         <>
           {/* OAuth Sync Loader */}
           <OAuthSyncLoader />
@@ -892,7 +917,7 @@ export default function LoginPage() {
             </motion.div>
           </div>
         </>
-      )}
+      }
     </>
   );
 }

@@ -12,7 +12,7 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 interface Props {
   userId: Id<'users'>;
-  organizationId: Id<'organizations'>;
+  organizationId?: Id<'organizations'>;
   onClose: () => void;
   onSelectMessage: (conversationId: Id<'chatConversations'>, messageId: Id<'chatMessages'>) => void;
 }

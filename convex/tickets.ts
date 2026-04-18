@@ -6,6 +6,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { getTranslation, getUserLocale } from "./translations";
 
 // ─── CREATE TICKET ───────────────────────────────────────────────────────────
 export const createTicket = mutation({
@@ -516,5 +517,286 @@ export const getMyTickets = query({
         };
       })
     );
+  },
+});
+
+// ─── CREATE TICKET CHAT ──────────────────────────────────────────────────────
+export const createTicketChat = mutation({
+  args: {
+    ticketId: v.id("supportTickets"),
+    superadminId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    console.log(`[createTicketChat] START - ticketId: ${args.ticketId}, superadminId: ${args.superadminId}`);
+    
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) {
+      console.error(`[createTicketChat] Ticket not found: ${args.ticketId}`);
+      throw new Error("Ticket not found");
+    }
+    console.log(`[createTicketChat] Ticket found: ${ticket._id}, chatId: ${ticket.chatId}`);
+
+    // Verify user is superadmin
+    const superadmin = await ctx.db.get(args.superadminId);
+    console.log(`[createTicketChat] Superadmin: ${superadmin?._id}, role: ${superadmin?.role}, orgId: ${superadmin?.organizationId}`);
+    
+    if (!superadmin || superadmin.role !== "superadmin") {
+      console.error(`[createTicketChat] User is not superadmin: role=${superadmin?.role}`);
+      throw new Error("Only superadmins can create ticket chats");
+    }
+
+    // Check if chat already exists
+    if (ticket.chatId) {
+      console.error(`[createTicketChat] Chat already exists: ${ticket.chatId}`);
+      throw new Error("Chat already exists for this ticket");
+    }
+
+    const now = Date.now();
+
+    // Get organization
+    const org = ticket.organizationId ? await ctx.db.get(ticket.organizationId) : null;
+    const orgName = org?.name || "Organization";
+
+    // Get ticket creator to determine organization
+    const creator = await ctx.db.get(ticket.createdBy);
+    const creatorName = creator?.name || "Unknown";
+
+    // Determine organization ID for chat
+    // Priority: ticket's org > creator's org > superadmin's org
+    const chatOrgId = ticket.organizationId || creator?.organizationId || superadmin.organizationId;
+    console.log(`[createTicketChat] Ticket orgId: ${ticket.organizationId}, Creator orgId: ${creator?.organizationId}, Superadmin orgId: ${superadmin.organizationId}, Using: ${chatOrgId || 'undefined'}`);
+
+    // Generate smart chat name based on ticket
+    const chatName = `🎫 ${ticket.ticketNumber}: ${ticket.title}`;
+
+    // Create group conversation
+    const chatId = await ctx.db.insert("chatConversations", {
+      organizationId: chatOrgId,
+      type: "group",
+      name: chatName,
+      description: `Support chat for ticket ${ticket.ticketNumber}\nPriority: ${ticket.priority}\nCategory: ${ticket.category}`,
+      createdBy: args.superadminId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    console.log(`[createTicketChat] Created conversation ${chatId} with orgId: ${chatOrgId || 'undefined'}`);
+
+    // Add superadmin as owner (check if already exists)
+    const existingSuperadminMember = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", chatId).eq("userId", args.superadminId)
+      )
+      .first();
+
+    if (existingSuperadminMember) {
+      await ctx.db.patch(existingSuperadminMember._id, {
+        role: "owner",
+        unreadCount: 0,
+        isMuted: false,
+        isDeleted: false,
+        deletedAt: undefined,
+      });
+      console.log(`[createTicketChat] Superadmin ${args.superadminId} already exists, updated membership`);
+    } else {
+      await ctx.db.insert("chatMembers", {
+        conversationId: chatId,
+        userId: args.superadminId,
+        organizationId: chatOrgId,
+        role: "owner",
+        unreadCount: 0,
+        isMuted: false,
+        joinedAt: now,
+      });
+      console.log(`[createTicketChat] Added superadmin ${args.superadminId} as owner of chat ${chatId}`);
+    }
+
+    // Add ticket creator as member (check if already exists)
+    const existingCreatorMember = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", chatId).eq("userId", ticket.createdBy)
+      )
+      .first();
+
+    if (existingCreatorMember) {
+      await ctx.db.patch(existingCreatorMember._id, {
+        role: "member",
+        unreadCount: 0,
+        isMuted: false,
+        isDeleted: false,
+        deletedAt: undefined,
+      });
+      console.log(`[createTicketChat] Ticket creator ${ticket.createdBy} already exists, updated membership`);
+    } else {
+      await ctx.db.insert("chatMembers", {
+        conversationId: chatId,
+        userId: ticket.createdBy,
+        organizationId: chatOrgId,
+        role: "member",
+        unreadCount: 0,
+        isMuted: false,
+        joinedAt: now,
+      });
+      console.log(`[createTicketChat] Added ticket creator ${ticket.createdBy} as member of chat ${chatId}`);
+    }
+
+    // Add ticket assignee if exists (check if already exists)
+    if (ticket.assignedTo) {
+      const assigneeId = ticket.assignedTo;
+      const existingAssigneeMember = await ctx.db
+        .query("chatMembers")
+        .withIndex("by_conversation_user", (q) =>
+          q.eq("conversationId", chatId).eq("userId", assigneeId)
+        )
+        .first();
+
+      if (existingAssigneeMember) {
+        await ctx.db.patch(existingAssigneeMember._id, {
+          role: "member",
+          unreadCount: 0,
+          isMuted: false,
+          isDeleted: false,
+          deletedAt: undefined,
+        });
+        console.log(`[createTicketChat] Assignee ${assigneeId} already exists, updated membership`);
+      } else {
+        await ctx.db.insert("chatMembers", {
+          conversationId: chatId,
+          userId: assigneeId,
+          organizationId: chatOrgId,
+          role: "member",
+          unreadCount: 0,
+          isMuted: false,
+          joinedAt: now,
+        });
+        console.log(`[createTicketChat] Added assignee ${assigneeId} as member of chat ${chatId}`);
+      }
+    }
+
+    // Add system message about chat creation (translated based on creator's language)
+    const creatorLocale = getUserLocale(creator?.language);
+    const systemMessage = getTranslation(creatorLocale, 'ticket.chatCreated', {
+      ticketNumber: ticket.ticketNumber,
+    });
+    
+    await ctx.db.insert("chatMessages", {
+      conversationId: chatId,
+      organizationId: chatOrgId,
+      senderId: args.superadminId,
+      type: "system",
+      content: systemMessage,
+      createdAt: now,
+    });
+
+    // Update ticket with chatId (but NOT chatActivated yet)
+    await ctx.db.patch(args.ticketId, {
+      chatId,
+      updatedAt: now,
+    });
+
+    console.log(`[createTicketChat] Completed! chatId=${chatId}, orgId=${chatOrgId}, memberships added for superadmin, creator${ticket.assignedTo ? ', and assignee' : ''}`);
+    return { chatId, chatName };
+  },
+});
+
+// ─── ACTIVATE TICKET CHAT ────────────────────────────────────────────────────
+export const activateTicketChat = mutation({
+  args: {
+    ticketId: v.id("supportTickets"),
+    superadminId: v.id("users"),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) throw new Error("Ticket not found");
+    if (!ticket.chatId) throw new Error("Chat not created yet");
+    if (ticket.chatActivated) throw new Error("Chat already activated");
+
+    // Verify user is superadmin
+    const superadmin = await ctx.db.get(args.superadminId);
+    if (!superadmin || superadmin.role !== "superadmin") {
+      throw new Error("Only superadmins can activate ticket chats");
+    }
+
+    const now = Date.now();
+
+    // Determine org ID - use ticket's org, or creator's org as fallback
+    const creator = await ctx.db.get(ticket.createdBy);
+    const chatOrgId = ticket.organizationId || creator?.organizationId || superadmin.organizationId;
+    console.log(`[activateTicketChat] Ticket orgId: ${ticket.organizationId}, Creator orgId: ${creator?.organizationId}, Superadmin orgId: ${superadmin.organizationId}, Using: ${chatOrgId || 'undefined'}`);
+
+    // Send the first message from superadmin
+    const messageId = await ctx.db.insert("chatMessages", {
+      conversationId: ticket.chatId,
+      organizationId: chatOrgId,
+      senderId: args.superadminId,
+      type: "text",
+      content: args.message,
+      createdAt: now,
+    });
+
+    // Update conversation's last message metadata
+    const preview = args.message.length > 60 ? args.message.slice(0, 60) + "..." : args.message;
+    await ctx.db.patch(ticket.chatId, {
+      lastMessageAt: now,
+      lastMessageText: preview,
+      lastMessageSenderId: args.superadminId,
+      updatedAt: now,
+    });
+
+    // Mark chat as activated - now employee can see it
+    await ctx.db.patch(args.ticketId, {
+      chatActivated: true,
+      updatedAt: now,
+    });
+
+    if (!ticket.chatId) throw new Error("Chat not created yet");
+
+    // At this point, ticket.chatId is guaranteed to exist
+    const chatId = ticket.chatId;
+
+    // Increment unread count for ticket creator
+    const creatorMember = await ctx.db
+      .query("chatMembers")
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", chatId).eq("userId", ticket.createdBy)
+      )
+      .first();
+
+    if (creatorMember) {
+      await ctx.db.patch(creatorMember._id, {
+        unreadCount: creatorMember.unreadCount + 1,
+      });
+    }
+
+    // Notify ticket creator
+    await ctx.db.insert("notifications", {
+      organizationId: ticket.organizationId,
+      userId: ticket.createdBy,
+      type: "system",
+      title: `💬 Новый ответ в чате тикета: ${ticket.ticketNumber}`,
+      message: args.message.slice(0, 100),
+      isRead: false,
+      relatedId: `support_ticket:${args.ticketId}`,
+      createdAt: now,
+    });
+
+    return { messageId, chatId };
+  },
+});
+
+// ─── GET TICKET CHAT STATUS ──────────────────────────────────────────────────
+export const getTicketChatStatus = query({
+  args: { ticketId: v.id("supportTickets") },
+  handler: async (ctx, args) => {
+    const ticket = await ctx.db.get(args.ticketId);
+    if (!ticket) return null;
+
+    return {
+      chatId: ticket.chatId,
+      chatActivated: ticket.chatActivated || false,
+      hasChat: !!ticket.chatId,
+    };
   },
 });

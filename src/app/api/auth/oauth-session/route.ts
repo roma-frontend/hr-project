@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
     console.log('[oauth-session] Creating login session...');
-    await convexMutation('auth:login', {
+    const loginResult = await convexMutation('auth:login', {
       email: emailLower,
       password: '',
       sessionToken,
@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
       email: result.email,
       role: result.role,
       organizationId: result.organizationId,
+      organizationSlug: loginResult.organizationSlug,
+      organizationName: loginResult.organizationName,
       department: result.department,
       position: result.position,
       employeeType: result.employeeType,
@@ -156,6 +158,8 @@ export async function POST(req: NextRequest) {
         email: result.email,
         role: result.role,
         organizationId: result.organizationId,
+        organizationSlug: loginResult.organizationSlug,
+        organizationName: loginResult.organizationName,
         department: result.department,
         position: result.position,
         employeeType: result.employeeType,

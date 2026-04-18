@@ -19,6 +19,8 @@ export interface JWTPayload {
   email: string;
   role: 'admin' | 'supervisor' | 'employee' | 'superadmin';
   organizationId?: string;
+  organizationSlug?: string;
+  organizationName?: string;
   isApproved?: boolean;
   department?: string;
   position?: string;

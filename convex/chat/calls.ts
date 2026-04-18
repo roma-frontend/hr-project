@@ -7,7 +7,7 @@ import type { Id } from '../_generated/dataModel';
 export const initiateCall = mutation({
   args: {
     conversationId: v.id('chatConversations'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     initiatorId: v.id('users'),
     type: v.union(v.literal('audio'), v.literal('video')),
     participantIds: v.array(v.id('users')),

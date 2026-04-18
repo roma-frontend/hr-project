@@ -330,10 +330,17 @@ export function Navbar() {
                                 n.type === 'ticket_created' ||
                                 n.type === 'ticket_updated' ||
                                 n.type === 'ticket' ||
+                                n.type === 'system' && n.relatedId?.startsWith('support_ticket:') ||
                                 n.message?.toLowerCase().includes('ticket') ||
-                                n.title?.toLowerCase().includes('ticket')
+                                n.title?.toLowerCase().includes('ticket') ||
+                                n.title?.includes('🎫')
                               ) {
-                                router.push('/help');
+                                // Redirect based on user role
+                                if (user?.role === 'superadmin') {
+                                  router.push('/superadmin/support');
+                                } else {
+                                  router.push('/help');
+                                }
                               }
                               setShowNotifications(false);
                             }}
@@ -381,7 +388,7 @@ export function Navbar() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => setTheme('light')}
-                className={theme === 'light' ? 'bg-[#38bdf8]/10' : ''}
+                className={theme === 'light' ? 'bg-[#01579b]/10' : ''}
               >
                 <Sun className="w-4 h-4 mr-2" />
                 {t('settings.lightMode', { defaultValue: 'Light' })}
@@ -401,7 +408,7 @@ export function Navbar() {
                   theme === 'system'
                     ? resolvedTheme === 'dark'
                       ? 'bg-[#0ea5e9]/10'
-                      : 'bg-[#38bdf8]/10'
+                      : 'bg-[#01579b]/10'
                     : ''
                 }
               >

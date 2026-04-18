@@ -14,7 +14,7 @@ import { SUPERADMIN_EMAIL } from '../../../convex/lib/auth';
 
 interface Props {
   currentUserId: Id<'users'>;
-  organizationId: Id<'organizations'>;
+  organizationId?: Id<'organizations'>;
   userRole: string;
   onClose: () => void;
   onCreated: (convId: Id<'chatConversations'>) => void;
@@ -51,7 +51,7 @@ export function NewConversationModal({
 
   const isSuperadmin = userRole === 'superadmin';
   // Use selectedOrgId if set (superadmin viewing specific org), else use the user's own org
-  const effectiveOrgId = (selectedOrgId ?? organizationId) as Id<'organizations'>;
+  const effectiveOrgId = selectedOrgId ?? organizationId;
 
   // "All orgs" mode is available only for superadmin via sidebar selector.
   const isAllOrgs = selectedOrgId === null;
@@ -65,7 +65,7 @@ export function NewConversationModal({
   // For a specific organization we keep using the lightweight chat.getOrgUsers query.
   const orgScopedUsers = useQuery(
     api.chat.queries.getOrgUsers,
-    isAllOrgs ? 'skip' : { organizationId: effectiveOrgId, currentUserId },
+    isAllOrgs || !effectiveOrgId ? 'skip' : { organizationId: effectiveOrgId as any, currentUserId },
   );
 
   // In "All orgs" mode we load users via users.getAllUsers which,
@@ -147,7 +147,7 @@ export function NewConversationModal({
         if (!targetId) return;
 
         const convId = await getOrCreateDM({
-          organizationId: dmOrgId,
+          organizationId: dmOrgId as any,
           currentUserId,
           targetUserId: targetId,
         });
@@ -179,7 +179,7 @@ export function NewConversationModal({
         }
 
         const convId = await createGroup({
-          organizationId: groupOrgId,
+          organizationId: groupOrgId as any,
           createdBy: currentUserId,
           name: groupName.trim(),
           memberIds: selectedUsers,

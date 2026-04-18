@@ -22,7 +22,7 @@ function emojiToKey(emoji: string): string {
 /** Get or create a direct message conversation between two users */
 export const getOrCreateDM = mutation({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     currentUserId: v.id('users'),
     targetUserId: v.id('users'),
   },
@@ -74,7 +74,7 @@ export const getOrCreateDM = mutation({
 /** Create a group conversation */
 export const createGroup = mutation({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     createdBy: v.id('users'),
     name: v.string(),
     description: v.optional(v.string()),
@@ -162,7 +162,7 @@ export const addMember = mutation({
     conversationId: v.id('chatConversations'),
     requesterId: v.id('users'),
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -217,7 +217,7 @@ export const leaveConversation = mutation({
     if (conv) {
       await ctx.db.insert('chatMessages', {
         conversationId: args.conversationId,
-        organizationId: conv.organizationId,
+        organizationId: conv.organizationId as Id<'organizations'>,
         senderId: args.userId,
         type: 'system',
         content: `${user?.name ?? 'Someone'} left the group`,
@@ -234,7 +234,7 @@ export const sendMessage = mutation({
   args: {
     conversationId: v.id('chatConversations'),
     senderId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     type: v.union(
       v.literal('text'),
       v.literal('image'),
@@ -623,7 +623,7 @@ export const setTyping = mutation({
   args: {
     conversationId: v.id('chatConversations'),
     userId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     isTyping: v.boolean(),
   },
   handler: async (ctx, args) => {
@@ -704,7 +704,7 @@ export const sendThreadReply = mutation({
     parentMessageId: v.id('chatMessages'),
     conversationId: v.id('chatConversations'),
     senderId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     content: v.string(),
   },
   handler: async (ctx, args) => {
@@ -737,7 +737,7 @@ export const scheduleMessage = mutation({
   args: {
     conversationId: v.id('chatConversations'),
     senderId: v.id('users'),
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     content: v.string(),
     scheduledFor: v.number(),
   },
@@ -884,6 +884,28 @@ export const restoreConversation = mutation({
       deletedAt: undefined,
       isArchived: false,
     });
+
+    // Also restore messages for this user
+    const messages = await ctx.db
+      .query('chatMessages')
+      .withIndex('by_conversation_created', (q) =>
+        q.eq('conversationId', args.conversationId),
+      )
+      .collect();
+
+    await Promise.all(
+      messages.map(async (msg) => {
+        const deletedForUsers: Id<'users'>[] =
+          (msg.deletedForUsers as Id<'users'>[] | undefined) ?? [];
+        if (deletedForUsers.includes(args.userId)) {
+          await ctx.db.patch(msg._id, {
+            deletedForUsers: deletedForUsers.filter((id) => id !== args.userId),
+          });
+        }
+      }),
+    );
+
+    return { success: true };
   },
 });
 
@@ -941,7 +963,7 @@ export const toggleMute = mutation({
 /** Send a service broadcast message from superadmin to all users in organization */
 export const sendServiceBroadcast = mutation({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     conversationId: v.id('chatConversations'),
     senderId: v.id('users'), // the superadmin user
     title: v.string(), // e.g. "System Maintenance"

@@ -1,6 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const validation = await validateRestrictedOrgFromRequest(request);
+
+  if (!validation.allowed) {
+    return NextResponse.json(validation.body, { status: validation.status });
+  }
+
   const response = NextResponse.json({ success: true });
 
   response.cookies.set('sharepoint_access_token', '', {

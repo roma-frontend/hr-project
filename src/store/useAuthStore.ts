@@ -13,6 +13,8 @@ export interface User {
   position?: string;
   employeeType?: 'staff' | 'contractor';
   organizationId?: string;
+  organizationSlug?: string;
+  organizationName?: string;
   isApproved?: boolean;
   phone?: string;
 }

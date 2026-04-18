@@ -14,7 +14,7 @@ interface Props {
   parentContent: string;
   currentUserId: Id<'users'>;
   conversationId: Id<'chatConversations'>;
-  organizationId: Id<'organizations'>;
+  organizationId?: Id<'organizations'>;
   onClose: () => void;
 }
 

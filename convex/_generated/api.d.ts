@@ -114,6 +114,7 @@ import type * as supervisorRatings from "../supervisorRatings.js";
 import type * as tasks from "../tasks.js";
 import type * as tickets from "../tickets.js";
 import type * as timeTracking from "../timeTracking.js";
+import type * as translations from "../translations.js";
 import type * as updateSuperadminPlan from "../updateSuperadminPlan.js";
 import type * as userPreferences from "../userPreferences.js";
 import type * as userStats from "../userStats.js";
@@ -237,6 +238,7 @@ declare const fullApi: ApiFromModules<{
   tasks: typeof tasks;
   tickets: typeof tickets;
   timeTracking: typeof timeTracking;
+  translations: typeof translations;
   updateSuperadminPlan: typeof updateSuperadminPlan;
   userPreferences: typeof userPreferences;
   userStats: typeof userStats;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchSharePointListItems, refreshSharePointToken } from '@/lib/sharepoint-sync';
 import type { SharePointSyncResult } from '@/lib/sharepoint-sync';
+import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -17,6 +18,12 @@ async function convexMutation(path: string, args: Record<string, unknown>) {
 
 export async function POST(request: NextRequest) {
   try {
+    const validation = await validateRestrictedOrgFromRequest(request);
+
+    if (!validation.allowed) {
+      return NextResponse.json(validation.body, { status: validation.status });
+    }
+
     const { adminId, organizationId } = await request.json();
 
     if (!adminId || !organizationId) {
