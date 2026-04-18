@@ -10,28 +10,33 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const PRESENCE_CONFIG = {
   available: {
-    dot: 'bg-green-500',
-    badge: 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-200 border border-emerald-500/20',
+    dot: 'bg-(--success)',
+    badge:
+      'bg-(--badge-success-bg) text-(--badge-success-text) border border-(--badge-success-border)',
     labelKey: 'quickStats.available',
   },
   in_meeting: {
-    dot: 'bg-yellow-500',
-    badge: 'bg-amber-500/10 text-amber-800 dark:text-amber-200 border border-amber-500/20',
+    dot: 'bg-(--warning)',
+    badge:
+      'bg-(--badge-warning-bg) text-(--badge-warning-text) border border-(--badge-warning-border)',
     labelKey: 'quickStats.inMeeting',
   },
   in_call: {
-    dot: 'bg-blue-500',
-    badge: 'bg-blue-500/10 text-blue-800 dark:text-blue-200 border border-blue-500/20',
+    dot: 'bg-(--info)',
+    badge:
+      'bg-(--badge-primary-bg) text-(--badge-primary-text) border border-(--badge-primary-border)',
     labelKey: 'quickStats.inCall',
   },
   out_of_office: {
-    dot: 'bg-gray-500',
-    badge: 'bg-gray-500/10 text-gray-800 dark:text-gray-200 border border-gray-500/20',
+    dot: 'bg-(--text-muted)',
+    badge:
+      'bg-(--badge-secondary-bg) text-(--badge-secondary-text) border border-(--badge-secondary-border)',
     labelKey: 'quickStats.outOfOffice',
   },
   busy: {
-    dot: 'bg-red-500',
-    badge: 'bg-red-500/10 text-red-800 dark:text-red-200 border border-red-500/20',
+    dot: 'bg-(--destructive)',
+    badge:
+      'bg-(--badge-danger-bg) text-(--badge-danger-text) border border-(--badge-danger-border)',
     labelKey: 'quickStats.busy',
   },
 } as const;
