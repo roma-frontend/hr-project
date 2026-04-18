@@ -55,6 +55,10 @@
     "perfectlyManaged": "Perfectly Managed",
     "learnMore": "Learn More"
   },
+  "tasksPage": {
+    "title": "Tasks",
+    "subtitle": "Manage your tasks and track progress"
+  },
   "socialProof": {
     "activeUsers": "Active Users",
     "customerRating": "Customer Rating",
@@ -4830,10 +4834,6 @@
       "navigate": "Navigate",
       "pickupTarget": "Pickup",
       "dropoffTarget": "Dropoff"
-    },
-    "status": {
-      "active": "Active",
-      "inactive": "Inactive"
     }
   },
   "events": {

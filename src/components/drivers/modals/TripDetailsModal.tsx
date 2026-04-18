@@ -12,6 +12,8 @@ import {
   PhoneCall,
   AlertCircle,
   X,
+  ExternalLink,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
@@ -19,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect } from 'react';
 
 interface TripDetailsModalProps {
   schedule: any;
@@ -44,6 +47,18 @@ export function TripDetailsModal({
   isAdmin = false,
 }: TripDetailsModalProps & { isAdmin?: boolean }) {
   const { t, i18n } = useTranslation();
+  const [showMapMenu, setShowMapMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMapMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
 
@@ -68,6 +83,35 @@ export function TripDetailsModal({
     in_progress: t('driver.status.in_progress', 'In Progress'),
     completed: t('driver.status.completed', 'Completed'),
     cancelled: t('driver.status.cancelled', 'Cancelled'),
+  };
+
+  const openInMap = (provider: string) => {
+    if (!schedule.tripInfo?.from || !schedule.tripInfo?.to) return;
+    const from = encodeURIComponent(schedule.tripInfo.from);
+    const to = encodeURIComponent(schedule.tripInfo.to);
+    let url = '';
+    switch (provider) {
+      case 'google':
+        url = `https://www.google.com/maps/dir/?api=1&origin=${from}&destination=${to}`;
+        break;
+      case 'yandex':
+        // Use /route/ endpoint for explicit addresses, not rtext which uses geolocation
+        url = `https://yandex.ru/maps/?pt=${from}&l=map&z=12&text=${to}`;
+        break;
+      case 'apple':
+        url = `https://maps.apple.com/?saddr=${from}&daddr=${to}&dirflg=d`;
+        break;
+      case 'waze':
+        url = `https://waze.com/ul?from=${from}&to=${to}&navigate=yes`;
+        break;
+      case '2gis':
+        url = `https://2gis.ru/directions/points/${from}|${to}`;
+        break;
+    }
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setShowMapMenu(false);
+    }
   };
 
   return (
@@ -118,12 +162,10 @@ export function TripDetailsModal({
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Badge className="bg-white/20 text-white border-0">
+              <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
                 {isTrip ? t('driver.trip', 'Trip') : t('driver.blocked', 'Blocked')}
               </Badge>
-              <Badge
-                className={`${statusColors[schedule.status] || 'bg-gray-500/10 text-gray-600'} border-none`}
-              >
+              <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
                 {statusTranslations[schedule.status] || schedule.status}
               </Badge>
             </div>
@@ -136,11 +178,72 @@ export function TripDetailsModal({
             <>
               {/* Route */}
               <div className="rounded-xl bg-muted/30 p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <Navigation2 className="w-4 h-4 text-(--primary)" />
-                  <span className="text-sm font-semibold text-foreground">
-                    {t('driver.route', 'Route')}
-                  </span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Navigation2 className="w-4 h-4 text-(--primary)" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {t('driver.route', 'Route')}
+                    </span>
+                  </div>
+                  <div className="relative" ref={menuRef}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowMapMenu(!showMapMenu)}
+                      className="gap-1.5 h-8 text-xs"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">
+                        {t('driver.openInMap', 'Open in Map')}
+                      </span>
+                      <span className="sm:hidden">Map</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform ${showMapMenu ? 'rotate-180' : ''}`}
+                      />
+                    </Button>
+                    {showMapMenu && (
+                      <div className="absolute right-0 top-full mt-1 w-48 bg-(--card) border border-(--border) rounded-lg shadow-lg z-50 overflow-hidden">
+                        <div className="px-3 py-2 text-xs font-semibold text-(--text-muted) border-b border-(--border)">
+                          {t('driver.selectMapApp', 'Select Map App')}
+                        </div>
+                        <button
+                          onClick={() => openInMap('google')}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          Google Maps
+                        </button>
+                        <button
+                          onClick={() => openInMap('yandex')}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-red-500" />
+                          Yandex Maps
+                        </button>
+                        <button
+                          onClick={() => openInMap('apple')}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-gray-500" />
+                          Apple Maps
+                        </button>
+                        <button
+                          onClick={() => openInMap('waze')}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                          Waze
+                        </button>
+                        <button
+                          onClick={() => openInMap('2gis')}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-green-500" />
+                          2GIS
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">

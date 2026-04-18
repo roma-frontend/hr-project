@@ -7,16 +7,21 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-(--primary) text-white',
-        secondary: 'border-transparent bg-[var(--secondary)] text-[var(--secondary-foreground)]',
+        default: 'border-transparent bg-(--badge-primary-bg) text-(--badge-primary-text) shadow-sm',
+        secondary: 'border-transparent bg-(--badge-secondary-bg) text-(--badge-secondary-text)',
         destructive:
-          'border-[var(--destructive)]/30 bg-[var(--destructive)]/15 text-[var(--destructive)]',
+          'border-(--badge-danger-border)/30 bg-(--badge-danger-bg) text-(--badge-danger-text)',
         outline: 'border-(--border) text-(--text-secondary)',
-        success: 'border-[var(--success)]/30 bg-[var(--success)]/15 text-(--success)',
-        warning: 'border-[var(--warning)]/30 bg-[var(--warning)]/15 text-(--warning)',
-        info: 'border-[var(--info)]/30 bg-[var(--info)]/15 text-[var(--info)]',
+        success:
+          'border-(--badge-success-border)/30 bg-(--badge-success-bg) text-(--badge-success-text)',
+        warning:
+          'border-(--badge-warning-border)/30 bg-(--badge-warning-bg) text-(--badge-warning-text)',
+        info: 'border-(--badge-info-border)/30 bg-(--badge-info-bg) text-(--badge-info-text)',
         purple: 'border-[var(--purple)]/30 bg-[var(--purple)]/15 text-[var(--purple)]',
         pink: 'border-[var(--pink)]/30 bg-[var(--pink)]/15 text-[var(--pink)]',
+        primary: 'border-transparent bg-(--badge-primary-bg) text-(--badge-primary-text) shadow-sm',
+        danger:
+          'border-(--badge-danger-border)/30 bg-(--badge-danger-bg) text-(--badge-danger-text)',
       },
     },
     defaultVariants: {

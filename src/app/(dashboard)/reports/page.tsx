@@ -55,9 +55,14 @@ export default function ReportsPage() {
     shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
     user?.id && leavesQueryParams !== 'skip' ? leavesQueryParams : 'skip',
   );
+  const usersQueryParams = shouldUseOrgQuery
+    ? { requesterId: user.id as Id<'users'>, organizationId: selectedOrgId as Id<'organizations'> }
+    : user?.id
+      ? { requesterId: user.id as Id<'users'> }
+      : ('skip' as const);
   const users = useQuery(
-    api.users.queries.getAllUsers,
-    user?.id ? { requesterId: user.id as Id<'users'> } : 'skip',
+    shouldUseOrgQuery ? api.users.queries.getUsersByOrganizationId : api.users.queries.getAllUsers,
+    user?.id && usersQueryParams !== 'skip' ? usersQueryParams : 'skip',
   );
 
   const isLoading = leaves === undefined || users === undefined;
@@ -179,9 +184,7 @@ export default function ReportsPage() {
                 <h2 className="text-2xl font-bold tracking-tight text-(--text-primary)">
                   {t('reportsAnalytics.reportsAnalytics')}
                 </h2>
-                <p className="text-(--text-muted) text-sm mt-1">
-                  {t('ui.comprehensiveAnalysis')}
-                </p>
+                <p className="text-(--text-muted) text-sm mt-1">{t('ui.comprehensiveAnalysis')}</p>
               </div>
               <Button
                 variant="outline"
@@ -360,9 +363,7 @@ export default function ReportsPage() {
                                 className="w-2.5 h-2.5 rounded-full"
                                 style={{ background: s.color }}
                               />
-                              <span className="text-sm text-(--text-secondary)">
-                                {s.label}
-                              </span>
+                              <span className="text-sm text-(--text-secondary)">{s.label}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant={s.variant}>{s.count}</Badge>
@@ -390,9 +391,7 @@ export default function ReportsPage() {
                             </p>
                           </div>
                           <div className="rounded-lg bg-(--background-subtle) border border-(--border) p-3 text-center">
-                            <p className="text-xl font-bold text-(--warning)">
-                              {contractorCount}
-                            </p>
+                            <p className="text-xl font-bold text-(--warning)">{contractorCount}</p>
                             <p className="text-xs text-(--text-muted) mt-0.5">
                               {t('employees.contractors')}
                             </p>
@@ -474,9 +473,7 @@ export default function ReportsPage() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {deptData.length === 0 ? (
-                        <p className="text-xs text-(--text-muted)">
-                          {t('emptyStates.noDataYet')}
-                        </p>
+                        <p className="text-xs text-(--text-muted)">{t('emptyStates.noDataYet')}</p>
                       ) : (
                         deptData.map((d) => (
                           <div

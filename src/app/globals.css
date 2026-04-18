@@ -194,6 +194,60 @@ html.light {
   --success-foreground: #ffffff;
   --warning: #f59e0b;
   --warning-foreground: #ffffff;
+  --info: #2563eb;
+  --info-foreground: #ffffff;
+
+  /* Button colors */
+  --button-primary-bg: var(--primary);
+  --button-primary-hover: var(--primary-hover);
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: rgba(37, 99, 235, 0.08);
+  --button-secondary-hover: rgba(37, 99, 235, 0.15);
+  --button-secondary-text: #2563eb;
+  --button-secondary-border: rgba(37, 99, 235, 0.2);
+  --button-danger-bg: rgba(239, 68, 68, 0.08);
+  --button-danger-hover: rgba(239, 68, 68, 0.15);
+  --button-danger-text: #ef4444;
+  --button-danger-border: rgba(239, 68, 68, 0.2);
+  --button-success-bg: rgba(16, 185, 129, 0.08);
+  --button-success-hover: rgba(16, 185, 129, 0.15);
+  --button-success-text: #10b981;
+  --button-success-border: rgba(16, 185, 129, 0.2);
+  --button-outline-bg: transparent;
+  --button-outline-hover: rgba(0, 0, 0, 0.04);
+  --button-outline-text: var(--text-primary);
+  --button-outline-border: var(--border);
+
+  /* Card variants */
+  --card-default: var(--card);
+  --card-elevated: var(--card-hover);
+  --card-subtle: var(--background-subtle);
+  --card-border-default: var(--border);
+  --card-border-elevated: var(--border-subtle);
+
+  /* Badge variants */
+  --badge-primary-bg: rgba(37, 99, 235, 0.1);
+  --badge-primary-text: #2563eb;
+  --badge-primary-border: rgba(37, 99, 235, 0.2);
+  --badge-success-bg: rgba(16, 185, 129, 0.1);
+  --badge-success-text: #10b981;
+  --badge-success-border: rgba(16, 185, 129, 0.2);
+  --badge-warning-bg: rgba(245, 158, 11, 0.1);
+  --badge-warning-text: #f59e0b;
+  --badge-warning-border: rgba(245, 158, 11, 0.2);
+  --badge-danger-bg: rgba(239, 68, 68, 0.1);
+  --badge-danger-text: #ef4444;
+  --badge-danger-border: rgba(239, 68, 68, 0.2);
+  --badge-info-bg: rgba(37, 99, 235, 0.1);
+  --badge-info-text: #2563eb;
+  --badge-info-border: rgba(37, 99, 235, 0.2);
+  --badge-secondary-bg: rgba(147, 197, 253, 0.1);
+  --badge-secondary-text: #4a6fa5;
+  --badge-secondary-border: rgba(147, 197, 253, 0.15);
+  --badge-purple-bg: rgba(147, 51, 234, 0.1);
+  --badge-purple-text: #9333ea;
+  --badge-purple-border: rgba(147, 51, 234, 0.2);
+  --purple: #9333ea;
 
   /* Text */
   --text-primary: #0c1a2e;
@@ -305,6 +359,60 @@ html.light {
   --success-foreground: #ffffff;
   --warning: #fbbf24;
   --warning-foreground: #ffffff;
+  --info: #60a5fa;
+  --info-foreground: #ffffff;
+
+  /* Button colors */
+  --button-primary-bg: var(--primary);
+  --button-primary-hover: var(--primary-hover);
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: rgba(59, 130, 246, 0.12);
+  --button-secondary-hover: rgba(59, 130, 246, 0.2);
+  --button-secondary-text: #60a5fa;
+  --button-secondary-border: rgba(59, 130, 246, 0.3);
+  --button-danger-bg: rgba(248, 113, 113, 0.12);
+  --button-danger-hover: rgba(248, 113, 113, 0.2);
+  --button-danger-text: #f87171;
+  --button-danger-border: rgba(248, 113, 113, 0.3);
+  --button-success-bg: rgba(52, 211, 153, 0.12);
+  --button-success-hover: rgba(52, 211, 153, 0.2);
+  --button-success-text: #34d399;
+  --button-success-border: rgba(52, 211, 153, 0.3);
+  --button-outline-bg: transparent;
+  --button-outline-hover: rgba(255, 255, 255, 0.05);
+  --button-outline-text: var(--text-primary);
+  --button-outline-border: var(--border);
+
+  /* Card variants */
+  --card-default: var(--card);
+  --card-elevated: var(--card-hover);
+  --card-subtle: var(--background-subtle);
+  --card-border-default: var(--border);
+  --card-border-elevated: var(--border-subtle);
+
+  /* Badge variants */
+  --badge-primary-bg: rgba(59, 130, 246, 0.15);
+  --badge-primary-text: #60a5fa;
+  --badge-primary-border: rgba(59, 130, 246, 0.3);
+  --badge-success-bg: rgba(52, 211, 153, 0.15);
+  --badge-success-text: #34d399;
+  --badge-success-border: rgba(52, 211, 153, 0.3);
+  --badge-warning-bg: rgba(251, 191, 36, 0.15);
+  --badge-warning-text: #fbbf24;
+  --badge-warning-border: rgba(251, 191, 36, 0.3);
+  --badge-danger-bg: rgba(248, 113, 113, 0.15);
+  --badge-danger-text: #f87171;
+  --badge-danger-border: rgba(248, 113, 113, 0.3);
+  --badge-info-bg: rgba(96, 165, 250, 0.15);
+  --badge-info-text: #60a5fa;
+  --badge-info-border: rgba(96, 165, 250, 0.3);
+  --badge-secondary-bg: rgba(147, 197, 253, 0.1);
+  --badge-secondary-text: #93c5fd;
+  --badge-secondary-border: rgba(147, 197, 253, 0.2);
+  --badge-purple-bg: rgba(168, 85, 247, 0.15);
+  --badge-purple-text: #a855f7;
+  --badge-purple-border: rgba(168, 85, 247, 0.3);
+  --purple: #a855f7;
 
   /* Text */
   --text-primary: #e8f0fe;
@@ -1904,4 +2012,37 @@ html.dark .quick-action-slate:hover {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR STYLES
+   ═══════════════════════════════════════════════════════════════ */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 20px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}
+
+.scrollbar-thumb-\(--border\)::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
 }

@@ -104,10 +104,11 @@ export function DriverShiftControls({
     }
   };
 
-  // Format shift duration
-  const formatDuration = (hours: number) => {
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
+  // Format shift duration (input in milliseconds)
+  const formatDuration = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
     return `${h}h ${m}m`;
   };
 
@@ -124,10 +125,10 @@ export function DriverShiftControls({
               {t('driver.shift.currentShift', 'Current Shift')}
             </CardTitle>
             {currentShift ? (
-              <Badge variant={currentShift.status === 'active' ? 'default' : 'secondary'}>
+              <Badge variant={currentShift.status === 'active' ? 'success' : 'warning'}>
                 {currentShift.status === 'active' && (
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-(--success) animate-pulse" />
                     {t('driver.shift.active', 'Active')}
                   </span>
                 )}
@@ -147,12 +148,12 @@ export function DriverShiftControls({
           {currentShift ? (
             <div className="space-y-4">
               {/* Shift Timer */}
-              <div className="flex items-center justify-between p-4 bg-linear-to-r from-primary/10 to-primary/5 rounded-lg">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-(--background-subtle) border border-(--border)">
                 <div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-(--text-muted)">
                     {t('driver.shift.duration', 'Duration')}
                   </p>
-                  <p className="text-2xl font-bold font-mono">
+                  <p className="text-2xl font-bold font-mono text-(--text-primary)">
                     {formatDuration(
                       currentShift.endTime
                         ? currentShift.endTime - currentShift.startTime
@@ -161,47 +162,51 @@ export function DriverShiftControls({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-(--text-muted)">
                     {t('driver.shift.startedAt', 'Started')}
                   </p>
-                  <p className="text-sm font-medium">{format(currentShift.startTime, 'HH:mm')}</p>
+                  <p className="text-sm font-medium text-(--text-primary)">
+                    {format(currentShift.startTime, 'HH:mm')}
+                  </p>
                 </div>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="text-center p-2 bg-muted/50 rounded">
-                  <p className="text-xs text-muted-foreground">
-                    {t('driver.shift.trips', 'Trips')}
+                <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
+                  <p className="text-xs text-(--text-muted)">{t('driver.shift.trips', 'Trips')}</p>
+                  <p className="text-lg font-semibold text-(--text-primary)">
+                    {currentShift.tripsCompleted}
                   </p>
-                  <p className="text-lg font-semibold">{currentShift.tripsCompleted}</p>
                 </div>
-                <div className="text-center p-2 bg-muted/50 rounded">
-                  <p className="text-xs text-muted-foreground">
+                <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
+                  <p className="text-xs text-(--text-muted)">
                     {t('driver.shift.distance', 'Distance')}
                   </p>
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-semibold text-(--text-primary)">
                     {(currentShift.totalDistance || 0).toFixed(1)} km
                   </p>
                 </div>
-                <div className="text-center p-2 bg-muted/50 rounded">
-                  <p className="text-xs text-muted-foreground">
+                <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
+                  <p className="text-xs text-(--text-muted)">
                     {t('driver.shift.duration', 'Duration')}
                   </p>
-                  <p className="text-lg font-semibold">{currentShift.totalDuration || 0} min</p>
+                  <p className="text-lg font-semibold text-(--text-primary)">
+                    {currentShift.totalDuration || 0} min
+                  </p>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex gap-2">
                 {currentShift.status === 'active' ? (
-                  <Button variant="outline" size="sm" onClick={handlePauseShift} className="flex-1">
+                  <Button variant="warning" size="sm" onClick={handlePauseShift} className="flex-1">
                     <Pause className="w-4 h-4 mr-2" />
                     {t('driver.shift.pause', 'Pause')}
                   </Button>
                 ) : (
                   <Button
-                    variant="outline"
+                    variant="success"
                     size="sm"
                     onClick={handleResumeShift}
                     className="flex-1"
@@ -211,7 +216,7 @@ export function DriverShiftControls({
                   </Button>
                 )}
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={() => setShowEndShiftModal(true)}
                   className="flex-1"
@@ -223,8 +228,8 @@ export function DriverShiftControls({
             </div>
           ) : (
             <div className="text-center py-8">
-              <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground mb-4">
+              <Clock className="w-12 h-12 mx-auto mb-4 text-(--text-muted) opacity-50" />
+              <p className="text-(--text-muted) mb-4">
                 {t('driver.shift.notStarted', 'No active shift')}
               </p>
               <Button onClick={handleStartShift} size="sm">

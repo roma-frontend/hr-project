@@ -156,13 +156,13 @@ export default function DriverDashboardPage() {
           className="relative p-6 rounded-2xl overflow-hidden"
           style={{
             background:
-              'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 80%, black) 100%)',
+              'linear-gradient(135deg, color-mix(in srgb, var(--primary) 90%, var(--background)) 0%, color-mix(in srgb, var(--primary) 70%, var(--background)) 100%)',
           }}
         >
           <div
             className="absolute top-[-50%] right-[-10%] w-125 h-125 rounded-full pointer-events-none"
             style={{
-              background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%)',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%)',
             }}
           />
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
@@ -173,12 +173,12 @@ export default function DriverDashboardPage() {
               >
                 {t('driver.dashboard', 'Driver Dashboard')}
               </h1>
-              <p className="text-sm sm:text-base mt-1" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              <p className="text-sm sm:text-base mt-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 {t('driver.dashboardDesc', 'Manage your trips and availability')}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-white/80">
+              <span className="text-sm text-white/90">
                 {driver.isAvailable ? t('driver.available') : t('driver.busy')}
               </span>
               <Switch checked={driver.isAvailable} onCheckedChange={handleToggleAvailability} />
@@ -193,29 +193,25 @@ export default function DriverDashboardPage() {
           label={t('driver.todayTrips', "Today's Trips")}
           value={todayTrips}
           icon={Calendar}
-          gradientFrom="#3b82f6"
-          gradientTo="#2563eb"
+          color="var(--primary)"
         />
         <StatCard
           label={t('driver.pendingRequests', 'Pending')}
           value={pendingRequests?.length ?? 0}
           icon={Clock}
-          gradientFrom="#f59e0b"
-          gradientTo="#d97706"
+          color="var(--warning)"
         />
         <StatCard
           label={t('driver.totalCompleted', 'Completed')}
           value={driver.totalTrips ?? 0}
           icon={TrendingUp}
-          gradientFrom="#22c55e"
-          gradientTo="#16a34a"
+          color="var(--success)"
         />
         <StatCard
           label={t('driver.rating', 'Rating')}
           value={driver.rating?.toFixed(1) ?? '5.0'}
           icon={Star}
-          gradientFrom="#eab308"
-          gradientTo="#ca8a04"
+          color="var(--warning)"
         />
       </div>
 
@@ -281,13 +277,14 @@ export default function DriverDashboardPage() {
                       <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           onClick={() => handleRespond(req._id as Id<'driverRequests'>, false)}
                         >
                           <ThumbsDown className="w-4 h-4 mr-1" /> {t('driver.decline', 'Decline')}
                         </Button>
                         <Button
                           size="sm"
+                          variant="success"
                           onClick={() => handleRespond(req._id as Id<'driverRequests'>, true)}
                         >
                           <ThumbsUp className="w-4 h-4 mr-1" /> {t('driver.approve', 'Approve')}
@@ -365,17 +362,17 @@ export default function DriverDashboardPage() {
                       <div
                         className={`w-2 shrink-0 rounded-full ${
                           s.status === 'scheduled'
-                            ? 'bg-blue-500'
+                            ? 'bg-(--primary)'
                             : s.status === 'completed'
-                              ? 'bg-green-500'
-                              : 'bg-gray-400'
+                              ? 'bg-(--success)'
+                              : 'bg-(--text-disabled)'
                         }`}
                         style={{
                           boxShadow:
                             s.status === 'scheduled'
-                              ? '0 0 12px rgba(59, 130, 246, 0.5)'
+                              ? '0 0 12px color-mix(in srgb, var(--primary) 50%, transparent)'
                               : s.status === 'completed'
-                                ? '0 0 12px rgba(34, 197, 94, 0.5)'
+                                ? '0 0 12px color-mix(in srgb, var(--success) 50%, transparent)'
                                 : undefined,
                         }}
                       />
@@ -408,8 +405,8 @@ export default function DriverDashboardPage() {
                               {s.status === 'scheduled' && !s.arrivedAt && (
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="gap-1 h-7 px-2 text-xs bg-green-50 border-green-200 text-green-700"
+                                  variant="success"
+                                  className="gap-1 h-7 px-2 text-xs"
                                   onClick={async () => {
                                     try {
                                       await markArrived({
@@ -434,10 +431,7 @@ export default function DriverDashboardPage() {
                               )}
                               {s.arrivedAt && !s.passengerPickedUpAt && (
                                 <>
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs bg-yellow-50 border-yellow-200"
-                                  >
+                                  <Badge variant="warning" className="text-xs">
                                     <Timer className="w-3 h-3 mr-1" />
                                     {t('driver.waiting', 'Waiting')}:{' '}
                                     {Math.round((currentTime - s.arrivedAt) / 60000)}{' '}
@@ -445,8 +439,8 @@ export default function DriverDashboardPage() {
                                   </Badge>
                                   <Button
                                     size="sm"
-                                    variant="outline"
-                                    className="gap-1 h-7 px-2 text-xs bg-blue-50 border-blue-200 text-blue-700"
+                                    variant="primary"
+                                    className="gap-1 h-7 px-2 text-xs"
                                     onClick={async () => {
                                       try {
                                         await markPickedUp({
@@ -529,33 +523,24 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  gradientFrom,
-  gradientTo,
+  color,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  gradientFrom: string;
-  gradientTo: string;
+  color: string;
 }) {
   return (
-    <Card className="drivers-card-hover relative overflow-hidden border-(--border)">
+    <Card className="drivers-card-hover relative overflow-hidden border-(--border) bg-(--card-elevated)">
       <div className="drivers-stats-shimmer absolute inset-0 pointer-events-none" />
       <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
         <h3 className="text-sm font-medium text-(--text-muted)">{label}</h3>
-        <div className="p-2 rounded-lg" style={{ background: `${gradientFrom}15` }}>
-          <Icon className="w-4 h-4" style={{ color: gradientFrom }} />
+        <div className="p-2 rounded-lg" style={{ background: `${color}20`, color }}>
+          <Icon className="w-4 h-4" />
         </div>
       </CardHeader>
       <CardContent className="relative z-10">
-        <div
-          style={{
-            background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-          className="text-2xl font-bold"
-        >
+        <div className="text-2xl font-bold" style={{ color }}>
           {value}
         </div>
       </CardContent>

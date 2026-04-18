@@ -558,7 +558,10 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <h1
+              className="text-2xl sm:text-3xl font-bold tracking-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
               {userRole === 'employee' || userRole === 'driver'
                 ? t('tasksClient.myTasks')
                 : t('tasksClient.taskManager')}
@@ -591,52 +594,52 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
       </div>
 
       {/* Stats row - scrollable on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mt-4 sm:mt-6">
-          {[
-            {
-              label: t('tasksClient.total'),
-              value: stats.total,
-              color: 'from-[var(--text-secondary)] to-[var(--text-muted)]',
-            },
-            {
-              label: t('tasksClient.pending'),
-              value: stats.pending,
-              color: 'from-[var(--text-muted)] to-[var(--text-muted)]',
-            },
-            {
-              label: t('tasksClient.inProgress'),
-              value: stats.inProgress,
-              color: 'from-blue-400 to-blue-500',
-            },
-            {
-              label: t('tasksClient.inReview'),
-              value: stats.review,
-              color: 'from-amber-400 to-amber-500',
-            },
-            {
-              label: t('tasksClient.completed'),
-              value: stats.completed,
-              color: 'from-emerald-400 to-emerald-500',
-            },
-            {
-              label: t('tasksClient.overdue'),
-              value: stats.overdue,
-              color: 'from-rose-400 to-rose-500',
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-(--card) rounded-xl sm:rounded-2xl border border-(--border) shadow-sm p-3 sm:p-4 text-center"
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 my-4 sm:my-6">
+        {[
+          {
+            label: t('tasksClient.total'),
+            value: stats.total,
+            color: 'from-[var(--text-secondary)] to-[var(--text-muted)]',
+          },
+          {
+            label: t('tasksClient.pending'),
+            value: stats.pending,
+            color: 'from-[var(--text-muted)] to-[var(--text-muted)]',
+          },
+          {
+            label: t('tasksClient.inProgress'),
+            value: stats.inProgress,
+            color: 'from-blue-400 to-blue-500',
+          },
+          {
+            label: t('tasksClient.inReview'),
+            value: stats.review,
+            color: 'from-amber-400 to-amber-500',
+          },
+          {
+            label: t('tasksClient.completed'),
+            value: stats.completed,
+            color: 'from-emerald-400 to-emerald-500',
+          },
+          {
+            label: t('tasksClient.overdue'),
+            value: stats.overdue,
+            color: 'from-rose-400 to-rose-500',
+          },
+        ].map((s) => (
+          <div
+            key={s.label}
+            className="bg-(--card) rounded-xl sm:rounded-2xl border border-(--border) shadow-sm p-3 sm:p-4 text-center"
+          >
+            <p
+              className={`text-xl sm:text-2xl font-bold bg-linear-to-r ${s.color} bg-clip-text text-transparent`}
             >
-              <p
-                className={`text-xl sm:text-2xl font-bold bg-linear-to-r ${s.color} bg-clip-text text-transparent`}
-              >
-                {s.value}
-              </p>
-              <p className="text-[10px] sm:text-xs text-(--text-muted) mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
+              {s.value}
+            </p>
+            <p className="text-[10px] sm:text-xs text-(--text-muted) mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
@@ -722,9 +725,12 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
                 status: newStatus,
                 userId: convexId,
               });
-              toast.success(t('tasks.status.moved', { status: t(STATUS_CONFIG[newStatus].labelKey) }), {
-                duration: 2000,
-              });
+              toast.success(
+                t('tasks.status.moved', { status: t(STATUS_CONFIG[newStatus].labelKey) }),
+                {
+                  duration: 2000,
+                },
+              );
             } catch {
               toast.error('Failed to update status');
             }
@@ -755,9 +761,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
           {tasks.length === 0 ? (
             <div className="py-20 text-center">
               <p className="text-4xl mb-3">📋</p>
-              <p className="text-(--text-secondary) font-medium">
-                {t('tasksClient.noTasksFound')}
-              </p>
+              <p className="text-(--text-secondary) font-medium">{t('tasksClient.noTasksFound')}</p>
               <p className="text-(--text-muted) text-sm mt-1">
                 {canManage ? t('tasksClient.createNewTask') : t('tasksClient.noTasksAssigned')}
               </p>

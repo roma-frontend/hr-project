@@ -40,6 +40,7 @@ import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useAuthUser, type User } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
+import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -143,11 +144,36 @@ export default function DashboardClient() {
   // ═══════════════════════════════════════════════════════════════
   const [mounted, setMounted] = React.useState(false);
 
+  // Get selected organization for superadmin
+  const selectedOrgId = useSelectedOrganization();
+  const shouldUseOrgQuery = selectedOrgId && user?.id;
+
   // Convex useQuery arguments - properly typed
   const userId = user?.id as Id<'users'> | undefined;
-  const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip') ?? [];
+
+  // Leaves query - use org-specific query if superadmin selected an org
+  const leaves =
+    useQuery(
+      shouldUseOrgQuery ? api.leaves.getLeavesForOrganization : api.leaves.getAllLeaves,
+      userId
+        ? shouldUseOrgQuery
+          ? { organizationId: selectedOrgId as Id<'organizations'> }
+          : { requesterId: userId }
+        : 'skip',
+    ) ?? [];
+
+  // Users query - use org-specific query if superadmin selected an org
   const usersFromConvex =
-    useQuery(api.users.queries.getAllUsers, userId ? { requesterId: userId } : 'skip') ?? [];
+    useQuery(
+      shouldUseOrgQuery
+        ? api.users.queries.getUsersByOrganizationId
+        : api.users.queries.getAllUsers,
+      userId
+        ? shouldUseOrgQuery
+          ? { requesterId: userId, organizationId: selectedOrgId as Id<'organizations'> }
+          : { requesterId: userId }
+        : 'skip',
+    ) ?? [];
   // Convert Convex _id to id for User type compatibility
   const users = usersFromConvex.map((u) => ({ ...u, id: u._id })) as unknown as User[];
   const organization = useQuery(
@@ -256,9 +282,7 @@ export default function DashboardClient() {
         <h2 className="text-xl font-semibold text-(--text-primary)">
           {t('dashboard.convexNotDeployed')}
         </h2>
-        <p className="text-(--text-muted) text-sm max-w-sm">
-          {t('dashboard.convexNotDeployed')}
-        </p>
+        <p className="text-(--text-muted) text-sm max-w-sm">{t('dashboard.convexNotDeployed')}</p>
       </div>
     );
 
@@ -271,12 +295,15 @@ export default function DashboardClient() {
     >
       {/* Page title for accessibility — proper heading order h1 → h2 → h3 */}
       <h1 className="sr-only">{t('nav.dashboard', { defaultValue: 'Dashboard' })}</h1>
-      
+
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>
+            <h2
+              className="text-2xl sm:text-3xl font-bold tracking-tight mb-1"
+              style={{ color: 'var(--text-primary)' }}
+            >
               {t('nav.dashboard', { defaultValue: 'Dashboard' })}
             </h2>
             <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy')}</p>
@@ -288,10 +315,7 @@ export default function DashboardClient() {
       <DashboardBanners />
 
       {/* Welcome header - now hidden since we have sticky header */}
-      <motion.div
-        variants={itemVariants}
-        className="hidden"
-      >
+      <motion.div variants={itemVariants} className="hidden">
         <div>
           <motion.p
             initial={{ opacity: 0 }}
@@ -706,9 +730,7 @@ export default function DashboardClient() {
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-2">
                   <Clock className="w-6 h-6 text-(--text-muted)" />
-                  <p className="text-sm text-(--text-muted)">
-                    {t('dashboard.noRecentLeaves')}
-                  </p>
+                  <p className="text-sm text-(--text-muted)">{t('dashboard.noRecentLeaves')}</p>
                 </div>
               )}
             </CardContent>

@@ -8,14 +8,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default:
+          'bg-(--button-primary-bg) text-(--button-primary-text) hover:bg-(--button-primary-hover) shadow-md hover:shadow-lg',
+        primary:
+          'bg-(--button-primary-bg) text-(--button-primary-text) hover:bg-(--button-primary-hover) shadow-md hover:shadow-lg',
         destructive:
-          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+          'bg-(--button-danger-bg) text-(--button-danger-text) border border-(--button-danger-border) hover:bg-(--button-danger-hover) shadow-sm hover:shadow-md',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'border border-(--button-outline-border) bg-(--button-outline-bg) text-(--button-outline-text) hover:bg-(--button-outline-hover) shadow-sm',
+        secondary:
+          'bg-(--button-secondary-bg) text-(--button-secondary-text) border border-(--button-secondary-border) hover:bg-(--button-secondary-hover) shadow-sm hover:shadow-md',
+        ghost: 'hover:bg-(--button-outline-hover) text-(--text-primary)',
+        link: 'text-(--primary) underline-offset-4 hover:underline',
 
         // ═══════════════════════════════════════════════════════════════
         // LANDING PAGE VARIANTS — Градиенты и эффекты для landing page
@@ -27,9 +31,11 @@ const buttonVariants = cva(
         // ═══════════════════════════════════════════════════════════════
         // EXTENDED VARIANTS — Для dashboard и форм
         // ═══════════════════════════════════════════════════════════════
-        success: 'bg-green-600 text-white hover:bg-green-700',
-        warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
-        info: 'bg-blue-400 text-white hover:bg-blue-500',
+        success:
+          'bg-(--button-success-bg) text-(--button-success-text) border border-(--button-success-border) hover:bg-(--button-success-hover) shadow-sm hover:shadow-md',
+        warning:
+          'bg-(--button-danger-bg) text-(--button-danger-text) border border-(--button-danger-border) hover:bg-(--button-danger-hover) shadow-sm hover:shadow-md',
+        info: 'bg-(--button-secondary-bg) text-(--button-secondary-text) border border-(--button-secondary-border) hover:bg-(--button-secondary-hover) shadow-sm hover:shadow-md',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

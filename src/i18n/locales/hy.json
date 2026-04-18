@@ -55,6 +55,10 @@
     "perfectlyManaged": "Կատարյալ կառավարված",
     "learnMore": "Learn More"
   },
+  "tasksPage": {
+    "title": "Խնդիրներ",
+    "subtitle": "Կառավարեք ձեր խնդիրները և հետևեք առաջընթացին"
+  },
   "socialProof": {
     "activeUsers": "Ակտիվ օգտատերեր",
     "customerRating": "Հաճախորդների գնահատական",
@@ -295,13 +299,6 @@
     "back": "Հետ",
     "next": "Հաջորդ",
     "employee": "Աշխատակից"
-  },
-  "driver": {
-    "registered": "Գրանցված է որպես վարորդ:",
-    "failedToRegister": "Չհաջողվեց գրանցել",
-    "removedFromFavorites": "Հեռացվեց նախընտրելիներից",
-    "addedToFavorites": "Ավելացվեց նախընտրելիներին",
-    "failed": "Սխալ"
   },
   "nav": {
     "home": "Գլխավոր",
@@ -4372,6 +4369,11 @@
     "filterAll": "Բոլորը"
   },
   "driver": {
+    "registered": "Գրանցված է որպես վարորդ:",
+    "failedToRegister": "Չհաջողվեց գրանցել",
+    "removedFromFavorites": "Հեռացվեց նախընտրելիներից",
+    "addedToFavorites": "Ավելացվեց նախընտրելիներին",
+    "failed": "Սխալ",
     "driverBookings": "Վարորդների ամրագրումներ",
     "booking": "Վարորդի ամրագրում",
     "bookingDesc": "Ամրագրեք վարորդ ձեր գործնական ուղևորությունների և տրանսֆերների համար",
@@ -4806,10 +4808,6 @@
       "navigate": "Ուղղություն",
       "pickupTarget": "Վայրէջք",
       "dropoffTarget": "Նշանակման վայր"
-    },
-    "status": {
-      "active": "Ակտիվ",
-      "inactive": "Ոչ ակտիվ"
     }
   },
   "events": {

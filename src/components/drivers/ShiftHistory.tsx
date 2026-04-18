@@ -28,10 +28,10 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'default' | 'secondary' | 'outline'> = {
-      completed: 'default',
-      active: 'default',
-      paused: 'secondary',
+    const variants: Record<string, 'success' | 'primary' | 'warning' | 'outline'> = {
+      completed: 'success',
+      active: 'primary',
+      paused: 'warning',
       overtime: 'outline',
     };
 
@@ -46,7 +46,7 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
       <Badge variant={variants[status] || 'outline'}>
         {status === 'completed' && <CheckCircle className="w-3 h-3 mr-1" />}
         {status === 'active' && (
-          <span className="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-(--success) mr-1 animate-pulse" />
         )}
         {status === 'paused' && <Coffee className="w-3 h-3 mr-1" />}
         {labels[status] || status}

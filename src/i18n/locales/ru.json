@@ -55,6 +55,10 @@
     "perfectlyManaged": "Идеально управляемый",
     "learnMore": "Узнать больше"
   },
+  "tasksPage": {
+    "title": "Задачи",
+    "subtitle": "Управляйте задачами и отслеживайте прогресс"
+  },
   "socialProof": {
     "activeUsers": "Активные пользователи",
     "customerRating": "Рейтинг клиентов",
@@ -295,13 +299,6 @@
     "back": "Назад",
     "next": "Далее",
     "employee": "Сотрудник"
-  },
-  "driver": {
-    "registered": "Зарегистрирован как водитель!",
-    "failedToRegister": "Не удалось зарегистрировать",
-    "removedFromFavorites": "Удалено из избранного",
-    "addedToFavorites": "Добавлено в избранное",
-    "failed": "Ошибка"
   },
   "nav": {
     "home": "Главная",
@@ -4399,6 +4396,11 @@
     "filterAll": "Все"
   },
   "driver": {
+    "registered": "Зарегистрирован как водитель!",
+    "failedToRegister": "Не удалось зарегистрировать",
+    "removedFromFavorites": "Удалено из избранного",
+    "addedToFavorites": "Добавлено в избранное",
+    "failed": "Ошибка",
     "driverBookings": "Бронирования водителей",
     "booking": "Бронирование водителя",
     "bookingDesc": "Забронируйте водителя для деловых поездок и трансферов",
@@ -5049,10 +5051,6 @@
       "navigate": "Навигация",
       "pickupTarget": "Посадка",
       "dropoffTarget": "Высадка"
-    },
-    "status": {
-      "active": "Активен",
-      "inactive": "Неактивен"
     }
   },
   "events": {

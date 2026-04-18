@@ -135,11 +135,11 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
           </Button>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+          <Button variant="secondary" size="sm" onClick={handleExportExcel}>
             <Download className="w-4 h-4 mr-2" />
             Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportPDF}>
+          <Button variant="secondary" size="sm" onClick={handleExportPDF}>
             <FileText className="w-4 h-4 mr-2" />
             PDF
           </Button>
@@ -148,41 +148,51 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-        <Card>
+        <Card variant="elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium">{t('driver.totalTrips', 'Total Trips')}</h3>
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-(--text-muted)">
+              {t('driver.totalTrips', 'Total Trips')}
+            </h3>
+            <TrendingUp className="w-4 h-4 text-(--primary)" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTrips}</div>
+            <div className="text-2xl font-bold text-(--text-primary)">{stats.totalTrips}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card variant="elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium">{t('driver.totalDistance', 'Total Distance')}</h3>
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-(--text-muted)">
+              {t('driver.totalDistance', 'Total Distance')}
+            </h3>
+            <MapPin className="w-4 h-4 text-(--warning)" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">N/A</div>
-            <p className="text-xs text-muted-foreground mt-1">Distance tracking coming soon</p>
+            <div className="text-2xl font-bold text-(--text-primary)">N/A</div>
+            <p className="text-xs text-(--text-muted) mt-1">Distance tracking coming soon</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card variant="elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium">{t('driver.totalDuration', 'Total Duration')}</h3>
-            <Clock className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-(--text-muted)">
+              {t('driver.totalDuration', 'Total Duration')}
+            </h3>
+            <Clock className="w-4 h-4 text-(--success)" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(stats.totalWorkedHours * 60)} min</div>
+            <div className="text-2xl font-bold text-(--text-primary)">
+              {Math.round(stats.totalWorkedHours * 60)} min
+            </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card variant="elevated">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium">{t('driver.avgPerTrip', 'Avg per Trip')}</h3>
-            <BarChart3 className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-medium text-(--text-muted)">
+              {t('driver.avgPerTrip', 'Avg per Trip')}
+            </h3>
+            <BarChart3 className="w-4 h-4 text-(--info)" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-(--text-primary)">
               {stats.totalTrips > 0
                 ? ((stats.totalWorkedHours * 60) / stats.totalTrips).toFixed(0)
                 : 0}{' '}
