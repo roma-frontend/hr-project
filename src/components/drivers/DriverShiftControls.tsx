@@ -243,13 +243,14 @@ export function DriverShiftControls({
 
       {/* End Shift Modal */}
       <Dialog open={showEndShiftModal} onOpenChange={setShowEndShiftModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="pb-4 border-b border-(--border)">
-            <DialogTitle className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-(--destructive)/10">
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          {/* Header */}
+          <div className="px-6 pt-6 pb-4 border-b border-(--border)">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-(--destructive)/10 shrink-0">
                 <Square className="w-5 h-5 text-(--destructive)" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-(--text-primary)">
                   {t('driver.shift.endShift', 'End Shift')}
                 </h2>
@@ -257,9 +258,10 @@ export function DriverShiftControls({
                   {t('driver.shift.endShiftDesc', 'Complete your shift and submit final details')}
                 </p>
               </div>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-5 py-4">
+            </div>
+          </div>
+          {/* Body */}
+          <div className="px-6 py-5 space-y-5">
             <div>
               <Label className="text-sm font-medium text-(--text-primary) flex items-center gap-2">
                 <Coffee className="w-4 h-4 text-(--warning)" />
@@ -295,7 +297,8 @@ export function DriverShiftControls({
               </p>
             </div>
           </div>
-          <div className="flex gap-3 justify-end pt-4 border-t border-(--border)">
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-(--border) flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setShowEndShiftModal(false)}>
               {t('common.cancel', 'Cancel')}
             </Button>
