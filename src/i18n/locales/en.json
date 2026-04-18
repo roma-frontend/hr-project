@@ -59,13 +59,6 @@
     "title": "Tasks",
     "subtitle": "Manage your tasks and track progress"
   },
-  "driver": {
-    "shift": {
-      "endShiftDesc": "Complete your shift and submit final details",
-      "breakTimeHint": "Enter total break time taken during this shift",
-      "notesHint": "Add any important information about this shift"
-    }
-  },
   "socialProof": {
     "activeUsers": "Active Users",
     "customerRating": "Customer Rating",
@@ -304,7 +297,8 @@
     "cancel": "Cancel",
     "back": "Back",
     "next": "Next",
-    "employee": "Employee"
+    "employee": "Employee",
+    "optional": "Optional"
   },
   "nav": {
     "home": "Home",
@@ -4801,6 +4795,9 @@
     "failedToSubmitRating": "Failed to submit rating",
     "failedToReassign": "Failed to reassign",
     "shift": {
+      "endShiftDesc": "Complete your shift and submit final details",
+      "breakTimeHint": "Enter total break time taken during this shift",
+      "notesHint": "Add any important information about this shift",
       "currentShift": "Current Shift",
       "active": "Active",
       "paused": "Shift paused",
@@ -4824,6 +4821,7 @@
       "notStarted": "No active shift",
       "endShift": "End Shift",
       "breakTime": "Break Time (minutes)",
+      "notesLabel": "Notes",
       "notes": "Notes",
       "notesPlaceholder": "Any notes about this shift...",
       "endConfirm": "End Shift",
@@ -4835,7 +4833,9 @@
       "google": "Google Maps",
       "yandex": "Yandex Maps",
       "2gis": "2GIS",
-      "waze": "Waze"
+      "waze": "Waze",
+      "openInMap": "Open in Map",
+      "selectMapApp": "Select Map App"
     },
     "map": {
       "navigate": "Navigate",
