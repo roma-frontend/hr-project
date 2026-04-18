@@ -118,42 +118,47 @@ export function DriverShiftControls({
     <>
       {/* Shift Status Card */}
       <Card className="mb-6">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="w-5 h-5" />
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               {t('driver.shift.currentShift', 'Current Shift')}
             </CardTitle>
             {currentShift ? (
-              <Badge variant={currentShift.status === 'active' ? 'success' : 'warning'}>
+              <Badge
+                variant={currentShift.status === 'active' ? 'success' : 'warning'}
+                className="text-[10px] sm:text-xs"
+              >
                 {currentShift.status === 'active' && (
                   <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-(--success) animate-pulse" />
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-(--success) animate-pulse" />
                     {t('driver.shift.active', 'Active')}
                   </span>
                 )}
                 {currentShift.status === 'paused' && (
                   <span className="flex items-center gap-1">
-                    <Pause className="w-3 h-3" />
+                    <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     {t('driver.shift.paused', 'Paused')}
                   </span>
                 )}
               </Badge>
             ) : (
-              <Badge variant="outline">{t('driver.shift.offShift', 'Off Shift')}</Badge>
+              <Badge variant="outline" className="text-[10px] sm:text-xs">
+                {t('driver.shift.offShift', 'Off Shift')}
+              </Badge>
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
           {currentShift ? (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Shift Timer */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-(--background-subtle) border border-(--border)">
+              <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-(--background-subtle) border border-(--border)">
                 <div>
-                  <p className="text-sm text-(--text-muted)">
+                  <p className="text-xs sm:text-sm text-(--text-muted)">
                     {t('driver.shift.duration', 'Duration')}
                   </p>
-                  <p className="text-2xl font-bold font-mono text-(--text-primary)">
+                  <p className="text-xl sm:text-2xl font-bold font-mono text-(--text-primary)">
                     {formatDuration(
                       currentShift.endTime
                         ? currentShift.endTime - currentShift.startTime
@@ -162,10 +167,10 @@ export function DriverShiftControls({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-(--text-muted)">
+                  <p className="text-xs sm:text-sm text-(--text-muted)">
                     {t('driver.shift.startedAt', 'Started')}
                   </p>
-                  <p className="text-sm font-medium text-(--text-primary)">
+                  <p className="text-xs sm:text-sm font-medium text-(--text-primary)">
                     {format(currentShift.startTime, 'HH:mm')}
                   </p>
                 </div>
@@ -174,34 +179,41 @@ export function DriverShiftControls({
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
-                  <p className="text-xs text-(--text-muted)">{t('driver.shift.trips', 'Trips')}</p>
-                  <p className="text-lg font-semibold text-(--text-primary)">
+                  <p className="text-[10px] sm:text-xs text-(--text-muted)">
+                    {t('driver.shift.trips', 'Trips')}
+                  </p>
+                  <p className="text-base sm:text-lg font-semibold text-(--text-primary)">
                     {currentShift.tripsCompleted}
                   </p>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
-                  <p className="text-xs text-(--text-muted)">
+                  <p className="text-[10px] sm:text-xs text-(--text-muted)">
                     {t('driver.shift.distance', 'Distance')}
                   </p>
-                  <p className="text-lg font-semibold text-(--text-primary)">
+                  <p className="text-base sm:text-lg font-semibold text-(--text-primary)">
                     {(currentShift.totalDistance || 0).toFixed(1)} km
                   </p>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
-                  <p className="text-xs text-(--text-muted)">
+                  <p className="text-[10px] sm:text-xs text-(--text-muted)">
                     {t('driver.shift.duration', 'Duration')}
                   </p>
-                  <p className="text-lg font-semibold text-(--text-primary)">
+                  <p className="text-base sm:text-lg font-semibold text-(--text-primary)">
                     {currentShift.totalDuration || 0} min
                   </p>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {currentShift.status === 'active' ? (
-                  <Button variant="warning" size="sm" onClick={handlePauseShift} className="flex-1">
-                    <Pause className="w-4 h-4 mr-2" />
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    onClick={handlePauseShift}
+                    className="flex-1 text-xs"
+                  >
+                    <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     {t('driver.shift.pause', 'Pause')}
                   </Button>
                 ) : (
@@ -209,9 +221,9 @@ export function DriverShiftControls({
                     variant="success"
                     size="sm"
                     onClick={handleResumeShift}
-                    className="flex-1"
+                    className="flex-1 text-xs"
                   >
-                    <Play className="w-4 h-4 mr-2" />
+                    <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                     {t('driver.shift.resume', 'Resume')}
                   </Button>
                 )}
@@ -219,21 +231,21 @@ export function DriverShiftControls({
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowEndShiftModal(true)}
-                  className="flex-1"
+                  className="flex-1 sm:flex-none text-xs"
                 >
-                  <Square className="w-4 h-4 mr-2" />
+                  <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                   {t('driver.shift.end', 'End Shift')}
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Clock className="w-12 h-12 mx-auto mb-4 text-(--text-muted) opacity-50" />
-              <p className="text-(--text-muted) mb-4">
+            <div className="text-center py-6 sm:py-8">
+              <Clock className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-(--text-muted) opacity-50" />
+              <p className="text-xs sm:text-sm text-(--text-muted) mb-4">
                 {t('driver.shift.notStarted', 'No active shift')}
               </p>
-              <Button onClick={handleStartShift} size="sm">
-                <Play className="w-4 h-4 mr-2" />
+              <Button onClick={handleStartShift} size="sm" className="text-xs">
+                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                 {t('driver.shift.start', 'Start Shift')}
               </Button>
             </div>
@@ -243,28 +255,28 @@ export function DriverShiftControls({
 
       {/* End Shift Modal */}
       <Dialog open={showEndShiftModal} onOpenChange={setShowEndShiftModal}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
+        <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="px-6 pt-6 pb-4 border-b border-(--border)">
+          <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-(--border)">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-xl bg-(--destructive)/10 shrink-0">
-                <Square className="w-5 h-5 text-(--destructive)" />
+                <Square className="w-4 h-4 sm:w-5 sm:h-5 text-(--destructive)" />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-semibold text-(--text-primary)">
+                <h2 className="text-base sm:text-lg font-semibold text-(--text-primary)">
                   {t('driver.shift.endShift', 'End Shift')}
                 </h2>
-                <p className="text-sm text-(--text-muted) mt-0.5">
+                <p className="text-xs sm:text-sm text-(--text-muted) mt-0.5">
                   {t('driver.shift.endShiftDesc', 'Complete your shift and submit final details')}
                 </p>
               </div>
             </div>
           </div>
           {/* Body */}
-          <div className="px-6 py-5 space-y-5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-5">
             <div>
-              <Label className="text-sm font-medium text-(--text-primary) flex items-center gap-2">
-                <Coffee className="w-4 h-4 text-(--warning)" />
+              <Label className="text-xs sm:text-sm font-medium text-(--text-primary) flex items-center gap-2">
+                <Coffee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--warning)" />
                 {t('driver.shift.breakTime', 'Break Time (minutes)')}
               </Label>
               <Input
@@ -274,15 +286,15 @@ export function DriverShiftControls({
                 value={breakTime}
                 onChange={(e) => setBreakTime(e.target.value)}
                 placeholder="0"
-                className="mt-2"
+                className="mt-2 text-sm"
               />
-              <p className="text-xs text-(--text-muted) mt-1.5">
+              <p className="text-[10px] sm:text-xs text-(--text-muted) mt-1.5">
                 {t('driver.shift.breakTimeHint', 'Enter total break time taken during this shift')}
               </p>
             </div>
             <div>
-              <Label className="text-sm font-medium text-(--text-primary) flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-(--primary)" />
+              <Label className="text-xs sm:text-sm font-medium text-(--text-primary) flex items-center gap-2">
+                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--primary)" />
                 {t('driver.shift.notesLabel', 'Notes')} ({t('common.optional', 'Optional')})
               </Label>
               <Textarea
@@ -290,20 +302,28 @@ export function DriverShiftControls({
                 onChange={(e) => setDriverNotes(e.target.value)}
                 placeholder={t('driver.shift.notesPlaceholder', 'Any notes about this shift...')}
                 rows={3}
-                className="mt-2 resize-none"
+                className="mt-2 resize-none text-sm"
               />
-              <p className="text-xs text-(--text-muted) mt-1.5">
+              <p className="text-[10px] sm:text-xs text-(--text-muted) mt-1.5">
                 {t('driver.shift.notesHint', 'Add any important information about this shift')}
               </p>
             </div>
           </div>
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-(--border) flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowEndShiftModal(false)}>
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-(--border) flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowEndShiftModal(false)}
+              className="w-full sm:w-auto text-xs"
+            >
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleEndShift}>
-              <Square className="w-4 h-4 mr-2" />
+            <Button
+              variant="destructive"
+              onClick={handleEndShift}
+              className="w-full sm:w-auto text-xs"
+            >
+              <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
               {t('driver.shift.endConfirm', 'End Shift')}
             </Button>
           </div>

@@ -149,36 +149,36 @@ export default function DriverDashboardPage() {
     todaySchedule?.filter((s) => s.type === 'trip' && s.status === 'scheduled').length ?? 0;
 
   return (
-    <div className="max-w-400 mx-auto">
+    <div className="max-w-400 mx-auto px-3 sm:px-4 lg:px-6">
       {/* Header */}
-      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+      <div className="sticky top-0 z-10 -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 mb-4 sm:mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div
-          className="relative p-6 rounded-2xl overflow-hidden"
+          className="relative p-4 sm:p-6 rounded-xl sm:rounded-2xl overflow-hidden"
           style={{
             background:
               'linear-gradient(135deg, color-mix(in srgb, var(--primary) 90%, var(--background)) 0%, color-mix(in srgb, var(--primary) 70%, var(--background)) 100%)',
           }}
         >
           <div
-            className="absolute top-[-50%] right-[-10%] w-125 h-125 rounded-full pointer-events-none"
+            className="absolute top-[-50%] right-[-10%] w-64 sm:w-125 h-64 sm:h-125 rounded-full pointer-events-none"
             style={{
               background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%)',
             }}
           />
-          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 justify-between">
             <div>
               <h1
-                className="text-2xl sm:text-3xl font-bold text-white"
+                className="text-xl sm:text-2xl lg:text-3xl font-bold text-white"
                 style={{ textShadow: '0 2px 20px rgba(0,0,0,0.15)' }}
               >
                 {t('driver.dashboard', 'Driver Dashboard')}
               </h1>
-              <p className="text-sm sm:text-base mt-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <p className="text-xs sm:text-sm mt-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 {t('driver.dashboardDesc', 'Manage your trips and availability')}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-white/90">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-xs sm:text-sm text-white/90">
                 {driver.isAvailable ? t('driver.available') : t('driver.busy')}
               </span>
               <Switch checked={driver.isAvailable} onCheckedChange={handleToggleAvailability} />
@@ -188,7 +188,7 @@ export default function DriverDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 mb-8 drivers-stagger">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-6 sm:mb-8 drivers-stagger">
         <StatCard
           label={t('driver.todayTrips', "Today's Trips")}
           value={todayTrips}
@@ -221,13 +221,13 @@ export default function DriverDashboardPage() {
       )}
 
       {/* Pending Requests */}
-      <Card className="mb-8 border-(--border)">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">
+      <Card className="mb-6 sm:mb-8 border-(--border)">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base sm:text-xl font-semibold">
             {t('driver.pendingRequests', 'Pending Requests')}
           </h2>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
           {pendingRequests && pendingRequests.length > 0 ? (
             <div className="space-y-3">
               {pendingRequests.map((request) => {
@@ -248,24 +248,24 @@ export default function DriverDashboardPage() {
                 return (
                   <div
                     key={req._id}
-                    className="p-4 rounded-xl border border-(--border) hover:border-(--primary)/30 transition-all duration-300"
+                    className="p-3 sm:p-4 rounded-xl border border-(--border) hover:border-(--primary)/30 transition-all duration-300"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="w-10 h-10 shrink-0">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <Avatar className="w-9 h-9 sm:w-10 sm:h-10 shrink-0">
                           {req.requesterAvatar && <AvatarImage src={req.requesterAvatar} />}
-                          <AvatarFallback>
+                          <AvatarFallback className="text-xs">
                             {req.requesterName
                               ?.split(' ')
                               .map((n) => n[0])
                               .join('') ?? '?'}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold truncate">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-sm sm:text-base truncate">
                             {req.requesterName ?? 'Unknown'}
                           </h3>
-                          <p className="text-sm text-(--text-muted)">
+                          <p className="text-xs sm:text-sm text-(--text-muted) truncate">
                             {req.tripInfo.from} → {req.tripInfo.to}
                           </p>
                           <p className="text-xs text-(--text-muted)">
@@ -279,15 +279,19 @@ export default function DriverDashboardPage() {
                           size="sm"
                           variant="destructive"
                           onClick={() => handleRespond(req._id as Id<'driverRequests'>, false)}
+                          className="flex-1 sm:flex-none text-xs"
                         >
-                          <ThumbsDown className="w-4 h-4 mr-1" /> {t('driver.decline', 'Decline')}
+                          <ThumbsDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{' '}
+                          {t('driver.decline', 'Decline')}
                         </Button>
                         <Button
                           size="sm"
                           variant="success"
                           onClick={() => handleRespond(req._id as Id<'driverRequests'>, true)}
+                          className="flex-1 sm:flex-none text-xs"
                         >
-                          <ThumbsUp className="w-4 h-4 mr-1" /> {t('driver.approve', 'Approve')}
+                          <ThumbsUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{' '}
+                          {t('driver.approve', 'Approve')}
                         </Button>
                       </div>
                     </div>
@@ -324,20 +328,22 @@ export default function DriverDashboardPage() {
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-(--text-muted)">
-              <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>{t('driver.noRequests', 'No pending requests')}</p>
+            <div className="text-center py-6 sm:py-8 text-(--text-muted)">
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+              <p className="text-sm">{t('driver.noRequests', 'No pending requests')}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Today's Schedule */}
-      <Card className="mb-8 border-(--border)">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">{t('driver.todaySchedule', "Today's Schedule")}</h2>
+      <Card className="mb-6 sm:mb-8 border-(--border)">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base sm:text-xl font-semibold">
+            {t('driver.todaySchedule', "Today's Schedule")}
+          </h2>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
           {todaySchedule && todaySchedule.length > 0 ? (
             <div className="space-y-3">
               {todaySchedule
@@ -357,10 +363,10 @@ export default function DriverDashboardPage() {
                   return (
                     <div
                       key={s._id}
-                      className="flex gap-3 p-4 rounded-xl border border-(--border) hover:border-(--primary)/30 transition-all duration-300"
+                      className="flex gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border border-(--border) hover:border-(--primary)/30 transition-all duration-300"
                     >
                       <div
-                        className={`w-2 shrink-0 rounded-full ${
+                        className={`w-1.5 sm:w-2 shrink-0 rounded-full ${
                           s.status === 'scheduled'
                             ? 'bg-(--primary)'
                             : s.status === 'completed'
@@ -379,22 +385,25 @@ export default function DriverDashboardPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-sm sm:text-base">
+                            <span className="font-semibold text-xs sm:text-sm">
                               {format(new Date(s.startTime), 'HH:mm')} -{' '}
                               {format(new Date(s.endTime), 'HH:mm')}
                             </span>
-                            <Badge variant={s.type === 'trip' ? 'default' : 'secondary'}>
+                            <Badge
+                              variant={s.type === 'trip' ? 'default' : 'secondary'}
+                              className="text-[10px] sm:text-xs"
+                            >
                               {s.type}
                             </Badge>
                           </div>
                         </div>
                         {s.tripInfo && (
-                          <p className="text-sm text-(--text-muted) mt-1">
+                          <p className="text-xs sm:text-sm text-(--text-muted) mt-1 truncate">
                             {s.tripInfo.from} → {s.tripInfo.to}
                           </p>
                         )}
                         {s.userName && (
-                          <p className="text-xs text-(--text-muted)">
+                          <p className="text-xs text-(--text-muted) truncate">
                             {t('driver.passenger', 'Passenger')}: {s.userName}
                           </p>
                         )}
@@ -406,7 +415,7 @@ export default function DriverDashboardPage() {
                                 <Button
                                   size="sm"
                                   variant="success"
-                                  className="gap-1 h-7 px-2 text-xs"
+                                  className="gap-1 h-7 px-2 text-xs flex-1 sm:flex-none"
                                   onClick={async () => {
                                     try {
                                       await markArrived({
@@ -440,7 +449,7 @@ export default function DriverDashboardPage() {
                                   <Button
                                     size="sm"
                                     variant="primary"
-                                    className="gap-1 h-7 px-2 text-xs"
+                                    className="gap-1 h-7 px-2 text-xs flex-1 sm:flex-none"
                                     onClick={async () => {
                                       try {
                                         await markPickedUp({
@@ -472,20 +481,22 @@ export default function DriverDashboardPage() {
                 })}
             </div>
           ) : (
-            <div className="text-center py-8 text-(--text-muted)">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>{t('driver.noSchedule', 'No trips scheduled for today')}</p>
+            <div className="text-center py-6 sm:py-8 text-(--text-muted)">
+              <Calendar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+              <p className="text-sm">{t('driver.noSchedule', 'No trips scheduled for today')}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Weekly Calendar */}
-      <Card className="mb-8 border-(--border)">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">{t('driver.weeklySchedule', 'Weekly Schedule')}</h2>
+      <Card className="mb-6 sm:mb-8 border-(--border)">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base sm:text-xl font-semibold">
+            {t('driver.weeklySchedule', 'Weekly Schedule')}
+          </h2>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-4 py-2 sm:py-4">
           <DriverCalendar
             driverId={driver._id}
             organizationId={orgId!}
@@ -496,21 +507,25 @@ export default function DriverDashboardPage() {
       </Card>
 
       {/* Statistics */}
-      <Card className="mb-8 border-(--border)">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">{t('driver.tripStatistics', 'Trip Statistics')}</h2>
+      <Card className="mb-6 sm:mb-8 border-(--border)">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base sm:text-xl font-semibold">
+            {t('driver.tripStatistics', 'Trip Statistics')}
+          </h2>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
           <DriverStatsCard driverId={driver._id} organizationId={orgId!} />
         </CardContent>
       </Card>
 
       {/* Shift History */}
-      <Card className="mb-8 border-(--border)">
-        <CardHeader>
-          <h2 className="text-xl font-semibold">{t('driver.shiftHistory', 'Shift History')}</h2>
+      <Card className="mb-6 sm:mb-8 border-(--border)">
+        <CardHeader className="pb-3 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base sm:text-xl font-semibold">
+            {t('driver.shiftHistory', 'Shift History')}
+          </h2>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 py-3 sm:px-6 sm:py-4">
           <ShiftHistory driverId={driver._id} />
         </CardContent>
       </Card>

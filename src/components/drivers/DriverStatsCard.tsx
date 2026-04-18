@@ -108,14 +108,15 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Period Selector & Export */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant={period === 'week' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setPeriod('week')}
+            className="flex-1 sm:flex-none text-xs"
           >
             {t('driver.week', 'Week')}
           </Button>
@@ -123,6 +124,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
             variant={period === 'month' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setPeriod('month')}
+            className="flex-1 sm:flex-none text-xs"
           >
             {t('driver.month', 'Month')}
           </Button>
@@ -130,69 +132,84 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
             variant={period === 'year' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setPeriod('year')}
+            className="flex-1 sm:flex-none text-xs"
           >
             {t('driver.year', 'Year')}
           </Button>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={handleExportExcel}>
-            <Download className="w-4 h-4 mr-2" />
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportExcel}
+            className="flex-1 sm:flex-none text-xs"
+          >
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             Excel
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleExportPDF}>
-            <FileText className="w-4 h-4 mr-2" />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportPDF}
+            className="flex-1 sm:flex-none text-xs"
+          >
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
             PDF
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <Card variant="elevated">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium text-(--text-muted)">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 py-2">
+            <h3 className="text-xs sm:text-sm font-medium text-(--text-muted)">
               {t('driver.totalTrips', 'Total Trips')}
             </h3>
-            <TrendingUp className="w-4 h-4 text-(--primary)" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--primary)" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-(--text-primary)">{stats.totalTrips}</div>
+          <CardContent className="px-3 py-2 pb-3">
+            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">
+              {stats.totalTrips}
+            </div>
           </CardContent>
         </Card>
         <Card variant="elevated">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium text-(--text-muted)">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 py-2">
+            <h3 className="text-xs sm:text-sm font-medium text-(--text-muted)">
               {t('driver.totalDistance', 'Total Distance')}
             </h3>
-            <MapPin className="w-4 h-4 text-(--warning)" />
+            <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--warning)" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-(--text-primary)">N/A</div>
-            <p className="text-xs text-(--text-muted) mt-1">Distance tracking coming soon</p>
+          <CardContent className="px-3 py-2 pb-3">
+            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">N/A</div>
+            <p className="text-[10px] sm:text-xs text-(--text-muted) mt-1">
+              Distance tracking coming soon
+            </p>
           </CardContent>
         </Card>
         <Card variant="elevated">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium text-(--text-muted)">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 py-2">
+            <h3 className="text-xs sm:text-sm font-medium text-(--text-muted)">
               {t('driver.totalDuration', 'Total Duration')}
             </h3>
-            <Clock className="w-4 h-4 text-(--success)" />
+            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--success)" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-(--text-primary)">
+          <CardContent className="px-3 py-2 pb-3">
+            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">
               {Math.round(stats.totalWorkedHours * 60)} min
             </div>
           </CardContent>
         </Card>
         <Card variant="elevated">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <h3 className="text-sm font-medium text-(--text-muted)">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 py-2">
+            <h3 className="text-xs sm:text-sm font-medium text-(--text-muted)">
               {t('driver.avgPerTrip', 'Avg per Trip')}
             </h3>
-            <BarChart3 className="w-4 h-4 text-(--info)" />
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--info)" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-(--text-primary)">
+          <CardContent className="px-3 py-2 pb-3">
+            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">
               {stats.totalTrips > 0
                 ? ((stats.totalWorkedHours * 60) / stats.totalTrips).toFixed(0)
                 : 0}{' '}

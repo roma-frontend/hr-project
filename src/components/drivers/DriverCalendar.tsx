@@ -182,33 +182,35 @@ function TripCard({
       onClick={() => onOpenDetails?.(item)}
     >
       {/* Left accent bar */}
-      <div className={`absolute left-0 top-2 bottom-2 w-0.5 rounded-full ${config.accent}`} />
+      <div className={`absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full ${config.accent}`} />
 
-      <div className="p-2.5 pl-3.5">
+      <div className="p-2 pl-3">
         {/* Time & Status */}
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-1.5">
-            <Clock className={`w-3 h-3 ${config.textMuted}`} />
-            <span className={`text-xs font-semibold ${config.text}`}>{startTime}</span>
-            <span className="text-[10px] text-muted-foreground/50">{endTime}</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1">
+            <Clock className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${config.textMuted}`} />
+            <span className={`text-[10px] sm:text-xs font-semibold ${config.text}`}>
+              {startTime}
+            </span>
+            <span className="text-[8px] sm:text-[10px] text-muted-foreground/50">{endTime}</span>
           </div>
-          <div className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+          <div className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${config.dot}`} />
         </div>
 
         {/* Route - single line, truncated */}
         {item.type === 'trip' && item.tripInfo ? (
-          <div className="mb-2">
-            <p className="text-[11px] font-medium text-foreground truncate leading-tight">
+          <div className="mb-1.5">
+            <p className="text-[9px] sm:text-[11px] font-medium text-foreground truncate leading-tight">
               {routeText}
             </p>
             {item.tripInfo.purpose && (
-              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+              <p className="text-[8px] sm:text-[10px] text-muted-foreground truncate mt-0.5">
                 {item.tripInfo.purpose}
               </p>
             )}
           </div>
         ) : (
-          <p className="text-[11px] text-muted-foreground truncate">
+          <p className="text-[9px] sm:text-[11px] text-muted-foreground truncate">
             {item.reason || getTypeLabel()}
           </p>
         )}
@@ -220,9 +222,9 @@ function TripCard({
               e.stopPropagation();
               onUpdateStatus(item._id, 'in_progress');
             }}
-            className={`w-full mt-1.5 p-2 text-[10px] font-semibold rounded-md ${config.btnBg} ${config.btnText} transition-colors flex items-center justify-center gap-1`}
+            className={`w-full mt-1 py-1.5 text-[9px] sm:text-[10px] font-semibold rounded-md ${config.btnBg} ${config.btnText} transition-colors flex items-center justify-center gap-1`}
           >
-            <Play className="w-2.5 h-2.5" />
+            <Play className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             {t('driverCalendar.startTrip', 'Start')}
           </button>
         )}
@@ -232,9 +234,9 @@ function TripCard({
               e.stopPropagation();
               onUpdateStatus(item._id, 'completed');
             }}
-            className="w-full mt-1.5 p-2 text-[10px] font-semibold rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center justify-center gap-1"
+            className="w-full mt-1 py-1.5 text-[9px] sm:text-[10px] font-semibold rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center justify-center gap-1"
           >
-            <CheckCircle2 className="w-2.5 h-2.5" />
+            <CheckCircle2 className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             {t('driverCalendar.completeTrip', 'Complete')}
           </button>
         )}
@@ -264,7 +266,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
   // Get schedule for the week
   const schedule = useQuery(
     api.drivers.queries.getDriverSchedule,
-    driverId ? { driverId, startTime: weekStart, endTime: weekEnd } : 'skip',
+    driverId ? ({ driverId, startTime: weekStart, endTime: weekEnd } as const) : 'skip',
   );
 
   // Mutations
@@ -310,24 +312,24 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
   const [mobileViewDay, setMobileViewDay] = useState<number>(0);
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+    <div className="space-y-3 sm:space-y-4 p-2 sm:p-3 md:p-4 lg:p-6">
       {/* Calendar Header - Modern Design */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center bg-muted/50 rounded-xl p-1 gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-lg hover:bg-background"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg hover:bg-background"
               onClick={() => setSelectedDate(addDays(selectedDate, -7))}
               aria-label={t('driverCalendar.previousWeek', 'Previous week')}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 px-3 rounded-lg text-xs font-medium hover:bg-background"
+              className="h-8 sm:h-9 px-2 sm:px-3 rounded-lg text-[11px] sm:text-xs font-medium hover:bg-background"
               onClick={() => {
                 setSelectedDate(new Date());
                 setMobileViewDay(0);
@@ -338,15 +340,15 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-lg hover:bg-background"
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg hover:bg-background"
               onClick={() => setSelectedDate(addDays(selectedDate, 7))}
               aria-label={t('driverCalendar.nextWeek', 'Next week')}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
           </div>
           <div className="hidden sm:block">
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-xs sm:text-sm font-semibold text-white">
               {format(weekStart, 'MMM d', { locale: dateFnsLocale })} —{' '}
               {format(new Date(weekEnd), 'MMM d, yyyy', { locale: dateFnsLocale })}
             </h3>
@@ -355,9 +357,9 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
         {role === 'driver' && (
           <Button
             onClick={() => setShowBlockModal(true)}
-            className="w-full sm:w-auto gap-2 rounded-xl bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm hover:shadow-md transition-all"
+            className="w-full sm:w-auto gap-2 rounded-xl bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-sm hover:shadow-md transition-all text-xs sm:text-sm"
           >
-            <Shield className="w-4 h-4" />
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             {t('driverCalendar.blockTime', 'Block Time')}
           </Button>
         )}
@@ -365,7 +367,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
 
       {/* Week Range for Mobile */}
       <div className="sm:hidden text-center">
-        <p className="text-sm font-semibold text-white">
+        <p className="text-xs sm:text-sm font-semibold text-white">
           {format(weekStart, 'MMM d', { locale: dateFnsLocale })} —{' '}
           {format(new Date(weekEnd), 'MMM d, yyyy', { locale: dateFnsLocale })}
         </p>
@@ -373,7 +375,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
 
       {/* Desktop Week View - Hidden on mobile */}
       <div className="hidden sm:block">
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-7 gap-2 lg:gap-3">
           {weekDays.map((day: any) => {
             const daySchedule = getScheduleForDay(day);
             const today = isToday(day);
@@ -381,24 +383,24 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
             return (
               <div
                 key={day.toISOString()}
-                className={`rounded-2xl border transition-all duration-200 ${
+                className={`rounded-xl lg:rounded-2xl border transition-all duration-200 ${
                   today
                     ? 'border-primary/40 bg-linear-to-b from-primary/5 to-transparent shadow-lg shadow-primary/5'
                     : 'border-border/50 bg-card/50 hover:border-border'
                 }`}
               >
                 {/* Day Header */}
-                <div className="p-3 pb-2 border-b border-border/30">
+                <div className="p-2 lg:p-3 pb-1.5 lg:pb-2 border-b border-border/30">
                   <div className="text-center">
                     <div
-                      className={`text-[11px] font-semibold uppercase tracking-wider ${
+                      className={`text-[9px] lg:text-[11px] font-semibold uppercase tracking-wider ${
                         today ? 'text-primary' : 'text-muted-foreground'
                       }`}
                     >
                       {format(day, 'EEE', { locale: dateFnsLocale })}
                     </div>
                     <div
-                      className={`text-2xl font-bold mt-1 ${
+                      className={`text-lg lg:text-2xl font-bold mt-0.5 lg:mt-1 ${
                         today ? 'text-primary' : 'text-foreground'
                       }`}
                     >
@@ -408,7 +410,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                 </div>
 
                 {/* Schedule Items */}
-                <div className="p-2 space-y-2 max-h-80 overflow-y-auto scrollbar-thin">
+                <div className="p-1.5 lg:p-2 space-y-1.5 lg:space-y-2 max-h-64 lg:max-h-80 overflow-y-auto scrollbar-thin">
                   {daySchedule.length > 0 ? (
                     daySchedule
                       .sort((a: ScheduleItem, b: ScheduleItem) => a.startTime - b.startTime)
@@ -430,9 +432,9 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                         />
                       ))
                   ) : (
-                    <div className="text-center py-8">
-                      <CalendarIcon className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                      <span className="text-[11px] text-muted-foreground">
+                    <div className="text-center py-6 lg:py-8">
+                      <CalendarIcon className="w-6 h-6 lg:w-8 lg:h-8 mx-auto mb-1.5 lg:mb-2 text-muted-foreground/30" />
+                      <span className="text-[9px] lg:text-[11px] text-muted-foreground">
                         {t('driverCalendar.noTrips')}
                       </span>
                     </div>
@@ -446,11 +448,11 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
 
       {/* Mobile Day View - Horizontal Scroll */}
       <div className="sm:hidden">
-        <div className="rounded-2xl border border-border/50 bg-card/50 overflow-hidden">
+        <div className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
           {/* Day Selector */}
-          <div className="p-3 pb-2 border-b border-border/30">
+          <div className="p-2 pb-1.5 border-b border-border/30">
             <ScrollArea className="w-full">
-              <div className="flex gap-2 pb-2">
+              <div className="flex gap-1.5 pb-1.5">
                 {weekDays.map((day: any, index: any) => {
                   const today = isToday(day);
                   const isSelected = index === mobileViewDay;
@@ -460,7 +462,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                     <button
                       key={day.toISOString()}
                       onClick={() => setMobileViewDay(index)}
-                      className={`flex flex-col items-center justify-center min-w-14 p-2.5 rounded-xl transition-all duration-200 ${
+                      className={`flex flex-col items-center justify-center min-w-12 p-2 rounded-xl transition-all duration-200 ${
                         isSelected
                           ? today
                             ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
@@ -469,14 +471,14 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                       }`}
                     >
                       <span
-                        className={`text-[10px] font-semibold uppercase ${
+                        className={`text-[9px] font-semibold uppercase ${
                           isSelected ? 'opacity-80' : 'text-muted-foreground'
                         }`}
                       >
                         {format(day, 'EEE', { locale: dateFnsLocale })}
                       </span>
                       <span
-                        className={`text-xl font-bold mt-0.5 ${
+                        className={`text-lg font-bold mt-0.5 ${
                           isSelected ? '' : today ? 'text-primary' : ''
                         }`}
                       >
@@ -484,7 +486,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                       </span>
                       {daySchedule.length > 0 && (
                         <div
-                          className={`w-1.5 h-1.5 rounded-full mt-1.5 ${
+                          className={`w-1 h-1 rounded-full mt-1 ${
                             isSelected
                               ? 'bg-primary-foreground'
                               : today
@@ -502,7 +504,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
           </div>
 
           {/* Schedule Content */}
-          <div className="p-3 space-y-3 max-h-90 overflow-y-auto">
+          <div className="p-2 space-y-2 max-h-80 overflow-y-auto">
             {weekDays[mobileViewDay] && getScheduleForDay(weekDays[mobileViewDay]).length > 0 ? (
               getScheduleForDay(weekDays[mobileViewDay])
                 .sort((a: ScheduleItem, b: ScheduleItem) => a.startTime - b.startTime)
@@ -525,12 +527,12 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                   />
                 ))
             ) : (
-              <div className="text-center py-12">
-                <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground/20" />
-                <p className="text-sm font-medium text-foreground">
+              <div className="text-center py-8">
+                <CalendarIcon className="w-8 h-8 mx-auto mb-2 text-muted-foreground/20" />
+                <p className="text-xs font-medium text-foreground">
                   {t('driverCalendar.noTripsScheduled')}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1">
                   {format(weekDays[mobileViewDay] ?? new Date(), 'EEEE, MMM d', {
                     locale: dateFnsLocale,
                   })}
@@ -542,26 +544,36 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
       </div>
 
       {/* Legend - Modern Design */}
-      <div className="flex flex-wrap items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border/30">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
-          <span className="text-xs text-muted-foreground">{t('driverCalendar.completed')}</span>
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-xl bg-muted/30 border border-border/30">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
+            {t('driverCalendar.completed')}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
-          <span className="text-xs text-muted-foreground">{t('driverCalendar.inProgress')}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
+            {t('driverCalendar.inProgress')}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-slate-400 shadow-sm shadow-slate-400/50" />
-          <span className="text-xs text-muted-foreground">{t('driverCalendar.scheduled')}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-slate-400 shadow-sm shadow-slate-400/50" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
+            {t('driverCalendar.scheduled')}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50" />
-          <span className="text-xs text-muted-foreground">{t('driverCalendar.timeOff')}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
+            {t('driverCalendar.timeOff')}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50" />
-          <span className="text-xs text-muted-foreground">{t('driverCalendar.maintenance')}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50" />
+          <span className="text-[10px] sm:text-xs text-muted-foreground">
+            {t('driverCalendar.maintenance')}
+          </span>
         </div>
       </div>
 
@@ -572,7 +584,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm pointer-events-auto"
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm pointer-events-auto"
             onClick={() => setShowBlockModal(false)}
           >
             <motion.div
@@ -581,7 +593,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl pointer-events-auto"
+              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-(--card) rounded-xl sm:rounded-2xl border border-(--border) shadow-2xl pointer-events-auto"
             >
               <BlockTimeWizard
                 driverId={driverId}
@@ -599,7 +611,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
         selectedTrip &&
         createPortal(
           <div
-            className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md"
             style={{ pointerEvents: 'auto' }}
             onClick={() => {
               setShowTripModal(false);
