@@ -4803,13 +4803,14 @@
       "noHistory": "Հերթափոխերի պատմություն դեռ չկա",
       "overtime": "Գերժամյա"
     },
+    "openInMap": "Բացել քարտեզում",
+    "selectMapApp": "Ընտրեք քարտեզի հավելված",
     "navigator": {
       "google": "Google Maps",
       "yandex": "Yandex Maps",
       "2gis": "2GIS",
       "waze": "Waze",
-      "openInMap": "Բացել քարտեզում",
-      "selectMapApp": "Ընտրեք քարտեզի հավելված"
+      "apple": "Apple Maps"
     },
     "map": {
       "navigate": "Ուղղություն",

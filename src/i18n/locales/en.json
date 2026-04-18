@@ -4829,13 +4829,14 @@
       "noHistory": "No shift history yet",
       "overtime": "Overtime"
     },
+    "openInMap": "Open in Map",
+    "selectMapApp": "Select Map App",
     "navigator": {
       "google": "Google Maps",
       "yandex": "Yandex Maps",
       "2gis": "2GIS",
       "waze": "Waze",
-      "openInMap": "Open in Map",
-      "selectMapApp": "Select Map App"
+      "apple": "Apple Maps"
     },
     "map": {
       "navigate": "Navigate",

@@ -211,35 +211,35 @@ export function TripDetailsModal({
                           className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
                         >
                           <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          Google Maps
+                          {t('driver.navigator.google', 'Google Maps')}
                         </button>
                         <button
                           onClick={() => openInMap('yandex')}
                           className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
                         >
                           <span className="w-2 h-2 rounded-full bg-red-500" />
-                          Yandex Maps
+                          {t('driver.navigator.yandex', 'Yandex Maps')}
                         </button>
                         <button
                           onClick={() => openInMap('apple')}
                           className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
                         >
                           <span className="w-2 h-2 rounded-full bg-gray-500" />
-                          Apple Maps
+                          {t('driver.navigator.apple', 'Apple Maps')}
                         </button>
                         <button
                           onClick={() => openInMap('waze')}
                           className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
                         >
                           <span className="w-2 h-2 rounded-full bg-cyan-500" />
-                          Waze
+                          {t('driver.navigator.waze', 'Waze')}
                         </button>
                         <button
                           onClick={() => openInMap('2gis')}
                           className="w-full px-3 py-2 text-left text-sm hover:bg-(--background-subtle) flex items-center gap-2 transition-colors"
                         >
                           <span className="w-2 h-2 rounded-full bg-green-500" />
-                          2GIS
+                          {t('driver.navigator.2gis', '2GIS')}
                         </button>
                       </div>
                     )}

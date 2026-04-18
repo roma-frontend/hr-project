@@ -5046,13 +5046,14 @@
       "noHistory": "История смен пока пуста",
       "overtime": "Переработка"
     },
+    "openInMap": "Открыть в карте",
+    "selectMapApp": "Выберите приложение",
     "navigator": {
       "google": "Google Maps",
       "yandex": "Яндекс Карты",
       "2gis": "2ГИС",
       "waze": "Waze",
-      "openInMap": "Открыть в карте",
-      "selectMapApp": "Выберите приложение"
+      "apple": "Apple Maps"
     },
     "map": {
       "navigate": "Навигация",
