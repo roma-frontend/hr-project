@@ -37,7 +37,6 @@ export function useApproveUser() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (userId: string) => {
@@ -68,7 +67,6 @@ export function useRejectUser() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (userId: string) => {
