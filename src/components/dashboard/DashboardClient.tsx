@@ -297,9 +297,6 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* Smart Banners - only render if there are active banners */}
-      <DashboardBanners />
-
       {/* Welcome header - now hidden since we have sticky header */}
       <motion.div variants={itemVariants} className="hidden">
         <div>
@@ -397,6 +394,9 @@ export default function DashboardClient() {
           </Button>
         </div>
       </motion.div>
+
+      {/* Smart Banners - only render if there are active banners */}
+      <DashboardBanners />
 
       {/* Stats */}
       <motion.div variants={itemVariants}>
