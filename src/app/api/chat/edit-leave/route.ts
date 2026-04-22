@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: Request) {
   try {
-    const { leaveId, requesterId, startDate, endDate, days, reason, type } = await req.json();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
 
-    if (!leaveId || !requesterId) {
+    const { leaveId, startDate, endDate, days, reason, type } = await req.json();
+    const requesterId = auth.user.id;
+
+    if (!leaveId) {
       return NextResponse.json(
-        { success: false, message: 'Missing leaveId or requesterId' },
+        { success: false, message: 'Missing leaveId' },
         { status: 400 },
       );
     }
@@ -15,11 +20,14 @@ export async function POST(req: Request) {
     const supabase = await createClient();
 
     // Get the leave to validate
+    const { data: requesterUser } = await supabase.from('users').select('organization_id').eq('id', requesterId).maybeSingle();
+    const organizationId = requesterUser?.organization_id;
+
     const { data: leaves } = await supabase
       .from('leave_requests')
-      .select('*')
-      .eq('organizationId', (await supabase.from('users').select('organizationId').eq('id', requesterId).single()).data?.organizationId ?? '');
-    const leave = (leaves as any[]).find((l: any) => l.id === leaveId);
+      .select('id, userid, status, start_date, end_date, type, reason, organization_id, created_at, updated_at, days, total_days, comment, reviewed_by, review_comment, reviewed_at')
+      .eq('organization_id', organizationId || '');
+    const leave = leaves?.find((l) => l.id === leaveId);
 
     if (!leave) {
       return NextResponse.json({ success: false, message: 'Leave request not found' });
@@ -28,9 +36,9 @@ export async function POST(req: Request) {
     // Get requester
     const { data: users } = await supabase
       .from('users')
-      .select('*')
-      .eq('organizationId', (await supabase.from('users').select('organizationId').eq('id', requesterId).single()).data?.organizationId ?? '');
-    const requester = (users as any[]).find((u: any) => u.id === requesterId);
+      .select('id, name, role, organization_id')
+      .eq('organization_id', organizationId || '');
+    const requester = users?.find((u) => u.id === requesterId);
 
     if (!requester) {
       return NextResponse.json({ success: false, message: 'User not found' });
@@ -57,7 +65,7 @@ export async function POST(req: Request) {
     await supabase.from('leave_requests').update({
       ...(startDate && { start_date: startDate }),
       ...(endDate && { end_date: endDate }),
-      ...(days && { days }),
+      ...(days && { total_days: days }),
       ...(reason && { reason }),
       ...(type && { type }),
       updated_at: Date.now(),

@@ -129,9 +129,17 @@ function isProtectedPath(pathname: string): boolean {
 async function hasValidSession(request: NextRequest): Promise<boolean> {
   const response = NextResponse.next();
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables in middleware');
+    return false;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -235,7 +243,10 @@ export async function middleware(request: NextRequest) {
     const isMaintenance = request.nextUrl.searchParams.get('maintenance') === 'true';
     const hasSession = await hasValidSession(request);
 
-    if (AUTH_PATHS.some((prefix) => pathname.startsWith(prefix)) && hasSession && !isMaintenance) {
+    // Only redirect from auth pages (login/register/forgot-password/reset-password) if already authenticated
+    // Do NOT redirect from /auth/callback, /, or other public paths
+    const isAuthPage = AUTH_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
+    if (isAuthPage && hasSession && !isMaintenance) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     const response = NextResponse.next();
@@ -256,6 +267,17 @@ export async function middleware(request: NextRequest) {
 
   // All other paths — apply security headers
     const response = NextResponse.next();
+    
+    // Pass locale cookie to server components
+    const localeCookie = request.cookies.get('NEXT_LOCALE');
+    if (!localeCookie) {
+      response.cookies.set('NEXT_LOCALE', 'en', {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+      });
+    }
+    
     return applySecurityHeaders(request, response);
 }
 

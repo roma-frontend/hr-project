@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,34 +32,34 @@ interface ServiceBroadcastDialogProps {
   userId?: string;
 }
 
-const BROADCAST_ICONS = [
-  { icon: 'ℹ️', label: 'Information', color: '#3b82f6' },
-  { icon: '⚠️', label: 'Warning', color: '#f59e0b' },
-  { icon: '🔧', label: 'Maintenance', color: '#6b7280' },
-  { icon: '🚨', label: 'Urgent', color: '#ef4444' },
-  { icon: '🎉', label: 'Announcement', color: '#8b5cf6' },
-  { icon: '🔒', label: 'Security', color: '#10b981' },
-  { icon: '📢', label: 'Broadcast', color: '#ec4899' },
-  { icon: '🔄', label: 'Update', color: '#06b6d4' },
+const BROADCAST_ICONS = (t: any) => [
+  { icon: 'ℹ️', label: t('serviceBroadcast.icons.information'), color: '#3b82f6' },
+  { icon: '⚠️', label: t('serviceBroadcast.icons.warning'), color: '#f59e0b' },
+  { icon: '🔧', label: t('serviceBroadcast.icons.maintenance'), color: '#6b7280' },
+  { icon: '🚨', label: t('serviceBroadcast.icons.urgent'), color: '#ef4444' },
+  { icon: '🎉', label: t('serviceBroadcast.icons.announcement'), color: '#8b5cf6' },
+  { icon: '🔒', label: t('serviceBroadcast.icons.security'), color: '#10b981' },
+  { icon: '📢', label: t('serviceBroadcast.icons.broadcast'), color: '#ec4899' },
+  { icon: '🔄', label: t('serviceBroadcast.icons.update'), color: '#06b6d4' },
 ];
 
-const DURATION_OPTIONS = [
-  { label: '30 мин', value: '30 minutes' },
-  { label: '1 час', value: '1 hour' },
-  { label: '2 часа', value: '2 hours' },
-  { label: '3 часа', value: '3 hours' },
-  { label: '4 часа', value: '4 hours' },
-  { label: 'Неизвестно', value: undefined },
+const DURATION_OPTIONS = (t: any) => [
+  { label: t('serviceBroadcast.duration.30min'), value: '30 minutes' },
+  { label: t('serviceBroadcast.duration.1hour'), value: '1 hour' },
+  { label: t('serviceBroadcast.duration.2hours'), value: '2 hours' },
+  { label: t('serviceBroadcast.duration.3hours'), value: '3 hours' },
+  { label: t('serviceBroadcast.duration.4hours'), value: '4 hours' },
+  { label: t('serviceBroadcast.duration.unknown'), value: undefined },
 ];
 
-const STEPS = [
-  { id: 'audience', label: 'Аудитория', icon: Users },
-  { id: 'message', label: 'Сообщение', icon: MessageSquare },
-  { id: 'schedule', label: 'Расписание', icon: Calendar },
-  { id: 'review', label: 'Отправка', icon: Send },
+const STEPS = (t: any) => [
+  { id: 'audience', label: t('serviceBroadcast.steps.audience'), icon: Users },
+  { id: 'message', label: t('serviceBroadcast.steps.message'), icon: MessageSquare },
+  { id: 'schedule', label: t('serviceBroadcast.steps.schedule'), icon: Calendar },
+  { id: 'review', label: t('serviceBroadcast.steps.send'), icon: Send },
 ];
 
-type StepId = (typeof STEPS)[number]['id'];
+type StepId = 'audience' | 'message' | 'schedule' | 'review';
 
 export function ServiceBroadcastDialog({
   open,
@@ -66,6 +67,7 @@ export function ServiceBroadcastDialog({
   organizationId,
   userId,
 }: ServiceBroadcastDialogProps) {
+  const { t, i18n } = useTranslation();
   const [currentStep, setCurrentStep] = useState<StepId>('audience');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -88,7 +90,7 @@ export function ServiceBroadcastDialog({
   const sendBroadcastMutation = useSendServiceBroadcast();
   const enableMaintenanceModeMutation = useEnableMaintenanceMode();
 
-  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
+  const currentStepIndex = STEPS(t).findIndex((s) => s.id === currentStep);
 
   const selectedOrg = organizations?.find((o: any) => o.id === selectedOrgId);
   const targetOrgCount = broadcastScope === 'all' ? (organizations?.length ?? 0) : 1;
@@ -117,33 +119,33 @@ export function ServiceBroadcastDialog({
   ]);
 
   const nextStep = () => {
-    const idx = STEPS.findIndex((s) => s.id === currentStep);
-    const nextStepData = STEPS[idx + 1];
-    if (idx >= 0 && nextStepData) setCurrentStep(nextStepData.id);
+    const idx = STEPS(t).findIndex((s) => s.id === currentStep);
+    const nextStepData = STEPS(t)[idx + 1];
+    if (idx >= 0 && nextStepData) setCurrentStep(nextStepData.id as StepId);
   };
 
   const prevStep = () => {
-    const idx = STEPS.findIndex((s) => s.id === currentStep);
-    const prevStepData = STEPS[idx - 1];
-    if (idx > 0 && prevStepData) setCurrentStep(prevStepData.id);
+    const idx = STEPS(t).findIndex((s) => s.id === currentStep);
+    const prevStepData = STEPS(t)[idx - 1];
+    if (idx > 0 && prevStepData) setCurrentStep(prevStepData.id as StepId);
   };
 
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) {
       setStatus('error');
-      setErrorMessage('Заполните заголовок и сообщение');
+      setErrorMessage(t('serviceBroadcast.errors.fillTitleAndMessage'));
       return;
     }
 
     if (scheduleMaintenance && !scheduleDateTime) {
       setStatus('error');
-      setErrorMessage('Укажите время начала обслуживания');
+      setErrorMessage(t('serviceBroadcast.errors.specifyStartTime'));
       return;
     }
 
     if (!userId) {
       setStatus('error');
-      setErrorMessage('Пользователь не загружен');
+      setErrorMessage(t('serviceBroadcast.errors.userNotLoaded'));
       return;
     }
 
@@ -162,16 +164,16 @@ export function ServiceBroadcastDialog({
       let broadcastContent = content.trim();
       if (scheduleMaintenance && scheduleDateTime) {
         const scheduledDate = new Date(scheduledTime);
-        const timeStr = scheduledDate.toLocaleString('ru-RU', {
+        const timeStr = scheduledDate.toLocaleString(i18n.language || 'en-GB', {
           hour: '2-digit',
           minute: '2-digit',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         });
-        broadcastContent = `${content.trim()}\n\n⏰ Техническое обслуживание начнётся в: ${timeStr}`;
+        broadcastContent = `${content.trim()}\n\n⏰ ${t('serviceBroadcast.scheduledMessage.startsAt')} ${timeStr}`;
         if (estimatedDuration) {
-          broadcastContent += `\n⏱️ Примерная длительность: ${estimatedDuration}`;
+          broadcastContent += `\n⏱️ ${t('serviceBroadcast.scheduledMessage.duration')} ${estimatedDuration}`;
         }
       }
 
@@ -216,7 +218,7 @@ export function ServiceBroadcastDialog({
       }, 2500);
     } catch (error) {
       setStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Ошибка при отправке');
+      setErrorMessage(error instanceof Error ? error.message : t('serviceBroadcast.errors.sendingError'));
     } finally {
       setLoading(false);
     }
@@ -237,8 +239,8 @@ export function ServiceBroadcastDialog({
         <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-3">
           <Users className="w-8 h-8 text-blue-400" />
         </div>
-        <h3 className="text-lg font-semibold">Кто получит сообщение?</h3>
-        <p className="text-sm text-(--text-muted) mt-1">Выберите целевую аудиторию для рассылки</p>
+        <h3 className="text-lg font-semibold">{t('serviceBroadcast.audience.title')}</h3>
+        <p className="text-sm text-(--text-muted) mt-1">{t('serviceBroadcast.audience.subtitle')}</p>
       </div>
 
       <div className="space-y-3">
@@ -262,9 +264,9 @@ export function ServiceBroadcastDialog({
               {broadcastScope === 'all' && <Check className="w-3 h-3 text-white" />}
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm">📢 Все организации</p>
+              <p className="font-medium text-sm">{t('serviceBroadcast.audience.allOrgs')}</p>
               <p className="text-xs text-(--text-muted)">
-                {organizations?.length ?? 0} организаций
+                {organizations?.length ?? 0} {t('serviceBroadcast.audience.orgsCount')}
               </p>
             </div>
           </div>
@@ -290,8 +292,8 @@ export function ServiceBroadcastDialog({
               {broadcastScope === 'specific' && <Check className="w-3 h-3 text-white" />}
             </div>
             <div className="flex-1">
-              <p className="font-medium text-sm">🏢 Конкретная организация</p>
-              <p className="text-xs text-(--text-muted)">Выберите одну организацию</p>
+              <p className="font-medium text-sm">{t('serviceBroadcast.audience.specificOrg')}</p>
+              <p className="text-xs text-(--text-muted)">{t('serviceBroadcast.audience.specificOrgSubtitle')}</p>
             </div>
           </div>
         </button>
@@ -314,15 +316,14 @@ export function ServiceBroadcastDialog({
             >
               {organizations.map((org: any) => (
                 <option key={org.id} value={org.id}>
-                  {org.name} ({org.active_employees ?? org.member_count ?? 0} сотрудников)
+                  {org.name} ({org.active_employees ?? org.member_count ?? 0} {t('serviceBroadcast.audience.employees')})
                 </option>
               ))}
             </select>
             {selectedOrg && (
               <div className="mt-2 p-3 rounded-lg bg-(--background-subtle) border border-(--border)">
                 <p className="text-xs text-(--text-muted)">
-                  📊 {selectedOrg.active_employees ?? selectedOrg.member_count ?? 0} активных
-                  пользователей получат сообщение
+                  📊 {selectedOrg.active_employees ?? selectedOrg.member_count ?? 0} {t('serviceBroadcast.audience.activeUsersWillReceive')}
                 </p>
               </div>
             )}
@@ -339,15 +340,15 @@ export function ServiceBroadcastDialog({
         <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mx-auto mb-3">
           <MessageSquare className="w-8 h-8 text-purple-400" />
         </div>
-        <h3 className="text-lg font-semibold">Содержание сообщения</h3>
-        <p className="text-sm text-(--text-muted) mt-1">Напишите заголовок и текст сообщения</p>
+        <h3 className="text-lg font-semibold">{t('serviceBroadcast.message.title')}</h3>
+        <p className="text-sm text-(--text-muted) mt-1">{t('serviceBroadcast.message.subtitle')}</p>
       </div>
 
       {/* Icon Selection */}
       <div>
-        <label className="text-sm font-medium block mb-3">Иконка сообщения</label>
+        <label className="text-sm font-medium block mb-3">{t('serviceBroadcast.message.iconLabel')}</label>
         <div className="grid grid-cols-4 gap-2">
-          {BROADCAST_ICONS.map(({ icon, label, color }) => (
+          {BROADCAST_ICONS(t).map(({ icon, label, color }) => (
             <button
               key={icon}
               onClick={() => setSelectedIcon(icon)}
@@ -378,9 +379,9 @@ export function ServiceBroadcastDialog({
 
       {/* Title */}
       <div>
-        <label className="text-sm font-medium block mb-2">Заголовок</label>
+        <label className="text-sm font-medium block mb-2">{t('serviceBroadcast.message.titleLabel')}</label>
         <Input
-          placeholder="Например: Плановое обслуживание системы"
+          placeholder={t('serviceBroadcast.message.titlePlaceholder')}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={loading}
@@ -390,9 +391,9 @@ export function ServiceBroadcastDialog({
 
       {/* Content */}
       <div>
-        <label className="text-sm font-medium block mb-2">Сообщение</label>
+        <label className="text-sm font-medium block mb-2">{t('serviceBroadcast.message.contentLabel')}</label>
         <Textarea
-          placeholder="Введите текст сообщения, которое получат все пользователи..."
+          placeholder={t('serviceBroadcast.message.contentPlaceholder')}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           disabled={loading}
@@ -401,9 +402,9 @@ export function ServiceBroadcastDialog({
         />
         <div className="flex items-center justify-between mt-1">
           <p className="text-xs text-(--text-muted)">
-            Все активные пользователи получат это в канале "System Announcements"
+            {t('serviceBroadcast.message.infoText')}
           </p>
-          <p className="text-xs text-(--text-muted)">{content.length} символов</p>
+          <p className="text-xs text-(--text-muted)">{content.length} {t('serviceBroadcast.message.characters')}</p>
         </div>
       </div>
     </div>
@@ -416,10 +417,8 @@ export function ServiceBroadcastDialog({
         <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center mx-auto mb-3">
           <Calendar className="w-8 h-8 text-orange-400" />
         </div>
-        <h3 className="text-lg font-semibold">Расписание обслуживания</h3>
-        <p className="text-sm text-(--text-muted) mt-1">
-          Запланируйте автоматическое включение режима обслуживания
-        </p>
+        <h3 className="text-lg font-semibold">{t('serviceBroadcast.schedule.title')}</h3>
+        <p className="text-sm text-(--text-muted) mt-1">{t('serviceBroadcast.schedule.subtitle')}</p>
       </div>
 
       {/* Toggle */}
@@ -451,11 +450,11 @@ export function ServiceBroadcastDialog({
                 className="font-medium text-sm"
                 style={{ color: scheduleMaintenance ? '#f97316' : undefined }}
               >
-                Запланировать техническое обслуживание
+                {t('serviceBroadcast.schedule.scheduleMaintenance')}
               </p>
             </div>
             <p className="text-xs text-(--text-muted) mt-0.5">
-              Отправить сообщение сейчас, а режим обслуживания включить в определённое время
+              {t('serviceBroadcast.schedule.scheduleDescription')}
             </p>
           </div>
         </div>
@@ -473,7 +472,7 @@ export function ServiceBroadcastDialog({
             <div>
               <label className="text-sm font-medium flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4" />
-                Время начала обслуживания
+                {t('serviceBroadcast.schedule.startTime')}
               </label>
               <Input
                 type="datetime-local"
@@ -486,8 +485,8 @@ export function ServiceBroadcastDialog({
               {scheduleDateTime && (
                 <div className="mt-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                   <p className="text-xs text-orange-400">
-                    ⏰ Обслуживание начнётся:{' '}
-                    {new Date(scheduleDateTime).toLocaleString('ru-RU', {
+                    ⏰ {t('serviceBroadcast.schedule.willStartAt')}{' '}
+                    {new Date(scheduleDateTime).toLocaleString(i18n.language || 'en-GB', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
@@ -501,9 +500,9 @@ export function ServiceBroadcastDialog({
 
             {/* Estimated Duration */}
             <div>
-              <label className="text-sm font-medium block mb-2">Примерная длительность</label>
+              <label className="text-sm font-medium block mb-2">{t('serviceBroadcast.schedule.estimatedDuration')}</label>
               <div className="grid grid-cols-3 gap-2">
-                {DURATION_OPTIONS.map((option: any) => (
+                {DURATION_OPTIONS(t).map((option: any) => (
                   <button
                     key={option.value || 'unknown'}
                     onClick={() => setEstimatedDuration(option.value)}
@@ -532,8 +531,8 @@ export function ServiceBroadcastDialog({
         <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mx-auto mb-3">
           <Send className="w-8 h-8 text-emerald-400" />
         </div>
-        <h3 className="text-lg font-semibold">Проверьте и отправьте</h3>
-        <p className="text-sm text-(--text-muted) mt-1">Убедитесь, что всё верно перед отправкой</p>
+        <h3 className="text-lg font-semibold">{t('serviceBroadcast.review.title')}</h3>
+        <p className="text-sm text-(--text-muted) mt-1">{t('serviceBroadcast.review.subtitle')}</p>
       </div>
 
       {/* Summary Card */}
@@ -542,16 +541,16 @@ export function ServiceBroadcastDialog({
         <div
           className="p-4 flex items-center gap-3"
           style={{
-            backgroundColor: `${BROADCAST_ICONS.find((i) => i.icon === selectedIcon)?.color}15`,
+            backgroundColor: `${BROADCAST_ICONS(t).find((i) => i.icon === selectedIcon)?.color}15`,
           }}
         >
           <span className="text-3xl">{selectedIcon}</span>
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm truncate">{title || 'Без заголовка'}</h4>
+            <h4 className="font-semibold text-sm truncate">{title || t('serviceBroadcast.review.noTitle')}</h4>
             <p className="text-xs text-(--text-muted) truncate">
               {broadcastScope === 'all'
-                ? `📢 Все организации (${targetOrgCount})`
-                : `🏢 ${selectedOrg?.name ?? 'Организация'}`}
+                ? `📢 ${t('serviceBroadcast.audience.allOrgs')} (${targetOrgCount})`
+                : `🏢 ${selectedOrg?.name ?? t('serviceBroadcast.audience.specificOrg')}`}
             </p>
           </div>
         </div>
@@ -559,7 +558,7 @@ export function ServiceBroadcastDialog({
         {/* Content preview */}
         <div className="p-4 border-t border-(--border)">
           <p className="text-sm text-(--text-secondary) line-clamp-3">
-            {content || 'Без содержания'}
+            {content || t('serviceBroadcast.review.noContent')}
           </p>
         </div>
 
@@ -569,7 +568,7 @@ export function ServiceBroadcastDialog({
             <div className="flex items-center gap-2 text-xs text-orange-400">
               <Clock className="w-3.5 h-3.5" />
               <span>
-                Обслуживание: {new Date(scheduleDateTime).toLocaleString('ru-RU')}
+                {t('serviceBroadcast.review.scheduleLabel')} {new Date(scheduleDateTime).toLocaleString(i18n.language || 'en-GB')}
                 {estimatedDuration && ` • ${estimatedDuration}`}
               </span>
             </div>
@@ -582,12 +581,12 @@ export function ServiceBroadcastDialog({
         <Users className="w-5 h-5 text-(--text-muted)" />
         <div>
           <p className="text-sm font-medium">
-            {targetOrgCount} {targetOrgCount === 1 ? 'организация' : 'организации'}
+            {targetOrgCount} {targetOrgCount === 1 ? t('serviceBroadcast.review.organization') : t('serviceBroadcast.review.organizations')}
           </p>
           <p className="text-xs text-(--text-muted)">
             {broadcastScope === 'all'
-              ? 'Все активные пользователи всех организаций'
-              : `Активные пользователи ${selectedOrg?.name}`}
+              ? t('serviceBroadcast.review.allOrgsDescription')
+              : `${t('serviceBroadcast.review.activeUsers')} ${selectedOrg?.name}`}
           </p>
         </div>
       </div>
@@ -609,7 +608,7 @@ export function ServiceBroadcastDialog({
     }
   };
 
-  const currentStepData = STEPS[currentStepIndex];
+  const currentStepData = STEPS(t)[currentStepIndex];
 
   return (
     <Dialog
@@ -620,14 +619,14 @@ export function ServiceBroadcastDialog({
       }}
     >
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        <DialogTitle className="sr-only">Service Broadcast</DialogTitle>
+        <DialogTitle className="sr-only">{t('serviceBroadcast.dialogTitle', 'Service Broadcast')}</DialogTitle>
         {/* Progress Bar */}
         <div className="px-6 pt-6 pb-2">
           <div className="flex items-center justify-between mb-4">
-            {STEPS.map((step, idx) => {
+            {STEPS(t).map((step, idx) => {
               const Icon = step.icon;
               const isActive = step.id === currentStep;
-              const isCompleted = STEPS.findIndex((s) => s.id === currentStep) > idx;
+              const isCompleted = STEPS(t).findIndex((s) => s.id === currentStep) > idx;
 
               return (
                 <React.Fragment key={step.id}>
@@ -653,7 +652,7 @@ export function ServiceBroadcastDialog({
                       {step.label}
                     </span>
                   </div>
-                  {idx < STEPS.length - 1 && (
+                  {idx < STEPS(t).length - 1 && (
                     <div
                       className={cn(
                         'flex-1 h-0.5 rounded-full transition-all mb-5',
@@ -711,8 +710,8 @@ export function ServiceBroadcastDialog({
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 <span className="text-sm">
                   {scheduleMaintenance
-                    ? 'Сообщение отправлено! Техническое обслуживание автоматически включится в указанное время.'
-                    : 'Сообщение успешно отправлено всем пользователям!'}
+                    ? t('serviceBroadcast.success.withSchedule')
+                    : t('serviceBroadcast.success.withoutSchedule')}
                 </span>
               </motion.div>
             )}
@@ -728,17 +727,17 @@ export function ServiceBroadcastDialog({
             className="gap-1"
           >
             <ChevronLeft className="w-4 h-4" />
-            Назад
+            {t('serviceBroadcast.buttons.back')}
           </Button>
 
           <div className="flex items-center gap-2">
-            {currentStepIndex < STEPS.length - 1 ? (
+            {currentStepIndex < STEPS(t).length - 1 ? (
               <Button
                 onClick={nextStep}
                 disabled={!canProceed || loading || status === 'success'}
                 className="gap-1"
               >
-                Далее
+                {t('serviceBroadcast.buttons.next')}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (
@@ -754,12 +753,12 @@ export function ServiceBroadcastDialog({
                 {loading ? (
                   <>
                     <ShieldLoader size="xs" variant="inline" />
-                    Отправка...
+                    {t('serviceBroadcast.buttons.sending')}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    {scheduleMaintenance ? 'Отправить и запланировать' : 'Отправить всем'}
+                    {scheduleMaintenance ? t('serviceBroadcast.buttons.sendAndSchedule') : t('serviceBroadcast.buttons.sendToAll')}
                   </>
                 )}
               </Button>

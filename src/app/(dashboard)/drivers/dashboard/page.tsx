@@ -28,7 +28,8 @@ import {
   CheckCircle,
   type LucideIcon,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, type Locale } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { DriverStatsCard } from '@/components/drivers/DriverStatsCard';
 import { DriverShiftControls } from '@/components/drivers/DriverShiftControls';
@@ -54,9 +55,15 @@ interface Driver {
 }
 
 export default function DriverDashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   const userId = user?.id as string | undefined;
   const orgId = user?.organizationId as string | undefined;
@@ -68,18 +75,19 @@ export default function DriverDashboardPage() {
     return () => clearInterval(timer);
   }, []);
 
+  const { t: tDash } = useTranslation();
   // Mock driver data - in production this would come from API
   const driver: Driver | undefined = useMemo(() => {
     if (!userId || !orgId) return undefined;
     return {
       id: 'driver-1',
-      userName: user?.name || 'Driver',
+      userName: user?.name || tDash('driver.defaultName', 'Driver'),
       rating: 4.8,
       totalTrips: 150,
       isAvailable: true,
       organizationId: orgId,
     };
-  }, [userId, orgId, user?.name]);
+  }, [userId, orgId, user?.name, tDash]);
 
   const { data: pendingRequests } = useDriverRequests(orgId, 'pending');
   
@@ -113,7 +121,7 @@ export default function DriverDashboardPage() {
       );
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : t('driver.failedToRespond', 'Failed to respond');
+        error instanceof Error ? t('driver.error', { defaultValue: error.message }) : t('driver.failedToRespond', 'Failed to respond');
       toast.error(message);
     }
   };
@@ -187,7 +195,7 @@ export default function DriverDashboardPage() {
         />
         <StatCard
           label={t('driver.rating', 'Rating')}
-          value={driver.rating?.toFixed(1) ?? '5.0'}
+          value={driver.rating?.toFixed(1) ?? t('driver.perfectRating', '5.0')}
           icon={Star}
           color="var(--warning)"
         />
@@ -224,14 +232,14 @@ export default function DriverDashboardPage() {
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-sm sm:text-base truncate">
-                          {request.requesterName ?? 'Unknown'}
+                          {request.requesterName ?? t('common.unknown', 'Unknown')}
                         </h3>
                         <p className="text-xs sm:text-sm text-(--text-muted) truncate">
                           {request.tripInfo?.from} → {request.tripInfo?.to}
                         </p>
                         <p className="text-xs text-(--text-muted)">
-                          {format(new Date(request.startTime), 'MMM dd, HH:mm')} -{' '}
-                          {format(new Date(request.endTime), 'HH:mm')}
+                          {format(new Date(request.startTime), 'MMM dd, HH:mm', { locale: dateFnsLocale })} -{' '}
+                          {format(new Date(request.endTime), 'HH:mm', { locale: dateFnsLocale })}
                         </p>
                       </div>
                     </div>
@@ -305,14 +313,18 @@ export default function DriverDashboardPage() {
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-xs sm:text-sm">
-                            {format(new Date(schedule.startTime), 'HH:mm')} -{' '}
-                            {format(new Date(schedule.endTime), 'HH:mm')}
+                            {format(new Date(schedule.startTime), 'HH:mm', { locale: dateFnsLocale })} -{' '}
+                            {format(new Date(schedule.endTime), 'HH:mm', { locale: dateFnsLocale })}
                           </span>
                           <Badge
                             variant={schedule.type === 'trip' ? 'default' : 'secondary'}
                             className="text-[10px] sm:text-xs"
                           >
-                            {schedule.type}
+                            {schedule.type === 'trip'
+                              ? t('driver.scheduleType.trip', 'Trip')
+                              : schedule.type === 'blocked'
+                                ? t('driver.scheduleType.blocked', 'Blocked')
+                                : String(t(`driver.scheduleType.${schedule.type}`, schedule.type))}
                           </Badge>
                         </div>
                       </div>

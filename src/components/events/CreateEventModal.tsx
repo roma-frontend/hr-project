@@ -109,7 +109,7 @@ export function CreateEventModal({
     e.preventDefault();
 
     if (!name || !startDate || !endDate || requiredDepartments.length === 0) {
-      alert('Please fill all required fields');
+      alert(t('events.fillRequiredFields', 'Please fill all required fields'));
       return;
     }
 
@@ -143,8 +143,8 @@ export function CreateEventModal({
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Failed to create event:', error);
-      alert(error.message || 'Failed to create event');
+      console.error(t('events.failedToCreateEvent', 'Failed to create event:'), error);
+      alert(error instanceof Error ? t('events.error', { defaultValue: error.message }) : t('events.failedToCreateEvent', 'Failed to create event'));
     } finally {
       setIsSubmitting(false);
     }
@@ -162,7 +162,7 @@ export function CreateEventModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Create Company Event
+            {t('events.createCompanyEvent', 'Create Company Event')}
           </DialogTitle>
         </DialogHeader>
 
@@ -171,22 +171,22 @@ export function CreateEventModal({
           <div className="space-y-4">
             <div>
               <Label>
-                Event Name <span className="text-red-500">*</span>
+                {t('events.eventName', 'Event Name')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Annual IT Conference 2025"
+                placeholder={t('events.eventNamePlaceholder', 'e.g., Annual IT Conference 2025')}
                 required
               />
             </div>
 
             <div>
-              <Label>Description</Label>
+              <Label>{t('events.description', 'Description')}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the event..."
+                placeholder={t('events.descriptionPlaceholder', 'Brief description of the event...')}
                 rows={3}
               />
             </div>
@@ -196,7 +196,7 @@ export function CreateEventModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>
-                Start Date <span className="text-red-500">*</span>
+                {t('events.startDate', 'Start Date')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
@@ -207,7 +207,7 @@ export function CreateEventModal({
             </div>
             <div>
               <Label>
-                End Date <span className="text-red-500">*</span>
+                {t('events.endDate', 'End Date')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 type="date"
@@ -220,7 +220,7 @@ export function CreateEventModal({
 
           {/* Event Type */}
           <div>
-            <Label>Event Type</Label>
+            <Label>{t('events.eventType', 'Event Type')}</Label>
             <Select value={eventType} onValueChange={(v) => setEventType(v as any)}>
               <SelectTrigger>
                 <SelectValue />
@@ -237,7 +237,7 @@ export function CreateEventModal({
 
           {/* Priority */}
           <div>
-            <Label>Priority Level</Label>
+            <Label>{t('events.priorityLevel', 'Priority Level')}</Label>
             <div className="grid grid-cols-3 gap-2 mt-2">
               {PRIORITY_LEVELS.map((level) => (
                 <button
@@ -262,10 +262,11 @@ export function CreateEventModal({
           {/* Required Departments */}
           <div>
             <Label>
-              Required Departments <span className="text-red-500">*</span>
+              {t('events.requiredDepartments', 'Required Departments')}{' '}
+              <span className="text-red-500">*</span>
             </Label>
             <p className="text-sm text-muted-foreground mb-2">
-              Employees from these departments should attend
+              {t('events.departmentsDescription', 'Employees from these departments should attend')}
             </p>
             <div className="flex flex-wrap gap-2">
               {DEPARTMENTS.map((dept) => (
@@ -281,13 +282,15 @@ export function CreateEventModal({
               ))}
             </div>
             {requiredDepartments.length === 0 && (
-              <p className="text-sm text-red-500 mt-1">⚠️ At least one department is required</p>
+              <p className="text-sm text-red-500 mt-1">
+                {t('events.atLeastOneDepartment', '⚠️ At least one department is required')}
+              </p>
             )}
           </div>
 
           {/* Notifications */}
           <div>
-            <Label>Notify Days Before</Label>
+            <Label>{t('events.notifyDaysBefore', 'Notify Days Before')}</Label>
             <div className="flex items-center gap-2 mt-2">
               <Input
                 type="number"
@@ -297,7 +300,9 @@ export function CreateEventModal({
                 onChange={(e) => setNotifyDaysBefore(parseInt(e.target.value) || 3)}
                 className="w-24"
               />
-              <span className="text-sm text-muted-foreground">days before the event</span>
+              <span className="text-sm text-muted-foreground">
+                {t('events.daysBeforeEvent', 'days before the event')}
+              </span>
             </div>
           </div>
 
@@ -307,7 +312,7 @@ export function CreateEventModal({
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold text-blue-900">Event Summary</p>
+                  <p className="font-semibold text-blue-900">{t('events.eventSummary', 'Event Summary')}</p>
                   <p className="text-blue-700 mt-1">
                     <strong>{name}</strong> will require attendance from:{' '}
                     <span className="font-medium">{requiredDepartments.join(', ')}</span>
@@ -322,10 +327,12 @@ export function CreateEventModal({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('wizard.cancel', 'Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting || requiredDepartments.length === 0}>
-              {isSubmitting ? 'Creating...' : 'Create Event'}
+              {isSubmitting
+                ? t('events.creating', 'Creating...')
+                : t('events.createEvent', 'Create Event')}
             </Button>
           </DialogFooter>
         </form>

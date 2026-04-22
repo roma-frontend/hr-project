@@ -51,7 +51,9 @@ export function SavedMessagesPanel({ userId, organizationId, onClose, onSelectMe
                 {t('chat.savedMessages')}
               </h2>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {savedMessages?.length ?? 0} {savedMessages?.length === 1 ? 'message' : 'messages'}
+                {(savedMessages?.length ?? 0) === 1
+                  ? t('chat.messageCount', { count: 1 })
+                  : t('chat.messageCount', { count: savedMessages?.length ?? 0 })}
               </p>
             </div>
           </div>
@@ -112,14 +114,14 @@ export function SavedMessagesPanel({ userId, organizationId, onClose, onSelectMe
                   <button
                     onClick={(e) => handleUnsave(e, saved.id)}
                     className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-(--background)"
-                    title="Remove from saved"
+                    title={t('chat.removeFromSaved')}
                   >
                     <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
                   </button>
 
                   {/* Saved timestamp */}
                   <div className="mt-2 text-xs" style={{ color: 'var(--text-disabled)' }}>
-                    Saved {new Date(saved.createdAt).toLocaleDateString()}
+                    {t('chat.savedTimestamp', { date: new Date(saved.createdAt).toLocaleDateString() })}
                   </div>
                 </div>
               );

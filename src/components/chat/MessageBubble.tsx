@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -347,6 +348,7 @@ export const MessageBubble = React.memo(function MessageBubble({
   onSendMessage,
   lang = 'en',
 }: Props) {
+  const { t } = useTranslation();
   const L = UI_LABELS[getLabelLang(lang)];
   const [showActions, setShowActions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -629,7 +631,7 @@ export const MessageBubble = React.memo(function MessageBubble({
             <Link
               href={`/employees/${message.sender.id}`}
               className="block rounded-full transition-transform duration-200 hover:scale-110 focus:outline-none"
-              title={`View ${message.sender?.name}'s profile`}
+              title={t('chat.viewProfile', 'View {{name}}\'s profile', { name: message.sender?.name || '' })}
               onClick={(e) => e.stopPropagation()}
             >
               <Avatar className="w-7 h-7 ring-2 ring-transparent hover:ring-(--primary) transition-all duration-200">

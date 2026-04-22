@@ -292,7 +292,7 @@ export function ConversationList({
                       : 'transparent',
                   cursor: 'pointer',
                 }}
-                title={f === 'archived' ? 'Archived conversations - tap to restore' : undefined}
+                title={f === 'archived' ? t('chat.archivedConversationsTooltip', 'Archived conversations - tap to restore') : undefined}
               >
                 {f === 'all' && t('chat.filterAll', 'All')}
                 {f === 'chat' && t('chat.filterChat', 'Chat')}
@@ -610,7 +610,7 @@ export function ConversationList({
                       className="flex items-center gap-2"
                     >
                       <Pin className="w-4 h-4" />
-                      {conv.isPinned ? 'Открепить' : 'Закрепить'}
+                      {conv.isPinned ? t('chat.unpin') : t('chat.pin')}
                     </ContextMenuItem>
 
                     <ContextMenuItem
@@ -662,7 +662,7 @@ export function ConversationList({
                       className="flex items-center gap-2 text-red-500 focus:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Удалить
+                      {t('chat.delete')}
                     </ContextMenuItem>
                   </>
                 )}

@@ -183,7 +183,7 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
         organizationId: '',
       });
       const res = await fetch(`/api/users?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch org users');
+      if (!res.ok) throw new Error(t('chat.failedToFetchOrgUsers', 'Failed to fetch org users'));
       const json = await res.json();
       return json.data as any[];
     },
@@ -236,7 +236,7 @@ export function TeamSidebar({ userId, onToggle }: TeamSidebarProps) {
 
   const recentEmployees = allUsers
       ?.filter((u: any) => u.isActive)
-      .sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0))
+      .sort((a: any, b: any) => (b.created_at || 0) - (a.created_at || 0))
       .slice(0, 5) || [];
 
   const overviewTitle = (

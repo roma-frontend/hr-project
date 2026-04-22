@@ -17,29 +17,17 @@ const languages = {
 };
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const currentLang = i18n.language || 'en';
 
   const changeLanguage = async (lng: string) => {
-    console.log('🔄 LanguageSwitcher: Changing language from', i18n.language, 'to', lng);
-
-    // Save to localStorage BEFORE changing language
+    // Save to both cookie and localStorage for server/client sync
     if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('i18nextLng', lng);
-        console.log('💾 Saved to localStorage FIRST:', lng);
-
-        // Verify it was saved
-        const saved = localStorage.getItem('i18nextLng');
-        console.log('✅ Verification - localStorage now has:', saved);
-      } catch (error) {
-        console.error('❌ Failed to save to localStorage:', error);
-      }
+      document.cookie = `NEXT_LOCALE=${lng}; path=/; max-age=31536000; SameSite=Lax`;
+      localStorage.setItem('i18nextLng', lng);
     }
 
-    // Then change the language
     await i18n.changeLanguage(lng);
-    console.log('✅ Language changed to:', i18n.language);
   };
 
   // Фильтруем языки, исключая текущий выбранный
@@ -59,10 +47,10 @@ export function LanguageSwitcher() {
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">
             {languages[currentLang as keyof typeof languages]?.flag}{' '}
-            {languages[currentLang as keyof typeof languages]?.name || 'English'}
+            {languages[currentLang as keyof typeof languages]?.name || t('languages.english')}
           </span>
           <span className="sm:hidden">
-            {languages[currentLang as keyof typeof languages]?.flag || '🇬🇧'}
+            {languages[currentLang as keyof typeof languages]?.flag || t('languages.englishFlag')}
           </span>
         </Button>
       </DropdownMenuTrigger>

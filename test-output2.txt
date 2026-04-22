@@ -1,0 +1,519 @@
+﻿
+Running 95 tests using 4 workers
+
+[1A[2K[1/95] [chromium] тА║ e2e\api.spec.ts:24:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/contact should validate required fields
+[1A[2K[2/95] [chromium] тА║ e2e\api.spec.ts:14:9 тА║ API Endpoints тА║ Public Endpoints тА║ GET /api/health should return status
+[1A[2K[3/95] [chromium] тА║ e2e\api.spec.ts:50:9 тА║ API Endpoints тА║ Public Endpoints тА║ GET /api/maintenance/check should return isActive
+[1A[2K[4/95] [chromium] тА║ e2e\api.spec.ts:32:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/contact should accept valid data
+[1A[2K[5/95] [chromium] тА║ e2e\api.spec.ts:58:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/login should reject missing credentials
+[1A[2K[6/95] [chromium] тА║ e2e\api.spec.ts:65:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/login should reject invalid credentials
+[1A[2K[7/95] [chromium] тА║ e2e\api.spec.ts:75:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/forgot-password should validate email
+[1A[2K[8/95] [chromium] тА║ e2e\api.spec.ts:82:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/reset-password should validate token
+[1A[2K[9/95] [chromium] тА║ e2e\api.spec.ts:89:9 тА║ API Endpoints тА║ Public Endpoints тА║ GET /api/auth/verify-reset-token should handle missing token
+[1A[2K[10/95] [chromium] тА║ e2e\api.spec.ts:97:9 тА║ API Endpoints тА║ Employee Endpoints тА║ GET /api/employees without auth should return 401
+[1A[2K[11/95] [chromium] тА║ e2e\api.spec.ts:102:9 тА║ API Endpoints тА║ Employee Endpoints тА║ POST /api/employees without auth should return 401
+[1A[2K[12/95] [chromium] тА║ e2e\api.spec.ts:109:9 тА║ API Endpoints тА║ Employee Endpoints тА║ GET /api/employees/[id] without auth should return 401
+[1A[2K[13/95] [chromium] тА║ e2e\api.spec.ts:116:9 тА║ API Endpoints тА║ Leave Endpoints тА║ GET /api/leaves should return leaves array
+[1A[2K[14/95] [chromium] тА║ e2e\api.spec.ts:125:9 тА║ API Endpoints тА║ Leave Endpoints тА║ POST /api/leaves should validate required fields
+[1A[2K  1) [chromium] тА║ e2e\api.spec.ts:75:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/forgot-password should validate email 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m400[39m
+    Received: [31m429[39m
+
+      77 |         data: {},
+      78 |       });
+    > 79 |       expect(response.status()).toBe(400);
+         |                                 ^
+      80 |     });
+      81 |
+      82 |     test('POST /api/auth/reset-password should validate token', async ({ request }) => {
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:79:33
+
+    Error Context: test-results\api-API-Endpoints-Public-E-303f5-sword-should-validate-email-chromium\error-context.md
+
+
+[1A[2K  2) [chromium] тА║ e2e\api.spec.ts:82:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/reset-password should validate token 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m400[39m
+    Received: [31m429[39m
+
+      84 |         data: {},
+      85 |       });
+    > 86 |       expect(response.status()).toBe(400);
+         |                                 ^
+      87 |     });
+      88 |
+      89 |     test('GET /api/auth/verify-reset-token should handle missing token', async ({ request }) => {
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:86:33
+
+    Error Context: test-results\api-API-Endpoints-Public-E-69af7-sword-should-validate-token-chromium\error-context.md
+
+
+[1A[2K[15/95] [chromium] тА║ e2e\api.spec.ts:146:9 тА║ API Endpoints тА║ Task Endpoints тА║ GET /api/tasks without auth should return 401
+[1A[2K[16/95] [chromium] тА║ e2e\api.spec.ts:151:9 тА║ API Endpoints тА║ Task Endpoints тА║ POST /api/tasks without auth should return 401
+[1A[2K[17/95] [chromium] тА║ e2e\api.spec.ts:160:9 тА║ API Endpoints тА║ Attendance Endpoints тА║ GET /api/attendance without auth should return 401
+[1A[2K[18/95] [chromium] тА║ e2e\api.spec.ts:165:9 тА║ API Endpoints тА║ Attendance Endpoints тА║ POST /api/attendance without auth should return 401
+[1A[2K[19/95] [chromium] тА║ e2e\api.spec.ts:174:9 тА║ API Endpoints тА║ Chat Endpoints тА║ GET /api/chat without auth should return 401
+[1A[2K[20/95] [chromium] тА║ e2e\api.spec.ts:179:9 тА║ API Endpoints тА║ Chat Endpoints тА║ POST /api/chat without auth should return 401
+[1A[2K[21/95] [chromium] тА║ e2e\api.spec.ts:188:9 тА║ API Endpoints тА║ Dashboard Endpoints тА║ GET /api/dashboard without auth should return 401
+[1A[2K[22/95] [chromium] тА║ e2e\api.spec.ts:195:9 тА║ API Endpoints тА║ User Endpoints тА║ GET /api/users without auth should return 401
+[1A[2K[23/95] [chromium] тА║ e2e\api.spec.ts:200:9 тА║ API Endpoints тА║ User Endpoints тА║ POST /api/users without auth should return 401
+[1A[2K[24/95] [chromium] тА║ e2e\api.spec.ts:209:9 тА║ API Endpoints тА║ Notification Endpoints тА║ GET /api/notifications without auth should return 401
+[1A[2K[25/95] [chromium] тА║ e2e\api.spec.ts:214:9 тА║ API Endpoints тА║ Notification Endpoints тА║ POST /api/notifications without auth should return 401
+[1A[2K[26/95] [chromium] тА║ e2e\api.spec.ts:221:9 тА║ API Endpoints тА║ Notification Endpoints тА║ PATCH /api/notifications without auth should return 401
+[1A[2K[27/95] [chromium] тА║ e2e\api.spec.ts:228:9 тА║ API Endpoints тА║ Notification Endpoints тА║ DELETE /api/notifications without auth should return 401
+[1A[2K[28/95] [chromium] тА║ e2e\api.spec.ts:235:9 тА║ API Endpoints тА║ Settings Endpoints тА║ POST /api/settings without auth should return 401
+[1A[2K[29/95] [chromium] тА║ e2e\api.spec.ts:244:9 тА║ API Endpoints тА║ Organization Endpoints тА║ GET /api/org without auth should return 401 for protected actions
+[1A[2K[30/95] [chromium] тА║ e2e\api.spec.ts:249:9 тА║ API Endpoints тА║ Organization Endpoints тА║ POST /api/org without auth should return 401
+[1A[2K[31/95] [chromium] тА║ e2e\api.spec.ts:258:9 тА║ API Endpoints тА║ Analytics Endpoints тА║ GET /api/analytics without auth should return 401
+[1A[2K[32/95] [chromium] тА║ e2e\api.spec.ts:265:9 тА║ API Endpoints тА║ AI Chat Endpoints тА║ GET /api/ai-chat without auth should return 401
+[1A[2K[33/95] [chromium] тА║ e2e\api.spec.ts:279:9 тА║ API Endpoints тА║ Face Recognition Endpoints тА║ GET /api/face-recognition/status should require auth
+[1A[2K[34/95] [chromium] тА║ e2e\api.spec.ts:270:9 тА║ API Endpoints тА║ AI Chat Endpoints тА║ POST /api/ai-chat without auth should return 401
+[1A[2K[35/95] [chromium] тА║ e2e\api.spec.ts:285:9 тА║ API Endpoints тА║ Face Recognition Endpoints тА║ POST /api/face-recognition without image should return 400 or 405
+[1A[2K[36/95] [chromium] тА║ e2e\api.spec.ts:295:9 тА║ API Endpoints тА║ Security Endpoints тА║ GET /api/security should handle missing action
+[1A[2K[37/95] [chromium] тА║ e2e\api.spec.ts:139:9 тА║ API Endpoints тА║ Leave Endpoints тА║ DELETE /api/leaves should validate leaveId
+[1A[2K[38/95] [chromium] тА║ e2e\api.spec.ts:301:9 тА║ API Endpoints тА║ Security Endpoints тА║ GET /api/security/login-attempts without auth should return 401
+[1A[2K[39/95] [chromium] тА║ e2e\api.spec.ts:306:9 тА║ API Endpoints тА║ Security Endpoints тА║ GET /api/security/metrics is a public endpoint
+[1A[2K[40/95] [chromium] тА║ e2e\api.spec.ts:314:9 тА║ API Endpoints тА║ Stripe Endpoints тА║ POST /api/stripe/checkout without auth should return 400
+[1A[2K[41/95] [chromium] тА║ e2e\api.spec.ts:322:9 тА║ API Endpoints тА║ Stripe Endpoints тА║ GET /api/stripe/transactions is public in dev mode
+[1A[2K[42/95] [chromium] тА║ e2e\api.spec.ts:330:9 тА║ API Endpoints тА║ Calendar Endpoints тА║ GET /api/calendar/google/auth without code should return 400
+[1A[2K[43/95] [chromium] тА║ e2e\api.spec.ts:132:9 тА║ API Endpoints тА║ Leave Endpoints тА║ PATCH /api/leaves should validate leaveId
+[1A[2K[44/95] [chromium] тА║ e2e\api.spec.ts:336:9 тА║ API Endpoints тА║ Calendar Endpoints тА║ GET /api/calendar/outlook/auth without auth should return 401
+[1A[2K[45/95] [chromium] тА║ e2e\api.spec.ts:343:9 тА║ API Endpoints тА║ Admin Endpoints тА║ GET /api/admin without auth should return 401
+[1A[2K[46/95] [chromium] тА║ e2e\api.spec.ts:348:9 тА║ API Endpoints тА║ Admin Endpoints тА║ GET /api/admin/events without auth should return 401
+[1A[2K[47/95] [chromium] тА║ e2e\api.spec.ts:353:9 тА║ API Endpoints тА║ Admin Endpoints тА║ GET /api/admin/join-requests without auth should return 401
+[1A[2K[48/95] [chromium] тА║ e2e\api.spec.ts:360:9 тА║ API Endpoints тА║ Superadmin Endpoints тА║ GET /api/superadmin without auth should return 401
+[1A[2K[49/95] [chromium] тА║ e2e\api.spec.ts:365:9 тА║ API Endpoints тА║ Superadmin Endpoints тА║ POST /api/superadmin/impersonate without auth should return 400
+[1A[2K[50/95] [chromium] тА║ e2e\api.spec.ts:373:9 тА║ API Endpoints тА║ Superadmin Endpoints тА║ POST /api/superadmin/bulk-actions without auth should return 400
+[1A[2K[51/95] [chromium] тА║ e2e\api.spec.ts:383:9 тА║ API Endpoints тА║ Driver Endpoints тА║ GET /api/drivers without auth should return 401
+[1A[2K[52/95] [chromium] тА║ e2e\api.spec.ts:388:9 тА║ API Endpoints тА║ Driver Endpoints тА║ GET /api/drivers/available without auth should return 400 or 401
+[1A[2K[53/95] [chromium] тА║ e2e\api.spec.ts:396:9 тА║ API Endpoints тА║ Chat Action Endpoints тА║ POST /api/chat/book-leave without auth should return 400
+[1A[2K[54/95] [chromium] тА║ e2e\api.spec.ts:403:9 тА║ API Endpoints тА║ Chat Action Endpoints тА║ POST /api/chat/create-task without auth should return 400
+[1A[2K[55/95] [chromium] тА║ e2e\api.spec.ts:410:9 тА║ API Endpoints тА║ Chat Action Endpoints тА║ POST /api/chat/conflict-check without auth should return 400
+[1A[2K[56/95] [chromium] тА║ e2e\api.spec.ts:417:9 тА║ API Endpoints тА║ Chat Action Endpoints тА║ GET /api/chat/weekly-digest without auth should return 400
+[1A[2K[57/95] [chromium] тА║ e2e\api.spec.ts:422:9 тА║ API Endpoints тА║ Chat Action Endpoints тА║ POST /api/chat/smart-reply without auth should return 200
+[1A[2K[58/95] [chromium] тА║ e2e\api.spec.ts:432:9 тА║ API Endpoints тА║ AI Site Editor Endpoints тА║ POST /api/ai-site-editor without auth should return 400
+[1A[2K[59/95] [chromium] тА║ e2e\api.spec.ts:439:9 тА║ API Endpoints тА║ AI Site Editor Endpoints тА║ POST /api/ai-site-editor/apply without auth should return 400
+[1A[2K[60/95] [chromium] тА║ e2e\api.spec.ts:448:9 тА║ API Endpoints тА║ AI Evaluator Endpoints тА║ POST /api/ai-evaluator without auth should return 401
+[1A[2K[61/95] [chromium] тА║ e2e\api.spec.ts:457:9 тА║ API Endpoints тА║ TOTP Endpoints тА║ GET /api/auth/totp/status without auth should return 401
+[1A[2K[62/95] [chromium] тА║ e2e\api.spec.ts:462:9 тА║ API Endpoints тА║ TOTP Endpoints тА║ POST /api/auth/totp/setup without auth should return 401
+[1A[2K[63/95] [chromium] тА║ e2e\api.spec.ts:469:9 тА║ API Endpoints тА║ TOTP Endpoints тА║ POST /api/auth/totp/verify without auth should return 401
+[1A[2K[64/95] [chromium] тА║ e2e\api.spec.ts:478:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ GET /api/user/profile without auth should return 401
+[1A[2K[65/95] [chromium] тА║ e2e\api.spec.ts:483:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ POST /api/profile/update without auth should return 401
+[1A[2K[66/95] [chromium] тА║ e2e\api.spec.ts:492:9 тА║ API Endpoints тА║ Productivity Endpoints тА║ GET /api/productivity without auth should return 401
+[1A[2K[67/95] [chromium] тА║ e2e\api.spec.ts:499:9 тА║ API Endpoints тА║ Time Tracking Endpoints тА║ GET /api/time-tracking without auth should return 401
+[1A[2K  3) [chromium] тА║ e2e\api.spec.ts:478:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ GET /api/user/profile without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      478 |     test('GET /api/user/profile without auth should return 401', async ({ request }) => {
+      479 |       const response = await request.get(`${BASE_URL}/api/user/profile`);
+    > 480 |       expect(response.status()).toBe(401);
+          |                                 ^
+      481 |     });
+      482 |
+      483 |     test('POST /api/profile/update without auth should return 401', async ({ request }) => {
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:480:33
+
+    Error Context: test-results\api-API-Endpoints-User-Pro-ec555-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  4) [chromium] тА║ e2e\api.spec.ts:492:9 тА║ API Endpoints тА║ Productivity Endpoints тА║ GET /api/productivity without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      492 |     test('GET /api/productivity without auth should return 401', async ({ request }) => {
+      493 |       const response = await request.get(`${BASE_URL}/api/productivity`);
+    > 494 |       expect(response.status()).toBe(401);
+          |                                 ^
+      495 |     });
+      496 |   });
+      497 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:494:33
+
+    Error Context: test-results\api-API-Endpoints-Producti-e2543-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[68/95] [chromium] тА║ e2e\api.spec.ts:518:9 тА║ API Endpoints тА║ Tickets Endpoints тА║ GET /api/tickets without auth should return 401
+[1A[2K  5) [chromium] тА║ e2e\api.spec.ts:483:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ POST /api/profile/update without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      485 |         data: {},
+      486 |       });
+    > 487 |       expect(response.status()).toBe(401);
+          |                                 ^
+      488 |     });
+      489 |   });
+      490 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:487:33
+
+    Error Context: test-results\api-API-Endpoints-User-Pro-44c40-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[69/95] [chromium] тА║ e2e\api.spec.ts:534:9 тА║ API Endpoints тА║ Automation Endpoints тА║ POST /api/automation without auth should return 401
+[1A[2K[70/95] [chromium] тА║ e2e\api.spec.ts:543:9 тА║ API Endpoints тА║ Org Requests Endpoints тА║ GET /api/org-requests without auth should return 401
+[1A[2K[71/95] [chromium] тА║ e2e\api.spec.ts:550:9 тА║ API Endpoints тА║ Driver Schedules Endpoints тА║ GET /api/driver-schedules without auth should return 401
+[1A[2K  6) [chromium] тА║ e2e\api.spec.ts:550:9 тА║ API Endpoints тА║ Driver Schedules Endpoints тА║ GET /api/driver-schedules without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      550 |     test('GET /api/driver-schedules without auth should return 401', async ({ request }) => {
+      551 |       const response = await request.get(`${BASE_URL}/api/driver-schedules`);
+    > 552 |       expect(response.status()).toBe(401);
+          |                                 ^
+      553 |     });
+      554 |   });
+      555 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:552:33
+
+    Error Context: test-results\api-API-Endpoints-Driver-S-deb03-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[72/95] [chromium] тА║ e2e\api.spec.ts:511:9 тА║ API Endpoints тА║ Events Endpoints тА║ GET /api/events/scan-conflicts without auth should return 401
+[1A[2K[73/95] [chromium] тА║ e2e\api.spec.ts:525:9 тА║ API Endpoints тА║ Approve All Endpoints тА║ POST /api/approve-all without auth should return 401
+[1A[2K[74/95] [chromium] тА║ e2e\api.spec.ts:506:9 тА║ API Endpoints тА║ Events Endpoints тА║ GET /api/events without auth should return 401
+[1A[2K  7) [chromium] тА║ e2e\api.spec.ts:511:9 тА║ API Endpoints тА║ Events Endpoints тА║ GET /api/events/scan-conflicts without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m405[39m
+
+      511 |     test('GET /api/events/scan-conflicts without auth should return 401', async ({ request }) => {
+      512 |       const response = await request.get(`${BASE_URL}/api/events/scan-conflicts`);
+    > 513 |       expect(response.status()).toBe(401);
+          |                                 ^
+      514 |     });
+      515 |   });
+      516 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:513:33
+
+    Error Context: test-results\api-API-Endpoints-Events-E-eaac7-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[75/95] [chromium] тА║ e2e\api.spec.ts:569:9 тА║ API Endpoints тА║ Security Settings Endpoints тА║ GET /api/security/settings without auth should return 401
+[1A[2K[76/95] [chromium] тА║ e2e\api.spec.ts:576:9 тА║ API Endpoints тА║ Security Suspended Users Endpoints тА║ GET /api/security/suspended-users without auth should return 401
+[1A[2K  8) [chromium] тА║ e2e\api.spec.ts:569:9 тА║ API Endpoints тА║ Security Settings Endpoints тА║ GET /api/security/settings without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m500[39m
+
+      569 |     test('GET /api/security/settings without auth should return 401', async ({ request }) => {
+      570 |       const response = await request.get(`${BASE_URL}/api/security/settings`);
+    > 571 |       expect(response.status()).toBe(401);
+          |                                 ^
+      572 |     });
+      573 |   });
+      574 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:571:33
+
+    Error Context: test-results\api-API-Endpoints-Security-16a25-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  9) [chromium] тА║ e2e\api.spec.ts:576:9 тА║ API Endpoints тА║ Security Suspended Users Endpoints тА║ GET /api/security/suspended-users without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m200[39m
+
+      576 |     test('GET /api/security/suspended-users without auth should return 401', async ({ request }) => {
+      577 |       const response = await request.get(`${BASE_URL}/api/security/suspended-users`);
+    > 578 |       expect(response.status()).toBe(401);
+          |                                 ^
+      579 |     });
+      580 |   });
+      581 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:578:33
+
+    Error Context: test-results\api-API-Endpoints-Security-e71fa-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[77/95] [chromium] тА║ e2e\api.spec.ts:557:9 тА║ API Endpoints тА║ SharePoint Endpoints тА║ GET /api/sharepoint/auth without auth should return 401
+[1A[2K[78/95] [chromium] тА║ e2e\api.spec.ts:597:9 тА║ API Endpoints тА║ Chat Delete Leave Endpoints тА║ POST /api/chat/delete-leave without auth should return 401
+[1A[2K  10) [chromium] тА║ e2e\api.spec.ts:597:9 тА║ API Endpoints тА║ Chat Delete Leave Endpoints тА║ POST /api/chat/delete-leave without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      599 |         data: {},
+      600 |       });
+    > 601 |       expect(response.status()).toBe(401);
+          |                                 ^
+      602 |     });
+      603 |   });
+      604 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:601:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Del-2db3f-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[79/95] [chromium] тА║ e2e\api.spec.ts:562:9 тА║ API Endpoints тА║ SharePoint Endpoints тА║ GET /api/sharepoint/status without auth should return 401
+[1A[2K[80/95] [chromium] тА║ e2e\api.spec.ts:583:9 тА║ API Endpoints тА║ Chat Insights Endpoints тА║ GET /api/chat/insights without auth should return 401
+[1A[2K[81/95] [chromium] тА║ e2e\api.spec.ts:590:9 тА║ API Endpoints тА║ Chat Full Context Endpoints тА║ GET /api/chat/full-context without auth should return 401
+[1A[2K[82/95] [chromium] тА║ e2e\api.spec.ts:615:9 тА║ API Endpoints тА║ Chat Book Driver Endpoints тА║ POST /api/chat/book-driver without auth should return 401
+[1A[2K  11) [chromium] тА║ e2e\api.spec.ts:583:9 тА║ API Endpoints тА║ Chat Insights Endpoints тА║ GET /api/chat/insights without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m200[39m
+
+      583 |     test('GET /api/chat/insights without auth should return 401', async ({ request }) => {
+      584 |       const response = await request.get(`${BASE_URL}/api/chat/insights`);
+    > 585 |       expect(response.status()).toBe(401);
+          |                                 ^
+      586 |     });
+      587 |   });
+      588 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:585:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Ins-f25ac-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  12) [chromium] тА║ e2e\api.spec.ts:590:9 тА║ API Endpoints тА║ Chat Full Context Endpoints тА║ GET /api/chat/full-context without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      590 |     test('GET /api/chat/full-context without auth should return 401', async ({ request }) => {
+      591 |       const response = await request.get(`${BASE_URL}/api/chat/full-context`);
+    > 592 |       expect(response.status()).toBe(401);
+          |                                 ^
+      593 |     });
+      594 |   });
+      595 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:592:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Ful-07043-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  13) [chromium] тА║ e2e\api.spec.ts:615:9 тА║ API Endpoints тА║ Chat Book Driver Endpoints тА║ POST /api/chat/book-driver without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      617 |         data: {},
+      618 |       });
+    > 619 |       expect(response.status()).toBe(401);
+          |                                 ^
+      620 |     });
+      621 |   });
+      622 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:619:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Boo-959bc-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[83/95] [chromium] тА║ e2e\api.spec.ts:606:9 тА║ API Endpoints тА║ Chat Edit Leave Endpoints тА║ POST /api/chat/edit-leave without auth should return 401
+[1A[2K  14) [chromium] тА║ e2e\api.spec.ts:606:9 тА║ API Endpoints тА║ Chat Edit Leave Endpoints тА║ POST /api/chat/edit-leave without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      608 |         data: {},
+      609 |       });
+    > 610 |       expect(response.status()).toBe(401);
+          |                                 ^
+      611 |     });
+      612 |   });
+      613 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:610:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Edi-aa9d6-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[84/95] [chromium] тА║ e2e\api.spec.ts:631:9 тА║ API Endpoints тА║ Face Recognition Record Attempt Endpoints тА║ POST /api/face-recognition/record-attempt without auth should return 401
+[1A[2K[85/95] [chromium] тА║ e2e\api.spec.ts:624:9 тА║ API Endpoints тА║ Chat Link Preview Endpoints тА║ GET /api/chat/link-preview without auth should return 401
+[1A[2K[86/95] [chromium] тА║ e2e\api.spec.ts:640:9 тА║ API Endpoints тА║ Face Recognition Register Endpoints тА║ POST /api/face-recognition/register without auth should return 401
+[1A[2K[87/95] [chromium] тА║ e2e\api.spec.ts:658:9 тА║ API Endpoints тА║ Auth Create Session Endpoints тА║ POST /api/auth/create-session without auth should return 401
+[1A[2K  15) [chromium] тА║ e2e\api.spec.ts:624:9 тА║ API Endpoints тА║ Chat Link Preview Endpoints тА║ GET /api/chat/link-preview without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      624 |     test('GET /api/chat/link-preview without auth should return 401', async ({ request }) => {
+      625 |       const response = await request.get(`${BASE_URL}/api/chat/link-preview`);
+    > 626 |       expect(response.status()).toBe(401);
+          |                                 ^
+      627 |     });
+      628 |   });
+      629 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:626:33
+
+    Error Context: test-results\api-API-Endpoints-Chat-Lin-60e92-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  16) [chromium] тА║ e2e\api.spec.ts:640:9 тА║ API Endpoints тА║ Face Recognition Register Endpoints тА║ POST /api/face-recognition/register without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      642 |         data: {},
+      643 |       });
+    > 644 |       expect(response.status()).toBe(401);
+          |                                 ^
+      645 |     });
+      646 |   });
+      647 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:644:33
+
+    Error Context: test-results\api-API-Endpoints-Face-Rec-dca41-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  17) [chromium] тА║ e2e\api.spec.ts:658:9 тА║ API Endpoints тА║ Auth Create Session Endpoints тА║ POST /api/auth/create-session without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      660 |         data: {},
+      661 |       });
+    > 662 |       expect(response.status()).toBe(401);
+          |                                 ^
+      663 |     });
+      664 |   });
+      665 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:662:33
+
+    Error Context: test-results\api-API-Endpoints-Auth-Cre-b99f9-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[88/95] [chromium] тА║ e2e\api.spec.ts:649:9 тА║ API Endpoints тА║ Auth Face Login Endpoints тА║ POST /api/auth/face-login without auth should return 401
+[1A[2K  18) [chromium] тА║ e2e\api.spec.ts:649:9 тА║ API Endpoints тА║ Auth Face Login Endpoints тА║ POST /api/auth/face-login without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m400[39m
+
+      651 |         data: {},
+      652 |       });
+    > 653 |       expect(response.status()).toBe(401);
+          |                                 ^
+      654 |     });
+      655 |   });
+      656 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:653:33
+
+    Error Context: test-results\api-API-Endpoints-Auth-Fac-d9453-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K[89/95] [chromium] тА║ e2e\api.spec.ts:681:9 тА║ API Endpoints тА║ Init Superadmin Endpoints тА║ POST /api/init-superadmin should handle missing data
+[1A[2K[90/95] [chromium] тА║ e2e\api.spec.ts:674:9 тА║ API Endpoints тА║ Auth Google Endpoints тА║ GET /api/auth/google without auth should return redirect or 401
+[1A[2K[91/95] [chromium] тА║ e2e\api.spec.ts:667:9 тА║ API Endpoints тА║ Auth OAuth Session Endpoints тА║ GET /api/auth/oauth-session without auth should return 401
+[1A[2K[92/95] [chromium] тА║ e2e\api.spec.ts:697:9 тА║ API Endpoints тА║ Admin SLA Endpoints тА║ GET /api/admin/sla without auth should return 401
+[1A[2K[93/95] [chromium] тА║ e2e\api.spec.ts:704:9 тА║ API Endpoints тА║ User Preferences Endpoints тА║ GET /api/user-preferences without sessionToken should return 400
+[1A[2K  19) [chromium] тА║ e2e\api.spec.ts:667:9 тА║ API Endpoints тА║ Auth OAuth Session Endpoints тА║ GET /api/auth/oauth-session without auth should return 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m401[39m
+    Received: [31m405[39m
+
+      667 |     test('GET /api/auth/oauth-session without auth should return 401', async ({ request }) => {
+      668 |       const response = await request.get(`${BASE_URL}/api/auth/oauth-session`);
+    > 669 |       expect(response.status()).toBe(401);
+          |                                 ^
+      670 |     });
+      671 |   });
+      672 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:669:33
+
+    Error Context: test-results\api-API-Endpoints-Auth-OAu-51530-hout-auth-should-return-401-chromium\error-context.md
+
+
+[1A[2K  20) [chromium] тА║ e2e\api.spec.ts:704:9 тА║ API Endpoints тА║ User Preferences Endpoints тА║ GET /api/user-preferences without sessionToken should return 400 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m400[39m
+    Received: [31m200[39m
+
+      704 |     test('GET /api/user-preferences without sessionToken should return 400', async ({ request }) => {
+      705 |       const response = await request.get(`${BASE_URL}/api/user-preferences`);
+    > 706 |       expect(response.status()).toBe(400);
+          |                                 ^
+      707 |     });
+      708 |
+      709 |     test('POST /api/user-preferences without data should return 400', async ({ request }) => {
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:706:33
+
+    Error Context: test-results\api-API-Endpoints-User-Pre-122a2-sionToken-should-return-400-chromium\error-context.md
+
+
+[1A[2K[94/95] [chromium] тА║ e2e\api.spec.ts:690:9 тА║ API Endpoints тА║ Supervisor Ratings Endpoints тА║ GET /api/supervisor-ratings without auth should return 401
+[1A[2K  21) [chromium] тА║ e2e\api.spec.ts:674:9 тА║ API Endpoints тА║ Auth Google Endpoints тА║ GET /api/auth/google without auth should return redirect or 401 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+      674 |     test('GET /api/auth/google without auth should return redirect or 401', async ({ request }) => {
+      675 |       const response = await request.get(`${BASE_URL}/api/auth/google`);
+    > 676 |       expect(response.status() === 302 || response.status() === 401).toBeTruthy();
+          |                                                                      ^
+      677 |     });
+      678 |   });
+      679 |
+        at C:\Users\namel\Desktop\office\e2e\api.spec.ts:676:70
+
+    Error Context: test-results\api-API-Endpoints-Auth-Goo-70cae-ould-return-redirect-or-401-chromium\error-context.md
+
+
+[1A[2K[95/95] [chromium] тА║ e2e\api.spec.ts:709:9 тА║ API Endpoints тА║ User Preferences Endpoints тА║ POST /api/user-preferences without data should return 400
+[1A[2K  21 failed
+    [chromium] тА║ e2e\api.spec.ts:75:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/forgot-password should validate email 
+    [chromium] тА║ e2e\api.spec.ts:82:9 тА║ API Endpoints тА║ Public Endpoints тА║ POST /api/auth/reset-password should validate token 
+    [chromium] тА║ e2e\api.spec.ts:478:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ GET /api/user/profile without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:483:9 тА║ API Endpoints тА║ User Profile Endpoints тА║ POST /api/profile/update without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:492:9 тА║ API Endpoints тА║ Productivity Endpoints тА║ GET /api/productivity without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:511:9 тА║ API Endpoints тА║ Events Endpoints тА║ GET /api/events/scan-conflicts without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:550:9 тА║ API Endpoints тА║ Driver Schedules Endpoints тА║ GET /api/driver-schedules without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:569:9 тА║ API Endpoints тА║ Security Settings Endpoints тА║ GET /api/security/settings without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:576:9 тА║ API Endpoints тА║ Security Suspended Users Endpoints тА║ GET /api/security/suspended-users without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:583:9 тА║ API Endpoints тА║ Chat Insights Endpoints тА║ GET /api/chat/insights without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:590:9 тА║ API Endpoints тА║ Chat Full Context Endpoints тА║ GET /api/chat/full-context without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:597:9 тА║ API Endpoints тА║ Chat Delete Leave Endpoints тА║ POST /api/chat/delete-leave without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:606:9 тА║ API Endpoints тА║ Chat Edit Leave Endpoints тА║ POST /api/chat/edit-leave without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:615:9 тА║ API Endpoints тА║ Chat Book Driver Endpoints тА║ POST /api/chat/book-driver without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:624:9 тА║ API Endpoints тА║ Chat Link Preview Endpoints тА║ GET /api/chat/link-preview without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:640:9 тА║ API Endpoints тА║ Face Recognition Register Endpoints тА║ POST /api/face-recognition/register without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:649:9 тА║ API Endpoints тА║ Auth Face Login Endpoints тА║ POST /api/auth/face-login without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:658:9 тА║ API Endpoints тА║ Auth Create Session Endpoints тА║ POST /api/auth/create-session without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:667:9 тА║ API Endpoints тА║ Auth OAuth Session Endpoints тА║ GET /api/auth/oauth-session without auth should return 401 
+    [chromium] тА║ e2e\api.spec.ts:674:9 тА║ API Endpoints тА║ Auth Google Endpoints тА║ GET /api/auth/google without auth should return redirect or 401 
+    [chromium] тА║ e2e\api.spec.ts:704:9 тА║ API Endpoints тА║ User Preferences Endpoints тА║ GET /api/user-preferences without sessionToken should return 400 
+  74 passed (30.4s)

@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { resolvePlanFromPriceId } from '@/lib/stripe-config';
 import * as Sentry from '@sentry/nextjs';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
             break;
           }
 
-          const supabase = await createClient();
+          const supabase = createServiceClient();
           const { error } = await supabase.from('subscriptions').upsert({
             stripe_customerid: typeof sub.customer === 'string' ? sub.customer : (sub.customer as any).id,
             stripe_subscriptionid: sub.id,
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
             current_period_end: ((sub as any).current_period_end ?? 0) * 1000,
             cancel_at_period_end: sub.cancel_at_period_end,
             trial_end: sub.trial_end ? (sub.trial_end as number) * 1000 : undefined,
-          });
+          }, { onConflict: 'stripe_subscriptionid' });
 
           if (error) {
             console.error('[Stripe] Failed to save subscription:', error);
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription;
         console.log('[Stripe] 🔄 subscription.updated:', sub.id);
-        const supabase = await createClient();
+        const supabase = createServiceClient();
         await supabase
           .from('subscriptions')
           .update({
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription;
         console.log('[Stripe] ❌ subscription.deleted:', sub.id);
-        const supabase = await createClient();
+        const supabase = createServiceClient();
         await supabase
           .from('subscriptions')
           .update({
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
             : (invoice as any).subscription?.id;
         console.log('[Stripe] ⚠️ invoice.payment_failed:', invoice.id);
         if (subId) {
-          const supabase = await createClient();
+          const supabase = createServiceClient();
           await supabase
             .from('subscriptions')
             .update({
@@ -229,7 +229,7 @@ export async function POST(req: NextRequest) {
             : (invoice as any).subscription?.id;
         console.log('[Stripe] 💰 invoice.payment_succeeded:', invoice.id);
         if (subId) {
-          const supabase = await createClient();
+          const supabase = createServiceClient();
           await supabase
             .from('subscriptions')
             .update({
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.resumed': {
         const sub = event.data.object as Stripe.Subscription;
         console.log(`[Stripe] ${event.type}:`, sub.id);
-        const supabase = await createClient();
+        const supabase = createServiceClient();
         await supabase
           .from('subscriptions')
           .update({

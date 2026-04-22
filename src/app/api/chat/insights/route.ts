@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get('userId');
-    if (!userId) return NextResponse.json(null);
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
 
-    const supabase = await createClient();
+    const userId = auth.user.id;
+
+    const supabaseService = createServiceClient();
 
     const [user, userLeaves, allLeaves, timeHistory] = await Promise.all([
-      supabase.from('users').select('*').eq('id', userId).single(),
-      supabase.from('leave_requests').select('*').eq('userid', userId),
-      supabase.from('leave_requests').select('*').eq('organizationId', ((await supabase.from('users').select('organizationId').eq('id', userId).single()).data?.organizationId) ?? ''),
-      supabase.from('time_tracking').select('*').eq('userId', userId).order('date', { ascending: false }).limit(60),
+      supabaseService.from('users').select('*').eq('id', userId).maybeSingle(),
+      supabaseService.from('leave_requests').select('*').eq('userid', userId),
+      supabaseService.from('leave_requests').select('*').eq('organization_id', ((await supabaseService.from('users').select('organization_id').eq('id', userId).maybeSingle()).data?.organization_id) ?? ''),
+      supabaseService.from('time_tracking').select('*').eq('userid', userId).order('date', { ascending: false }).limit(60),
     ]);
 
     if (!user.data) return NextResponse.json(null);

@@ -13,10 +13,7 @@ interface CompanyEvent {
   endDate: number;
   priority?: Priority;
   eventType: string;
-  location?: string;
   requiredDepartments?: string[];
-  creatorId?: string;
-  creatorName?: string;
   createdAt: number;
   isAllDay?: boolean;
 }
@@ -80,7 +77,6 @@ export function useCreateCompanyEvent() {
       endDate: number;
       priority?: Priority;
       eventType: string;
-      location?: string;
       requiredDepartments?: string[];
       isAllDay?: boolean;
     }) => {

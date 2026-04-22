@@ -40,8 +40,6 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
       icon: <Calendar className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="type"
           label={t('leaveWizard.steps.type.typeLabel')}
           options={[
@@ -89,16 +87,12 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextInputStep
-              stepData={{}}
-              updateStepData={() => {}}
               field="startDate"
               label={t('leaveWizard.steps.dates.startDateLabel')}
               type="date"
               required
             />
             <TextInputStep
-              stepData={{}}
-              updateStepData={() => {}}
               field="endDate"
               label={t('leaveWizard.steps.dates.endDateLabel')}
               type="date"
@@ -127,16 +121,12 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="reason"
             label={t('leaveWizard.steps.details.reasonLabel')}
             placeholder={t('leaveWizard.steps.details.reasonPlaceholder')}
             required
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="comment"
             label={t('leaveWizard.steps.details.commentLabel')}
             placeholder={t('leaveWizard.steps.details.commentPlaceholder')}

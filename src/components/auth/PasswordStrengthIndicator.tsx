@@ -27,11 +27,11 @@ export function PasswordStrengthIndicator({
 
   const strengthColor = getStrengthColor(validation.strength);
   const strengthLabels = {
-    weak: 'Слабый',
-    fair: 'Средний',
-    good: 'Хороший',
-    strong: 'Надежный',
-    excellent: 'Превосходный',
+    weak: t('auth.passwordStrength.weak', 'Weak'),
+    fair: t('auth.passwordStrength.fair', 'Fair'),
+    good: t('auth.passwordStrength.good', 'Good'),
+    strong: t('auth.passwordStrength.strong', 'Strong'),
+    excellent: t('auth.passwordStrength.excellent', 'Excellent'),
   };
 
   return (
@@ -44,7 +44,7 @@ export function PasswordStrengthIndicator({
       {/* Strength Bar */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-(--text-muted)">Надежность пароля</span>
+          <span className="text-(--text-muted)">{t('auth.passwordStrength.title', 'Password Strength')}</span>
           <motion.span
             key={validation.strength}
             initial={{ scale: 0.8, opacity: 0 }}
@@ -142,7 +142,7 @@ export function PasswordStrengthIndicator({
         >
           <div className="flex items-center gap-1.5 text-xs text-(--text-muted)">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="font-medium">Рекомендации:</span>
+            <span className="font-medium">{t('auth.passwordStrength.suggestionsTitle', 'Suggestions:')}</span>
           </div>
           <ul className="space-y-1">
             {validation.suggestions.map((suggestion, index) => (

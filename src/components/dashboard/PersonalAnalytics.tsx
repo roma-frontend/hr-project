@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useUserAnalytics } from '@/hooks/useDashboard';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Calendar, TrendingUp, Clock } from 'lucide-react';
+import type { LeaveType } from '@/lib/types';
 
 interface PersonalAnalyticsProps {
   userId: string;
@@ -174,7 +175,7 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
         className="rounded-2xl p-6 shadow-lg border"
         style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
       >
-        <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">💼 Leave Balances</h3>
+        <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">{t('dashboard.leaveBalances')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <div className="flex items-center justify-between mb-2">

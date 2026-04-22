@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabaseService = createServiceClient();
 
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
@@ -17,18 +20,18 @@ export async function GET(request: NextRequest) {
       case 'get-analytics-overview': {
         const organizationId = searchParams.get('organizationId');
 
-        let usersQuery = supabase
+        let usersQuery = supabaseService
           .from('users')
           .select('*')
           .neq('role', 'superadmin');
 
-        let leavesQuery = supabase
+        let leavesQuery = supabaseService
           .from('leave_requests')
           .select('*');
 
         if (organizationId) {
-          usersQuery = usersQuery.eq('organizationId', organizationId);
-          leavesQuery = leavesQuery.eq('organizationId', organizationId);
+          usersQuery = usersQuery.eq('organization_id', organizationId);
+          leavesQuery = leavesQuery.eq('organization_id', organizationId);
         }
 
         const [{ data: users }, { data: leaves }] = await Promise.all([
@@ -72,13 +75,13 @@ export async function GET(request: NextRequest) {
       case 'get-department-stats': {
         const organizationId = searchParams.get('organizationId');
 
-        let query = supabase
+        let query = supabaseService
           .from('users')
           .select('*')
           .neq('role', 'superadmin');
 
         if (organizationId) {
-          query = query.eq('organizationId', organizationId);
+          query = query.eq('organization_id', organizationId);
         }
 
         const { data: users } = await query;
@@ -120,12 +123,12 @@ export async function GET(request: NextRequest) {
       case 'get-leave-trends': {
         const organizationId = searchParams.get('organizationId');
 
-        let query = supabase
+        let query = supabaseService
           .from('leave_requests')
           .select('*');
 
         if (organizationId) {
-          query = query.eq('organizationId', organizationId);
+          query = query.eq('organization_id', organizationId);
         }
 
         const { data: leaves } = await query;
@@ -144,32 +147,32 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (!userData) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const { data: userLeaves } = await supabase
+        const { data: userLeaves } = await supabaseService
           .from('leave_requests')
           .select('*')
           .eq('userid', userId);
 
         const totalDaysTaken = (userLeaves || [])
           .filter((l) => l.status === 'approved')
-          .reduce((sum, l) => sum + l.days, 0);
+          .reduce((sum, l) => sum + (l.total_days || 0), 0);
 
         const pendingDays = (userLeaves || [])
           .filter((l) => l.status === 'pending')
-          .reduce((sum, l) => sum + l.days, 0);
+          .reduce((sum, l) => sum + (l.total_days || 0), 0);
 
         const leavesByType = (userLeaves || []).reduce(
           (acc, leave) => {
-            acc[leave.type] = (acc[leave.type] || 0) + (leave.status === 'approved' ? leave.days : 0);
+            acc[leave.type] = (acc[leave.type] || 0) + (leave.status === 'approved' ? leave.total_days : 0);
             return acc;
           },
           {} as Record<string, number>
@@ -194,13 +197,13 @@ export async function GET(request: NextRequest) {
       case 'get-team-calendar': {
         const organizationId = searchParams.get('organizationId');
 
-        let query = supabase
+        let query = supabaseService
           .from('leave_requests')
           .select('*')
           .eq('status', 'approved');
 
         if (organizationId) {
-          query = query.eq('organizationId', organizationId);
+          query = query.eq('organization_id', organizationId);
         }
 
         const { data: leaves } = await query;
@@ -216,7 +219,7 @@ export async function GET(request: NextRequest) {
 
         const userIds = [...new Set(upcomingLeaves.map((l) => l.userid))];
         const { data: users } = userIds.length > 0
-          ? await supabase
+          ? await supabaseService
               .from('users')
               .select('id, name, department')
               .in('id', userIds)

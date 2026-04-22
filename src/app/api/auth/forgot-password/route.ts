@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       .from('users')
       .select('id, name, email')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
     if (error || !user) {
       // Wait a fixed amount of time to prevent timing-based email enumeration
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     // Generate reset token
     const resetToken = crypto.randomUUID();
-    const resetExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+    const resetExpiry = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour in seconds
 
     // Store reset token in database
     await supabase
@@ -57,8 +57,18 @@ export async function POST(req: NextRequest) {
       // Resend requires verified domain to send to arbitrary emails.
       // Until adb.org DNS records are verified, send to test email (account owner).
       const isDomainVerified = process.env.RESEND_DOMAIN_VERIFIED === 'true';
-      const testEmail = process.env.RESEND_TEST_EMAIL || 'romangulanyan@gmail.com';
-      const toEmail = isDomainVerified ? user.email : testEmail;
+      const testEmail = process.env.RESEND_TEST_EMAIL;
+      if (!isDomainVerified && !testEmail) {
+        console.warn('[forgot-password] RESEND_DOMAIN_VERIFIED is not set to true and no RESEND_TEST_EMAIL configured. Password reset emails will not be sent.');
+        // Still save the token so the user can reset once domain is verified
+        const elapsed = Date.now() - startTime;
+        const minDelay = 500;
+        if (elapsed < minDelay) {
+          await new Promise((r) => setTimeout(r, minDelay - elapsed));
+        }
+        return NextResponse.json({ success: true });
+      }
+      const toEmail = isDomainVerified ? user.email! : testEmail!;
       const fromEmail = isDomainVerified
         ? 'HR Office <hr@adb.org>'
         : 'HR Office <onboarding@resend.dev>';

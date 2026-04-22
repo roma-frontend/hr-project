@@ -172,11 +172,11 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
             : {}),
         }),
       });
-      if (!res.ok) throw new Error('Failed to create user');
+      if (!res.ok) throw new Error(t('employees.failedToCreateUser', 'Failed to create user'));
       toast.success(t('success.created'));
       onClose();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : t('errors.somethingWentWrong'));
+      toast.error(err instanceof Error ? t('employees.error', { defaultValue: err.message }) : t('errors.somethingWentWrong'));
     } finally {
       setSubmitting(false);
     }
@@ -343,7 +343,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                       <Input
                         id="emp-email"
                         type="email"
-                        placeholder="john.smith@company.com"
+                        placeholder={t('placeholders.emailExample', 'john.smith@company.com')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className={`pl-10 ${errors.email ? 'border-(--destructive)' : ''}`}
@@ -388,7 +388,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                         <SelectContent>
                           {DEPARTMENTS.map((d) => (
                             <SelectItem key={d} value={d}>
-                              {d}
+                              {t(`departments.${d.toLowerCase().replace(/\s+/g, '')}`, { defaultValue: d })}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -401,7 +401,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                       <Label htmlFor="emp-position">{t('employees.position')} *</Label>
                       <Input
                         id="emp-position"
-                        placeholder="e.g. Developer"
+                        placeholder={t('placeholders.positionExampleDev', 'e.g. Developer')}
                         value={position}
                         onChange={(e) => setPosition(e.target.value)}
                         className={errors.position ? 'border-(--destructive)' : ''}
@@ -482,7 +482,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
                       <Input
                         id="emp-phone"
-                        placeholder="+374 91 123456"
+                        placeholder={t('placeholders.phoneFormatArm', '+374 91 123456')}
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         className="pl-10"

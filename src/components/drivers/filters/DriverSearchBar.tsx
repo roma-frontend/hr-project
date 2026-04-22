@@ -5,6 +5,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
@@ -17,15 +18,17 @@ interface DriverSearchBarProps {
 export const DriverSearchBar = memo(function DriverSearchBar({
   value,
   onChange,
-  placeholder = 'Search drivers...',
+  placeholder,
 }: DriverSearchBarProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder || t('driver.searchBar.placeholder', 'Search drivers...');
   return (
     <div className="relative flex-1 sm:flex-initial">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         className="pl-10 border-(--border)"
         style={{
           borderRadius: '1rem',

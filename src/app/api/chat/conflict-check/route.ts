@@ -11,10 +11,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, organizationId, requestType, startDate, endDate, metadata } = await req.json();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const { organizationId, requestType, startDate, endDate, metadata } = await req.json();
+    const userId = auth.user.id;
 
     console.log('[conflict-check] Request:', {
       userId,
@@ -24,10 +29,10 @@ export async function POST(req: NextRequest) {
       endDate,
     });
 
-    if (!userId || !organizationId || !requestType || !startDate || !endDate) {
+    if (!organizationId || !requestType || !startDate || !endDate) {
       return NextResponse.json(
         {
-          error: 'Missing required fields: userId, organizationId, requestType, startDate, endDate',
+          error: 'Missing required fields: organizationId, requestType, startDate, endDate',
         },
         { status: 400 },
       );
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
       const { data: events } = await supabase
         .from('company_events')
         .select('*')
-        .eq('organizationId', organizationId)
+        .eq('organization_id', organizationId)
         .lte('start_date', new Date(endDate).getTime())
         .gte('end_date', new Date(startDate).getTime());
 
@@ -146,14 +151,17 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   // GET для быстрой проверки через query params
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const organizationId = searchParams.get('organizationId');
     const requestType = searchParams.get('requestType');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const userId = auth.user.id;
 
-    if (!userId || !organizationId || !requestType || !startDate || !endDate) {
+    if (!organizationId || !requestType || !startDate || !endDate) {
       return NextResponse.json({ error: 'Missing required query params' }, { status: 400 });
     }
 

@@ -14,13 +14,13 @@ export async function POST(req: NextRequest) {
       .from('users')
       .select('id, reset_password_token, reset_password_expiry')
       .eq('reset_password_token', token)
-      .single();
+      .maybeSingle();
 
     if (error || !data) {
       return NextResponse.json({ valid: false });
     }
 
-    const isValid = data.reset_password_expiry ? Date.now() <= data.reset_password_expiry : false;
+    const isValid = data.reset_password_expiry ? Math.floor(Date.now() / 1000) <= data.reset_password_expiry : false;
 
     return NextResponse.json({ valid: isValid });
   } catch (err) {

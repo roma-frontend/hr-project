@@ -25,7 +25,7 @@ BEGIN
     -- Insert into public.users table
     INSERT INTO public.users (
         id,
-        organizationId,
+        organization_id,
         name,
         email,
         password_hash,

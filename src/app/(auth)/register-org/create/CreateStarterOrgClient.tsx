@@ -65,12 +65,12 @@ export default function CreateStarterOrgClient() {
     setError(null);
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('registerOrg.passwordMinLength', 'Password must be at least 8 characters'));
       return;
     }
 
     if (!formData.slug) {
-      setError('Organization slug is required');
+      setError(t('registerOrg.slugRequired', 'Organization slug is required'));
       return;
     }
 
@@ -89,13 +89,13 @@ export default function CreateStarterOrgClient() {
           industry: formData.industry || undefined,
         });
 
-        toast.success('🎉 Organization created successfully!');
+        toast.success(t('orgRequests.orgCreated', '🎉 Organization created successfully!'));
 
         setTimeout(() => {
-          router.push('/login?message=Organization created! Please log in.');
+          router.push(`/login?message=${encodeURIComponent(t('orgRequests.orgCreatedLoginPrompt', 'Organization created! Please log in.'))}`);
         }, 1500);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to create organization';
+        } catch (err) {
+        const message = err instanceof Error ? t('orgRequests.error', { defaultValue: err.message }) : t('orgRequests.orgCreateFailed', 'Failed to create organization');
         setError(message);
         toast.error(message);
       }
@@ -191,7 +191,7 @@ export default function CreateStarterOrgClient() {
                       slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                     }))
                   }
-                  placeholder="acme-inc"
+                  placeholder={t('org.slugPlaceholder', 'acme-inc')}
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                   style={{
                     background: 'var(--input)',

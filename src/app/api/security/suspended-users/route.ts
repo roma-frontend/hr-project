@@ -1,11 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { supabase: supabaseService } = auth;
 
-    const { data: users, error } = await supabase
+    const { data: users, error } = await supabaseService
       .from('users')
       .select('id, name, email, role, avatar_url, is_suspended, suspended_until, suspended_reason')
       .eq('is_suspended', true)

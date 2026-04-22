@@ -74,12 +74,12 @@ export function useReportsData(
   const deptData = useMemo(() => {
     return DEPARTMENTS.map((dept) => ({
       dept: dept.slice(0, 3),
-      fullName: dept,
+      fullName: t(`departments.${dept.toLowerCase().replace(/\s+/g, '')}`, { defaultValue: dept }),
       total: leaves?.filter((r: LeaveRecord) => getDepartment(r) === dept).length ?? 0,
       approved: leaves?.filter((r: LeaveRecord) => getDepartment(r) === dept && r.status === 'approved').length ?? 0,
       pending: leaves?.filter((r: LeaveRecord) => getDepartment(r) === dept && r.status === 'pending').length ?? 0,
     })).filter((d) => d.total > 0);
-  }, [leaves]);
+  }, [leaves, t]);
 
   // Monthly trend (last 6 months)
   const monthlyTrend = useMemo(() => {

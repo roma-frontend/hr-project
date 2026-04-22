@@ -166,7 +166,7 @@ export function TripDetailsModal({
                 {isTrip ? t('driver.trip', 'Trip') : t('driver.blocked', 'Blocked')}
               </Badge>
               <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-                {statusTranslations[schedule.status] || schedule.status}
+                {statusTranslations[schedule.status] || String(t(`driver.status.${schedule.status}`, schedule.status))}
               </Badge>
             </div>
           </div>
@@ -196,7 +196,7 @@ export function TripDetailsModal({
                       <span className="hidden sm:inline">
                         {t('driver.openInMap', 'Open in Map')}
                       </span>
-                      <span className="sm:hidden">Map</span>
+                      <span className="sm:hidden">{t('driver.map.mapShort', 'Map')}</span>
                       <ChevronDown
                         className={`w-3.5 h-3.5 transition-transform ${showMapMenu ? 'rotate-180' : ''}`}
                       />

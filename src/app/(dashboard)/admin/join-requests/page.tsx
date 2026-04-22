@@ -47,7 +47,7 @@ export default function JoinRequestsPage() {
     } catch (_error) {
       const errorMessage =
         _error instanceof Error
-          ? _error.message
+          ? t('joinRequests.error', { defaultValue: _error.message })
           : t('joinRequests.approveFailed', 'Failed to approve');
       toast.error(errorMessage);
     }
@@ -72,7 +72,7 @@ export default function JoinRequestsPage() {
     } catch (_error) {
       const errorMessage =
         _error instanceof Error
-          ? _error.message
+          ? t('joinRequests.error', { defaultValue: _error.message })
           : t('joinRequests.rejectFailed', 'Failed to reject');
       toast.error(errorMessage);
     }

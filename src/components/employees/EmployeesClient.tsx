@@ -110,10 +110,11 @@ export function EmployeesClient() {
   }, 300);
 
   const isSuperadmin = user?.role === 'superadmin';
-  const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
+  const orgIdForQuery = selectedOrgId || user?.organizationId || '';
+  const useOrgFilter = mounted && !!orgIdForQuery;
 
   const { data: allUsersDirect, isLoading } = useOrgMembers(
-    selectedOrgId || '',
+    orgIdForQuery,
     user?.id || '',
     undefined,
     !!useOrgFilter,
@@ -198,11 +199,11 @@ export function EmployeesClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminId: user.id, userId }),
       });
-      if (!res.ok) throw new Error('Delete failed');
+      if (!res.ok) throw new Error(t('employees.deleteFailed', 'Delete failed'));
       toast.success(t('employees.deactivated'));
       setDeleteConfirm(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('employees.deactivateFailed'));
+      toast.error(err instanceof Error ? t('employees.error', { defaultValue: err.message }) : t('employees.deactivateFailed'));
     }
   };
 
@@ -319,13 +320,13 @@ export function EmployeesClient() {
                 value: filterRole,
                 setter: setFilterRole,
                 options: ['all', 'admin', 'supervisor', 'employee'],
-                label: 'Role',
+                label: 'role',
               },
               {
                 value: filterType,
                 setter: setFilterType,
                 options: ['all', 'staff', 'contractor'],
-                label: 'Type',
+                label: 'type',
               },
               ...(canManage
                 ? [
@@ -333,18 +334,18 @@ export function EmployeesClient() {
                       value: filterStatus,
                       setter: setFilterStatus,
                       options: ['all', 'active', 'inactive'],
-                      label: 'Status',
+                      label: 'status',
                     },
                   ]
                 : []),
             ].map(({ value, setter, options, label }: any) => {
               const getTranslation = (o: string) => {
                 if (o === 'all') {
-                  if (label === 'Role')
+                  if (label === 'role')
                     return t('employees.allRoles', { defaultValue: 'All Roles' });
-                  if (label === 'Type')
+                  if (label === 'type')
                     return t('employees.allTypes', { defaultValue: 'All Types' });
-                  if (label === 'Status')
+                  if (label === 'status')
                     return t('employees.allStatuses', { defaultValue: 'All Statuses' });
                 }
                 return t(`employees.filter_${o}`, { defaultValue: o });

@@ -19,7 +19,7 @@ export default function CTABanner() {
   const { t } = useTranslation();
 
   return (
-    <section className="relative py-28" aria-label="Call to action">
+    <section className="relative py-28" aria-label={t('ariaLabels.callToAction')}>
       {/* Static CSS glows — no JS animation needed */}
       <div
         className="absolute -top-24 right-0 w-[600px] h-[600px] rounded-full pointer-events-none orb-pulse-1"

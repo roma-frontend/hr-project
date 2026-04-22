@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user, supabase: supabaseService } = auth;
 
     const searchParams = req.nextUrl.searchParams;
     const action = searchParams.get('action');
@@ -20,11 +36,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
       }
 
-      const { data: broadcasts, error } = await supabase
+      const { data: broadcasts, error } = await supabaseService
         .from('service_broadcasts')
-        .select('*, users!createdBy(name, avatar_url)')
-        .eq('organizationId', organizationId)
-        .order('createdAt', { ascending: false });
+        .select('*, users!created_by(name, avatar_url)')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -32,13 +48,13 @@ export async function GET(req: NextRequest) {
 
       const mapped = (broadcasts || []).map((b: any) => ({
         id: b.id,
-        organizationId: b.organizationId,
+        organizationId: b.organization_id,
         title: b.title,
         content: b.content,
         icon: b.icon,
         senderName: b.users?.name || 'Unknown',
         senderAvatar: b.users?.avatar_url,
-        createdAt: b.createdAt,
+        createdAt: b.created_at,
       }));
 
       return NextResponse.json({ data: mapped });
@@ -51,7 +67,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
       }
 
-      const { data: maintenance, error } = await supabase
+      const { data: maintenance, error } = await supabaseService
         .from('maintenance_modes')
         .select('*')
         .eq('organization_id', organizationId)
@@ -71,7 +87,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         data: {
           id: maintenance.id,
-          organizationId: maintenance.organization_id,
+          organization_id: maintenance.organization_id,
           title: maintenance.title,
           message: maintenance.message,
           startTime: maintenance.start_time,
@@ -85,7 +101,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === 'get-calendar-export-data') {
-      const { data: leaves } = await supabase
+      const { data: leaves } = await supabaseService
         .from('leave_requests')
         .select('*, users(name)')
         .eq('status', 'approved')
@@ -119,7 +135,7 @@ export async function GET(req: NextRequest) {
         startDate.setFullYear(startDate.getFullYear() - 1);
       }
 
-      const { data: leaves } = await supabase
+      const { data: leaves } = await supabaseService
         .from('leave_requests')
         .select('*, users!leave_requests_userid_fkey(department, position)')
         .eq('status', 'approved')
@@ -138,7 +154,7 @@ export async function GET(req: NextRequest) {
       }
 
       const totalLeaves = leaves.length;
-      const totalDays = leaves.reduce((sum: number, l: any) => sum + (l.days || 0), 0);
+      const totalDays = leaves.reduce((sum: number, l: any) => sum + (l.total_days || 0), 0);
       const totalCost = totalDays * 100;
 
       const deptMap: Record<string, { name: string; cost: number; days: number }> = {};
@@ -146,7 +162,7 @@ export async function GET(req: NextRequest) {
 
       leaves.forEach((l: any) => {
         const dept = l.users?.department || 'Unknown';
-        const days = l.days || 0;
+        const days = l.total_days || 0;
         const cost = days * 100;
 
         if (!deptMap[dept]) {
@@ -191,10 +207,10 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
       }
 
-      const { data: leaves } = await supabase
+      const { data: leaves } = await supabaseService
         .from('leave_requests')
         .select('*, users!leave_requests_userid_fkey(name, department)')
-        .eq('organizationId', organizationId)
+        .eq('organization_id', organizationId)
         .eq('status', 'approved');
 
       if (!leaves) {
@@ -256,35 +272,32 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
     const body = await req.json();
     const action = req.nextUrl.searchParams.get('action');
 
     if (action === 'send-service-broadcast') {
-      const { organizationId, userId, title, content, icon } = body;
+      const { organizationId, title, content, icon } = body;
 
-      if (!organizationId || !userId || !title || !content) {
+      if (!organizationId || !title || !content) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: broadcast, error } = await supabase
+      const { data: broadcast, error } = await supabaseService
         .from('service_broadcasts')
         .insert({
-          organizationId: organizationId,
+          organization_id: organizationId,
           title,
           content,
           icon: icon || 'ℹ️',
-          createdBy: userId,
+          createdBy: authUser.id,
           createdAt: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -294,13 +307,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'enable-maintenance-mode') {
-      const { organizationId, userId, title, message, startTime, estimatedDuration, icon } = body;
+      const { organizationId, title, message, startTime, estimatedDuration, icon } = body;
 
-      if (!organizationId || !userId || !title || !startTime) {
+      if (!organizationId || !title || !startTime) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: maintenance, error } = await supabase
+      const { data: maintenance, error } = await supabaseService
         .from('maintenance_modes')
         .insert({
           organization_id: organizationId,
@@ -309,12 +322,12 @@ export async function POST(req: NextRequest) {
           start_time: startTime,
           estimated_duration: estimatedDuration || null,
           icon: icon || '🔧',
-          enabled_by: userId,
+          enabled_by: authUser.id,
           is_active: true,
           created_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -324,13 +337,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'disable-maintenance-mode') {
-      const { organizationId, userId } = body;
+      const { organizationId } = body;
 
-      if (!organizationId || !userId) {
+      if (!organizationId) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: maintenance, error } = await supabase
+      const { data: maintenance, error } = await supabaseService
         .from('maintenance_modes')
         .update({
           is_active: false,
@@ -350,13 +363,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'delete-message') {
-      const { messageId, userId, deleteForEveryone } = body;
+      const { messageId } = body;
 
-      if (!messageId || !userId) {
+      if (!messageId) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { error } = await supabase
+      const { error } = await supabaseService
         .from('service_broadcasts')
         .delete()
         .eq('id', messageId);

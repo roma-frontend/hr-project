@@ -1,30 +1,52 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { recordFaceIdAttempt } from '@/lib/supabase/face';
-import { supabase } from '@/lib/supabase/client';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabaseService = createServiceClient();
+
     const body = await request.json();
     const { userId, success } = body;
 
     if (!userId || typeof success !== 'boolean') {
       return NextResponse.json(
         { error: 'userId and success are required' },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    if (userId !== user.id) {
+      const { data: profile } = await supabaseService
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     await recordFaceIdAttempt(userId, success);
 
-    const { data: user } = await supabase
+    const { data: foundUser } = await supabaseService
       .from('users')
       .select('faceid_failed_attempts, faceid_blocked')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     return NextResponse.json({
-      attempts: user?.faceid_failed_attempts || 0,
-      blocked: user?.faceid_blocked || false,
+      attempts: foundUser?.faceid_failed_attempts || 0,
+      blocked: foundUser?.faceid_blocked || false,
     });
   } catch (error) {
     console.error('[face-recognition/record-attempt] Error:', error);

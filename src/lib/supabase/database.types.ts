@@ -63,7 +63,7 @@ export type Database = {
       users: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           name: string
           email: string
           password_hash: string
@@ -132,7 +132,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           name: string
           email: string
           password_hash: string
@@ -201,7 +201,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           name?: string
           email?: string
           password_hash?: string
@@ -270,8 +270,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "users_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "users_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -288,16 +288,16 @@ export type Database = {
       leave_requests: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           userid: string
           type: 'paid' | 'unpaid' | 'sick' | 'family' | 'doctor'
           start_date: string
           end_date: string
           days: number
+          total_days: number
           reason: string
           comment: string | null
           status: 'pending' | 'approved' | 'rejected'
-          is_read: boolean | null
           reviewed_by: string | null
           review_comment: string | null
           reviewed_at: number | null
@@ -306,16 +306,16 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           userid: string
           type: 'paid' | 'unpaid' | 'sick' | 'family' | 'doctor'
           start_date: string
           end_date: string
-          days: number
-          reason: string
+          days?: number
+          total_days: number
+          reason?: string
           comment?: string | null
           status?: 'pending' | 'approved' | 'rejected'
-          is_read?: boolean | null
           reviewed_by?: string | null
           review_comment?: string | null
           reviewed_at?: number | null
@@ -324,16 +324,16 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           userid?: string
           type?: 'paid' | 'unpaid' | 'sick' | 'family' | 'doctor'
           start_date?: string
           end_date?: string
           days?: number
+          total_days?: number
           reason?: string
           comment?: string | null
           status?: 'pending' | 'approved' | 'rejected'
-          is_read?: boolean | null
           reviewed_by?: string | null
           review_comment?: string | null
           reviewed_at?: number | null
@@ -342,8 +342,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "leave_requests_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "leave_requests_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -360,7 +360,7 @@ export type Database = {
       notifications: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           userid: string
           type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'driver_request' | 'driver_request_approved' | 'driver_request_rejected' | 'employee_added' | 'join_request' | 'join_approved' | 'join_rejected' | 'security_alert' | 'status_change' | 'message_mention' | 'system'
           title: string
@@ -372,7 +372,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           userid: string
           type: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'driver_request' | 'driver_request_approved' | 'driver_request_rejected' | 'employee_added' | 'join_request' | 'join_approved' | 'join_rejected' | 'security_alert' | 'status_change' | 'message_mention' | 'system'
           title: string
@@ -384,7 +384,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           userid?: string
           type?: 'leave_request' | 'leave_approved' | 'leave_rejected' | 'driver_request' | 'driver_request_approved' | 'driver_request_rejected' | 'employee_added' | 'join_request' | 'join_approved' | 'join_rejected' | 'security_alert' | 'status_change' | 'message_mention' | 'system'
           title?: string
@@ -396,8 +396,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notifications_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -414,7 +414,7 @@ export type Database = {
       chat_conversations: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           type: 'direct' | 'group'
           name: string | null
           description: string | null
@@ -434,7 +434,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           type: 'direct' | 'group'
           name?: string | null
           description?: string | null
@@ -454,7 +454,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           type?: 'direct' | 'group'
           name?: string | null
           description?: string | null
@@ -474,8 +474,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "chat_conversations_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "chat_conversations_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -493,7 +493,7 @@ export type Database = {
         Row: {
           id: string
           conversationid: string
-          organizationId: string | null
+          organization_id: string | null
           senderid: string
           type: 'text' | 'image' | 'file' | 'audio' | 'system' | 'call'
           content: string
@@ -530,7 +530,7 @@ export type Database = {
         Insert: {
           id?: string
           conversationid: string
-          organizationId?: string | null
+          organization_id?: string | null
           senderid: string
           type?: 'text' | 'image' | 'file' | 'audio' | 'system' | 'call'
           content: string
@@ -567,7 +567,7 @@ export type Database = {
         Update: {
           id?: string
           conversationid?: string
-          organizationId?: string | null
+          organization_id?: string | null
           senderid?: string
           type?: 'text' | 'image' | 'file' | 'audio' | 'system' | 'call'
           content?: string
@@ -610,8 +610,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "chat_messages_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "chat_messages_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -628,7 +628,7 @@ export type Database = {
       tasks: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           title: string
           description: string | null
           assigned_to: string
@@ -645,7 +645,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           title: string
           description?: string | null
           assigned_to: string
@@ -662,7 +662,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           title?: string
           description?: string | null
           assigned_to?: string
@@ -679,8 +679,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tasks_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -707,21 +707,21 @@ export type Database = {
           taskid: string
           authorid: string
           content: string
-          createdat: number
+          created_at: number
         }
         Insert: {
           id?: string
           taskid: string
           authorid: string
           content: string
-          createdat?: number
+          created_at?: number
         }
         Update: {
           id?: string
           taskid?: string
           authorid?: string
           content?: string
-          createdat?: number
+          created_at?: number
         }
         Relationships: [
           {
@@ -743,7 +743,7 @@ export type Database = {
       drivers: {
         Row: {
           id: string
-          organizationId: string
+          organization_id: string
           userid: string
           vehicle_model: string
           vehicle_plate_number: string
@@ -773,7 +773,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId: string
+          organization_id: string
           userid: string
           vehicle_model: string
           vehicle_plate_number: string
@@ -803,7 +803,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string
+          organization_id?: string
           userid?: string
           vehicle_model?: string
           vehicle_plate_number?: string
@@ -833,8 +833,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "drivers_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "drivers_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -851,7 +851,7 @@ export type Database = {
       subscriptions: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           stripe_customerid: string
           stripe_subscriptionid: string
           stripe_sessionid: string | null
@@ -868,7 +868,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           stripe_customerid: string
           stripe_subscriptionid: string
           stripe_sessionid?: string | null
@@ -885,7 +885,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           stripe_customerid?: string
           stripe_subscriptionid?: string
           stripe_sessionid?: string | null
@@ -902,8 +902,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "subscriptions_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -922,7 +922,7 @@ export type Database = {
           id: string
           email: string
           userid: string | null
-          organizationId: string | null
+          organization_id: string | null
           success: boolean
           method: 'password' | 'faceid' | 'webauthn' | 'google'
           ip: string | null
@@ -939,7 +939,7 @@ export type Database = {
           id?: string
           email: string
           userid?: string | null
-          organizationId?: string | null
+          organization_id?: string | null
           success?: boolean
           method: 'password' | 'faceid' | 'webauthn' | 'google'
           ip?: string | null
@@ -956,7 +956,7 @@ export type Database = {
           id?: string
           email?: string
           userid?: string | null
-          organizationId?: string | null
+          organization_id?: string | null
           success?: boolean
           method?: 'password' | 'faceid' | 'webauthn' | 'google'
           ip?: string | null
@@ -978,8 +978,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "login_attempts_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "login_attempts_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          id: string
+          superadminid: string
+          target_userid: string
+          organization_id: string
+          reason: string
+          token: string
+          is_active: boolean
+          started_at: number
+          ended_at: number | null
+          expires_at: number
+        }
+        Insert: {
+          id?: string
+          superadminid: string
+          target_userid: string
+          organization_id: string
+          reason: string
+          token: string
+          is_active?: boolean
+          started_at?: number
+          ended_at?: number | null
+          expires_at: number
+        }
+        Update: {
+          id?: string
+          superadminid?: string
+          target_userid?: string
+          organization_id?: string
+          reason?: string
+          token?: string
+          is_active?: boolean
+          started_at?: number
+          ended_at?: number | null
+          expires_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impersonation_sessions_superadminid_fkey"
+            columns: ["superadminid"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_target_userid_fkey"
+            columns: ["target_userid"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impersonation_sessions_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1049,61 +1110,79 @@ export type Database = {
       company_events: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string
           name: string
           description: string | null
           start_date: number
           end_date: number
-          priority: 'high' | 'medium' | 'low' | null
+          is_all_day: boolean
+          required_departments: string[]
+          required_employeeids: string[] | null
           event_type: string
-          location: string | null
-          required_departments: string[] | null
-          creator_id: string | null
-          creator_name: string | null
-          is_all_day: boolean | null
+          priority: 'high' | 'medium' | 'low' | null
+          created_by: string
+          notify_days_before: number | null
+          notified_at: number | null
           created_at: number
-          updated_at: number | null
+          updated_at: number
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id: string
           name: string
           description?: string | null
           start_date: number
           end_date: number
-          priority?: 'high' | 'medium' | 'low' | null
+          is_all_day?: boolean
+          required_departments?: string[]
+          required_employeeids?: string[] | null
           event_type: string
-          location?: string | null
-          required_departments?: string[] | null
-          creator_id?: string | null
-          creator_name?: string | null
-          is_all_day?: boolean | null
+          priority?: 'high' | 'medium' | 'low' | null
+          created_by: string
+          notify_days_before?: number | null
+          notified_at?: number | null
           created_at?: number
-          updated_at?: number | null
+          updated_at?: number
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string
           name?: string
           description?: string | null
           start_date?: number
           end_date?: number
-          priority?: 'high' | 'medium' | 'low' | null
+          is_all_day?: boolean
+          required_departments?: string[]
+          required_employeeids?: string[] | null
           event_type?: string
-          location?: string | null
-          required_departments?: string[] | null
-          creator_id?: string | null
-          creator_name?: string | null
-          is_all_day?: boolean | null
+          priority?: 'high' | 'medium' | 'low' | null
+          created_by?: string
+          notify_days_before?: number | null
+          notified_at?: number | null
           created_at?: number
-          updated_at?: number | null
+          updated_at?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_events_created_by_fkey"
+            columns: ["created_by"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       organization_join_requests: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           requester_name: string
           requester_email: string
           requester_phone: string | null
@@ -1116,7 +1195,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requester_name: string
           requester_email: string
           requester_phone?: string | null
@@ -1129,7 +1208,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requester_name?: string
           requester_email?: string
           requester_phone?: string | null
@@ -1145,7 +1224,7 @@ export type Database = {
       service_broadcasts: {
         Row: {
           id: string
-          organizationId: string
+          organization_id: string
           title: string
           content: string
           icon: string | null
@@ -1154,7 +1233,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId: string
+          organization_id: string
           title: string
           content: string
           icon?: string | null
@@ -1163,7 +1242,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string
+          organization_id?: string
           title?: string
           content?: string
           icon?: string | null
@@ -1172,8 +1251,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "service_broadcasts_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "service_broadcasts_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1190,7 +1269,7 @@ export type Database = {
       sla_config: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           target_response_time_hours: number
           warning_threshold_percent: number
           critical_threshold_percent: number
@@ -1199,7 +1278,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           target_response_time_hours?: number
           warning_threshold_percent?: number
           critical_threshold_percent?: number
@@ -1208,7 +1287,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           target_response_time_hours?: number
           warning_threshold_percent?: number
           critical_threshold_percent?: number
@@ -1217,8 +1296,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sla_config_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "sla_config_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1228,7 +1307,7 @@ export type Database = {
       sla_metrics: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           ticketId: string
           first_response_time_hours: number | null
           status: 'within_sla' | 'breached' | 'warning'
@@ -1237,7 +1316,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           ticketId: string
           first_response_time_hours?: number | null
           status?: 'within_sla' | 'breached' | 'warning'
@@ -1246,7 +1325,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           ticketId?: string
           first_response_time_hours?: number | null
           status?: 'within_sla' | 'breached' | 'warning'
@@ -1255,8 +1334,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "sla_metrics_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "sla_metrics_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1301,7 +1380,7 @@ export type Database = {
       tickets: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           title: string
           description: string
           status: 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed'
@@ -1316,7 +1395,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           title: string
           description: string
           status?: 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed'
@@ -1331,7 +1410,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           title?: string
           description?: string
           status?: 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed'
@@ -1346,8 +1425,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tickets_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "tickets_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1416,29 +1495,29 @@ export type Database = {
       ai_conversations: {
         Row: {
           id: string
-          userId: string
+          userid: string
           title: string | null
-          createdAt: number
-          updatedAt: number | null
+          created_at: number
+          updated_at: number | null
         }
         Insert: {
           id?: string
-          userId: string
+          userid: string
           title?: string | null
-          createdAt?: number
-          updatedAt?: number | null
+          created_at?: number
+          updated_at?: number | null
         }
         Update: {
           id?: string
-          userId?: string
+          userid?: string
           title?: string | null
-          createdAt?: number
-          updatedAt?: number | null
+          created_at?: number
+          updated_at?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "ai_conversations_userId_fkey"
-            columns: ["userId"]
+            foreignKeyName: "ai_conversations_userid_fkey"
+            columns: ["userid"]
             isRelationOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1448,29 +1527,29 @@ export type Database = {
       ai_messages: {
         Row: {
           id: string
-          conversationId: string
+          conversationid: string
           role: 'user' | 'assistant' | 'system'
           content: string
-          createdAt: number
+          created_at: number
         }
         Insert: {
           id?: string
-          conversationId: string
+          conversationid: string
           role: 'user' | 'assistant' | 'system'
           content: string
-          createdAt?: number
+          created_at?: number
         }
         Update: {
           id?: string
-          conversationId?: string
+          conversationid?: string
           role?: 'user' | 'assistant' | 'system'
           content?: string
-          createdAt?: number
+          created_at?: number
         }
         Relationships: [
           {
-            foreignKeyName: "ai_messages_conversationId_fkey"
-            columns: ["conversationId"]
+            foreignKeyName: "ai_messages_conversationid_fkey"
+            columns: ["conversationid"]
             isRelationOneToOne: false
             referencedRelation: "ai_conversations"
             referencedColumns: ["id"]
@@ -1480,56 +1559,56 @@ export type Database = {
       time_tracking: {
         Row: {
           id: string
-          userId: string
+          userid: string
           date: string
           check_in_time: number | null
           check_out_time: number | null
-          status: 'present' | 'absent' | 'late' | 'half_day'
+          status: 'checked_in' | 'checked_out' | 'absent'
           total_worked_minutes: number | null
           is_late: boolean | null
           late_minutes: number | null
           is_early_leave: boolean | null
           early_leave_minutes: number | null
           overtime_minutes: number | null
-          createdAt: number
-          updatedAt: number | null
+          created_at: number
+          updated_at: number | null
         }
         Insert: {
           id?: string
-          userId: string
+          userid: string
           date: string
           check_in_time?: number | null
           check_out_time?: number | null
-          status?: 'present' | 'absent' | 'late' | 'half_day'
+          status?: 'checked_in' | 'checked_out' | 'absent'
           total_worked_minutes?: number | null
           is_late?: boolean | null
           late_minutes?: number | null
           is_early_leave?: boolean | null
           early_leave_minutes?: number | null
           overtime_minutes?: number | null
-          createdAt?: number
-          updatedAt?: number | null
+          created_at?: number
+          updated_at?: number | null
         }
         Update: {
           id?: string
-          userId?: string
+          userid?: string
           date?: string
           check_in_time?: number | null
           check_out_time?: number | null
-          status?: 'present' | 'absent' | 'late' | 'half_day'
+          status?: 'checked_in' | 'checked_out' | 'absent'
           total_worked_minutes?: number | null
           is_late?: boolean | null
           late_minutes?: number | null
           is_early_leave?: boolean | null
           early_leave_minutes?: number | null
           overtime_minutes?: number | null
-          createdAt?: number
-          updatedAt?: number | null
+          created_at?: number
+          updated_at?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "time_tracking_userId_fkey"
-            columns: ["userId"]
+            foreignKeyName: "time_tracking_userid_fkey"
+            columns: ["userid"]
             isRelationOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1575,7 +1654,7 @@ export type Database = {
         Row: {
           id: string
           userId: string
-          organizationId: string | null
+          organization_id: string | null
           user_message: string | null
           edit_type: string | null
           ai_response: string | null
@@ -1587,7 +1666,7 @@ export type Database = {
         Insert: {
           id?: string
           userId: string
-          organizationId?: string | null
+          organization_id?: string | null
           user_message?: string | null
           edit_type?: string | null
           ai_response?: string | null
@@ -1599,7 +1678,7 @@ export type Database = {
         Update: {
           id?: string
           userId?: string
-          organizationId?: string | null
+          organization_id?: string | null
           user_message?: string | null
           edit_type?: string | null
           ai_response?: string | null
@@ -1621,7 +1700,7 @@ export type Database = {
       organization_invites: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           requested_by_email: string
           requested_by_name: string
           requested_at: number
@@ -1637,7 +1716,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requested_by_email: string
           requested_by_name: string
           requested_at?: number
@@ -1653,7 +1732,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requested_by_email?: string
           requested_by_name?: string
           requested_at?: number
@@ -1669,8 +1748,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "organization_invites_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "organization_invites_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -1843,7 +1922,7 @@ export type Database = {
       supervisor_ratings: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           employee_id: string
           supervisorid: string
           rated_by: string
@@ -1865,7 +1944,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           employee_id: string
           supervisorid: string
           rated_by: string
@@ -1887,7 +1966,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           employee_id?: string
           supervisorid?: string
           rated_by?: string
@@ -1909,8 +1988,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "supervisor_ratings_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "supervisor_ratings_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -2114,7 +2193,7 @@ export type Database = {
       driver_requests: {
         Row: {
           id: string
-          organizationId: string | null
+          organization_id: string | null
           requesterid: string
           driverid: string
           start_time: number
@@ -2130,7 +2209,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requesterid: string
           driverid: string
           start_time: number
@@ -2146,7 +2225,7 @@ export type Database = {
         }
         Update: {
           id?: string
-          organizationId?: string | null
+          organization_id?: string | null
           requesterid?: string
           driverid?: string
           start_time?: number
@@ -2162,8 +2241,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "driver_requests_organizationId_fkey"
-            columns: ["organizationId"]
+            foreignKeyName: "driver_requests_organization_id_fkey"
+            columns: ["organization_id"]
             isRelationOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
@@ -2283,6 +2362,310 @@ export type Database = {
             columns: ["updated_by"]
             isRelationOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      sync_logs: {
+        Row: {
+          id: string
+          organization_id: string
+          triggered_by: string
+          created_count: number
+          updated_count: number
+          deactivated_count: number
+          error_count: number
+          created_at: number
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          triggered_by: string
+          created_count?: number
+          updated_count?: number
+          deactivated_count?: number
+          error_count?: number
+          created_at?: number
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          triggered_by?: string
+          created_count?: number
+          updated_count?: number
+          deactivated_count?: number
+          error_count?: number
+          created_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_logs_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      recurring_trips: {
+        Row: {
+          id: string
+          organization_id: string | null
+          userid: string
+          driverid: string
+          trip_from: string
+          trip_to: string
+          trip_purpose: string
+          schedule: Json
+          is_active: boolean
+          created_at: number
+          updated_at: number
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          userid: string
+          driverid: string
+          trip_from: string
+          trip_to: string
+          trip_purpose?: string
+          schedule: Json
+          is_active?: boolean
+          created_at?: number
+          updated_at?: number
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          userid?: string
+          driverid?: string
+          trip_from?: string
+          trip_to?: string
+          trip_purpose?: string
+          schedule?: Json
+          is_active?: boolean
+          created_at?: number
+          updated_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_trips_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_trips_userid_fkey"
+            columns: ["userid"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_trips_driverid_fkey"
+            columns: ["driverid"]
+            isRelationOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      passenger_favorites: {
+        Row: {
+          id: string
+          passengerid: string
+          driverid: string
+          organization_id: string | null
+          created_at: number
+        }
+        Insert: {
+          id?: string
+          passengerid: string
+          driverid: string
+          organization_id?: string | null
+          created_at?: number
+        }
+        Update: {
+          id?: string
+          passengerid?: string
+          driverid?: string
+          organization_id?: string | null
+          created_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passenger_favorites_passengerid_fkey"
+            columns: ["passengerid"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passenger_favorites_driverid_fkey"
+            columns: ["driverid"]
+            isRelationOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      passenger_ratings: {
+        Row: {
+          id: string
+          scheduleid: string | null
+          requestid: string | null
+          passengerid: string
+          driverid: string
+          organization_id: string | null
+          rating: number
+          comment: string | null
+          created_at: number
+        }
+        Insert: {
+          id?: string
+          scheduleid?: string | null
+          requestid?: string | null
+          passengerid: string
+          driverid: string
+          organization_id?: string | null
+          rating: number
+          comment?: string | null
+          created_at?: number
+        }
+        Update: {
+          id?: string
+          scheduleid?: string | null
+          requestid?: string | null
+          passengerid?: string
+          driverid?: string
+          organization_id?: string | null
+          rating?: number
+          comment?: string | null
+          created_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passenger_ratings_passengerid_fkey"
+            columns: ["passengerid"]
+            isRelationOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passenger_ratings_driverid_fkey"
+            columns: ["driverid"]
+            isRelationOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      driver_shifts: {
+        Row: {
+          id: string
+          organization_id: string | null
+          driverid: string
+          start_time: number
+          end_time: number | null
+          status: 'active' | 'completed' | 'paused' | 'overtime'
+          created_at: number
+          updated_at: number
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          driverid: string
+          start_time: number
+          end_time?: number | null
+          status?: 'active' | 'completed' | 'paused' | 'overtime'
+          created_at?: number
+          updated_at?: number
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          driverid?: string
+          start_time?: number
+          end_time?: number | null
+          status?: 'active' | 'completed' | 'paused' | 'overtime'
+          created_at?: number
+          updated_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_shifts_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_shifts_driverid_fkey"
+            columns: ["driverid"]
+            isRelationOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      vehicles: {
+        Row: {
+          id: string
+          organization_id: string | null
+          driverid: string
+          model: string
+          year: number | null
+          color: string | null
+          plate_number: string
+          capacity: number
+          created_at: number
+          updated_at: number
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          driverid: string
+          model: string
+          year?: number | null
+          color?: string | null
+          plate_number: string
+          capacity?: number
+          created_at?: number
+          updated_at?: number
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          driverid?: string
+          model?: string
+          year?: number | null
+          color?: string | null
+          plate_number?: string
+          capacity?: number
+          created_at?: number
+          updated_at?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_organization_id_fkey"
+            columns: ["organization_id"]
+            isRelationOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_driverid_fkey"
+            columns: ["driverid"]
+            isRelationOneToOne: false
+            referencedRelation: "drivers"
             referencedColumns: ["id"]
           }
         ]

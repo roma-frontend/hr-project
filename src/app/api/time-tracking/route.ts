@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,17 +11,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
     const searchParams = req.nextUrl.searchParams;
     const type = searchParams.get('type');
 
     if (type === 'today-status') {
       const today = new Date().toISOString().split('T')[0];
-      const { data: record } = await supabase
+      const { data: record } = await supabaseService
         .from('time_tracking')
         .select('*')
-        .eq('userId', user.id)
+        .eq('userid', user.id)
         .eq('date', today as string)
-        .single();
+        .maybeSingle();
 
       if (!record) {
         return NextResponse.json({ data: null });
@@ -60,10 +62,10 @@ export async function GET(req: NextRequest) {
       999,
     ).getTime();
 
-    const { data: timeEntries } = await supabase
+    const { data: timeEntries } = await supabaseService
       .from('time_tracking')
       .select('*')
-      .eq('userId', employeeId)
+      .eq('userid', employeeId)
       .gte('check_in_time', monthStart)
       .lte('check_in_time', monthEnd);
 
@@ -73,13 +75,13 @@ export async function GET(req: NextRequest) {
     let earlyLeaveDays = 0;
 
     if (timeEntries) {
-      totalDays = timeEntries.filter((e: any) => e.checkin_time).length;
+      totalDays = timeEntries.filter((e: any) => e.check_in_time).length;
       totalWorkedHours = timeEntries.reduce(
         (sum: number, e: any) => sum + (e.total_worked_minutes || 0) / 60,
         0,
       );
       lateDays = timeEntries.filter((e: any) => e.is_late).length;
-      earlyLeaveDays = timeEntries.filter((e: any) => e.early_leave).length;
+      earlyLeaveDays = timeEntries.filter((e: any) => e.is_early_leave).length;
     }
 
     const punctualityRate = totalDays > 0 ? Math.round(((totalDays - lateDays) / totalDays) * 100) : 100;
@@ -111,6 +113,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
     const body = await req.json();
     const { type } = body;
 
@@ -118,15 +121,31 @@ export async function POST(req: NextRequest) {
       const today = new Date().toISOString().split('T')[0];
       const now = Date.now();
 
-      const { data: existing } = await supabase
+      // Atomic upsert: try to insert, and if conflict on (userid, date), return existing
+      const { data: record, error } = await supabaseService
         .from('time_tracking')
-        .select('*')
-        .eq('userId', user.id)
-        .eq('date', today as string)
-        .single();
+        .insert({
+          userid: user.id as string,
+          date: today as string,
+          status: 'checked_in',
+          check_in_time: now,
+          is_late: false,
+          late_minutes: 0,
+          created_at: now,
+          updated_at: now,
+        })
+        .select()
+        .maybeSingle();
 
-      if (existing) {
-        return NextResponse.json({ error: 'Already checked in today' }, { status: 400 });
+      if (error) {
+        if (error.code === '23505') {
+          return NextResponse.json({ error: 'Already checked in today' }, { status: 400 });
+        }
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!record) {
+        return NextResponse.json({ error: 'Failed to check in' }, { status: 500 });
       }
 
       const workHoursStart = '09:00';
@@ -136,23 +155,15 @@ export async function POST(req: NextRequest) {
       const isLate = now > expectedTime.getTime();
       const lateMinutes = isLate ? Math.floor((now - expectedTime.getTime()) / 60000) : 0;
 
-      const { data: record, error } = await supabase
-        .from('time_tracking')
-        .insert({
-          userId: user.id as string,
-          date: today as string,
-          status: 'present',
-          check_in_time: now,
-          is_late: isLate,
-          late_minutes: lateMinutes,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+      // Update late status separately to avoid race condition
+      if (isLate || lateMinutes > 0) {
+        await supabaseService
+          .from('time_tracking')
+          .update({
+            is_late: isLate,
+            late_minutes: 0,
+          })
+          .eq('id', record.id);
       }
 
       return NextResponse.json({
@@ -170,12 +181,12 @@ export async function POST(req: NextRequest) {
       const today = new Date().toISOString().split('T')[0];
       const now = Date.now();
 
-      const { data: existing, error: fetchError } = await supabase
+      const { data: existing, error: fetchError } = await supabaseService
         .from('time_tracking')
         .select('*')
-        .eq('userId', user.id)
+        .eq('userid', user.id)
         .eq('date', today as string)
-        .single();
+        .maybeSingle();
 
       if (fetchError || !existing) {
         return NextResponse.json({ error: 'No check-in record found for today' }, { status: 400 });
@@ -196,7 +207,8 @@ export async function POST(req: NextRequest) {
       const standardWorkMinutes = 8 * 60;
       const overtimeMinutes = totalWorkedMinutes > standardWorkMinutes ? totalWorkedMinutes - standardWorkMinutes : 0;
 
-      const { data: record, error } = await supabase
+      // Atomic update: only update if check_out_time is still null (prevents race condition)
+      const { data: record, error } = await supabaseService
         .from('time_tracking')
         .update({
           check_out_time: now,
@@ -204,14 +216,20 @@ export async function POST(req: NextRequest) {
           is_early_leave: isEarlyLeave,
           early_leave_minutes: earlyLeaveMinutes,
           overtime_minutes: overtimeMinutes,
-          updatedAt: now,
+          status: 'checked_out',
+          updated_at: now,
         })
         .eq('id', existing.id)
+        .is('check_out_time', null)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Already checked out today' }, { status: 400 });
+      }
+
+      if (!record) {
+        return NextResponse.json({ error: 'Failed to check out' }, { status: 500 });
       }
 
       return NextResponse.json({

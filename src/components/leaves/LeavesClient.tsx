@@ -167,8 +167,8 @@ export function LeavesClient() {
       playNotificationSound('approved');
       toast.success(t('leave.approvedSuccess'));
     } catch (err) {
-      console.error('Approve error:', err);
-      toast.error(err instanceof Error ? err.message : t('leave.approveFailed'));
+      console.error(t('leave.approveError', 'Approve error:'), err);
+      toast.error(err instanceof Error ? t('leave.error', { defaultValue: err.message }) : t('leave.approveFailed'));
     }
   };
 
@@ -188,8 +188,8 @@ export function LeavesClient() {
       playNotificationSound('rejected');
       toast.success(t('leave.rejectedSuccess'));
     } catch (err) {
-      console.error('Reject error:', err);
-      toast.error(err instanceof Error ? err.message : t('leave.rejectFailed'));
+      console.error(t('leave.rejectError', 'Reject error:'), err);
+      toast.error(err instanceof Error ? t('leave.error', { defaultValue: err.message }) : t('leave.rejectFailed'));
     }
   };
 
@@ -202,8 +202,8 @@ export function LeavesClient() {
       await deleteLeaveMutation.mutateAsync(id);
       toast.success(t('leave.deletedSuccess'));
     } catch (err) {
-      console.error('Delete error:', err);
-      toast.error(err instanceof Error ? err.message : t('leave.deleteFailed'));
+      console.error(t('leave.deleteError', 'Delete error:'), err);
+      toast.error(err instanceof Error ? t('leave.error', { defaultValue: err.message }) : t('leave.deleteFailed'));
     }
   };
 
@@ -436,7 +436,7 @@ export function LeavesClient() {
                             <td colSpan={7} className="px-6 py-4 bg-(--background-subtle)">
                               <AILeaveAssistant
                                 leaveRequestId={req.id}
-                                userId={req.userId}
+                                userId={req.userid}
                                 onApprove={(comment?: string) => handleApprove(req.id, comment)}
                                 onReject={(comment?: string) => handleReject(req.id, comment)}
                               />

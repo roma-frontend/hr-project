@@ -147,7 +147,7 @@ export async function setTypingIndicator(
     .select('id')
     .eq('conversationid', conversationId)
     .eq('userid', userId)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     await supabase

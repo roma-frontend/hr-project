@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/config';
 import { useTaskById, useTaskComments, useUpdateTask, useDeleteTask, useAddComment, type TaskAttachment, type TaskComment } from '@/hooks/useTasks';
 import { TaskAttachments } from './TaskAttachments';
 import { Button } from '@/components/ui/button';
@@ -388,7 +389,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                     className={`text-sm font-medium ${deadlinePassed ? 'text-rose-400' : 'text-(--text-primary)'}`}
                   >
                     {deadlinePassed ? '⏰ ' : '📅 '}
-                    {new Date(taskData.deadline).toLocaleDateString('en-GB', {
+                    {new Date(taskData.deadline).toLocaleDateString(i18n.language, {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',

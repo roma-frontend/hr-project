@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { supabase: supabaseService } = auth;
 
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
@@ -19,11 +35,11 @@ export async function GET(request: NextRequest) {
         const last24h = now - 24 * 60 * 60 * 1000;
         const last7d = now - 7 * 24 * 60 * 60 * 1000;
 
-        const { data: tasks } = await supabase
+        const { data: tasks } = await supabaseService
           .from('automation_tasks')
           .select('*');
 
-        const { data: workflows } = await supabase
+        const { data: workflows } = await supabaseService
           .from('automation_workflows')
           .select('*');
 
@@ -71,7 +87,7 @@ export async function GET(request: NextRequest) {
       case 'get-recent-tasks': {
         const limit = parseInt(searchParams.get('limit') || '10');
 
-        const { data: tasks } = await supabase
+        const { data: tasks } = await supabaseService
           .from('automation_tasks')
           .select('*')
           .order('created_at', { ascending: false })
@@ -81,7 +97,7 @@ export async function GET(request: NextRequest) {
       }
 
       case 'get-active-workflows': {
-        const { data: workflows } = await supabase
+        const { data: workflows } = await supabaseService
           .from('automation_workflows')
           .select('*');
 
@@ -102,37 +118,38 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
     const body = await request.json();
     const action = request.nextUrl.searchParams.get('action');
 
     switch (action) {
       case 'run-automation': {
-        const { data: task, error } = await supabase
+        const { data: task, error } = await supabaseService
           .from('automation_tasks')
           .insert({
             name: 'Manual automation run',
             status: 'running',
+            created_by: authUser.id,
             created_at: Date.now(),
-            updated_at: Date.now(),
-          })
+          } as any)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
+        if (!task) {
+          return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
+        }
+
         // Simulate completion after delay
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        await supabase
+        await supabaseService
           .from('automation_tasks')
           .update({ status: 'completed', updated_at: Date.now() })
           .eq('id', task.id);
@@ -147,17 +164,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing workflowId' }, { status: 400 });
         }
 
-        const { data: workflow } = await supabase
+        const { data: workflow } = await supabaseService
           .from('automation_workflows')
           .select('*')
           .eq('id', workflowId)
-          .single();
+          .maybeSingle();
 
         if (!workflow) {
           return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
         }
 
-        const { data: updatedWorkflow, error } = await supabase
+        const { data: updatedWorkflow, error } = await supabaseService
           .from('automation_workflows')
           .update({
             is_active: !workflow.is_active,
@@ -165,10 +182,14 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', workflowId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        if (!updatedWorkflow) {
+          return NextResponse.json({ error: 'Failed to update workflow' }, { status: 500 });
         }
 
         return NextResponse.json({

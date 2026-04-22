@@ -172,13 +172,13 @@ export function IntegrationSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           adminId: user.id,
-          organizationId: user.organizationId,
+          organizationId: user.organization_id,
         }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || t('toasts.syncFailed'));
+        toast.error(t('settings.error', { defaultValue: data.error }) || t('toasts.syncFailed'));
         return;
       }
 

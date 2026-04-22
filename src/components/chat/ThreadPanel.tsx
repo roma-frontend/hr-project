@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { X, Send } from 'lucide-react';
 import { format } from 'date-fns';
@@ -33,6 +34,7 @@ export function ThreadPanel({
   organizationId,
   onClose,
 }: Props) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -78,10 +80,10 @@ export function ThreadPanel({
       >
         <div>
           <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Thread
+            {t('chat.thread.title', 'Thread')}
           </h3>
           <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            {replies?.length ?? 0} repl{(replies?.length ?? 0) !== 1 ? 'ies' : 'y'}
+            {t('chat.thread.replies', { count: replies?.length ?? 0 })}
           </p>
         </div>
         <button
@@ -111,7 +113,7 @@ export function ThreadPanel({
           </div>
         )}
         {replies?.map((r: any) => {
-          const isOwn = r.senderId === currentUserId;
+          const isOwn = r.senderid === currentUserId;
           return (
             <div
               key={r.id}
@@ -134,7 +136,7 @@ export function ThreadPanel({
                   className="sm:text-[10px] text-xs font-medium sm:mb-0.5 mb-1"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {isOwn ? 'You' : r.sender?.name}
+                  {isOwn ? t('chat.thread.you', 'You') : r.sender?.name}
                 </span>
                 <div
                   className="sm:px-3 px-3.5 sm:py-1.5 py-2 rounded-xl sm:text-xs text-sm break-words"
@@ -151,7 +153,7 @@ export function ThreadPanel({
                   className="sm:text-[9px] text-xs mt-1 opacity-50"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {format(new Date(r.createdAt), 'HH:mm')}
+                  {format(new Date(r.created_at), 'HH:mm')}
                 </span>
               </div>
             </div>
@@ -175,7 +177,7 @@ export function ThreadPanel({
                 handleSend();
               }
             }}
-            placeholder="Reply in thread…"
+            placeholder={t('thread.replyInThread', 'Reply in thread…')}
             className="flex-1 bg-transparent outline-none text-xs"
             style={{ color: 'var(--text-primary)' }}
           />

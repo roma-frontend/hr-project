@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabaseService = createServiceClient();
+
     const body = await request.json();
-    const { action, userId } = body;
+    const { action } = body;
 
     switch (action) {
       case 'update-localization': {
         const { language, timezone, dateFormat, timeFormat, firstDayOfWeek } = body;
 
-        if (!userId) {
-          return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-        }
-
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('users')
           .update({
             language,
@@ -24,7 +30,7 @@ export async function POST(request: NextRequest) {
             first_day_of_week: firstDayOfWeek,
             updated_at: Date.now(),
           })
-          .eq('id', userId);
+          .eq('id', user.id);
 
         if (error) {
           throw error;

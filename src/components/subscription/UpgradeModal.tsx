@@ -35,19 +35,19 @@ interface PlanTier {
 const ALL_TIERS: PlanTier[] = [
   {
     id: 'starter',
-    name: 'Starter',
+    name: 'billing.starter.name',
     price: '$29',
     priceMonthly: 29,
-    description: 'Perfect for small teams getting started',
+    description: 'billing.starter.description',
     icon: <Zap size={20} />,
     features: [
-      'Up to 10 employees',
-      'Basic leave tracking',
-      'Email notifications',
-      'Mobile app access',
-      'Standard support',
+      'billing.starter.features.upTo10Employees',
+      'billing.starter.features.basicLeaveTracking',
+      'billing.starter.features.emailNotifications',
+      'billing.starter.features.mobileAppAccess',
+      'billing.starter.features.standardSupport',
     ],
-    buttonText: 'Start Free Trial',
+    buttonText: 'billing.starter.buttonText',
     accentFrom: '#6366f1',
     accentTo: '#8b5cf6',
     glowColor: 'rgba(99,102,241,0.2)',
@@ -55,21 +55,21 @@ const ALL_TIERS: PlanTier[] = [
   },
   {
     id: 'professional',
-    name: 'Professional',
+    name: 'billing.professional.name',
     price: '$79',
     priceMonthly: 79,
-    description: 'For growing teams that need more power',
+    description: 'billing.professional.description',
     icon: <Building2 size={20} />,
     features: [
-      'Up to 50 employees',
-      'Advanced analytics & reports',
-      'AI Leave Assistant & Insights',
-      'SLA management',
-      'Calendar sync (Google & Outlook)',
-      'Priority support',
-      'CSV export',
+      'billing.professional.features.upTo50Employees',
+      'billing.professional.features.advancedAnalyticsReports',
+      'billing.professional.features.aiLeaveAssistantInsights',
+      'billing.professional.features.slaManagement',
+      'billing.professional.features.calendarSync',
+      'billing.professional.features.prioritySupport',
+      'billing.professional.features.csvExport',
     ],
-    buttonText: 'Upgrade to Professional',
+    buttonText: 'billing.professional.buttonText',
     popular: true,
     accentFrom: '#3b82f6',
     accentTo: '#6366f1',
@@ -78,20 +78,20 @@ const ALL_TIERS: PlanTier[] = [
   },
   {
     id: 'enterprise',
-    name: 'Enterprise',
+    name: 'billing.enterprise.name',
     price: 'Custom',
-    description: 'Tailored for large organizations',
+    description: 'billing.enterprise.description',
     icon: <Rocket size={20} />,
     features: [
-      '100+ employees',
-      'Everything in Professional',
-      'Custom integrations & API',
-      'White-label solution',
-      'Dedicated account manager',
-      '24/7 phone support & SLA',
-      'On-premise option',
+      'billing.enterprise.features.over100Employees',
+      'billing.enterprise.features.everythingInProfessional',
+      'billing.enterprise.features.customIntegrationsApi',
+      'billing.enterprise.features.whiteLabelSolution',
+      'billing.enterprise.features.dedicatedAccountManager',
+      'billing.enterprise.features.phoneSupportSla',
+      'billing.enterprise.features.onPremiseOption',
     ],
-    buttonText: 'Contact Sales',
+    buttonText: 'billing.enterprise.buttonText',
     accentFrom: '#0ea5e9',
     accentTo: '#06b6d4',
     glowColor: 'rgba(14,165,233,0.3)',
@@ -109,6 +109,7 @@ function PlanCard({
   isCurrent: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
@@ -145,7 +146,7 @@ function PlanCard({
       {/* Current plan badge */}
       {isCurrent && (
         <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider z-10 bg-(--background-subtle) border border-(--border) text-(--text-muted)">
-          Current Plan
+          {t('billing.currentPlan')}
         </div>
       )}
 
@@ -156,7 +157,7 @@ function PlanCard({
           style={{ background: `linear-gradient(135deg, ${tier.accentFrom}, ${tier.accentTo})` }}
         >
           <Star size={9} fill="currentColor" />
-          Most Popular
+          {t('billing.mostPopular')}
         </div>
       )}
 
@@ -181,9 +182,9 @@ function PlanCard({
           </div>
           <div>
             <p className="font-bold text-(--text-primary) leading-tight text-sm">
-              {tier.name}
+              {t(tier.name)}
             </p>
-            <p className="text-[11px] text-(--text-muted)">{tier.description}</p>
+            <p className="text-[11px] text-(--text-muted)">{t(tier.description)}</p>
           </div>
         </div>
 
@@ -194,13 +195,13 @@ function PlanCard({
               {tier.price}
             </span>
             {tier.priceMonthly && (
-              <span className="text-xs text-(--text-muted) pb-0.5">/mo</span>
+              <span className="text-xs text-(--text-muted) pb-0.5">{t('billing.perMonth')}</span>
             )}
           </div>
           {tier.priceMonthly && (
             <p className="text-[11px] text-(--text-muted) mt-0.5 flex items-center gap-1">
               <Shield size={9} />
-              14-day free trial
+              {t('billing.freeTrialDays')}
             </p>
           )}
         </div>
@@ -218,7 +219,7 @@ function PlanCard({
               >
                 <Check size={8} style={{ color: tier.accentFrom }} />
               </div>
-              <span className="text-(--text-secondary)">{feature}</span>
+              <span className="text-(--text-secondary)">{t(feature)}</span>
             </li>
           ))}
         </ul>
@@ -255,12 +256,12 @@ function PlanCard({
           ) : isCurrent ? (
             <>
               <Check size={12} />
-              {tier.buttonText}
+              {t(tier.buttonText)}
             </>
           ) : (
             <>
               <Sparkles size={12} />
-              {tier.buttonText}
+              {t(tier.buttonText)}
               <ArrowRight
                 size={12}
                 className="group-hover/btn:translate-x-0.5 transition-transform"
@@ -336,7 +337,7 @@ export function UpgradeModal({
         {/* Footer */}
         <div className="px-6 pb-5 flex items-center justify-center gap-2 text-xs text-(--text-muted)">
           <Shield size={11} />
-          Payments secured by Stripe · Cancel anytime · GDPR compliant
+          {t('billing.footerSecurity')}
         </div>
       </DialogContent>
     </Dialog>

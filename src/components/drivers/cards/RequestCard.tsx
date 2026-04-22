@@ -5,11 +5,13 @@
 'use client';
 
 import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car, Eye, Star, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, type Locale } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 
 interface RequestCardProps {
   request: {
@@ -47,6 +49,23 @@ export const RequestCard = memo(function RequestCard({
   onViewDetails,
   onRate,
 }: RequestCardProps) {
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
+
+  const statusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: t('driver.status.pending', 'Pending'),
+      approved: t('driver.status.approved', 'Approved'),
+      completed: t('driver.status.completed', 'Completed'),
+      cancelled: t('driver.status.cancelled', 'Cancelled'),
+    };
+    return labels[status] || t(`driver.status.${status}`, status);
+  };
+
   return (
     <div className="p-4 rounded-xl border border-(--border) bg-(--card) hover:border-(--primary)/30 transition-all duration-300 hover:shadow-lg hover:translate-x-1">
       <div className="flex items-start justify-between gap-4">
@@ -70,13 +89,13 @@ export const RequestCard = memo(function RequestCard({
                 {request.tripInfo?.from} → {request.tripInfo?.to}
               </p>
               <Badge variant={badgeVariants[request.status] || 'outline'} className="text-xs">
-                {request.status}
+                {statusLabel(request.status)}
               </Badge>
             </div>
             {request.startTime && (
               <p className="text-xs text-(--text-muted) flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {format(new Date(request.startTime), 'MMM dd, HH:mm')}
+                {format(new Date(request.startTime), 'MMM dd, HH:mm', { locale: dateFnsLocale })}
               </p>
             )}
             {request.assignedDriver && (

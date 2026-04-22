@@ -110,7 +110,7 @@ export default function JoinRequestsPage() {
       });
       toast.success(t('joinRequestsPage.requestApproved'));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('joinRequestsPage.failedToApprove'));
+      toast.error(e instanceof Error ? t('joinRequestsPage.error', { defaultValue: e.message }) : t('joinRequestsPage.failedToApprove'));
     } finally {
       setApproving(null);
     }
@@ -125,7 +125,7 @@ export default function JoinRequestsPage() {
       setRejectingId(null);
       setRejectReason('');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('joinRequestsPage.failedToReject'));
+      toast.error(e instanceof Error ? t('joinRequestsPage.error', { defaultValue: e.message }) : t('joinRequestsPage.failedToReject'));
     } finally {
       setRejecting(null);
     }
@@ -139,7 +139,7 @@ export default function JoinRequestsPage() {
       const link = `${window.location.origin}/register?invite=${result.token}`;
       setInviteLink(link);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : t('joinRequestsPage.failedToGenerateLink'));
+      toast.error(e instanceof Error ? t('joinRequestsPage.error', { defaultValue: e.message }) : t('joinRequestsPage.failedToGenerateLink'));
     } finally {
       setGeneratingLink(false);
     }

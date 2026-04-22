@@ -268,13 +268,13 @@ function DayCell({
               </span>
             </div>
           ))}
-          {totalItems > 2 && (
-            <span
-              className={`text-[9px] pl-1 ${isSelected ? 'text-white/80' : 'text-(--text-muted)'}`}
-            >
-              +{totalItems - 2} more
-            </span>
-          )}
+            {totalItems > 2 && (
+              <span
+                className={`text-[9px] pl-1 ${isSelected ? 'text-white/80' : 'text-(--text-muted)'}`}
+              >
+                +{totalItems - 2} {t('calendar.more', 'more')}
+              </span>
+            )}
         </div>
       )}
     </button>
@@ -687,7 +687,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                   className="w-3 h-3 rounded-full shrink-0"
                   style={{ background: GOOGLE_EVENT_COLOR }}
                 />
-                <span className="text-xs text-(--text-muted)">Google Calendar</span>
+                <span className="text-xs text-(--text-muted)">{t('calendar.googleCalendar', 'Google Calendar')}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -757,7 +757,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-1">
                             <p className="text-xs font-semibold text-(--text-primary) truncate">
-                              {leave.userName ?? 'Unknown'}
+                              {leave.userName ?? t('calendar.unknown', 'Unknown')}
                             </p>
                             <StatusIcon status={leave.status as LeaveStatus} />
                           </div>
@@ -826,7 +826,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                             </p>
                           )}
                           {!evt.startTime && (
-                            <p className="text-[10px] text-(--text-muted) mt-0.5">All day</p>
+                            <p className="text-[10px] text-(--text-muted) mt-0.5">{t('calendar.allDay', 'All day')}</p>
                           )}
                           {evt.location && (
                             <p className="text-[10px] text-(--text-muted) mt-0.5 truncate">
@@ -839,7 +839,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                               style={{ background: GOOGLE_EVENT_COLOR }}
                             />
                             <span className="text-[10px] text-(--text-secondary)">
-                              Google Calendar
+                              {t('calendar.googleCalendar', 'Google Calendar')}
                             </span>
                           </div>
                         </div>
@@ -968,14 +968,14 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     </Avatar>
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-(--text-primary) truncate">
-                        {l.userName ?? 'Unknown'}
+                        {l.userName ?? t('calendar.unknown', 'Unknown')}
                       </p>
                       <p className="text-[10px] text-(--text-muted)">
                         {getLeaveTypeLabel(l.type as LeaveType, t)}
                       </p>
                     </div>
                     <Badge className="ml-auto text-[9px] h-4 px-1.5 shrink-0" variant="success">
-                      away
+                      {t('calendar.away', 'away')}
                     </Badge>
                   </div>
                 ))
@@ -1058,7 +1058,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold leading-tight drop-shadow-md">
-                        {selectedLeave.userName ?? 'Unknown'}
+                        {selectedLeave.userName ?? t('calendar.unknown', 'Unknown')}
                       </h3>
                       <p className="text-sm mt-0.5 drop-shadow">
                         {selectedLeave.userDepartment ?? ''}
@@ -1217,7 +1217,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="absolute inset-0 top-16 bg-black/60 backdrop-blur-md"
               onClick={() => setSelectedDriverEvent(null)}
             />
             <motion.div
@@ -1225,7 +1225,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Hero Header */}
@@ -1267,7 +1267,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold leading-tight">
-                        {selectedDriverEvent.driverName ?? 'Unknown'}
+                        {selectedDriverEvent.driverName ?? t('calendar.unknown', 'Unknown')}
                       </h3>
                       <p className="text-sm mt-0.5">
                         {selectedDriverEvent.driverVehicle?.model || ''}
@@ -1549,7 +1549,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     <h3 className="text-lg font-bold text-(--text-primary) truncate">
                       {selectedGoogleEvent.title}
                     </h3>
-                    <p className="text-xs text-(--text-muted)">Google Calendar</p>
+                    <p className="text-xs text-(--text-muted)">{t('calendar.googleCalendar', 'Google Calendar')}</p>
                   </div>
                 </div>
                 <button

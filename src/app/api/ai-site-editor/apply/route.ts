@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { requireAdmin } from '@/lib/api-utils';
 
 // ─── Whitelist / Blacklist (дублируем для изоляции endpoint) ──────────────────
 
@@ -39,6 +40,9 @@ const BACKUP_DIR = () => path.join(process.cwd(), '.ai-editor-backups');
 
 export async function GET(_req: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+
     const backupDir = BACKUP_DIR();
 
     if (!fs.existsSync(backupDir)) {
@@ -74,6 +78,9 @@ export async function GET(_req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+
     const body = await req.json();
     const { filePath, content, description } = body as {
       filePath: string;
@@ -141,6 +148,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+
     const body = await req.json();
     const { filePath, timestamp } = body as { filePath: string; timestamp: number };
 

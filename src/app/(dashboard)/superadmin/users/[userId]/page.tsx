@@ -41,7 +41,7 @@ export default function UserProfile360Page() {
 
   const { data } = useUser360(userId as string);
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (!data) {
     return (
@@ -314,7 +314,7 @@ export default function UserProfile360Page() {
                               </Badge>
                             </div>
                             <p className="text-sm mb-1" style={{ color: 'var(--text-primary)' }}>
-                              {leave.startDate} → {leave.endDate} ({leave.days} дн.)
+                              {leave.startDate} → {leave.endDate} ({leave.days} {t('superadmin.users.days') || 'days'})
                             </p>
                             <p className="text-sm text-muted-foreground">{leave.reason}</p>
                             {leave.reviewComment && (
@@ -454,7 +454,7 @@ export default function UserProfile360Page() {
                             )}
                           </div>
                           <div className="text-right text-xs text-muted-foreground">
-                            {new Date(req.startTime).toLocaleString()}
+                            {new Date(req.startTime).toLocaleString(i18n.language)}
                           </div>
                         </div>
                       </div>
@@ -585,9 +585,9 @@ export default function UserProfile360Page() {
                           </span>
                           <Badge variant="outline">{attempt.authMethod || 'password'}</Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          <div>IP: {attempt.ipAddress || 'N/A'}</div>
-                          <div>Устройство: {attempt.userAgent || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            <div>IP: {attempt.ipAddress || t('superadmin.users.na') || 'N/A'}</div>
+                            <div>{t('superadmin.users.device')}: {attempt.userAgent || t('superadmin.users.na') || 'N/A'}</div>
                           {attempt.riskScore && (
                             <div>
                               {t('superadmin.users.risk')}: {' '}
@@ -603,7 +603,7 @@ export default function UserProfile360Page() {
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(attempt.createdAt).toLocaleString()}
+                        {new Date(attempt.createdAt).toLocaleString(i18n.language)}
                       </div>
                     </div>
                   ))}

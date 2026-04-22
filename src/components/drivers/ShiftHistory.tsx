@@ -7,14 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { History, Clock, TrendingUp, CheckCircle, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy, type Locale } from 'date-fns/locale';
 
 interface ShiftHistoryProps {
   driverId: string;
 }
 
 export function ShiftHistory({ driverId }: ShiftHistoryProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: shifts } = useDriverShifts(undefined, driverId);
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   if (!shifts) return null;
 
@@ -22,7 +29,7 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
     if (!hours) return '-';
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
-    return `${h}h ${m}m`;
+    return `${h}${t('driver.shift.hourUnit', 'h')} ${m}${t('driver.shift.minUnit', 'm')}`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -80,11 +87,11 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
                     </div>
                     <div>
                       <p className="font-semibold text-sm sm:text-base">
-                        {format(shift.startTime, 'MMM dd, yyyy')}
+                        {format(shift.startTime, 'MMM dd, yyyy', { locale: dateFnsLocale })}
                       </p>
                       <p className="text-xs sm:text-sm text-muted-foreground">
-                        {format(shift.startTime, 'HH:mm')} -{' '}
-                        {shift.endTime ? format(shift.endTime, 'HH:mm') : 'Now'}
+                        {format(shift.startTime, 'HH:mm', { locale: dateFnsLocale })} -{' '}
+                        {shift.endTime ? format(shift.endTime, 'HH:mm', { locale: dateFnsLocale }) : t('driver.shift.now', 'Now')}
                       </p>
                     </div>
                   </div>
@@ -111,7 +118,7 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
                       {t('driver.shift.distance', 'Distance')}
                     </p>
                     <p className="font-medium text-xs sm:text-sm">
-                      {(shift.totalDistance || 0).toFixed(1)} km
+                      {(shift.totalDistance || 0).toFixed(1)} {t('driver.shift.kmUnit', 'km')}
                     </p>
                   </div>
                   {shift.overtimeHours && shift.overtimeHours > 0 && (
@@ -120,7 +127,7 @@ export function ShiftHistory({ driverId }: ShiftHistoryProps) {
                         {t('driver.shift.overtime', 'Overtime')}
                       </p>
                       <p className="font-medium text-orange-600 text-xs sm:text-sm">
-                        {shift.overtimeHours.toFixed(1)}h
+                        {shift.overtimeHours.toFixed(1)}{t('driver.shift.hourUnit', 'h')}
                       </p>
                     </div>
                   )}

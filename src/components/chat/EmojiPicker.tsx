@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const EMOJI_GROUPS = [
   {
-    label: 'Smileys',
+    labelKey: 'smileys',
     emojis: [
       '😀',
       '😃',
@@ -111,7 +112,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Gestures',
+    labelKey: 'gestures',
     emojis: [
       '👋',
       '🤚',
@@ -169,7 +170,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'People',
+    labelKey: 'people',
     emojis: [
       '👶',
       '🧒',
@@ -239,7 +240,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Hearts',
+    labelKey: 'hearts',
     emojis: [
       '❤️',
       '🧡',
@@ -302,7 +303,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Nature',
+    labelKey: 'nature',
     emojis: [
       '🐶',
       '🐱',
@@ -416,7 +417,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Food',
+    labelKey: 'food',
     emojis: [
       '🍎',
       '🍐',
@@ -531,7 +532,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Activity',
+    labelKey: 'activity',
     emojis: [
       '⚽',
       '🏀',
@@ -620,7 +621,7 @@ const EMOJI_GROUPS = [
     ],
   },
   {
-    label: 'Objects',
+    labelKey: 'objects',
     emojis: [
       '📱',
       '💻',
@@ -694,6 +695,7 @@ interface Props {
 }
 
 export default function EmojiPicker({ onSelect, onClose }: Props) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -714,12 +716,12 @@ export default function EmojiPicker({ onSelect, onClose }: Props) {
     >
       <div className="max-h-64 overflow-y-auto p-2">
         {EMOJI_GROUPS.map((group) => (
-          <div key={group.label} className="mb-2">
+          <div key={group.labelKey} className="mb-2">
             <p
               className="sm:text-[10px] text-xs font-semibold px-1 mb-1"
               style={{ color: 'var(--text-disabled)' }}
             >
-              {group.label}
+              {t(`chat.emojiPicker.${group.labelKey}`, group.labelKey)}
             </p>
             <div className="flex flex-wrap gap-0.5">
               {group.emojis.map((emoji) => (

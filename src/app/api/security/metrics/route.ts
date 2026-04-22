@@ -1,37 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { supabase: supabaseService } = auth;
+
     const { searchParams } = new URL(request.url);
     const hours = parseInt(searchParams.get('hours') || '24');
 
     const now = Date.now();
     const since = now - hours * 60 * 60 * 1000;
 
-    // Get total logins
-    const { count: total } = await supabase
+    const { count: total } = await supabaseService
       .from('login_attempts')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', since);
 
-    // Get failed logins
-    const { count: failed } = await supabase
+    const { count: failed } = await supabaseService
       .from('login_attempts')
       .select('*', { count: 'exact', head: true })
       .eq('success', false)
       .gte('created_at', since);
 
-    // Get high risk logins
-    const { data: highRiskData } = await supabase
+    const { data: highRiskData } = await supabaseService
       .from('login_attempts')
       .select('risk_score')
       .gte('created_at', since)
       .gte('risk_score', 60);
 
-    // Get suspicious logins
-    const { data: suspicious } = await supabase
+    const { data: suspicious } = await supabaseService
       .from('login_attempts')
       .select('email, success, method, ip, risk_score, risk_factors, blocked_reason, created_at')
       .gte('created_at', since)

@@ -60,7 +60,8 @@ export default function DashboardPage() {
   // Block rendering if user has no organization (needs onboarding)
   // NOTE: Providers.tsx already handles this check globally, so we just return the component
   // The global ShieldLoader in Providers will show during loading/onboarding
-  if (user && !user.organizationId) {
+  // Superadmin is exempt from this check
+  if (user && !user.organizationId && user.role !== 'superadmin') {
     return null; // Providers.tsx will show ShieldLoader
   }
 

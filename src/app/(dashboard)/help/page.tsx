@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateTicketWizard } from '@/components/help/CreateTicketWizard';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useMyOrganization } from '@/hooks/useOrganizations';
+import { useMyTickets, useTicketStats } from '@/hooks/useTickets';
 
 export default function HelpSupportPage() {
   const { t } = useTranslation();
@@ -39,12 +40,13 @@ export default function HelpSupportPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showPlanLimit, setShowPlanLimit] = useState(false);
 
-  // TODO: Replace with React Query once tickets API is implemented
-  const myTickets: any[] | undefined = [];
-  const stats: any = undefined;
-
   // Get organization plan
   const { data: userOrg } = useMyOrganization(!!user?.id);
+  const organizationId = user?.organizationId || '';
+  
+  // Fetch user's tickets and stats
+  const { data: myTickets = [] } = useMyTickets(user?.id || '', organizationId);
+  const { data: stats } = useTicketStats();
 
   // Check plan limitations
   const canCreateTickets = userOrg?.plan === 'professional' || userOrg?.plan === 'enterprise';
@@ -313,7 +315,22 @@ function StatCard({
 
 // Ticket List Component
 function TicketList({ tickets, emptyMessage }: { tickets: any[]; emptyMessage: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const statusLabels: Record<string, string> = {
+    open: t('ticketStatus.open', 'Open'),
+    'in-progress': t('ticketStatus.inProgress', 'In Progress'),
+    pending: t('ticketStatus.pending', 'Pending'),
+    resolved: t('ticketStatus.resolved', 'Resolved'),
+    closed: t('ticketStatus.closed', 'Closed'),
+  };
+
+  const priorityLabels: Record<string, string> = {
+    low: t('priority.low', 'Low'),
+    medium: t('priority.medium', 'Medium'),
+    high: t('priority.high', 'High'),
+    critical: t('priority.critical', 'Critical'),
+  };
 
   if (tickets.length === 0) {
     return (
@@ -343,7 +360,7 @@ function TicketList({ tickets, emptyMessage }: { tickets: any[]; emptyMessage: s
                     }
                     className="text-xs"
                   >
-                    {ticket.status}
+                    {statusLabels[ticket.status] || ticket.status}
                   </Badge>
                   <Badge
                     variant={
@@ -355,7 +372,7 @@ function TicketList({ tickets, emptyMessage }: { tickets: any[]; emptyMessage: s
                     }
                     className="text-xs"
                   >
-                    {ticket.priority}
+                    {priorityLabels[ticket.priority] || ticket.priority}
                   </Badge>
                 </div>
                 <p
@@ -370,7 +387,11 @@ function TicketList({ tickets, emptyMessage }: { tickets: any[]; emptyMessage: s
                 <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2 md:mt-3 text-[10px] md:text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    {new Date(ticket.createdAt).toLocaleDateString()}
+                    {new Date(ticket.createdAt).toLocaleDateString(i18n.language || 'en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
                   </span>
                   {ticket.assigneeName && (
                     <span className="truncate">👤 {ticket.assigneeName}</span>

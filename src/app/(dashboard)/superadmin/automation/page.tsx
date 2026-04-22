@@ -54,7 +54,7 @@ interface Task {
 }
 
 export default function AutomationPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [isRunning, setIsRunning] = useState(false);
 
@@ -72,7 +72,7 @@ export default function AutomationPage() {
     try {
       await runAutomation.mutateAsync();
     } catch (_error) {
-      toast.error(t('automation.runError') || 'Failed to run automation');
+      toast.error(t('superadmin.automation.runError') || 'Failed to run automation');
     } finally {
       setIsRunning(false);
     }
@@ -124,8 +124,8 @@ export default function AutomationPage() {
           >
             {isRunning ? <ShieldLoader size="xs" variant="inline" /> : <Play className="w-4 h-4" />}
             {isRunning
-              ? t('automation.running') || 'Running...'
-              : t('automation.runNow') || 'Run Now'}
+              ? t('superadmin.automation.running') || 'Running...'
+              : t('superadmin.automation.runNow') || 'Run Now'}
           </Button>
         </div>
       </div>
@@ -133,28 +133,28 @@ export default function AutomationPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title={t('automation.stats.totalTasks') || 'Total Tasks'}
+          title={t('superadmin.automation.stats.totalTasks') || 'Total Tasks'}
           value={stats?.totalTasks ?? 0}
           icon={<Activity className="w-5 h-5" />}
           color="blue"
           trend={stats?.tasksTrend ?? 0}
         />
         <StatsCard
-          title={t('automation.stats.completed') || 'Completed'}
+          title={t('superadmin.automation.stats.completed') || 'Completed'}
           value={stats?.completedTasks ?? 0}
           icon={<CheckCircle className="w-5 h-5" />}
           color="green"
           trend={stats?.completedTrend ?? 0}
         />
         <StatsCard
-          title={t('automation.stats.pending') || 'Pending'}
+          title={t('superadmin.automation.stats.pending') || 'Pending'}
           value={stats?.pendingTasks ?? 0}
           icon={<Clock className="w-5 h-5" />}
           color="yellow"
           trend={stats?.pendingTrend ?? 0}
         />
         <StatsCard
-          title={t('automation.stats.failed') || 'Failed'}
+          title={t('superadmin.automation.stats.failed') || 'Failed'}
           value={stats?.failedTasks ?? 0}
           icon={<AlertTriangle className="w-5 h-5" />}
           color="red"
@@ -167,7 +167,7 @@ export default function AutomationPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            {t('automation.activeWorkflows') || 'Active Workflows'}
+            {t('superadmin.automation.activeWorkflows') || 'Active Workflows'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -207,7 +207,7 @@ export default function AutomationPage() {
             </div>
           ) : (
             <p className="text-sm text-(--text-muted) text-center py-4">
-              {t('automation.noWorkflows') || 'No active workflows'}
+              {t('superadmin.automation.noWorkflows') || 'No active workflows'}
             </p>
           )}
         </CardContent>
@@ -218,7 +218,7 @@ export default function AutomationPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-500" />
-            {t('automation.recentTasks') || 'Recent Tasks'}
+            {t('superadmin.automation.recentTasks') || 'Recent Tasks'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -234,7 +234,7 @@ export default function AutomationPage() {
                     <div>
                       <p className="text-sm font-medium text-(--text-primary)">{task.name}</p>
                       <p className="text-xs text-(--text-muted)">
-                        {new Date(task.created_at).toLocaleString()}
+                        {new Date(task.created_at).toLocaleString(i18n.language)}
                       </p>
                     </div>
                   </div>
@@ -254,7 +254,7 @@ export default function AutomationPage() {
             </div>
           ) : (
             <p className="text-sm text-(--text-muted) text-center py-4">
-              {t('automation.noTasks') || 'No recent tasks'}
+              {t('superadmin.automation.noTasks') || 'No recent tasks'}
             </p>
           )}
         </CardContent>

@@ -77,7 +77,7 @@ export default function ContactClient() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to submit inquiry');
+      if (!res.ok) throw new Error(t('contact.failedToSubmit', 'Failed to submit inquiry'));
       setSent(true);
     } catch (_e) {
       setError(t('errors.somethingWentWrong'));
@@ -445,7 +445,7 @@ export default function ContactClient() {
                       <Field label={t('contact.email') + ' *'} icon={<Mail size={14} />}>
                         <input
                           type="email"
-                          placeholder="john@company.com"
+                          placeholder={t('placeholders.emailExample')}
                           required
                           value={form.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}

@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
                         autoFocus
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@company.com"
+                        placeholder={t('auth.emailPlaceholder', 'you@company.com')}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                         style={{
                           background: 'var(--input)',

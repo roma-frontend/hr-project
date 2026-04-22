@@ -327,9 +327,9 @@ export default function SupportTicketsClient() {
       {selectedTicket && (
         <TicketDetailDialog
           ticketId={selectedTicket}
-          open={!!selectedTicket}
-          onOpenChange={(open) => !open && setSelectedTicket(null)}
-          userId={user.id}
+          onClose={() => setSelectedTicket(null)}
+          getPriorityColor={getPriorityColor}
+          getStatusColor={getStatusColor}
         />
       )}
     </div>
@@ -381,7 +381,7 @@ function TicketRow({
   getPriorityColor: (priority: string) => string;
   getStatusColor: (status: string) => string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const formatDate = (date: number) => {
     const now = new Date();
     const ticketDate = new Date(date);
@@ -390,7 +390,7 @@ function TicketRow({
     if (diffDays === 0) return t('superadmin.support.dateToday');
     if (diffDays === 1) return t('superadmin.support.dateYesterday');
     if (diffDays < 7) return t('superadmin.support.daysAgo', { count: diffDays });
-    return ticketDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    return ticketDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
   };
 
   return (
@@ -480,5 +480,241 @@ function TicketRow({
         </div>
       </div>
     </div>
+  );
+}
+
+function TicketDetailDialog({
+  ticketId,
+  onClose,
+  getPriorityColor,
+  getStatusColor,
+}: {
+  ticketId: string;
+  onClose: () => void;
+  getPriorityColor: (priority: string) => string;
+  getStatusColor: (status: string) => string;
+}) {
+  const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const [comment, setComment] = useState('');
+  const [isInternal, setIsInternal] = useState(false);
+  const [newStatus, setNewStatus] = useState<string>('');
+  const [newAssignee, setNewAssignee] = useState<string>('');
+
+  const { data: ticket } = useTicketById(ticketId);
+  const { data: chatStatus } = useTicketChatStatus(ticketId);
+  const addComment = useAddTicketComment();
+  const updateStatus = useUpdateTicketStatus();
+  const assignTicket = useAssignTicket();
+  const resolveTicket = useResolveTicket();
+  const createChat = useCreateTicketChat();
+  const activateChat = useActivateTicketChat();
+
+  if (!ticket) {
+    return (
+      <Dialog open={true} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-center py-8">
+            <ShieldLoader size="lg" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const handleAddComment = async () => {
+    if (!comment.trim() || !user?.id) return;
+    try {
+      await addComment.mutateAsync({
+        ticketId,
+        authorId: user.id,
+        message: comment.trim(),
+        isInternal,
+      });
+      setComment('');
+      toast.success(t('support.commentAdded', 'Comment added'));
+    } catch {
+      toast.error(t('support.commentFailed', 'Failed to add comment'));
+    }
+  };
+
+  const handleStatusChange = async () => {
+    if (!newStatus || !user?.id) return;
+    try {
+      await updateStatus.mutateAsync({ ticketId, status: newStatus, userId: user.id });
+      toast.success(t('support.statusUpdated', 'Status updated'));
+      setNewStatus('');
+    } catch {
+      toast.error(t('support.statusUpdateFailed', 'Failed to update status'));
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!newAssignee) return;
+    try {
+      await assignTicket.mutateAsync({ ticketId, assignedTo: newAssignee });
+      toast.success(t('support.ticketAssigned', 'Ticket assigned'));
+      setNewAssignee('');
+    } catch {
+      toast.error(t('support.assignFailed', 'Failed to assign ticket'));
+    }
+  };
+
+  const handleResolve = async () => {
+    if (!user?.id) return;
+    try {
+      await resolveTicket.mutateAsync({
+        ticketId,
+        resolution: comment.trim() || t('support.resolved', 'Resolved'),
+        userId: user.id,
+      });
+      toast.success(t('support.ticketResolved', 'Ticket resolved'));
+    } catch {
+      toast.error(t('support.resolveFailed', 'Failed to resolve ticket'));
+    }
+  };
+
+  const handleCreateChat = async () => {
+    if (!user?.id) return;
+    try {
+      await createChat.mutateAsync({ ticketId, superadminId: user.id });
+      toast.success(t('support.chatCreated', 'Support chat created'));
+    } catch {
+      toast.error(t('support.chatCreateFailed', 'Failed to create chat'));
+    }
+  };
+
+  const handleActivateChat = async () => {
+    if (!user?.id) return;
+    try {
+      await activateChat.mutateAsync({
+        ticketId,
+        superadminId: user.id,
+        message: comment.trim() || t('support.chatActivated', 'Chat activated'),
+      });
+      toast.success(t('support.chatActivated', 'Chat activated'));
+      setComment('');
+    } catch {
+      toast.error(t('support.chatActivateFailed', 'Failed to activate chat'));
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-sm">{ticket.ticketNumber}</span>
+            <DialogTitle>{ticket.title}</DialogTitle>
+          </div>
+          <DialogDescription>{ticket.description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Ticket Info */}
+          <div className="flex flex-wrap gap-2">
+            <Badge className={getStatusColor(ticket.status)}>{ticket.status}</Badge>
+            <Badge className={getPriorityColor(ticket.priority)}>{ticket.priority}</Badge>
+            {ticket.category && (
+              <Badge variant="outline">{ticket.category}</Badge>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t('support.updateStatus', 'Update Status')}</Label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('support.selectStatus', 'Select status')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">{t('support.statusOpen', 'Open')}</SelectItem>
+                    <SelectItem value="in_progress">{t('support.statusInProgress', 'In Progress')}</SelectItem>
+                    <SelectItem value="waiting_customer">{t('support.statusWaiting', 'Waiting Customer')}</SelectItem>
+                    <SelectItem value="resolved">{t('support.statusResolved', 'Resolved')}</SelectItem>
+                    <SelectItem value="closed">{t('support.statusClosed', 'Closed')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleStatusChange} disabled={!newStatus} size="sm" className="w-full">
+                  {t('support.update', 'Update')}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('support.assignTo', 'Assign To')}</Label>
+                <Input
+                  value={newAssignee}
+                  onChange={(e) => setNewAssignee(e.target.value)}
+                  placeholder={t('support.userId', 'User ID')}
+                />
+                <Button onClick={handleAssign} disabled={!newAssignee} size="sm" className="w-full">
+                  {t('support.assign', 'Assign')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Chat Actions */}
+            {chatStatus && (
+              <div className="space-y-2">
+                <Label>{t('support.chatActions', 'Chat Actions')}</Label>
+                <div className="flex gap-2">
+                  {!chatStatus.hasChat ? (
+                    <Button onClick={handleCreateChat} size="sm">
+                      {t('support.createChat', 'Create Chat')}
+                    </Button>
+                  ) : !chatStatus.chatActivated ? (
+                    <Button onClick={handleActivateChat} size="sm">
+                      {t('support.activateChat', 'Activate Chat')}
+                    </Button>
+                  ) : (
+                    <Badge className="bg-green-500/10 text-green-600">
+                      {t('support.chatActive', 'Chat Active')}
+                    </Badge>
+                  )}
+                  <Button onClick={handleResolve} variant="outline" size="sm">
+                    {t('support.resolveTicket', 'Resolve Ticket')}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Comment */}
+            <div className="space-y-2">
+              <Label>{t('support.addComment', 'Add Comment')}</Label>
+              <Textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={t('support.commentPlaceholder', 'Type your comment...')}
+                rows={3}
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="internal"
+                  checked={isInternal}
+                  onChange={(e) => setIsInternal(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="internal" className="text-sm">
+                  {t('support.internalComment', 'Internal comment')}
+                </Label>
+              </div>
+              <Button onClick={handleAddComment} disabled={!comment.trim()} size="sm" className="w-full">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                {t('support.addComment', 'Add Comment')}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t('common.close', 'Close')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

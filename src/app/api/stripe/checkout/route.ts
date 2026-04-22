@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { isValidEmail } from '@/lib/stripe-config';
+import { requireAuth } from '@/lib/api-utils';
+
+async function getAuthUser() {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  return auth.user;
+}
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -8,13 +15,16 @@ function getStripe(): Stripe | null {
   return new Stripe(key, { apiVersion: '2026-02-25.clover' });
 }
 
-const PLANS: Record<string, { priceId: string; name: string }> = {
-  starter: { priceId: process.env.STRIPE_PRICE_STARTER!, name: 'Starter' },
-  professional: { priceId: process.env.STRIPE_PRICE_PROFESSIONAL!, name: 'Professional' },
-  enterprise: { priceId: process.env.STRIPE_PRICE_ENTERPRISE!, name: 'Enterprise' },
+const PLANS: Record<string, { priceId: string | undefined; name: string }> = {
+  starter: { priceId: process.env.STRIPE_PRICE_STARTER, name: 'Starter' },
+  professional: { priceId: process.env.STRIPE_PRICE_PROFESSIONAL, name: 'Professional' },
+  enterprise: { priceId: process.env.STRIPE_PRICE_ENTERPRISE, name: 'Enterprise' },
 };
 
 export async function POST(req: NextRequest) {
+  const authUser = await getAuthUser();
+  if (authUser instanceof NextResponse) return authUser;
+
   const stripe = getStripe();
   if (!stripe) {
     return NextResponse.json(
@@ -65,11 +75,11 @@ export async function POST(req: NextRequest) {
       billing_address_collection: 'auto',
       subscription_data: {
         trial_period_days: 14,
-        metadata: { plan, organizationId: organizationId ?? '' },
+        metadata: { plan, organization_id: organizationId ?? '' },
       },
-      success_url: `${origin}/checkout/success?sessionid={CHECKOUT_SESSIONid}&plan=${plan}`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
       cancel_url: `${origin}/#pricing`,
-      metadata: { plan, organizationId: organizationId ?? '' },
+      metadata: { plan, organization_id: organizationId ?? '' },
     });
 
     return NextResponse.json({ url: session.url });

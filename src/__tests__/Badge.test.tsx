@@ -62,34 +62,34 @@ describe('Badge', () => {
       });
     });
 
-    it('should apply bg-primary for default variant', () => {
+    it('should apply bg-(--badge-primary-bg) for default variant', () => {
       const { container } = render(<Badge variant="default">Test</Badge>);
       const badge = container.firstChild as HTMLElement;
-      expect(badge.className).toContain('bg-(--primary)');
+      expect(badge.className).toContain('bg-(--badge-primary-bg)');
     });
 
-    it('should apply bg-success for success variant', () => {
+    it('should apply bg-(--badge-success-bg) for success variant', () => {
       const { container } = render(<Badge variant="success">Success</Badge>);
       const badge = container.firstChild as HTMLElement;
-      expect(badge.className).toContain('bg-[var(--success)]');
+      expect(badge.className).toContain('bg-(--badge-success-bg)');
     });
 
-    it('should apply bg-destructive for destructive variant', () => {
+    it('should apply bg-(--badge-danger-bg) for destructive variant', () => {
       const { container } = render(<Badge variant="destructive">Danger</Badge>);
       const badge = container.firstChild as HTMLElement;
-      expect(badge.className).toContain('bg-[var(--destructive)]');
+      expect(badge.className).toContain('bg-(--badge-danger-bg)');
     });
 
-    it('should apply bg-warning for warning variant', () => {
+    it('should apply bg-(--badge-warning-bg) for warning variant', () => {
       const { container } = render(<Badge variant="warning">Warning</Badge>);
       const badge = container.firstChild as HTMLElement;
-      expect(badge.className).toContain('bg-[var(--warning)]');
+      expect(badge.className).toContain('bg-(--badge-warning-bg)');
     });
 
-    it('should apply bg-info for info variant', () => {
+    it('should apply bg-(--badge-info-bg) for info variant', () => {
       const { container } = render(<Badge variant="info">Info</Badge>);
       const badge = container.firstChild as HTMLElement;
-      expect(badge.className).toContain('bg-[var(--info)]');
+      expect(badge.className).toContain('bg-(--badge-info-bg)');
     });
 
     it('should have border-transparent for default variant', () => {
@@ -186,7 +186,7 @@ describe('Badge', () => {
 
     it('should apply variant classes', () => {
       const result = badgeVariants({ variant: 'success' });
-      expect(result).toContain('bg-[var(--success)]');
+      expect(result).toContain('bg-(--badge-success-bg)');
     });
 
     it('should append custom className', () => {
@@ -200,7 +200,7 @@ describe('Badge', () => {
       render(<Badge variant="success">Approved</Badge>);
       const badge = screen.getByText('Approved');
       expect(badge).toBeInTheDocument();
-      expect(badge.className).toContain('bg-[var(--success)]');
+      expect(badge.className).toContain('bg-(--badge-success-bg)');
     });
 
     it('should render as a count badge', () => {

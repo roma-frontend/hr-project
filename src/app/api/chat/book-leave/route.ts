@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: Request) {
   try {
-    const { userId, organizationId, type, startDate, endDate, days, reason } = await req.json();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const { organizationId, type, startDate, endDate, days, reason } = await req.json();
+    const userId = auth.user.id;
 
     if (!userId || !organizationId || !type || !startDate || !endDate || !days || !reason) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -25,7 +30,22 @@ export async function POST(req: Request) {
     if (existingLeaves && existingLeaves.length > 0) {
       const personalConflict = existingLeaves[0];
       if (personalConflict) {
-        const conflictEnd = new Date(personalConflict.end_date);
+        const conflictEndDate = personalConflict.end_date;
+        if (!conflictEndDate) {
+          return NextResponse.json({
+            success: false,
+            conflict: true,
+            message: `You already have a ${personalConflict.type} leave with status: "${personalConflict.status}".`,
+          });
+        }
+        const conflictEnd = new Date(conflictEndDate);
+        if (isNaN(conflictEnd.getTime())) {
+          return NextResponse.json({
+            success: false,
+            conflict: true,
+            message: `You already have a ${personalConflict.type} leave with status: "${personalConflict.status}".`,
+          });
+        }
         conflictEnd.setDate(conflictEnd.getDate() + 1);
         const suggestedStart = conflictEnd.toISOString().split('T')[0];
         const suggestedEnd = new Date(conflictEnd);
@@ -43,7 +63,7 @@ export async function POST(req: Request) {
     // ═══════════════════════════════════════════════════════════════
     // CHECK LEAVE BALANCE
     // ═══════════════════════════════════════════════════════════════
-    const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+    const { data: user } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -77,20 +97,24 @@ export async function POST(req: Request) {
       .from('leave_requests')
       .insert({
         userid: userId,
-        organizationId,
+        organization_id: organizationId,
         type,
         start_date: startDate,
         end_date: endDate,
-        days,
+        total_days: days,
         reason,
         comment: 'Submitted via AI Assistant',
         status: 'pending',
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    if (!leave) {
+      throw new Error('Failed to create leave request');
     }
 
     return NextResponse.json({

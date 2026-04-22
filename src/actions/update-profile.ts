@@ -2,6 +2,8 @@
 
 import { cookies } from 'next/headers';
 import { signJWT, verifyJWT, type JWTPayload } from '@/lib/jwt';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
+import { createClient } from '@/lib/supabase/server';
 
 export async function updateSessionProfileAction(userId: string, name: string, email: string) {
   try {
@@ -17,7 +19,7 @@ export async function updateSessionProfileAction(userId: string, name: string, e
         '[updateSessionProfileAction] Available cookies:',
         cookieStore.getAll().map((c) => c.name),
       );
-      throw new Error('Not authenticated - no token');
+      throw new Error(serverT('actions.updateProfile.notAuthenticated', 'Not authenticated - no token'));
     }
 
     const payload = await verifyJWT(jwt);
@@ -26,7 +28,7 @@ export async function updateSessionProfileAction(userId: string, name: string, e
 
     if (!payload) {
       console.error('[updateSessionProfileAction] Invalid JWT payload');
-      throw new Error('Invalid token');
+      throw new Error(serverT('actions.updateProfile.invalidToken', 'Invalid token'));
     }
 
     if (payload.userId !== userId) {
@@ -34,7 +36,7 @@ export async function updateSessionProfileAction(userId: string, name: string, e
         payloadUserId: payload.userId,
         requestUserId: userId,
       });
-      throw new Error('Unauthorized - user ID mismatch');
+      throw new Error(serverT('actions.updateProfile.unauthorized', 'Unauthorized - user ID mismatch'));
     }
 
     const newJwt = await signJWT({
@@ -50,6 +52,18 @@ export async function updateSessionProfileAction(userId: string, name: string, e
       employeeType: payload.employeeType,
       avatar: payload.avatar,
     } as JWTPayload);
+
+    // Persist changes to database
+    const supabase = await createClient();
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ name, email })
+      .eq('id', payload.userId);
+
+    if (updateError) {
+      console.error('[updateSessionProfileAction] Database update failed:', updateError.message);
+      throw new Error(serverT('actions.updateProfile.dbUpdateFailed', 'Failed to update profile in database'));
+    }
 
     console.log('[updateSessionProfileAction] New JWT created, length:', newJwt.length);
 

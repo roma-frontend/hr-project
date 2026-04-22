@@ -55,7 +55,7 @@ export default function SuccessClient() {
         className="min-h-screen flex items-center justify-center"
         style={{ background: 'var(--background)' }}
       >
-        <p className="text-white/50">Verifying...</p>
+        <p className="text-white/50">{t('checkout.success.verifying')}</p>
       </div>
     );
   }
@@ -68,8 +68,8 @@ export default function SuccessClient() {
         style={{ background: 'var(--background)' }}
       >
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-red-400 mb-4">Invalid Session</h1>
-          <p className="text-white/50 mb-6">We couldn't verify your payment session.</p>
+          <h1 className="text-3xl font-bold text-red-400 mb-4">{t('checkout.success.invalidSession')}</h1>
+          <p className="text-white/50 mb-6">{t('checkout.success.invalidSessionDesc')}</p>
           <Link href="/#pricing" className="text-blue-400 hover:underline">
             Return to pricing
           </Link>

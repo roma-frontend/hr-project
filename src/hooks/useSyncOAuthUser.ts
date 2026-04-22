@@ -33,9 +33,9 @@ export function useSyncOAuthUser() {
 
         const { data: existingUser } = await supabase
           .from('users')
-          .select('id, email, name, role, employee_type, department, position, avatar_url, is_approved, organizationId')
+          .select('id, email, name, role, employee_type, department, position, avatar_url, is_approved, organization_id')
           .eq('email', session.user.email)
-          .single();
+          .maybeSingle();
 
         if (!existingUser) {
           const { data: newUser, error } = await supabase
@@ -56,10 +56,17 @@ export function useSyncOAuthUser() {
               updated_at: Math.floor(Date.now() / 1000),
             })
             .select()
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('[useSyncOAuthUser] Error creating user:', error);
+            syncingRef.current = false;
+            setIsProcessing(false);
+            return;
+          }
+
+          if (!newUser) {
+            console.error('[useSyncOAuthUser] Failed to create user');
             syncingRef.current = false;
             setIsProcessing(false);
             return;
@@ -74,7 +81,7 @@ export function useSyncOAuthUser() {
             department: newUser.department || undefined,
             position: newUser.position || undefined,
             employeeType: newUser.employee_type || undefined,
-            organizationId: newUser.organizationId || undefined,
+            organizationId: newUser.organization_id || undefined,
             isApproved: newUser.is_approved,
           });
         } else {
@@ -87,7 +94,7 @@ export function useSyncOAuthUser() {
             department: existingUser.department || undefined,
             position: existingUser.position || undefined,
             employeeType: existingUser.employee_type || undefined,
-            organizationId: existingUser.organizationId || undefined,
+            organizationId: existingUser.organization_id || undefined,
             isApproved: existingUser.is_approved,
           });
         }

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface EmergencyDashboardData {
   criticalTickets: {
@@ -44,11 +45,12 @@ interface EmergencyDashboardData {
 }
 
 export function useEmergencyDashboard() {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['superadmin', 'emergencyDashboard'],
     queryFn: async () => {
       const res = await fetch('/api/superadmin/emergency');
-      if (!res.ok) throw new Error('Failed to fetch emergency dashboard');
+      if (!res.ok) throw new Error(t('hooks.emergency.failedToFetchDashboard', 'Failed to fetch emergency dashboard'));
       const data = await res.json();
       return data as EmergencyDashboardData;
     },
@@ -57,6 +59,7 @@ export function useEmergencyDashboard() {
 
 export function useCreateIncident() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async ({
       createdBy,
@@ -86,7 +89,7 @@ export function useCreateIncident() {
           affectedOrgs,
         }),
       });
-      if (!res.ok) throw new Error('Failed to create incident');
+      if (!res.ok) throw new Error(t('hooks.emergency.failedToCreateIncident', 'Failed to create incident'));
       return res.json();
     },
     onSuccess: () => {
@@ -97,6 +100,7 @@ export function useCreateIncident() {
 
 export function useUpdateIncidentStatus() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async ({
       incidentId,
@@ -123,7 +127,7 @@ export function useUpdateIncidentStatus() {
           resolution,
         }),
       });
-      if (!res.ok) throw new Error('Failed to update incident status');
+      if (!res.ok) throw new Error(t('hooks.emergency.failedToUpdateIncidentStatus', 'Failed to update incident status'));
       return res.json();
     },
     onSuccess: () => {

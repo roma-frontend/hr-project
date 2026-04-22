@@ -137,14 +137,14 @@ function Avatar({
 
 // ── Deadline badge ─────────────────────────────────────────────────────────
 function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!deadline) return null;
   const now = Date.now();
   const diff = deadline - now;
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   const overdue = diff < 0 && status !== 'completed' && status !== 'cancelled';
   const soon = diff > 0 && days <= 2 && status !== 'completed';
-  const dateStr = new Date(deadline).toLocaleDateString('en-GB', {
+  const dateStr = new Date(deadline).toLocaleDateString(i18n.language || 'en-GB', {
     day: '2-digit',
     month: 'short',
   });
@@ -224,7 +224,7 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
           ))}
           {task.attachments.length > 3 && (
             <span className="text-xs text-(--text-muted) px-2 py-1">
-              +{task.attachments.length - 3} more
+              +{t('tasksClient.moreAttachments', { count: task.attachments.length - 3 })}
             </span>
           )}
         </div>
@@ -650,11 +650,11 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
           className="px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-(--border) bg-(--card) text-(--text-secondary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
         >
           <option value="all">{t('tasksClient.allStatuses')}</option>
-          <option value="pending">{t('statuses.pending')}</option>
-          <option value="in_progress">{t('taskStatus.inProgress')}</option>
-          <option value="review">{t('taskStatus.inReview')}</option>
-          <option value="completed">{t('statuses.completed')}</option>
-          <option value="cancelled">{t('taskStatus.cancelled')}</option>
+          <option value="pending">{t('tasks.status.pending')}</option>
+          <option value="in_progress">{t('tasks.status.inProgress')}</option>
+          <option value="review">{t('tasks.status.review')}</option>
+          <option value="completed">{t('tasks.status.completed')}</option>
+          <option value="cancelled">{t('tasks.status.cancelled')}</option>
         </select>
 
         {/* View toggle */}

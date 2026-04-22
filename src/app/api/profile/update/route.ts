@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { signJWT, verifyJWT } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, name, email } = await request.json();
+    const { name, email } = await request.json();
 
-    if (!userId || !name || !email) {
+    if (!name || !email) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -22,14 +23,14 @@ export async function POST(request: NextRequest) {
       }
 
       jwt = await signJWT({
-        userId: session.user.id || userId,
+        userId: session.user.id,
         name: session.user.name || name,
         email: session.user.email || email,
-        role: (session.user as any).role || 'employee',
-        department: (session.user as any).department,
-        position: (session.user as any).position,
-        employeeType: (session.user as any).employeeType,
-        avatar: (session.user as any).avatar,
+        role: session.user.role || 'employee',
+        department: session.user.department,
+        position: session.user.position,
+        employeeType: session.user.employeeType,
+        avatar: session.user.avatar,
       });
     }
 
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
+    // SECURITY: Only allow updating the authenticated user's own profile
     const newJwt = await signJWT({
       userId: payload.userId,
       name,
@@ -53,6 +55,21 @@ export async function POST(request: NextRequest) {
       employeeType: payload.employeeType,
       avatar: payload.avatar,
     });
+
+    // Persist profile changes to database
+    const supabase = await createClient();
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        name,
+        email,
+      })
+      .eq('id', payload.userId);
+
+    if (updateError) {
+      console.error('[/api/profile/update] Database update failed:', updateError.message);
+      return NextResponse.json({ error: 'Failed to update profile in database' }, { status: 500 });
+    }
 
     const response = NextResponse.json({ success: true });
 

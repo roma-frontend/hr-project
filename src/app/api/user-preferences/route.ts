@@ -1,28 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const action = searchParams.get('action');
-
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const searchParams = request.nextUrl.searchParams;
+    const action = searchParams.get('action');
+    const userId = auth.user.id;
+
     switch (action) {
       case 'has-seen-tour': {
         const tourId = searchParams.get('tourId');
-        const sessionToken = searchParams.get('sessionToken');
 
-        if (!sessionToken || !tourId) {
-          return NextResponse.json({ data: { hasSeenTour: false } });
-        }
-
-        // Get user from session token
-        const { data: user } = await supabase
-          .from('users')
-          .select('id')
-          .or(`sessionToken.eq.${sessionToken},clerkid.eq.${sessionToken}`)
-          .single();
-
-        if (!user) {
+        if (!tourId) {
           return NextResponse.json({ data: { hasSeenTour: false } });
         }
 
@@ -30,9 +23,9 @@ export async function GET(request: NextRequest) {
         const { data: preference } = await supabase
           .from('userPreferences')
           .select('value')
-          .eq('userId', user.id)
+          .eq('userId', userId)
           .eq('key', `tour_seen_${tourId}`)
-          .single();
+          .maybeSingle();
 
         return NextResponse.json({
           data: { hasSeenTour: preference?.value === true },
@@ -50,33 +43,26 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
-    const { action, tourId, sessionToken } = body;
+    const { action, tourId } = body;
+    const userId = auth.user.id;
 
     switch (action) {
       case 'mark-tour-as-seen': {
-        if (!sessionToken || !tourId) {
+        if (!tourId) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
-
-        // Get user from session token
-        const { data: user } = await supabase
-          .from('users')
-          .select('id')
-          .or(`sessionToken.eq.${sessionToken},clerkid.eq.${sessionToken}`)
-          .single();
-
-        if (!user) {
-          return NextResponse.json({ success: true, storage: 'localStorage' });
         }
 
         // Check if preference already exists
         const { data: existing } = await supabase
           .from('userPreferences')
           .select('id')
-          .eq('userId', user.id)
+          .eq('userId', userId)
           .eq('key', `tour_seen_${tourId}`)
-          .single();
+          .maybeSingle();
 
         if (existing) {
           await supabase
@@ -85,7 +71,7 @@ export async function POST(request: NextRequest) {
             .eq('id', existing.id);
         } else {
           await supabase.from('userPreferences').insert({
-            userId: user.id,
+            userId: userId,
             key: `tour_seen_${tourId}`,
             value: true,
             createdAt: Date.now(),

@@ -86,11 +86,18 @@ export default function SubscriptionsManagementPage() {
       past_due: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
     };
 
+    const statusLabels: Record<string, string> = {
+      active: t('subscriptionStatus.active', 'Active'),
+      canceled: t('subscriptionStatus.canceled', 'Canceled'),
+      trialing: t('subscriptionStatus.trialing', 'Trialing'),
+      past_due: t('subscriptionStatus.pastDue', 'Past Due'),
+    };
+
     return (
       <Badge variant="outline" className={colors[status] || ''}>
         {status === 'active' && <CheckCircle className="w-3 h-3 mr-1" />}
         {status === 'canceled' && <X className="w-3 h-3 mr-1" />}
-        {status}
+        {statusLabels[status] || status}
       </Badge>
     );
   };
@@ -193,7 +200,7 @@ export default function SubscriptionsManagementPage() {
                     <td className="py-3 px-2">
                       <div>
                         <p className="font-medium text-(--text-primary)">
-                          {sub.organizationName || 'Unknown'}
+                          {sub.organizationName || t('superadmin.subscriptions.unknown')}
                         </p>
                         <p className="text-xs text-(--text-muted)">{sub.organizationSlug}</p>
                       </div>
@@ -206,9 +213,9 @@ export default function SubscriptionsManagementPage() {
                     </td>
                     <td className="py-3 px-2">
                       <span className="capitalize font-semibold text-(--text-primary)">
-                        {sub.plan === 'enterprise' && '🏢 '}
-                        {sub.plan === 'professional' && '💼 '}
-                        {sub.plan === 'starter' && '⚡ '}
+                        {sub.plan === 'enterprise' && t('superadmin.subscriptions.planIcons.enterprise', '🏢 ')}
+                        {sub.plan === 'professional' && t('superadmin.subscriptions.planIcons.professional', '💼 ')}
+                        {sub.plan === 'starter' && t('superadmin.subscriptions.planIcons.starter', '⚡ ')}
                         {sub.plan}
                       </span>
                     </td>
@@ -236,7 +243,7 @@ export default function SubscriptionsManagementPage() {
                         (sub.plan === 'professional'
                           ? '49'
                           : sub.plan === 'enterprise'
-                            ? 'Custom'
+                            ? t('superadmin.subscriptions.custom')
                             : '0')}
                     </td>
                     <td className="py-3 px-2 text-(--text-muted) text-sm">

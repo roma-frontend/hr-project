@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { getOrgMembers } from '@/lib/server/organizations';
 
 export async function GET(request: NextRequest) {
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
 
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing requesterId' }, { status: 400 });
         }
 
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseService
           .from('users')
           .select('*')
           .eq('is_active', true)
@@ -40,10 +42,10 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { data: supervisors } = await supabase
+        const { data: supervisors } = await supabaseService
           .from('users')
           .select('*')
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .in('role', ['admin', 'supervisor'])
           .eq('is_active', true)
           .order('name');
@@ -57,11 +59,11 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         return NextResponse.json({ data: userData });
       }
@@ -72,10 +74,10 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
         }
 
-        const { data: users } = await supabase
+        const { data: users } = await supabaseService
           .from('users')
           .select('*')
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .eq('is_active', true)
           .eq('is_approved', true)
           .order('name');
@@ -89,7 +91,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing supervisorId' }, { status: 400 });
         }
 
-        const { data: users } = await supabase
+        const { data: users } = await supabaseService
           .from('users')
           .select('*')
           .eq('supervisorid', supervisorId)
@@ -101,41 +103,13 @@ export async function GET(request: NextRequest) {
       }
 
       case 'get-current-user': {
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         return NextResponse.json({ data: userData });
-      }
-
-      case 'update-own-profile': {
-        const name = searchParams.get('name');
-        const email = searchParams.get('email');
-        const phone = searchParams.get('phone');
-        const location = searchParams.get('location');
-
-        if (!name || !email) {
-          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
-
-        const updateData: any = { name, email };
-        if (phone !== undefined) updateData.phone = phone;
-        if (location !== undefined) updateData.location = location;
-
-        const { data: updatedUser, error } = await supabase
-          .from('users')
-          .update(updateData)
-          .eq('id', user.id)
-          .select()
-          .single();
-
-        if (error) {
-          return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        return NextResponse.json({ data: updatedUser });
       }
 
       case 'get-user-stats': {
@@ -144,17 +118,17 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: userData } = await supabase
+        const { data: userData } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (!userData) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        const { data: userLeaves } = await supabase
+        const { data: userLeaves } = await supabaseService
           .from('leave_requests')
           .select('*')
           .eq('userid', userId);
@@ -162,10 +136,10 @@ export async function GET(request: NextRequest) {
         const approved = (userLeaves || []).filter((l: any) => l.status === 'approved');
         const pending = (userLeaves || []).filter((l: any) => l.status === 'pending');
 
-        const totalDaysUsed = approved.reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
-        const totalDaysPending = pending.reduce((sum: number, l: any) => sum + (l.days ?? 0), 0);
+        const totalDaysUsed = approved.reduce((sum: number, l: any) => sum + (l.total_days ?? 0), 0);
+        const totalDaysPending = pending.reduce((sum: number, l: any) => sum + (l.total_days ?? 0), 0);
 
-        const { data: userTasks } = await supabase
+        const { data: userTasks } = await supabaseService
           .from('tasks')
           .select('*')
           .eq('assigned_to', userId);
@@ -174,7 +148,7 @@ export async function GET(request: NextRequest) {
         const totalTasks = (userTasks || []).length;
         const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-        const { data: userMessages } = await supabase
+        const { data: userMessages } = await supabaseService
           .from('chat_messages')
           .select('*')
           .eq('senderid', userId);
@@ -234,25 +208,25 @@ export async function GET(request: NextRequest) {
       }
 
       case 'get-pending-approvals': {
-        const { data: adminProfile } = await supabase
+        const { data: adminProfile } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        let query = supabase
+        let query = supabaseService
           .from('users')
           .select('*')
           .eq('is_approved', false)
           .eq('is_active', true)
           .order('created_at', { ascending: false });
 
-        if (adminProfile.role !== 'superadmin' && adminProfile.organizationId) {
-          query = query.eq('organizationId', adminProfile.organizationId);
+        if (adminProfile.role !== 'superadmin' && adminProfile.organization_id) {
+          query = query.eq('organization_id', adminProfile.organization_id);
         }
 
         const { data: pendingUsers } = await query;
@@ -268,7 +242,7 @@ export async function GET(request: NextRequest) {
           phone: u.phone,
           avatarUrl: u.avatar_url,
           createdAt: u.created_at,
-          organizationId: u.organizationId,
+          organization_id: u.organization_id,
         }));
 
         return NextResponse.json({ data: mapped });
@@ -280,7 +254,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: requests, error } = await supabase
+        const { data: requests, error } = await supabaseService
           .from('organization_invites')
           .select('*')
           .eq('requested_by_email', userId)
@@ -293,7 +267,7 @@ export async function GET(request: NextRequest) {
         const mapped = (requests || []).map((r: any) => ({
           id: r.id,
           status: r.status,
-          organizationId: r.organization_id,
+          organization_id: r.organization_id,
           requestedBy: r.requested_by,
           requestedAt: r.created_at,
           rejectionReason: r.rejection_reason,
@@ -317,6 +291,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -327,6 +302,31 @@ export async function POST(request: NextRequest) {
     const action = request.nextUrl.searchParams.get('action');
 
     switch (action) {
+      case 'update-own-profile': {
+        const { name, email, phone, location } = body;
+
+        if (!name || !email) {
+          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const updateData: any = { name, email };
+        if (phone !== undefined) updateData.phone = phone;
+        if (location !== undefined) updateData.location = location;
+
+        const { data: updatedUser, error } = await supabaseService
+          .from('users')
+          .update(updateData)
+          .eq('id', user.id)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ data: updatedUser });
+      }
+
       case 'create': {
         const {
           adminId,
@@ -341,41 +341,83 @@ export async function POST(request: NextRequest) {
           organizationId,
         } = body;
 
+        console.log('[Create User] Auth user ID:', user.id);
+        console.log('[Create User] Admin ID from body:', adminId);
+        console.log('[Create User] Email:', email);
+        console.log('[Create User] Role:', role);
+
         if (!adminId || !name || !email || !role || !passwordHash) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: newUser, error } = await supabase
+        // Verify the authenticated user matches the adminId
+        if (user.id !== adminId) {
+          return NextResponse.json({ error: 'Forbidden: User ID mismatch' }, { status: 403 });
+        }
+
+        // Get admin's organization - bypass RLS by using the authenticated user's ID directly
+        let targetOrgId = organizationId;
+        
+        const { data: adminUser } = await supabaseService
+          .from('users')
+          .select('role, organization_id')
+          .eq('id', adminId)
+          .maybeSingle();
+
+        console.log('[Create User] Admin user lookup:', adminUser);
+
+        if (!adminUser && !organizationId) {
+          console.log('[Create User] Admin profile not found, proceeding without org check');
+        } else if (adminUser && adminUser.role !== 'superadmin' && !targetOrgId) {
+          targetOrgId = adminUser.organization_id;
+        }
+
+        console.log('[Create User] Target org ID:', targetOrgId);
+
+        // Create user directly without RPC
+        const now = Date.now();
+        const { data: createdUser, error: createError } = await supabaseService
           .from('users')
           .insert({
             name,
             email,
             password_hash: passwordHash,
-            role,
+            role: role || 'employee',
+            employee_type: employeeType || 'staff',
             department: department || null,
             position: position || null,
-            employee_type: employeeType || 'staff',
             phone: phone || null,
-            organizationId: organizationId || null,
+            organization_id: targetOrgId || null,
             is_active: true,
             is_approved: true,
+            approved_by: adminId,
+            approved_at: now,
             paid_leave_balance: 24,
             sick_leave_balance: 10,
             family_leave_balance: 5,
+            travel_allowance: 0,
+            created_at: now,
+            updated_at: now,
           })
           .select()
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          return NextResponse.json({ error: error.message }, { status: 500 });
+        if (createError) {
+          console.error('[Create User Error] Failed to create user:', JSON.stringify(createError, null, 2));
+          return NextResponse.json({ error: createError.message, code: createError.code }, { status: 500 });
         }
 
-        return NextResponse.json({ data: newUser });
+        const userId = createdUser?.id;
+        if (!userId) {
+          return NextResponse.json({ error: 'Failed to create user', code: 'CREATE_FAILED' }, { status: 500 });
+        }
+
+        console.log('[Create User] Success:', userId);
+        return NextResponse.json({ data: createdUser });
       }
 
       case 'update': {
         const {
-          adminId,
           userId,
           name,
           role,
@@ -390,13 +432,45 @@ export async function POST(request: NextRequest) {
           familyLeaveBalance,
         } = body;
 
-        if (!adminId || !userId) {
-          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!userId) {
+          return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+        }
+
+        const { data: adminProfile } = await supabaseService
+          .from('users')
+          .select('role, organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: targetUser } = await supabaseService
+          .from('users')
+          .select('organization_id')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (!targetUser) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        if (adminProfile.role !== 'superadmin' && targetUser.organization_id !== adminProfile.organization_id) {
+          return NextResponse.json({ error: 'Forbidden: Different organization' }, { status: 403 });
         }
 
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
-        if (role !== undefined) updateData.role = role;
+        if (role !== undefined) {
+          if (adminProfile.role === 'superadmin') {
+            updateData.role = role;
+          } else if (['admin', 'supervisor'].includes(role)) {
+            return NextResponse.json({ error: 'Only superadmin can assign admin/supervisor roles' }, { status: 403 });
+          } else {
+            updateData.role = role;
+          }
+        }
         if (employeeType !== undefined) updateData.employee_type = employeeType;
         if (department !== undefined) updateData.department = department;
         if (position !== undefined) updateData.position = position;
@@ -407,12 +481,12 @@ export async function POST(request: NextRequest) {
         if (sickLeaveBalance !== undefined) updateData.sick_leave_balance = sickLeaveBalance;
         if (familyLeaveBalance !== undefined) updateData.family_leave_balance = familyLeaveBalance;
 
-        const { data: updatedUser, error } = await supabase
+        const { data: updatedUser, error } = await supabaseService
           .from('users')
           .update(updateData)
           .eq('id', userId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -422,13 +496,23 @@ export async function POST(request: NextRequest) {
       }
 
       case 'delete': {
-        const { adminId, userId } = body;
+        const { userId } = body;
 
-        if (!adminId || !userId) {
-          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!userId) {
+          return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { data: adminProfile } = await supabaseService
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { error } = await supabaseService
           .from('users')
           .update({ is_active: false })
           .eq('id', userId);
@@ -452,12 +536,48 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
         }
 
-        const { data: updatedUser, error } = await supabase
+        const { data: requesterProfile } = await supabaseService
           .from('users')
-          .update({ presence_status: presenceStatus })
+          .select('role, organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!requesterProfile) {
+          return NextResponse.json({ error: 'Requester not found' }, { status: 404 });
+        }
+
+        const canEditOthers = ['admin', 'superadmin'].includes(requesterProfile.role);
+        const isOwnProfile = user.id === userId;
+        const isSameOrg = requesterProfile.organization_id
+          ? await (async () => {
+              const { data: targetUser } = await supabaseService
+                .from('users')
+                .select('organization_id')
+                .eq('id', userId)
+                .maybeSingle();
+              return targetUser?.organization_id === requesterProfile.organization_id;
+            })()
+          : false;
+
+        if (!isOwnProfile && !canEditOthers) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        if (!isOwnProfile && !isSameOrg) {
+          return NextResponse.json({ error: 'Forbidden: Different organization' }, { status: 403 });
+        }
+
+        const updateData: any = { presence_status: presenceStatus };
+        if (presenceStatus === 'out_of_office' && outOfOfficeMessage) {
+          updateData.out_of_office_message = outOfOfficeMessage;
+        }
+
+        const { data: updatedUser, error } = await supabaseService
+          .from('users')
+          .update(updateData)
           .eq('id', userId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -473,18 +593,18 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: adminProfile } = await supabase
+        const { data: adminProfile } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         const now = Date.now();
-        const { data: updatedUser, error } = await supabase
+        const { data: updatedUser, error } = await supabaseService
           .from('users')
           .update({
             is_approved: true,
@@ -493,7 +613,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', userId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -509,17 +629,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { data: adminProfile } = await supabase
+        const { data: adminProfile } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('users')
           .update({ is_active: false })
           .eq('id', userId);
@@ -538,7 +658,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('users')
           .update({ avatar_url: null })
           .eq('id', userId);
@@ -557,11 +677,11 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: adminProfile } = await supabase
+        const { data: adminProfile } = await supabaseService
           .from('users')
           .select('role')
           .eq('id', adminId)
-          .single();
+          .maybeSingle();
 
         if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -570,7 +690,7 @@ export async function POST(request: NextRequest) {
         const now = Date.now();
         const suspendedUntil = duration ? now + (duration * 60 * 60 * 1000) : null;
 
-        const { data: updatedUser, error } = await supabase
+        const { data: updatedUser, error } = await supabaseService
           .from('users')
           .update({
             is_suspended: true,
@@ -581,7 +701,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', targetUserId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -597,17 +717,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: adminProfile } = await supabase
+        const { data: adminProfile } = await supabaseService
           .from('users')
           .select('role')
           .eq('id', adminId)
-          .single();
+          .maybeSingle();
 
         if (!adminProfile || !['admin', 'superadmin'].includes(adminProfile.role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const { data: updatedUser, error } = await supabase
+        const { data: updatedUser, error } = await supabaseService
           .from('users')
           .update({
             is_suspended: false,
@@ -618,7 +738,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', targetUserId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });

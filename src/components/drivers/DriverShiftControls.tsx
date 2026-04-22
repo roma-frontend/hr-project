@@ -17,7 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Clock, Play, Square, Pause, Coffee } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, type Locale } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 
 interface DriverShiftControlsProps {
   driverId: string;
@@ -30,10 +31,16 @@ export function DriverShiftControls({
   userId,
   organizationId,
 }: DriverShiftControlsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showEndShiftModal, setShowEndShiftModal] = useState(false);
   const [breakTime, setBreakTime] = useState('');
   const [driverNotes, setDriverNotes] = useState('');
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   const { data: shifts } = useDriverShifts(organizationId, driverId);
   const currentShift = shifts?.[0];
@@ -50,7 +57,7 @@ export function DriverShiftControls({
       });
       toast.success(t('driver.shift.started', 'Shift started successfully!'));
     } catch (error: any) {
-      toast.error(error.message || t('driver.shift.startFailed', 'Failed to start shift'));
+      toast.error(error instanceof Error ? t('driver.error', { defaultValue: error.message }) : t('driver.shift.startFailed', 'Failed to start shift'));
     }
   };
 
@@ -66,7 +73,7 @@ export function DriverShiftControls({
       setBreakTime('');
       setDriverNotes('');
     } catch (error: any) {
-      toast.error(error.message || t('driver.shift.endFailed', 'Failed to end shift'));
+      toast.error(error instanceof Error ? t('driver.error', { defaultValue: error.message }) : t('driver.shift.endFailed', 'Failed to end shift'));
     }
   };
 
@@ -74,7 +81,7 @@ export function DriverShiftControls({
     const totalSeconds = Math.floor(ms / 1000);
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
-    return `${h}h ${m}m`;
+    return `${h}${t('driver.shift.hourUnit', 'h')} ${m}${t('driver.shift.minUnit', 'm')}`;
   };
 
   return (
@@ -126,7 +133,7 @@ export function DriverShiftControls({
                     {t('driver.shift.startedAt', 'Started')}
                   </p>
                   <p className="text-xs sm:text-sm font-medium text-(--text-primary)">
-                    {format(currentShift.startTime, 'HH:mm')}
+                    {format(currentShift.startTime, 'HH:mm', { locale: dateFnsLocale })}
                   </p>
                 </div>
               </div>
@@ -145,7 +152,7 @@ export function DriverShiftControls({
                     {t('driver.shift.distance', 'Distance')}
                   </p>
                   <p className="text-base sm:text-lg font-semibold text-(--text-primary)">
-                    {(currentShift.totalDistance || 0).toFixed(1)} km
+                    {(currentShift.totalDistance || 0).toFixed(1)} {t('driver.shift.kmUnit', 'km')}
                   </p>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-(--background-subtle) border border-(--border)">
@@ -153,7 +160,7 @@ export function DriverShiftControls({
                     {t('driver.shift.duration', 'Duration')}
                   </p>
                   <p className="text-base sm:text-lg font-semibold text-(--text-primary)">
-                    {currentShift.totalDuration || 0} min
+                    {currentShift.totalDuration || 0} {t('driver.shift.minutes', 'min')}
                   </p>
                 </div>
               </div>
@@ -214,7 +221,7 @@ export function DriverShiftControls({
                 max="480"
                 value={breakTime}
                 onChange={(e) => setBreakTime(e.target.value)}
-                placeholder="0"
+                placeholder={t('placeholders.zero', '0')}
                 className="mt-2 text-sm"
               />
             </div>

@@ -63,10 +63,10 @@ function SLASettings() {
           </div>
           <div>
             <CardTitle className="text-lg font-bold text-(--text-primary)">
-              SLA Configuration
+              {t('sla.configurationTitle', 'SLA Configuration')}
             </CardTitle>
             <CardDescription className="text-sm text-(--text-muted)">
-              Configure response time targets and thresholds
+              {t('sla.configurationDescription', 'Configure response time targets and thresholds')}
             </CardDescription>
           </div>
         </div>
@@ -75,7 +75,7 @@ function SLASettings() {
         {/* Target Response Time */}
         <div className="space-y-2">
           <Label htmlFor="target" className="text-sm font-medium text-(--text-primary)">
-            Target Response Time (hours)
+            {t('sla.targetResponseTimeLabel', 'Target Response Time (hours)')}
           </Label>
           <Input
             id="target"
@@ -94,7 +94,7 @@ function SLASettings() {
         {/* Warning Threshold */}
         <div className="space-y-2">
           <Label htmlFor="warning" className="text-sm font-medium text-(--text-primary)">
-            Warning Threshold (%)
+            {t('sla.warningThresholdLabel', 'Warning Threshold (%)')}
           </Label>
           <div className="flex items-center gap-3">
             <Input
@@ -107,7 +107,7 @@ function SLASettings() {
               className="max-w-xs"
             />
             <span className="text-sm text-(--text-muted)">
-              = {Math.round((targetHours * warningThreshold) / 100)} hours
+              = {Math.round((targetHours * warningThreshold) / 100)} {t('sla.hours', 'hours')}
             </span>
           </div>
           <p className="text-xs text-(--text-muted)">
@@ -118,7 +118,7 @@ function SLASettings() {
         {/* Critical Threshold */}
         <div className="space-y-2">
           <Label htmlFor="critical" className="text-sm font-medium text-(--text-primary)">
-            Critical Threshold (%)
+            {t('sla.criticalThresholdLabel', 'Critical Threshold (%)')}
           </Label>
           <div className="flex items-center gap-3">
             <Input
@@ -131,7 +131,7 @@ function SLASettings() {
               className="max-w-xs"
             />
             <span className="text-sm text-(--text-muted)">
-              = {Math.round((targetHours * criticalThreshold) / 100)} hours
+              = {Math.round((targetHours * criticalThreshold) / 100)} {t('sla.hours', 'hours')}
             </span>
           </div>
           <p className="text-xs text-(--text-muted)">

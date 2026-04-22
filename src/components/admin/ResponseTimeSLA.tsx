@@ -70,7 +70,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${complianceColor}`}>{stats.complianceRate}%</div>
-            <p className="text-xs text-muted-foreground">Target: 95%</p>
+            <p className="text-xs text-muted-foreground">{t('responseSLA.target95')}</p>
             <Progress value={stats.complianceRate} className="mt-2" />
           </CardContent>
         </Card>
@@ -133,8 +133,8 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
       {trend && trend.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>SLA Performance Trend (Last 30 Days)</CardTitle>
-            <CardDescription>Response time and compliance rate over time</CardDescription>
+            <CardTitle>{t('responseSLA.performanceTrendTitle', 'SLA Performance Trend (Last 30 Days)')}</CardTitle>
+            <CardDescription>{t('responseSLA.performanceTrendDescription', 'Response time and compliance rate over time')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -174,7 +174,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
                   type="monotone"
                   dataKey="complianceRate"
                   stroke="#82ca9d"
-                  name="Compliance Rate (%)"
+                  name={t('responseSLA.complianceRate', 'Compliance Rate (%)')}
                   strokeWidth={2}
                 />
               </LineChart>
@@ -188,7 +188,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
         <Card>
           <CardHeader>
             <CardTitle>{t('responseSLA.slaStatusDistribution')}</CardTitle>
-            <CardDescription>On-time vs breached requests by day</CardDescription>
+            <CardDescription>{t('responseSLA.onTimeVsBreached')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -214,8 +214,8 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
                   labelStyle={{ color: 'var(--text-primary)' }}
                 />
                 <Legend />
-                <Bar dataKey="onTime" fill="#10b981" name="On Time" stackId="a" />
-                <Bar dataKey="breached" fill="#ef4444" name="Breached" stackId="a" />
+                <Bar dataKey="onTime" fill="#10b981" name={t('responseSLA.onTime', 'On Time')} stackId="a" />
+                <Bar dataKey="breached" fill="#ef4444" name={t('responseSLA.breached', 'Breached')} stackId="a" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -227,24 +227,24 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
         <Card>
           <CardHeader>
             <CardTitle>{t('responseSLA.pendingRequests')}</CardTitle>
-            <CardDescription>{pendingWithSLA.length} requests awaiting response</CardDescription>
+            <CardDescription>{t('responseSLA.requestsAwaitingResponse', { count: pendingWithSLA.length })}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {pendingWithSLA.map((request: any) => {
                 const statusConfig = {
-                  normal: { color: 'bg-green-100 text-green-800', icon: Activity, label: 'Normal' },
+                  normal: { color: 'bg-green-100 text-green-800', icon: Activity, label: t('responseSLA.status.normal', 'Normal') },
                   warning: {
                     color: 'bg-yellow-100 text-yellow-800',
                     icon: Clock,
-                    label: 'Warning',
+                    label: t('responseSLA.status.warning', 'Warning'),
                   },
                   critical: {
                     color: 'bg-orange-100 text-orange-800',
                     icon: AlertTriangle,
-                    label: 'Critical',
+                    label: t('responseSLA.status.critical', 'Critical'),
                   },
-                  breached: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Breached' },
+                  breached: { color: 'bg-red-100 text-red-800', icon: XCircle, label: t('responseSLA.status.breached', 'Breached') },
                 } as const;
 
                 const config = statusConfig[request.sla?.status as keyof typeof statusConfig] || statusConfig.normal;
@@ -265,7 +265,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
                           <Badge variant="outline">{request.type}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {request.startDate} в†’ {request.endDate} ({request.days} days)
+                          {request.startDate} → {request.endDate} ({request.days} {t('responseSLA.days', 'days')})
                         </p>
                       </div>
                     </div>
@@ -276,9 +276,9 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
                           {request.sla.elapsedHours}h / {request.sla.targetHours}h
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {request.sla.remainingHours > 0
-                            ? `${request.sla.remainingHours}h remaining`
-                            : `${Math.abs(request.sla.remainingHours)}h overdue`}
+                        {request.sla.remainingHours > 0
+                          ? `${request.sla.remainingHours}${t('responseSLA.hRemaining', 'h remaining')}`
+                          : `${Math.abs(request.sla.remainingHours)}${t('responseSLA.hOverdue', 'h overdue')}`}
                         </p>
                       </div>
                       <div className="w-24">
@@ -298,7 +298,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-600">вњ… On Time</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600">{t('responseSLA.summary.onTime', '✅ On Time')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.onTime}</div>
@@ -311,7 +311,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-600">вЏі Pending</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-600">{t('responseSLA.summary.pending', '⏳ Pending')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.pending}</div>
@@ -324,7 +324,7 @@ export function ResponseTimeSLA({ startDate, endDate }: SLAStatsProps) {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600">вќЊ Breached</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-600">{t('responseSLA.summary.breached', '❌ Breached')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{stats.breached}</div>

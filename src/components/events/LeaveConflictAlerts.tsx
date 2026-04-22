@@ -62,8 +62,8 @@ export function LeaveConflictAlerts({ organizationId, userId }: LeaveConflictAle
       setSelectedAlert(null);
       setReviewNotes('');
     } catch (error: any) {
-      console.error('Failed to review alert:', error);
-      alert(error.message || 'Failed to review alert');
+      console.error(t('events.failedToReviewAlert', 'Failed to review alert:'), error);
+      alert(error instanceof Error ? t('events.error', { defaultValue: error.message }) : t('events.failedToReviewAlert', 'Failed to review alert'));
     } finally {
       setIsReviewing(false);
     }

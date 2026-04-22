@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import {
   requestOrganization,
   createStarterOrganization,
@@ -14,11 +15,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userProfile } = await supabase
+    const supabaseService = createServiceClient();
+
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
     if (action === 'get-all') {
       const status = searchParams.get('status');
 
-      let query = supabase
+      let query = supabaseService
         .from('organization_requests')
         .select('*')
         .order('created_at', { ascending: false });
@@ -79,6 +82,13 @@ export async function POST(req: NextRequest) {
     const action = searchParams.get('action');
 
     if (action === 'request-org') {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       const body = await req.json();
       const {
         name,
@@ -116,6 +126,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'create-starter-org') {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       const body = await req.json();
       const {
         name,
@@ -154,11 +171,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const { data: userProfile } = await supabase
+      const supabaseService = createServiceClient();
+
+      const { data: userProfile } = await supabaseService
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -171,11 +190,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing requestId' }, { status: 400 });
       }
 
-      const { data: request } = await supabase
+      const { data: request } = await supabaseService
         .from('organization_requests')
         .select('*')
         .eq('id', requestId)
-        .single();
+        .maybeSingle();
 
       if (!request) {
         return NextResponse.json({ error: 'Request not found' }, { status: 404 });
@@ -187,7 +206,7 @@ export async function POST(req: NextRequest) {
 
       const now = Date.now();
 
-      const { data: org, error: orgError } = await supabase
+      const { data: org, error: orgError } = await supabaseService
         .from('organizations')
         .insert({
           name: request.requested_name,
@@ -201,26 +220,17 @@ export async function POST(req: NextRequest) {
           updated_at: now,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (orgError) {
         return NextResponse.json({ error: orgError.message }, { status: 500 });
       }
 
-      const { error: updateError } = await supabase
-        .from('organization_requests')
-        .update({
-          status: 'approved',
-          reviewed_by: user.id,
-          reviewed_at: now,
-        })
-        .eq('id', requestId);
-
-      if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      if (!org) {
+        return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 });
       }
 
-      return NextResponse.json({ data: { success: true, organizationId: org.id } });
+      return NextResponse.json({ data: { success: true, organization_id: org.id } });
     }
 
     if (action === 'reject') {
@@ -231,11 +241,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const { data: userProfile } = await supabase
+      const supabaseService = createServiceClient();
+
+      const { data: userProfile } = await supabaseService
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!userProfile || !['admin', 'superadmin'].includes(userProfile.role)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -248,11 +260,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing requestId' }, { status: 400 });
       }
 
-      const { data: request } = await supabase
+      const { data: request } = await supabaseService
         .from('organization_requests')
         .select('*')
         .eq('id', requestId)
-        .single();
+        .maybeSingle();
 
       if (!request) {
         return NextResponse.json({ error: 'Request not found' }, { status: 404 });
@@ -264,7 +276,7 @@ export async function POST(req: NextRequest) {
 
       const now = Date.now();
 
-      const { error } = await supabase
+      const { error } = await supabaseService
         .from('organization_requests')
         .update({
           status: 'rejected',

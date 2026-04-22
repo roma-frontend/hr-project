@@ -19,12 +19,13 @@ export interface PendingUser {
 
 export function usePendingApprovals(enabled = true) {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   return useQuery({
     queryKey: ['approvals', 'pending', user?.id],
     queryFn: async () => {
       const res = await fetch('/api/users?action=get-pending-approvals');
-      if (!res.ok) throw new Error('Failed to fetch pending approvals');
+      if (!res.ok) throw new Error(t('hooks.approvals.failedToFetchPending', 'Failed to fetch pending approvals'));
       const json = await res.json();
       return json.data as PendingUser[];
     },
@@ -47,7 +48,7 @@ export function useApproveUser() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to approve user');
+        throw new Error(error.error || t('hooks.approvals.failedToApproveUser', 'Failed to approve user'));
       }
 
       return res.json();

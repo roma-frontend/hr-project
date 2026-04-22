@@ -269,7 +269,7 @@ export default function LoginPage() {
             window.location.href = `/login?maintenance=true&org=${orgId}`;
           }
         } catch (error) {
-          console.error('Failed to check maintenance mode:', error);
+          // Ignore errors
         }
       }
     };
@@ -289,31 +289,6 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  // Detect when auth completes and redirect (but NOT during maintenance)
-  useEffect(() => {
-    // Check if we're in maintenance mode
-    const params = new URLSearchParams(window.location.search);
-    const isMaintenance = params.get('maintenance') === 'true';
-
-    // Don't redirect if in maintenance mode
-    if (isMaintenance) {
-      return;
-    }
-
-    if (isAuthenticated && !isRedirecting) {
-      setIsRedirecting(true);
-
-      // Получаем параметр from из URL
-      const from = params.get('from');
-
-      // Редиректим на нужную страницу
-      const destination = from && from.startsWith('/') ? from : '/dashboard';
-      router.push(destination);
-    }
-  }, [isAuthenticated, isRedirecting, router]);
-
-
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -323,8 +298,6 @@ export default function LoginPage() {
 
     startTransition(async () => {
       try {
-        console.error('🔐 Attempting login...');
-
         // Collect keystroke sample and device fingerprint
         const keystrokeSample = getSample();
         const deviceFingerprint = deviceFingerprintRef.current;
@@ -341,17 +314,10 @@ export default function LoginPage() {
           }),
         });
 
-        if (!response.ok) {
-          const errorData = (await response.json()) as { error?: string; organizationId?: string };
-          // If maintenance mode is active, redirect to maintenance screen
-          if (errorData.error === 'maintenance') {
-            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
-            return;
-          }
-          throw new Error(errorData.error || 'Login failed');
-        }
-
+        // Parse response body once
         const result = (await response.json()) as {
+          error?: string;
+          organizationId?: string;
           requiresTwoFactor?: boolean;
           tempToken?: string;
           user?: {
@@ -372,8 +338,16 @@ export default function LoginPage() {
           };
           session?: any;
           riskLevel?: string;
-          error?: string;
         };
+
+        if (!response.ok) {
+          // If maintenance mode is active, redirect to maintenance screen
+          if (result.error === 'maintenance') {
+            window.location.href = `/login?maintenance=true${result.organizationId ? `&org=${result.organizationId}` : ''}`;
+            return;
+          }
+          throw new Error(t('errors.loginFailed'));
+        }
 
         // Check if 2FA is required
         if (result.requiresTwoFactor) {
@@ -384,10 +358,41 @@ export default function LoginPage() {
           return;
         }
 
-        console.error('✅ Login successful:', result);
-
         if (!result.user) {
-          throw new Error('No user data in response');
+          throw new Error(t('errors.noUserData'));
+        }
+
+        // Save session directly to localStorage (bypasses Supabase network calls)
+        if (result.session?.access_token && result.session?.refresh_token) {
+          console.log('[Login] Saving session to localStorage...');
+          
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0] || 'supabase';
+          const storageKey = `sb-${projectRef}-auth-token`;
+          
+          console.log('[Login] Supabase URL:', supabaseUrl);
+          console.log('[Login] Project ref:', projectRef);
+          console.log('[Login] Storage key:', storageKey);
+          
+          const sessionData = JSON.stringify({
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+            token_type: 'bearer',
+            expires_in: 3600,
+            expires_at: result.session.expires_at || Math.floor(Date.now() / 1000) + 3600,
+            user: result.session.user,
+          });
+          
+          console.log('[Login] Session data length:', sessionData.length);
+          localStorage.setItem(storageKey, sessionData);
+          
+          // Verify save
+          const saved = localStorage.getItem(storageKey);
+          console.log('[Login] Save verification:', saved ? 'OK' : 'FAILED');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            console.log('[Login] Saved session user:', parsed.user?.id, parsed.user?.email);
+          }
         }
 
         const userData: import('@/store/useAuthStore').UserProfile = {
@@ -407,7 +412,6 @@ export default function LoginPage() {
           organizationName: result.user.organizationName,
         };
 
-        console.error('💾 Saving user to store:', userData);
         login(userData);
         reset(); // clear keystroke buffer after successful login
 
@@ -423,15 +427,12 @@ export default function LoginPage() {
         }
 
         // Redirect to dashboard or callback URL
-        console.error('🔄 Redirecting to dashboard...');
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
         const redirectUrl = nextUrl || '/dashboard';
-        console.error('🔄 Redirect URL:', redirectUrl);
         window.location.href = redirectUrl;
       } catch (err) {
-        console.error('❌ Login failed:', err);
-        setError(err instanceof Error ? err.message : 'Login failed');
+        setError(err instanceof Error ? err.message : t('errors.loginFailed'));
       }
     });
   };
@@ -443,7 +444,7 @@ export default function LoginPage() {
       const session = await getSessionAction();
 
       if (!session) {
-        throw new Error('Failed to get session data after WebAuthn');
+        throw new Error(t('login.sessionDataMissing', 'Failed to get session data after WebAuthn'));
       }
 
       const userData = {
@@ -467,8 +468,7 @@ export default function LoginPage() {
       const redirectUrl = nextUrl || '/dashboard';
       router.push(redirectUrl);
     } catch (err) {
-      console.error('❌ WebAuthn login failed:', err);
-      setError(err instanceof Error ? err.message : 'WebAuthn login failed');
+      setError(err instanceof Error ? err.message : t('errors.webAuthnFailed'));
     }
   };
 
@@ -508,7 +508,7 @@ export default function LoginPage() {
         };
 
         if (!result.session) {
-          throw new Error('No session data in 2FA response');
+          throw new Error(t('login.noSessionIn2FA', 'No session data in 2FA response'));
         }
 
         const session = result.session;
@@ -517,7 +517,7 @@ export default function LoginPage() {
           name: session.name,
           email: session.email,
           role: session.role as 'admin' | 'supervisor' | 'employee' | 'superadmin' | 'driver',
-          organizationId: session.organizationId,
+        organizationId: session.organizationId,
           department: session.department,
           position: session.position,
           employeeType: session.employeeType as 'staff' | 'contractor' | undefined,
@@ -664,7 +664,7 @@ export default function LoginPage() {
                             setTotpCode(val);
                             setTwoFactorError(null);
                           }}
-                          placeholder={isBackupCode ? 'XXXXXXXX' : '000000'}
+                          placeholder={isBackupCode ? t('placeholders.backupCode') : t('placeholders.twoFACode')}
                           className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
                           style={{
                             background: 'var(--surface-hover)',
@@ -779,7 +779,7 @@ export default function LoginPage() {
                         }}
                       >
                         <Fingerprint className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Touch ID</span>
+                        <span className="hidden sm:inline">{t('auth.touchId', 'Touch ID')}</span>
                       </button>
                     </div>
 
@@ -827,7 +827,7 @@ export default function LoginPage() {
                           value={formData.email}
                           onChange={(val) => setFormData((p) => ({ ...p, email: val }))}
                           label={t('auth.emailAddress')}
-                          placeholder="you@company.com"
+                          placeholder={t('placeholders.emailExample')}
                           autoFocus={true}
                         />
 
@@ -837,7 +837,7 @@ export default function LoginPage() {
                             value={formData.password}
                             onChange={(val) => setFormData((p) => ({ ...p, password: val }))}
                             label={t('auth.password')}
-                            placeholder="••••••••"
+                            placeholder={t('auth.passwordPlaceholder', '••••••••')}
                             showStrength={false}
                             showGenerator={false}
                             forgotPasswordLink={

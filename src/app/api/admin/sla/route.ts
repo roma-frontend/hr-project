@@ -1,24 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user, supabase: supabaseService } = auth;
 
     const searchParams = req.nextUrl.searchParams;
     const action = searchParams.get('action');
 
     if (action === 'get-config') {
-      const { data: config } = await supabase
+      const { data: config } = await supabaseService
         .from('sla_config')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!config) {
         return NextResponse.json({
@@ -44,7 +60,7 @@ export async function GET(req: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
-      let query = supabase.from('sla_metrics').select('*');
+      let query = supabaseService.from('sla_metrics').select('*');
 
       if (startDate) {
         query = query.gte('created_at', parseInt(startDate));
@@ -125,7 +141,7 @@ export async function GET(req: NextRequest) {
       const now = Date.now();
       const startDate = now - days * 24 * 60 * 60 * 1000;
 
-      const { data: metrics } = await supabase
+      const { data: metrics } = await supabaseService
         .from('sla_metrics')
         .select('*')
         .gte('created_at', startDate);
@@ -173,7 +189,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === 'get-pending-with-sla') {
-      const { data: pending } = await supabase
+      const { data: pending } = await supabaseService
         .from('sla_metrics')
         .select('*')
         .eq('status', 'warning');
@@ -184,11 +200,11 @@ export async function GET(req: NextRequest) {
 
       const pendingWithDetails = await Promise.all(
         pending.map(async (m: any) => {
-          const { data: leaveRequest } = await supabase
+          const { data: leaveRequest } = await supabaseService
             .from('leave_requests')
             .select('*, users!leave_requests_userid_fkey(name)')
             .eq('id', m.ticketId)
-            .single();
+            .maybeSingle();
 
           if (!leaveRequest) return null;
 
@@ -213,7 +229,7 @@ export async function GET(req: NextRequest) {
             type: leaveRequest.type,
             startDate: leaveRequest.start_date,
             endDate: leaveRequest.end_date,
-            days: leaveRequest.days,
+            totalDays: leaveRequest.total_days,
             sla: {
               status: slaStatus,
               elapsedHours: Math.round(elapsedHours * 10) / 10,
@@ -240,12 +256,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
     const body = await req.json();
     const action = req.nextUrl.searchParams.get('action');
@@ -264,15 +277,15 @@ export async function POST(req: NextRequest) {
         notifyOnBreach,
       } = body;
 
-      const { data: existingConfig } = await supabase
+      const { data: existingConfig } = await supabaseService
         .from('sla_config')
         .select('id')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       let result;
       if (existingConfig) {
-        result = await supabase
+        result = await supabaseService
           .from('sla_config')
           .update({
             target_response_time_hours: targetResponseTime,
@@ -282,9 +295,9 @@ export async function POST(req: NextRequest) {
           })
           .eq('id', existingConfig.id)
           .select()
-          .single();
+          .maybeSingle();
       } else {
-        result = await supabase
+        result = await supabaseService
           .from('sla_config')
           .insert({
             target_response_time_hours: targetResponseTime,
@@ -293,11 +306,15 @@ export async function POST(req: NextRequest) {
             createdAt: Date.now(),
           })
           .select()
-          .single();
+          .maybeSingle();
       }
 
       if (result.error) {
         return NextResponse.json({ error: result.error.message }, { status: 500 });
+      }
+
+      if (!result.data) {
+        return NextResponse.json({ error: 'Failed to save SLA config' }, { status: 500 });
       }
 
       return NextResponse.json({

@@ -44,6 +44,7 @@ export default function ChatClient({
   userAvatar,
   userRole,
 }: Props) {
+  const { t } = useTranslation();
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [showNewConv, setShowNewConv] = useState(false);
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
@@ -197,10 +198,10 @@ export default function ChatClient({
           <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              No connection
+              {t('chat.noConnection')}
             </p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Messages will be sent when you're back online
+              {t('chat.noConnectionDesc')}
             </p>
           </div>
         </div>

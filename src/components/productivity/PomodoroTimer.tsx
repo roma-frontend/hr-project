@@ -178,7 +178,7 @@ export function PomodoroTimer() {
       <div className="mb-3 px-2">
         <h3 className="text-xs font-semibold text-(--text-muted) flex items-center gap-2">
           <Timer className="w-3.5 h-3.5" />
-          Pomodoro Timer
+          {t('pomodoro.pomodoroTimer', 'Pomodoro Timer')}
         </h3>
       </div>
 
@@ -192,7 +192,7 @@ export function PomodoroTimer() {
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >
-          Focus
+          {t('pomodoro.focus', 'Focus')}
         </button>
         <button
           onClick={() => handleModeChange('shortBreak')}
@@ -202,7 +202,7 @@ export function PomodoroTimer() {
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >
-          Short
+          {t('pomodoro.short', 'Short')}
         </button>
         <button
           onClick={() => handleModeChange('longBreak')}
@@ -212,7 +212,7 @@ export function PomodoroTimer() {
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >
-          Long
+          {t('pomodoro.long', 'Long')}
         </button>
       </div>
 

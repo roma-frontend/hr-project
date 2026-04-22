@@ -63,7 +63,7 @@ interface ImpersonationSession {
 export default function ImpersonationPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
   const [startDialogOpen, setStartDialogOpen] = useState(false);
@@ -151,7 +151,7 @@ export default function ImpersonationPage() {
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('superadmin.impersonate.exitMode')}</span>
-                <span className="sm:hidden">Exit</span>
+                <span className="sm:hidden">{t('superadmin.impersonate.exitModeShort') || 'Exit'}</span>
               </Button>
             )}
           </div>
@@ -180,7 +180,7 @@ export default function ImpersonationPage() {
                     {activeSession.expiresAt && (
                       <>
                         {t('superadmin.impersonate.sessionInfo.expiresAt')}:{' '}
-                        {new Date(activeSession.expiresAt).toLocaleString()}
+                        {new Date(activeSession.expiresAt).toLocaleString(i18n.language)}
                       </>
                     )}
                   </p>
@@ -246,7 +246,7 @@ export default function ImpersonationPage() {
                           </Badge>
                           {u.organizationId && (
                             <span className="text-xs text-muted-foreground">
-                              Org: {u.organizationId}
+                              {t('superadmin.impersonate.orgLabel')}: {u.organizationId}
                             </span>
                           )}
                         </div>
@@ -359,7 +359,7 @@ export default function ImpersonationPage() {
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3 shrink-0" />
                             {t('impersonate.started')}{' '}
-                            {new Date(session.startedAt).toLocaleString()}
+                            {new Date(session.startedAt).toLocaleString(i18n.language)}
                           </span>
                           {session.endedAt && (
                             <span>
@@ -456,7 +456,7 @@ export default function ImpersonationPage() {
             </Button>
             <Button onClick={handleStartImpersonation} disabled={!reason.trim() || startImpersonation.isPending}>
               <Shield className="w-4 h-4 mr-2" />
-              {startImpersonation.isPending ? 'Starting...' : t('impersonate.startSession')}
+              {startImpersonation.isPending ? t('superadmin.impersonate.starting') || 'Starting...' : t('impersonate.startSession')}
             </Button>
           </DialogFooter>
         </DialogContent>

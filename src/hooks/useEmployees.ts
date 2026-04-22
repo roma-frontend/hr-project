@@ -26,6 +26,7 @@ export interface EmployeeProfileData {
 }
 
 export function useEmployeeProfile(employeeId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['employee-profile', employeeId],
     queryFn: async () => {
@@ -34,7 +35,7 @@ export function useEmployeeProfile(employeeId: string, enabled = true) {
         employeeId,
       });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch employee profile');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchProfile', 'Failed to fetch employee profile'));
       const json = await res.json();
       return json.data as EmployeeProfileData;
     },
@@ -56,6 +57,7 @@ export interface AIEvaluation {
 }
 
 export function useEmployeeAIEvaluation(employeeId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['employee-ai-evaluation', employeeId],
     queryFn: async () => {
@@ -64,7 +66,7 @@ export function useEmployeeAIEvaluation(employeeId: string, enabled = true) {
         employeeId,
       });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch AI evaluation');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchAIEvaluation', 'Failed to fetch AI evaluation'));
       const json = await res.json();
       return json.data as AIEvaluation | null;
     },
@@ -97,6 +99,7 @@ export interface SupervisorRating {
 }
 
 export function useLatestSupervisorRating(employeeId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['supervisor-rating-latest', employeeId],
     queryFn: async () => {
@@ -105,7 +108,7 @@ export function useLatestSupervisorRating(employeeId: string, enabled = true) {
         employeeId,
       });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch latest rating');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchRating', 'Failed to fetch latest rating'));
       const json = await res.json();
       return json.data as SupervisorRating | null;
     },
@@ -114,6 +117,7 @@ export function useLatestSupervisorRating(employeeId: string, enabled = true) {
 }
 
 export function useSupervisorRatings(employeeId: string, limit = 10, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['supervisor-ratings', employeeId, limit],
     queryFn: async () => {
@@ -123,7 +127,7 @@ export function useSupervisorRatings(employeeId: string, limit = 10, enabled = t
         limit: String(limit),
       });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch ratings');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchRatings', 'Failed to fetch ratings'));
       const json = await res.json();
       return json.data as SupervisorRating[];
     },
@@ -140,6 +144,7 @@ export interface MonthlyTimeStats {
 }
 
 export function useMonthlyTimeStats(employeeId: string, month: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['time-tracking-monthly', employeeId, month],
     queryFn: async () => {
@@ -149,7 +154,7 @@ export function useMonthlyTimeStats(employeeId: string, month: string, enabled =
         month,
       });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch monthly stats');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchMonthlyStats', 'Failed to fetch monthly stats'));
       const json = await res.json();
       return json.data as MonthlyTimeStats;
     },

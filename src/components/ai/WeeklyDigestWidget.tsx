@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +37,7 @@ export default function WeeklyDigestWidget() {
         setGeneratedAt(data.generatedAt);
       }
     } catch (e) {
-      setDigest('Failed to generate digest. Please try again.');
+      setDigest(t('weeklyDigest.failedToGenerate', 'Failed to generate digest. Please try again.'));
     } finally {
       setLoading(false);
     }

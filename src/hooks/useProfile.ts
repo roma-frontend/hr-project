@@ -9,25 +9,33 @@ const PROFILE_QUERY_KEYS = {
 };
 
 async function fetchUser(userId: string) {
-  const params = new URLSearchParams({
-    action: 'get-user-by-id',
-    userId,
-  });
-  const res = await fetch(`/api/users?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch user');
-  const json = await res.json();
-  return json.data;
+  try {
+    const params = new URLSearchParams({
+      action: 'get-user-by-id',
+      userId,
+    });
+    const res = await fetch(`/api/users?${params}`);
+    if (!res.ok) throw new Error('Failed to fetch user');
+    const json = await res.json();
+    return json.data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch user');
+  }
 }
 
 async function fetchUserStats(userId: string) {
-  const params = new URLSearchParams({
-    action: 'get-user-stats',
-    userId,
-  });
-  const res = await fetch(`/api/users?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch user stats');
-  const json = await res.json();
-  return json.data;
+  try {
+    const params = new URLSearchParams({
+      action: 'get-user-stats',
+      userId,
+    });
+    const res = await fetch(`/api/users?${params}`);
+    if (!res.ok) throw new Error('Failed to fetch user stats');
+    const json = await res.json();
+    return json.data;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch user stats');
+  }
 }
 
 export function useUserProfile(userId?: string) {
@@ -58,13 +66,10 @@ export function useUpdateOwnProfile() {
       phone?: string;
       location?: string;
     }) => {
-      const res = await fetch('/api/users', {
+      const res = await fetch(`/api/users?action=update-own-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update-own-profile',
-          ...data,
-        }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         const error = await res.json();

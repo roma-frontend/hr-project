@@ -22,6 +22,8 @@ interface SmartErrorMessageProps {
 }
 
 export function SmartErrorMessage({ error, className = '' }: SmartErrorMessageProps) {
+  const { t } = useTranslation();
+
   if (!error) return null;
 
   // Convert string to SmartError object
@@ -92,7 +94,7 @@ export function SmartErrorMessage({ error, className = '' }: SmartErrorMessagePr
               transition={{ delay: 0.1 }}
               className="text-sm font-medium leading-relaxed"
             >
-              {errorObj.message}
+              {typeof errorObj.message === 'string' ? errorObj.message : t(errorObj.message)}
             </motion.p>
 
             {/* Suggestion */}
@@ -104,7 +106,9 @@ export function SmartErrorMessage({ error, className = '' }: SmartErrorMessagePr
                 className="flex items-start gap-2 text-xs opacity-90"
               >
                 <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
-                <p className="leading-relaxed">{errorObj.suggestion}</p>
+                <p className="leading-relaxed">
+                  {typeof errorObj.suggestion === 'string' ? errorObj.suggestion : t(errorObj.suggestion)}
+                </p>
               </motion.div>
             )}
 
@@ -117,7 +121,7 @@ export function SmartErrorMessage({ error, className = '' }: SmartErrorMessagePr
                 onClick={errorObj.action.onClick}
                 className="flex items-center gap-1.5 text-xs font-medium underline underline-offset-2 hover:no-underline transition-all group"
               >
-                {errorObj.action.label}
+                {t(errorObj.action.label)}
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </motion.button>
             )}
@@ -141,11 +145,11 @@ export function parseAuthError(error: string) {
     errorLower.includes('incorrect password')
   ) {
     return {
-      type: 'error',
-      message: 'Invalid email or password',
-      suggestion: 'Check your input. Is Caps Lock on?',
+      type: 'error' as ErrorType,
+      message: 'smartError.invalidCredentials.message',
+      suggestion: 'smartError.invalidCredentials.suggestion',
       action: {
-        label: 'Forgot password?',
+        label: 'smartError.invalidCredentials.action',
         onClick: () => (window.location.href = '/forgot-password'),
       },
     };
@@ -158,11 +162,11 @@ export function parseAuthError(error: string) {
     errorLower.includes('does not exist')
   ) {
     return {
-      type: 'error',
-      message: 'User not found',
-      suggestion: 'You may not be registered in the system yet',
+      type: 'error' as ErrorType,
+      message: 'smartError.userNotFound.message',
+      suggestion: 'smartError.userNotFound.suggestion',
       action: {
-        label: 'Create account',
+        label: 'smartError.userNotFound.action',
         onClick: () => (window.location.href = '/register'),
       },
     };
@@ -175,11 +179,11 @@ export function parseAuthError(error: string) {
     errorLower.includes('email taken')
   ) {
     return {
-      type: 'error',
-      message: 'This email is already registered',
-      suggestion: 'Try to login or reset your password',
+      type: 'error' as ErrorType,
+      message: 'smartError.emailExists.message',
+      suggestion: 'smartError.emailExists.suggestion',
       action: {
-        label: 'Go to login',
+        label: 'smartError.emailExists.action',
         onClick: () => (window.location.href = '/login'),
       },
     };
@@ -192,9 +196,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('password must be')
   ) {
     return {
-      type: 'warning',
-      message: 'Password not strong enough',
-      suggestion: 'Use at least 8 characters, including letters, numbers and special characters',
+      type: 'warning' as ErrorType,
+      message: 'smartError.weakPassword.message',
+      suggestion: 'smartError.weakPassword.suggestion',
     };
   }
 
@@ -205,9 +209,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('connection')
   ) {
     return {
-      type: 'warning',
-      message: 'Connection problem',
-      suggestion: 'Check your internet connection and try again',
+      type: 'warning' as ErrorType,
+      message: 'smartError.networkError.message',
+      suggestion: 'smartError.networkError.suggestion',
     };
   }
 
@@ -218,9 +222,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('internal error')
   ) {
     return {
-      type: 'error',
-      message: 'Server error',
-      suggestion: 'We are working on fixing this. Please try again in a few minutes',
+      type: 'error' as ErrorType,
+      message: 'smartError.serverError.message',
+      suggestion: 'smartError.serverError.suggestion',
     };
   }
 
@@ -231,9 +235,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('blocked')
   ) {
     return {
-      type: 'warning',
-      message: 'Too many attempts',
-      suggestion: 'Wait a few minutes before trying again',
+      type: 'warning' as ErrorType,
+      message: 'smartError.tooManyAttempts.message',
+      suggestion: 'smartError.tooManyAttempts.suggestion',
     };
   }
 
@@ -244,9 +248,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('disabled')
   ) {
     return {
-      type: 'error',
-      message: 'Account blocked',
-      suggestion: 'Contact your administrator to unblock',
+      type: 'error' as ErrorType,
+      message: 'smartError.accountBlocked.message',
+      suggestion: 'smartError.accountBlocked.suggestion',
     };
   }
 
@@ -257,9 +261,9 @@ export function parseAuthError(error: string) {
     errorLower.includes('confirm email')
   ) {
     return {
-      type: 'warning',
-      message: 'Email not confirmed',
-      suggestion: 'Check your email and click the confirmation link',
+      type: 'warning' as ErrorType,
+      message: 'smartError.emailNotVerified.message',
+      suggestion: 'smartError.emailNotVerified.suggestion',
     };
   }
 
@@ -270,16 +274,16 @@ export function parseAuthError(error: string) {
     errorLower.includes('timeout')
   ) {
     return {
-      type: 'info',
-      message: 'Session expired',
-      suggestion: 'Login again to continue',
+      type: 'info' as ErrorType,
+      message: 'smartError.sessionExpired.message',
+      suggestion: 'smartError.sessionExpired.suggestion',
     };
   }
 
   // Default error
   return {
-    type: 'error',
-    message: error || 'An error occurred',
-    suggestion: 'Try again or contact support',
+    type: 'error' as ErrorType,
+    message: error || 'smartError.defaultError.message',
+    suggestion: 'smartError.defaultError.suggestion',
   };
 }

@@ -14,6 +14,7 @@ import {
   Star,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { useUserLeaves, useUserData, useLatestRating, useMonthlyStats } from '@/hooks/useDashboard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,8 +77,9 @@ const StarRating = memo(({ rating }: { rating: number }) => {
 StarRating.displayName = 'StarRating';
 
 export function EmployeeDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
+  const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
 
   // ═══════════════════════════════════════════════════════════════
   // HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -145,7 +147,7 @@ export function EmployeeDashboard() {
           {t('dashboard.welcome')}, {user?.name?.split(' ')[0]} 👋
         </h2>
         <p className="text-(--text-muted) text-sm mt-1">
-          {format(today, 'EEEE, MMMM d, yyyy')}
+          {format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
         </p>
       </motion.div>
 
@@ -215,7 +217,7 @@ export function EmployeeDashboard() {
                     <span className="text-sm font-normal text-(--text-muted)">/5</span>
                   </p>
                   <p className="text-xs text-(--text-muted)">
-                    by {latestRating.supervisor?.name ?? 'Supervisor'} · {latestRating.ratingPeriod}
+                    {t('common.by', 'by')} {latestRating.supervisor?.name ?? t('roles.supervisor', 'Supervisor')} · {latestRating.ratingPeriod}
                   </p>
                 </div>
               </div>
@@ -426,11 +428,11 @@ export function EmployeeDashboard() {
                   >
                     <div className="flex-1">
                       <p className="text-sm font-medium text-(--text-primary)">
-                        {LEAVE_TYPE_LABELS[leave.type as LeaveType]}
+                        {t(`leaveTypes.${leave.type as LeaveType}`)}
                       </p>
                       <p className="text-xs text-(--text-muted) mt-0.5">
-                        {format(new Date(leave.startDate), 'MMM d')} –{' '}
-                        {format(new Date(leave.endDate), 'MMM d, yyyy')} ({leave.days}{' '}
+                        {format(new Date(leave.startDate), 'MMM d', { locale: dateFnsLocale })} –{' '}
+                        {format(new Date(leave.endDate), 'MMM d, yyyy', { locale: dateFnsLocale })} ({leave.days}{' '}
                         {t('ui.days').toLowerCase()})
                       </p>
                     </div>

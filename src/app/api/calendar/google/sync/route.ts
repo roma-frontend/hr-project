@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createGoogleCalendarEvent } from '@/lib/calendar-sync';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const accessToken = request.cookies.get('google_access_token')?.value;
 
     if (!accessToken) {

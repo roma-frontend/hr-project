@@ -48,10 +48,10 @@ export function useApproveOrgRequest() {
 
   return useMutation({
     mutationFn: async (requestId: string) => {
-      const res = await fetch('/api/org-requests', {
+      const res = await fetch('/api/org-requests?action=approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve', requestId }),
+        body: JSON.stringify({ requestId }),
       });
 
       if (!res.ok) {
@@ -77,10 +77,10 @@ export function useRejectOrgRequest() {
 
   return useMutation({
     mutationFn: async ({ requestId, reason }: { requestId: string; reason?: string }) => {
-      const res = await fetch('/api/org-requests', {
+      const res = await fetch('/api/org-requests?action=reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', requestId, reason }),
+        body: JSON.stringify({ requestId, reason }),
       });
 
       if (!res.ok) {

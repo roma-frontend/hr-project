@@ -21,7 +21,7 @@ interface LeaveStatsProps {
 
 export default React.memo(
   function LeaveStats({ userId }: LeaveStatsProps) {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { data: analytics } = useUserAnalytics(userId);
     const { data: user } = useUserById(userId);
 
@@ -145,7 +145,7 @@ export default React.memo(
                   ⚠️ {t('leaveStats.notOnLeave', { days: stats.daysSinceLastLeave })}
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-400">
-                  {t('leaveStats.lastLeave')}: {stats.lastLeaveDate?.toLocaleDateString('ru-RU')}
+                  {t('leaveStats.lastLeave')}: {stats.lastLeaveDate?.toLocaleDateString(i18n.language || 'en-GB')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge variant="destructive">
@@ -153,7 +153,7 @@ export default React.memo(
                   </Badge>
                   <Badge variant="secondary">
                     {t('leaveStats.recommendLeave')}:{' '}
-                    {stats.nextAvailableDate.toLocaleDateString('ru-RU')}
+                    {stats.nextAvailableDate.toLocaleDateString(i18n.language || 'en-GB')}
                   </Badge>
                 </div>
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
@@ -168,7 +168,7 @@ export default React.memo(
                 <p className="text-xs text-green-600 dark:text-green-400">
                   {t('leaveStats.lastLeave')}:{' '}
                   {stats.lastLeaveDate
-                    ? stats.lastLeaveDate.toLocaleDateString('ru-RU')
+                    ? stats.lastLeaveDate.toLocaleDateString(i18n.language || 'en-GB')
                     : t('leaveStats.never')}
                   {stats.daysSinceLastLeave !== null &&
                     ` (${stats.daysSinceLastLeave} ${t('leaveStats.daysAgo')})`}

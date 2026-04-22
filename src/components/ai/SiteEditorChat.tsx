@@ -77,7 +77,7 @@ function getEditTypeIcon(type?: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -167,7 +167,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
         setMessages((prev) => prev.slice(0, -1));
 
         if (error.limitReached) {
-          toast.error(error.error, {
+          toast.error(t('aiSiteEditor.error', { defaultValue: error.error }), {
             action: {
               label: t('aiSiteEditor.upgradePlan'),
               onClick: () => (window.location.href = '/settings?tab=billing'),
@@ -183,7 +183,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
           ]);
           return;
         }
-        throw new Error(error.error || 'Server error');
+        throw new Error(error.error || t('siteEditor.serverError', 'Server error'));
       }
 
       // Парсим JSON ответ
@@ -204,7 +204,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
 
       // Показываем результат
       if (appliedFiles && appliedFiles.length > 0) {
-        toast.success(t('aiSiteEditor.appliedChanges', { count: appliedFiles.length }, '✅ Applied {{count}} changes! Files updated.'), {
+        toast.success(t('aiSiteEditor.appliedChanges', { count: appliedFiles.length, defaultValue: '✅ Applied {{count}} changes! Files updated.' }), {
           duration: 5000,
         });
         console.log('Applied files:', appliedFiles);
@@ -522,7 +522,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                         <span className="font-mono text-xs truncate">{b.originalPath}</span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(b.timestamp).toLocaleString('ru-RU')} · {b.description}
+                        {new Date(b.timestamp).toLocaleString(i18n.language || 'en-GB')} · {b.description}
                       </div>
                     </div>
                     <Button

@@ -14,6 +14,7 @@ interface UnreadRequestsBadgeProps {
 }
 
 export function UnreadRequestsBadge({ userId, className = '' }: UnreadRequestsBadgeProps) {
+  const { t } = useTranslation();
   const { count, hasUnread, isBlinking } = useUnreadRequestsCount(userId);
   const isVisible = useTabBlink(count, hasUnread);
 
@@ -27,7 +28,7 @@ export function UnreadRequestsBadge({ userId, className = '' }: UnreadRequestsBa
     >
       <Bell className={`w-4 h-4 ${isVisible ? 'text-red-500 animate-bounce' : 'text-red-400'}`} />
       <span className={`text-xs font-bold ${isVisible ? 'text-red-500' : 'text-red-400'}`}>
-        {count} {count === 1 ? 'request' : 'requests'}
+        {t('banners.unreadRequests', { count })}
       </span>
     </div>
   );

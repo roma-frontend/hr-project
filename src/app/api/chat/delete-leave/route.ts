@@ -1,91 +1,82 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: Request) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const body = await req.json();
     const leaveId: string = body.leaveId ?? '';
-    const requesterId: string = body.requesterId ?? '';
-    const searchEmployeeName: string = body.employeeName ?? '';
-    const searchStartDate: string = body.startDate ?? '';
-    const searchEndDate: string = body.endDate ?? '';
-    const searchLeaveType: string = body.leaveType ?? '';
-
-    if (!requesterId) {
-      return NextResponse.json({ success: false, message: 'Missing requesterId' }, { status: 400 });
-    }
+    const requesterId: string = auth.user.id;
 
     const supabase = await createClient();
 
-    // Fetch all data
-    const { data: requesterUser } = await supabase.from('users').select('organizationId').eq('id', requesterId).single();
-    const organizationId = requesterUser?.organizationId;
-
-    const { data: allLeaves } = await supabase
-      .from('leave_requests')
-      .select('*')
-      .eq('organizationId', organizationId || '');
-    
-    const { data: allUsers } = await supabase
+    const { data: requesterUser } = await supabase
       .from('users')
-      .select('*')
-      .eq('organizationId', organizationId || '');
+      .select('organization_id, role')
+      .eq('id', requesterId)
+      .maybeSingle();
 
-    // Find leave by ID first
-    let targetLeave = (allLeaves as any[]).find((l: any) => l.id === leaveId);
-
-    // If not found by ID — search by employee name + dates
-    if (!targetLeave) {
-      targetLeave = (allLeaves as any[]).find((l: any) => {
-        const leaveUser = (allUsers as any[]).find((u: any) => u.id === l.userid);
-        const nameOk = searchEmployeeName
-          ? leaveUser?.name?.toLowerCase().includes(searchEmployeeName.toLowerCase())
-          : true;
-        const startOk = searchStartDate ? l.start_date === searchStartDate : true;
-        const endOk = searchEndDate ? l.end_date === searchEndDate : true;
-        const typeOk = searchLeaveType ? l.type === searchLeaveType : true;
-        return nameOk && startOk && endOk && typeOk;
-      });
-    }
-
-    if (!targetLeave) {
-      const preview = (allLeaves as any[])
-        .slice(0, 5)
-        .map((l: any) => {
-          const u = (allUsers as any[]).find((u: any) => u.id === l.userid);
-          return `${u?.name ?? '?'}: ${l.type} ${l.start_date}→${l.end_date} [${l.id}]`;
-        })
-        .join(', ');
-      return NextResponse.json({
-        success: false,
-        message: `Leave not found. Available: ${preview}`,
-      });
-    }
-
-    // Find requester
-    const requester = (allUsers as any[]).find((u: any) => u.id === requesterId);
-    if (!requester) {
+    if (!requesterUser) {
       return NextResponse.json({ success: false, message: 'Requester not found' });
     }
 
-    const isAdmin = requester.role === 'admin';
+    const { data: targetLeave, error: fetchError } = await supabase
+      .from('leave_requests')
+      .select('id, userid, organization_id, type, start_date, end_date, total_days, reason, status, comment, reviewed_by, review_comment, reviewed_at, created_at, updated_at')
+      .eq('id', leaveId)
+      .maybeSingle();
+
+    if (fetchError || !targetLeave) {
+      return NextResponse.json({
+        success: false,
+        message: `Leave with ID ${leaveId} not found.`,
+      });
+    }
+
+    const isAdmin = requesterUser.role === 'admin';
     const isOwner = targetLeave.userid === requesterId;
+    const isSameOrg = targetLeave.organization_id === requesterUser.organization_id;
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json({
         success: false,
-        message: '❌ You can only delete your own leave requests.',
+        message: 'You can only delete your own leave requests.',
       });
     }
 
-    const ownerUser = (allUsers as any[]).find((u: any) => u.id === targetLeave.userid);
+    if (!isSameOrg && !isAdmin) {
+      return NextResponse.json({
+        success: false,
+        message: 'You can only delete leave requests from your organization.',
+      });
+    }
+
+    const { data: ownerUser } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', targetLeave.userid)
+      .maybeSingle();
+
     const ownerName = ownerUser?.name ?? 'Employee';
 
-    await supabase.from('leave_requests').delete().eq('id', targetLeave.id);
+    const { error: deleteError } = await supabase
+      .from('leave_requests')
+      .delete()
+      .eq('id', targetLeave.id);
+
+    if (deleteError) {
+      return NextResponse.json({
+        success: false,
+        message: `Failed to delete leave: ${deleteError.message}`,
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: `✅ ${isAdmin && !isOwner ? `${ownerName}'s` : 'Your'} ${targetLeave.type} leave (${targetLeave.start_date} → ${targetLeave.end_date}) has been deleted.${targetLeave.status === 'approved' ? ' Leave balance restored.' : ''}`,
+      message: `${isAdmin && !isOwner ? `${ownerName}'s` : 'Your'} ${targetLeave.type} leave (${targetLeave.start_date} → ${targetLeave.end_date}) has been deleted.${targetLeave.status === 'approved' ? ' Leave balance restored.' : ''}`,
     });
   } catch (error: any) {
     return NextResponse.json({

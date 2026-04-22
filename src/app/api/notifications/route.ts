@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
+    const supabaseService = createServiceClient();
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-    }
-
-    const { data: notifications, error } = await supabase
+    const { data: notifications, error } = await supabaseService
       .from('notifications')
       .select('*')
-      .eq('userid', userId)
+      .eq('userid', authUser.id)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -24,11 +25,11 @@ export async function GET(request: NextRequest) {
 
     const mapped = (notifications || []).map((n: any) => ({
       id: n.id,
-      userId: n.user_id,
+      userId: n.userid,
       title: n.title,
       message: n.message,
       type: n.type || 'info',
-      relatedId: n.related_id,
+      relatedId: n.relatedid,
       metadata: n.metadata,
       isRead: n.is_read,
       createdAt: n.created_at,
@@ -43,7 +44,11 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
+    const supabaseService = createServiceClient();
     const body = await request.json();
     const { notificationId, isRead } = body;
 
@@ -56,12 +61,13 @@ export async function PATCH(request: NextRequest) {
       updateData.is_read = isRead;
     }
 
-    const { data: notification, error } = await supabase
+    const { data: notification, error } = await supabaseService
       .from('notifications')
       .update(updateData)
       .eq('id', notificationId)
+      .eq('userid', authUser.id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -76,22 +82,19 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    const supabaseService = createServiceClient();
     const body = await request.json();
-    const { action, userId } = body;
+    const { action } = body;
 
     if (action === 'mark-all-as-read') {
-      const targetUserId = userId || user.id;
-      const { error } = await supabase
+      const { error } = await supabaseService
         .from('notifications')
         .update({ is_read: true })
-        .eq('userid', targetUserId);
+        .eq('userid', authUser.id);
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -109,7 +112,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
+    const supabaseService = createServiceClient();
     const { searchParams } = new URL(request.url);
     const notificationId = searchParams.get('notificationId');
 
@@ -117,7 +124,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Missing notificationId' }, { status: 400 });
     }
 
-    const { error } = await supabase.from('notifications').delete().eq('id', notificationId);
+    const { error } = await supabaseService
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId)
+      .eq('userid', authUser.id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

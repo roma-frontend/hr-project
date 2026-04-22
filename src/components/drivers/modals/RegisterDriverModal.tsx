@@ -383,7 +383,7 @@ export function RegisterDriverModal({
                         }))
                       }
                     >
-                      -
+                      {t('common.decrement', '−')}
                     </Button>
                     <span className="text-lg font-bold w-8 text-center">
                       {formData.maxPassengers}
@@ -398,7 +398,7 @@ export function RegisterDriverModal({
                         }))
                       }
                     >
-                      +
+                      {t('common.increment', '+')}
                     </Button>
                   </div>
                 </div>

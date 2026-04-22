@@ -1,6 +1,9 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 export function TypingIndicator({ users }: { users: { userId: string; name: string }[] }) {
+  const { t } = useTranslation();
   const names = users.map((u) => u.name.split(' ')[0]).join(', ');
   return (
     <div className="flex items-end gap-2 my-1">
@@ -24,7 +27,7 @@ export function TypingIndicator({ users }: { users: { userId: string; name: stri
           />
         </div>
         <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-          {names} {users.length === 1 ? 'is' : 'are'} typing…
+          {t('chat.typing', { names, count: users.length })}
         </span>
       </div>
     </div>

@@ -56,7 +56,7 @@ export function ChatMessages({
 
   if (isLoading) {
     return (
-      <div className="space-y-3 animate-pulse" role="status" aria-label="Loading messages">
+      <div className="space-y-3 animate-pulse" role="status" aria-label={t('chat.loadingMessages')}>
         {[...Array(5)].map((_, i) => (
           <div key={i} className={`flex gap-3 ${i % 2 === 0 ? '' : 'flex-row-reverse'}`}>
             <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
@@ -89,7 +89,7 @@ export function ChatMessages({
       >
         <div
           role="log"
-          aria-label="Chat messages"
+          aria-label={t('chat.chatMessages')}
           aria-live="polite"
           aria-relevant="additions"
           style={{
@@ -102,9 +102,9 @@ export function ChatMessages({
             const msg = dedupedMessages[virtualRow.index];
             if (!msg) return null;
 
-            const isOwn = msg.senderId === currentUserId;
+            const isOwn = msg.senderid === currentUserId;
             const prevMsg = dedupedMessages[virtualRow.index - 1];
-            const isFirstOfStreak = virtualRow.index === 0 || prevMsg?.senderId !== msg.senderId;
+            const isFirstOfStreak = virtualRow.index === 0 || prevMsg?.senderid !== msg.senderid;
             const isSystemAnnouncements = conversation?.name === 'System Announcements';
             const showAvatar = isFirstOfStreak && !isSystemAnnouncements;
             const showName = isSystemAnnouncements

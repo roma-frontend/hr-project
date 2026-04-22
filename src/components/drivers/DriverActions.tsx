@@ -18,22 +18,26 @@ import { toast } from 'sonner';
 
 const NAVIGATORS = [
   {
+    nameKey: 'driver.navigator.google',
     name: 'Google Maps',
     icon: '🗺️',
     url: (lat: number, lng: number) =>
       `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
   },
   {
+    nameKey: 'driver.navigator.yandex',
     name: 'Yandex Maps',
     icon: '🟡',
     url: (lat: number, lng: number) => `https://yandex.ru/maps/?pt=${lng},${lat}&z=16&l=map`,
   },
   {
+    nameKey: 'driver.navigator.2gis',
     name: '2GIS',
     icon: '🟢',
     url: (lat: number, lng: number) => `https://2gis.ru/geo/${lng},${lat}`,
   },
   {
+    nameKey: 'driver.navigator.waze',
     name: 'Waze',
     icon: '🔵',
     url: (lat: number, lng: number) => `https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`,
@@ -66,7 +70,7 @@ export function NavigatorDropdown({ label, coords }: NavigatorDropdownProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-48">
         {NAVIGATORS.map((nav) => (
-          <DropdownMenuItem key={nav.name} asChild>
+          <DropdownMenuItem key={nav.nameKey} asChild>
             <a
               href={nav.url(coords.lat, coords.lng)}
               target="_blank"
@@ -74,7 +78,7 @@ export function NavigatorDropdown({ label, coords }: NavigatorDropdownProps) {
               className="flex items-center gap-2"
             >
               <span>{nav.icon}</span>
-              <span className="flex-1">{nav.name}</span>
+              <span className="flex-1">{t(nav.nameKey, nav.name)}</span>
               <ExternalLink className="w-3 h-3 opacity-50" />
             </a>
           </DropdownMenuItem>

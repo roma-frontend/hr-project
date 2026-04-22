@@ -227,7 +227,7 @@ export function Sidebar() {
   // Update browser tab title with unread chat count
   React.useEffect(() => {
     const count = chatUnreadCount ?? 0;
-    document.title = count > 0 ? `(${count}) Shield HR` : 'Shield HR';
+    document.title = count > 0 ? `(${count}) ${t('sidebar.appName')}` : t('sidebar.appName');
   }, [chatUnreadCount]);
 
   if (!mounted) return null;
@@ -742,7 +742,7 @@ export function MobileSidebar() {
                 {userOrg?.name ?? t('sidebar.orgName')}
               </p>
               <p className="text-[9px] truncate" style={{ color: 'var(--text-muted)' }}>
-                {user?.name ?? 'User'}
+                {user?.name ?? t('nav.userFallback')}
               </p>
             </div>
           </div>

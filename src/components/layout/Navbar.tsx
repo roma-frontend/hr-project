@@ -129,7 +129,6 @@ export function Navbar() {
       // Check for join_approved notification — auto-redirect user to dashboard
       const joinApprovedNotif = newNotifs.find((n: any) => n.type === 'join_approved');
       if (joinApprovedNotif && user?.id) {
-        console.log('[Navbar] Join request approved! Updating user state...');
         // Update user's isApproved status in useAuthStore
         const { setUser } = useAuthStore.getState();
         setUser({
@@ -150,25 +149,28 @@ export function Navbar() {
     prevUnreadCount.current = unreadCount;
   }, [notifications, unreadCount, user]);
 
-  const handleLogout = async () => {
-    try {
-      // Logout from server session
-      await logoutAction();
+  const handleLogout = () => {
+    console.log('[Navbar] Starting logout...');
+    
+    // Clear all localStorage immediately
+    localStorage.clear();
+    console.log('[Navbar] Cleared localStorage');
 
-      // Logout from useAuthStore
-      logout();
+    // Clear all cookies
+    document.cookie.split(';').forEach((c) => {
+      const cookieName = c.split('=')[0]?.trim();
+      document.cookie = `${cookieName}=; path=/; max-age=0; domain=${window.location.hostname}`;
+      document.cookie = `${cookieName}=; path=/; max-age=0`;
+    });
+    console.log('[Navbar] Cleared cookies');
 
-      // Clear auth cookie
-      document.cookie = 'hr-auth-token=; path=/; max-age=0';
+    // Clear auth store state immediately (no await)
+    logout();
+    console.log('[Navbar] Cleared auth store');
 
-      // Redirect to home
-      router.push('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force logout even if error
-      logout();
-      router.push('/');
-    }
+    // Force redirect immediately
+    console.log('[Navbar] Redirecting to login...');
+    window.location.replace('/login');
   };
 
   const handleMarkAllRead = async () => {
@@ -185,9 +187,9 @@ export function Navbar() {
     const mins = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    return `${mins}m ago`;
+    if (days > 0) return t('common.daysAgo', { count: days });
+    if (hours > 0) return t('common.hoursAgo', { count: hours });
+    return t('common.minutesAgo', { count: mins });
   };
 
   return (
@@ -427,7 +429,7 @@ export function Navbar() {
                 </div>
                 <div className="hidden sm:block text-left">
                   <p className="text-xs font-semibold text-(--text-primary) leading-tight">
-                    {user?.name ?? 'User'}
+                    {user?.name ?? t('nav.userFallback')}
                   </p>
                   <p className="text-[10px] text-(--text-muted) capitalize">
                     <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}

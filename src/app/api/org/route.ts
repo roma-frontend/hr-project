@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import {
   createOrganization,
   listAllOrganizations,
@@ -29,8 +30,70 @@ import {
   cancelSubscription,
 } from '@/lib/server/subscriptions';
 
+const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+
+async function ensureUserProfile(user: any) {
+  const supabaseService = createServiceClient();
+
+  const { data: existingProfile } = await supabaseService
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (existingProfile) return existingProfile;
+
+  if (user.email?.toLowerCase() === SUPERADMIN_EMAIL) {
+    const { data: inserted, error } = await supabaseService
+      .from('users')
+      .insert({
+        id: user.id,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || 'Superadmin',
+        email: user.email,
+        password_hash: 'oauth_managed',
+        role: 'superadmin',
+        employee_type: 'staff',
+        is_active: true,
+        is_approved: true,
+        travel_allowance: 9999,
+        paid_leave_balance: 999,
+        sick_leave_balance: 999,
+        family_leave_balance: 999,
+        created_at: Math.floor(Date.now() / 1000),
+        presence_status: 'available',
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to create superadmin profile: ${error.message}`);
+    console.log('[org] Auto-created superadmin profile:', user.id);
+    return inserted;
+  }
+
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const action = searchParams.get('action');
+
+    if (action === 'get-for-picker') {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      let userId: string | undefined;
+      if (user) {
+        const userProfile = await ensureUserProfile(user);
+        userId = userProfile?.id;
+      }
+
+      const orgs = await getOrganizationsForPicker(userId);
+      return NextResponse.json({ data: orgs });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -40,18 +103,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const userProfile = await ensureUserProfile(user);
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
-
-    const searchParams = request.nextUrl.searchParams;
-    const action = searchParams.get('action');
 
     switch (action) {
       case 'list-all': {
@@ -170,11 +226,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const userProfile = await ensureUserProfile(user);
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
@@ -200,7 +252,7 @@ export async function POST(request: NextRequest) {
       case 'update': {
         const result = await updateOrganization({
           superadminUserId: userProfile.id,
-          organizationId: body.organizationId,
+          organizationId: body.organization_id,
           name: body.name,
           plan: body.plan,
           isActive: body.isActive,
@@ -215,7 +267,7 @@ export async function POST(request: NextRequest) {
         const result = await assignOrgAdmin({
           superadminUserId: userProfile.id,
           userId: body.userId,
-          organizationId: body.organizationId,
+          organizationId: body.organization_id,
         });
         return NextResponse.json({ data: result });
       }
@@ -230,7 +282,7 @@ export async function POST(request: NextRequest) {
 
       case 'request-join': {
         const result = await requestToJoinOrganization({
-          organizationId: body.organizationId,
+          organizationId: body.organization_id,
           requestedByEmail: body.requestedByEmail,
           requestedByName: body.requestedByName,
         });
@@ -278,7 +330,7 @@ export async function POST(request: NextRequest) {
       case 'create-manual-subscription': {
         const result = await createManualSubscription({
           superadminUserId: userProfile.id,
-          organizationId: body.organizationId,
+          organizationId: body.organization_id,
           plan: body.plan,
           customPrice: body.customPrice,
           notes: body.notes,
@@ -298,7 +350,7 @@ export async function POST(request: NextRequest) {
         const result = await assignUserAsOrgAdmin({
           superadminUserId: userProfile.id,
           userEmail: body.userEmail,
-          organizationId: body.organizationId,
+          organizationId: body.organization_id,
         });
         return NextResponse.json({ data: result });
       }

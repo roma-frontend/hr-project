@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from '@/lib/cssMotion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';

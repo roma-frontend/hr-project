@@ -142,7 +142,7 @@ export function TodayTasksPanel() {
           href="/tasks"
           className="block text-center text-xs text-(--primary) hover:underline font-medium"
         >
-          View all tasks →
+          {t('tasks.viewAllTasks', 'View all tasks →')}
         </a>
       </div>
     </div>

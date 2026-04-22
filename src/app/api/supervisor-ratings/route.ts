@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const searchParams = req.nextUrl.searchParams;
     const employeeId = searchParams.get('employeeId');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -20,15 +19,15 @@ export async function GET(req: NextRequest) {
 
     const { data: ratings } = await supabase
       .from('supervisor_ratings')
-      .select('*, supervisor:supervisor_id(id, name, email, avatar_url)')
-      .eq('user.id', employeeId)
+      .select('*, supervisor:supervisorid(id, name, email, avatar_url)')
+      .eq('employee_id', employeeId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
     const mapped = (ratings || []).map((r: any) => ({
       id: r.id,
-      employeeId: r.user_id,
-      supervisorId: r.supervisor_id,
+      employeeId: r.employee_id,
+      supervisorId: r.supervisorid,
       supervisor: r.supervisor ? {
         id: r.supervisor.id,
         name: r.supervisor.name,
@@ -61,17 +60,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
     const {
       employeeId,
-      supervisorId,
       overallRating,
       qualityOfWork,
       efficiency,
@@ -85,15 +81,16 @@ export async function POST(req: NextRequest) {
       ratingPeriod,
     } = body;
 
-    if (!employeeId || !supervisorId || !overallRating) {
+    if (!employeeId || !overallRating) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const { data: rating, error } = await supabase
       .from('supervisor_ratings')
       .insert({
-        user_id: employeeId,
-        supervisor_id: supervisorId,
+        employee_id: employeeId,
+        supervisorid: authUser.id,
+        rated_by: authUser.id,
         overall_rating: overallRating,
         quality_of_work: qualityOfWork || 0,
         efficiency: efficiency || 0,
@@ -104,11 +101,11 @@ export async function POST(req: NextRequest) {
         strengths: strengths || null,
         areas_for_improvement: areasForImprovement || null,
         general_comments: generalComments || null,
-        rating_period: ratingPeriod || null,
-        created_at: new Date().toISOString(),
-      } as any)
+        rating_period: ratingPeriod || '',
+        created_at: Date.now(),
+      })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

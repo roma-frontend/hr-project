@@ -179,13 +179,14 @@ function Toggle({
 }
 
 function RiskBadge({ score }: { score: number }) {
+  const { t, i18n } = useTranslation();
   if (score >= 60)
     return (
       <span
         className="px-2 py-0.5 rounded text-xs font-bold"
         style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--destructive)' }}
       >
-        HIGH {t('security.riskHigh')}
+        {t('security.riskHigh') || 'HIGH'}
       </span>
     );
   if (score >= 30)
@@ -194,7 +195,7 @@ function RiskBadge({ score }: { score: number }) {
         className="px-2 py-0.5 rounded text-xs font-bold"
         style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--warning)' }}
       >
-        MED {t('security.riskMed')}
+        {t('security.riskMed') || 'MED'}
       </span>
     );
   return (
@@ -202,13 +203,13 @@ function RiskBadge({ score }: { score: number }) {
       className="px-2 py-0.5 rounded text-xs font-bold"
       style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--success)' }}
       >
-        LOW {t('security.riskLow')}
+        {t('security.riskLow') || 'LOW'}
       </span>
   );
 }
 
 export default function SecurityDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'settings' | 'logs' | 'attempts' | 'blocked'>(
@@ -272,7 +273,7 @@ export default function SecurityDashboard() {
     try {
       await toggleSetting.mutateAsync({ key, enabled: !currentEnabled, updatedBy: user!.id });
     } catch (err) {
-      console.error('Toggle failed:', err);
+      console.error(t('superadmin.security.toggleFailed', 'Toggle failed:'), err);
     } finally {
       setToggling((prev) => ({ ...prev, [key]: false }));
     }
@@ -539,7 +540,7 @@ export default function SecurityDashboard() {
                       className="text-[10px] sm:text-xs mt-1"
                       style={{ color: 'var(--text-disabled)' }}
                     >
-                      {t('superadmin.security.lastChanged', { date: new Date(savedAt).toLocaleString() })}
+                      {t('superadmin.security.lastChanged', { date: new Date(savedAt).toLocaleString(i18n.language) })}
                     </p>
                   )}
                 </div>
@@ -650,7 +651,7 @@ export default function SecurityDashboard() {
                                 {t('security.expiresHours', { hours: hoursLeft })}
                               </span>
                               <span className="hidden sm:inline">
-                                {t('security.suspendedUntil')} {new Date(user.suspendedUntil).toLocaleString()}
+                                {t('security.suspendedUntil')} {new Date(user.suspendedUntil).toLocaleString(i18n.language)}
                               </span>
                             </div>
                           </div>
@@ -817,7 +818,7 @@ export default function SecurityDashboard() {
                     )}
                   </div>
                   <div className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
-                    {new Date(log.createdAt).toLocaleString()}
+                    {new Date(log.createdAt).toLocaleString(i18n.language)}
                   </div>
                 </div>
               ))}

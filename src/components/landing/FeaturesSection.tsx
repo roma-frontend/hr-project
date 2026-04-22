@@ -72,7 +72,7 @@ export default function FeaturesSection() {
   const FEATURES = getFeaturesData(t);
 
   return (
-    <section id="features" className="relative px-6 md:px-12 py-20" aria-label="Platform features">
+    <section id="features" className="relative px-6 md:px-12 py-20" aria-label={t('ariaLabels.platformFeatures')}>
       {/* Section header */}
       <div className="text-center mb-16 section-fade">
         <span className="section-eyebrow">{t('landing.leaveTypes')}</span>

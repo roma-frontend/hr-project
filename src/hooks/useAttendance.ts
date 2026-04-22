@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 export function useMonthlyAttendanceStats(month?: string) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const currentMonth = month || new Date().toISOString().slice(0, 7);
 
@@ -15,7 +16,7 @@ export function useMonthlyAttendanceStats(month?: string) {
       url.searchParams.set('month', currentMonth);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch monthly attendance stats');
+      if (!res.ok) throw new Error(t('hooks.attendance.failedToFetchMonthlyStats', 'Failed to fetch monthly attendance stats'));
       return res.json();
     },
     enabled: !!user?.id,
@@ -24,6 +25,7 @@ export function useMonthlyAttendanceStats(month?: string) {
 
 export function useAttendanceHistory(limit: number = 10) {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   return useQuery({
     queryKey: ['attendance', 'history', user?.id, limit],
@@ -33,7 +35,7 @@ export function useAttendanceHistory(limit: number = 10) {
       url.searchParams.set('limit', String(limit));
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch attendance history');
+      if (!res.ok) throw new Error(t('hooks.attendance.failedToFetchHistory', 'Failed to fetch attendance history'));
       return res.json();
     },
     enabled: !!user?.id,
@@ -41,6 +43,7 @@ export function useAttendanceHistory(limit: number = 10) {
 }
 
 export function useEmployeeAttendanceHistory(userId: string | undefined, month?: string) {
+  const { t } = useTranslation();
   const currentMonth = month || new Date().toISOString().slice(0, 7);
 
   return useQuery({
@@ -52,7 +55,7 @@ export function useEmployeeAttendanceHistory(userId: string | undefined, month?:
       url.searchParams.set('month', currentMonth);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch employee attendance history');
+      if (!res.ok) throw new Error(t('hooks.attendance.failedToFetchEmployeeHistory', 'Failed to fetch employee attendance history'));
       return res.json();
     },
     enabled: !!userId,
@@ -61,6 +64,7 @@ export function useEmployeeAttendanceHistory(userId: string | undefined, month?:
 
 export function useTodayStatus(enabled = true) {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   return useQuery({
     queryKey: ['attendance', 'today-status', user?.id],
@@ -69,7 +73,7 @@ export function useTodayStatus(enabled = true) {
       url.searchParams.set('type', 'today-status');
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch today status');
+      if (!res.ok) throw new Error(t('hooks.attendance.failedToFetchTodayStatus', 'Failed to fetch today status'));
       const json = await res.json();
       return json.data;
     },

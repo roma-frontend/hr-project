@@ -20,7 +20,7 @@ export async function registerWebauthnCredential(
       last_used_at: now,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -31,7 +31,7 @@ export async function getWebauthnCredential(credentialId: string) {
     .from('webauthn_credentials')
     .select('*')
     .eq('credentialid', credentialId)
-    .single();
+    .maybeSingle();
 
   if (error) return null;
   return data;
@@ -60,7 +60,7 @@ export async function getWebauthnChallenge(userId: string): Promise<string | nul
     .from('users')
     .select('webauthn_challenge')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) return null;
   return data?.webauthn_challenge || null;

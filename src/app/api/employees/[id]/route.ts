@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import type { TablesUpdate } from '@/lib/supabase/database.types';
 
 export async function GET(
   req: NextRequest,
@@ -20,7 +21,7 @@ export async function GET(
       .from('users')
       .select('*')
       .eq('id', employeeId)
-      .single();
+      .maybeSingle();
 
     if (!employee) {
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
@@ -41,7 +42,7 @@ export async function GET(
         supervisorId: employee.supervisorid,
         isActive: employee.is_active,
         isApproved: employee.is_approved,
-        organizationId: employee.organizationId,
+        organizationId: employee.organization_id,
         travelAllowance: employee.travel_allowance,
         paidLeaveBalance: employee.paid_leave_balance,
         sickLeaveBalance: employee.sick_leave_balance,
@@ -75,7 +76,7 @@ export async function PUT(
     const employeeId = resolvedParams.id;
     const body = await req.json();
 
-    const updateData: Record<string, any> = {};
+    const updateData: TablesUpdate<'users'> = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.role !== undefined) updateData.role = body.role;
     if (body.employeeType !== undefined) updateData.employee_type = body.employeeType;
@@ -94,13 +95,17 @@ export async function PUT(
 
     const { data: employee, error } = await supabase
       .from('users')
-      .update(updateData as any)
+      .update(updateData)
       .eq('id', employeeId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -118,7 +123,7 @@ export async function PUT(
         supervisorId: employee.supervisorid,
         isActive: employee.is_active,
         isApproved: employee.is_approved,
-        organizationId: employee.organizationId,
+        organizationId: employee.organization_id,
         travelAllowance: employee.travel_allowance,
         paidLeaveBalance: employee.paid_leave_balance,
         sickLeaveBalance: employee.sick_leave_balance,

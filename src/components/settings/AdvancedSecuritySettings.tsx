@@ -88,7 +88,7 @@ export function AdvancedSecuritySettings() {
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Setup failed');
+        throw new Error(err.error || t('advancedSecurity.setupFailed', 'Setup failed'));
       }
       const data = await res.json();
       setQrCodeUrl(data.qrCodeUrl);
@@ -96,7 +96,7 @@ export function AdvancedSecuritySettings() {
       setBackupCodes(data.backupCodes);
       setSetupStep('qr');
     } catch (err: any) {
-      toast.error(err.message || t('toasts.failedToStart2fa'));
+      toast.error(err instanceof Error ? t('security.error', { defaultValue: err.message }) : t('toasts.failedToStart2fa'));
       setSetupStep('idle');
     }
   };
@@ -113,7 +113,7 @@ export function AdvancedSecuritySettings() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setVerifyError(err.error || 'Invalid code');
+        setVerifyError(err.error || t('advancedSecurity.invalidCode', 'Invalid code'));
         setVerifyCode('');
         return;
       }
@@ -121,7 +121,7 @@ export function AdvancedSecuritySettings() {
       setTwoFactorEnabled(true);
       toast.success(t('toasts.twoFactorEnabled'));
     } catch (err: any) {
-      setVerifyError(err.message || 'Verification failed');
+      setVerifyError(err.message || t('advancedSecurity.verificationFailed', 'Verification failed'));
       setVerifyCode('');
     }
   };
@@ -146,7 +146,7 @@ export function AdvancedSecuritySettings() {
       });
       if (!res.ok) {
         const err = await res.json();
-        setDisableError(err.error || 'Failed to disable 2FA');
+        setDisableError(err.error || t('advancedSecurity.disableFailed', 'Failed to disable 2FA'));
         return;
       }
       setTwoFactorEnabled(false);
@@ -154,7 +154,7 @@ export function AdvancedSecuritySettings() {
       setDisablePassword('');
       toast.success(t('toasts.twoFactorDisabled'));
     } catch (err: any) {
-      setDisableError(err.message || 'Failed to disable 2FA');
+      setDisableError(err.message || t('advancedSecurity.disableFailed', 'Failed to disable 2FA'));
     } finally {
       setDisableLoading(false);
     }
@@ -375,7 +375,7 @@ export function AdvancedSecuritySettings() {
                     setVerifyCode(e.target.value.replace(/\D/g, ''));
                     setVerifyError(null);
                   }}
-                  placeholder="000000"
+                  placeholder={t('placeholders.twoFACode', '000000')}
                   className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500"
                   style={{
                     background: 'var(--surface-hover)',

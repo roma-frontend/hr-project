@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
 
@@ -8,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No authorization code' }, { status: 400 });
   }
 
-  const clientId = process.env.GOOGLE_CLIENTid;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const origin = request.nextUrl.origin;
   const redirectUri = `${origin}/api/calendar/google/auth`;
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
       },
       body: new URLSearchParams({
         code,
-        clientid: clientId,
+        client_id: clientId,
         client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',

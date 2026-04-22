@@ -472,7 +472,7 @@ function RegisterPageContent() {
                       value={formData.email}
                       onChange={(val) => setFormData((p) => ({ ...p, email: val }))}
                       label={t('auth.emailAddress')}
-                      placeholder="you@company.com"
+                      placeholder={t('auth.emailPlaceholder', 'you@company.com')}
                     />
                     {isSuperadmin && (
                       <p className="text-xs text-blue-500 flex items-center gap-1 px-1 mt-2">
@@ -492,7 +492,7 @@ function RegisterPageContent() {
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                        placeholder="+374 XX XXX XXX"
+                        placeholder={t('auth.phonePlaceholder', '+374 XX XXX XXX')}
                         className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                         style={{
                           background: 'var(--input)',

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MapPin, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -26,9 +27,11 @@ export function PlaceAutocomplete({
   value,
   onChange,
   onSelect,
-  placeholder = 'Search for a place...',
+  placeholder,
   className,
 }: PlaceAutocompleteProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder || t('driver.placeAutocomplete.placeholder', 'Search for a place...');
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);

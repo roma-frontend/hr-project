@@ -65,7 +65,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-employee-profile', employeeId });
       const res = await fetch(`/api/employees?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch employee profile');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchProfile', 'Failed to fetch employee profile'));
       const json = await res.json();
       return json.data;
     },
@@ -100,7 +100,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
       });
       window.history.back();
     } catch (error: any) {
-      toast.error(error.message || t('employees.deleteFailed', 'Failed to delete employee'));
+      toast.error(error instanceof Error ? t('employees.error', { defaultValue: error.message }) || error.message : t('employees.deleteFailed', 'Failed to delete employee'));
     } finally {
       setDeleting(false);
     }
@@ -118,7 +118,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <p className="text-(--text-muted)">Loading employee profile...</p>
+          <p className="text-(--text-muted)">{t('common.loading', 'Loading employee profile...')}</p>
         </CardContent>
       </Card>
     );
@@ -132,9 +132,9 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-linear-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center text-white font-bold text-2xl shrink-0">
-                {(employee as any).avatarUrl ? (
+                {(employee as any).avatar_url ? (
                   <img
-                    src={(employee as any).avatarUrl}
+                    src={(employee as any).avatar_url}
                     alt={employee.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
@@ -151,7 +151,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
               <div>
                 <CardTitle className="text-2xl">{employee.name}</CardTitle>
                 <p className="text-(--text-muted) text-sm mt-1">
-                  {employee.position || 'Employee'}
+                  {employee.position || t('employeeProfile.defaultPosition', 'Employee')}
                 </p>
                 <div className="flex gap-2 mt-2 flex-wrap">
                   <Badge variant={employee.role === 'admin' ? 'default' : 'secondary'}>
@@ -159,7 +159,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                   </Badge>
                   <Badge variant="outline">{employee.employee_type}</Badge>
                   <Badge variant={employee.is_active ? 'success' : 'destructive'}>
-                    {employee.is_active ? 'Active' : 'Inactive'}
+                    {employee.is_active ? t('employeeProfile.active', 'Active') : t('employeeProfile.inactive', 'Inactive')}
                   </Badge>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             <div>
               <p className="text-xs text-(--text-muted)">{t('employeeProfile.joined')}</p>
               <p className="text-sm font-medium">
-                {format(new Date((employee as any).createdAt), 'MMM d, yyyy')}
+                {format(new Date((employee as any).created_at), 'MMM d, yyyy')}
               </p>
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                   <span className="text-sm font-normal text-(--text-muted)">/5</span>
                 </p>
                 <p className="text-xs text-(--text-muted)">
-                  by {latestRating.supervisor?.name ?? 'Supervisor'} · {latestRating.ratingPeriod}
+                  {t('common.by', 'by')} {latestRating.supervisor?.name ?? t('roles.supervisor', 'Supervisor')} · {latestRating.ratingPeriod}
                 </p>
               </div>
             </div>
@@ -382,7 +382,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             )}
             {latestRating.generalComments && (
               <div className="mt-2 p-3 rounded-lg bg-(--background-subtle)">
-                <p className="text-xs font-semibold text-(--text-muted) mb-1">💬 Comments</p>
+                <p className="text-xs font-semibold text-(--text-muted) mb-1">{t('employeeProfile.comments')}</p>
                 <p className="text-sm text-(--text-primary)">{latestRating.generalComments}</p>
               </div>
             )}
@@ -409,7 +409,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                       {rating.ratingPeriod}
                     </p>
                     <p className="text-xs text-(--text-muted)">
-                      by {rating.supervisor?.name ?? 'Supervisor'}
+                      {t('common.by', 'by')} {rating.supervisor?.name ?? t('roles.supervisor', 'Supervisor')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -450,19 +450,19 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
         </CardHeader>
         <CardContent className="grid grid-cols-3 gap-4">
           <div className="text-center">
-              <p className="text-2xl font-bold text-[#2563eb]">{(employee as any).paidLeaveBalance}</p>
+              <p className="text-2xl font-bold text-[#2563eb]">{(employee as any).paid_leave_balance}</p>
             <p className="text-xs text-(--text-muted) mt-1">
               {t('employeeProfile.paidLeave')}
             </p>
           </div>
           <div className="text-center">
-              <p className="text-2xl font-bold text-[#ef4444]">{(employee as any).sickLeaveBalance}</p>
+              <p className="text-2xl font-bold text-[#ef4444]">{(employee as any).sick_leave_balance}</p>
             <p className="text-xs text-(--text-muted) mt-1">
               {t('employeeProfile.sickLeave')}
             </p>
           </div>
           <div className="text-center">
-              <p className="text-2xl font-bold text-[#10b981]">{(employee as any).familyLeaveBalance}</p>
+              <p className="text-2xl font-bold text-[#10b981]">{(employee as any).family_leave_balance}</p>
             <p className="text-xs text-(--text-muted) mt-1">
               {t('employeeProfile.familyLeave')}
             </p>

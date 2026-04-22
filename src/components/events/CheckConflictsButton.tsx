@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCheckLeaveConflictsManual } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -32,6 +33,7 @@ export function CheckConflictsButton({
   endDate,
   organizationId,
 }: CheckConflictsButtonProps) {
+  const { t } = useTranslation();
   const { mutateAsync: checkConflicts } = useCheckLeaveConflictsManual();
   const [isChecking, setIsChecking] = React.useState(false);
   const [conflictCount, setConflictCount] = React.useState<number | null>(null);
@@ -48,8 +50,8 @@ export function CheckConflictsButton({
       }) as any;
       setConflictCount(result.conflictsFound);
     } catch (error: any) {
-      console.error('Conflict check failed:', error);
-      alert(error.message || 'Failed to check conflicts');
+      console.error(t('events.conflictCheckFailed', 'Conflict check failed:'), error);
+      alert(error instanceof Error ? t('events.error', { defaultValue: error.message }) : t('events.failedToCheckConflicts', 'Failed to check conflicts'));
     } finally {
       setIsChecking(false);
     }
@@ -64,7 +66,7 @@ export function CheckConflictsButton({
           ) : (
             <AlertCircle className="w-4 h-4" />
           )}
-          Check Conflicts
+          {t('events.checkConflicts', 'Check Conflicts')}
           {conflictCount !== null && conflictCount > 0 && (
             <span className="ml-1 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">
               {conflictCount}
@@ -73,7 +75,7 @@ export function CheckConflictsButton({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={handleCheck}>Check for this leave request</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCheck}>{t('events.checkForThisLeave', 'Check for this leave request')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

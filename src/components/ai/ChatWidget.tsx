@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import {
@@ -156,7 +157,7 @@ function parseActions(content: string): { cleanContent: string; actions: AnyActi
 function getFollowUpSuggestions(
   content: string,
   userRole: string,
-  t: (key: string) => string,
+  t: TFunction<'translation', undefined>,
 ): string[] {
   const lower = content.toLowerCase();
 
@@ -169,16 +170,16 @@ function getFollowUpSuggestions(
     return [t('chatWidget.showBalance'), t('chatWidget.viewUpcoming'), t('chatWidget.whoOnLeave')];
   }
   if (lower.includes('balance') || lower.includes('days left') || lower.includes('remaining')) {
-    return ['📆 Book a vacation', '🤒 Request sick leave', '📊 Show my leave history'];
+    return [t('chatWidget.bookVacation', '📆 Book a vacation'), t('chatWidget.requestSickLeave', '🤒 Request sick leave'), t('chatWidget.showLeaveHistory', '📊 Show my leave history')];
   }
   if (lower.includes('sick') || lower.includes('doctor') || lower.includes('medical')) {
     return ['🤒 Book sick leave for today', '👨‍⚕️ Book a doctor visit', t('chatWidget.showBalance')];
   }
   if (lower.includes('team') || lower.includes('colleague') || lower.includes('who is')) {
-    return ['📅 Show team calendar', '📋 My leave balance', '📆 Book time off'];
+    return [t('chatWidget.showTeamCalendar', '📅 Show team calendar'), t('chatWidget.myLeaveBalance', '📋 My leave balance'), t('chatWidget.bookTimeOff', '📆 Book time off')];
   }
   if (lower.includes('cancel') || lower.includes('delete') || lower.includes('removed')) {
-    return ['📋 Show my pending leaves', '📆 Book new leave', '📊 My leave balance'];
+    return [t('chatWidget.showPendingLeaves', '📋 Show my pending leaves'), t('chatWidget.bookNewLeave', '📆 Book new leave'), t('chatWidget.myLeaveBalance', '📊 My leave balance')];
   }
   if (userRole === 'admin' || userRole === 'supervisor') {
     return [
@@ -187,7 +188,7 @@ function getFollowUpSuggestions(
       t('chatWidget.pendingApprovals'),
     ];
   }
-  return ['📆 Book a vacation', t('chatWidget.showBalance'), '👥 Who is on leave this week?'];
+  return [t('chatWidget.bookVacation', '📆 Book a vacation'), t('chatWidget.showBalance'), t('chatWidget.whoOnLeaveWeek', '👥 Who is on leave this week?')];
 }
 
 const LEAVE_TYPE_LABELS: Record<string, string> = {
@@ -339,9 +340,9 @@ export function ChatWidget() {
     window.speechSynthesis.cancel();
 
     const greetings = [
-      'Hi! How can I help you today?',
-      'Hello! What can I do for you?',
-      "Hey! I'm here to help. What do you need?",
+      t('chat.widget.greeting', "Hey! I'm here to help. What do you need?"),
+      t('chat.widget.helloHelp', 'Hi! How can I help you today?'),
+      t('chat.widget.helloWhatCanIDo', 'Hello! What can I do for you?'),
     ];
     const text = greetings[Math.floor(Math.random() * greetings.length)];
     const utterance = new SpeechSynthesisUtterance(text);
@@ -458,7 +459,7 @@ export function ChatWidget() {
                 ...m,
                 bookingStates: {
                   ...m.bookingStates,
-                  [actionIndex]: { status: 'conflict', result: 'Not logged in.' },
+                  [actionIndex]: { status: 'conflict', result: t('chatWidget.notLoggedIn', 'Not logged in.') },
                 },
               }
             : m,
@@ -504,7 +505,7 @@ export function ChatWidget() {
                             status: 'conflict',
                             result:
                               conflictData.aiMessage ||
-                              'Обнаружены критические конфликты. Пожалуйста, выберите другие даты или обсудите с руководителем.',
+                              t('chatWidget.criticalConflictsDetected', 'Critical conflicts detected. Please choose different dates or discuss with your manager.'),
                             conflicts: conflictData.conflicts,
                             alternativeDates: conflictData.alternativeDates || [],
                           },
@@ -558,10 +559,10 @@ export function ChatWidget() {
         const endTime = new Date(action.endTime).getTime();
 
         if (!user.organizationId) {
-          throw new Error('Organization not selected. Please select an organization first.');
+          throw new Error(t('chatWidget.organizationNotSelected', 'Organization not selected. Please select an organization first.'));
         }
         if (isNaN(startTime) || isNaN(endTime)) {
-          throw new Error('Invalid date/time for driver booking.');
+          throw new Error(t('chatWidget.invalidDateTime', 'Invalid date/time for driver booking.'));
         }
 
         // ═══════════════════════════════════════════════════════════════
@@ -587,7 +588,7 @@ export function ChatWidget() {
                           status: 'conflict',
                           result:
                             conflictData.aiMessage ||
-                            'Водитель уже забронирован на это время. Пожалуйста, выберите другое время или другого водителя.',
+                              t('chatWidget.driverBusy', 'The driver is already booked for this time. Please choose a different time or another driver.'),
                           conflicts: conflictData.conflicts,
                         },
                       },
@@ -627,7 +628,7 @@ export function ChatWidget() {
       try {
         data = await res.json();
       } catch {
-        data = { error: `Server error (${res.status})` };
+        data = { error: t('chatWidget.serverError', 'Server error') + ` (${res.status})` };
       }
 
       if (res.ok) {
@@ -640,7 +641,7 @@ export function ChatWidget() {
                     ...m.bookingStates,
                     [actionIndex]: {
                       status: 'booked',
-                      result: (data.message as string) || 'Done!',
+                      result: (data.message as string) || t('chatWidget.done', 'Done!'),
                     },
                   },
                 }
@@ -657,7 +658,7 @@ export function ChatWidget() {
                     ...m.bookingStates,
                     [actionIndex]: {
                       status: 'conflict',
-                      result: (data.error as string) || 'Something went wrong.',
+                      result: (data.error as string) || t('chatWidget.somethingWentWrong', 'Something went wrong.'),
                     },
                   },
                 }
@@ -666,8 +667,8 @@ export function ChatWidget() {
         );
       }
     } catch (err) {
-      console.error('[ChatWidget] Action error:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Network error. Please try again.';
+      console.error(t('chatWidget.actionError', 'ChatWidget action error:'), err);
+      const errorMsg = err instanceof Error ? err.message : t('chatWidget.networkError', 'Network error. Please try again.');
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
@@ -899,7 +900,7 @@ export function ChatWidget() {
         ),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : t('chat.unknownError', 'Unknown error'));
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -929,7 +930,7 @@ export function ChatWidget() {
             className="fixed bottom-24 right-6 z-50 px-4 py-2 rounded-xl bg-[#2563eb] text-white text-sm font-medium shadow-lg flex items-center gap-2"
           >
             <Mic className="w-4 h-4 animate-pulse" />
-            Hey HR! I&apos;m listening…
+            Hey HR! {t('chatWidget.imListening', "I'm here to help! 💡")}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1037,7 +1038,7 @@ export function ChatWidget() {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-(--text-primary)">Shield HR AI</p>
+                <p className="text-sm font-semibold text-(--text-primary)">{t('chat.widget.shieldHrAi')}</p>
                 <p className="text-[10px] text-(--text-muted)">
                   {t('chatWidget.subtitle', { defaultValue: 'Your intelligent HR assistant' })}
                 </p>
@@ -1049,8 +1050,8 @@ export function ChatWidget() {
                     setIsOpen(false);
                   }}
                   className="p-1.5 rounded-lg hover:bg-(--background-subtle) transition-colors"
-                  aria-label="Open full screen chat"
-                  title="Открыть на весь экран"
+                  aria-label={t('chatWidget.openFullScreen', 'Open full screen chat')}
+                  title={t('chatWidget.openFullScreen', 'Open full screen chat')}
                 >
                   <Maximize2 className="w-4 h-4 text-(--text-muted)" />
                 </button>
@@ -1155,9 +1156,7 @@ export function ChatWidget() {
                                       ? t('chatWidget.updateLeave')
                                       : isBookDriver
                                         ? t('chatWidget.bookDriver', 'Book Driver')
-                                        : (LEAVE_TYPE_LABELS[
-                                            (action as BookLeaveAction).leaveType
-                                          ] ?? t('chatWidget.leaveRequest'))}
+                                         : t(`leaveTypes.${(action as BookLeaveAction).leaveType}`, { defaultValue: t('chatWidget.leaveRequest') })}
                                 </div>
                                 <div className="text-(--text-muted) space-y-0.5">
                                   {isBookDriver ? (
@@ -1174,7 +1173,7 @@ export function ChatWidget() {
                                         {(action as BookDriverAction).to}
                                       </p>
                                       <p>
-                                        👥 {(action as BookDriverAction).passengerCount} passengers
+                                        👥 {(action as BookDriverAction).passengerCount} {t('chatWidget.passengers', 'passengers')}
                                       </p>
                                       {(action as BookDriverAction).purpose && (
                                         <p>💼 {(action as BookDriverAction).purpose}</p>
@@ -1200,7 +1199,7 @@ export function ChatWidget() {
                                         {(action as DeleteLeaveAction).endDate}
                                       </p>
                                       <p className="text-red-500 font-medium">
-                                        ⚠️ This action cannot be undone
+                                        ⚠️ {t('chatWidget.actionCannotBeUndone', 'This action cannot be undone')}
                                       </p>
                                     </>
                                   )}
@@ -1272,7 +1271,7 @@ export function ChatWidget() {
                                         state.alternativeDates.length > 0 && (
                                           <div className="mt-3">
                                             <p className="text-xs font-medium text-red-700 dark:text-red-300 mb-1">
-                                              ✅ Доступные даты без конфликтов:
+                                              ✅ {t('chatWidget.availableDatesNoConflicts', 'Available dates without conflicts')}:
                                             </p>
                                             <div className="flex flex-wrap gap-1.5">
                                               {state.alternativeDates.map((dateRange, idx) => (
@@ -1280,7 +1279,7 @@ export function ChatWidget() {
                                                   key={idx}
                                                   onClick={() => {
                                                     // Вставляем даты в input
-                                                    setInput(`Хочу отпуск ${dateRange}`);
+                                                    setInput(t('chatWidget.wantLeave', 'I want leave') + ` ${dateRange}`);
                                                     // Обновляем состояние — убираем конфликт
                                                     setMessages((prev) =>
                                                       prev.map((msg) =>

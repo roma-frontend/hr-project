@@ -3,6 +3,8 @@ import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { requireAdmin } from '@/lib/api-utils';
 import fs from 'fs';
 import path from 'path';
 
@@ -666,6 +668,10 @@ IMPORTANT: Only output FILE blocks for files that need to change. Do NOT rewrite
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser, profile: authProfile } = auth;
+
     console.log('[AI Site Editor] Request received');
 
     const body = await req.json();
@@ -675,15 +681,20 @@ export async function POST(req: NextRequest) {
       plan: body.plan,
     });
 
-    const { message, userId, organizationId, plan } = body;
+    const { message, organizationId, plan } = body;
+    const userId = authUser.id;
 
-    if (!message || !userId || !organizationId) {
+    if (!message || !organizationId) {
       console.error('[AI Site Editor] Missing fields:', {
         message: !!message,
-        userId: !!userId,
-        organizationId: !!organizationId,
+        organization_id: !!organizationId,
       });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Verify admin can only edit their own org
+    if (authProfile.role !== 'superadmin' && authProfile.organization_id !== organizationId) {
+      return NextResponse.json({ error: 'Forbidden: cannot edit other organizations' }, { status: 403 });
     }
 
     console.log('[AI Site Editor] Detecting edit type...');
@@ -692,7 +703,54 @@ export async function POST(req: NextRequest) {
 
     // Проверяем лимиты плана
     console.log('[AI Site Editor] Checking limits...');
-    // TODO: Implement plan limits check with Supabase
+    const supabaseService = createServiceClient();
+    
+    const { data: subscription } = await supabaseService
+      .from('subscriptions')
+      .select('plan, status')
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    const planLimits: Record<string, { maxEditsPerMonth: number; maxFilesPerEdit: number }> = {
+      starter: { maxEditsPerMonth: 10, maxFilesPerEdit: 3 },
+      professional: { maxEditsPerMonth: 50, maxFilesPerEdit: 10 },
+      enterprise: { maxEditsPerMonth: -1, maxFilesPerEdit: -1 },
+    };
+
+    const limits = subscription ? planLimits[subscription.plan] : planLimits.starter;
+    
+    if (!limits) {
+      const canEdit = { allowed: false, reason: 'Invalid subscription plan' };
+      return NextResponse.json(
+        { error: canEdit.reason, limitReached: true, upgradeRequired: true },
+        { status: 403 },
+      );
+    }
+
+    // Check monthly edit count
+    if (limits.maxEditsPerMonth > 0) {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      
+      const { count: monthlyEdits } = await supabaseService
+        .from('ai_site_editor_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organizationId)
+        .gte('created_at', startOfMonth);
+
+      if (monthlyEdits !== null && monthlyEdits >= limits.maxEditsPerMonth) {
+        const canEdit = { 
+          allowed: false, 
+          reason: `Monthly AI edit limit reached (${limits.maxEditsPerMonth}/${limits.maxEditsPerMonth}). Upgrade your plan for more edits.` 
+        };
+        return NextResponse.json(
+          { error: canEdit.reason, limitReached: true, upgradeRequired: true },
+          { status: 403 },
+        );
+      }
+    }
+
     const canEdit = { allowed: true, reason: '' };
 
     if (!canEdit.allowed) {
@@ -709,17 +767,21 @@ export async function POST(req: NextRequest) {
       .from('ai_site_editor_sessions')
       .insert({
         userId: userId,
-        organizationId,
+        organization_id: organizationId,
         user_message: message,
         edit_type: editType,
         status: 'pending',
         created_at: Date.now(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (sessionError) {
       throw new Error(sessionError.message);
+    }
+
+    if (!session) {
+      throw new Error('Failed to create session');
     }
 
     const sessionId = session.id;
@@ -833,6 +895,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth instanceof NextResponse) return auth;
+
   const searchParams = request.nextUrl.searchParams;
   const action = searchParams.get('action');
   const userId = searchParams.get('userId');

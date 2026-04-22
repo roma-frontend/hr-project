@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 export interface GlobalSearchResults {
   users: Array<{
@@ -48,6 +49,7 @@ export interface GlobalSearchResults {
 }
 
 export function useGlobalSearch(query: string, limit = 20) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['superadmin', 'global-search', query, limit],
     queryFn: async () => {
@@ -57,7 +59,7 @@ export function useGlobalSearch(query: string, limit = 20) {
         limit: String(limit),
       });
       const res = await fetch(`/api/superadmin?${params}`);
-      if (!res.ok) throw new Error('Failed to search');
+      if (!res.ok) throw new Error(t('hooks.globalsearch.failedToSearch', 'Failed to search'));
       const json = await res.json();
       return json.data as GlobalSearchResults;
     },

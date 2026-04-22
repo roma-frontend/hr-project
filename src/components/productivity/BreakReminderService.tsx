@@ -69,7 +69,7 @@ export default function BreakReminderService({
       createTone(659.25, now + 0.45, 0.1); // E5
       createTone(783.99, now + 0.5, 0.2); // G5
     } catch (error) {
-      console.error('Failed to play break sound:', error);
+      console.error(t('productivity.breakSoundFailed', 'Failed to play break sound:'), error);
     }
   };
 
@@ -105,11 +105,11 @@ export default function BreakReminderService({
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
         </div>
         <div className="flex-1">
-          <p className="font-semibold text-(--foreground) text-base">Time for a Break! ☕</p>
+          <p className="font-semibold text-(--foreground) text-base">{t('productivity.breakReminder.title', 'Time for a Break! ☕')}</p>
           <p className="text-sm text-(--text-muted) mt-0.5 leading-relaxed">
             {intervalMinutes === 1
-              ? 'Testing mode: Time to take a quick break!'
-              : `You've been working for ${intervalMinutes} minutes. Take 5 minutes to stretch and recharge!`}
+              ? t('productivity.breakReminder.testing', 'Testing mode: Time to take a quick break!')
+              : t('productivity.breakReminder.message', `You've been working for ${intervalMinutes} minutes. Take 5 minutes to stretch and recharge!`, { intervalMinutes })}
           </p>
         </div>
       </div>,
@@ -123,14 +123,14 @@ export default function BreakReminderService({
     // Send push notification for mobile (works even when app is in background)
     if (isPushNotificationSupported()) {
       try {
-        await sendLocalPushNotification('Time for a Break! ☕', {
-          body: `You've been working for ${intervalMinutes} minutes. Take a 5-minute break to stretch and recharge!`,
+        await sendLocalPushNotification(t('productivity.breakReminder.title', 'Time for a Break! ☕'), {
+          body: t('productivity.breakReminder.pushBody', `You've been working for ${intervalMinutes} minutes. Take a 5-minute break to stretch and recharge!`, { intervalMinutes }),
           tag: `break-reminder-${Date.now()}`, // Unique tag to ensure it always shows
           requireInteraction: false, // Better for iOS - auto dismiss after some time
           silent: false, // Play sound
         } as any);
       } catch (error) {
-        console.error('Failed to send push notification:', error);
+        console.error(t('productivity.pushNotificationFailed', 'Failed to send push notification:'), error);
       }
     }
   };

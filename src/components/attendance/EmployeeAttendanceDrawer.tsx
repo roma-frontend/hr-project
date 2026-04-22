@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n/config';
 import {
   X,
   Calendar,
@@ -30,7 +31,7 @@ interface Props {
 }
 
 function formatTime(ts: number) {
-  return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(i18n.language || 'en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 function formatDuration(min: number) {
   return `${Math.floor(min / 60)}h ${min % 60}m`;
@@ -248,7 +249,7 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                       ? (record.totalWorkedMinutes / 60).toFixed(1)
                       : null;
                     const dateObj = new Date(record.date + 'T00:00:00');
-                    const dayLabel = dateObj.toLocaleDateString('en-GB', {
+                    const dayLabel = dateObj.toLocaleDateString(i18n.language || 'en-GB', {
                       weekday: 'short',
                       day: 'numeric',
                       month: 'short',

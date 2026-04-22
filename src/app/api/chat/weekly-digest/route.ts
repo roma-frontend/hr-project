@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { groq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
+import { requireAdmin } from '@/lib/api-utils';
 
 // Opt out of static generation — uses request.url
 export const revalidate = 0;
 
-// GET /api/chat/weekly-digest?adminId=xxx
+// GET /api/chat/weekly-digest
 // Returns AI-generated weekly digest for admin
 export async function GET(req: NextRequest) {
   try {
-    const adminId = req.nextUrl.searchParams.get('adminId');
-    if (!adminId) return NextResponse.json({ error: 'adminId required' }, { status: 400 });
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+
+    const adminId = auth.user.id;
 
     const supabase = await createClient();
 
@@ -24,8 +27,8 @@ export async function GET(req: NextRequest) {
     const weekEndStr = weekEnd.toISOString().split('T')[0] || '';
 
     // Get organizationId for admin
-    const { data: adminUser } = await supabase.from('users').select('organizationId').eq('id', adminId).single();
-    const organizationId = adminUser?.organizationId;
+    const { data: adminUser } = await supabase.from('users').select('organization_id').eq('id', adminId).maybeSingle();
+    const organizationId = adminUser?.organization_id;
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -33,9 +36,9 @@ export async function GET(req: NextRequest) {
 
     // Fetch all data in parallel
     const [allLeaves, allUsers, todayAttendance] = await Promise.all([
-      supabase.from('leave_requests').select('*').eq('organizationId', organizationId || ''),
-      supabase.from('users').select('*').eq('organizationId', organizationId || ''),
-      supabase.from('time_tracking').select('*').eq('userId', organizationId || '').eq('date', today.toISOString().split('T')[0] || ''),
+      supabase.from('leave_requests').select('*').eq('organization_id', organizationId || ''),
+      supabase.from('users').select('*').eq('organization_id', organizationId || ''),
+      supabase.from('time_tracking').select('*').eq('date', today.toISOString().split('T')[0] || ''),
     ]);
 
     const activeEmployees = (allUsers.data || []).filter((u: any) => u.is_active && u.role === 'employee');
@@ -53,7 +56,7 @@ export async function GET(req: NextRequest) {
         const { data: history } = await supabase
           .from('time_tracking')
           .select('*')
-          .eq('userId', emp.id)
+          .eq('userid', emp.id)
           .gte('date', weekStartStr)
           .lte('date', weekEndStr);
         const lateCount = history?.filter((r: any) => r.is_late).length || 0;
@@ -95,7 +98,7 @@ ${
     .slice(0, 5)
     .map((l: any) => {
       const user = allUsers.data?.find((u: any) => u.id === l.userid);
-      return `- ${user?.name ?? 'Unknown'}: ${l.days} day(s) ${l.type} leave (${l.start_date} → ${l.end_date})`;
+      return `- ${user?.name ?? 'Unknown'}: ${l.total_days} day(s) ${l.type} leave (${l.start_date} → ${l.end_date})`;
     })
     .join('\n') || 'None'
 }

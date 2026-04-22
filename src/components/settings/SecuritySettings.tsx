@@ -14,21 +14,21 @@ interface SecuritySettingsProps {
   userId: string;
 }
 
-async function fetchFaceDescriptor(userId: string) {
+async function fetchFaceDescriptor(userId: string, t: (key: string, fallback: string) => string) {
   const params = new URLSearchParams({ action: 'get-face-descriptor', userId });
   const res = await fetch(`/api/security?${params}`);
-  if (!res.ok) throw new Error('Failed to fetch face descriptor');
+  if (!res.ok) throw new Error(t('security.failedToFetchFaceDescriptor', 'Failed to fetch face descriptor'));
   const json = await res.json();
   return json.data;
 }
 
-async function removeFaceRegistration(userId: string) {
+async function removeFaceRegistration(userId: string, t: (key: string, fallback: string) => string) {
   const res = await fetch('/api/security', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'remove-face-registration', userId }),
   });
-  if (!res.ok) throw new Error('Failed to remove face registration');
+  if (!res.ok) throw new Error(t('security.failedToRemoveFaceRegistration', 'Failed to remove face registration'));
   return res.json();
 }
 
@@ -40,12 +40,12 @@ export function SecuritySettings({ userId }: SecuritySettingsProps) {
   // Get face descriptor status
   const { data: faceData } = useQuery({
     queryKey: ['face-descriptor', userId],
-    queryFn: () => fetchFaceDescriptor(userId),
+    queryFn: () => fetchFaceDescriptor(userId, t),
     enabled: !!userId,
   });
 
   const removeFaceMutation = useMutation({
-    mutationFn: () => removeFaceRegistration(userId),
+    mutationFn: () => removeFaceRegistration(userId, t),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['face-descriptor', userId] });
     },

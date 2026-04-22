@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSharePointAuthUrl } from '@/lib/sharepoint-sync';
 import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const validation = await validateRestrictedOrgFromRequest(request);
 
     if (!validation.allowed) {

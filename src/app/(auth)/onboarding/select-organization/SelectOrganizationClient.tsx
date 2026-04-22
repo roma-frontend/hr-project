@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Building2, Search, CheckCircle2 } from 'lucide-react';
+import { Building2, Search, ArrowRight, Shield, Users, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -53,7 +53,7 @@ export default function SelectOrganizationClient() {
         name: freshUserData.name,
         email: freshUserData.email,
         role: freshUserData.role,
-        organizationId: freshUserData.organizationId,
+        organizationId: freshUserData.organization_id,
         isApproved: freshUserData.isApproved,
       });
 
@@ -72,10 +72,19 @@ export default function SelectOrganizationClient() {
     }
   }, [user, freshUserData, setUser]);
 
-  const { data: organizations } = useQuery({
+  const { data: organizations, error, isLoading } = useQuery({
     queryKey: ['organizations-for-picker'],
     queryFn: fetchActiveOrganizations,
   });
+
+  React.useEffect(() => {
+    if (organizations) {
+      console.log('[SelectOrg] Organizations loaded:', organizations);
+    }
+    if (error) {
+      console.error('[SelectOrg] Error loading organizations:', error);
+    }
+  }, [organizations, error]);
   const requestJoin = useRequestJoinOrganization();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,16 +116,16 @@ export default function SelectOrganizationClient() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="w-full">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white dark:bg-gray-800 shadow-lg mb-4">
-            <Building2 className="w-8 h-8 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-[var(--landing-bg)] p-4">
+      <div className="w-full max-w-2xl">
+        <div className="text-center mb-10 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-lg mb-6">
+            <Shield className="w-10 h-10 text-[var(--primary)]" strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-3 heading-gradient">
             {t('onboarding.selectOrganization', 'Select Your Organization')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-[var(--text-muted)] max-w-md mx-auto">
             {t(
               'onboarding.selectOrgDesc',
               'Choose the organization you want to join. Your request will be sent to administrators for approval.',
@@ -124,45 +133,84 @@ export default function SelectOrganizationClient() {
           </p>
         </div>
 
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="flex flex-col items-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+            <Building2 className="w-5 h-5 text-[var(--primary)] mb-2" />
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t('onboarding.organizations', 'Organizations')}
+            </span>
+            <span className="text-xl font-bold text-[var(--text-primary)]">
+              {organizations?.length ?? 0}
+            </span>
+          </div>
+          <div className="flex flex-col items-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+            <Users className="w-5 h-5 text-[var(--primary)] mb-2" />
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t('onboarding.members', 'Members')}
+            </span>
+            <span className="text-xl font-bold text-[var(--text-primary)]">—</span>
+          </div>
+          <div className="flex flex-col items-center p-4 rounded-xl bg-[var(--card)] border border-[var(--border)]">
+            <Globe className="w-5 h-5 text-[var(--primary)] mb-2" />
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t('onboarding.countries', 'Countries')}
+            </span>
+            <span className="text-xl font-bold text-[var(--text-primary)]">—</span>
+          </div>
+        </div>
+
         <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] pointer-events-none" />
           <Input
             type="text"
             placeholder={t('onboarding.searchOrg', 'Search organizations...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-12 h-12 text-base bg-[var(--card)] border-[var(--border)] focus:border-[var(--primary)] focus:ring-[var(--primary)]/20 transition-all"
           />
         </div>
 
         <div className="space-y-3">
-          {!organizations ? (
-            <div className="flex items-center justify-center py-12">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
               <ShieldLoader size="md" variant="inline" />
             </div>
+          ) : error ? (
+            <Card variant="subtle">
+              <CardContent className="py-10 text-center">
+                <p className="text-[var(--destructive)] mb-2">
+                  {t('onboarding.loadError', 'Failed to load organizations')}
+                </p>
+                <p className="text-xs text-[var(--text-muted)]">{String(error)}</p>
+              </CardContent>
+            </Card>
           ) : filteredOrgs?.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-gray-500">
-                {searchQuery
-                  ? t('onboarding.noOrgFound', 'No organizations found matching your search')
-                  : t('onboarding.noOrgs', 'No organizations available')}
+            <Card variant="subtle">
+              <CardContent className="py-10 text-center">
+                <Search className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3 opacity-50" />
+                <p className="text-[var(--text-muted)]">
+                  {searchQuery
+                    ? t('onboarding.noOrgFound', 'No organizations found matching your search')
+                    : t('onboarding.noOrgs', 'No organizations available')}
+                </p>
               </CardContent>
             </Card>
           ) : (
-            filteredOrgs?.map((org) => (
+            filteredOrgs?.map((org, index) => (
               <Card
                 key={org.id}
-                className="hover:shadow-md transition-shadow cursor-pointer group"
+                className="hover:shadow-md hover:border-[var(--primary)]/30 transition-all duration-200 cursor-pointer group animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg">
+                      <div className="w-14 h-14 rounded-xl bg-(--button-primary-bg) flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:shadow-lg transition-shadow">
                         {org.logoUrl ? (
                           <img
                             src={org.logoUrl}
                             alt={org.name}
-                            className="w-full h-full object-cover rounded-lg"
+                            className="w-full h-full object-cover rounded-xl"
                           />
                         ) : (
                           org.name.charAt(0).toUpperCase()
@@ -170,20 +218,20 @@ export default function SelectOrganizationClient() {
                       </div>
 
                       <div>
-                        <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors">
+                        <h3 className="font-semibold text-lg text-[var(--text-primary)] group-hover:text-[var(--primary)] transition-colors">
                           {org.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <span>@{org.slug}</span>
+                        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mt-0.5">
+                          <span className="font-medium">@{org.slug}</span>
                           {org.industry && (
                             <>
-                              <span>•</span>
+                              <span className="text-[var(--border)]">•</span>
                               <span>{org.industry}</span>
                             </>
                           )}
                           {org.country && (
                             <>
-                              <span>•</span>
+                              <span className="text-[var(--border)]">•</span>
                               <span>{org.country}</span>
                             </>
                           )}
@@ -198,7 +246,7 @@ export default function SelectOrganizationClient() {
                         handleRequestJoin(org.id);
                       }}
                       disabled={isRequesting === org.id || !user?.id}
-                      className="min-w-[120px]"
+                      className="min-w-[120px] h-10 rounded-lg font-medium"
                     >
                       {isRequesting === org.id ? (
                         <>
@@ -209,8 +257,8 @@ export default function SelectOrganizationClient() {
                         <ShieldLoader size="xs" variant="inline" />
                       ) : (
                         <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
                           {t('onboarding.join', 'Join')}
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
                         </>
                       )}
                     </Button>
@@ -221,8 +269,8 @@ export default function SelectOrganizationClient() {
           )}
         </div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
+        <div className="mt-8 text-center">
+          <p className="text-sm text-[var(--text-muted)]">
             {t(
               'onboarding.afterJoin',
               "After joining, you'll need to wait for administrator approval before accessing the dashboard.",

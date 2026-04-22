@@ -87,7 +87,8 @@ const StatusUpdateBanner = dynamic(
 );
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore(useShallow((state: { user: User | null }) => state.user));
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
   const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
   const isAIChatPage = pathname?.startsWith('/ai-chat');
@@ -119,8 +120,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Redirect to onboarding if user needs it (and not already on onboarding page)
+  // Superadmin is exempt from this check
   useEffect(() => {
-    if (hydrated && user && !user.organizationId && !isOnboardingPage && !redirectedRef.current) {
+    if (hydrated && user && user.role && user.role !== 'superadmin' && !user.organizationId && !isOnboardingPage && !redirectedRef.current) {
       redirectedRef.current = true;
       window.location.href = '/onboarding/select-organization';
     }
@@ -142,7 +144,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   // Block dashboard access if user has no organization (onboarding required)
-  if (user && !user.organizationId && !isOnboardingPage) {
+  // Superadmin is exempt from this check
+  
+  // Only redirect if user exists, is NOT superadmin, has no organization, and we're not loading
+  if (user && user.role && user.role !== 'superadmin' && !user.organizationId && !isOnboardingPage && !isLoading) {
+    if (!redirectedRef.current) {
+      redirectedRef.current = true;
+      window.location.href = '/onboarding/select-organization';
+    }
     return (
       <div className="flex h-screen items-center justify-center bg-(--background)">
         <ShieldLoader size="lg" />

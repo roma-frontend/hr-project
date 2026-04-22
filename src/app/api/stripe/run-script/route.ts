@@ -27,7 +27,7 @@ const ALLOWED_SCRIPTS = [
 async function verifySuperadmin(): Promise<{ userId: string; role: string } | null> {
   try {
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('oauth-session');
+    const sessionCookie = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
     if (!sessionCookie) return null;
 
     const jwtSecret = process.env.JWT_SECRET;

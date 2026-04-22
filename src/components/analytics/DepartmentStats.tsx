@@ -42,7 +42,7 @@ export function DepartmentStats({ users }: DepartmentStatsProps) {
   // Group by department and calculate USED days (not remaining balance)
   const departments = users.reduce(
     (acc, user) => {
-      const dept = user.department || 'Unassigned';
+      const dept = user.department || t('departments.unassigned', 'Unassigned');
       if (!acc[dept]) {
         acc[dept] = {
           department: dept,

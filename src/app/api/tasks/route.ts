@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { requireAuth } from '@/lib/api-utils';
+
+async function getAuthUser() {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+  return auth.user;
+}
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -23,14 +32,14 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        let query = supabase
+        let query = supabaseService
           .from('tasks')
           .select(`
             *,
             assigned_to:users!tasks_assigned_to_fkey(id, name, avatar_url, department, position),
             assigned_by:users!tasks_assigned_by_fkey(id, name, avatar_url)
           `)
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .eq('assigned_to', userId);
 
         if (status) {
@@ -41,22 +50,20 @@ export async function GET(request: NextRequest) {
 
         const formattedTasks = tasks?.map(task => ({
           id: task.id,
-          organizationId: task.organizationId,
+          organization_id: task.organization_id,
           title: task.title,
           description: task.description,
-          assignedto: task.assigned_to,
-          assignedby: task.assigned_by,
+          assigned_to: task.assigned_to,
+          assigned_by: task.assigned_by,
           status: task.status,
           priority: task.priority,
           deadline: task.deadline,
-          completedat: task.completed_at,
+          completed_at: task.completed_at,
           tags: task.tags,
-          attachmenturl: task.attachment_url,
+          attachment_url: task.attachment_url,
           attachments: task.attachments,
-          createdat: task.created_at,
-          updatedat: task.updated_at,
-          assigned_to: task.assigned_to,
-          assigned_by: task.assigned_by,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
         })) || [];
 
         return NextResponse.json({ data: formattedTasks });
@@ -71,14 +78,14 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
         }
 
-        let query = supabase
+        let query = supabaseService
           .from('tasks')
           .select(`
             *,
             assigned_to:users!tasks_assigned_to_fkey(id, name, avatar_url, department, position),
             assigned_by:users!tasks_assigned_by_fkey(id, name, avatar_url)
           `)
-          .eq('organizationId', organizationId);
+          .eq('organization_id', organizationId);
 
         if (status) {
           query = query.eq('status', status as 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled');
@@ -91,22 +98,20 @@ export async function GET(request: NextRequest) {
 
         const formattedTasks = tasks?.map(task => ({
           id: task.id,
-          organizationId: task.organizationId,
+          organization_id: task.organization_id,
           title: task.title,
           description: task.description,
-          assignedto: task.assigned_to,
-          assignedby: task.assigned_by,
+          assigned_to: task.assigned_to,
+          assigned_by: task.assigned_by,
           status: task.status,
           priority: task.priority,
           deadline: task.deadline,
-          completedat: task.completed_at,
+          completed_at: task.completed_at,
           tags: task.tags,
-          attachmenturl: task.attachment_url,
+          attachment_url: task.attachment_url,
           attachments: task.attachments,
-          createdat: task.created_at,
-          updatedat: task.updated_at,
-          assigned_to: task.assigned_to,
-          assigned_by: task.assigned_by,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
         })) || [];
 
         return NextResponse.json({ data: formattedTasks });
@@ -119,7 +124,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing taskId' }, { status: 400 });
         }
 
-        const { data: task } = await supabase
+        const { data: task } = await supabaseService
           .from('tasks')
           .select(`
             *,
@@ -127,7 +132,7 @@ export async function GET(request: NextRequest) {
             assigned_by:users!tasks_assigned_by_fkey(id, name, avatar_url)
           `)
           .eq('id', taskId)
-          .single();
+          .maybeSingle();
 
         if (!task) {
           return NextResponse.json({ data: null });
@@ -135,22 +140,20 @@ export async function GET(request: NextRequest) {
 
         const formattedTask = {
           id: task.id,
-          organizationId: task.organizationId,
+          organization_id: task.organization_id,
           title: task.title,
           description: task.description,
-          assignedto: task.assigned_to,
-          assignedby: task.assigned_by,
+          assigned_to: task.assigned_to,
+          assigned_by: task.assigned_by,
           status: task.status,
           priority: task.priority,
           deadline: task.deadline,
-          completedat: task.completed_at,
+          completed_at: task.completed_at,
           tags: task.tags,
-          attachmenturl: task.attachment_url,
+          attachment_url: task.attachment_url,
           attachments: task.attachments,
-          createdat: task.created_at,
-          updatedat: task.updated_at,
-          assigned_to: task.assigned_to,
-          assigned_by: task.assigned_by,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
         };
 
         return NextResponse.json({ data: formattedTask });
@@ -163,21 +166,21 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing taskId' }, { status: 400 });
         }
 
-        const { data: comments } = await supabase
+        const { data: comments } = await supabaseService
           .from('task_comments')
           .select(`
             *,
             author:users(id, name, avatar_url)
           `)
           .eq('taskid', taskId)
-          .order('createdat', { ascending: true });
+          .order('created_at', { ascending: true });
 
         const formattedComments = comments?.map(comment => ({
           id: comment.id,
           taskid: comment.taskid,
           authorid: comment.authorid,
           content: comment.content,
-          createdat: comment.createdat,
+          created_at: comment.created_at,
           author: comment.author,
         })) || [];
 
@@ -199,6 +202,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -210,20 +214,20 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'create-task': {
-        const { organizationId, title, description, assignedTo, assignedBy, status, priority, deadline, tags, attachments } = body;
+        const { organizationId, title, description, assignedTo, status, priority, deadline, tags, attachments } = body;
 
-        if (!organizationId || !title || !assignedTo || !assignedBy) {
+        if (!organizationId || !title || !assignedTo) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: newTask, error } = await supabase
+        const { data: newTask, error } = await supabaseService
           .from('tasks')
           .insert({
-            organizationId: organizationId,
+            organization_id: organizationId,
             title,
             description: description || null,
             assigned_to: assignedTo,
-            assigned_by: assignedBy,
+            assigned_by: user.id,
             status: status || 'pending',
             priority: priority || 'medium',
             deadline: deadline || null,
@@ -233,7 +237,7 @@ export async function POST(request: NextRequest) {
             updated_at: Date.now(),
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -262,12 +266,12 @@ export async function POST(request: NextRequest) {
           updateData.completed_at = Date.now();
         }
 
-        const { data: updatedTask, error } = await supabase
+        const { data: updatedTask, error } = await supabaseService
           .from('tasks')
           .update(updateData)
           .eq('id', taskId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -283,7 +287,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing taskId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('tasks')
           .delete()
           .eq('id', taskId);
@@ -302,16 +306,16 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: newComment, error } = await supabase
+        const { data: newComment, error } = await supabaseService
           .from('task_comments')
           .insert({
             taskid: taskId,
             authorid: authorId,
             content,
-            createdat: Date.now(),
+            created_at: Date.now(),
           })
           .select('*, author:users(id, name, avatar_url)')
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -327,7 +331,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing commentId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('task_comments')
           .delete()
           .eq('id', commentId);
@@ -337,6 +341,33 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ data: { success: true } });
+      }
+
+      case 'assign-supervisor': {
+        const { employeeId, supervisorId, organizationId } = body;
+
+        if (!employeeId || !organizationId) {
+          return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const updateData: any = {
+          supervisorid: supervisorId || null,
+          updated_at: Date.now(),
+        };
+
+        const { data: updatedUser, error } = await supabaseService
+          .from('users')
+          .update(updateData)
+          .eq('id', employeeId)
+          .eq('organization_id', organizationId)
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ data: updatedUser });
       }
 
       default:

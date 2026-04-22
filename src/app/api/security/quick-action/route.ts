@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
-/**
- * Quick Security Action API
- * Allows superadmin to quickly suspend/unsuspend users from notifications
- */
+async function requireSuperadmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== 'superadmin') {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireSuperadmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
     const { action, userId, reason, duration } = await req.json();
 
@@ -38,7 +50,7 @@ export async function POST(req: NextRequest) {
     const suspendedUntil = duration ? now + (duration * 60 * 60 * 1000) : null;
 
     if (action === 'suspend') {
-      const { data: updatedUser, error } = await supabase
+      const { data: updatedUser, error } = await supabaseService
         .from('users')
         .update({
           is_suspended: true,
@@ -49,7 +61,7 @@ export async function POST(req: NextRequest) {
         })
         .eq('id', userId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -61,7 +73,7 @@ export async function POST(req: NextRequest) {
         data: updatedUser,
       });
     } else {
-      const { data: updatedUser, error } = await supabase
+      const { data: updatedUser, error } = await supabaseService
         .from('users')
         .update({
           is_suspended: false,
@@ -72,7 +84,7 @@ export async function POST(req: NextRequest) {
         })
         .eq('id', userId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

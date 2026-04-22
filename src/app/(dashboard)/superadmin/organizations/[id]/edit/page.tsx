@@ -79,7 +79,7 @@ export default function EditOrganizationPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">{t('ui.accessDenied')}</h1>
-          <p className="text-muted-foreground">You can only manage your own organization</p>
+          <p className="text-muted-foreground">{t('editOrg.onlyOwnOrganization', 'You can only manage your own organization')}</p>
           <p className="text-xs text-muted-foreground mt-2">
             {t('common.superadmin')}: {user.role} | {t('common.organization')}: {user.organizationId} | {t('common.requestedBy')}: {orgId}
           </p>
@@ -100,7 +100,7 @@ export default function EditOrganizationPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">{t('common.organization')} Not Found</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('superadmin.organizations.notFound', 'Organization')} {t('common.notFound', 'Not Found')}</h1>
           <p className="text-muted-foreground">{t('common.noOrgFound')}</p>
           <button
             onClick={() => router.push('/superadmin/organizations')}
@@ -132,7 +132,7 @@ export default function EditOrganizationPage() {
       router.push('/superadmin/organizations');
     } catch (error) {
       console.error('Failed to update organization:', error);
-      toast.error(error instanceof Error ? error.message : t('toasts.orgUpdateFailed'));
+      toast.error(error instanceof Error ? t('orgEdit.error', { defaultValue: error.message }) : t('toasts.orgUpdateFailed'));
     } finally {
       setIsLoading(false);
     }

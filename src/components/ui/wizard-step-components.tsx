@@ -22,6 +22,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useWizardContext } from '@/components/ui/wizard';
+import { useTranslation } from 'react-i18next';
 
 // ═══════════════════════════════════════════════════════════════
 // Text Input Step
@@ -142,11 +143,13 @@ export function SelectStep({
   field,
   label,
   options,
-  placeholder = 'Select...',
+  placeholder: placeholderProp,
   description,
   required = false,
 }: SelectStepProps) {
   const context = useWizardContext();
+  const { t } = useTranslation();
+  const placeholder = t('wizard.selectPlaceholder', placeholderProp || 'Select an option');
   const data = stepData ?? context.stepData;
   const update = updateStepData ?? context.updateStepData;
   const value = data[field] as string | undefined;
@@ -209,6 +212,7 @@ export function CardSelectionStep({
   required = false,
   columns = 2,
 }: CardSelectionStepProps) {
+  const { t } = useTranslation();
   const context = useWizardContext();
   const data = stepData ?? context.stepData;
   const update = updateStepData ?? context.updateStepData;
@@ -277,7 +281,7 @@ export function CardSelectionStep({
                 </div>
                 {isSelected && (
                   <Badge className="bg-(--primary) text-white text-[10px] md:text-xs px-2 py-0.5">
-                    ✓ Выбрано
+                    ✓ {t('wizard.selected', 'Selected')}
                   </Badge>
                 )}
               </CardContent>

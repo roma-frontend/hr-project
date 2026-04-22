@@ -43,18 +43,27 @@ interface Employee {
   name: string;
   email: string;
   role: 'admin' | 'supervisor' | 'employee' | 'superadmin';
-  employeeType: 'staff' | 'contractor';
+  employeeType?: 'staff' | 'contractor';
+  employee_type?: 'staff' | 'contractor';
   department?: string;
   position?: string;
   phone?: string;
   avatarUrl?: string;
+  avatar_url?: string;
   supervisorId?: string;
-  isActive: boolean;
+  supervisorid?: string;
+  isActive?: boolean;
+  is_active?: boolean;
   organizationId?: string;
-  travelAllowance: number;
-  paidLeaveBalance: number;
-  sickLeaveBalance: number;
-  familyLeaveBalance: number;
+  organization_id?: string;
+  travelAllowance?: number;
+  travel_allowance?: number;
+  paidLeaveBalance?: number;
+  paid_leave_balance?: number;
+  sickLeaveBalance?: number;
+  sick_leave_balance?: number;
+  familyLeaveBalance?: number;
+  family_leave_balance?: number;
 }
 
 interface EditEmployeeModalProps {
@@ -324,11 +333,11 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
           familyLeaveBalance: form.familyLeaveBalance,
         }),
       });
-      if (!res.ok) throw new Error('Failed to update user');
+      if (!res.ok) throw new Error(t('employees.failedToUpdateUser', 'Failed to update user'));
       toast.success(t('modals.editEmployee.updatedSuccess'));
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('modals.editEmployee.failedToUpdate'));
+      toast.error(err instanceof Error ? t('employees.error', { defaultValue: err.message }) : t('modals.editEmployee.failedToUpdate'));
     } finally {
       setLoading(false);
     }
@@ -492,7 +501,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
                   <input
                     value={form.phone}
                     onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder="+374 XX XXX XXX"
+                    placeholder={t('placeholders.phoneFormat', '+374 XX XXX XXX')}
                     className="w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all"
                     style={{
                       background: 'var(--input)',
@@ -629,7 +638,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
                     <input
                       value={form.position}
                       onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))}
-                      placeholder="e.g. Engineer"
+                      placeholder={t('placeholders.positionExample', 'e.g. Engineer')}
                       className={`w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all ${
                         errors.position ? 'border-red-500' : ''
                       }`}

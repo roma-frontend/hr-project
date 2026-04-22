@@ -30,13 +30,13 @@ async function updateLocalizationSettings(data: {
   dateFormat: string;
   timeFormat: string;
   firstDayOfWeek: string;
-}) {
+}, t: (key: string, fallback: string) => string) {
   const res = await fetch('/api/settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'update-localization', ...data }),
   });
-  if (!res.ok) throw new Error('Failed to update localization settings');
+  if (!res.ok) throw new Error(t('settings.failedToUpdateLocalization', 'Failed to update localization settings'));
   return res.json();
 }
 
@@ -56,7 +56,14 @@ export function LocalizationSettings({
   const [timeFormat, setTimeFormat] = useState(user?.timeFormat ?? '24h');
 
   const updateSettings = useMutation({
-    mutationFn: updateLocalizationSettings,
+    mutationFn: (data: {
+      userId: string;
+      language: string;
+      timezone: string;
+      dateFormat: string;
+      timeFormat: string;
+      firstDayOfWeek: string;
+    }) => updateLocalizationSettings(data, t),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-by-id', userId] });
     },
@@ -103,20 +110,15 @@ export function LocalizationSettings({
         // Save to localStorage (I18nProvider will detect and apply it)
         localStorage.setItem('i18nextLng', language);
 
-        // Change language immediately
+        // Change language immediately - no reload needed
         await i18n.changeLanguage(language);
 
         toast.success(t('settings.saved'), {
-          description: `${t('settings.localizationSaved')} ${t('settings.reloadingPage')}`,
+          description: t('settings.localizationSaved'),
           duration: 2000,
         });
 
-        // Force page reload to apply language everywhere after short delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-
-        return; // Exit early, reload will handle the rest
+        return;
       }
 
       toast.success(t('settings.saved'), {

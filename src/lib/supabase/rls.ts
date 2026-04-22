@@ -3,12 +3,12 @@ import { supabase } from './client';
 export async function getOrganizationId(userId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('users')
-    .select('organizationId')
+    .select('organization_id')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data?.organizationId) return null;
-  return data.organizationId;
+  if (error || !data?.organization_id) return null;
+  return data.organization_id;
 }
 
 export async function getUserRole(userId: string): Promise<string | null> {
@@ -16,7 +16,7 @@ export async function getUserRole(userId: string): Promise<string | null> {
     .from('users')
     .select('role')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data?.role) return null;
   return data.role;
@@ -45,13 +45,13 @@ export async function canAccessOrgData(
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('users')
-    .select('organizationId')
+    .select('organization_id')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return false;
 
-  const userOrgId = data.organizationId;
+  const userOrgId = data.organization_id;
   if (!userOrgId) return false;
 
   return userOrgId === organizationId || await isSuperadmin(userId);
@@ -61,7 +61,7 @@ export async function getOrgMembers(organizationId: string) {
   const { data, error } = await supabase
     .from('users')
     .select('id, name, email, role, is_active')
-    .eq('organizationId', organizationId)
+    .eq('organization_id', organizationId)
     .eq('is_active', true);
 
   if (error) throw error;

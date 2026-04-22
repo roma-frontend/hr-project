@@ -137,11 +137,6 @@ export function CreateEventWizard({
               required
             />
           </div>
-          <TextInputStep
-            field="location"
-            label={t('eventWizard.steps.datetime.locationLabel')}
-            placeholder={t('eventWizard.steps.datetime.locationPlaceholder')}
-          />
         </div>
       ),
     },

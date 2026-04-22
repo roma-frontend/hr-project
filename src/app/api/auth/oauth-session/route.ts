@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       .from('users')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       return NextResponse.json({
@@ -49,11 +49,18 @@ export async function POST(request: Request) {
         updated_at: now,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json(
         { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    if (!newUser) {
+      return NextResponse.json(
+        { error: 'Failed to create user' },
         { status: 500 }
       );
     }

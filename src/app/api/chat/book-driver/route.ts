@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, organizationId, driverId, startTime, endTime, tripInfo } = await req.json();
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const { organizationId, driverId, startTime, endTime, tripInfo } = await req.json();
+    const userId = auth.user.id;
 
     console.log('[book-driver] Received request:', {
       userId,
@@ -14,7 +19,7 @@ export async function POST(req: NextRequest) {
       tripInfo,
     });
 
-    if (!userId || !organizationId || !driverId || !startTime || !endTime || !tripInfo) {
+    if (!organizationId || !driverId || !startTime || !endTime || !tripInfo) {
       console.error('[book-driver] Missing required fields');
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
     const { data: request, error } = await supabase
       .from('driver_requests')
       .insert({
-        organizationId,
+        organization_id: organizationId,
         requesterid: userId,
         driverid: driverId,
         start_time: new Date(startTime).getTime(),
@@ -70,10 +75,14 @@ export async function POST(req: NextRequest) {
         status: 'pending',
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    if (!request) {
+      throw new Error('Failed to create driver request');
     }
 
     console.log('[book-driver] Request created:', request.id);

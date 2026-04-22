@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Mic, Square, Send, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onRecordingStart: () => void;
@@ -17,6 +18,7 @@ export function VoiceMessageRecorder({
   onRecordingCancel,
   disabled,
 }: Props) {
+  const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -61,8 +63,7 @@ export function VoiceMessageRecorder({
 
       onRecordingStart();
     } catch (err) {
-      console.error('Error accessing microphone:', err);
-      alert('Could not access microphone. Please check permissions.');
+      console.error(t('chat.errorAccessingMic', 'Error accessing microphone:'), err);
     }
   }, [onRecordingStart]);
 
@@ -159,7 +160,7 @@ export function VoiceMessageRecorder({
           <button
             onClick={cancelRecording}
             className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-            title="Cancel recording"
+            title={t('chat.cancelRecording')}
           >
             <Trash2 className="w-4 h-4 text-red-500" />
           </button>
@@ -168,7 +169,7 @@ export function VoiceMessageRecorder({
           <button
             onClick={stopRecording}
             className="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
-            title="Stop recording"
+            title={t('chat.stopRecording')}
           >
             <Square className="w-4 h-4" />
           </button>
@@ -212,12 +213,12 @@ export function VoiceMessageRecorder({
                 : 'hover:bg-red-100 dark:hover:bg-red-900/20',
             )}
             style={{ background: 'transparent' }}
-            title="Record voice message"
+            title={t('chat.recordVoiceMessage')}
           >
             <Mic className={cn('w-4 h-4', disabled ? '' : 'text-red-500')} />
           </button>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Voice message
+            {t('chat.voiceMessage')}
           </span>
         </>
       )}

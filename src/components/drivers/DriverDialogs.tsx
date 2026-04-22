@@ -68,7 +68,7 @@ export function RatingDialog({
       setRating(5);
       setComment('');
     } catch (error: any) {
-      toast.error(error.message || t('driver.failedToSubmitRating', 'Failed to submit rating'));
+      toast.error(error instanceof Error ? t('driver.error', { defaultValue: error.message }) : t('driver.failedToSubmitRating', 'Failed to submit rating'));
     } finally {
       setSubmitting(false);
     }
@@ -127,7 +127,7 @@ export function RatingDialog({
               {t('cancel', 'Cancel')}
             </Button>
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? '...' : t('driver.submitRating', 'Submit Rating')}
+              {submitting ? t('common.submitting', 'Submitting...') : t('driver.submitRating', 'Submit Rating')}
             </Button>
           </div>
         </div>
@@ -176,11 +176,11 @@ export function ReassignDriverDialog({
           newDriverId: selectedNewDriver,
         }),
       });
-      if (!res.ok) throw new Error('Failed to reassign');
+      if (!res.ok) throw new Error(t('driver.failedToReassignError', 'Failed to reassign'));
       toast.success(t('driver.reassigned', 'Request sent to new driver!'));
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || t('driver.failedToReassign', 'Failed to reassign'));
+      toast.error(error instanceof Error ? t('driver.error', { defaultValue: error.message }) : t('driver.failedToReassign', 'Failed to reassign'));
     } finally {
       setSubmitting(false);
     }
@@ -218,7 +218,7 @@ export function ReassignDriverDialog({
               {t('cancel', 'Cancel')}
             </Button>
             <Button onClick={handleReassign} disabled={submitting || !selectedNewDriver}>
-              {submitting ? '...' : t('driver.reassign', 'Send Request')}
+              {submitting ? t('common.submitting', 'Submitting...') : t('driver.reassign', 'Send Request')}
             </Button>
           </div>
         </div>

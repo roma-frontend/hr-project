@@ -6,6 +6,7 @@ import { Mail, Check, AlertCircle, Sparkles } from 'lucide-react';
 import { validateEmail, type EmailValidationResult } from '@/lib/passwordValidation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from 'react-i18next';
 
 interface SmartEmailInputProps {
   value: string;
@@ -24,6 +25,7 @@ export function SmartEmailInput({
   required = true,
   autoFocus = false,
 }: SmartEmailInputProps) {
+  const { t } = useTranslation();
   const [validation, setValidation] = useState<EmailValidationResult | null>(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
 
@@ -138,7 +140,7 @@ export function SmartEmailInput({
           >
             <Sparkles className="w-4 h-4 shrink-0 group-hover:rotate-12 transition-transform" />
             <div className="flex-1 text-left">
-              <p className="text-xs font-medium">Использовать предложение?</p>
+              <p className="text-xs font-medium">{t('auth.smartEmail.suggestion', 'Use suggestion?')}</p>
               <p className="text-sm font-semibold mt-0.5">{validation.suggestion}</p>
             </div>
             <Check className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />

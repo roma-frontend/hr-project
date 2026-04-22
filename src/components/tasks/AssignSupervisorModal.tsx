@@ -48,16 +48,33 @@ export function AssignSupervisorModal({ onClose }: Props) {
   const currentSupervisor = supervisors?.find((s) => s.id === selectedEmp?.supervisorid);
 
   const handleAssign = async () => {
-    if (!selectedEmployee || !selectedSupervisor) return;
+    if (!selectedEmployee || !user?.organizationId) return;
     setLoading(true);
     try {
-      // TODO: Implement assign supervisor API
+      const res = await fetch('/api/tasks?action=assign-supervisor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: selectedEmployee,
+          supervisorId: selectedSupervisor || null,
+          organizationId: user.organizationId,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || t('tasks.failedToAssignSupervisor', 'Failed to assign supervisor'));
+      }
+
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
         setSelectedEmployee('');
         setSelectedSupervisor('');
       }, 1500);
+    } catch (error) {
+      console.error('Failed to assign supervisor:', error);
+      setSuccess(false);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
@@ -27,6 +28,7 @@ export function ServiceBroadcastsManager({
   organizationId,
   userId,
 }: ServiceBroadcastsManagerProps) {
+  const { t } = useTranslation();
   const { data: broadcasts, isLoading } = useServiceBroadcasts(organizationId);
   const deleteMessageMutation = useDeleteMessage();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -56,8 +58,8 @@ export function ServiceBroadcastsManager({
       setSelectedBroadcastId(null);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error('[ServiceBroadcastsManager] ✗ Failed to delete broadcast:', errorMsg);
-      alert(`Не удалось удалить объявление: ${errorMsg}`);
+      console.error(t('admin.serviceBroadcast.deleteFailed', 'Failed to delete broadcast:'), errorMsg);
+      alert(t('admin.serviceBroadcast.deleteFailedAlert', 'Failed to delete announcement: {{errorMsg}}', { errorMsg: errorMsg }));
     } finally {
       setIsDeleting(false);
     }
@@ -69,7 +71,7 @@ export function ServiceBroadcastsManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
-            История объявлений
+            {t('admin.serviceBroadcast.historyTitle', 'Announcement History')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -87,13 +89,13 @@ export function ServiceBroadcastsManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
-            История объявлений
+            {t('admin.serviceBroadcast.historyTitle', 'Announcement History')}
           </CardTitle>
-          <CardDescription>Нет отправленных объявлений в этой организации</CardDescription>
+          <CardDescription>{t('admin.serviceBroadcast.noBroadcasts', 'No announcements sent in this organization')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Создавайте новые объявления, используя кнопку выше →
+            {t('admin.serviceBroadcast.createNewHint', 'Create new announcements using the button above →')}
           </div>
         </CardContent>
       </Card>
@@ -106,10 +108,10 @@ export function ServiceBroadcastsManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="w-5 h-5" />
-            История объявлений ({broadcasts.length})
+            {t('admin.serviceBroadcast.historyTitle', 'Announcement History')} ({broadcasts.length})
           </CardTitle>
           <CardDescription>
-            Просмотр, редактирование и удаление отправленных сообщений
+            {t('admin.serviceBroadcast.historyDescription', 'View, edit and delete sent messages')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -153,7 +155,7 @@ export function ServiceBroadcastsManager({
                         })}
                       </div>
                       <div>
-                        от{' '}
+                        {t('admin.serviceBroadcast.from', 'From')}{' '}
                         <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                           {broadcast.senderName}
                         </span>
@@ -169,7 +171,7 @@ export function ServiceBroadcastsManager({
                     size="sm"
                     className="gap-2"
                     disabled
-                    title="Редактирование объявлений вскоре"
+                    title={t('admin.serviceBroadcast.editComingSoon', 'Editing announcements coming soon')}
                     style={{
                       backgroundColor: 'var(--background-subtle)',
                       borderColor: 'var(--border)',
@@ -206,7 +208,7 @@ export function ServiceBroadcastsManager({
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Удалить</span>
+                    <span className="hidden sm:inline">{t('common.delete', 'Delete')}</span>
                   </Button>
                 </div>
               </div>
@@ -226,11 +228,10 @@ export function ServiceBroadcastsManager({
         >
           <AlertDialogHeader>
             <AlertDialogTitle style={{ color: 'var(--text-primary)' }}>
-              Удалить объявление?
+              {t('admin.serviceBroadcast.confirmDeleteTitle', 'Delete announcement?')}
             </AlertDialogTitle>
             <AlertDialogDescription style={{ color: 'var(--text-muted)' }}>
-              Это объявление будет удалено для всех пользователей организации. Это действие не может
-              быть отменено.
+              {t('admin.serviceBroadcast.confirmDeleteDescription', 'This announcement will be deleted for all users in the organization. This action cannot be undone.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogCancel
@@ -251,7 +252,7 @@ export function ServiceBroadcastsManager({
               (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--background-subtle)';
             }}
           >
-            Отменить
+            {t('common.cancel', 'Cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirmDelete}
@@ -270,7 +271,7 @@ export function ServiceBroadcastsManager({
               (e.currentTarget as HTMLElement).style.opacity = '1';
             }}
           >
-            {isDeleting ? 'Удаление...' : 'Удалить навсегда'}
+            {isDeleting ? t('common.deleting', 'Deleting...') : t('admin.serviceBroadcast.deleteForever', 'Delete permanently')}
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>

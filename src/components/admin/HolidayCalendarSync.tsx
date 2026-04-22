@@ -63,7 +63,7 @@ export default function HolidayCalendarSync() {
       downloadICalFile(icsContent, filename);
       toast.success(t('calendarSync.icalDownloadSuccess', 'iCal file downloaded successfully'));
     } catch (error) {
-      console.error('Export error:', error);
+      console.error(t('calendarSync.exportError', 'Export error:'), error);
       toast.error(t('calendarSync.exportFailed', 'Failed to export calendar'));
     } finally {
       setIsExporting(false);
@@ -87,13 +87,13 @@ export default function HolidayCalendarSync() {
         });
 
         if (!response.ok) {
-          throw new Error('Sync failed');
+          throw new Error(t('calendarSync.syncFailed', 'Sync failed'));
         }
 
         const result = await response.json();
-        toast.success(result.message);
+        toast.success(t('calendarSync.syncSuccess', { defaultValue: result.message }));
       } catch (error) {
-        console.error('Google sync error:', error);
+        console.error(t('calendarSync.googleSyncError', 'Google sync error:'), error);
         toast.error(t('calendarSync.googleSyncFailed', 'Failed to sync with Google Calendar'));
         setGoogleConnected(false);
       } finally {
@@ -106,7 +106,7 @@ export default function HolidayCalendarSync() {
         const authUrl = getGoogleCalendarAuthUrl(redirectUri);
         window.location.href = authUrl;
       } catch (error) {
-        console.error('Google auth error:', error);
+        console.error(t('calendarSync.googleAuthError', 'Google auth error:'), error);
         toast.error(t('calendarSync.googleNotConfigured', 'Google Calendar is not configured'));
       }
     }
@@ -129,13 +129,13 @@ export default function HolidayCalendarSync() {
         });
 
         if (!response.ok) {
-          throw new Error('Sync failed');
+          throw new Error(t('calendarSync.syncFailed', 'Sync failed'));
         }
 
         const result = await response.json();
-        toast.success(result.message);
+        toast.success(t('calendarSync.syncSuccess', { defaultValue: result.message }));
       } catch (error) {
-        console.error('Outlook sync error:', error);
+        console.error(t('calendarSync.outlookSyncError', 'Outlook sync error:'), error);
         toast.error(t('calendarSync.outlookSyncFailed', 'Failed to sync with Outlook Calendar'));
         setOutlookConnected(false);
       } finally {
@@ -148,7 +148,7 @@ export default function HolidayCalendarSync() {
         const authUrl = getOutlookAuthUrl(redirectUri);
         window.location.href = authUrl;
       } catch (error) {
-        console.error('Outlook auth error:', error);
+        console.error(t('calendarSync.outlookAuthError', 'Outlook auth error:'), error);
         toast.error(t('calendarSync.outlookNotConfigured', 'Outlook Calendar is not configured'));
       }
     }
@@ -171,7 +171,7 @@ export default function HolidayCalendarSync() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-blue-500" />
-            Calendar Sync
+            {t('admin.calendarSync.title', 'Calendar Sync')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -186,7 +186,7 @@ export default function HolidayCalendarSync() {
           {/* Export Options */}
           <div className="space-y-2">
             <h4 className="mb-2 text-sm font-semibold text-(--text-primary)">
-              Export Calendar
+              {t('admin.calendarSync.exportCalendar', 'Export Calendar')}
             </h4>
 
             <Button
@@ -200,7 +200,7 @@ export default function HolidayCalendarSync() {
               ) : (
                 <Download className="mr-2 h-4 w-4" />
               )}
-              Download iCal (.ics)
+              {t('admin.calendarSync.downloadIcal', 'Download iCal (.ics)')}
             </Button>
 
             <div className="relative">
@@ -208,9 +208,9 @@ export default function HolidayCalendarSync() {
                 onClick={() => {
                   if (!hasCalendarSync) {
                     openModal({
-                      featureTitle: 'Google Calendar Sync',
+                      featureTitle: t('admin.calendarSync.googleCalendarSync', 'Google Calendar Sync'),
                       featureDescription:
-                        'Sync leave schedules with Google Calendar. Available on Professional plan and above.',
+                        t('admin.calendarSync.googleCalendarSyncDesc', 'Sync leave schedules with Google Calendar. Available on Professional plan and above.'),
                       recommendedPlan: 'professional',
                     });
                     return;
@@ -239,7 +239,7 @@ export default function HolidayCalendarSync() {
                   variant="secondary"
                   className="absolute -right-2 -top-2 bg-green-500 text-white"
                 >
-                  Connected
+                  {t('admin.calendarSync.connected', 'Connected')}
                 </Badge>
               )}
               {!hasCalendarSync && (
@@ -247,7 +247,7 @@ export default function HolidayCalendarSync() {
                   variant="secondary"
                   className="absolute -right-2 -top-2 bg-linear-to-r from-amber-500 to-orange-500 text-white text-[10px]"
                 >
-                  Pro
+                  {t('admin.calendarSync.pro', 'Pro')}
                 </Badge>
               )}
             </div>
@@ -257,9 +257,9 @@ export default function HolidayCalendarSync() {
                 onClick={() => {
                   if (!hasCalendarSync) {
                     openModal({
-                      featureTitle: 'Outlook Calendar Sync',
+                      featureTitle: t('admin.calendarSync.outlookCalendarSync', 'Outlook Calendar Sync'),
                       featureDescription:
-                        'Sync leave schedules with Outlook Calendar. Available on Professional plan and above.',
+                        t('admin.calendarSync.outlookCalendarSyncDesc', 'Sync leave schedules with Outlook Calendar. Available on Professional plan and above.'),
                       recommendedPlan: 'professional',
                     });
                     return;
@@ -288,7 +288,7 @@ export default function HolidayCalendarSync() {
                   variant="secondary"
                   className="absolute -right-2 -top-2 bg-green-500 text-white"
                 >
-                  Connected
+                  {t('admin.calendarSync.connected', 'Connected')}
                 </Badge>
               )}
               {!hasCalendarSync && (
@@ -296,7 +296,7 @@ export default function HolidayCalendarSync() {
                   variant="secondary"
                   className="absolute -right-2 -top-2 bg-linear-to-r from-amber-500 to-orange-500 text-white text-[10px]"
                 >
-                  Pro
+                  {t('admin.calendarSync.pro', 'Pro')}
                 </Badge>
               )}
             </div>

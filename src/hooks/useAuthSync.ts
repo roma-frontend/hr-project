@@ -15,70 +15,25 @@ export function useAuthSync() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const prevUserState = useRef<{ organizationId?: string | null; isApproved?: boolean }>({});
 
+  console.log('[useAuthSync] Hook mounted, initializedRef:', initializedRef.current);
+
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    initialize();
+    console.log('[useAuthSync] Calling initialize()...');
+    initialize().catch(err => {
+      console.error('[useAuthSync] initialize() failed:', err);
+    });
   }, [initialize]);
 
-  useEffect(() => {
-    const syncAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        if (isAuthenticated) return;
-        setUserEmail(null);
-        return;
-      }
-
-      if (userEmail !== session.user.email) {
-        try {
-          const finalName = extractUserName(session.user);
-          const { data: existingUser } = await supabase
-            .from('users')
-            .select('id, email')
-            .eq('email', session.user.email!)
-            .single();
-
-          if (!existingUser) {
-            const { data: newUser } = await supabase
-              .from('users')
-              .insert({
-                email: session.user.email!,
-                name: finalName,
-                password_hash: 'oauth',
-                role: 'employee',
-                employee_type: 'staff',
-                is_active: true,
-                is_approved: false,
-                travel_allowance: 0,
-                paid_leave_balance: 20,
-                sick_leave_balance: 10,
-                family_leave_balance: 5,
-                created_at: Math.floor(Date.now() / 1000),
-                updated_at: Math.floor(Date.now() / 1000),
-              })
-              .select()
-              .single();
-
-            if (newUser) {
-              setUserEmail(session.user.email!);
-            }
-          } else {
-            setUserEmail(session.user.email!);
-          }
-        } catch (error) {
-          console.error('[useAuthSync] Error syncing OAuth user:', error);
-        }
-      }
-    };
-
-    syncAuth();
-  }, [isAuthenticated, userEmail]);
+  // Removed duplicate session sync logic - useAuthStore.initialize() handles it
+  // This useEffect was causing race conditions with useAuthStore.initialize()
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[useAuthSync] onAuthStateChange:', event, session ? { userId: session.user.id } : null);
+      
       if (event === 'SIGNED_IN' && session?.user) {
         // Skip if we already have a valid user in store (login page already set it)
         const currentState = useAuthStore.getState();
@@ -86,55 +41,45 @@ export function useAuthSync() {
           return;
         }
 
-        const profile = await supabase
-          .from('users')
-          .select(`
-            id,
-            name,
-            email,
-            role,
-            employee_type,
-            department,
-            position,
-            avatar_url,
-            is_approved,
-            organizationId,
-            organizations (
-              id,
-              name,
-              slug
-            )
-          `)
-          .eq('email', session.user.email!)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // Use API route to bypass RLS infinite recursion
+        const response = await fetch(`/api/user/profile?email=${encodeURIComponent(session.user.email!)}`);
+        
+        if (!response.ok) {
+          console.error('[useAuthSync] Failed to fetch profile via API');
+          return;
+        }
 
-        if (profile.data) {
-          const finalName = profile.data.name || extractUserName(session.user);
+        const profileData = await response.json();
+
+        if (profileData && !profileData.error) {
+          const org = profileData.organization;
+          const finalName = profileData.name || extractUserName(session.user);
 
           login({
-            id: profile.data.id,
+            id: profileData.id,
             name: finalName,
-            email: profile.data.email,
-            role: profile.data.role,
-            avatar: profile.data.avatar_url || undefined,
-            department: profile.data.department || undefined,
-            position: profile.data.position || undefined,
-            employeeType: profile.data.employee_type || undefined,
-            organizationId: profile.data.organizationId || undefined,
-            organizationSlug: profile.data.organizations?.slug || undefined,
-            organizationName: profile.data.organizations?.name || undefined,
-            isApproved: profile.data.is_approved,
+            email: profileData.email,
+            role: profileData.role,
+            avatar: profileData.avatar_url || undefined,
+            department: profileData.department || undefined,
+            position: profileData.position || undefined,
+            employeeType: profileData.employee_type || undefined,
+            organizationId: profileData.organization_id || undefined,
+            organizationSlug: org?.slug || undefined,
+            organizationName: org?.name || undefined,
+            isApproved: profileData.is_approved,
           });
 
           prevUserState.current = {
-            organizationId: profile.data.organizationId,
-            isApproved: profile.data.is_approved,
+            organizationId: profileData.organization_id,
+            isApproved: profileData.is_approved,
           };
         }
       } else if (event === 'SIGNED_OUT') {
+        console.log('[useAuthSync] SIGNED_OUT - clearing state');
         useAuthStore.getState().logout();
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('[useAuthSync] TOKEN_REFRESHED');
       }
     });
 

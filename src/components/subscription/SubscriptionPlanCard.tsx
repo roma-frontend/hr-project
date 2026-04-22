@@ -216,8 +216,8 @@ export function SubscriptionPlanCard() {
       <UpgradeModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        featureTitle="your plan"
-        featureDescription="Unlock advanced features for your team by upgrading to a higher plan."
+        featureTitle={t('subscription.upgradeModal.unlockFeatures', 'your plan')}
+        featureDescription={t('subscription.upgradeModal.unlockFeaturesDesc', 'Unlock advanced features for your team by upgrading to a higher plan.')}
       />
     </>
   );

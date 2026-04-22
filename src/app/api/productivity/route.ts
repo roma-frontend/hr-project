@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from '@/lib/api-utils';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+}
+
+const SUPABASE_URL = supabaseUrl as string;
+const SUPABASE_SERVICE_KEY = supabaseServiceKey as string;
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
-    const userId = searchParams.get('userId');
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     if (action === 'get-today-stats') {
       const now = Date.now();
@@ -30,11 +37,11 @@ export async function GET(req: NextRequest) {
       const { data: todayTracking } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userid', userId)
+        .eq('userid', authUser.id)
         .gte('checkin_time', todayStartMs)
         .order('checkin_time', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       let hoursWorkedToday = 0;
       if (todayTracking && todayTracking.total_worked_minutes) {
@@ -44,7 +51,7 @@ export async function GET(req: NextRequest) {
       const { data: weekTracking } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userid', userId)
+        .eq('userid', authUser.id)
         .gte('checkin_time', weekStartMs);
 
       let hoursWorkedWeek = 0;
@@ -59,7 +66,7 @@ export async function GET(req: NextRequest) {
       const { data: allTasks } = await supabase
         .from('tasks')
         .select('*')
-        .eq('assignedto', userId);
+        .eq('assignedto', authUser.id);
 
       const completedTasksToday =
         allTasks?.filter(
@@ -105,7 +112,7 @@ export async function GET(req: NextRequest) {
       const { data: tasks } = await supabase
         .from('tasks')
         .select('*')
-        .eq('assignedto', userId)
+        .eq('assignedto', authUser.id)
         .neq('status', 'completed');
 
       if (!tasks) {
@@ -127,7 +134,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === 'get-team-presence') {
-      const organizationId = searchParams.get('organizationId');
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('organization_id')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      const organizationId = userProfile?.organization_id;
 
       if (!organizationId) {
         return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
@@ -184,12 +197,12 @@ export async function GET(req: NextRequest) {
       const { data: session } = await supabase
         .from('pomodoro_sessions')
         .select('*')
-        .eq('userid', userId)
+        .eq('userid', authUser.id)
         .eq('completed', false)
         .eq('interrupted', false)
         .order('start_time', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       return NextResponse.json({ data: session || null });
     }
@@ -203,23 +216,27 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+    const { user: authUser } = auth;
+
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
     const body = await req.json();
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     if (action === 'start-pomodoro') {
-      const { userId, duration, taskId } = body;
+      const { duration, taskId } = body;
 
-      if (!userId || !duration) {
-        return NextResponse.json({ error: 'userId and duration are required' }, { status: 400 });
+      if (!duration) {
+        return NextResponse.json({ error: 'duration is required' }, { status: 400 });
       }
 
       const { data, error } = await supabase
         .from('pomodoro_sessions')
         .insert({
-          userid: userId,
+          userid: authUser.id,
           taskid: taskId || null,
           start_time: Date.now(),
           duration: duration * 60 * 1000,
@@ -228,7 +245,7 @@ export async function POST(req: NextRequest) {
           interrupted: false,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;
@@ -244,6 +261,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
       }
 
+      const { data: session } = await supabase
+        .from('pomodoro_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .eq('userid', authUser.id)
+        .maybeSingle();
+
+      if (!session) {
+        return NextResponse.json({ error: 'Session not found or not owned by user' }, { status: 404 });
+      }
+
       const { data, error } = await supabase
         .from('pomodoro_sessions')
         .update({
@@ -252,7 +280,7 @@ export async function POST(req: NextRequest) {
         })
         .eq('id', sessionId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;
@@ -268,6 +296,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
       }
 
+      const { data: session } = await supabase
+        .from('pomodoro_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .eq('userid', authUser.id)
+        .maybeSingle();
+
+      if (!session) {
+        return NextResponse.json({ error: 'Session not found or not owned by user' }, { status: 404 });
+      }
+
       const { data, error } = await supabase
         .from('pomodoro_sessions')
         .update({
@@ -276,7 +315,7 @@ export async function POST(req: NextRequest) {
         })
         .eq('id', sessionId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;
@@ -286,11 +325,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update-presence') {
-      const { userId, presenceStatus } = body;
+      const { presenceStatus } = body;
 
-      if (!userId || !presenceStatus) {
+      if (!presenceStatus) {
         return NextResponse.json(
-          { error: 'userId and presenceStatus are required' },
+          { error: 'presenceStatus is required' },
           { status: 400 },
         );
       }
@@ -298,9 +337,9 @@ export async function POST(req: NextRequest) {
       const { data, error } = await supabase
         .from('users')
         .update({ presence_status: presenceStatus })
-        .eq('id', userId)
+        .eq('id', authUser.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;

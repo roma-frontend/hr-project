@@ -1,9 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import type { Database } from '@/lib/supabase/database.types';
+
+type DriverRequest = Database['public']['Tables']['driver_requests']['Row'];
+type DriverSchedule = Database['public']['Tables']['driver_schedules']['Row'];
+type Driver = Database['public']['Tables']['drivers']['Row'];
+
+function mapDriverRequest(r: DriverRequest) {
+  return {
+    ...r,
+    id: r.id,
+    organizationId: r.organization_id,
+    requesterId: r.requesterid,
+    driverId: r.driverid,
+    startTime: r.start_time,
+    endTime: r.end_time,
+    tripFrom: r.trip_from,
+    tripTo: r.trip_to,
+    tripPurpose: r.trip_purpose,
+    passengerCount: r.passenger_count,
+    tripNotes: r.trip_notes,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+function mapDriverSchedule(s: DriverSchedule) {
+  return {
+    ...s,
+    id: s.id,
+    driverId: s.driverid,
+    startTime: s.start_time,
+    endTime: s.end_time,
+    scheduleType: s.schedule_type,
+    tripFrom: s.trip_from,
+    tripTo: s.trip_to,
+    tripPurpose: s.trip_purpose,
+    passengerCount: s.passenger_count,
+    createdAt: s.created_at,
+    updatedAt: s.updated_at,
+  };
+}
+
+function mapDriver(d: Driver) {
+  return {
+    ...d,
+    id: d.id,
+    organizationId: d.organization_id,
+    userId: d.userid,
+    vehicleModel: d.vehicle_model,
+    vehiclePlateNumber: d.vehicle_plate_number,
+    vehicleCapacity: d.vehicle_capacity,
+    vehicleColor: d.vehicle_color,
+    vehicleYear: d.vehicle_year,
+    isAvailable: d.is_available,
+    isOnShift: d.is_on_shift,
+    workingHoursStart: d.working_hours_start,
+    workingHoursEnd: d.working_hours_end,
+    workingDays: d.working_days,
+    maxTripsPerDay: d.max_trips_per_day,
+    currentTripsToday: d.current_trips_today,
+    createdAt: d.created_at,
+    updatedAt: d.updated_at,
+  };
+}
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -12,11 +78,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -27,33 +93,23 @@ export async function GET(req: NextRequest) {
 
     if (type === 'available-drivers') {
       const organizationId = searchParams.get('organizationId');
-      const date = searchParams.get('date');
 
       if (!organizationId) {
         return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
       }
 
-      const query = supabase
+      const { data: drivers, error } = await supabaseService
         .from('drivers')
         .select('*')
-        .eq('organizationId', organizationId)
+        .eq('organization_id', organizationId)
         .eq('is_available', true);
 
-      const { data: drivers } = await query;
+      if (error) {
+        console.error('Available drivers query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
 
-      const enriched = (drivers || []).map((driver: any) => ({
-        ...driver,
-        id: driver.id,
-        organizationId: driver.organizationId,
-        userId: driver.userid,
-        vehicleModel: driver.vehicle_model,
-        vehiclePlateNumber: driver.vehicle_plate_number,
-        vehicleCapacity: driver.vehicle_capacity,
-        vehicleColor: driver.vehicle_color,
-        vehicleYear: driver.vehicle_year,
-        isAvailable: driver.is_available,
-        isOnShift: driver.is_on_shift,
-      }));
+      const enriched = (drivers || []).map(mapDriver);
 
       return NextResponse.json(enriched);
     }
@@ -67,62 +123,68 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'driverId required' }, { status: 400 });
       }
 
-      let query = (supabase as any)
+      let query = supabaseService
         .from('driver_schedules')
         .select('*')
-        .eq('driver_id', driverId)
+        .eq('driverid', driverId)
         .order('start_time', { ascending: true });
 
       if (startDate) {
-        query = query.gte('start_time', startDate);
+        const startTs = new Date(startDate).getTime();
+        query = query.gte('start_time', startTs);
       }
       if (endDate) {
-        query = query.lte('start_time', endDate);
+        const endTs = new Date(endDate).getTime();
+        query = query.lte('start_time', endTs);
       }
 
-      const { data: schedules } = await query;
+      const { data: schedules, error } = await query;
 
-      const mapped = (schedules || []).map((s: any) => ({
-        ...s,
-        id: s.id,
-        driverId: s.driver_id,
-        startTime: s.start_time,
-        endTime: s.end_time,
-        tripInfo: s.trip_info,
-      }));
+      if (error) {
+        console.error('Driver schedules query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      const mapped = (schedules || []).map(mapDriverSchedule);
 
       return NextResponse.json(mapped);
     }
 
     if (type === 'driver-requests') {
       const organizationId = searchParams.get('organizationId');
+      const userId = searchParams.get('userId');
       const status = searchParams.get('status');
 
-      if (!organizationId) {
-        return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
+      if (!organizationId && !userId) {
+        return NextResponse.json({ error: 'organizationId or userId required' }, { status: 400 });
       }
 
-      let query = (supabase as any)
+      let query = supabaseService
         .from('driver_requests')
         .select('*')
-        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
+      if (userId) {
+        query = query.eq('requesterid', userId);
+      }
       if (status) {
-        query = query.eq('status', status);
+        const validStatuses = ['pending', 'approved', 'declined', 'cancelled', 'completed'] as const;
+        if (validStatuses.includes(status as typeof validStatuses[number])) {
+          query = query.eq('status', status as typeof validStatuses[number]);
+        }
       }
 
-      const { data: requests } = await query;
+      const { data: requests, error } = await query;
 
-      const mapped = (requests || []).map((r: any) => ({
-        ...r,
-        id: r.id,
-        organizationId: r.organization_id,
-        startTime: r.start_time,
-        endTime: r.end_time,
-        tripInfo: r.trip_info,
-        assignedDriver: r.driver ? { userName: r.driver.name } : null,
-      }));
+      if (error) {
+        console.error('Driver requests query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      const mapped = (requests || []).map(mapDriverRequest);
 
       return NextResponse.json(mapped);
     }
@@ -134,23 +196,29 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
       }
 
-      const { data: trips } = await (supabase as any)
+      const { data: trips, error } = await supabaseService
         .from('recurring_trips')
         .select('*')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error('Recurring trips query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
       const mapped = (trips || []).map((t: any) => ({
         ...t,
         id: t.id,
         organizationId: t.organization_id,
-        userId: t.user_id,
-        driverId: t.driver_id,
+        userId: t.userid,
+        driverId: t.driverid,
         isActive: t.is_active,
         createdAt: t.created_at,
         updatedAt: t.updated_at,
-        driverName: t.driver_name,
-        tripInfo: t.trip_info,
+        tripFrom: t.trip_from,
+        tripTo: t.trip_to,
+        tripPurpose: t.trip_purpose,
         schedule: t.schedule,
       }));
 
@@ -161,25 +229,35 @@ export async function GET(req: NextRequest) {
       const organizationId = searchParams.get('organizationId');
       const driverId = searchParams.get('driverId');
 
-      let query = (supabase as any).from('driver_shifts').select('*').order('created_at', { ascending: false });
+      let query = supabaseService
+        .from('driver_shifts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (organizationId) {
         query = query.eq('organization_id', organizationId);
       }
       if (driverId) {
-        query = query.eq('driver_id', driverId);
+        query = query.eq('driverid', driverId);
       }
 
-      const { data: shifts } = await query;
+      const { data: shifts, error } = await query;
+
+      if (error) {
+        console.error('Driver shifts query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
 
       const mapped = (shifts || []).map((s: any) => ({
         ...s,
         id: s.id,
         organizationId: s.organization_id,
-        driverId: s.driver_id,
+        driverId: s.driverid,
         startTime: s.start_time,
         endTime: s.end_time,
+        status: s.status,
         createdAt: s.created_at,
+        updatedAt: s.updated_at,
       }));
 
       return NextResponse.json(mapped);
@@ -192,23 +270,21 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'userId required' }, { status: 400 });
       }
 
-      const { data: favorites } = await (supabase as any)
+      const { data: favorites, error } = await supabaseService
         .from('passenger_favorites')
         .select('*')
-        .eq('passenger_id', userId);
+        .eq('passengerid', userId);
+
+      if (error) {
+        console.error('Passenger favorites query error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
 
       const mapped = (favorites || []).map((f: any) => ({
         ...f,
         id: f.id,
-        passengerId: f.passenger_id,
-        driverId: f.driver_id,
-        driver: f.drivers
-          ? {
-              ...f.drivers,
-              id: f.drivers.id,
-              organizationId: f.drivers.organization_id,
-            }
-          : null,
+        passengerId: f.passengerid,
+        driverId: f.driverid,
       }));
 
       return NextResponse.json(mapped);
@@ -216,7 +292,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
   } catch (error) {
-    console.error('Drivers API error:', error);
+    console.error('Drivers API GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -224,6 +300,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -241,121 +318,159 @@ export async function POST(req: NextRequest) {
         driverId,
         startTime,
         endTime,
-        tripInfo,
+        tripFrom,
+        tripTo,
+        tripPurpose,
+        passengerCount,
+        tripNotes,
       } = body;
 
-      const { data: request, error } = await (supabase as any)
+      if (!organizationId || !driverId || !startTime || !endTime || !tripFrom || !tripTo) {
+        return NextResponse.json(
+          { error: 'organizationId, driverId, startTime, endTime, tripFrom, tripTo are required' },
+          { status: 400 }
+        );
+      }
+
+      const startTs = typeof startTime === 'number' ? startTime : new Date(startTime).getTime();
+      const endTs = typeof endTime === 'number' ? endTime : new Date(endTime).getTime();
+
+      const { data: request, error } = await supabaseService
         .from('driver_requests')
         .insert({
           organization_id: organizationId,
-          driver_id: driverId,
-          requester_id: user.id,
-          start_time: startTime,
-          end_time: endTime,
-          trip_info: tripInfo,
+          driverid: driverId,
+          requesterid: user.id,
+          start_time: startTs,
+          end_time: endTs,
+          trip_from: tripFrom,
+          trip_to: tripTo,
+          trip_purpose: tripPurpose || '',
+          passenger_count: passengerCount || 1,
+          trip_notes: tripNotes || null,
           status: 'pending',
-          created_at: new Date().toISOString(),
+          created_at: Date.now(),
+          updated_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Create driver request error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...request,
-        id: request.id,
-        organizationId: request.organization_id,
-        startTime: request.start_time,
-        endTime: request.end_time,
-        tripInfo: request.trip_info,
-      });
+      if (!request) {
+        return NextResponse.json({ error: 'Failed to create request' }, { status: 500 });
+      }
+
+      return NextResponse.json(mapDriverRequest(request));
     }
 
     if (type === 'update-request-status') {
       const { requestId, status } = body;
 
-      const { data: request, error } = await (supabase as any)
+      if (!requestId || !status) {
+        return NextResponse.json({ error: 'requestId and status are required' }, { status: 400 });
+      }
+
+      const { data: request, error } = await supabaseService
         .from('driver_requests')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ status, updated_at: Date.now() })
         .eq('id', requestId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Update request status error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...request,
-        id: request.id,
-        organizationId: request.organization_id,
-        startTime: request.start_time,
-        endTime: request.end_time,
-      });
+      if (!request) {
+        return NextResponse.json({ error: 'Failed to update request' }, { status: 500 });
+      }
+
+      return NextResponse.json(mapDriverRequest(request));
     }
 
     if (type === 'create-schedule') {
       const {
         driverId,
-        type: scheduleType,
+        scheduleType,
         startTime,
         endTime,
-        tripInfo,
-        reason,
+        tripFrom,
+        tripTo,
+        tripPurpose,
+        passengerCount,
+        notes,
       } = body;
 
-      const { data: schedule, error } = await (supabase as any)
+      if (!driverId || !startTime || !endTime || !scheduleType) {
+        return NextResponse.json(
+          { error: 'driverId, startTime, endTime, scheduleType are required' },
+          { status: 400 }
+        );
+      }
+
+      const startTs = typeof startTime === 'number' ? startTime : new Date(startTime).getTime();
+      const endTs = typeof endTime === 'number' ? endTime : new Date(endTime).getTime();
+
+      const { data: schedule, error } = await supabaseService
         .from('driver_schedules')
         .insert({
-          driver_id: driverId,
-          type: scheduleType,
-          start_time: startTime,
-          end_time: endTime,
-          trip_info: tripInfo,
-          reason,
+          driverid: driverId,
+          schedule_type: scheduleType,
+          start_time: startTs,
+          end_time: endTs,
+          trip_from: tripFrom || null,
+          trip_to: tripTo || null,
+          trip_purpose: tripPurpose || null,
+          passenger_count: passengerCount || null,
+          notes: notes || null,
           status: 'scheduled',
-          created_at: new Date().toISOString(),
+          created_at: Date.now(),
+          updated_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Create schedule error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...schedule,
-        id: schedule.id,
-        driverId: schedule.driver_id,
-        startTime: schedule.start_time,
-        endTime: schedule.end_time,
-        tripInfo: schedule.trip_info,
-      });
+      if (!schedule) {
+        return NextResponse.json({ error: 'Failed to create schedule' }, { status: 500 });
+      }
+
+      return NextResponse.json(mapDriverSchedule(schedule));
     }
 
     if (type === 'update-schedule-status') {
       const { scheduleId, status } = body;
 
-      const { data: schedule, error } = await (supabase as any)
+      if (!scheduleId || !status) {
+        return NextResponse.json({ error: 'scheduleId and status are required' }, { status: 400 });
+      }
+
+      const { data: schedule, error } = await supabaseService
         .from('driver_schedules')
-        .update({ status })
+        .update({ status, updated_at: Date.now() })
         .eq('id', scheduleId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Update schedule status error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...schedule,
-        id: schedule.id,
-        driverId: schedule.driver_id,
-        startTime: schedule.start_time,
-        endTime: schedule.end_time,
-      });
+      if (!schedule) {
+        return NextResponse.json({ error: 'Failed to update schedule' }, { status: 500 });
+      }
+
+      return NextResponse.json(mapDriverSchedule(schedule));
     }
 
     if (type === 'submit-rating') {
@@ -369,33 +484,43 @@ export async function POST(req: NextRequest) {
         comment,
       } = body;
 
-      const { data: ratingRecord, error } = await (supabase as any)
+      if (!rating || rating < 1 || rating > 5) {
+        return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
+      }
+
+      const { data: ratingRecord, error } = await supabaseService
         .from('passenger_ratings')
         .insert({
-          schedule_id: scheduleId,
-          request_id: requestId,
-          passenger_id: passengerId,
-          driver_id: driverId,
-          organization_id: organizationId,
+          scheduleid: scheduleId || null,
+          requestid: requestId || null,
+          passengerid: passengerId,
+          driverid: driverId,
+          organization_id: organizationId || null,
           rating,
-          comment,
-          created_at: new Date().toISOString(),
+          comment: comment || null,
+          created_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Submit rating error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!ratingRecord) {
+        return NextResponse.json({ error: 'Failed to submit rating' }, { status: 500 });
       }
 
       return NextResponse.json({
         ...ratingRecord,
         id: ratingRecord.id,
-        scheduleId: ratingRecord.schedule_id,
-        requestId: ratingRecord.request_id,
-        passengerId: ratingRecord.passenger_id,
-        driverId: ratingRecord.driver_id,
+        scheduleId: ratingRecord.scheduleid,
+        requestId: ratingRecord.requestid,
+        passengerId: ratingRecord.passengerid,
+        driverId: ratingRecord.driverid,
         organizationId: ratingRecord.organization_id,
+        createdAt: ratingRecord.created_at,
       });
     }
 
@@ -403,35 +528,51 @@ export async function POST(req: NextRequest) {
       const {
         organizationId,
         driverId,
-        tripInfo,
+        tripFrom,
+        tripTo,
+        tripPurpose,
         schedule,
       } = body;
 
-      const { data: trip, error } = await (supabase as any)
+      if (!organizationId || !driverId || !tripFrom || !tripTo || !schedule) {
+        return NextResponse.json(
+          { error: 'organizationId, driverId, tripFrom, tripTo, schedule are required' },
+          { status: 400 }
+        );
+      }
+
+      const { data: trip, error } = await supabaseService
         .from('recurring_trips')
         .insert({
           organization_id: organizationId,
-          driver_id: driverId,
-          user_id: user.id,
-          trip_info: tripInfo,
+          driverid: driverId,
+          userid: user.id,
+          trip_from: tripFrom,
+          trip_to: tripTo,
+          trip_purpose: tripPurpose || '',
           schedule,
           is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          created_at: Date.now(),
+          updated_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Create recurring trip error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!trip) {
+        return NextResponse.json({ error: 'Failed to create recurring trip' }, { status: 500 });
       }
 
       return NextResponse.json({
         ...trip,
         id: trip.id,
         organizationId: trip.organization_id,
-        userId: trip.user_id,
-        driverId: trip.driver_id,
+        userId: trip.userid,
+        driverId: trip.driverid,
         isActive: trip.is_active,
         createdAt: trip.created_at,
         updatedAt: trip.updated_at,
@@ -443,110 +584,164 @@ export async function POST(req: NextRequest) {
         organizationId,
         driverId,
         startTime,
-        endTime,
+        end_time: endTime,
       } = body;
 
-      const { data: shift, error } = await (supabase as any)
+      if (!organizationId || !driverId || !startTime) {
+        return NextResponse.json(
+          { error: 'organizationId, driverId, startTime are required' },
+          { status: 400 }
+        );
+      }
+
+      const startTs = typeof startTime === 'number' ? startTime : new Date(startTime).getTime();
+      const endTs = endTime ? (typeof endTime === 'number' ? endTime : new Date(endTime).getTime()) : null;
+
+      const { data: shift, error } = await supabaseService
         .from('driver_shifts')
         .insert({
           organization_id: organizationId,
-          driver_id: driverId,
-          start_time: startTime,
-          end_time: endTime,
-          is_active: true,
-          created_at: new Date().toISOString(),
+          driverid: driverId,
+          start_time: startTs,
+          end_time: endTs,
+          status: 'active',
+          created_at: Date.now(),
+          updated_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Create shift error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!shift) {
+        return NextResponse.json({ error: 'Failed to create shift' }, { status: 500 });
       }
 
       return NextResponse.json({
         ...shift,
         id: shift.id,
         organizationId: shift.organization_id,
-        driverId: shift.driver_id,
+        driverId: shift.driverid,
         startTime: shift.start_time,
         endTime: shift.end_time,
+        status: shift.status,
+        createdAt: shift.created_at,
+        updatedAt: shift.updated_at,
       });
     }
 
     if (type === 'end-shift') {
       const { shiftId, endTime } = body;
 
-      const { data: shift, error } = await (supabase as any)
+      if (!shiftId) {
+        return NextResponse.json({ error: 'shiftId is required' }, { status: 400 });
+      }
+
+      const endTs = endTime ? (typeof endTime === 'number' ? endTime : new Date(endTime).getTime()) : Date.now();
+
+      const { data: shift, error } = await supabaseService
         .from('driver_shifts')
         .update({
-          end_time: endTime || new Date().toISOString(),
-          is_active: false,
+          end_time: endTs,
+          status: 'completed',
+          updated_at: Date.now(),
         })
         .eq('id', shiftId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('End shift error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!shift) {
+        return NextResponse.json({ error: 'Failed to end shift' }, { status: 500 });
       }
 
       return NextResponse.json({
         ...shift,
         id: shift.id,
         organizationId: shift.organization_id,
-        driverId: shift.driver_id,
+        driverId: shift.driverid,
         startTime: shift.start_time,
         endTime: shift.end_time,
+        status: shift.status,
+        createdAt: shift.created_at,
+        updatedAt: shift.updated_at,
       });
     }
 
     if (type === 'add-favorite') {
       const { organizationId, userId, driverId } = body;
 
-      const { data: existing } = await (supabase as any)
+      if (!userId || !driverId) {
+        return NextResponse.json({ error: 'userId and driverId are required' }, { status: 400 });
+      }
+
+      const { data: existing, error: existingError } = await supabaseService
         .from('passenger_favorites')
         .select('id')
-        .eq('passenger_id', userId)
-        .eq('driver_id', driverId)
+        .eq('passengerid', userId)
+        .eq('driverid', driverId)
         .maybeSingle();
+
+      if (existingError) {
+        console.error('Check favorite error:', existingError);
+        return NextResponse.json({ error: existingError.message }, { status: 500 });
+      }
 
       if (existing) {
         return NextResponse.json({ message: 'Already in favorites', id: existing.id });
       }
 
-      const { data: favorite, error } = await (supabase as any)
+      const { data: favorite, error } = await supabaseService
         .from('passenger_favorites')
         .insert({
-          passenger_id: userId,
-          driver_id: driverId,
-          organization_id: organizationId,
-          created_at: new Date().toISOString(),
+          passengerid: userId,
+          driverid: driverId,
+          organization_id: organizationId || null,
+          created_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Add favorite error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      if (!favorite) {
+        return NextResponse.json({ error: 'Failed to add favorite' }, { status: 500 });
       }
 
       return NextResponse.json({
         ...favorite,
         id: favorite.id,
-        passengerId: favorite.passenger_id,
-        driverId: favorite.driver_id,
+        passengerId: favorite.passengerid,
+        driverId: favorite.driverid,
+        createdAt: favorite.created_at,
       });
     }
 
     if (type === 'remove-favorite') {
       const { userId, driverId } = body;
 
-      const { error } = await (supabase as any)
+      if (!userId || !driverId) {
+        return NextResponse.json({ error: 'userId and driverId are required' }, { status: 400 });
+      }
+
+      const { error } = await supabaseService
         .from('passenger_favorites')
         .delete()
-        .eq('passenger_id', userId)
-        .eq('driver_id', driverId);
+        .eq('passengerid', userId)
+        .eq('driverid', driverId);
 
       if (error) {
+        console.error('Remove favorite error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
@@ -556,11 +751,15 @@ export async function POST(req: NextRequest) {
     if (type === 'register-driver') {
       const { userId, organizationId, vehicleInfo, workingHours, maxTripsPerDay, adminId } = body;
 
-      const { data: driver, error: driverError } = await supabase
+      if (!userId || !organizationId) {
+        return NextResponse.json({ error: 'userId and organizationId are required' }, { status: 400 });
+      }
+
+      const { data: driver, error: driverError } = await supabaseService
         .from('drivers')
         .insert({
           userid: userId,
-          organizationId: organizationId,
+          organization_id: organizationId,
           is_available: true,
           is_on_shift: false,
           vehicle_model: vehicleInfo?.model || '',
@@ -572,87 +771,60 @@ export async function POST(req: NextRequest) {
           working_hours_start: workingHours?.start || '09:00',
           working_hours_end: workingHours?.end || '17:00',
           working_days: [1, 2, 3, 4, 5],
+          current_trips_today: 0,
+          rating: 0,
+          total_trips: 0,
           created_at: Date.now(),
           updated_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (driverError) {
+        console.error('Register driver error:', driverError);
         return NextResponse.json({ error: driverError.message }, { status: 500 });
       }
 
-      let vehicleId = null;
-      if (vehicleInfo) {
-        const { data: vehicle, error: vehicleError } = await (supabase as any)
-          .from('vehicles')
-          .insert({
-            organization_id: organizationId,
-            driver_id: driver.id,
-            model: vehicleInfo.model,
-            year: vehicleInfo.year,
-            color: vehicleInfo.color,
-            plate_number: vehicleInfo.plateNumber,
-            capacity: vehicleInfo.capacity,
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (vehicleError) {
-          return NextResponse.json({ error: vehicleError.message }, { status: 500 });
-        }
-
-        vehicleId = vehicle.id;
+      if (!driver) {
+        return NextResponse.json({ error: 'Failed to register driver' }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...driver,
-        id: driver.id,
-        organizationId: driver.organizationId,
-        userId: driver.userid,
-        vehicleModel: driver.vehicle_model,
-        vehiclePlateNumber: driver.vehicle_plate_number,
-        vehicleCapacity: driver.vehicle_capacity,
-        vehicleColor: driver.vehicle_color,
-        vehicleYear: driver.vehicle_year,
-        isAvailable: driver.is_available,
-        isOnShift: driver.is_on_shift,
-        maxTripsPerDay: driver.max_trips_per_day,
-        vehicleId,
-      });
+      return NextResponse.json(mapDriver(driver));
     }
 
     if (type === 'reassign-request') {
-      const { requestId, userId, newDriverId } = body;
+      const { requestId, newDriverId } = body;
 
-      const { data: request, error } = await (supabase as any)
+      if (!requestId || !newDriverId) {
+        return NextResponse.json({ error: 'requestId and newDriverId are required' }, { status: 400 });
+      }
+
+      const { data: request, error } = await supabaseService
         .from('driver_requests')
         .update({
-          driver_id: newDriverId,
+          driverid: newDriverId,
           status: 'pending',
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
         })
         .eq('id', requestId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('Reassign request error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({
-        ...request,
-        id: request.id,
-        organizationId: request.organization_id,
-        startTime: request.start_time,
-        endTime: request.end_time,
-      });
+      if (!request) {
+        return NextResponse.json({ error: 'Failed to reassign request' }, { status: 500 });
+      }
+
+      return NextResponse.json(mapDriverRequest(request));
     }
 
     return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
   } catch (error) {
-    console.error('Drivers API error:', error);
+    console.error('Drivers API POST error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

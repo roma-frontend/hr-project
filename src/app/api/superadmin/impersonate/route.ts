@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
+import type { Database } from '@/lib/supabase/database.types';
+
+type ImpersonationSession = Database['public']['Tables']['impersonation_sessions']['Row'];
+
+async function requireSuperadmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: serverT('superadmin.api.unauthorized', 'Unauthorized') }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== 'superadmin') {
+    return { error: NextResponse.json({ error: serverT('superadmin.api.forbidden', 'Forbidden') }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireSuperadmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
+
     const { searchParams } = new URL(request.url);
     const prefix = searchParams.get('prefix');
     const userId = searchParams.get('userId');
@@ -11,9 +37,9 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '20';
 
     if (prefix) {
-      const { data: users, error } = await supabase
+      const { data: users, error } = await supabaseService
         .from('users')
-        .select('id, name, email, role, avatar_url, organizationId')
+        .select('id, name, email, role, avatar_url, organization_id')
         .or(`name.ilike.%${prefix}%,email.ilike.%${prefix}%`)
         .limit(20);
 
@@ -28,13 +54,13 @@ export async function GET(request: NextRequest) {
           email: u.email,
           role: u.role,
           avatarUrl: u.avatar_url,
-          organizationId: u.organizationId,
+          organization_id: u.organization_id,
         })),
       });
     }
 
     if (userId) {
-      const { data: session, error } = await (supabase as any)
+      const { data: session, error } = await supabaseService
         .from('impersonation_sessions')
         .select(
           `
@@ -65,8 +91,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ session: null });
       }
 
-      const superadmin = session.users?.[0] || session.users;
-      const targetUser = session.users?.[1] || (session.users && session.users.length > 1 ? session.users[1] : null);
+      const usersArray = session.users as unknown as { name: string; email: string }[] | null;
+      const superadmin = usersArray?.[0] || null;
+      const targetUser = usersArray?.[1] || null;
       const org = session.organizations;
 
       return NextResponse.json({
@@ -92,7 +119,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (superadminId) {
-      const { data: sessions, error } = await (supabase as any)
+      const { data: sessions, error } = await supabaseService
         .from('impersonation_sessions')
         .select(
           `
@@ -117,9 +144,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      const formattedSessions = (sessions || []).map((s: any) => {
-        const superadmin = s.users?.[0] || s.users;
-        const targetUser = s.users?.[1] || (s.users && s.users.length > 1 ? s.users[1] : null);
+      const formattedSessions = (sessions || []).map((s) => {
+        const usersArray = s.users as unknown as { name: string; email: string }[] | null;
+        const superadmin = usersArray?.[0] || null;
+        const targetUser = usersArray?.[1] || null;
         const org = s.organizations;
 
         return {
@@ -139,34 +167,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ sessions: formattedSessions });
     }
 
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: serverT('superadmin.api.invalidRequest', 'Invalid request') }, { status: 400 });
   } catch (error) {
     console.error('[Impersonation API] Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: serverT('superadmin.api.internalServerError', 'Internal server error') }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { superadminId, targetUserId, reason } = await request.json();
+    const auth = await requireSuperadmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
-    if (!superadminId || !targetUserId || !reason) {
+    const { targetUserId, reason } = await request.json();
+
+    if (!targetUserId || !reason) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: serverT('superadmin.api.missingRequiredFields', 'Missing required fields') },
         { status: 400 },
       );
     }
 
-    const { data: targetUser } = await supabase
+    const { data: targetUser } = await supabaseService
       .from('users')
-      .select('organizationId')
+      .select('organization_id')
       .eq('id', targetUserId)
-      .single();
+      .maybeSingle();
 
-    if (!targetUser?.organizationId) {
+    if (!targetUser?.organization_id) {
       return NextResponse.json(
-        { error: 'Target user has no organization' },
+        { error: serverT('superadmin.api.targetUserNoOrg', 'Target user has no organization') },
         { status: 400 },
       );
     }
@@ -174,12 +205,12 @@ export async function POST(request: NextRequest) {
     const token = crypto.randomUUID();
     const expiresAt = Date.now() + 60 * 60 * 1000;
 
-    const { data: session, error } = await supabase
-      .from('impersonation_sessions' as any)
+    const { data: session, error } = await supabaseService
+      .from('impersonation_sessions')
       .insert({
-        superadminid: superadminId,
+        superadminid: authUser.id,
         target_userid: targetUserId,
-        organization_id: targetUser.organizationId,
+        organization_id: targetUser.organization_id,
         reason,
         token,
         expires_at: expiresAt,
@@ -187,7 +218,7 @@ export async function POST(request: NextRequest) {
         is_active: true,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -196,27 +227,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, session });
   } catch (error) {
     console.error('[Start Impersonation API] Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: serverT('superadmin.api.internalServerError', 'Internal server error') }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { sessionId, userId } = await request.json();
+    const auth = await requireSuperadmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, supabase: supabaseService } = auth;
 
-    if (!sessionId || !userId) {
+    const { sessionId } = await request.json();
+
+    if (!sessionId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: serverT('superadmin.api.missingRequiredFields', 'Missing required fields') },
         { status: 400 },
       );
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await supabaseService
       .from('impersonation_sessions')
       .update({ is_active: false, ended_at: Date.now() })
       .eq('id', sessionId)
-      .eq('superadminid', userId);
+      .eq('superadminid', authUser.id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -225,6 +259,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[End Impersonation API] Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: serverT('superadmin.api.internalServerError', 'Internal server error') }, { status: 500 });
   }
 }

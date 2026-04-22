@@ -58,7 +58,7 @@ interface StripeData {
 }
 
 export default function StripeSupportStudio() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export default function StripeSupportStudio() {
       const response = await fetch('/api/stripe/transactions');
       const result = await response.json();
 
-      if (!response.ok) throw new Error(result.error || 'Failed to fetch');
+      if (!response.ok) throw new Error(result.error || t('stripeDashboard.failedToFetch', 'Failed to fetch'));
 
       // Calculate success rate
       const txs = result.recentTransactions || [];
@@ -94,7 +94,7 @@ export default function StripeSupportStudio() {
       });
     } catch (err: any) {
       setError(err.message);
-      toast.error('Ошибка загрузки данных');
+      toast.error(t('stripeDashboard.dataLoadFailed', 'Ошибка загрузки данных'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -122,7 +122,7 @@ export default function StripeSupportStudio() {
 
       // Date format matching (DD.MM.YYYY)
       const date = new Date(tx.date);
-      const dateStr = date.toLocaleDateString('ru-RU');
+      const dateStr = date.toLocaleDateString(i18n.language || 'en-GB');
       const dateMatch = dateStr.includes(q);
 
       return emailMatch || amountMatch || cardMatch || idMatch || dateMatch;
@@ -131,11 +131,19 @@ export default function StripeSupportStudio() {
 
   const handleExport = (): void => {
     if (!filteredData.length) {
-      toast.error('Нет данных для экспорта');
+      toast.error(t('stripeDashboard.noDataToExport', 'Нет данных для экспорта'));
       return;
     }
 
-    const headers = ['ID', 'Customer', 'Amount', 'Status', 'Date', 'Card', 'Description'];
+    const headers = [
+      t('stripeDashboard.csvHeaders.id', 'ID'),
+      t('stripeDashboard.csvHeaders.customer', 'Customer'),
+      t('stripeDashboard.csvHeaders.amount', 'Amount'),
+      t('stripeDashboard.csvHeaders.status', 'Status'),
+      t('stripeDashboard.csvHeaders.date', 'Date'),
+      t('stripeDashboard.csvHeaders.card', 'Card'),
+      t('stripeDashboard.csvHeaders.description', 'Description'),
+    ];
     const csvContent = [
       headers.join(','),
       ...filteredData.map((tx) =>
@@ -144,7 +152,7 @@ export default function StripeSupportStudio() {
           tx.customer,
           tx.amount,
           tx.status,
-          new Date(tx.date).toLocaleDateString('ru-RU'),
+          new Date(tx.date).toLocaleDateString(i18n.language || 'en-GB'),
           `${tx.cardBrand}..${tx.cardLast4}`,
           tx.description,
         ].join(','),
@@ -156,7 +164,7 @@ export default function StripeSupportStudio() {
     link.href = URL.createObjectURL(blob);
     link.download = `stripe_support_export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    toast.success('Данные экспортированы');
+    toast.success(t('stripeDashboard.dataExported', 'Данные экспортированы'));
   };
 
   const getStatusIcon = (status: string) => {
@@ -179,26 +187,26 @@ export default function StripeSupportStudio() {
       </div>
     );
 
-  if (!user) return <div className="p-6">Please log in</div>;
+  if (!user) return <div className="p-6">{t('common.pleaseLogIn') || 'Please log in'}</div>;
 
   return (
     <div className="min-h-screen p-6 space-y-6">
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Stripe Support Studio</h1>
-          <p className="text-muted-foreground">Поиск транзакций, данные карт и поддержка</p>
+          <h1 className="text-3xl font-bold mb-1">{t('stripe.dataStudio.title') || 'Stripe Support Studio'}</h1>
+          <p className="text-muted-foreground">{t('stripe.dataStudio.subtitle') || 'Search transactions, card data, and support'}</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" onClick={() => router.push('/superadmin/stripe-dashboard')}>
-            📊 Дашборд
+            📊 {t('stripe.dataStudio.dashboard') || 'Dashboard'}
           </Button>
           <Button variant="outline" onClick={handleExport} disabled={filteredData.length === 0}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> {t('stripe.dataStudio.export') || 'Export'}
           </Button>
           <Button onClick={() => fetchStripeData(true)} disabled={refreshing}>
             <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Обновить
+            {t('stripe.dataStudio.refresh') || 'Refresh'}
           </Button>
         </div>
       </div>
@@ -208,7 +216,7 @@ export default function StripeSupportStudio() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Выручка (Всего)</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('stripe.dataStudio.revenueTotal') || 'Total Revenue'}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -217,7 +225,7 @@ export default function StripeSupportStudio() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">За 30 дней</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('stripe.dataStudio.revenue30Days') || 'Last 30 Days'}</CardTitle>
               <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -226,7 +234,7 @@ export default function StripeSupportStudio() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Успешность</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('stripe.dataStudio.successRate') || 'Success Rate'}</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -235,7 +243,7 @@ export default function StripeSupportStudio() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Всего оплат</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('stripe.dataStudio.totalPayments') || 'Total Payments'}</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -248,14 +256,14 @@ export default function StripeSupportStudio() {
       {/* Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Поиск транзакций</CardTitle>
-          <CardDescription>Введите Email, Сумму, Дату или Номер карты</CardDescription>
+          <CardTitle>{t('stripe.dataStudio.searchTransactions') || 'Search Transactions'}</CardTitle>
+          <CardDescription>{t('stripe.dataStudio.searchDesc') || 'Enter Email, Amount, Date, or Card Number'}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск..."
+              placeholder={t('stripe.dataStudio.searchPlaceholder') || 'Search...'}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -270,19 +278,19 @@ export default function StripeSupportStudio() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr className="text-left">
-                <th className="p-3 font-medium">Статус</th>
-                <th className="p-3 font-medium">Сумма</th>
-                <th className="p-3 font-medium">Клиент</th>
-                <th className="p-3 font-medium">Карта</th>
-                <th className="p-3 font-medium">Дата</th>
-                <th className="p-3 font-medium">ID</th>
+                <th className="p-3 font-medium">{t('stripe.table.status') || 'Status'}</th>
+                <th className="p-3 font-medium">{t('stripe.table.amount') || 'Amount'}</th>
+                <th className="p-3 font-medium">{t('stripe.table.client') || 'Client'}</th>
+                <th className="p-3 font-medium">{t('stripe.table.card') || 'Card'}</th>
+                <th className="p-3 font-medium">{t('stripe.table.date') || 'Date'}</th>
+                <th className="p-3 font-medium">{t('stripe.table.id') || 'ID'}</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    Ничего не найдено
+                    {t('stripe.dataStudio.noResults') || 'No results found'}
                   </td>
                 </tr>
               ) : (
@@ -305,7 +313,7 @@ export default function StripeSupportStudio() {
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground">
-                      {new Date(tx.date).toLocaleDateString('ru-RU')}
+                      {new Date(tx.date).toLocaleDateString(i18n.language || 'en-GB')}
                     </td>
                     <td className="p-3 text-xs font-mono text-muted-foreground">
                       {tx.id.slice(-8)}
@@ -326,7 +334,7 @@ export default function StripeSupportStudio() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {getStatusIcon(selectedTx.status)}
-                  Детали транзакции
+                  {t('stripe.dataStudio.transactionDetails') || 'Transaction Details'}
                 </DialogTitle>
                 <DialogDescription>{selectedTx.id}</DialogDescription>
               </DialogHeader>
@@ -335,11 +343,11 @@ export default function StripeSupportStudio() {
                 {/* Main Info Grid */}
                 <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
                   <div>
-                    <p className="text-xs text-muted-foreground">Сумма</p>
+                    <p className="text-xs text-muted-foreground">{t('stripe.table.amount') || 'Amount'}</p>
                     <p className="text-xl font-bold text-green-600">${selectedTx.amount}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Статус</p>
+                    <p className="text-xs text-muted-foreground">{t('stripe.table.status') || 'Status'}</p>
                     <Badge
                       variant={selectedTx.status === 'succeeded' ? 'default' : 'secondary'}
                       className="mt-1"
@@ -352,7 +360,7 @@ export default function StripeSupportStudio() {
                 {/* Card Details */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" /> Способ оплаты
+                    <CreditCard className="w-4 h-4" /> {t('stripe.dataStudio.paymentMethod') || 'Payment Method'}
                   </h4>
                   <div className="p-3 border rounded-lg bg-card">
                     {selectedTx.cardBrand ? (
@@ -365,7 +373,7 @@ export default function StripeSupportStudio() {
                         </span>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-sm">Нет данных о карте</p>
+                      <p className="text-muted-foreground text-sm">{t('stripe.dataStudio.noCardData') || 'No card data available'}</p>
                     )}
                   </div>
                 </div>
@@ -373,20 +381,20 @@ export default function StripeSupportStudio() {
                 {/* Customer & Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">Клиент</p>
+                    <p className="text-xs text-muted-foreground">{t('stripe.table.client') || 'Client'}</p>
                     <p className="font-medium">{selectedTx.customer}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Время</p>
+                    <p className="text-xs text-muted-foreground">{t('stripe.dataStudio.time') || 'Time'}</p>
                     <p className="font-medium">
-                      {new Date(selectedTx.date).toLocaleString('ru-RU')}
+                      {new Date(selectedTx.date).toLocaleString(i18n.language || 'en-GB')}
                     </p>
                   </div>
                 </div>
 
                 {/* Description */}
                 <div>
-                  <p className="text-xs text-muted-foreground">Описание</p>
+                  <p className="text-xs text-muted-foreground">{t('stripe.table.description') || 'Description'}</p>
                   <p className="text-sm bg-muted/20 p-2 rounded">{selectedTx.description}</p>
                 </div>
 
@@ -396,7 +404,7 @@ export default function StripeSupportStudio() {
                     className="w-full gap-2"
                     onClick={() => window.open(selectedTx.receiptUrl!, '_blank')}
                   >
-                    <Copy className="w-4 h-4" /> Открыть чек Stripe
+                    <Copy className="w-4 h-4" /> {t('stripe.dataStudio.openStripeReceipt') || 'Open Stripe Receipt'}
                   </Button>
                 )}
               </div>

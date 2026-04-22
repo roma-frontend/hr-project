@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -19,25 +21,25 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'employeeId is required' }, { status: 400 });
       }
 
-      const { data: user } = await supabase
+      const { data: userData } = await supabaseService
         .from('users')
         .select('*')
         .eq('id', employeeId)
-        .single();
+        .maybeSingle();
 
       return NextResponse.json({
         data: {
-          profile: user ? {
-            id: user.id,
-            userId: user.id,
-            name: user.name,
-            email: user.email,
-            department: user.department,
-            position: user.position,
-            phone: user.phone,
-            location: user.location,
-            avatarUrl: user.avatar_url,
-            presenceStatus: user.presence_status,
+          profile: userData ? {
+            id: userData.id,
+            userId: userData.id,
+            name: userData.name,
+            email: userData.email,
+            department: userData.department,
+            position: userData.position,
+            phone: userData.phone,
+            location: userData.location,
+            avatarUrl: userData.avatar_url,
+            presenceStatus: userData.presence_status,
           } : null,
           documents: [],
         },
@@ -50,13 +52,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'employeeId is required' }, { status: 400 });
       }
 
-      const { data: evaluation } = await supabase
+      const { data: evaluation } = await supabaseService
         .from('ai_evaluations')
         .select('*')
         .eq('userId', employeeId)
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!evaluation) {
         return NextResponse.json({ data: null });
@@ -79,13 +81,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'employeeId is required' }, { status: 400 });
       }
 
-      const { data: rating } = await supabase
+      const { data: rating } = await supabaseService
         .from('supervisor_ratings')
         .select('*, supervisor:users!supervisor_ratings_supervisorid_fkey(id, name, email, avatar_url)')
         .eq('employee_id', employeeId)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!rating) {
         return NextResponse.json({ data: null });
@@ -125,7 +127,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'employeeId is required' }, { status: 400 });
       }
 
-      const { data: ratings } = await supabase
+      const { data: ratings } = await supabaseService
         .from('supervisor_ratings')
         .select('*, supervisor:users!supervisor_ratings_supervisorid_fkey(id, name, email, avatar_url)')
         .eq('employee_id', employeeId)
@@ -177,10 +179,10 @@ export async function GET(req: NextRequest) {
         999,
       ).getTime();
 
-      const { data: timeEntries } = await supabase
+      const { data: timeEntries } = await supabaseService
         .from('time_tracking')
         .select('*')
-        .eq('userId', employeeId)
+        .eq('userid', employeeId)
         .gte('check_in_time', monthStart)
         .lte('check_in_time', monthEnd);
 
@@ -190,13 +192,13 @@ export async function GET(req: NextRequest) {
       let earlyLeaveDays = 0;
 
       if (timeEntries) {
-        totalDays = timeEntries.filter((e: any) => e.checkin_time).length;
+        totalDays = timeEntries.filter((e: any) => e.check_in_time).length;
         totalWorkedHours = timeEntries.reduce(
           (sum: number, e: any) => sum + (e.total_worked_minutes || 0) / 60,
           0,
         );
         lateDays = timeEntries.filter((e: any) => e.is_late).length;
-        earlyLeaveDays = timeEntries.filter((e: any) => e.early_leave).length;
+        earlyLeaveDays = timeEntries.filter((e: any) => e.is_early_leave).length;
       }
 
       const punctualityRate = totalDays > 0 ? Math.round(((totalDays - lateDays) / totalDays) * 100) : 100;
@@ -225,6 +227,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -237,7 +240,6 @@ export async function POST(req: NextRequest) {
     if (action === 'submit-rating') {
       const {
         employeeId,
-        supervisorId,
         overallRating,
         qualityOfWork,
         efficiency,
@@ -251,16 +253,16 @@ export async function POST(req: NextRequest) {
         ratingPeriod,
       } = body;
 
-      if (!employeeId || !supervisorId || !overallRating) {
+      if (!employeeId || !overallRating) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: rating, error } = await supabase
+      const { data: rating, error } = await supabaseService
         .from('supervisor_ratings')
         .insert({
           employee_id: employeeId,
-          supervisorid: supervisorId,
-          rated_by: supervisorId,
+          supervisorid: user.id,
+          rated_by: user.id,
           overall_rating: overallRating,
           quality_of_work: qualityOfWork || 0,
           efficiency: efficiency || 0,
@@ -276,7 +278,7 @@ export async function POST(req: NextRequest) {
           created_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -292,7 +294,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: evaluation, error } = await supabase
+      const { data: evaluation, error } = await supabaseService
         .from('ai_evaluations')
         .insert({
           userId: employeeId,
@@ -301,7 +303,7 @@ export async function POST(req: NextRequest) {
           createdAt: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -26,7 +26,7 @@ export default async function HeroSection() {
     <div
       className="relative flex flex-col items-center text-center pb-20 px-6 min-h-screen justify-center"
       role="banner"
-      aria-label="Hero section"
+      aria-label={t('ariaLabels.heroSection')}
     >
       {/* Skip to content link for accessibility */}
       <a
@@ -48,7 +48,7 @@ export default async function HeroSection() {
           background: 'var(--landing-card-bg)',
         }}
         role="status"
-        aria-label="Premium HR platform"
+        aria-label={t('ariaLabels.premiumHRPlatform')}
       >
         <div className="badge-shimmer absolute inset-0" aria-hidden="true" />
         <div

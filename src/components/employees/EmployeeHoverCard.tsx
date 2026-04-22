@@ -87,7 +87,7 @@ export function EmployeeHoverCard({
         userId: employee.id,
       });
       const res = await fetch(`/api/tasks?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch tasks');
+      if (!res.ok) throw new Error(t('hooks.employees.failedToFetchTasks', 'Failed to fetch tasks'));
       const json = await res.json();
       return json.data as any[];
     },
@@ -402,7 +402,7 @@ export function EmployeeHoverCard({
                 {canEditStatus && (
                   <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
                     <p className="text-xs mb-2 font-medium" style={{ color: 'var(--text-muted)' }}>
-                      Set Status
+                      {t('employeeInfo.setStatus', 'Set Status')}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {(

@@ -57,18 +57,18 @@ export default function FavoritesPage() {
         const d = f.driver;
         return {
           id: d.id as string,
-          userName: d.userName ?? 'Unknown',
+          userName: d.userName ?? t('driver.unknown', 'Unknown'),
           userAvatar: d.userAvatar,
           userPosition: d.userPosition,
           rating: d.rating ?? 5.0,
           totalTrips: d.totalTrips ?? 0,
           isOnShift: d.isOnShift,
-          vehicleInfo: d.vehicleInfo ?? { model: 'Unknown', capacity: 4, plateNumber: 'N/A' },
+          vehicleInfo: d.vehicleInfo ?? { model: t('driver.unknown', 'Unknown'), capacity: 4, plateNumber: t('common.na', 'N/A') },
         };
       });
     if (!searchQuery) return base;
     return base.filter((d) => d.userName.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [favoriteDrivers, searchQuery]);
+  }, [favoriteDrivers, searchQuery, t]);
 
   const handleRemoveFavorite = useCallback(
     async (driverId: string) => {
@@ -77,7 +77,7 @@ export default function FavoritesPage() {
         await removeFavoriteMutation.mutateAsync({ userId, driverId });
         toast.success(t('driver.removedFromFavorites', 'Removed from favorites'));
       } catch (e) {
-        const message = e instanceof Error ? e.message : t('driver.failed', 'Failed');
+        const message = e instanceof Error ? t('driver.error', { defaultValue: e.message }) : t('driver.failed', 'Failed');
         toast.error(message);
       }
     },

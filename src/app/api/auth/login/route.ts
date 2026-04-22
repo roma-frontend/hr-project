@@ -1,212 +1,228 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import type { Database } from '@/lib/supabase/database.types';
+import { applyRateLimit, LOGIN_RATE_LIMIT, handleFailedLogin } from '@/lib/rate-limit';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    console.log('[auth/login] Login attempt started');
+    const rateLimitResponse = await applyRateLimit(
+      request,
+      LOGIN_RATE_LIMIT,
+      'login',
+    );
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const { email, password } = body;
 
-    const normalizedEmail = email.toLowerCase().trim();
-
-    console.log('[auth/login] Email (normalized):', normalizedEmail);
-
-    if (!normalizedEmail || !password) {
-      console.error('[auth/login] Missing email or password');
+    if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Create a fresh response object to collect cookies
+    const response = new NextResponse();
+    
+    // Create SSR client to properly handle cookies
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: 'Server configuration error: missing Supabase environment variables' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createServerClient<Database>(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            // Set cookie on the response object
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            response.cookies.set({
+              name,
+              value: '',
+              ...options,
+              maxAge: 0,
+            });
+          },
+        },
+      }
     );
 
-    console.log('[auth/login] Calling Supabase signInWithPassword...');
     const { data, error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
       password,
     });
 
-    console.log('[auth/login] Supabase response:', { hasSession: !!data.session, hasError: !!error, error: error?.message });
-
     if (error) {
-      console.error('[auth/login] Supabase auth error:', error.message);
+      await handleFailedLogin(normalizedEmail, request);
       return NextResponse.json(
         { error: error.message },
         { status: 401 }
       );
     }
 
-    // Use service role to bypass RLS for profile lookup after successful auth
-    const supabaseService = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseServiceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseServiceUrl || !supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Server configuration error: missing Supabase environment variables' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseService = createSupabaseClient<Database>(
+      supabaseServiceUrl,
+      supabaseServiceKey
     );
 
-    console.log('[auth/login] Querying user profile for email:', normalizedEmail);
-    const { data: userProfiles, error: profileError } = await supabaseService
+    // Use select('*') to bypass schema cache issues with camelCase columns
+    let { data: users } = await supabaseService
       .from('users')
-      .select(`
-        id,
-        name,
-        email,
-        role,
-        employee_type,
-        department,
-        position,
-        phone,
-        avatar_url,
-        presence_status,
-        is_active,
-        is_approved,
-        "organizationId",
-        organizations (
-          id,
-          name,
-          slug
-        )
-      `)
-      .eq('email', normalizedEmail)
-      .order('created_at', { ascending: false })
+      .select('*')
+      .eq('id', data.user.id)
       .limit(1);
 
-    console.log('[auth/login] Profile query result:', { 
-      count: userProfiles?.length ?? 0, 
-      profileError,
-      firstProfile: userProfiles?.[0]
-    });
+    let user = users?.[0];
 
-    let userProfile = userProfiles?.[0];
+    // Fallback: try by email
+    if (!user) {
+      const { data: usersByEmail } = await supabaseService
+        .from('users')
+        .select('*')
+        .eq('email', normalizedEmail)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-    // If no profile exists, create one from Supabase Auth user
-    if (!userProfile && data.session?.user) {
-      console.log('[auth/login] No profile found, creating one for auth user:', data.session.user.id);
-      
-      const authUser = data.session.user;
+      user = usersByEmail?.[0];
+    }
+
+    // If still no profile, create one
+    if (!user && data.user) {
+      const authUser = data.user;
       const userName = authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
-      
-      const { data: newProfile, error: insertError } = await supabaseService
+      const userRole = authUser.user_metadata?.role || 'employee';
+      const orgId = authUser.user_metadata?.organization_id || null;
+
+      // Create user profile directly via insert
+      const { data: insertedUsers, error: insertError } = await supabaseService
         .from('users')
         .insert({
           id: authUser.id,
-          "organizationId": authUser.user_metadata?.organization_id || null,
+          organization_id: orgId,
           name: userName,
           email: normalizedEmail,
           password_hash: 'auth_managed',
-          role: authUser.user_metadata?.role || 'employee',
+          role: userRole,
           employee_type: 'staff',
-          department: authUser.user_metadata?.department || null,
-          position: authUser.user_metadata?.position || null,
-          phone: authUser.user_metadata?.phone || null,
           is_active: true,
           is_approved: true,
-          travel_allowance: 0,
-          paid_leave_balance: 0,
-          sick_leave_balance: 0,
-          family_leave_balance: 0,
-          created_at: Math.floor(Date.now() / 1000),
+          travel_allowance: userRole === 'superadmin' ? 9999 : 0,
+          paid_leave_balance: userRole === 'superadmin' ? 999 : 0,
+          sick_leave_balance: userRole === 'superadmin' ? 999 : 0,
+          family_leave_balance: userRole === 'superadmin' ? 999 : 0,
+          created_at: Date.now(),
+          updated_at: Date.now(),
         })
-        .select(`
-          id,
-          name,
-          email,
-          role,
-          employee_type,
-          department,
-          position,
-          phone,
-          avatar_url,
-          presence_status,
-          is_active,
-          is_approved,
-          "organizationId",
-          organizations (
-            id,
-            name,
-            slug
-          )
-        `)
-        .single();
+        .select('*')
+        .limit(1);
 
       if (insertError) {
-        console.error('[auth/login] Failed to create user profile:', insertError);
-        return NextResponse.json(
-          { error: 'Failed to create user profile. Please contact support.' },
-          { status: 500 }
-        );
-      }
+        // If insert fails, try to fetch the profile
+        const { data: fetchedUsers } = await supabaseService
+          .from('users')
+          .select('*')
+          .eq('id', authUser.id)
+          .limit(1);
 
-      console.log('[auth/login] Profile created successfully:', newProfile);
-      userProfile = newProfile;
+        user = fetchedUsers?.[0];
+
+        if (!user) {
+          return NextResponse.json(
+            { error: `Failed to create user profile: ${insertError.message}` },
+            { status: 500 }
+          );
+        }
+      } else {
+        user = insertedUsers?.[0];
+      }
     }
 
-    if (!userProfile) {
-      console.error('[auth/login] No user profile found for email:', normalizedEmail);
+    if (!user) {
       return NextResponse.json(
-        { error: 'User profile not found. Please contact support.', details: profileError?.message },
+        { error: 'User profile not found. Please contact support.' },
         { status: 404 }
       );
     }
 
-    console.log('[auth/login] User profile found:', { 
-      id: userProfile.id, 
-      name: userProfile.name, 
-      role: userProfile.role,
-      organizationId: userProfile.organizationId 
-    });
+    // Access organization_id from user object
+    const orgId = user?.organization_id;
 
-    const response = NextResponse.json({
-      user: {
-        id: userProfile.id,
-        name: userProfile.name,
-        email: userProfile.email,
-        role: userProfile.role,
-        avatar: userProfile.avatar_url,
-        department: userProfile.department,
-        position: userProfile.position,
-        employeeType: userProfile.employee_type,
-        organizationId: userProfile.organizationId,
-        organizationSlug: userProfile.organizations?.slug,
-        organizationName: userProfile.organizations?.name,
-        isApproved: userProfile.is_approved,
-        phone: userProfile.phone,
-        presenceStatus: userProfile.presence_status,
-      },
-      session: data.session,
-    });
-
-    // Set Supabase auth cookies with correct names
-    if (data.session) {
-      const projectRef = 'fprtklhpngvtpuozypdj';
-      const expiresAt = new Date(data.session.expires_at! * 1000);
-      
-      response.cookies.set({
-        name: `sb-${projectRef}-access-token`,
-        value: data.session.access_token,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        expires: expiresAt,
-      });
-      
-      response.cookies.set({
-        name: `sb-${projectRef}-refresh-token`,
-        value: data.session.refresh_token,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 30,
-      });
+    // Get organization info
+    let orgSlug = null;
+    let orgName = null;
+    if (orgId) {
+      const { data: org } = await supabaseService
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('id', orgId)
+        .maybeSingle();
+      if (org) {
+        orgSlug = org.slug;
+        orgName = org.name;
+      }
     }
 
-    return response;
+    const responseData = {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar_url,
+        department: user.department,
+        position: user.position,
+        employeeType: user.employee_type,
+        organization_id: orgId,
+        organizationSlug: orgSlug,
+        organizationName: orgName,
+        isApproved: user.is_approved,
+        phone: user.phone,
+        presenceStatus: user.presence_status,
+      },
+      session: data.session,
+    };
+
+    // Create JSON response and copy cookies from SSR client
+    const jsonResponse = NextResponse.json(responseData);
+    
+    // Copy all cookies from the SSR response to the JSON response
+    response.cookies.getAll().forEach((cookie) => {
+      jsonResponse.cookies.set(cookie);
+    });
+
+    return jsonResponse;
   } catch (error) {
-    console.error('[auth/login] Error:', error);
+    console.error('Login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

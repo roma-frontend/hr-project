@@ -79,12 +79,13 @@ const AI_CHAT_QUERY_KEYS = {
 // ═══════════════════════════════════════════════════════════════
 
 export function useAiConversations(userId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: AI_CHAT_QUERY_KEYS.conversations(userId),
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-conversations' });
       const res = await fetch(`/api/ai-chat?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch AI conversations');
+      if (!res.ok) throw new Error(t('hooks.aichat.failedToFetchConversations', 'Failed to fetch AI conversations'));
       const json = await res.json();
       return json.data as AiConversation[];
     },
@@ -93,6 +94,7 @@ export function useAiConversations(userId: string) {
 }
 
 export function useAiMessages(conversationId: string | null) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: AI_CHAT_QUERY_KEYS.messages(conversationId || ''),
     queryFn: async () => {
@@ -101,7 +103,7 @@ export function useAiMessages(conversationId: string | null) {
         conversationId: conversationId || '',
       });
       const res = await fetch(`/api/ai-chat?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch AI messages');
+      if (!res.ok) throw new Error(t('hooks.aichat.failedToFetchMessages', 'Failed to fetch AI messages'));
       const json = await res.json();
       return json.data as AiMessage[];
     },
@@ -110,12 +112,13 @@ export function useAiMessages(conversationId: string | null) {
 }
 
 export function useAiFullContext(userId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: AI_CHAT_QUERY_KEYS.fullContext(userId),
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-full-context' });
       const res = await fetch(`/api/ai-chat?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch AI full context');
+      if (!res.ok) throw new Error(t('hooks.aichat.failedToFetchFullContext', 'Failed to fetch AI full context'));
       const json = await res.json();
       return json.data as AiFullContext;
     },
@@ -140,7 +143,7 @@ export function useCreateAiConversation() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create conversation');
+        throw new Error(error.error || t('hooks.aichat.failedToCreateConversation', 'Failed to create conversation'));
       }
       return res.json();
     },
@@ -166,7 +169,7 @@ export function useUpdateAiConversationTitle() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to update title');
+        throw new Error(error.error || t('hooks.aichat.failedToUpdateTitle', 'Failed to update title'));
       }
       return res.json();
     },
@@ -192,7 +195,7 @@ export function useDeleteAiConversation() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to delete conversation');
+        throw new Error(error.error || t('hooks.aichat.failedToDeleteConversation', 'Failed to delete conversation'));
       }
       return res.json();
     },
@@ -208,6 +211,7 @@ export function useDeleteAiConversation() {
 
 export function useAddAiMessage() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { conversationId: string; role: 'user' | 'assistant'; content: string }) => {
@@ -218,7 +222,7 @@ export function useAddAiMessage() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to add message');
+        throw new Error(error.error || t('hooks.aichat.failedToAddMessage', 'Failed to add message'));
       }
       return res.json();
     },
@@ -230,6 +234,7 @@ export function useAddAiMessage() {
 
 export function useAutoRenameAiConversation() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { conversationId: string; firstMessage: string }) => {
@@ -240,7 +245,7 @@ export function useAutoRenameAiConversation() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to auto-rename conversation');
+        throw new Error(error.error || t('hooks.aichat.failedToAutoRename', 'Failed to auto-rename conversation'));
       }
       return res.json();
     },
@@ -251,6 +256,7 @@ export function useAutoRenameAiConversation() {
 }
 
 export function useAiCreateLeaveRequest() {
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async (data: {
       requesterId: string;
@@ -267,7 +273,7 @@ export function useAiCreateLeaveRequest() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create leave request');
+        throw new Error(error.error || t('hooks.aichat.failedToCreateLeaveRequest', 'Failed to create leave request'));
       }
       return res.json();
     },
@@ -275,6 +281,7 @@ export function useAiCreateLeaveRequest() {
 }
 
 export function useAiCreateTask() {
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async (data: {
       assigneeId: string;
@@ -292,7 +299,7 @@ export function useAiCreateTask() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create task');
+        throw new Error(error.error || t('hooks.aichat.failedToCreateTask', 'Failed to create task'));
       }
       return res.json();
     },

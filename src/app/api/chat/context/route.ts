@@ -1,35 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { requireAuth } from '@/lib/api-utils';
 
 // Opt out of static generation — uses cookies
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get('hr-session-token')?.value;
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
 
-    if (!sessionToken) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const supabaseService = createServiceClient();
+    const userId = auth.user.id;
 
-    const supabase = await createClient();
-
-    // Get user session
-    const { data: session } = await supabase
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
-      .eq('session_token', sessionToken)
-      .single();
+      .eq('id', userId)
+      .maybeSingle();
 
-    if (!session) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    if (!userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
-    // Get user data
-    const userId = session.id;
-
     // Fetch user's leave data
-    const { data: userLeaves } = await supabase
+    const { data: userLeaves } = await supabaseService
       .from('leave_requests')
       .select('*')
       .eq('userid', userId)
@@ -39,14 +34,14 @@ export async function GET(req: NextRequest) {
     // Calculate analytics manually
     const approvedLeaves = userLeaves?.filter((l: any) => l.status === 'approved') || [];
     const pendingLeaves = userLeaves?.filter((l: any) => l.status === 'pending') || [];
-    const totalDaysTaken = approvedLeaves.reduce((sum: number, l: any) => sum + (l.days || 0), 0);
-    const pendingDays = pendingLeaves.reduce((sum: number, l: any) => sum + (l.days || 0), 0);
+    const totalDaysTaken = approvedLeaves.reduce((sum: number, l: any) => sum + (l.total_days || 0), 0);
+    const pendingDays = pendingLeaves.reduce((sum: number, l: any) => sum + (l.total_days || 0), 0);
 
     // Get team calendar
-    const { data: teamCalendar } = await supabase
+    const { data: teamCalendar } = await supabaseService
       .from('leave_requests')
       .select('*, users(name, department)')
-      .eq('organizationId', session.organizationId!)
+      .eq('organization_id', userProfile.organization_id!)
       .eq('status', 'approved')
       .gte('start_date', new Date().toISOString().split('T')[0])
       .order('start_date', { ascending: true })
@@ -56,16 +51,16 @@ export async function GET(req: NextRequest) {
     const context = {
       user: {
         id: userId,
-        name: session.name,
-        email: session.email,
-        role: session.role,
-        department: session.department,
-        organizationId: session.organizationId,
+        name: userProfile.name,
+        email: userProfile.email,
+        role: userProfile.role,
+        department: userProfile.department,
+        organizationId: userProfile.organization_id,
       },
       leaveBalances: {
-        paid: session.paid_leave_balance || 0,
-        sick: session.sick_leave_balance || 0,
-        family: session.family_leave_balance || 0,
+        paid: userProfile.paid_leave_balance || 0,
+        sick: userProfile.sick_leave_balance || 0,
+        family: userProfile.family_leave_balance || 0,
       },
       stats: {
         totalDaysTaken,
@@ -77,7 +72,7 @@ export async function GET(req: NextRequest) {
           startDate: l.start_date,
           endDate: l.end_date,
           status: l.status,
-          days: l.days,
+          totalDays: l.total_days,
         })) || [],
       teamAvailability:
         teamCalendar?.slice(0, 10).map((l: any) => ({

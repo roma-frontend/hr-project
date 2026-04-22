@@ -7,21 +7,21 @@
 -- EMPLOYEES
 -- =====================================================
 
-CREATE TABLE employee_profiles (
+CREATE TABLE IF NOT EXISTS employee_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id) UNIQUE,
     biography JSONB,
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_employee_profiles_org ON employee_profiles(organizationId);
-CREATE INDEX idx_employee_profiles_user ON employee_profiles(userid);
+CREATE INDEX IF NOT EXISTS idx_employee_profiles_org ON employee_profiles(organization_id);
+CREATE INDEX IF NOT EXISTS idx_employee_profiles_user ON employee_profiles(userid);
 
-CREATE TABLE employee_documents (
+CREATE TABLE IF NOT EXISTS employee_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     uploaderid UUID NOT NULL REFERENCES users(id),
     category document_category NOT NULL,
@@ -32,12 +32,12 @@ CREATE TABLE employee_documents (
     uploaded_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_employee_docs_org ON employee_documents(organizationId);
-CREATE INDEX idx_employee_docs_user ON employee_documents(userid);
+CREATE INDEX IF NOT EXISTS idx_employee_docs_org ON employee_documents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_employee_docs_user ON employee_documents(userid);
 
-CREATE TABLE employee_notes (
+CREATE TABLE IF NOT EXISTS employee_notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     employeeid UUID NOT NULL REFERENCES users(id),
     authorid UUID NOT NULL REFERENCES users(id),
     type note_type NOT NULL,
@@ -48,13 +48,13 @@ CREATE TABLE employee_notes (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_employee_notes_org ON employee_notes(organizationId);
-CREATE INDEX idx_employee_notes_employee ON employee_notes(employeeid);
-CREATE INDEX idx_employee_notes_author ON employee_notes(authorid);
+CREATE INDEX IF NOT EXISTS idx_employee_notes_org ON employee_notes(organization_id);
+CREATE INDEX IF NOT EXISTS idx_employee_notes_employee ON employee_notes(employeeid);
+CREATE INDEX IF NOT EXISTS idx_employee_notes_author ON employee_notes(authorid);
 
-CREATE TABLE performance_metrics (
+CREATE TABLE IF NOT EXISTS performance_metrics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     updated_by UUID NOT NULL REFERENCES users(id),
     punctuality_score NUMERIC(5,2) NOT NULL DEFAULT 0,
@@ -69,12 +69,12 @@ CREATE TABLE performance_metrics (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_perf_metrics_org ON performance_metrics(organizationId);
-CREATE INDEX idx_perf_metrics_user ON performance_metrics(userid);
+CREATE INDEX IF NOT EXISTS idx_perf_metrics_org ON performance_metrics(organization_id);
+CREATE INDEX IF NOT EXISTS idx_perf_metrics_user ON performance_metrics(userid);
 
-CREATE TABLE time_tracking (
+CREATE TABLE IF NOT EXISTS time_tracking (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     check_in_time BIGINT NOT NULL,
     check_out_time BIGINT,
@@ -93,15 +93,15 @@ CREATE TABLE time_tracking (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_time_tracking_org ON time_tracking(organizationId);
-CREATE INDEX idx_time_tracking_user ON time_tracking(userid);
-CREATE INDEX idx_time_tracking_date ON time_tracking(date);
-CREATE INDEX idx_time_tracking_user_date ON time_tracking(userid, date);
-CREATE INDEX idx_time_tracking_status ON time_tracking(status);
+CREATE INDEX IF NOT EXISTS idx_time_tracking_org ON time_tracking(organization_id);
+CREATE INDEX IF NOT EXISTS idx_time_tracking_user ON time_tracking(userid);
+CREATE INDEX IF NOT EXISTS idx_time_tracking_date ON time_tracking(date);
+CREATE INDEX IF NOT EXISTS idx_time_tracking_user_date ON time_tracking(userid, date);
+CREATE INDEX IF NOT EXISTS idx_time_tracking_status ON time_tracking(status);
 
-CREATE TABLE supervisor_ratings (
+CREATE TABLE IF NOT EXISTS supervisor_ratings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     employeeid UUID NOT NULL REFERENCES users(id),
     supervisorid UUID NOT NULL REFERENCES users(id),
     quality_of_work NUMERIC(5,2) NOT NULL,
@@ -118,18 +118,18 @@ CREATE TABLE supervisor_ratings (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_supervisor_ratings_org ON supervisor_ratings(organizationId);
-CREATE INDEX idx_supervisor_ratings_employee ON supervisor_ratings(employeeid);
-CREATE INDEX idx_supervisor_ratings_supervisor ON supervisor_ratings(supervisorid);
-CREATE INDEX idx_supervisor_ratings_period ON supervisor_ratings(rating_period);
+CREATE INDEX IF NOT EXISTS idx_supervisor_ratings_org ON supervisor_ratings(organization_id);
+CREATE INDEX IF NOT EXISTS idx_supervisor_ratings_employee ON supervisor_ratings(employeeid);
+CREATE INDEX IF NOT EXISTS idx_supervisor_ratings_supervisor ON supervisor_ratings(supervisorid);
+CREATE INDEX IF NOT EXISTS idx_supervisor_ratings_period ON supervisor_ratings(rating_period);
 
 -- =====================================================
 -- DRIVERS
 -- =====================================================
 
-CREATE TABLE drivers (
+CREATE TABLE IF NOT EXISTS drivers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id) UNIQUE,
     vehicle_model VARCHAR(100) NOT NULL,
     vehicle_plate_number VARCHAR(50) NOT NULL,
@@ -158,14 +158,14 @@ CREATE TABLE drivers (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_drivers_org ON drivers(organizationId);
-CREATE INDEX idx_drivers_user ON drivers(userid);
-CREATE INDEX idx_drivers_org_available ON drivers(organizationId, is_available);
-CREATE INDEX idx_drivers_on_shift ON drivers(is_on_shift);
+CREATE INDEX IF NOT EXISTS idx_drivers_org ON drivers(organization_id);
+CREATE INDEX IF NOT EXISTS idx_drivers_user ON drivers(userid);
+CREATE INDEX IF NOT EXISTS idx_drivers_org_available ON drivers(organization_id, is_available);
+CREATE INDEX IF NOT EXISTS idx_drivers_on_shift ON drivers(is_on_shift);
 
-CREATE TABLE driver_shifts (
+CREATE TABLE IF NOT EXISTS driver_shifts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     driverid UUID NOT NULL REFERENCES drivers(id),
     userid UUID NOT NULL REFERENCES users(id),
     start_time BIGINT NOT NULL,
@@ -187,15 +187,15 @@ CREATE TABLE driver_shifts (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_driver_shifts_driver ON driver_shifts(driverid);
-CREATE INDEX idx_driver_shifts_org ON driver_shifts(organizationId);
-CREATE INDEX idx_driver_shifts_driver_status ON driver_shifts(driverid, status);
-CREATE INDEX idx_driver_shifts_org_status ON driver_shifts(organizationId, status);
-CREATE INDEX idx_driver_shifts_start_time ON driver_shifts(start_time);
+CREATE INDEX IF NOT EXISTS idx_driver_shifts_driver ON driver_shifts(driverid);
+CREATE INDEX IF NOT EXISTS idx_driver_shifts_org ON driver_shifts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_driver_shifts_driver_status ON driver_shifts(driverid, status);
+CREATE INDEX IF NOT EXISTS idx_driver_shifts_org_status ON driver_shifts(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_driver_shifts_start_time ON driver_shifts(start_time);
 
-CREATE TABLE driver_schedules (
+CREATE TABLE IF NOT EXISTS driver_schedules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     driverid UUID NOT NULL REFERENCES drivers(id),
     userid UUID NOT NULL REFERENCES users(id),
     start_time BIGINT NOT NULL,
@@ -216,15 +216,15 @@ CREATE TABLE driver_schedules (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_driver_schedules_org ON driver_schedules(organizationId);
-CREATE INDEX idx_driver_schedules_driver ON driver_schedules(driverid);
-CREATE INDEX idx_driver_schedules_driver_time ON driver_schedules(driverid, start_time);
-CREATE INDEX idx_driver_schedules_user ON driver_schedules(userid);
-CREATE INDEX idx_driver_schedules_status ON driver_schedules(status);
+CREATE INDEX IF NOT EXISTS idx_driver_schedules_org ON driver_schedules(organization_id);
+CREATE INDEX IF NOT EXISTS idx_driver_schedules_driver ON driver_schedules(driverid);
+CREATE INDEX IF NOT EXISTS idx_driver_schedules_driver_time ON driver_schedules(driverid, start_time);
+CREATE INDEX IF NOT EXISTS idx_driver_schedules_user ON driver_schedules(userid);
+CREATE INDEX IF NOT EXISTS idx_driver_schedules_status ON driver_schedules(status);
 
-CREATE TABLE driver_requests (
+CREATE TABLE IF NOT EXISTS driver_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     requesterid UUID NOT NULL REFERENCES users(id),
     driverid UUID NOT NULL REFERENCES drivers(id),
     start_time BIGINT NOT NULL,
@@ -254,17 +254,17 @@ CREATE TABLE driver_requests (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_driver_requests_org ON driver_requests(organizationId);
-CREATE INDEX idx_driver_requests_requester ON driver_requests(requesterid);
-CREATE INDEX idx_driver_requests_driver ON driver_requests(driverid);
-CREATE INDEX idx_driver_requests_status ON driver_requests(status);
-CREATE INDEX idx_driver_requests_org_status ON driver_requests(organizationId, status);
-CREATE INDEX idx_driver_requests_priority ON driver_requests(priority);
-CREATE INDEX idx_driver_requests_requires_approval ON driver_requests(requires_approval);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_org ON driver_requests(organization_id);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_requester ON driver_requests(requesterid);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_driver ON driver_requests(driverid);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_status ON driver_requests(status);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_org_status ON driver_requests(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_priority ON driver_requests(priority);
+CREATE INDEX IF NOT EXISTS idx_driver_requests_requires_approval ON driver_requests(requires_approval);
 
-CREATE TABLE calendar_access (
+CREATE TABLE IF NOT EXISTS calendar_access (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     ownerid UUID NOT NULL REFERENCES users(id),
     viewerid UUID NOT NULL REFERENCES users(id),
     access_level calendar_access_level NOT NULL DEFAULT 'busy_only',
@@ -273,14 +273,14 @@ CREATE TABLE calendar_access (
     is_active BOOLEAN NOT NULL DEFAULT true
 );
 
-CREATE INDEX idx_calendar_access_org ON calendar_access(organizationId);
-CREATE INDEX idx_calendar_access_owner ON calendar_access(ownerid);
-CREATE INDEX idx_calendar_access_viewer ON calendar_access(viewerid);
-CREATE INDEX idx_calendar_access_owner_viewer ON calendar_access(ownerid, viewerid);
+CREATE INDEX IF NOT EXISTS idx_calendar_access_org ON calendar_access(organization_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_access_owner ON calendar_access(ownerid);
+CREATE INDEX IF NOT EXISTS idx_calendar_access_viewer ON calendar_access(viewerid);
+CREATE INDEX IF NOT EXISTS idx_calendar_access_owner_viewer ON calendar_access(ownerid, viewerid);
 
-CREATE TABLE recurring_trips (
+CREATE TABLE IF NOT EXISTS recurring_trips (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     driverid UUID NOT NULL REFERENCES drivers(id),
     trip_from VARCHAR(255) NOT NULL,
@@ -299,23 +299,23 @@ CREATE TABLE recurring_trips (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_recurring_trips_user ON recurring_trips(userid);
-CREATE INDEX idx_recurring_trips_org_active ON recurring_trips(organizationId, is_active);
+CREATE INDEX IF NOT EXISTS idx_recurring_trips_user ON recurring_trips(userid);
+CREATE INDEX IF NOT EXISTS idx_recurring_trips_org_active ON recurring_trips(organization_id, is_active);
 
-CREATE TABLE favorite_drivers (
+CREATE TABLE IF NOT EXISTS favorite_drivers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     driverid UUID NOT NULL REFERENCES drivers(id),
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_favorite_drivers_user ON favorite_drivers(userid);
-CREATE INDEX idx_favorite_drivers_user_driver ON favorite_drivers(userid, driverid);
+CREATE INDEX IF NOT EXISTS idx_favorite_drivers_user ON favorite_drivers(userid);
+CREATE INDEX IF NOT EXISTS idx_favorite_drivers_user_driver ON favorite_drivers(userid, driverid);
 
-CREATE TABLE passenger_ratings (
+CREATE TABLE IF NOT EXISTS passenger_ratings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     scheduleid UUID NOT NULL REFERENCES driver_schedules(id),
     requestid UUID REFERENCES driver_requests(id),
     passengerid UUID NOT NULL REFERENCES users(id),
@@ -325,17 +325,17 @@ CREATE TABLE passenger_ratings (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_passenger_ratings_schedule ON passenger_ratings(scheduleid);
-CREATE INDEX idx_passenger_ratings_passenger ON passenger_ratings(passengerid);
-CREATE INDEX idx_passenger_ratings_driver ON passenger_ratings(driverid);
+CREATE INDEX IF NOT EXISTS idx_passenger_ratings_schedule ON passenger_ratings(scheduleid);
+CREATE INDEX IF NOT EXISTS idx_passenger_ratings_passenger ON passenger_ratings(passengerid);
+CREATE INDEX IF NOT EXISTS idx_passenger_ratings_driver ON passenger_ratings(driverid);
 
 -- =====================================================
 -- TASKS
 -- =====================================================
 
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     title VARCHAR(255) NOT NULL,
     description TEXT,
     assigned_to UUID NOT NULL REFERENCES users(id),
@@ -351,15 +351,15 @@ CREATE TABLE tasks (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_tasks_org ON tasks(organizationId);
-CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
-CREATE INDEX idx_tasks_assigned_by ON tasks(assigned_by);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_tasks_deadline ON tasks(deadline);
-CREATE INDEX idx_tasks_assigned_status ON tasks(assigned_to, status);
-CREATE INDEX idx_tasks_org_deadline ON tasks(organizationId, deadline);
+CREATE INDEX IF NOT EXISTS idx_tasks_org ON tasks(organization_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_by ON tasks(assigned_by);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status ON tasks(assigned_to, status);
+CREATE INDEX IF NOT EXISTS idx_tasks_org_deadline ON tasks(organization_id, deadline);
 
-CREATE TABLE task_comments (
+CREATE TABLE IF NOT EXISTS task_comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     taskid UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     authorid UUID NOT NULL REFERENCES users(id),
@@ -367,15 +367,15 @@ CREATE TABLE task_comments (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_task_comments_task ON task_comments(taskid);
+CREATE INDEX IF NOT EXISTS idx_task_comments_task ON task_comments(taskid);
 
 -- =====================================================
 -- EVENTS
 -- =====================================================
 
-CREATE TABLE company_events (
+CREATE TABLE IF NOT EXISTS company_events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     name VARCHAR(255) NOT NULL,
     description TEXT,
     start_date BIGINT NOT NULL,
@@ -392,18 +392,18 @@ CREATE TABLE company_events (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_events_org ON company_events(organizationId);
-CREATE INDEX idx_events_date ON company_events(start_date);
-CREATE INDEX idx_events_org_date ON company_events(organizationId, start_date);
-CREATE INDEX idx_events_priority ON company_events(priority);
+CREATE INDEX IF NOT EXISTS idx_events_org ON company_events(organization_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON company_events(start_date);
+CREATE INDEX IF NOT EXISTS idx_events_org_date ON company_events(organization_id, start_date);
+CREATE INDEX IF NOT EXISTS idx_events_priority ON company_events(priority);
 
 -- =====================================================
 -- PRODUCTIVITY
 -- =====================================================
 
-CREATE TABLE work_schedules (
+CREATE TABLE IF NOT EXISTS work_schedules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -414,10 +414,10 @@ CREATE TABLE work_schedules (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_work_schedules_org ON work_schedules(organizationId);
-CREATE INDEX idx_work_schedules_user ON work_schedules(userid);
+CREATE INDEX IF NOT EXISTS idx_work_schedules_org ON work_schedules(organization_id);
+CREATE INDEX IF NOT EXISTS idx_work_schedules_user ON work_schedules(userid);
 
-CREATE TABLE user_preferences (
+CREATE TABLE IF NOT EXISTS user_preferences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid UUID NOT NULL REFERENCES users(id),
     key VARCHAR(100) NOT NULL,
@@ -426,10 +426,10 @@ CREATE TABLE user_preferences (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_user_prefs_user ON user_preferences(userid);
-CREATE INDEX idx_user_prefs_user_key ON user_preferences(userid, key);
+CREATE INDEX IF NOT EXISTS idx_user_prefs_user ON user_preferences(userid);
+CREATE INDEX IF NOT EXISTS idx_user_prefs_user_key ON user_preferences(userid, key);
 
-CREATE TABLE pomodoro_sessions (
+CREATE TABLE IF NOT EXISTS pomodoro_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid UUID NOT NULL REFERENCES users(id),
     taskid UUID REFERENCES tasks(id),
@@ -441,16 +441,16 @@ CREATE TABLE pomodoro_sessions (
     actual_end_time BIGINT
 );
 
-CREATE INDEX idx_pomodoro_user ON pomodoro_sessions(userid);
-CREATE INDEX idx_pomodoro_user_active ON pomodoro_sessions(userid, completed, interrupted);
+CREATE INDEX IF NOT EXISTS idx_pomodoro_user ON pomodoro_sessions(userid);
+CREATE INDEX IF NOT EXISTS idx_pomodoro_user_active ON pomodoro_sessions(userid, completed, interrupted);
 
 -- =====================================================
 -- SETTINGS
 -- =====================================================
 
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     stripe_customerid VARCHAR(255) NOT NULL UNIQUE,
     stripe_subscriptionid VARCHAR(255) NOT NULL UNIQUE,
     stripe_sessionid VARCHAR(255),
@@ -466,14 +466,14 @@ CREATE TABLE subscriptions (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_subscriptions_org ON subscriptions(organizationId);
-CREATE INDEX idx_subscriptions_stripe_customer ON subscriptions(stripe_customerid);
-CREATE INDEX idx_subscriptions_stripe_sub ON subscriptions(stripe_subscriptionid);
-CREATE INDEX idx_subscriptions_status ON subscriptions(status);
-CREATE INDEX idx_subscriptions_user ON subscriptions(userid);
-CREATE INDEX idx_subscriptions_email ON subscriptions(email);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_org ON subscriptions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customerid);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_sub ON subscriptions(stripe_subscriptionid);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(userid);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_email ON subscriptions(email);
 
-CREATE TABLE contact_inquiries (
+CREATE TABLE IF NOT EXISTS contact_inquiries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -484,11 +484,11 @@ CREATE TABLE contact_inquiries (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_contact_inquiries_created ON contact_inquiries(created_at);
+CREATE INDEX IF NOT EXISTS idx_contact_inquiries_created ON contact_inquiries(created_at);
 
-CREATE TABLE maintenance_mode (
+CREATE TABLE IF NOT EXISTS maintenance_mode (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     is_active BOOLEAN NOT NULL DEFAULT false,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
@@ -501,12 +501,12 @@ CREATE TABLE maintenance_mode (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_maintenance_org ON maintenance_mode(organizationId);
-CREATE INDEX idx_maintenance_active ON maintenance_mode(is_active);
+CREATE INDEX IF NOT EXISTS idx_maintenance_org ON maintenance_mode(organization_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_active ON maintenance_mode(is_active);
 
-CREATE TABLE scheduled_jobs (
+CREATE TABLE IF NOT EXISTS scheduled_jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     function_name VARCHAR(255) NOT NULL,
     schedule VARCHAR(100) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -515,17 +515,17 @@ CREATE TABLE scheduled_jobs (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_scheduled_jobs_org ON scheduled_jobs(organizationId);
-CREATE INDEX idx_scheduled_jobs_org_active ON scheduled_jobs(organizationId, is_active);
-CREATE INDEX idx_scheduled_jobs_function ON scheduled_jobs(function_name);
+CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_org ON scheduled_jobs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_org_active ON scheduled_jobs(organization_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_scheduled_jobs_function ON scheduled_jobs(function_name);
 
 -- =====================================================
 -- CORPORATE, CONFLICTS, AI, ANALYTICS
 -- =====================================================
 
-CREATE TABLE corporate_documents (
+CREATE TABLE IF NOT EXISTS corporate_documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     title VARCHAR(255) NOT NULL,
     document_type VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
@@ -534,12 +534,12 @@ CREATE TABLE corporate_documents (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_corporate_docs_org ON corporate_documents(organizationId);
-CREATE INDEX idx_corporate_docs_type ON corporate_documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_corporate_docs_org ON corporate_documents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_corporate_docs_type ON corporate_documents(document_type);
 
-CREATE TABLE conflicts (
+CREATE TABLE IF NOT EXISTS conflicts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     parties UUID[] NOT NULL,
@@ -552,13 +552,13 @@ CREATE TABLE conflicts (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_conflicts_org ON conflicts(organizationId);
-CREATE INDEX idx_conflicts_status ON conflicts(status);
-CREATE INDEX idx_conflicts_reported_by ON conflicts(reported_by);
+CREATE INDEX IF NOT EXISTS idx_conflicts_org ON conflicts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_conflicts_status ON conflicts(status);
+CREATE INDEX IF NOT EXISTS idx_conflicts_reported_by ON conflicts(reported_by);
 
-CREATE TABLE ai_conversations (
+CREATE TABLE IF NOT EXISTS ai_conversations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     title VARCHAR(255),
     model VARCHAR(50) NOT NULL,
@@ -566,10 +566,10 @@ CREATE TABLE ai_conversations (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_ai_conversations_org ON ai_conversations(organizationId);
-CREATE INDEX idx_ai_conversations_user ON ai_conversations(userid);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_org ON ai_conversations(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_user ON ai_conversations(userid);
 
-CREATE TABLE ai_messages (
+CREATE TABLE IF NOT EXISTS ai_messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversationid UUID NOT NULL REFERENCES ai_conversations(id) ON DELETE CASCADE,
     role VARCHAR(20) NOT NULL,
@@ -578,11 +578,11 @@ CREATE TABLE ai_messages (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_ai_messages_conversation ON ai_messages(conversationid);
+CREATE INDEX IF NOT EXISTS idx_ai_messages_conversation ON ai_messages(conversationid);
 
-CREATE TABLE analytics_snapshots (
+CREATE TABLE IF NOT EXISTS analytics_snapshots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    organizationId UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     metric_name VARCHAR(100) NOT NULL,
     metric_value NUMERIC(15,2) NOT NULL,
     period_start BIGINT NOT NULL,
@@ -590,9 +590,9 @@ CREATE TABLE analytics_snapshots (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_analytics_org ON analytics_snapshots(organizationId);
-CREATE INDEX idx_analytics_metric ON analytics_snapshots(metric_name);
-CREATE INDEX idx_analytics_period ON analytics_snapshots(period_start, period_end);
+CREATE INDEX IF NOT EXISTS idx_analytics_org ON analytics_snapshots(organization_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_metric ON analytics_snapshots(metric_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_period ON analytics_snapshots(period_start, period_end);
 
 -- =====================================================
 -- RLS POLICIES FOR ALL NEW TABLES
@@ -629,144 +629,210 @@ ALTER TABLE ai_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_snapshots ENABLE ROW LEVEL SECURITY;
 
 -- Employee policies
+DO $$ BEGIN
 CREATE POLICY "Users can view employee profiles in their org" ON employee_profiles
     FOR SELECT USING (
-        organizationId IN (SELECT organizationId FROM users WHERE id = auth.uid())
+        organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Admins can manage employee profiles" ON employee_profiles
     FOR ALL USING (
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Driver policies
+DO $$ BEGIN
 CREATE POLICY "Users can view drivers in their org" ON drivers
     FOR SELECT USING (
-        organizationId IN (SELECT organizationId FROM users WHERE id = auth.uid())
+        organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Admins can manage drivers" ON drivers
     FOR ALL USING (
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Task policies
+DO $$ BEGIN
 CREATE POLICY "Users can view tasks assigned to them or in their org" ON tasks
     FOR SELECT USING (
         assigned_to = auth.uid()
-        OR organizationId IN (SELECT organizationId FROM users WHERE id = auth.uid())
+        OR organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can create tasks" ON tasks
     FOR INSERT WITH CHECK (assigned_by = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can update tasks assigned to them" ON tasks
     FOR UPDATE USING (
         assigned_to = auth.uid()
         OR assigned_by = auth.uid()
         OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Event policies
+DO $$ BEGIN
 CREATE POLICY "Users can view events in their org" ON company_events
     FOR SELECT USING (
-        organizationId IN (SELECT organizationId FROM users WHERE id = auth.uid())
+        organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Admins can manage events" ON company_events
     FOR ALL USING (
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Subscription policies
+DO $$ BEGIN
 CREATE POLICY "Users can view their org subscription" ON subscriptions
     FOR SELECT USING (
-        organizationId IN (SELECT organizationId FROM users WHERE id = auth.uid())
+        organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Admins can manage subscriptions" ON subscriptions
     FOR ALL USING (
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AI conversation policies
+DO $$ BEGIN
 CREATE POLICY "Users can view their own AI conversations" ON ai_conversations
     FOR SELECT USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can create AI conversations" ON ai_conversations
     FOR INSERT WITH CHECK (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can update their AI conversations" ON ai_conversations
     FOR UPDATE USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can delete their AI conversations" ON ai_conversations
     FOR DELETE USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AI message policies
+DO $$ BEGIN
 CREATE POLICY "Users can view messages in their conversations" ON ai_messages
     FOR SELECT USING (
         conversationid IN (SELECT id FROM ai_conversations WHERE userid = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
+DO $$ BEGIN
 CREATE POLICY "Users can insert messages in their conversations" ON ai_messages
     FOR INSERT WITH CHECK (
         conversationid IN (SELECT id FROM ai_conversations WHERE userid = auth.uid())
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Analytics policies
+DO $$ BEGIN
 CREATE POLICY "Admins can view analytics" ON analytics_snapshots
     FOR SELECT USING (
         EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin', 'supervisor'))
     );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- =====================================================
 -- TRIGGERS
 -- =====================================================
 
+DROP TRIGGER IF EXISTS update_employee_profiles_updated_at ON employee_profiles;
 CREATE TRIGGER update_employee_profiles_updated_at
     BEFORE UPDATE ON employee_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_drivers_updated_at ON drivers;
 CREATE TRIGGER update_drivers_updated_at
     BEFORE UPDATE ON drivers
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_driver_shifts_updated_at ON driver_shifts;
 CREATE TRIGGER update_driver_shifts_updated_at
     BEFORE UPDATE ON driver_shifts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_driver_schedules_updated_at ON driver_schedules;
 CREATE TRIGGER update_driver_schedules_updated_at
     BEFORE UPDATE ON driver_schedules
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_driver_requests_updated_at ON driver_requests;
 CREATE TRIGGER update_driver_requests_updated_at
     BEFORE UPDATE ON driver_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
 CREATE TRIGGER update_tasks_updated_at
     BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_company_events_updated_at ON company_events;
 CREATE TRIGGER update_company_events_updated_at
     BEFORE UPDATE ON company_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_work_schedules_updated_at ON work_schedules;
 CREATE TRIGGER update_work_schedules_updated_at
     BEFORE UPDATE ON work_schedules
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_preferences_updated_at ON user_preferences;
 CREATE TRIGGER update_user_preferences_updated_at
     BEFORE UPDATE ON user_preferences
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON subscriptions;
 CREATE TRIGGER update_subscriptions_updated_at
     BEFORE UPDATE ON subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_maintenance_mode_updated_at ON maintenance_mode;
 CREATE TRIGGER update_maintenance_mode_updated_at
     BEFORE UPDATE ON maintenance_mode
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_ai_conversations_updated_at ON ai_conversations;
 CREATE TRIGGER update_ai_conversations_updated_at
     BEFORE UPDATE ON ai_conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -3,62 +3,242 @@
 -- Day 1: Organizations, Users, Auth, RLS Policies
 -- =====================================================
 
--- Enable UUID extension
+-- Enable UUID extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- Helper function to add columns if they don't exist (drop at end of migration)
+CREATE OR REPLACE FUNCTION add_col_if_missing(tbl TEXT, col TEXT, def TEXT)
+RETURNS VOID AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = tbl AND column_name = col
+  ) THEN
+    EXECUTE format('ALTER TABLE %I ADD COLUMN %I %s', tbl, col, def);
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 -- =====================================================
--- ENUMS
+-- ENUMS (all wrapped for idempotency)
 -- =====================================================
 
-CREATE TYPE org_plan AS ENUM ('starter', 'professional', 'enterprise');
-CREATE TYPE user_role AS ENUM ('superadmin', 'admin', 'supervisor', 'employee', 'driver');
-CREATE TYPE employee_type AS ENUM ('staff', 'contractor');
-CREATE TYPE presence_status AS ENUM ('available', 'in_meeting', 'in_call', 'out_of_office', 'busy');
-CREATE TYPE leave_type AS ENUM ('paid', 'unpaid', 'sick', 'family', 'doctor');
-CREATE TYPE leave_status AS ENUM ('pending', 'approved', 'rejected');
-CREATE TYPE ticket_priority AS ENUM ('low', 'medium', 'high', 'critical');
-CREATE TYPE ticket_status AS ENUM ('open', 'in_progress', 'waiting_customer', 'resolved', 'closed');
-CREATE TYPE ticket_category AS ENUM ('technical', 'billing', 'access', 'feature_request', 'bug', 'other');
-CREATE TYPE automation_trigger AS ENUM ('leave_created', 'leave_pending_hours', 'user_inactive_days', 'sla_breach', 'multiple_failed_logins', 'ticket_created', 'ticket_priority');
-CREATE TYPE automation_action AS ENUM ('auto_approve', 'auto_reject', 'send_notification', 'escalate', 'create_ticket', 'block_user', 'assign_user');
-CREATE TYPE automation_task_status AS ENUM ('pending', 'running', 'completed', 'failed');
-CREATE TYPE incident_severity AS ENUM ('low', 'medium', 'high', 'critical');
-CREATE TYPE incident_status AS ENUM ('investigating', 'identified', 'monitoring', 'resolved');
-CREATE TYPE login_method AS ENUM ('password', 'faceid', 'webauthn', 'google');
-CREATE TYPE chat_type AS ENUM ('direct', 'group');
-CREATE TYPE chat_member_role AS ENUM ('owner', 'admin', 'member');
-CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'audio', 'system', 'call');
-CREATE TYPE call_type AS ENUM ('audio', 'video');
-CREATE TYPE call_status AS ENUM ('ringing', 'active', 'ended', 'missed', 'declined');
-CREATE TYPE task_status AS ENUM ('pending', 'in_progress', 'review', 'completed', 'cancelled');
-CREATE TYPE task_priority AS ENUM ('low', 'medium', 'high', 'urgent');
-CREATE TYPE event_type AS ENUM ('meeting', 'conference', 'training', 'team_building', 'holiday', 'deadline', 'other');
-CREATE TYPE event_priority AS ENUM ('high', 'medium', 'low');
-CREATE TYPE driver_shift_status AS ENUM ('active', 'completed', 'paused', 'overtime');
-CREATE TYPE driver_schedule_type AS ENUM ('trip', 'blocked', 'maintenance', 'time_off');
-CREATE TYPE driver_schedule_status AS ENUM ('scheduled', 'in_progress', 'completed', 'cancelled');
-CREATE TYPE trip_priority AS ENUM ('P0', 'P1', 'P2', 'P3');
-CREATE TYPE trip_category AS ENUM ('client_meeting', 'airport', 'office_transfer', 'emergency', 'team_event', 'personal');
-CREATE TYPE driver_request_status AS ENUM ('pending', 'approved', 'declined', 'cancelled', 'completed');
-CREATE TYPE calendar_access_level AS ENUM ('full', 'busy_only', 'none');
-CREATE TYPE inspection_status AS ENUM ('passed', 'failed', 'overdue');
-CREATE TYPE document_category AS ENUM ('resume', 'contract', 'certificate', 'performance_review', 'id_document', 'other');
-CREATE TYPE note_type AS ENUM ('performance', 'behavior', 'achievement', 'concern', 'general');
-CREATE TYPE note_visibility AS ENUM ('private', 'hr_only', 'manager_only', 'employee_visible');
-CREATE TYPE sentiment AS ENUM ('positive', 'neutral', 'negative');
-CREATE TYPE time_status AS ENUM ('checked_in', 'checked_out', 'absent');
-CREATE TYPE subscription_plan AS ENUM ('starter', 'professional', 'enterprise');
-CREATE TYPE subscription_status AS ENUM ('trialing', 'active', 'past_due', 'canceled', 'incomplete');
-CREATE TYPE notification_type AS ENUM ('leave_request', 'leave_approved', 'leave_rejected', 'driver_request', 'driver_request_approved', 'driver_request_rejected', 'employee_added', 'join_request', 'join_approved', 'join_rejected', 'security_alert', 'status_change', 'message_mention', 'system');
-CREATE TYPE invite_status AS ENUM ('pending', 'approved', 'rejected');
-CREATE TYPE request_status AS ENUM ('pending', 'approved', 'rejected');
+DO $$ BEGIN
+  CREATE TYPE org_plan AS ENUM ('starter', 'professional', 'enterprise');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM ('superadmin', 'admin', 'supervisor', 'employee', 'driver');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE employee_type AS ENUM ('staff', 'contractor');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE presence_status AS ENUM ('available', 'in_meeting', 'in_call', 'out_of_office', 'busy');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE leave_type AS ENUM ('paid', 'unpaid', 'sick', 'family', 'doctor');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE leave_status AS ENUM ('pending', 'approved', 'rejected');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE ticket_priority AS ENUM ('low', 'medium', 'high', 'critical');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE ticket_status AS ENUM ('open', 'in_progress', 'waiting_customer', 'resolved', 'closed');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE ticket_category AS ENUM ('technical', 'billing', 'access', 'feature_request', 'bug', 'other');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE automation_trigger AS ENUM ('leave_created', 'leave_pending_hours', 'user_inactive_days', 'sla_breach', 'multiple_failed_logins', 'ticket_created', 'ticket_priority');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE automation_action AS ENUM ('auto_approve', 'auto_reject', 'send_notification', 'escalate', 'create_ticket', 'block_user', 'assign_user');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE automation_task_status AS ENUM ('pending', 'running', 'completed', 'failed');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE incident_severity AS ENUM ('low', 'medium', 'high', 'critical');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE incident_status AS ENUM ('investigating', 'identified', 'monitoring', 'resolved');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE login_method AS ENUM ('password', 'faceid', 'webauthn', 'google');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE chat_type AS ENUM ('direct', 'group');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE chat_member_role AS ENUM ('owner', 'admin', 'member');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'audio', 'system', 'call');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE call_type AS ENUM ('audio', 'video');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE call_status AS ENUM ('ringing', 'active', 'ended', 'missed', 'declined');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE task_status AS ENUM ('pending', 'in_progress', 'review', 'completed', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE task_priority AS ENUM ('low', 'medium', 'high', 'urgent');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE event_type AS ENUM ('meeting', 'conference', 'training', 'team_building', 'holiday', 'deadline', 'other');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE event_priority AS ENUM ('high', 'medium', 'low');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE driver_shift_status AS ENUM ('active', 'completed', 'paused', 'overtime');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE driver_schedule_type AS ENUM ('trip', 'blocked', 'maintenance', 'time_off');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE driver_schedule_status AS ENUM ('scheduled', 'in_progress', 'completed', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE trip_priority AS ENUM ('P0', 'P1', 'P2', 'P3');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE trip_category AS ENUM ('client_meeting', 'airport', 'office_transfer', 'emergency', 'team_event', 'personal');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE driver_request_status AS ENUM ('pending', 'approved', 'declined', 'cancelled', 'completed');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE calendar_access_level AS ENUM ('full', 'busy_only', 'none');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE inspection_status AS ENUM ('passed', 'failed', 'overdue');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE document_category AS ENUM ('resume', 'contract', 'certificate', 'performance_review', 'id_document', 'other');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE note_type AS ENUM ('performance', 'behavior', 'achievement', 'concern', 'general');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE note_visibility AS ENUM ('private', 'hr_only', 'manager_only', 'employee_visible');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE sentiment AS ENUM ('positive', 'neutral', 'negative');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE time_status AS ENUM ('checked_in', 'checked_out', 'absent');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE subscription_plan AS ENUM ('starter', 'professional', 'enterprise');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE subscription_status AS ENUM ('trialing', 'active', 'past_due', 'canceled', 'incomplete');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE notification_type AS ENUM ('leave_request', 'leave_approved', 'leave_rejected', 'driver_request', 'driver_request_approved', 'driver_request_rejected', 'employee_added', 'join_request', 'join_approved', 'join_rejected', 'security_alert', 'status_change', 'message_mention', 'system');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE invite_status AS ENUM ('pending', 'approved', 'rejected');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE request_status AS ENUM ('pending', 'approved', 'rejected');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- =====================================================
 -- ORGANIZATIONS
 -- =====================================================
 
-CREATE TABLE organizations (
+CREATE TABLE IF NOT EXISTS organizations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(100) NOT NULL UNIQUE,
@@ -75,12 +255,12 @@ CREATE TABLE organizations (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_organizations_slug ON organizations(slug);
-CREATE INDEX idx_organizations_plan ON organizations(plan);
-CREATE INDEX idx_organizations_active ON organizations(is_active);
+CREATE INDEX IF NOT EXISTS idx_organizations_slug ON organizations(slug);
+CREATE INDEX IF NOT EXISTS idx_organizations_plan ON organizations(plan);
+CREATE INDEX IF NOT EXISTS idx_organizations_active ON organizations(is_active);
 
 -- Organization Requests
-CREATE TABLE organization_requests (
+CREATE TABLE IF NOT EXISTS organization_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     requested_name VARCHAR(255) NOT NULL,
     requested_slug VARCHAR(100) NOT NULL UNIQUE,
@@ -97,19 +277,38 @@ CREATE TABLE organization_requests (
     reviewed_by UUID REFERENCES users(id),
     reviewed_at BIGINT,
     rejection_reason TEXT,
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID REFERENCES users(id),
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_org_requests_status ON organization_requests(status);
-CREATE INDEX idx_org_requests_email ON organization_requests(requester_email);
-CREATE INDEX idx_org_requests_slug ON organization_requests(requested_slug);
+-- Add missing columns to organization_requests if table already exists with older schema
+SELECT add_col_if_missing('organization_requests', 'requester_email', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_requests', 'requester_password', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_requests', 'requested_plan', 'org_plan');
+SELECT add_col_if_missing('organization_requests', 'industry', 'VARCHAR(100)');
+SELECT add_col_if_missing('organization_requests', 'country', 'VARCHAR(100)');
+SELECT add_col_if_missing('organization_requests', 'team_size', 'VARCHAR(50)');
+SELECT add_col_if_missing('organization_requests', 'description', 'TEXT');
+SELECT add_col_if_missing('organization_requests', 'status', 'request_status NOT NULL DEFAULT ''pending''');
+SELECT add_col_if_missing('organization_requests', 'reviewed_by', 'UUID REFERENCES users(id)');
+SELECT add_col_if_missing('organization_requests', 'reviewed_at', 'BIGINT');
+SELECT add_col_if_missing('organization_requests', 'rejection_reason', 'TEXT');
+SELECT add_col_if_missing('organization_requests', 'organization_id', 'UUID REFERENCES organizations(id)');
+SELECT add_col_if_missing('organization_requests', 'userid', 'UUID REFERENCES users(id)');
+SELECT add_col_if_missing('organization_requests', 'requester_phone', 'VARCHAR(50)');
+SELECT add_col_if_missing('organization_requests', 'requested_name', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_requests', 'requested_slug', 'VARCHAR(100)');
+SELECT add_col_if_missing('organization_requests', 'requester_name', 'VARCHAR(255)');
+
+CREATE INDEX IF NOT EXISTS idx_org_requests_status ON organization_requests(status);
+CREATE INDEX IF NOT EXISTS idx_org_requests_email ON organization_requests(requester_email);
+CREATE INDEX IF NOT EXISTS idx_org_requests_slug ON organization_requests(requested_slug);
 
 -- Organization Invites
-CREATE TABLE organization_invites (
+CREATE TABLE IF NOT EXISTS organization_invites (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     requested_by_email VARCHAR(255) NOT NULL,
     requested_by_name VARCHAR(255) NOT NULL,
     requested_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
@@ -124,19 +323,34 @@ CREATE TABLE organization_invites (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_org_invites_org ON organization_invites("organizationId");
-CREATE INDEX idx_org_invites_email ON organization_invites(requested_by_email);
-CREATE INDEX idx_org_invites_status ON organization_invites(status);
-CREATE INDEX idx_org_invites_org_status ON organization_invites("organizationId", status);
-CREATE INDEX idx_org_invites_token ON organization_invites(invite_token);
+-- Add missing columns to organization_invites if table already exists with older schema
+SELECT add_col_if_missing('organization_invites', 'organization_id', 'UUID REFERENCES organizations(id)');
+SELECT add_col_if_missing('organization_invites', 'requested_by_email', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_invites', 'requested_by_name', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_invites', 'status', 'invite_status NOT NULL DEFAULT ''pending''');
+SELECT add_col_if_missing('organization_invites', 'reviewed_by', 'UUID REFERENCES users(id)');
+SELECT add_col_if_missing('organization_invites', 'reviewed_at', 'BIGINT');
+SELECT add_col_if_missing('organization_invites', 'rejection_reason', 'TEXT');
+SELECT add_col_if_missing('organization_invites', 'userid', 'UUID REFERENCES users(id)');
+SELECT add_col_if_missing('organization_invites', 'invite_token', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_invites', 'invite_email', 'VARCHAR(255)');
+SELECT add_col_if_missing('organization_invites', 'invite_expiry', 'BIGINT');
+SELECT add_col_if_missing('organization_invites', 'requested_at', 'BIGINT');
+SELECT add_col_if_missing('organization_invites', 'created_at', 'BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT');
+
+CREATE INDEX IF NOT EXISTS idx_org_invites_org ON organization_invites(organization_id);
+CREATE INDEX IF NOT EXISTS idx_org_invites_email ON organization_invites(requested_by_email);
+CREATE INDEX IF NOT EXISTS idx_org_invites_status ON organization_invites(status);
+CREATE INDEX IF NOT EXISTS idx_org_invites_org_status ON organization_invites(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_org_invites_token ON organization_invites(invite_token);
 
 -- =====================================================
 -- USERS & AUTH
 -- =====================================================
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -204,22 +418,22 @@ CREATE TABLE users (
     last_login_at BIGINT
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_org ON users("organizationId");
-CREATE INDEX idx_users_org_role ON users("organizationId", role);
-CREATE INDEX idx_users_org_active ON users("organizationId", is_active);
-CREATE INDEX idx_users_org_approval ON users("organizationId", is_approved);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_supervisor ON users(supervisorid);
-CREATE INDEX idx_users_approval ON users(is_approved);
-CREATE INDEX idx_users_clerkid ON users(clerkid);
-CREATE INDEX idx_users_org_email ON users("organizationId", email);
-CREATE INDEX idx_users_org_created ON users("organizationId", created_at);
-CREATE INDEX idx_users_session_token ON users(session_token);
-CREATE INDEX idx_users_reset_token ON users(reset_password_token);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_org ON users(organization_id);
+CREATE INDEX IF NOT EXISTS idx_users_org_role ON users(organization_id, role);
+CREATE INDEX IF NOT EXISTS idx_users_org_active ON users(organization_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_users_org_approval ON users(organization_id, is_approved);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_supervisor ON users(supervisorid);
+CREATE INDEX IF NOT EXISTS idx_users_approval ON users(is_approved);
+CREATE INDEX IF NOT EXISTS idx_users_clerkid ON users(clerkid);
+CREATE INDEX IF NOT EXISTS idx_users_org_email ON users(organization_id, email);
+CREATE INDEX IF NOT EXISTS idx_users_org_created ON users(organization_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_users_session_token ON users(session_token);
+CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users(reset_password_token);
 
 -- WebAuthn Credentials
-CREATE TABLE webauthn_credentials (
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     credentialid VARCHAR(255) NOT NULL UNIQUE,
@@ -230,16 +444,16 @@ CREATE TABLE webauthn_credentials (
     last_used_at BIGINT
 );
 
-CREATE INDEX idx_webauthn_user ON webauthn_credentials(userid);
-CREATE INDEX idx_webauthn_credential ON webauthn_credentials(credentialid);
+CREATE INDEX IF NOT EXISTS idx_webauthn_user ON webauthn_credentials(userid);
+CREATE INDEX IF NOT EXISTS idx_webauthn_credential ON webauthn_credentials(credentialid);
 
 -- =====================================================
 -- LEAVES
 -- =====================================================
 
-CREATE TABLE leave_requests (
+CREATE TABLE IF NOT EXISTS leave_requests (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     type leave_type NOT NULL,
     start_date DATE NOT NULL,
@@ -256,22 +470,22 @@ CREATE TABLE leave_requests (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_leaves_org ON leave_requests("organizationId");
-CREATE INDEX idx_leaves_user ON leave_requests(userid);
-CREATE INDEX idx_leaves_org_status ON leave_requests("organizationId", status);
-CREATE INDEX idx_leaves_status ON leave_requests(status);
-CREATE INDEX idx_leaves_created ON leave_requests(created_at);
-CREATE INDEX idx_leaves_status_created ON leave_requests(status, created_at);
-CREATE INDEX idx_leaves_user_status ON leave_requests(userid, status);
-CREATE INDEX idx_leaves_org_created ON leave_requests("organizationId", created_at);
+CREATE INDEX IF NOT EXISTS idx_leaves_org ON leave_requests(organization_id);
+CREATE INDEX IF NOT EXISTS idx_leaves_user ON leave_requests(userid);
+CREATE INDEX IF NOT EXISTS idx_leaves_org_status ON leave_requests(organization_id, status);
+CREATE INDEX IF NOT EXISTS idx_leaves_status ON leave_requests(status);
+CREATE INDEX IF NOT EXISTS idx_leaves_created ON leave_requests(created_at);
+CREATE INDEX IF NOT EXISTS idx_leaves_status_created ON leave_requests(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_leaves_user_status ON leave_requests(userid, status);
+CREATE INDEX IF NOT EXISTS idx_leaves_org_created ON leave_requests(organization_id, created_at);
 
 -- =====================================================
 -- NOTIFICATIONS
 -- =====================================================
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     type notification_type NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -282,74 +496,22 @@ CREATE TABLE notifications (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_notifications_user ON notifications(userid);
-CREATE INDEX idx_notifications_org ON notifications("organizationId");
-CREATE INDEX idx_notifications_user_unread ON notifications(userid, is_read);
-CREATE INDEX idx_notifications_unread_date ON notifications(userid, is_read, created_at);
-CREATE INDEX idx_notifications_org_created ON notifications("organizationId", created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(userid);
+CREATE INDEX IF NOT EXISTS idx_notifications_org ON notifications(organization_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(userid, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread_date ON notifications(userid, is_read, created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_org_created ON notifications(organization_id, created_at);
 
--- =====================================================
--- TICKETS
--- =====================================================
-
-CREATE TABLE support_tickets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
-    ticket_number VARCHAR(50) NOT NULL UNIQUE,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    priority ticket_priority NOT NULL DEFAULT 'medium',
-    status ticket_status NOT NULL DEFAULT 'open',
-    category ticket_category NOT NULL DEFAULT 'other',
-    created_by UUID NOT NULL REFERENCES users(id),
-    assigned_to UUID REFERENCES users(id),
-    related_leaveid UUID REFERENCES leave_requests(id),
-    related_driver_requestid UUID REFERENCES driver_requests(id),
-    related_taskid UUID REFERENCES tasks(id),
-    resolution TEXT,
-    resolved_at BIGINT,
-    resolved_by UUID REFERENCES users(id),
-    closed_at BIGINT,
-    sla_deadline BIGINT,
-    first_response_at BIGINT,
-    chatid UUID REFERENCES chat_conversations(id),
-    chat_activated BOOLEAN DEFAULT false,
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
-);
-
-CREATE INDEX idx_tickets_org ON support_tickets("organizationId");
-CREATE INDEX idx_tickets_status ON support_tickets(status);
-CREATE INDEX idx_tickets_priority ON support_tickets(priority);
-CREATE INDEX idx_tickets_created_by ON support_tickets(created_by);
-CREATE INDEX idx_tickets_assigned_to ON support_tickets(assigned_to);
-CREATE INDEX idx_tickets_status_priority ON support_tickets(status, priority);
-CREATE INDEX idx_tickets_created ON support_tickets(created_at);
-CREATE INDEX idx_tickets_number ON support_tickets(ticket_number);
-
-CREATE TABLE ticket_comments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    ticketid UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-    "organizationId" UUID REFERENCES organizations(id),
-    authorid UUID NOT NULL REFERENCES users(id),
-    message TEXT NOT NULL,
-    is_internal BOOLEAN NOT NULL DEFAULT false,
-    attachments JSONB,
-    created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
-    updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
-);
-
-CREATE INDEX idx_ticket_comments_ticket ON ticket_comments(ticketid);
-CREATE INDEX idx_ticket_comments_org ON ticket_comments("organizationId");
-CREATE INDEX idx_ticket_comments_created ON ticket_comments(created_at);
+-- NOTE: support_tickets and ticket_comments are defined in 009_create_tickets_tables.sql
+-- with the correct camelCase schema that matches the application code.
 
 -- =====================================================
 -- AUTOMATION
 -- =====================================================
 
-CREATE TABLE automation_rules (
+CREATE TABLE IF NOT EXISTS automation_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     trigger_type automation_trigger NOT NULL,
@@ -363,11 +525,11 @@ CREATE TABLE automation_rules (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_automation_org ON automation_rules("organizationId");
-CREATE INDEX idx_automation_active ON automation_rules(is_active);
-CREATE INDEX idx_automation_trigger ON automation_rules(trigger_type);
+CREATE INDEX IF NOT EXISTS idx_automation_org ON automation_rules(organization_id);
+CREATE INDEX IF NOT EXISTS idx_automation_active ON automation_rules(is_active);
+CREATE INDEX IF NOT EXISTS idx_automation_trigger ON automation_rules(trigger_type);
 
-CREATE TABLE automation_workflows (
+CREATE TABLE IF NOT EXISTS automation_workflows (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -377,9 +539,9 @@ CREATE TABLE automation_workflows (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_workflows_active ON automation_workflows(is_active);
+CREATE INDEX IF NOT EXISTS idx_workflows_active ON automation_workflows(is_active);
 
-CREATE TABLE automation_tasks (
+CREATE TABLE IF NOT EXISTS automation_tasks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     status automation_task_status NOT NULL DEFAULT 'pending',
@@ -389,18 +551,18 @@ CREATE TABLE automation_tasks (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_automation_tasks_status ON automation_tasks(status);
-CREATE INDEX idx_automation_tasks_created ON automation_tasks(created_at);
+CREATE INDEX IF NOT EXISTS idx_automation_tasks_status ON automation_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_automation_tasks_created ON automation_tasks(created_at);
 
 -- =====================================================
 -- SECURITY
 -- =====================================================
 
-CREATE TABLE impersonation_sessions (
+CREATE TABLE IF NOT EXISTS impersonation_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     superadminid UUID NOT NULL REFERENCES users(id),
     target_userid UUID NOT NULL REFERENCES users(id),
-    "organizationId" UUID NOT NULL REFERENCES organizations(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
     reason TEXT NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
     expires_at BIGINT NOT NULL,
@@ -409,14 +571,14 @@ CREATE TABLE impersonation_sessions (
     is_active BOOLEAN NOT NULL DEFAULT true
 );
 
-CREATE INDEX idx_impersonation_superadmin ON impersonation_sessions(superadminid);
-CREATE INDEX idx_impersonation_target ON impersonation_sessions(target_userid);
-CREATE INDEX idx_impersonation_token ON impersonation_sessions(token);
-CREATE INDEX idx_impersonation_active ON impersonation_sessions(is_active);
+CREATE INDEX IF NOT EXISTS idx_impersonation_superadmin ON impersonation_sessions(superadminid);
+CREATE INDEX IF NOT EXISTS idx_impersonation_target ON impersonation_sessions(target_userid);
+CREATE INDEX IF NOT EXISTS idx_impersonation_token ON impersonation_sessions(token);
+CREATE INDEX IF NOT EXISTS idx_impersonation_active ON impersonation_sessions(is_active);
 
-CREATE TABLE emergency_incidents (
+CREATE TABLE IF NOT EXISTS emergency_incidents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     severity incident_severity NOT NULL DEFAULT 'medium',
@@ -432,14 +594,14 @@ CREATE TABLE emergency_incidents (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_incidents_status ON emergency_incidents(status);
-CREATE INDEX idx_incidents_severity ON emergency_incidents(severity);
-CREATE INDEX idx_incidents_org ON emergency_incidents("organizationId");
-CREATE INDEX idx_incidents_created ON emergency_incidents(created_at);
+CREATE INDEX IF NOT EXISTS idx_incidents_status ON emergency_incidents(status);
+CREATE INDEX IF NOT EXISTS idx_incidents_severity ON emergency_incidents(severity);
+CREATE INDEX IF NOT EXISTS idx_incidents_org ON emergency_incidents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_incidents_created ON emergency_incidents(created_at);
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     userid UUID NOT NULL REFERENCES users(id),
     action VARCHAR(255) NOT NULL,
     target VARCHAR(255),
@@ -448,10 +610,10 @@ CREATE TABLE audit_logs (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_audit_org ON audit_logs("organizationId");
-CREATE INDEX idx_audit_user ON audit_logs(userid);
+CREATE INDEX IF NOT EXISTS idx_audit_org ON audit_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(userid);
 
-CREATE TABLE security_settings (
+CREATE TABLE IF NOT EXISTS security_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     key VARCHAR(255) NOT NULL UNIQUE,
     enabled BOOLEAN NOT NULL DEFAULT true,
@@ -460,13 +622,13 @@ CREATE TABLE security_settings (
     description TEXT
 );
 
-CREATE INDEX idx_security_settings_key ON security_settings(key);
+CREATE INDEX IF NOT EXISTS idx_security_settings_key ON security_settings(key);
 
-CREATE TABLE login_attempts (
+CREATE TABLE IF NOT EXISTS login_attempts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL,
     userid UUID REFERENCES users(id),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     success BOOLEAN NOT NULL DEFAULT false,
     method login_method NOT NULL,
     ip VARCHAR(45),
@@ -480,13 +642,13 @@ CREATE TABLE login_attempts (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_login_attempts_email ON login_attempts(email);
-CREATE INDEX idx_login_attempts_user ON login_attempts(userid);
-CREATE INDEX idx_login_attempts_org ON login_attempts("organizationId");
-CREATE INDEX idx_login_attempts_created ON login_attempts(created_at);
-CREATE INDEX idx_login_attempts_success ON login_attempts(success);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_user ON login_attempts(userid);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_org ON login_attempts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_created ON login_attempts(created_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_success ON login_attempts(success);
 
-CREATE TABLE device_fingerprints (
+CREATE TABLE IF NOT EXISTS device_fingerprints (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid UUID NOT NULL REFERENCES users(id),
     fingerprint VARCHAR(255) NOT NULL,
@@ -497,11 +659,11 @@ CREATE TABLE device_fingerprints (
     login_count INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE INDEX idx_device_fingerprints_user ON device_fingerprints(userid);
-CREATE INDEX idx_device_fingerprints_fingerprint ON device_fingerprints(fingerprint);
-CREATE INDEX idx_device_fingerprints_user_fp ON device_fingerprints(userid, fingerprint);
+CREATE INDEX IF NOT EXISTS idx_device_fingerprints_user ON device_fingerprints(userid);
+CREATE INDEX IF NOT EXISTS idx_device_fingerprints_fingerprint ON device_fingerprints(fingerprint);
+CREATE INDEX IF NOT EXISTS idx_device_fingerprints_user_fp ON device_fingerprints(userid, fingerprint);
 
-CREATE TABLE keystroke_profiles (
+CREATE TABLE IF NOT EXISTS keystroke_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     userid UUID NOT NULL REFERENCES users(id) UNIQUE,
     avg_dwell NUMERIC(5,2) NOT NULL,
@@ -512,15 +674,15 @@ CREATE TABLE keystroke_profiles (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_keystroke_user ON keystroke_profiles(userid);
+CREATE INDEX IF NOT EXISTS idx_keystroke_user ON keystroke_profiles(userid);
 
 -- =====================================================
 -- SLA
 -- =====================================================
 
-CREATE TABLE sla_config (
+CREATE TABLE IF NOT EXISTS sla_config (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id) UNIQUE,
+    organization_id UUID REFERENCES organizations(id) UNIQUE,
     target_response_time INTEGER NOT NULL DEFAULT 4,
     warning_threshold INTEGER NOT NULL DEFAULT 2,
     critical_threshold INTEGER NOT NULL DEFAULT 1,
@@ -535,11 +697,11 @@ CREATE TABLE sla_config (
     updated_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_sla_config_org ON sla_config("organizationId");
+CREATE INDEX IF NOT EXISTS idx_sla_config_org ON sla_config(organization_id);
 
-CREATE TABLE sla_metrics (
+CREATE TABLE IF NOT EXISTS sla_metrics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "organizationId" UUID REFERENCES organizations(id),
+    organization_id UUID REFERENCES organizations(id),
     leave_requestid UUID NOT NULL REFERENCES leave_requests(id),
     submitted_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT,
     responded_at BIGINT,
@@ -552,16 +714,16 @@ CREATE TABLE sla_metrics (
     created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT
 );
 
-CREATE INDEX idx_sla_metrics_org ON sla_metrics("organizationId");
-CREATE INDEX idx_sla_metrics_leave ON sla_metrics(leave_requestid);
-CREATE INDEX idx_sla_metrics_status ON sla_metrics(status);
-CREATE INDEX idx_sla_metrics_submitted ON sla_metrics(submitted_at);
+CREATE INDEX IF NOT EXISTS idx_sla_metrics_org ON sla_metrics(organization_id);
+CREATE INDEX IF NOT EXISTS idx_sla_metrics_leave ON sla_metrics(leave_requestid);
+CREATE INDEX IF NOT EXISTS idx_sla_metrics_status ON sla_metrics(status);
+CREATE INDEX IF NOT EXISTS idx_sla_metrics_submitted ON sla_metrics(submitted_at);
 
 -- =====================================================
--- RLS POLICIES
+-- RLS POLICIES (idempotent via DO blocks)
 -- =====================================================
 
--- Enable RLS on all tables
+-- Enable RLS on all tables (safe to run multiple times)
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organization_invites ENABLE ROW LEVEL SECURITY;
@@ -569,8 +731,6 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webauthn_credentials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leave_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_workflows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_tasks ENABLE ROW LEVEL SECURITY;
@@ -585,79 +745,101 @@ ALTER TABLE sla_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sla_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Organization policies
-CREATE POLICY "Users can view their own organization" ON organizations
-    FOR SELECT USING (
-        id IN (SELECT "organizationId" FROM users WHERE id = auth.uid())
-    );
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own organization" ON organizations
+      FOR SELECT USING (
+          id IN (SELECT organization_id FROM users WHERE id = auth.uid())
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Superadmins can view all organizations" ON organizations
-    FOR ALL USING (
-        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'superadmin')
-    );
+DO $$ BEGIN
+  CREATE POLICY "Superadmins can view all organizations" ON organizations
+      FOR ALL USING (
+          EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'superadmin')
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- User policies
-CREATE POLICY "Users can view their own profile" ON users
-    FOR SELECT USING (id = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own profile" ON users
+      FOR SELECT USING (id = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Users can view others in same organization" ON users
-    FOR SELECT USING (
-        "organizationId" IN (SELECT "organizationId" FROM users WHERE id = auth.uid())
-    );
+DO $$ BEGIN
+  CREATE POLICY "Users can view others in same organization" ON users
+      FOR SELECT USING (
+          organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Admins can manage users in their organization" ON users
-    FOR ALL USING (
-        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
-    );
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage users in their organization" ON users
+      FOR ALL USING (
+          EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Leave policies
-CREATE POLICY "Users can view their own leaves" ON leave_requests
-    FOR SELECT USING (userid = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own leaves" ON leave_requests
+      FOR SELECT USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Users can view leaves in their organization" ON leave_requests
-    FOR SELECT USING (
-        "organizationId" IN (SELECT "organizationId" FROM users WHERE id = auth.uid())
-    );
+DO $$ BEGIN
+  CREATE POLICY "Users can view leaves in their organization" ON leave_requests
+      FOR SELECT USING (
+          organization_id IN (SELECT organization_id FROM users WHERE id = auth.uid())
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Users can create their own leaves" ON leave_requests
-    FOR INSERT WITH CHECK (userid = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "Users can create their own leaves" ON leave_requests
+      FOR INSERT WITH CHECK (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Admins can manage all leaves" ON leave_requests
-    FOR ALL USING (
-        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
-    );
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage all leaves" ON leave_requests
+      FOR ALL USING (
+          EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Notification policies
-CREATE POLICY "Users can view their own notifications" ON notifications
-    FOR SELECT USING (userid = auth.uid());
+DO $$ BEGIN
+  CREATE POLICY "Users can view their own notifications" ON notifications
+      FOR SELECT USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "Users can update their own notifications" ON notifications
-    FOR UPDATE USING (userid = auth.uid());
-
--- Ticket policies
-CREATE POLICY "Users can view tickets in their organization" ON support_tickets
-    FOR SELECT USING (
-        "organizationId" IN (SELECT "organizationId" FROM users WHERE id = auth.uid())
-        OR created_by = auth.uid()
-        OR assigned_to = auth.uid()
-    );
-
-CREATE POLICY "Users can create tickets" ON support_tickets
-    FOR INSERT WITH CHECK (created_by = auth.uid());
-
-CREATE POLICY "Users can update assigned tickets" ON support_tickets
-    FOR UPDATE USING (
-        assigned_to = auth.uid()
-        OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
-    );
+DO $$ BEGIN
+  CREATE POLICY "Users can update their own notifications" ON notifications
+      FOR UPDATE USING (userid = auth.uid());
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- Audit log policies
-CREATE POLICY "Admins can view audit logs" ON audit_logs
-    FOR SELECT USING (
-        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
-    );
+DO $$ BEGIN
+  CREATE POLICY "Admins can view audit logs" ON audit_logs
+      FOR SELECT USING (
+          EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('superadmin', 'admin'))
+      );
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
-CREATE POLICY "System can insert audit logs" ON audit_logs
-    FOR INSERT WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "System can insert audit logs" ON audit_logs
+      FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- =====================================================
 -- FUNCTIONS & TRIGGERS
@@ -672,26 +854,23 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply to tables with updated_at
+-- Apply to tables with updated_at (drop first for idempotency)
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON organizations;
 CREATE TRIGGER update_organizations_updated_at
     BEFORE UPDATE ON organizations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_leave_requests_updated_at ON leave_requests;
 CREATE TRIGGER update_leave_requests_updated_at
     BEFORE UPDATE ON leave_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_support_tickets_updated_at
-    BEFORE UPDATE ON support_tickets
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_ticket_comments_updated_at
-    BEFORE UPDATE ON ticket_comments
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- NOTE: support_tickets and ticket_comments triggers are in 009
 
 -- Auto-generate ticket numbers
 CREATE OR REPLACE FUNCTION generate_ticket_number()
@@ -711,9 +890,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER generate_ticket_number_trigger
-    BEFORE INSERT ON support_tickets
-    FOR EACH ROW EXECUTE FUNCTION generate_ticket_number();
+-- NOTE: This trigger will be created in 009 for the `tickets` table.
+-- Keeping this here for reference but it won't fire since support_tickets is not used.
 
 -- =====================================================
 -- COMMENTS
@@ -723,7 +901,6 @@ COMMENT ON TABLE organizations IS 'Organizations/tenants in the multi-tenant sys
 COMMENT ON TABLE users IS 'User accounts with auth and profile data';
 COMMENT ON TABLE leave_requests IS 'Employee leave requests';
 COMMENT ON TABLE notifications IS 'User notifications';
-COMMENT ON TABLE support_tickets IS 'Customer support tickets';
 COMMENT ON TABLE audit_logs IS 'Security audit trail';
 COMMENT ON TABLE sla_config IS 'SLA configuration per organization';
 COMMENT ON TABLE sla_metrics IS 'SLA performance metrics';

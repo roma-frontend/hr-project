@@ -81,7 +81,7 @@ export default function Navbar() {
           scrolled ? 'py-2 md:py-3 shadow-lg' : 'py-3 md:py-4'
         }`}
         role="navigation"
-        aria-label="Main navigation"
+        aria-label={t('ariaLabels.mainNavigation')}
         style={{
           borderColor: 'var(--landing-card-border)',
           willChange: 'padding, box-shadow',
@@ -121,7 +121,7 @@ export default function Navbar() {
         <div className="relative hidden lg:flex items-center gap-6 xl:gap-8">
           {[
             { name: t('landing.features'), href: '#features' },
-            { name: t('landing.pricing'), href: '#pricing' },
+            { name: t('landing.pricingLabel'), href: '#pricing' },
             { name: t('landing.testimonials'), href: '#testimonials' },
             { name: t('landing.faq'), href: '#faq' },
           ].map((item) => (
@@ -232,7 +232,7 @@ export default function Navbar() {
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="lg:hidden w-10 h-10 rounded-xl transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 style={{ backgroundColor: 'var(--landing-card-bg)', border: '1px solid var(--landing-card-border)' }}
-                aria-label="Open mobile menu"
+                aria-label={t('ariaLabels.openMobileMenu')}
               >
                 <svg className="w-6 h-6" style={{ color: 'var(--landing-text-primary)' }} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path d="M4 6h16M4 12h16M4 18h16"/>

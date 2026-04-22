@@ -23,7 +23,7 @@ VALUES (
 -- Create superadmin user (romangulanyan@gmail.com) if it doesn't exist
 -- This ensures the superadmin can ALWAYS log in
 INSERT INTO users (
-  id, organizationId, name, email, password_hash, role, employee_type,
+  id, organization_id, name, email, password_hash, role, employee_type,
   is_active, is_approved, travel_allowance, paid_leave_balance,
   sick_leave_balance, family_leave_balance, created_at, updated_at
 )

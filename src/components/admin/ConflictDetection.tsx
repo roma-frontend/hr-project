@@ -30,7 +30,7 @@ export default function ConflictDetection() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-500" />
-            Conflict Detection
+            {t('admin.conflictDetection.title', 'Conflict Detection')}
           </CardTitle>
           <div className="flex gap-2">
             {criticalCount > 0 && (

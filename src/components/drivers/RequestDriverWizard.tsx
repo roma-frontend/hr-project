@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wizard, WizardStep } from '@/components/ui/wizard';
 import {
@@ -16,8 +16,6 @@ import {
 import { Car, MapPin, Clock, Calendar, Users } from 'lucide-react';
 import { useAvailableDrivers, useCreateDriverRequest } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 
@@ -41,14 +39,6 @@ export function RequestDriverWizard({
   const organizationId = (selectedOrgId ?? user?.organizationId) as string | undefined;
   const { data: drivers } = useAvailableDrivers(organizationId);
 
-  const [wizardData, setWizardData] = useState<Record<string, string | number | boolean | null>>(
-    {},
-  );
-
-  const updateStepData = (key: string, value: string | number | boolean | null) => {
-    setWizardData((prev) => ({ ...prev, [key]: value }));
-  };
-
   const steps: WizardStep[] = [
     {
       id: 'type',
@@ -57,8 +47,6 @@ export function RequestDriverWizard({
       icon: <Car className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={wizardData}
-          updateStepData={updateStepData}
           field="tripCategory"
           label={t('driverWizard.steps.type.typeLabel')}
           options={[
@@ -97,43 +85,29 @@ export function RequestDriverWizard({
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
             field="from"
             label={t('driverWizard.steps.route.fromLabel')}
             placeholder={t('driverWizard.steps.route.fromPlaceholder')}
             required
           />
           <TextInputStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
             field="to"
             label={t('driverWizard.steps.route.toLabel')}
             placeholder={t('driverWizard.steps.route.toPlaceholder')}
             required
           />
           <TextInputStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
             field="purpose"
             label={t('driverWizard.steps.route.purposeLabel')}
             placeholder={t('driverWizard.steps.route.purposePlaceholder')}
             required
           />
-          <div className="space-y-2">
-            <Label htmlFor="passengerCount">
-              {t('driverWizard.steps.route.passengerCountLabel')}
-            </Label>
-            <Input
-              id="passengerCount"
-              type="number"
-              min="1"
-              max="10"
-              value={String(wizardData.passengerCount || '1')}
-              onChange={(e) => updateStepData('passengerCount', parseInt(e.target.value) || 1)}
-              className="bg-(--background) border-(--border) text-(--text-primary)"
-            />
-          </div>
+          <TextInputStep
+            field="passengerCount"
+            label={t('driverWizard.steps.route.passengerCountLabel')}
+            type="number"
+            defaultValue="1"
+          />
         </div>
       ),
     },
@@ -145,8 +119,6 @@ export function RequestDriverWizard({
       content:
         drivers && drivers.length > 0 ? (
           <CardSelectionStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
             field="driverId"
             label={t('driverWizard.steps.driver.selectLabel')}
             options={drivers
@@ -176,27 +148,21 @@ export function RequestDriverWizard({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextInputStep
-              stepData={wizardData}
-              updateStepData={updateStepData}
               field="date"
               label={t('driverWizard.steps.datetime.dateLabel')}
               type="text"
-              placeholder="YYYY-MM-DD"
+              placeholder={t('placeholders.dateFormat', 'YYYY-MM-DD')}
               required
             />
             <TextInputStep
-              stepData={wizardData}
-              updateStepData={updateStepData}
               field="time"
               label={t('driverWizard.steps.datetime.timeLabel')}
               type="text"
-              placeholder="HH:MM"
+              placeholder={t('placeholders.timeFormat', 'HH:MM')}
               required
             />
           </div>
           <TextareaStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
             field="notes"
             label={t('driverWizard.steps.datetime.notesLabel')}
             placeholder={t('driverWizard.steps.datetime.notesPlaceholder')}
@@ -211,15 +177,13 @@ export function RequestDriverWizard({
     data: Record<string, string | number | boolean | string[] | null>,
   ) => {
     try {
-      const mergedData = { ...wizardData, ...data };
-
       if (!organizationId) {
         toast.error(t('driverWizard.toast.noOrg'));
         return;
       }
 
-      const dateStr = String(mergedData.date || '').trim();
-      const timeStr = String(mergedData.time || '').trim();
+      const dateStr = String(data.date || '').trim();
+      const timeStr = String(data.time || '').trim();
 
       if (!dateStr || !timeStr) {
         toast.error(
@@ -245,15 +209,15 @@ export function RequestDriverWizard({
 
       const result = await requestDriver.mutateAsync({
         organizationId,
-        driverId: mergedData.driverId as string,
+        driverId: data.driverId as string,
         startTime,
         endTime,
         tripInfo: {
-          from: String(mergedData.from),
-          to: String(mergedData.to),
-          purpose: String(mergedData.purpose),
-          passengerCount: Number(mergedData.passengerCount) || 1,
-          notes: mergedData.notes ? String(mergedData.notes) : undefined,
+          from: String(data.from),
+          to: String(data.to),
+          purpose: String(data.purpose),
+          passengerCount: Number(data.passengerCount) || 1,
+          notes: data.notes ? String(data.notes) : undefined,
         },
       });
 

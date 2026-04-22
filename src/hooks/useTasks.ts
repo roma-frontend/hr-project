@@ -49,6 +49,7 @@ export interface Task {
 }
 
 export function useMyTasks(userId: string, organizationId?: string, status?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['my-tasks', userId, organizationId, status],
     queryFn: async () => {
@@ -61,7 +62,7 @@ export function useMyTasks(userId: string, organizationId?: string, status?: str
         params.append('status', status);
       }
       const res = await fetch(`/api/tasks?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch tasks');
+      if (!res.ok) throw new Error(t('hooks.tasks.failedToFetchTasks', 'Failed to fetch tasks'));
       const json = await res.json();
       return json.data as Task[];
     },
@@ -71,6 +72,7 @@ export function useMyTasks(userId: string, organizationId?: string, status?: str
 }
 
 export function useOrgTasks(organizationId: string, status?: string, assignedTo?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['org-tasks', organizationId, status, assignedTo],
     queryFn: async () => {
@@ -85,7 +87,7 @@ export function useOrgTasks(organizationId: string, status?: string, assignedTo?
         params.append('assignedTo', assignedTo);
       }
       const res = await fetch(`/api/tasks?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch org tasks');
+      if (!res.ok) throw new Error(t('hooks.tasks.failedToFetchOrgTasks', 'Failed to fetch org tasks'));
       const json = await res.json();
       return json.data as Task[];
     },
@@ -95,6 +97,7 @@ export function useOrgTasks(organizationId: string, status?: string, assignedTo?
 }
 
 export function useTaskById(taskId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['task-by-id', taskId],
     queryFn: async () => {
@@ -103,7 +106,7 @@ export function useTaskById(taskId: string) {
         taskId,
       });
       const res = await fetch(`/api/tasks?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch task');
+      if (!res.ok) throw new Error(t('hooks.tasks.failedToFetchTask', 'Failed to fetch task'));
       const json = await res.json();
       return json.data as Task | null;
     },
@@ -112,6 +115,7 @@ export function useTaskById(taskId: string) {
 }
 
 export function useTaskComments(taskId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['task-comments', taskId],
     queryFn: async () => {
@@ -120,7 +124,7 @@ export function useTaskComments(taskId: string) {
         taskId,
       });
       const res = await fetch(`/api/tasks?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch comments');
+      if (!res.ok) throw new Error(t('hooks.tasks.failedToFetchComments', 'Failed to fetch comments'));
       const json = await res.json();
       return json.data as TaskComment[];
     },
@@ -152,7 +156,7 @@ export function useCreateTask() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create task');
+        throw new Error(error.error || t('hooks.tasks.failedToCreateTask', 'Failed to create task'));
       }
       return res.json();
     },
@@ -191,7 +195,7 @@ export function useUpdateTask() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to update task');
+        throw new Error(error.error || t('hooks.tasks.failedToUpdateTask', 'Failed to update task'));
       }
       return res.json();
     },
@@ -222,7 +226,7 @@ export function useDeleteTask() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to delete task');
+        throw new Error(error.error || t('hooks.tasks.failedToDeleteTask', 'Failed to delete task'));
       }
       return res.json();
     },
@@ -255,7 +259,7 @@ export function useAddComment() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to add comment');
+        throw new Error(error.error || t('hooks.tasks.failedToAddComment', 'Failed to add comment'));
       }
       return res.json();
     },
@@ -283,7 +287,7 @@ export function useDeleteComment() {
       });
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to delete comment');
+        throw new Error(error.error || t('hooks.tasks.failedToDeleteComment', 'Failed to delete comment'));
       }
       return res.json();
     },

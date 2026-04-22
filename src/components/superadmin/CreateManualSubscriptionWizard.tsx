@@ -1,5 +1,5 @@
 /**
- * Create Manual Subscription Wizard - Пошаговая форма создания ручной подписки
+ * Create Manual Subscription Wizard - Step-by-step form for creating manual subscriptions
  * Uses universal Wizard component
  */
 
@@ -47,14 +47,12 @@ export function CreateManualSubscriptionWizard({
       icon: <Building className="w-5 h-5" />,
       content: (
         <SelectStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="organizationId"
           label={t('subscriptionWizard.steps.organization.organizationLabel')}
           options={orgs.map((org: any) => ({
             value: org.id,
             label: `${org.name} (${org.slug})`,
-            description: `${org.totalEmployees || org.employeeCount || 0} employees`,
+            description: `${org.totalEmployees || org.employeeCount || 0} ${t('subscriptionWizard.employees') || 'employees'}`,
           }))}
           placeholder={t('subscriptionWizard.steps.organization.organizationPlaceholder')}
           required
@@ -68,8 +66,6 @@ export function CreateManualSubscriptionWizard({
       icon: <Crown className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="plan"
           label={t('subscriptionWizard.steps.plan.planLabel')}
           options={[
@@ -108,17 +104,13 @@ export function CreateManualSubscriptionWizard({
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="customPrice"
             label={t('subscriptionWizard.steps.pricing.priceLabel')}
             type="number"
-            placeholder="0"
+            placeholder={t('subscriptionWizard.steps.pricing.pricePlaceholder') || '0'}
             description={t('subscriptionWizard.steps.pricing.priceDescription')}
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="notes"
             label={t('subscriptionWizard.steps.pricing.notesLabel')}
             placeholder={t('subscriptionWizard.steps.pricing.notesPlaceholder')}
@@ -134,7 +126,7 @@ export function CreateManualSubscriptionWizard({
   ) => {
     try {
       await createManual.mutateAsync({
-        organizationId: String(data.organizationId),
+        organizationId: String(data.organization_id),
         plan: String(data.plan) as 'starter' | 'professional' | 'enterprise',
         customPrice: data.customPrice ? parseFloat(String(data.customPrice)) : undefined,
         notes: data.notes ? String(data.notes) : undefined,

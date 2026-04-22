@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
     const searchParams = request.nextUrl.searchParams;
     const organizationId = searchParams.get('organizationId');
     const isReviewed = searchParams.get('isReviewed');
@@ -18,7 +20,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
     }
 
-    let query = supabase
+    let query = supabaseService
       .from('leave_conflict_alerts')
       .select(`
         *,
@@ -34,6 +36,7 @@ export async function GET(request: NextRequest) {
     const { data: alerts, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
+      console.error('[Events API] Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -76,25 +79,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
     const body = await request.json();
     const { action, alertId, adminId, isApproved, reviewNotes } = body;
 
     if (action === 'review-conflict-alert') {
-      if (!alertId || !adminId) {
+      if (!alertId) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: alert, error } = await supabase
+      const { data: alert, error } = await supabaseService
         .from('leave_conflict_alerts')
         .update({
           is_reviewed: true,
-          reviewed_by: adminId,
+          reviewed_by: user.id,
           reviewed_at: Date.now(),
           review_notes: reviewNotes || (isApproved ? 'Approved despite conflict' : 'Flagged for discussion'),
         })
         .eq('id', alertId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -104,30 +108,43 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'create-company-event') {
-      const { organizationId, userId, name, description, startDate, endDate, isAllDay, eventType, priority, requiredDepartments, notifyDaysBefore } = body;
+      const { organizationId, name, description, startDate, endDate, isAllDay, eventType, priority, requiredDepartments, notifyDaysBefore } = body;
 
-      if (!organizationId || !userId || !name || !startDate || !endDate || !eventType || !requiredDepartments || requiredDepartments.length === 0) {
+      if (!organizationId || !name || !startDate || !endDate || !eventType || !requiredDepartments || requiredDepartments.length === 0) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: event, error } = await supabase
+      const startDateObj = typeof startDate === 'string' ? new Date(startDate) : null;
+      const endDateObj = typeof endDate === 'string' ? new Date(endDate) : null;
+      if ((typeof startDate === 'string' && (!startDateObj || isNaN(startDateObj.getTime()))) ||
+          (typeof endDate === 'string' && (!endDateObj || isNaN(endDateObj.getTime())))) {
+        return NextResponse.json({ error: 'Invalid date format for event dates' }, { status: 400 });
+      }
+
+      const now = Date.now();
+      const { data: event, error } = await supabaseService
         .from('company_events')
         .insert({
-          organizationId,
+          organization_id: organizationId,
           name,
           description: description || '',
-          start_date: new Date(startDate).getTime(),
-          end_date: new Date(endDate).getTime(),
+          start_date: startDateObj ? startDateObj.getTime() : startDate,
+          end_date: endDateObj ? endDateObj.getTime() : endDate,
           is_all_day: isAllDay ?? true,
           event_type: eventType,
           priority: priority || 'medium',
           required_departments: requiredDepartments,
-          creator_id: userId,
+          created_by: user.id,
+          notify_days_before: notifyDaysBefore || 3,
+          notified_at: null,
+          created_at: now,
+          updated_at: now,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
+        console.error('[Events API Error] Failed to create company event:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
@@ -135,13 +152,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'check-leave-conflicts-manual') {
-      const { leaveRequestId, userId, startDate, endDate, organizationId } = body;
+      const { leaveRequestId, startDate, endDate, organizationId } = body;
 
-      if (!leaveRequestId || !userId || !startDate || !endDate || !organizationId) {
+      if (!leaveRequestId || !startDate || !endDate || !organizationId) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const { data: conflicts, error } = await supabase
+      const { data: conflicts, error } = await supabaseService
         .from('leave_conflict_alerts')
         .select('*')
         .eq('leave_request_id', leaveRequestId)

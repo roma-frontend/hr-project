@@ -64,7 +64,7 @@ interface SuspiciousIP {
 }
 
 export default function EmergencyDashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [createIncidentOpen, setCreateIncidentOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -160,12 +160,12 @@ export default function EmergencyDashboardPage() {
                   <span className="hidden sm:inline">{priorityLevel.toUpperCase()}</span>
                   <span className="sm:hidden">
                     {priorityLevel === 'critical'
-                      ? 'CRIT'
+                      ? t('superadmin.emergency.priority.criticalShort') || 'CRIT'
                       : priorityLevel === 'high'
-                        ? 'HIGH'
+                        ? t('superadmin.emergency.priority.highShort') || 'HIGH'
                         : priorityLevel === 'medium'
-                          ? 'MED'
-                          : 'LOW'}
+                          ? t('superadmin.emergency.priority.mediumShort') || 'MED'
+                          : t('superadmin.emergency.priority.lowShort') || 'LOW'}
                   </span>
                 </Badge>
               </div>
@@ -192,7 +192,7 @@ export default function EmergencyDashboardPage() {
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('superadmin.emergency.createIncident')}</span>
-                <span className="sm:hidden">Create</span>
+                <span className="sm:hidden">{t('superadmin.emergency.createShort') || 'Create'}</span>
               </Button>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function EmergencyDashboardPage() {
                             variant="default"
                             className="bg-red-600 hover:bg-red-700 text-white shadow-sm text-xs"
                           >
-                            CRITICAL
+                            {t('superadmin.emergency.badge.critical')}
                           </Badge>
                           <Badge
                             variant="outline"
@@ -528,7 +528,7 @@ export default function EmergencyDashboardPage() {
       <Dialog open={createIncidentOpen} onOpenChange={setCreateIncidentOpen}>
       <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col">
         <DialogTitle className="sr-only">{t('superadmin.emergency.createIncident')}</DialogTitle>
-        <DialogDescription className="sr-only">Создание нового инцидента</DialogDescription>
+        <DialogDescription className="sr-only">{t('superadmin.emergency.createIncidentDesc')}</DialogDescription>
         <div className="flex-1 min-h-0 overflow-y-auto">
           <CreateIncidentWizard
             userId={user.id}

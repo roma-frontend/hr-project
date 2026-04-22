@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+
   const accessToken = request.cookies.get('google_access_token')?.value;
   const refreshToken = request.cookies.get('google_refresh_token')?.value;
 
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
 
   // Try to refresh the token
   if (refreshToken) {
-    const clientId = process.env.GOOGLE_CLIENTid;
+    const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
     if (clientId && clientSecret) {
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            clientid: clientId,
+            client_id: clientId,
             client_secret: clientSecret,
             refresh_token: refreshToken,
             grant_type: 'refresh_token',

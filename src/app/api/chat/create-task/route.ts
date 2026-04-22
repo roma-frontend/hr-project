@@ -11,20 +11,25 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const {
-      userId,
       organizationId,
       title,
       description,
       assignedTo,
-      assignedBy,
       priority,
       deadline,
       tags,
     } = await req.json();
+
+    const userId = auth.user.id;
+    const assignedBy = auth.user.id;
 
     console.log('[create-task] Request:', {
       userId,
@@ -34,11 +39,11 @@ export async function POST(req: NextRequest) {
       deadline,
     });
 
-    if (!userId || !organizationId || !title || !assignedTo || !assignedBy || !priority) {
+    if (!organizationId || !title || !assignedTo || !priority) {
       return NextResponse.json(
         {
           error:
-            'Missing required fields: userId, organizationId, title, assignedTo, assignedBy, priority',
+            'Missing required fields: organizationId, title, assignedTo, priority',
         },
         { status: 400 },
       );
@@ -98,13 +103,17 @@ export async function POST(req: NextRequest) {
         priority: priority as 'low' | 'medium' | 'high' | 'urgent',
         deadline: deadline ? new Date(deadline).getTime() : undefined,
         tags: tags || [],
-        organizationId,
+        organization_id: organizationId,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    if (!task) {
+      throw new Error('Failed to create task');
     }
 
     console.log('[create-task] Task created:', task.id);
@@ -139,13 +148,16 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
     const organizationId = searchParams.get('organizationId');
     const assigneeId = searchParams.get('assigneeId');
     const deadline = searchParams.get('deadline');
+    const userId = auth.user.id;
 
-    if (!userId || !organizationId || !assigneeId || !deadline) {
+    if (!organizationId || !assigneeId || !deadline) {
       return NextResponse.json({ error: 'Missing required query params' }, { status: 400 });
     }
 

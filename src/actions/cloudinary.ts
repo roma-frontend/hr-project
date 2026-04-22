@@ -1,12 +1,21 @@
 'use server';
 
 import { v2 as cloudinary } from 'cloudinary';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
 
 // Configure Cloudinary
+const cloudinaryCloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const cloudinaryApiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+const cloudinaryApiSecret = process.env.CLOUDINARY_API_SECRET;
+
+if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
+  throw new Error('Missing required Cloudinary environment variables: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+}
+
 cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: cloudinaryCloudName,
+  api_key: cloudinaryApiKey,
+  api_secret: cloudinaryApiSecret,
 });
 
 // Upload any file (PDF, image, doc, etc.) for task attachments
@@ -20,7 +29,7 @@ export async function uploadTaskAttachment(base64File: string, fileName: string)
     if (decodedSize > MAX_FILE_SIZE) {
       const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
       throw new Error(
-        `File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.`,
+        serverT('actions.cloudinary.fileSizeExceeded', 'File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.').replace('${sizeMB}', sizeMB),
       );
     }
     const result = await cloudinary.uploader.upload(base64File, {
@@ -32,7 +41,7 @@ export async function uploadTaskAttachment(base64File: string, fileName: string)
     return result.secure_url;
   } catch (error) {
     console.error('❌ Attachment upload error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Upload failed');
+    throw new Error(error instanceof Error ? error.message : serverT('actions.cloudinary.uploadFailed', 'Upload failed'));
   }
 }
 
@@ -52,7 +61,7 @@ export async function uploadAvatarToCloudinary(
     if (decodedSize > MAX_FILE_SIZE) {
       const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
       throw new Error(
-        `Avatar size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller image.`,
+        serverT('actions.cloudinary.avatarSizeExceeded', 'Avatar size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller image.').replace('${sizeMB}', sizeMB),
       );
     }
 
@@ -72,7 +81,7 @@ export async function uploadAvatarToCloudinary(
     return result.secure_url;
   } catch (error) {
     console.error('❌ Upload error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Upload failed');
+    throw new Error(error instanceof Error ? error.message : serverT('actions.cloudinary.uploadFailed', 'Upload failed'));
   }
 }
 
@@ -97,7 +106,7 @@ export async function uploadChatAttachment(
       apiKey: !!apiKey,
       apiSecret: !!apiSecret,
     });
-    throw new Error('Cloudinary credentials not configured');
+    throw new Error(serverT('actions.cloudinary.credentialsNotConfigured', 'Cloudinary credentials not configured'));
   }
 
   const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
@@ -108,7 +117,7 @@ export async function uploadChatAttachment(
   const decodedSize = Math.round((base64File.length * 3) / 4);
   if (decodedSize > MAX_FILE_SIZE) {
     const sizeMB = (decodedSize / (1024 * 1024)).toFixed(2);
-    throw new Error(`File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.`);
+    throw new Error(serverT('actions.cloudinary.fileSizeExceeded', 'File size (${sizeMB}MB) exceeds the 1MB limit. Please upload a smaller file.').replace('${sizeMB}', sizeMB));
   }
 
   // Determine resource type based on mime type
@@ -156,8 +165,8 @@ export async function uploadChatAttachment(
       status: error?.status,
       http_code: error?.http_code,
     });
-    const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-    throw new Error(`Voice message upload error: ${errorMessage}`);
+    const errorMessage = error instanceof Error ? error.message : serverT('actions.cloudinary.uploadFailed', 'Upload failed');
+    throw new Error(serverT('actions.cloudinary.voiceMessageError', 'Voice message error: ${errorMessage}').replace('${errorMessage}', errorMessage));
   }
 }
 
@@ -174,11 +183,11 @@ export async function deleteAvatarFromCloudinary(userId: string): Promise<void> 
     console.log('✅ Delete result:', result);
 
     if (result.result !== 'ok' && result.result !== 'not found') {
-      throw new Error(`Delete failed: ${result.result}`);
+      throw new Error(serverT('actions.cloudinary.deleteFailed', 'Delete failed: ${result.result}').replace('${result.result}', result.result));
     }
   } catch (error) {
     console.error('❌ Delete error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Delete failed');
+    throw new Error(error instanceof Error ? error.message : serverT('actions.cloudinary.deleteFailedGeneric', 'Delete failed'));
   }
 }
 
@@ -192,14 +201,14 @@ export async function deleteTaskAttachmentFromCloudinary(url: string): Promise<v
     const urlParts = url.split('/');
     const folderIndex = urlParts.findIndex((part) => part === 'task-attachments');
     if (folderIndex === -1) {
-      throw new Error('Invalid task attachment URL');
+      throw new Error(serverT('actions.cloudinary.invalidTaskAttachmentUrl', 'Invalid task attachment URL'));
     }
 
     // Get the publicid (folder/filename without extension and version)
     const folder = urlParts[folderIndex];
     const filenameWithVersion = urlParts[folderIndex + 1];
     if (!filenameWithVersion) {
-      throw new Error('Invalid task attachment URL: missing filename');
+      throw new Error(serverT('actions.cloudinary.invalidTaskAttachmentUrlMissingFilename', 'Invalid task attachment URL: missing filename'));
     }
     const filename = filenameWithVersion.replace(/^v\d+_/, '').split('.')[0];
     const publicId = `hr-office/${folder}/${filename}`;
@@ -213,10 +222,10 @@ export async function deleteTaskAttachmentFromCloudinary(url: string): Promise<v
     console.log('✅ Delete result:', result);
 
     if (result.result !== 'ok' && result.result !== 'not found') {
-      throw new Error(`Delete failed: ${result.result}`);
+      throw new Error(serverT('actions.cloudinary.deleteFailed', 'Delete failed: ${result.result}').replace('${result.result}', result.result));
     }
   } catch (error) {
     console.error('❌ Delete error:', error);
-    throw new Error(error instanceof Error ? error.message : 'Delete failed');
+    throw new Error(error instanceof Error ? error.message : serverT('actions.cloudinary.deleteFailedGeneric', 'Delete failed'));
   }
 }

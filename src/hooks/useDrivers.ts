@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,7 @@ interface DriverStats {
 // ─── Available Drivers ───────────────────────────────────────────────────────
 
 export function useAvailableDrivers(organizationId: string | undefined, date?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'available', organizationId, date],
     queryFn: async () => {
@@ -123,7 +125,7 @@ export function useAvailableDrivers(organizationId: string | undefined, date?: s
       if (date) url.searchParams.set('date', date);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch available drivers');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchAvailableDrivers', 'Failed to fetch available drivers'));
       return res.json() as Promise<Driver[]>;
     },
     enabled: !!organizationId,
@@ -137,6 +139,7 @@ export function useDriverSchedules(
   startTime?: number,
   endTime?: number,
 ) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'schedules', driverId, startTime, endTime],
     queryFn: async () => {
@@ -147,7 +150,7 @@ export function useDriverSchedules(
       if (endTime) url.searchParams.set('endDate', String(endTime));
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch driver schedules');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchSchedules', 'Failed to fetch driver schedules'));
       return res.json() as Promise<ScheduleItem[]>;
     },
     enabled: !!driverId,
@@ -157,6 +160,7 @@ export function useDriverSchedules(
 // ─── Driver Requests ─────────────────────────────────────────────────────────
 
 export function useDriverRequests(organizationId: string | undefined, status?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'requests', organizationId, status],
     queryFn: async () => {
@@ -166,7 +170,7 @@ export function useDriverRequests(organizationId: string | undefined, status?: s
       if (status) url.searchParams.set('status', status);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch driver requests');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchRequests', 'Failed to fetch driver requests'));
       return res.json() as Promise<DriverRequest[]>;
     },
     enabled: !!organizationId,
@@ -174,6 +178,7 @@ export function useDriverRequests(organizationId: string | undefined, status?: s
 }
 
 export function useMyRequests(userId: string | undefined) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'my-requests', userId],
     queryFn: async () => {
@@ -182,7 +187,7 @@ export function useMyRequests(userId: string | undefined) {
       url.searchParams.set('userId', userId!);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch my requests');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchMyRequests', 'Failed to fetch my requests'));
       return res.json() as Promise<DriverRequest[]>;
     },
     enabled: !!userId,
@@ -192,6 +197,7 @@ export function useMyRequests(userId: string | undefined) {
 // ─── Recurring Trips ─────────────────────────────────────────────────────────
 
 export function useRecurringTrips(organizationId: string | undefined) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'recurring-trips', organizationId],
     queryFn: async () => {
@@ -200,7 +206,7 @@ export function useRecurringTrips(organizationId: string | undefined) {
       url.searchParams.set('organizationId', organizationId!);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch recurring trips');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchRecurringTrips', 'Failed to fetch recurring trips'));
       return res.json() as Promise<RecurringTrip[]>;
     },
     enabled: !!organizationId,
@@ -210,6 +216,7 @@ export function useRecurringTrips(organizationId: string | undefined) {
 // ─── Driver Shifts ───────────────────────────────────────────────────────────
 
 export function useDriverShifts(organizationId?: string, driverId?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'shifts', organizationId, driverId],
     queryFn: async () => {
@@ -219,7 +226,7 @@ export function useDriverShifts(organizationId?: string, driverId?: string) {
       if (driverId) url.searchParams.set('driverId', driverId);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch driver shifts');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchShifts', 'Failed to fetch driver shifts'));
       return res.json() as Promise<DriverShift[]>;
     },
     enabled: !!organizationId || !!driverId,
@@ -229,6 +236,7 @@ export function useDriverShifts(organizationId?: string, driverId?: string) {
 // ─── Favorite Drivers ────────────────────────────────────────────────────────
 
 export function useFavoriteDrivers(userId: string | undefined) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'favorites', userId],
     queryFn: async () => {
@@ -237,7 +245,7 @@ export function useFavoriteDrivers(userId: string | undefined) {
       url.searchParams.set('userId', userId!);
 
       const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Failed to fetch favorite drivers');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchFavorites', 'Failed to fetch favorite drivers'));
       return res.json() as Promise<FavoriteDriver[]>;
     },
     enabled: !!userId,
@@ -248,6 +256,7 @@ export function useFavoriteDrivers(userId: string | undefined) {
 
 export function useCreateDriverRequest() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -274,7 +283,7 @@ export function useCreateDriverRequest() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create request');
+        throw new Error(error.error || t('hooks.drivers.failedToCreateRequest', 'Failed to create request'));
       }
 
       return res.json();
@@ -288,6 +297,7 @@ export function useCreateDriverRequest() {
 
 export function useUpdateRequestStatus() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { requestId: string; status: string }) => {
@@ -302,7 +312,7 @@ export function useUpdateRequestStatus() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to update request status');
+        throw new Error(error.error || t('hooks.drivers.failedToUpdateRequestStatus', 'Failed to update request status'));
       }
 
       return res.json();
@@ -316,6 +326,7 @@ export function useUpdateRequestStatus() {
 
 export function useCreateSchedule() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -338,7 +349,7 @@ export function useCreateSchedule() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create schedule');
+        throw new Error(error.error || t('hooks.drivers.failedToCreateSchedule', 'Failed to create schedule'));
       }
 
       return res.json();
@@ -353,6 +364,7 @@ export function useCreateSchedule() {
 
 export function useUpdateScheduleStatus() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { scheduleId: string; status: string }) => {
@@ -367,7 +379,7 @@ export function useUpdateScheduleStatus() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to update schedule status');
+        throw new Error(error.error || t('hooks.drivers.failedToUpdateScheduleStatus', 'Failed to update schedule status'));
       }
 
       return res.json();
@@ -380,6 +392,7 @@ export function useUpdateScheduleStatus() {
 
 export function useSubmitRating() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -402,7 +415,7 @@ export function useSubmitRating() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to submit rating');
+        throw new Error(error.error || t('hooks.drivers.failedToSubmitRating', 'Failed to submit rating'));
       }
 
       return res.json();
@@ -415,6 +428,7 @@ export function useSubmitRating() {
 
 export function useCreateRecurringTrip() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -438,7 +452,7 @@ export function useCreateRecurringTrip() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create recurring trip');
+        throw new Error(error.error || t('hooks.drivers.failedToCreateRecurringTrip', 'Failed to create recurring trip'));
       }
 
       return res.json();
@@ -451,6 +465,7 @@ export function useCreateRecurringTrip() {
 
 export function useCreateShift() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -470,7 +485,7 @@ export function useCreateShift() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to create shift');
+        throw new Error(error.error || t('hooks.drivers.failedToCreateShift', 'Failed to create shift'));
       }
 
       return res.json();
@@ -483,6 +498,7 @@ export function useCreateShift() {
 
 export function useEndShift() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { shiftId: string; endTime?: string }) => {
@@ -497,7 +513,7 @@ export function useEndShift() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to end shift');
+        throw new Error(error.error || t('hooks.drivers.failedToEndShift', 'Failed to end shift'));
       }
 
       return res.json();
@@ -510,6 +526,7 @@ export function useEndShift() {
 
 export function useAddFavorite() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { organizationId: string; userId: string; driverId: string }) => {
@@ -524,7 +541,7 @@ export function useAddFavorite() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to add favorite');
+        throw new Error(error.error || t('hooks.drivers.failedToAddFavorite', 'Failed to add favorite'));
       }
 
       return res.json();
@@ -537,6 +554,7 @@ export function useAddFavorite() {
 
 export function useRemoveFavorite() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: { userId: string; driverId: string }) => {
@@ -551,7 +569,7 @@ export function useRemoveFavorite() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to remove favorite');
+        throw new Error(error.error || t('hooks.drivers.failedToRemoveFavorite', 'Failed to remove favorite'));
       }
 
       return res.json();
@@ -568,6 +586,7 @@ export function useIsDriverOnLeave(
   endTime: number | undefined,
   enabled = true,
 ) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'is-on-leave', driverId, startTime, endTime],
     queryFn: async () => {
@@ -578,7 +597,7 @@ export function useIsDriverOnLeave(
         endTime: String(endTime!),
       });
       const res = await fetch(`/api/drivers/available?${params}`);
-      if (!res.ok) throw new Error('Failed to check driver leave status');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToCheckLeaveStatus', 'Failed to check driver leave status'));
       const json = await res.json();
       return json.data;
     },
@@ -594,6 +613,7 @@ export function useAlternativeDrivers(
   excludeDriverId: string | undefined,
   enabled = true,
 ) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['drivers', 'alternative', organizationId, startTime, endTime, excludeDriverId],
     queryFn: async () => {
@@ -605,7 +625,7 @@ export function useAlternativeDrivers(
         excludeDriverId: excludeDriverId!,
       });
       const res = await fetch(`/api/drivers/available?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch alternative drivers');
+      if (!res.ok) throw new Error(t('hooks.drivers.failedToFetchAlternativeDrivers', 'Failed to fetch alternative drivers'));
       const json = await res.json();
       return json.data as Driver[];
     },

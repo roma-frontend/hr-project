@@ -56,7 +56,7 @@ export default function AdminPage() {
       setAssignEmail('');
       clearSelection();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('admin.failedToAssignUser');
+      const errorMessage = error instanceof Error ? t('admin.assignError', { defaultValue: error.message }) : t('admin.failedToAssignUser');
       toast.error(errorMessage);
     } finally {
       setIsAssigning(false);
@@ -94,7 +94,7 @@ export default function AdminPage() {
               type="email"
               value={assignEmail}
               onChange={(e) => setAssignEmail(e.target.value)}
-              placeholder="user@example.com"
+              placeholder={t('admin.emailPlaceholder', 'user@example.com')}
               className="w-full px-3 py-2 rounded-lg border border-(--border) bg-(--background-subtle) text-(--text-primary) outline-none focus:ring-2 focus:ring-[var(--primary)]"
             />
             <p className="text-xs text-(--text-muted)">{t('admin.emailDescription')}</p>
@@ -202,12 +202,12 @@ export default function AdminPage() {
                 >
                   <div className="flex-1">
                     <p className="font-semibold text-(--text-primary)">{org.name}</p>
-                    <p className="text-sm text-(--text-muted)">
+                    <div className="text-sm text-(--text-muted)">
                       {t('admin.plan')}:{' '}
                       <Badge variant="outline" className="ml-1">
                         {org.plan}
                       </Badge>
-                    </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <Badge>{org.is_active ? t('admin.active') : t('admin.inactive')}</Badge>

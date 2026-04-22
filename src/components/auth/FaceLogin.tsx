@@ -561,7 +561,7 @@ export function FaceLogin() {
       const matchedUserData = allFaceDescriptors.find((u) => u.userId === bestMatch.userId);
       if (!matchedUserData) {
         console.error('❌ User data not found in allFaceDescriptors');
-        throw new Error('User data not found');
+        throw new Error(t('faceLogin.userDataNotFound', 'User data not found'));
       }
       console.log('✅ Matched user data:', matchedUserData);
 
@@ -586,7 +586,7 @@ export function FaceLogin() {
         if (!response.ok) {
           const errorData = await response.json();
           if (errorData.error === 'maintenance') {
-            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+            window.location.href = `/login?maintenance=true${errorData.organization_id ? `&org=${errorData.organization_id}` : ''}`;
             return;
           }
           throw new Error(errorData.error || 'Login failed');
@@ -603,7 +603,7 @@ export function FaceLogin() {
             name: data.session.name,
             email: data.session.email,
             role: data.session.role,
-            organizationId: data.session.organizationId,
+            organizationId: data.session.organization_id,
             organizationSlug: data.session.organizationSlug,
             organizationName: data.session.organizationName,
             department: data.session.department,
@@ -619,7 +619,7 @@ export function FaceLogin() {
           name: loginError?.name,
           message: loginError?.message,
         });
-        throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
+        throw new Error(`${t('faceLogin.loginFailed', 'Login failed')}: ${loginError?.message || t('faceLogin.unknownError', 'Unknown error')}`);
       }
 
       // Redirect to dashboard or callback URL

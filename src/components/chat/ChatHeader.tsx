@@ -65,7 +65,7 @@ export function ChatHeader({
           <Link
             href={`/employees/${otherUser.id}`}
             className="block rounded-full transition-transform duration-200 hover:scale-110 hover:opacity-90"
-            title={`View ${displayName}'s profile`}
+            title={t('chat.viewProfile', 'View {{name}}\'s profile', { name: displayName })}
           >
             <Avatar className="w-9 h-9">
               {otherUser?.avatarUrl && <AvatarImage src={otherUser.avatarUrl} />}

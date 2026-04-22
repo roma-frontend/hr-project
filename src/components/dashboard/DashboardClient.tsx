@@ -16,7 +16,6 @@ import {
   CreditCard,
   ShieldCheck,
   ShieldAlert,
-  ShieldOff,
   Activity,
   XCircle,
 } from 'lucide-react';
@@ -35,9 +34,9 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { useLeaves, useUsers, useSecurityStats } from '@/hooks/useDashboard';
 import { useAuthUser, type UserProfile as User } from '@/store/useAuthStore';
-import { useShallow } from 'zustand/shallow';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { useMyOrganization } from '@/hooks/useOrganizations';
 import { StatsCard } from '@/components/dashboard/StatsCard';
@@ -103,6 +102,7 @@ function formatDate(dateStr: string | undefined | null, fmt: string): string {
 }
 
 const LeaveTypeBadge = React.memo(({ type }: { type: LeaveType }) => {
+  const { t } = useTranslation();
   const colorMap: Record<LeaveType, string> = {
     paid: 'bg-[#2563eb]/20 text-[#2563eb] border-[#2563eb]/30',
     unpaid: 'bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30',
@@ -114,7 +114,7 @@ const LeaveTypeBadge = React.memo(({ type }: { type: LeaveType }) => {
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${colorMap[type]}`}
     >
-      {LEAVE_TYPE_LABELS[type]}
+      {t(`leaveTypes.${type}`)}
     </span>
   );
 });
@@ -135,7 +135,8 @@ const StatusBadgeMemo = React.memo(({ status, label }: { status: LeaveStatus; la
 StatusBadgeMemo.displayName = 'StatusBadgeMemo';
 
 export default function DashboardClient() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
   const user = useAuthUser();
 
   // ═══════════════════════════════════════════════════════════════
@@ -145,9 +146,6 @@ export default function DashboardClient() {
 
   // Get selected organization for superadmin
   const selectedOrgId = useSelectedOrganization();
-  const shouldUseOrgQuery = selectedOrgId && user?.id;
-
-  const isSuperadmin = user?.role === 'superadmin';
 
   const { data: leaves, isLoading: leavesLoading } = useLeaves();
   const { data: users, isLoading: usersLoading } = useUsers();
@@ -199,26 +197,12 @@ export default function DashboardClient() {
       { month: string; approved: number; pending: number; rejected: number }
     > = {};
     const now = new Date();
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       months[key] = {
-        month: monthNames[d.getMonth()] ?? 'Unknown',
+        month: format(d, 'MMM', { locale: dateFnsLocale }),
         approved: 0,
         pending: 0,
         rejected: 0,
@@ -232,7 +216,7 @@ export default function DashboardClient() {
       }
     });
     return Object.values(months);
-  }, [leaves]);
+  }, [leaves, dateFnsLocale]);
 
   if (!mounted) return null;
 
@@ -258,8 +242,90 @@ export default function DashboardClient() {
             >
               {t('nav.dashboard', { defaultValue: 'Dashboard' })}
             </h2>
-            <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy')}</p>
+            <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}</p>
           </div>
+          {user?.role === 'superadmin' && (
+            <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="hover:text-(--text-primary) transition-colors"
+              >
+                <Link href="/superadmin/organizations">
+                  <Building2 className="w-4 h-4" />
+                  {t('dashboard.manageOrgs')}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
+                  background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
+                  color: 'var(--primary)',
+                }}
+              >
+                <Link href="/superadmin/create-org">
+                  <Building2 className="w-4 h-4" />
+                  {t('dashboard.createOrg')}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--success) 25%, transparent)',
+                  background: 'color-mix(in srgb, var(--success) 6%, transparent)',
+                  color: 'var(--success)',
+                }}
+              >
+                <Link href="/superadmin/stripe-dashboard">
+                  <CreditCard className="w-4 h-4" />
+                  {t('dashboard.stripeDashboard')}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
+                  background: 'color-mix(in srgb, var(--primary) 10%, transparent)',
+                  color: 'var(--primary)',
+                }}
+              >
+                <Link href="/superadmin/security">
+                  <ShieldCheck className="w-4 h-4" />
+                  {t('landingExtra.securityCenter')}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="hover:text-(--text-primary) transition-colors"
+              >
+                <Link href="/calendar">
+                  <CalendarDays className="w-4 h-4" />
+                  {t('nav.calendar')}
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="default"
+                className="flex items-center gap-2 w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg"
+              >
+                <Link href="/leaves">
+                  <Plus className="w-4 h-4" />
+                  {t('dashboard.newRequest')}
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -275,7 +341,7 @@ export default function DashboardClient() {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="text-(--text-muted) text-xs sm:text-sm"
           >
-            {format(today, 'EEEE, MMMM d, yyyy')}
+            {format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
           </motion.p>
         </div>
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">

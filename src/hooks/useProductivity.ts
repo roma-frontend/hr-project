@@ -42,6 +42,7 @@ export interface PomodoroSession {
 }
 
 export function useTodayStats(userId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: PRODUCTIVITY_QUERY_KEYS.todayStats(userId),
     queryFn: async () => {
@@ -50,7 +51,7 @@ export function useTodayStats(userId: string, enabled = true) {
         userId,
       });
       const res = await fetch(`/api/productivity?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch today stats');
+      if (!res.ok) throw new Error(t('productivity.fetchTodayStatsFailed'));
       const json = await res.json();
       return json.data as TodayStats;
     },
@@ -60,6 +61,7 @@ export function useTodayStats(userId: string, enabled = true) {
 }
 
 export function useTodayTasks(userId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: PRODUCTIVITY_QUERY_KEYS.todayTasks(userId),
     queryFn: async () => {
@@ -68,7 +70,7 @@ export function useTodayTasks(userId: string, enabled = true) {
         userId,
       });
       const res = await fetch(`/api/productivity?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch today tasks');
+      if (!res.ok) throw new Error(t('productivity.fetchTodayTasksFailed'));
       const json = await res.json();
       return json.data as any[];
     },
@@ -78,6 +80,7 @@ export function useTodayTasks(userId: string, enabled = true) {
 }
 
 export function useTeamPresence(organizationId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: PRODUCTIVITY_QUERY_KEYS.teamPresence(organizationId),
     queryFn: async () => {
@@ -86,7 +89,7 @@ export function useTeamPresence(organizationId: string, enabled = true) {
         organizationId,
       });
       const res = await fetch(`/api/productivity?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch team presence');
+      if (!res.ok) throw new Error(t('productivity.fetchTeamPresenceFailed'));
       const json = await res.json();
       return json.data as TeamMember[];
     },
@@ -96,6 +99,7 @@ export function useTeamPresence(organizationId: string, enabled = true) {
 }
 
 export function useActivePomodoro(userId: string, enabled = true) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: PRODUCTIVITY_QUERY_KEYS.activePomodoro(userId),
     queryFn: async () => {
@@ -104,7 +108,7 @@ export function useActivePomodoro(userId: string, enabled = true) {
         userId,
       });
       const res = await fetch(`/api/productivity?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch active pomodoro');
+      if (!res.ok) throw new Error(t('productivity.fetchActivePomodoroFailed'));
       const json = await res.json();
       return json.data as PomodoroSession | null;
     },

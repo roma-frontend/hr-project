@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 
 export default function SecurityAlertDetailPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -93,7 +93,7 @@ export default function SecurityAlertDetailPage() {
       toast.success(t('toasts.userSuspendedFor', { hours: suspendDuration }));
       setSuspendReason('');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : t('toasts.userSuspendFailed');
+      const message = error instanceof Error ? t('security.error', { defaultValue: error.message }) : t('toasts.userSuspendFailed');
       toast.error(message);
     } finally {
       setIsProcessing(false);
@@ -110,7 +110,7 @@ export default function SecurityAlertDetailPage() {
 
       toast.success(t('toasts.userUnsuspended'));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : t('toasts.userUnsuspendFailed');
+      const message = error instanceof Error ? t('security.error', { defaultValue: error.message }) : t('toasts.userUnsuspendFailed');
       toast.error(message);
     } finally {
       setIsProcessing(false);
@@ -290,11 +290,11 @@ export default function SecurityAlertDetailPage() {
                       </p>
                       <p>
                         <span className="font-medium">{t('superadmin.security.until')}:</span>{' '}
-                        {new Date(suspiciousUser.suspended_until!).toLocaleString()}
+                        {new Date(suspiciousUser.suspended_until!).toLocaleString(i18n.language)}
                       </p>
                       <p>
                         <span className="font-medium">{t('superadmin.impersonate.sessionInfo.expiresAt')}:</span>{' '}
-                        {new Date(suspiciousUser.suspended_at!).toLocaleString()}
+                        {new Date(suspiciousUser.suspended_at!).toLocaleString(i18n.language)}
                       </p>
                       {suspiciousUser.suspended_reason?.includes('AUTO-BLOCKED') && (
                         <p
@@ -405,7 +405,7 @@ export default function SecurityAlertDetailPage() {
                         </div>
 
                         <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                          {new Date(attempt.created_at).toLocaleString()}
+                          {new Date(attempt.created_at).toLocaleString(i18n.language)}
                         </div>
                       </div>
                     </div>

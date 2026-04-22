@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -6,6 +7,16 @@ type User = Database['public']['Tables']['users']['Row'];
 type OrganizationInvite = Database['public']['Tables']['organization_invites']['Row'];
 
 const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+}
+
+const SUPABASE_URL = supabaseUrl as string;
+const SUPABASE_SERVICE_KEY = supabaseServiceKey as string;
 
 const PLAN_EMPLOYEE_LIMITS: Record<string, number> = {
   starter: 10,
@@ -16,12 +27,15 @@ const PLAN_EMPLOYEE_LIMITS: Record<string, number> = {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function verifySuperadmin(userId: string): Promise<User> {
-  const supabase = await createClient();
-  const { data: user, error } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !user) throw new Error('User not found');
   if (user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
@@ -31,12 +45,15 @@ async function verifySuperadmin(userId: string): Promise<User> {
 }
 
 async function verifyOrgAdmin(userId: string): Promise<User> {
-  const supabase = await createClient();
-  const { data: user, error } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !user) throw new Error('User not found');
   if (user.role !== 'admin' && user.email.toLowerCase() !== SUPERADMIN_EMAIL) {
@@ -69,17 +86,20 @@ export async function createOrganization(args: {
   const slug = normalizeSlug(args.slug);
   if (!slug) throw new Error('Invalid organization slug');
 
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseService
     .from('organizations')
     .select('id')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
   if (existing) throw new Error(`Organization with slug "${slug}" already exists`);
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseService
     .from('organizations')
     .insert({
       name: args.name,
@@ -95,25 +115,29 @@ export async function createOrganization(args: {
       updated_at: Math.floor(Date.now() / 1000),
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Failed to create organization');
   return { orgId: data.id, slug: data.slug };
 }
 
 // ── SUPERADMIN: List All Organizations ───────────────────────────────────────
 
 export async function listAllOrganizations(callerUserId: string) {
-  const supabase = await createClient();
-  const { data: caller } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: caller } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', callerUserId)
-    .single();
+    .maybeSingle();
 
   if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) return [];
 
-  const { data: orgs, error } = await supabase
+  const { data: orgs, error } = await supabaseService
     .from('organizations')
     .select('*');
 
@@ -121,10 +145,10 @@ export async function listAllOrganizations(callerUserId: string) {
 
   return Promise.all(
     (orgs || []).map(async (org) => {
-      const { data: employees } = await supabase
+      const { data: employees } = await supabaseService
         .from('users')
         .select('*')
-        .eq('organizationId', org.id);
+        .eq('organization_id', org.id);
 
       const filteredEmployees = (employees || []).filter(
         (e) => e.role !== 'superadmin'
@@ -145,8 +169,11 @@ export async function getAllOrganizations(superadminUserId?: string) {
     await verifySuperadmin(superadminUserId);
   }
 
-  const supabase = await createClient();
-  const { data: orgs, error } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: orgs, error } = await supabaseService
     .from('organizations')
     .select('*');
 
@@ -154,10 +181,10 @@ export async function getAllOrganizations(superadminUserId?: string) {
 
   return Promise.all(
     (orgs || []).map(async (org) => {
-      const { data: employees } = await supabase
+      const { data: employees } = await supabaseService
         .from('users')
         .select('*')
-        .eq('organizationId', org.id);
+        .eq('organization_id', org.id);
 
       const filteredEmployees = (employees || []).filter(
         (e) => e.role !== 'superadmin'
@@ -192,7 +219,10 @@ export async function updateOrganization(args: {
 }) {
   await verifySuperadmin(args.superadminUserId);
 
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
   const updates: any = {
     updated_at: Math.floor(Date.now() / 1000),
   };
@@ -207,14 +237,15 @@ export async function updateOrganization(args: {
   if (args.country !== undefined) updates.country = args.country;
   if (args.industry !== undefined) updates.industry = args.industry;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseService
     .from('organizations')
     .update(updates)
     .eq('id', args.organizationId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Failed to update organization');
   return data.id;
 }
 
@@ -227,19 +258,22 @@ export async function assignOrgAdmin(args: {
 }) {
   await verifySuperadmin(args.superadminUserId);
 
-  const supabase = await createClient();
-  const { data: user, error: userError } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error: userError } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', args.userId)
-    .single();
+    .maybeSingle();
 
   if (userError || !user) throw new Error('User not found');
 
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('users')
     .update({
-      organizationId: args.organizationId,
+      organization_id: args.organizationId,
       role: 'admin',
       is_approved: true,
       approved_at: Math.floor(Date.now() / 1000),
@@ -256,35 +290,38 @@ export async function getOrganizationById(args: {
   callerUserId: string;
   organizationId: string;
 }) {
-  const supabase = await createClient();
-  const { data: caller, error: callerError } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: caller, error: callerError } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', args.callerUserId)
-    .single();
+    .maybeSingle();
 
   if (callerError || !caller) throw new Error('User not found');
 
-  const { data: org, error: orgError } = await supabase
+  const { data: org, error: orgError } = await supabaseService
     .from('organizations')
     .select('*')
     .eq('id', args.organizationId)
-    .single();
+    .maybeSingle();
 
   if (orgError || !org) throw new Error('Organization not found');
 
   const isSuperadmin = caller.email.toLowerCase() === SUPERADMIN_EMAIL;
   const isOwnOrg =
-    caller.organizationId === args.organizationId && caller.role === 'admin';
+    caller.organization_id === args.organizationId && caller.role === 'admin';
 
   if (!isSuperadmin && !isOwnOrg) {
     throw new Error("You don't have access to this organization");
   }
 
-  const { data: members } = await supabase
+  const { data: members } = await supabaseService
     .from('users')
     .select('*')
-    .eq('organizationId', args.organizationId);
+    .eq('organization_id', args.organizationId);
 
   const filteredMembers = (members || []).filter(
     (m) => m.role !== 'superadmin'
@@ -308,23 +345,40 @@ export async function getOrgMembers(args: {
   const MAX_LIMIT = 100;
   const effectiveLimit = Math.min(args.limit || DEFAULT_LIMIT, MAX_LIMIT);
 
-  await verifySuperadmin(args.superadminUserId);
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  const supabase = await createClient();
-  const { data: org, error: orgError } = await supabase
+  const { data: caller, error: callerError } = await supabaseService
+    .from('users')
+    .select('*')
+    .eq('id', args.superadminUserId)
+    .maybeSingle();
+
+  if (callerError || !caller) throw new Error('User not found');
+
+  const isSuperadmin = caller.email.toLowerCase() === SUPERADMIN_EMAIL || caller.role === 'superadmin';
+  const isOrgAdmin = caller.organization_id === args.organizationId && (caller.role === 'admin' || isSuperadmin);
+
+  if (!isSuperadmin && !isOrgAdmin) {
+    throw new Error('You do not have permission to view members of this organization');
+  }
+
+  const { data: org, error: orgError } = await supabaseService
     .from('organizations')
     .select('*')
     .eq('id', args.organizationId)
-    .single();
+    .maybeSingle();
 
   if (orgError || !org) throw new Error('Organization not found');
 
-  let query = supabase
+  let query = supabaseService
     .from('users')
     .select(
       'id, name, email, role, is_active, is_approved, department, position, avatar_url, created_at, supervisorid, employee_type, phone, travel_allowance, paid_leave_balance, sick_leave_balance, family_leave_balance'
     )
-    .eq('organizationId', args.organizationId);
+    .eq('organization_id', args.organizationId);
 
   if (args.cursor) {
     query = query.gt('id', args.cursor);
@@ -338,7 +392,27 @@ export async function getOrgMembers(args: {
     (m) => m.role !== 'superadmin' && m.email?.toLowerCase() !== SUPERADMIN_EMAIL
   );
 
-  return filteredMembers.slice(0, effectiveLimit);
+  const mapped = filteredMembers.slice(0, effectiveLimit).map((m) => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    role: m.role,
+    isActive: m.is_active,
+    isApproved: m.is_approved,
+    department: m.department,
+    position: m.position,
+    avatarUrl: m.avatar_url,
+    createdAt: m.created_at,
+    supervisorid: m.supervisorid,
+    employeeType: m.employee_type,
+    phone: m.phone,
+    travelAllowance: m.travel_allowance,
+    paidLeaveBalance: m.paid_leave_balance,
+    sickLeaveBalance: m.sick_leave_balance,
+    familyLeaveBalance: m.family_leave_balance,
+  }));
+
+  return mapped;
 }
 
 // ── SUPERADMIN: Remove Org Admin ─────────────────────────────────────────────
@@ -349,17 +423,20 @@ export async function removeOrgAdmin(args: {
 }) {
   await verifySuperadmin(args.superadminUserId);
 
-  const supabase = await createClient();
-  const { data: user, error: userError } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error: userError } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', args.userId)
-    .single();
+    .maybeSingle();
 
   if (userError || !user) throw new Error('User not found');
   if (user.role !== 'admin') throw new Error('User is not an admin');
 
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('users')
     .update({ role: 'employee' })
     .eq('id', args.userId);
@@ -410,7 +487,7 @@ export async function getOrganizationBySlug(slug: string) {
     .from('organizations')
     .select('id, name, slug, industry, plan, is_active')
     .eq('slug', slug.toLowerCase())
-    .single();
+    .maybeSingle();
 
   if (error || !org || !org.is_active) return null;
 
@@ -436,7 +513,7 @@ export async function requestToJoinOrganization(args: {
     .from('organizations')
     .select('*')
     .eq('id', args.organizationId)
-    .single();
+    .maybeSingle();
 
   if (orgError || !org || !org.is_active) {
     throw new Error('Organization not found or inactive');
@@ -449,7 +526,7 @@ export async function requestToJoinOrganization(args: {
 
   const alreadyPending = (existingInvites || []).find(
     (inv) =>
-      inv.organizationId === args.organizationId && inv.status === 'pending'
+      inv.organization_id === args.organizationId && inv.status === 'pending'
   );
 
   if (alreadyPending) {
@@ -460,11 +537,11 @@ export async function requestToJoinOrganization(args: {
     .from('users')
     .select('*')
     .eq('email', args.requestedByEmail)
-    .single();
+    .maybeSingle();
 
   if (
     existingUser &&
-    existingUser.organizationId === args.organizationId
+    existingUser.organization_id === args.organizationId
   ) {
     throw new Error('You are already a member of this organization');
   }
@@ -474,7 +551,7 @@ export async function requestToJoinOrganization(args: {
   const { data: invite, error: inviteError } = await supabase
     .from('organization_invites')
     .insert({
-      organizationId: args.organizationId,
+      organization_id: args.organizationId,
       requested_by_email: args.requestedByEmail,
       requested_by_name: args.requestedByName,
       requested_at: now,
@@ -482,20 +559,21 @@ export async function requestToJoinOrganization(args: {
       created_at: now,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (inviteError) throw inviteError;
+  if (!invite) throw new Error('Failed to create invite');
 
-  // Notify org admins
+    // Notify org admins
   const { data: admins } = await supabase
     .from('users')
     .select('*')
-    .eq('organizationId', args.organizationId)
+    .eq('organization_id', args.organizationId)
     .eq('role', 'admin');
 
   for (const admin of admins || []) {
     await supabase.from('notifications').insert({
-      organizationId: args.organizationId,
+      organization_id: args.organizationId,
       userid: admin.id,
       type: 'join_request',
       title: '🙋 New Join Request',
@@ -516,21 +594,24 @@ export async function getJoinRequests(args: {
   status?: 'pending' | 'approved' | 'rejected';
 }) {
   const admin = await verifyOrgAdmin(args.adminId);
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  if (!admin.organizationId && admin.role === 'admin') {
+  if (!admin.organization_id && admin.role === 'admin') {
     return [];
   }
 
-  const orgId = admin.organizationId;
-  let query = supabase.from('organization_invites').select('*');
+  const orgId = admin.organization_id;
+  let query = supabaseService.from('organization_invites').select('*');
 
   if (!orgId) {
     if (args.status) {
       query = query.eq('status', args.status);
     }
   } else {
-    query = query.eq('organizationId', orgId);
+    query = query.eq('organization_id', orgId);
     if (args.status) {
       query = query.eq('status', args.status);
     }
@@ -553,39 +634,42 @@ export async function approveJoinRequest(args: {
   passwordHash: string;
 }) {
   const admin = await verifyOrgAdmin(args.adminId);
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await supabaseService
     .from('organization_invites')
     .select('*')
     .eq('id', args.inviteId)
-    .single();
+    .maybeSingle();
 
   if (inviteError || !invite) throw new Error('Invite not found');
   if (invite.status !== 'pending') {
     throw new Error('This request has already been reviewed');
   }
 
-  if (!admin.organizationId) {
+  if (!admin.organization_id) {
     throw new Error('Admin must belong to an organization');
   }
 
-  if (invite.organizationId !== admin.organizationId) {
+  if (invite.organization_id !== admin.organization_id) {
     throw new Error('This request belongs to a different organization');
   }
 
-  const { data: org, error: orgError } = await supabase
+  const { data: org, error: orgError } = await supabaseService
     .from('organizations')
     .select('*')
-    .eq('id', invite.organizationId)
-    .single();
+    .eq('id', invite.organization_id)
+    .maybeSingle();
 
   if (orgError || !org) throw new Error('Organization not found');
 
-  const { data: currentCount } = await supabase
+  const { data: currentCount } = await supabaseService
     .from('users')
     .select('id')
-    .eq('organizationId', invite.organizationId)
+    .eq('organization_id', invite.organization_id)
     .eq('is_active', true);
 
   if ((currentCount || []).length >= org.employee_limit) {
@@ -594,21 +678,21 @@ export async function approveJoinRequest(args: {
     );
   }
 
-  const { data: existingUser } = await supabase
+  const { data: existingUser } = await supabaseService
     .from('users')
     .select('*')
     .eq('email', invite.requested_by_email.toLowerCase())
-    .single();
+    .maybeSingle();
 
   const now = Math.floor(Date.now() / 1000);
   let userId: string;
 
   if (existingUser) {
     userId = existingUser.id;
-    const { error } = await supabase
+    const { error } = await supabaseService
       .from('users')
       .update({
-        organizationId: invite.organizationId,
+        organization_id: invite.organization_id,
         role: args.role,
         employee_type: 'staff',
         department: args.department,
@@ -626,10 +710,10 @@ export async function approveJoinRequest(args: {
 
     if (error) throw error;
   } else {
-    const { data: newUser, error } = await supabase
+    const { data: newUser, error } = await supabaseService
       .from('users')
       .insert({
-        organizationId: invite.organizationId,
+        organization_id: invite.organization_id,
         name: invite.requested_by_name,
         email: invite.requested_by_email,
         password_hash: args.passwordHash,
@@ -648,13 +732,14 @@ export async function approveJoinRequest(args: {
         created_at: now,
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!newUser) throw new Error('Failed to create user');
     userId = newUser.id;
   }
 
-  await supabase
+  await supabaseService
     .from('organization_invites')
     .update({
       status: 'approved',
@@ -664,8 +749,8 @@ export async function approveJoinRequest(args: {
     })
     .eq('id', args.inviteId);
 
-  await supabase.from('notifications').insert({
-    organizationId: invite.organizationId,
+  await supabaseService.from('notifications').insert({
+    organization_id: invite.organization_id,
     userid: userId,
     type: 'join_approved',
     title: `✅ Welcome to ${org.name}!`,
@@ -686,29 +771,32 @@ export async function rejectJoinRequest(args: {
   reason?: string;
 }) {
   const admin = await verifyOrgAdmin(args.adminId);
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await supabaseService
     .from('organization_invites')
     .select('*')
     .eq('id', args.inviteId)
-    .single();
+    .maybeSingle();
 
   if (inviteError || !invite) throw new Error('Invite not found');
   if (invite.status !== 'pending') {
     throw new Error('This request has already been reviewed');
   }
 
-  if (!admin.organizationId) {
+  if (!admin.organization_id) {
     throw new Error('Admin must belong to an organization');
   }
 
-  if (invite.organizationId !== admin.organizationId) {
+  if (invite.organization_id !== admin.organization_id) {
     throw new Error('This request belongs to a different organization');
   }
 
   const now = Math.floor(Date.now() / 1000);
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('organization_invites')
     .update({
       status: 'rejected',
@@ -731,7 +819,7 @@ export async function generateInviteToken(args: {
 }) {
   const admin = await verifyOrgAdmin(args.adminId);
 
-  if (!admin.organizationId) {
+  if (!admin.organization_id) {
     throw new Error('Admin must belong to an organization');
   }
 
@@ -743,11 +831,14 @@ export async function generateInviteToken(args: {
   const expiry = Date.now() + expiryHours * 60 * 60 * 1000;
   const now = Math.floor(Date.now() / 1000);
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data, error } = await supabaseService
     .from('organization_invites')
     .insert({
-      organizationId: admin.organizationId,
+      organization_id: admin.organization_id,
       requested_by_email: args.inviteEmail ?? '',
       requested_by_name: '',
       requested_at: now,
@@ -758,9 +849,10 @@ export async function generateInviteToken(args: {
       created_at: now,
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error('Failed to create invite');
   return { token, inviteId: data.id, expiresAt: expiry };
 }
 
@@ -772,7 +864,7 @@ export async function validateInviteToken(token: string) {
     .from('organization_invites')
     .select('*')
     .eq('invite_token', token)
-    .single();
+    .maybeSingle();
 
   if (error || !invite) return { valid: false, reason: 'Token not found' };
   if (invite.status === 'approved') return { valid: false, reason: 'Already used' };
@@ -780,15 +872,15 @@ export async function validateInviteToken(token: string) {
     return { valid: false, reason: 'Token expired' };
   }
 
-  if (!invite.organizationId) {
+  if (!invite.organization_id) {
     return { valid: false, reason: 'Invite has no organization' };
   }
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')
     .select('*')
-    .eq('id', invite.organizationId)
-    .single();
+    .eq('id', invite.organization_id)
+    .maybeSingle();
 
   if (orgError || !org || !org.is_active) {
     return { valid: false, reason: 'Organization inactive' };
@@ -796,7 +888,7 @@ export async function validateInviteToken(token: string) {
 
   return {
     valid: true,
-    organizationId: invite.organizationId,
+    organizationId: invite.organization_id,
     organizationName: org.name,
     organizationSlug: org.slug,
     prefilledEmail: invite.invite_email,
@@ -812,15 +904,15 @@ export async function getMyOrganization(userId: string) {
     .from('users')
     .select('*')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (userError || !user || !user.organizationId) return null;
+  if (userError || !user || !user.organization_id) return null;
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')
     .select('*')
-    .eq('id', user.organizationId)
-    .single();
+    .eq('id', user.organization_id)
+    .maybeSingle();
 
   if (orgError) return null;
   return org;
@@ -834,7 +926,7 @@ export async function getPendingJoinRequestCount(adminId: string) {
     .from('users')
     .select('*')
     .eq('id', adminId)
-    .single();
+    .maybeSingle();
 
   if (
     adminError ||
@@ -844,12 +936,12 @@ export async function getPendingJoinRequestCount(adminId: string) {
     return 0;
   }
 
-  if (!admin.organizationId) return 0;
+  if (!admin.organization_id) return 0;
 
   const { data: pending, error } = await supabase
     .from('organization_invites')
     .select('id')
-    .eq('organizationId', admin.organizationId)
+    .eq('organization_id', admin.organization_id)
     .eq('status', 'pending');
 
   if (error) return 0;
@@ -864,12 +956,15 @@ export async function removeMemberFromOrganization(args: {
 }) {
   await verifySuperadmin(args.superadminUserId);
 
-  const supabase = await createClient();
-  const { data: user, error: userError } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error: userError } = await supabaseService
     .from('users')
     .select('*')
     .eq('id', args.userId)
-    .single();
+    .maybeSingle();
 
   if (userError || !user) throw new Error('User not found');
 
@@ -880,10 +975,10 @@ export async function removeMemberFromOrganization(args: {
     throw new Error('Cannot remove the superadmin from any organization');
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('users')
     .update({
-      organizationId: null,
+      organization_id: null,
       is_active: false,
     })
     .eq('id', args.userId);
@@ -894,36 +989,101 @@ export async function removeMemberFromOrganization(args: {
 
 // ── Get Organizations For Picker ─────────────────────────────────────────────
 
-export async function getOrganizationsForPicker(userId: string) {
-  const supabase = await createClient();
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
+export async function getOrganizationsForPicker(userId: string | undefined) {
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  if (userError || !user) throw new Error('User not found');
-
-  if (user.email.toLowerCase() === SUPERADMIN_EMAIL) {
-    const { data: orgs, error } = await supabase
+  if (!userId) {
+    const { data: orgs, error } = await supabaseService
       .from('organizations')
-      .select('id, name, slug')
+      .select('id, name, slug, industry, logo_url, country')
       .eq('is_active', true);
 
     if (error) throw error;
-    return orgs || [];
+    return (orgs || []).map((org: any) => ({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      industry: org.industry || undefined,
+      logoUrl: org.logo_url || undefined,
+      country: org.country || undefined,
+    }));
   }
 
-  if (!user.organizationId) return [];
+  const { data: user, error: userError } = await supabaseService
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
 
-  const { data: org, error } = await supabase
+  if (userError || !user) {
+    const { data: orgs, error } = await supabaseService
+      .from('organizations')
+      .select('id, name, slug, industry, logo_url, country')
+      .eq('is_active', true);
+
+    if (error) throw error;
+    return (orgs || []).map((org: any) => ({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      industry: org.industry || undefined,
+      logoUrl: org.logo_url || undefined,
+      country: org.country || undefined,
+    }));
+  }
+
+  if (user.email.toLowerCase() === SUPERADMIN_EMAIL) {
+    const { data: orgs, error } = await supabaseService
+      .from('organizations')
+      .select('id, name, slug, industry, logo_url, country')
+      .eq('is_active', true);
+
+    if (error) throw error;
+    return (orgs || []).map((org: any) => ({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      industry: org.industry || undefined,
+      logoUrl: org.logo_url || undefined,
+      country: org.country || undefined,
+    }));
+  }
+
+  if (!user.organization_id) {
+    const { data: orgs, error } = await supabaseService
+      .from('organizations')
+      .select('id, name, slug, industry, logo_url, country')
+      .eq('is_active', true);
+
+    if (error) throw error;
+    return (orgs || []).map((org: any) => ({
+      id: org.id,
+      name: org.name,
+      slug: org.slug,
+      industry: org.industry || undefined,
+      logoUrl: org.logo_url || undefined,
+      country: org.country || undefined,
+    }));
+  }
+
+  const { data: org, error } = await supabaseService
     .from('organizations')
-    .select('id, name, slug')
-    .eq('id', user.organizationId)
-    .single();
+    .select('id, name, slug, industry, logo_url, country')
+    .eq('id', user.organization_id)
+    .maybeSingle();
 
   if (error || !org) return [];
-  return [org];
+  return [{
+    id: org.id,
+    name: org.name,
+    slug: org.slug,
+    industry: org.industry || undefined,
+    logoUrl: org.logo_url || undefined,
+    country: org.country || undefined,
+  }];
 }
 
 // ── SUPERADMIN: Assign User as Org Admin ──────────────────────────────────────
@@ -935,31 +1095,34 @@ export async function assignUserAsOrgAdmin(args: {
 }) {
   await verifySuperadmin(args.superadminUserId);
 
-  const supabase = await createClient();
-  const { data: user, error: userError } = await supabase
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
+  const { data: user, error: userError } = await supabaseService
     .from('users')
     .select('*')
     .eq('email', args.userEmail.toLowerCase())
-    .single();
+    .maybeSingle();
 
   if (userError || !user) {
     throw new Error(`User with email ${args.userEmail} not found`);
   }
 
-  const { data: org, error: orgError } = await supabase
+  const { data: org, error: orgError } = await supabaseService
     .from('organizations')
     .select('*')
     .eq('id', args.organizationId)
-    .single();
+    .maybeSingle();
 
   if (orgError || !org) {
     throw new Error('Organization not found');
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('users')
     .update({
-      organizationId: args.organizationId,
+      organization_id: args.organizationId,
       role: 'admin',
       updated_at: Math.floor(Date.now() / 1000),
     })
@@ -989,20 +1152,23 @@ export async function requestOrganization(args: {
   teamSize?: string;
   description?: string;
 }) {
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseService
     .from('organization_requests')
     .select('id')
     .eq('requester_email', args.email)
     .eq('status', 'pending')
-    .single();
+    .maybeSingle();
 
   if (existing) {
     throw new Error('You already have a pending request');
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseService
     .from('organization_requests')
     .insert({
       requested_name: args.name,
@@ -1033,22 +1199,25 @@ export async function createStarterOrganization(args: {
   country?: string;
   industry?: string;
 }) {
-  const supabase = await createClient();
+  const supabaseService = createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_KEY
+  );
 
   const slug = normalizeSlug(args.slug);
   if (!slug) throw new Error('Invalid organization slug');
 
-  const { data: existingOrg } = await supabase
+  const { data: existingOrg } = await supabaseService
     .from('organizations')
     .select('id')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
   if (existingOrg) {
     throw new Error(`Organization with slug "${slug}" already exists`);
   }
 
-  const { data: org, error: orgError } = await supabase
+  const { data: org, error: orgError } = await supabaseService
     .from('organizations')
     .insert({
       name: args.name,
@@ -1064,18 +1233,19 @@ export async function createStarterOrganization(args: {
       updated_at: Math.floor(Date.now() / 1000),
     })
     .select()
-    .single();
+    .maybeSingle();
 
   if (orgError) throw orgError;
+  if (!org) throw new Error('Failed to create organization');
 
-  const { error: userError } = await supabase
+  const { error: userError } = await supabaseService
     .from('users')
     .insert({
       name: args.userName,
       email: args.email.toLowerCase(),
       password_hash: args.password,
       role: 'admin',
-      organizationId: org.id,
+      organization_id: org.id,
       is_active: true,
       is_approved: true,
       employee_type: 'staff',

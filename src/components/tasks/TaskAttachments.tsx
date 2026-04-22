@@ -6,6 +6,7 @@ import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { uploadTaskAttachment, deleteTaskAttachmentFromCloudinary } from '@/actions/cloudinary';
 
 interface Attachment {
   url: string;
@@ -61,7 +62,6 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    // Max 5 files at once, max 10MB each
     const validFiles = files
       .filter((f) => {
         if (f.size > 10 * 1024 * 1024) {
@@ -76,8 +76,40 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
     setUploading(true);
 
     try {
-      // TODO: Implement file upload API
+      const uploadedAttachments: Array<{ url: string; name: string; type: string; size: number }> = [];
+
+      for (const file of validFiles) {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const url = await uploadTaskAttachment(base64, file.name);
+        uploadedAttachments.push({
+          url,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        });
+      }
+
+      const res = await fetch('/api/tasks?action=update-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          attachments: [...attachments, ...uploadedAttachments],
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update task attachments');
+      }
+
       toast.success(t('toasts.uploadSuccess', { count: validFiles.length }));
+      window.location.reload();
     } catch {
       toast.error(t('toasts.uploadFailed'));
     } finally {
@@ -93,10 +125,29 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
   const confirmRemove = async () => {
     if (!confirmDelete) return;
     try {
-      // TODO: Implement file remove API
+      await deleteTaskAttachmentFromCloudinary(confirmDelete.url);
+
+      const updatedAttachments = attachments.filter(
+        (att) => att.url !== confirmDelete.url,
+      );
+
+      const res = await fetch('/api/tasks?action=update-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          attachments: updatedAttachments,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update task attachments');
+      }
+
       toast.success(t('toasts.removed'));
       if (preview?.url === confirmDelete.url) setPreview(null);
       setConfirmDelete(null);
+      window.location.reload();
     } catch {
       toast.error(t('toasts.removeFailed'));
     }

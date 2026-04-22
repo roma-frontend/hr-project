@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
         const { data: conversations } = await supabase
           .from('ai_conversations')
           .select('*')
-          .eq('userId', user.id)
-          .order('createdAt', { ascending: false });
+          .eq('userid', user.id)
+          .order('created_at', { ascending: false });
 
         return NextResponse.json({ data: conversations || [] });
       }
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
         const { data: messages } = await supabase
           .from('ai_messages')
           .select('*')
-          .eq('conversationId', conversationId as string)
-          .order('createdAt', { ascending: true });
+          .eq('conversationid', conversationId as string)
+          .order('created_at', { ascending: true });
 
         return NextResponse.json({ data: messages || [] });
       }
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           .from('users')
           .select('*, organizations(*)')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!userData) {
           return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -63,13 +63,13 @@ export async function GET(request: NextRequest) {
         const { data: teamMembers } = await supabase
           .from('users')
           .select('id, name, email, role, department')
-          .eq('organizationId', userData.organizationId!)
+          .eq('organization_id', userData.organization_id!)
           .eq('is_active', true);
 
         const { data: attendance } = await supabase
           .from('time_tracking')
           .select('id, date, check_in_time, check_out_time, status')
-          .eq('userId', user.id)
+          .eq('userid', user.id)
           .order('date', { ascending: false })
           .limit(30);
 
@@ -154,11 +154,11 @@ export async function POST(request: NextRequest) {
         const { data: newConv, error } = await supabase
           .from('ai_conversations')
           .insert({
-            userId: user.id,
+            userid: user.id,
             title,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error || !newConv) {
           return NextResponse.json({ error: error?.message || 'Failed to create conversation' }, { status: 500 });
@@ -176,9 +176,9 @@ export async function POST(request: NextRequest) {
 
         const { error } = await supabase
           .from('ai_conversations')
-          .update({ title, updatedAt: Date.now() })
+          .update({ title, updated_at: Date.now() })
           .eq('id', conversationId)
-          .eq('userId', user.id);
+          .eq('userid', user.id);
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -197,13 +197,13 @@ export async function POST(request: NextRequest) {
         await supabase
           .from('ai_messages')
           .delete()
-          .eq('conversationId', conversationId);
+          .eq('conversationid', conversationId);
 
         const { error } = await supabase
           .from('ai_conversations')
           .delete()
           .eq('id', conversationId)
-          .eq('userId', user.id);
+          .eq('userid', user.id);
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -222,29 +222,28 @@ export async function POST(request: NextRequest) {
         const { data: newMessage, error } = await supabase
           .from('ai_messages')
           .insert({
-            conversationId,
+            conversationid: conversationId,
             role,
             content,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        await supabase
-          .from('ai_conversations')
-          .update({ updatedAt: Date.now() })
-          .eq('id', conversationId);
+        if (!newMessage) {
+          return NextResponse.json({ error: 'Failed to create message' }, { status: 500 });
+        }
 
         return NextResponse.json({ data: { messageId: newMessage.id } });
       }
 
       case 'create-leave-request': {
-        const { requesterId, organizationId, type, startDate, endDate, reason } = body;
+        const { organizationId, type, startDate, endDate, reason } = body;
 
-        if (!requesterId || !organizationId || !type || !startDate || !endDate) {
+        if (!organizationId || !type || !startDate || !endDate) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -253,30 +252,34 @@ export async function POST(request: NextRequest) {
 
         const { data: newLeave, error } = await supabase
           .from('leave_requests')
-          .insert({
-            userid: requesterId,
-            organizationId,
-            type,
+        .insert({
+          userid: user.id,
+          organization_id: organizationId,
+          type,
             start_date: startDate,
             end_date: endDate,
-            days,
+            total_days: days,
             reason: reason || '',
             status: 'pending',
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        if (!newLeave) {
+          return NextResponse.json({ error: 'Failed to create leave request' }, { status: 500 });
         }
 
         return NextResponse.json({ data: { leaveId: newLeave.id, success: true } });
       }
 
       case 'create-task': {
-        const { assigneeId, assignerId, organizationId, title, description, deadline, priority } = body;
+        const { assigneeId, organizationId, title, description, deadline, priority } = body;
 
-        if (!assigneeId || !assignerId || !organizationId || !title) {
+        if (!assigneeId || !organizationId || !title) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -284,21 +287,25 @@ export async function POST(request: NextRequest) {
 
         const { data: newTask, error } = await supabase
           .from('tasks')
-          .insert({
-            assigned_to: assigneeId,
-            assigned_by: assignerId,
-            organizationId,
-            title,
+        .insert({
+          assigned_to: assigneeId,
+          assigned_by: user.id,
+          organization_id: organizationId,
+          title,
             description: description || null,
             status: 'pending',
             priority: priority || 'medium',
             deadline: deadline || null,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        if (!newTask) {
+          return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
         }
 
         return NextResponse.json({ data: { taskId: newTask.id, success: true } });

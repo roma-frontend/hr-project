@@ -24,6 +24,7 @@ export interface User {
 }
 
 export function useOrgUsers(organizationId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['org-users', organizationId],
     queryFn: async () => {
@@ -32,7 +33,7 @@ export function useOrgUsers(organizationId: string) {
         organizationId,
       });
       const res = await fetch(`/api/users?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch org users');
+      if (!res.ok) throw new Error(t('users.fetchOrgUsersFailed', 'Failed to fetch org users'));
       const json = await res.json();
       return json.data as User[];
     },
@@ -41,6 +42,7 @@ export function useOrgUsers(organizationId: string) {
 }
 
 export function useMyEmployees(supervisorId?: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['my-employees', supervisorId],
     queryFn: async () => {
@@ -50,7 +52,7 @@ export function useMyEmployees(supervisorId?: string) {
         supervisorId,
       });
       const res = await fetch(`/api/users?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch my employees');
+      if (!res.ok) throw new Error(t('users.fetchMyEmployeesFailed', 'Failed to fetch my employees'));
       const json = await res.json();
       return json.data as User[];
     },
@@ -59,6 +61,7 @@ export function useMyEmployees(supervisorId?: string) {
 }
 
 export function useUserById(userId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['user-by-id', userId],
     queryFn: async () => {
@@ -67,7 +70,7 @@ export function useUserById(userId: string) {
         userId,
       });
       const res = await fetch(`/api/users?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch user');
+      if (!res.ok) throw new Error(t('users.fetchUserFailed', 'Failed to fetch user'));
       const json = await res.json();
       return json.data as User | null;
     },
@@ -100,7 +103,7 @@ export function useSuspendUser() {
       queryClient.invalidateQueries({ queryKey: ['superadmin', 'user-360'] });
     },
     onError: (error: any) => {
-      toast.error(error.message || t('users.suspendFailed', 'Failed to suspend user'));
+      toast.error(error.message || t('users.suspendFailed'));
     },
   });
 }

@@ -4,11 +4,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/api-utils';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+
     const body = await request.json();
-    const { organizationId } = body;
+    const organizationId = auth.profile.organization_id;
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Organization ID required' }, { status: 400 });
@@ -20,14 +24,14 @@ export async function POST(request: NextRequest) {
     const { data: pendingLeaves } = await supabase
       .from('leave_requests')
       .select('*')
-      .eq('organizationId', organizationId)
+      .eq('organization_id', organizationId)
       .eq('status', 'pending');
 
     // Get all company events
     const { data: events } = await supabase
       .from('company_events')
       .select('*')
-      .eq('organizationId', organizationId);
+      .eq('organization_id', organizationId);
 
     let conflictsFound = 0;
 

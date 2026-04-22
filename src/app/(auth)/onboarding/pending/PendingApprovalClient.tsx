@@ -54,7 +54,7 @@ export default function PendingApprovalClient() {
         name: freshUserData.name,
         email: freshUserData.email,
         role: freshUserData.role,
-        organizationId: freshUserData.organizationId,
+        organizationId: freshUserData.organization_id,
         isApproved: freshUserData.isApproved,
       });
 

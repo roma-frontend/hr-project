@@ -1,150 +1,157 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
+import type { Database } from '@/lib/supabase/database.types';
+import { requireSuperadmin } from '@/lib/api-utils';
 
-interface TicketWithRelations {
-  id: string;
-  ticket_number: string;
-  title: string;
-  status: string;
-  created_by: string;
-  organization_id: string;
-  created_at: number;
-  users?: { name: string } | { name: string }[] | null;
-  organizations?: { name: string } | null;
-}
+type TicketRow = Database['public']['Tables']['tickets']['Row'];
+type UserRow = Database['public']['Tables']['users']['Row'];
+type LoginAttemptRow = Database['public']['Tables']['login_attempts']['Row'];
+type OrganizationRow = Database['public']['Tables']['organizations']['Row'];
 
-interface IncidentWithRelations {
+interface TicketWithCreator {
   id: string;
-  organization_id: string;
   title: string;
   description: string;
-  severity: string;
   status: string;
-  affected_users: number;
-  affected_orgs: number;
-  root_cause: string | null;
-  resolution: string | null;
-  started_at: number;
-  resolved_at: number | null;
-  created_by: string;
-  created_at: number;
-  updated_at: number;
-  users?: { name: string } | { name: string }[] | null;
+  priority: string;
+  createdBy: string;
+  organization_id: string | null;
+  createdAt: number;
+  updatedAt: number | null;
+  creatorName: string;
+  organizationName: string | null;
+  minutesOpen: number;
 }
 
-export async function GET() {
+interface IncidentWithCreator {
+  id: string;
+  organization_id: string | null;
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  createdBy: string;
+  createdAt: number;
+  updatedAt: number | null;
+  creatorName: string;
+  minutesActive: number;
+}
+
+export async function GET(request?: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireSuperadmin();
+    if (auth instanceof NextResponse) return auth;
+
+    const supabase = createServiceClient();
 
     // Critical tickets
-    const { data: criticalTicketsData } = await (supabase as any)
-      .from('support_tickets')
+    const { data: criticalTicketsData } = await supabase
+      .from('tickets')
       .select(
         `
         id,
-        ticket_number,
         title,
+        description,
         status,
-        created_by,
+        priority,
+        createdBy,
         organization_id,
-        created_at,
-        users!support_tickets_created_by_fkey (name),
-        organizations!support_tickets_organization_id_fkey (name)
+        createdAt,
+        updatedAt,
+        users!tickets_createdBy_fkey (name),
+        organizations!tickets_organization_id_fkey (name)
       `,
       )
       .eq('priority', 'critical')
       .in('status', ['open', 'in_progress'])
-      .order('created_at', { ascending: false })
+      .order('createdAt', { ascending: false })
       .limit(10);
 
-    // Active incidents
-    const { data: activeIncidentsData } = await (supabase as any)
-      .from('emergency_incidents')
+    // Active incidents (using tickets as fallback since emergency_incidents table doesn't exist)
+    const { data: activeIncidentsData } = await supabase
+      .from('tickets')
       .select(
         `
         id,
-        organization_id,
         title,
         description,
-        severity,
         status,
-        affected_users,
-        affected_orgs,
-        root_cause,
-        resolution,
-        started_at,
-        resolved_at,
-        created_by,
-        created_at,
-        updated_at,
-        users!emergency_incidents_created_by_fkey (name)
+        priority,
+        createdBy,
+        organization_id,
+        createdAt,
+        updatedAt,
+        users!tickets_createdBy_fkey (name)
       `,
       )
-      .neq('status', 'resolved')
-      .order('created_at', { ascending: false });
+      .eq('priority', 'critical')
+      .order('createdAt', { ascending: false });
 
     // SLA breaches (tickets older than 24h still open)
-    const { count: slaBreaches } = await (supabase as any)
-      .from('support_tickets')
+    const { count: slaBreaches } = await supabase
+      .from('tickets')
       .select('*', { count: 'exact', head: true })
       .in('status', ['open', 'in_progress'])
-      .lt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      .lt('createdAt', Date.now() - 24 * 60 * 60 * 1000);
 
     // Suspicious IPs
-    const { data: suspiciousIPsData } = await (supabase as any)
+    const { data: suspiciousIPsData } = await supabase
       .from('login_attempts')
       .select('ip, userid')
       .eq('success', false)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      .gte('created_at', Date.now() - 24 * 60 * 60 * 1000);
 
     // Maintenance mode orgs
-    const { count: maintenanceModeOrgs } = await (supabase as any)
+    const { count: maintenanceModeOrgs } = await supabase
       .from('organizations')
       .select('*', { count: 'exact', head: true })
       .eq('is_active', false);
 
     // Pending org requests
-    const { count: pendingOrgRequests } = await (supabase as any)
+    const { count: pendingOrgRequests } = await supabase
       .from('organization_requests')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
 
     // Format critical tickets
-    const criticalTickets = ((criticalTicketsData as any) || []).map((t: TicketWithRelations) => {
-      const creator = Array.isArray(t.users) ? t.users[0] : t.users;
-      const org = t.organizations;
+    const criticalTickets = (criticalTicketsData || []).map((t): TicketWithCreator => {
+      const usersData = t.users as unknown as { name: string }[] | null;
+      const creator = Array.isArray(usersData) ? usersData[0] : usersData;
+      const org = t.organizations as unknown as { name: string } | null;
       return {
         id: t.id,
-        ticketNumber: t.ticket_number,
         title: t.title,
+        description: t.description,
         status: t.status,
+        priority: t.priority,
+        createdBy: t.createdBy,
+        organization_id: t.organization_id,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt ?? null,
         creatorName: creator?.name || 'Unknown',
         organizationName: org?.name || null,
-        minutesOpen: Math.round((Date.now() - t.created_at) / 60000),
+        minutesOpen: Math.round((Date.now() - t.createdAt) / 60000),
       };
     });
 
     // Format active incidents
-    const activeIncidents = ((activeIncidentsData as any) || []).map((i: IncidentWithRelations) => {
-      const creator = Array.isArray(i.users) ? i.users[0] : i.users;
+    const activeIncidents = (activeIncidentsData || []).map((i): IncidentWithCreator => {
+      const usersData = i.users as unknown as { name: string }[] | null;
+      const creator = Array.isArray(usersData) ? usersData[0] : usersData;
       return {
         id: i.id,
-        organizationId: i.organization_id,
+        organization_id: i.organization_id,
         title: i.title,
         description: i.description,
-        severity: i.severity,
+        priority: i.priority,
         status: i.status,
-        affectedUsers: i.affected_users,
-        affectedOrgs: i.affected_orgs,
-        rootCause: i.root_cause,
-        resolution: i.resolution,
-        startedAt: i.started_at,
-        resolvedAt: i.resolved_at,
-        createdBy: i.created_by,
-        createdAt: i.created_at,
-        updatedAt: i.updated_at,
+        createdBy: i.createdBy,
+        createdAt: i.createdAt,
+        updatedAt: i.updatedAt ?? null,
         creatorName: creator?.name || 'Unknown',
-        minutesActive: Math.round((Date.now() - i.started_at) / 60000),
+        minutesActive: Math.round((Date.now() - i.createdAt) / 60000),
       };
     });
 
@@ -209,7 +216,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireSuperadmin();
+    if (auth instanceof NextResponse) return auth;
+
+    const supabase = createServiceClient();
     const {
       action,
       createdBy,
@@ -221,32 +231,30 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     if (action !== 'createIncident') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+      return NextResponse.json({ error: serverT('superadmin.api.invalidAction', 'Invalid action') }, { status: 400 });
     }
 
     if (!createdBy || !title || !description || !severity) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: serverT('superadmin.api.missingRequiredFields', 'Missing required fields') },
         { status: 400 },
       );
     }
 
-    const { data: incident, error } = await (supabase as any)
-      .from('emergency_incidents')
+    const { data: incident, error } = await supabase
+      .from('tickets')
       .insert({
-        created_by: createdBy,
+        createdBy,
         title,
         description,
-        severity,
-        affected_users: affectedUsers || 0,
-        affected_orgs: affectedOrgs || 0,
-        status: 'investigating',
-        started_at: Date.now(),
-        created_at: Date.now(),
-        updated_at: Date.now(),
+        priority: severity === 'critical' ? 'critical' : severity === 'high' ? 'high' : 'medium',
+        status: 'open',
+        organization_id: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -261,7 +269,10 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const auth = await requireSuperadmin();
+    if (auth instanceof NextResponse) return auth;
+
+    const supabase = createServiceClient();
     const {
       action,
       incidentId,
@@ -272,35 +283,36 @@ export async function PATCH(request: NextRequest) {
     } = await request.json();
 
     if (action !== 'updateIncidentStatus') {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+      return NextResponse.json({ error: serverT('superadmin.api.invalidAction', 'Invalid action') }, { status: 400 });
     }
 
     if (!incidentId || !status || !userId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: serverT('superadmin.api.missingRequiredFields', 'Missing required fields') },
         { status: 400 },
       );
     }
 
-    const updateData: Record<string, unknown> = {
-      status,
-      updated_at: Date.now(),
+    const updateData: {
+      status: 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed';
+      updatedAt: number;
+      description?: string;
+      resolvedAt?: number;
+    } = {
+      status: status as 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed',
+      updatedAt: Date.now(),
     };
 
-    if (rootCause) {
-      updateData.root_cause = rootCause;
-    }
-
     if (resolution) {
-      updateData.resolution = resolution;
+      updateData.description = resolution;
     }
 
     if (status === 'resolved') {
-      updateData.resolved_at = Date.now();
+      updateData.resolvedAt = Date.now();
     }
 
-    const { error } = await (supabase as any)
-      .from('emergency_incidents')
+    const { error } = await supabase
+      .from('tickets')
       .update(updateData)
       .eq('id', incidentId);
 

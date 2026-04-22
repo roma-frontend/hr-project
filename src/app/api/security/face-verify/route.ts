@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       .from('users')
       .select('face_descriptor')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (!profile?.face_descriptor) {
       // No face registered → skip verification (allow)

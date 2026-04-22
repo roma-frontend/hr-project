@@ -64,7 +64,7 @@ export function NewConversationModal({
     queryKey: ['chat-org-users', effectiveOrgId, currentUserId],
     queryFn: async () => {
       const res = await fetch(`/api/chat?action=get-org-users&organizationId=${effectiveOrgId}&currentUserId=${currentUserId}`);
-      if (!res.ok) throw new Error('Failed to fetch users');
+      if (!res.ok) throw new Error(t('chat.failedToFetchUsers', 'Failed to fetch users'));
       const json = await res.json();
       return json.data;
     },
@@ -77,7 +77,7 @@ export function NewConversationModal({
     queryKey: ['all-org-users', currentUserId],
     queryFn: async () => {
       const res = await fetch(`/api/users?action=get-all-users&requesterId=${currentUserId}`);
-      if (!res.ok) throw new Error('Failed to fetch users');
+      if (!res.ok) throw new Error(t('chat.failedToFetchUsers', 'Failed to fetch users'));
       const json = await res.json();
       return json.data;
     },
@@ -100,7 +100,7 @@ export function NewConversationModal({
           department: u.department,
           position: u.position,
           presenceStatus: u.presence_status,
-          organizationId: u.organizationId as string | undefined,
+          organizationId: u.organization_id as string | undefined,
         }));
     }
 
@@ -134,7 +134,7 @@ export function NewConversationModal({
     // so that they can see it in their own tenant. For non-superadmin / single-org
     // flow we fall back to the effectiveOrgId.
     const dmOrgId =
-      isAllOrgs && targetUser?.organizationId ? targetUser.organizationId : effectiveOrgId;
+      isAllOrgs && targetUser?.organizationId ? targetUser.organization_id : effectiveOrgId;
 
     const result = await handleCreateDMMutation.mutateAsync({
       organizationId: dmOrgId,
@@ -154,16 +154,14 @@ export function NewConversationModal({
       const orgIds = Array.from(
         new Set(
           selected
-            .map((u: any) => u.organizationId)
+            .map((u: any) => u.organization_id)
             .filter((id): id is string => !!id),
         ),
       );
       if (orgIds.length === 1) {
         groupOrgId = orgIds[0]!;
       } else if (orgIds.length > 1) {
-        console.warn(
-          "[NewConversationModal] Cross-organization groups are not fully supported yet; using first organization's ID for the group.",
-        );
+        console.warn(t('chat.crossOrgGroupsNotSupported', 'Cross-organization groups are not fully supported yet; using first organization\'s ID for the group.'));
         groupOrgId = orgIds[0]!;
       }
     }
@@ -206,7 +204,7 @@ export function NewConversationModal({
         onCreated(convId);
       }
     } catch (err) {
-      console.error('Error creating conversation:', err);
+      console.error(t('chat.createConversationError', 'Error creating conversation:'), err);
     } finally {
       setLoading(false);
     }

@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         presence_status,
         is_active,
         is_approved,
-        organizationId,
+        organization_id,
         organizations!inner (
           id,
           name,
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         )
       `)
       .eq('email', data.user?.email || '')
-      .single();
+      .maybeSingle();
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         department: userProfile.department,
         position: userProfile.position,
         employeeType: userProfile.employee_type,
-        organizationId: userProfile.organizationId,
+        organizationId: userProfile.organization_id,
         organizationSlug: userProfile.organizations?.slug,
         organizationName: userProfile.organizations?.name,
         isApproved: userProfile.is_approved,

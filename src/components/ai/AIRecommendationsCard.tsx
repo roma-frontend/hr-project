@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
@@ -120,7 +120,7 @@ export default function AIRecommendationsCard() {
               {loading && !insights ? (
                 <div className="flex items-center gap-2 py-4 justify-center">
                   <ShieldLoader size="xs" variant="inline" />
-                  <span className="text-sm text-(--text-muted)">Analyzing your data...</span>
+                  <span className="text-sm text-(--text-muted)">{t('aiAssistant.analyzingData')}</span>
                 </div>
               ) : (
                 <>
@@ -146,7 +146,7 @@ export default function AIRecommendationsCard() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="w-4 h-4 text-sky-400" />
-                        <p className="text-xs font-semibold text-sky-400">Attendance Patterns</p>
+                        <p className="text-xs font-semibold text-sky-400">{t('aiAssistant.attendancePatterns')}</p>
                       </div>
                       <ul className="space-y-1">
                         {insights.patterns.map((p, i) => (

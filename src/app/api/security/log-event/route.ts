@@ -1,34 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
-/**
- * Verify JWT auth token.
- */
-async function verifyAuth(): Promise<{ userId: string; role: string } | null> {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
-    if (!token) return null;
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return null;
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
 
-    const secret = new TextEncoder().encode(jwtSecret);
-    const { payload } = await jwtVerify(token.value, secret);
-    return { userId: payload.sub as string, role: (payload.role as string) || 'employee' };
-  } catch {
-    return null;
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
   }
+  return { user, profile, supabase: supabaseService };
 }
 
 export async function POST(req: NextRequest) {
-  // SECURITY: Require authentication
-  const auth = await verifyAuth();
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+  const { user: authUser, supabase: supabaseService } = auth;
 
   try {
     const { userId, event, details } = await req.json();
@@ -36,8 +31,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId or event' }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const { error } = await supabase.from('login_attempts').insert({
+    const { error } = await supabaseService.from('login_attempts').insert({
       email: '',
       userid: userId,
       success: false,

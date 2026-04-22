@@ -71,7 +71,7 @@ interface EmployeeNeedingRating {
 }
 
 export default function AttendancePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
   const [selectedEmployee, setSelectedEmployee] = useState<{
@@ -242,7 +242,7 @@ export default function AttendancePage() {
               <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
                 {t('attendance.todaysAttendance')} —{' '}
-                {new Date().toLocaleDateString('en-GB', {
+                {new Date().toLocaleDateString(i18n.language || 'en-GB', {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -302,14 +302,14 @@ export default function AttendancePage() {
                                 className="text-sm font-medium"
                                 style={{ color: 'var(--text-primary)' }}
                               >
-                                {record.user?.name ?? 'Unknown'}
+                                {record.user?.name ?? t('common.unknown', 'Unknown')}
                               </p>
                               <p className="text-xs text-(--text-muted)">
                                 {record.status !== 'absent' && record.checkInTime > 0
-                                  ? `In: ${new Date(record.checkInTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                  ? `In: ${new Date(record.checkInTime).toLocaleTimeString(i18n.language || 'en-GB', { hour: '2-digit', minute: '2-digit' })}`
                                   : ''}
                                 {record.checkOutTime
-                                  ? ` · Out: ${new Date(record.checkOutTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                  ? ` · Out: ${new Date(record.checkOutTime).toLocaleTimeString(i18n.language || 'en-GB', { hour: '2-digit', minute: '2-digit' })}`
                                   : ''}
                                 {record.totalWorkedMinutes
                                   ? ` · ${(record.totalWorkedMinutes / 60).toFixed(1)}h worked`
@@ -520,9 +520,13 @@ export default function AttendancePage() {
 
                         {/* Last record badge */}
                         <div className="shrink-0">
-                          {lastRecord?.status === t('status.checkedIn') ? (
+                            {lastRecord?.status === t('status.checkedIn') ? (
                             <span className="text-xs bg-green-500/20 dark:bg-green-500/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-full font-medium animate-pulse">
-                              ● Active
+                              {t('attendance.activeStatus')}
+                            </span>
+                          ) : lastRecord?.status === t('status.checkedOut') ? (
+                            <span className="text-xs bg-blue-500/20 dark:bg-blue-500/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium">
+                              {t('attendance.doneStatus')}
                             </span>
                           ) : lastRecord?.status === t('status.checkedOut') ? (
                             <span className="text-xs bg-blue-500/20 dark:bg-blue-500/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-medium">

@@ -362,10 +362,10 @@ export default function OrgRequestsPage() {
               style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
             >
               <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-                Reject Request
+                {t('orgRequests.rejectRequest', 'Reject Request')}
               </h3>
               <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                Please provide a reason for rejection (optional):
+                {t('orgRequests.rejectReasonPrompt', 'Please provide a reason for rejection (optional):')}
               </p>
               <textarea
                 value={rejectionReason}

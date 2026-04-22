@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdmin();
+    if (auth instanceof NextResponse) return auth;
+    const { profile: authProfile } = auth;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get('organizationId');
+    const driverId = searchParams.get('driverId');
     const startTime = searchParams.get('startTime');
     const endTime = searchParams.get('endTime');
-
-    if (!organizationId) {
-      return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
-    }
 
     let query = supabase
       .from('driver_schedules')
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
           id,
           name,
           vehicle_info,
-          user_id
+          user_id,
+          organization_id
         ),
         users!driver_schedules_user_id_fkey (
           id,
@@ -29,9 +31,12 @@ export async function GET(request: NextRequest) {
           email
         )
       `)
-      .eq('driverid', organizationId)
       .neq('status', 'cancelled')
       .order('start_time', { ascending: true });
+
+    if (driverId) {
+      query = query.eq('driverid', driverId);
+    }
 
     if (startTime) {
       query = query.gte('start_time', startTime);
@@ -47,7 +52,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const enriched = (schedules || []).map((schedule: any) => ({
+    // Filter by organization in memory since driver_schedules doesn't have org_id
+    const orgSchedules = (schedules || []).filter(
+      (s: any) => s.drivers?.organization_id === authProfile.organization_id
+    );
+
+    const enriched = orgSchedules.map((schedule: any) => ({
       id: schedule.id,
       driverId: schedule.driver_id,
       driverName: schedule.drivers?.name || 'Unknown',

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 const LEAVES_QUERY_KEYS = {
   all: ['leaves'],
@@ -13,16 +14,20 @@ async function fetchLeaves(params?: {
   organizationId?: string;
   status?: string;
   unreadOnly?: boolean;
-}) {
-  const searchParams = new URLSearchParams();
-  if (params?.requesterId) searchParams.set('requesterId', params.requesterId);
-  if (params?.organizationId) searchParams.set('organizationId', params.organizationId);
-  if (params?.status) searchParams.set('status', params.status);
-  if (params?.unreadOnly) searchParams.set('unreadOnly', 'true');
+}, t?: (key: string, fallback: string) => string) {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.requesterId) searchParams.set('requesterId', params.requesterId);
+    if (params?.organizationId) searchParams.set('organizationId', params.organizationId);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.unreadOnly) searchParams.set('unreadOnly', 'true');
 
-  const response = await fetch(`/api/leaves?${searchParams.toString()}`);
-  if (!response.ok) throw new Error('Failed to fetch leaves');
-  return response.json();
+    const response = await fetch(`/api/leaves?${searchParams.toString()}`);
+    if (!response.ok) throw new Error(t?.('hooks.leaves.failedToFetch', 'Failed to fetch leaves') ?? 'Failed to fetch leaves');
+    return response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch leaves');
+  }
 }
 
 export function useLeaves(params?: {
@@ -31,13 +36,14 @@ export function useLeaves(params?: {
   status?: string;
   enabled?: boolean;
 }) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: params?.organizationId
       ? LEAVES_QUERY_KEYS.byOrganization(params.organizationId)
       : params?.requesterId
         ? LEAVES_QUERY_KEYS.byRequester(params.requesterId)
         : LEAVES_QUERY_KEYS.all,
-    queryFn: () => fetchLeaves(params),
+    queryFn: () => fetchLeaves(params, t),
     enabled: params?.enabled ?? true,
     select: (data) => data.leaves || [],
   });
@@ -54,6 +60,7 @@ export function useUnreadLeavesCount(requesterId?: string) {
 
 export function useCreateLeave() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -71,7 +78,7 @@ export function useCreateLeave() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create leave');
+      if (!response.ok) throw new Error(t('hooks.leaves.failedToCreate', 'Failed to create leave'));
       return response.json();
     },
     onSuccess: () => {
@@ -82,6 +89,7 @@ export function useCreateLeave() {
 
 export function useApproveLeave() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -96,10 +104,9 @@ export function useApproveLeave() {
           leaveId: data.leaveId,
           status: 'approved',
           reviewedBy: data.reviewedBy,
-          isRead: true,
         }),
       });
-      if (!response.ok) throw new Error('Failed to approve leave');
+      if (!response.ok) throw new Error(t('hooks.leaves.failedToApprove', 'Failed to approve leave'));
       return response.json();
     },
     onSuccess: () => {
@@ -110,6 +117,7 @@ export function useApproveLeave() {
 
 export function useRejectLeave() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (data: {
@@ -124,10 +132,9 @@ export function useRejectLeave() {
           leaveId: data.leaveId,
           status: 'rejected',
           reviewedBy: data.reviewedBy,
-          isRead: true,
         }),
       });
-      if (!response.ok) throw new Error('Failed to reject leave');
+      if (!response.ok) throw new Error(t('hooks.leaves.failedToReject', 'Failed to reject leave'));
       return response.json();
     },
     onSuccess: () => {
@@ -138,13 +145,14 @@ export function useRejectLeave() {
 
 export function useDeleteLeave() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (leaveId: string) => {
       const response = await fetch(`/api/leaves?leaveId=${leaveId}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error('Failed to delete leave');
+      if (!response.ok) throw new Error(t('hooks.leaves.failedToDelete', 'Failed to delete leave'));
       return response.json();
     },
     onSuccess: () => {
@@ -155,19 +163,12 @@ export function useDeleteLeave() {
 
 export function useMarkLeaveAsRead() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: async (leaveId: string) => {
-      const response = await fetch('/api/leaves', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leaveId,
-          isRead: true,
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to mark leave as read');
-      return response.json();
+    mutationFn: async (_leaveId: string) => {
+      // is_read column doesn't exist in DB — just invalidate cache
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LEAVES_QUERY_KEYS.all });
@@ -189,15 +190,19 @@ async function fetchDriverSchedules(params: {
   organizationId: string;
   startTime: number;
   endTime: number;
-}) {
-  const searchParams = new URLSearchParams();
-  searchParams.set('organizationId', params.organizationId);
-  searchParams.set('startTime', params.startTime.toString());
-  searchParams.set('endTime', params.endTime.toString());
+}, t?: (key: string, fallback: string) => string) {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('organizationId', params.organizationId);
+    searchParams.set('startTime', params.startTime.toString());
+    searchParams.set('endTime', params.endTime.toString());
 
-  const response = await fetch(`/api/driver-schedules?${searchParams.toString()}`);
-  if (!response.ok) throw new Error('Failed to fetch driver schedules');
-  return response.json();
+    const response = await fetch(`/api/driver-schedules?${searchParams.toString()}`);
+    if (!response.ok) throw new Error(t?.('hooks.leaves.failedToFetchDriverSchedules', 'Failed to fetch driver schedules') ?? 'Failed to fetch driver schedules');
+    return response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to fetch driver schedules');
+  }
 }
 
 export function useDriverSchedules(params: {
@@ -206,13 +211,14 @@ export function useDriverSchedules(params: {
   endTime: number;
   enabled?: boolean;
 }) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: DRIVER_SCHEDULES_QUERY_KEYS.byOrganization(
       params.organizationId,
       params.startTime,
       params.endTime,
     ),
-    queryFn: () => fetchDriverSchedules(params),
+    queryFn: () => fetchDriverSchedules(params, t),
     enabled: params.enabled ?? true,
     select: (data) => data.schedules || [],
   });

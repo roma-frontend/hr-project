@@ -8,7 +8,7 @@ import { useMaintenanceMode } from '@/hooks/useAdmin';
 import { useTranslation } from 'react-i18next';
 
 export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [countdownTime, setCountdownTime] = useState<string>('');
@@ -55,11 +55,11 @@ export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }
         const seconds = Math.floor((remaining % 60000) / 1000);
 
         if (hours > 0) {
-          setCountdownTime(`${hours}ч ${minutes}м`);
+          setCountdownTime(`${hours} ${t('common.hours')} ${minutes} ${t('common.minutes')}`);
         } else if (minutes > 0) {
-          setCountdownTime(`${minutes}м ${seconds}с`);
+          setCountdownTime(`${minutes} ${t('common.minutes')} ${seconds} ${t('common.seconds')}`);
         } else {
-          setCountdownTime(`${seconds}с`);
+          setCountdownTime(`${seconds} ${t('common.seconds')}`);
         }
       }
     }, 1000);
@@ -238,7 +238,7 @@ export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }
                 </span>
               </div>
               <p style={{ fontWeight: 600, color: '#ffffff' }}>
-                {new Date(maintenance.startTime).toLocaleString('ru-RU', {
+                {new Date(maintenance.startTime).toLocaleString(i18n.language || 'en-US', {
                   month: 'short',
                   day: 'numeric',
                   hour: '2-digit',

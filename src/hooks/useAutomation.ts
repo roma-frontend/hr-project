@@ -31,12 +31,13 @@ export interface AutomationWorkflow {
 }
 
 export function useAutomationStats() {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['automation', 'stats'],
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-stats' });
       const res = await fetch(`/api/automation?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch automation stats');
+      if (!res.ok) throw new Error(t('hooks.automation.failedToFetchStats', 'Failed to fetch automation stats'));
       const json = await res.json();
       return json.data as AutomationStats;
     },
@@ -44,12 +45,13 @@ export function useAutomationStats() {
 }
 
 export function useRecentTasks(limit = 10) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['automation', 'recent-tasks', limit],
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-recent-tasks', limit: String(limit) });
       const res = await fetch(`/api/automation?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch recent tasks');
+      if (!res.ok) throw new Error(t('hooks.automation.failedToFetchRecentTasks', 'Failed to fetch recent tasks'));
       const json = await res.json();
       return json.data as AutomationTask[];
     },
@@ -57,12 +59,13 @@ export function useRecentTasks(limit = 10) {
 }
 
 export function useActiveWorkflows() {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['automation', 'active-workflows'],
     queryFn: async () => {
       const params = new URLSearchParams({ action: 'get-active-workflows' });
       const res = await fetch(`/api/automation?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch active workflows');
+      if (!res.ok) throw new Error(t('hooks.automation.failedToFetchActiveWorkflows', 'Failed to fetch active workflows'));
       const json = await res.json();
       return json.data as AutomationWorkflow[];
     },
@@ -76,7 +79,7 @@ export function useRunAutomation() {
     mutationFn: async () => {
       const params = new URLSearchParams({ action: 'run-automation' });
       const res = await fetch(`/api/automation?${params}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to run automation');
+      if (!res.ok) throw new Error(t('hooks.automation.failedToRun', 'Failed to run automation'));
       const json = await res.json();
       return json.data;
     },
@@ -101,7 +104,7 @@ export function useToggleWorkflow() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workflowId }),
       });
-      if (!res.ok) throw new Error('Failed to toggle workflow');
+      if (!res.ok) throw new Error(t('hooks.automation.failedToToggleWorkflow', 'Failed to toggle workflow'));
       const json = await res.json();
       return json.data;
     },

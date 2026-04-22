@@ -1,21 +1,37 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { supabase } from '@/lib/supabase/client';
 
 interface GoogleSignInButtonProps {
   onOAuthStart?: () => void;
 }
 
 export function GoogleSignInButton({ onOAuthStart }: GoogleSignInButtonProps) {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     setIsLoading(true);
     onOAuthStart?.();
     try {
-      // Redirect to Supabase Google OAuth via our custom API route
-      window.location.href = '/api/auth/[...nextauth]?provider=google';
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error('Error signing in:', error);
       setIsLoading(false);
@@ -37,7 +53,7 @@ export function GoogleSignInButton({ onOAuthStart }: GoogleSignInButtonProps) {
       {isLoading ? (
         <>
           <ShieldLoader size="sm" variant="inline" />
-          <span>Signing in...</span>
+          <span>{t('auth.signingIn', 'Signing in...')}</span>
         </>
       ) : (
         <>
@@ -59,7 +75,7 @@ export function GoogleSignInButton({ onOAuthStart }: GoogleSignInButtonProps) {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          <span>Continue with Google</span>
+          <span>{t('auth.continueWithGoogle', 'Continue with Google')}</span>
         </>
       )}
     </button>

@@ -3,6 +3,7 @@ import Image from 'next/image';
 
 import { useTranslation } from 'react-i18next';
 import React from 'react';
+import i18n from '@/i18n/config';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import {
   X,
@@ -51,7 +52,7 @@ interface AttendanceDetailModalProps {
 }
 
 function formatTime(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString('en-GB', {
+  return new Date(timestamp).toLocaleTimeString(i18n.language || 'en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -133,9 +134,9 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   )}
                 </div>
                 <div className="pb-1">
-                  <h2 className="text-xl font-bold text-white">{record.user?.name ?? 'Unknown'}</h2>
+                  <h2 className="text-xl font-bold text-white">{record.user?.name ?? t('attendanceExtra.unknown')}</h2>
                   <p className="text-white/70 text-sm">
-                    {record.user?.position ?? record.user?.role ?? 'Employee'}
+                    {record.user?.position ?? record.user?.role ?? t('attendanceExtra.employee')}
                   </p>
                 </div>
               </div>
@@ -147,7 +148,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                   <Calendar className="w-4 h-4" />
-                  {new Date(record.date).toLocaleDateString('en-GB', {
+                  {new Date(record.date).toLocaleDateString(i18n.language || 'en-GB', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -156,27 +157,27 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 </div>
                 <div className="flex gap-2">
                   {record.status === 'checked_in' && (
-                    <Badge className="bg-green-500 text-white">🟢 Active</Badge>
+                    <Badge className="bg-green-500 text-white">🟢 {t('attendanceExtra.active')}</Badge>
                   )}
                   {record.status === 'checked_out' && (
-                    <Badge className="bg-blue-500 text-white">✅ Done</Badge>
+                    <Badge className="bg-blue-500 text-white">✅ {t('attendanceExtra.done')}</Badge>
                   )}
-                  {record.status === 'absent' && <Badge variant="destructive">❌ Absent</Badge>}
+                  {record.status === 'absent' && <Badge variant="destructive">❌ {t('attendanceExtra.absent')}</Badge>}
                 </div>
               </div>
 
               {/* Timeline */}
               <div className="rounded-xl p-4 space-y-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-500" />
-                  Time Timeline
-                </h3>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    {t('attendanceExtra.timeTimeline')}
+                  </h3>
                 <div className="flex items-center gap-3">
                   {/* Check In */}
                   <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-center gap-2 mb-1">
                       <LogIn className="w-4 h-4 text-green-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Check In</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{t('attendanceExtra.checkIn')}</span>
                     </div>
                     <p className="text-lg font-bold text-green-500">
                       {record.checkInTime ? formatTime(record.checkInTime) : '—'}
@@ -184,13 +185,13 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                     {record.isLate && (
                       <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
-                        Late by {record.lateMinutes} min
+                        {t('attendanceExtra.lateBy', { count: record.lateMinutes })}
                       </p>
                     )}
                     {!record.isLate && record.checkInTime && (
                       <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        On time
+                        {t('attendanceExtra.onTime')}
                       </p>
                     )}
                   </div>
@@ -202,7 +203,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-center gap-2 mb-1">
                       <LogOut className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Check Out</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{t('attendanceExtra.checkOut')}</span>
                     </div>
                     <p className="text-lg font-bold text-blue-500">
                       {record.checkOutTime ? formatTime(record.checkOutTime) : '—'}
@@ -210,17 +211,17 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                     {record.isEarlyLeave && record.earlyLeaveMinutes && (
                       <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
-                        Early by {record.earlyLeaveMinutes} min
+                        {t('attendanceExtra.earlyBy', { count: record.earlyLeaveMinutes })}
                       </p>
                     )}
                     {record.checkOutTime && !record.isEarlyLeave && (
                       <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Full day
+                        {t('attendanceExtra.fullDay')}
                       </p>
                     )}
                     {!record.checkOutTime && record.status === 'checked_in' && (
-                      <p className="text-xs text-green-500 mt-1">Still working...</p>
+                      <p className="text-xs text-green-500 mt-1">{t('attendanceExtra.stillWorking')}</p>
                     )}
                   </div>
                 </div>
@@ -230,7 +231,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   <div>
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                       <span className="flex items-center gap-1">
-                        <Timer className="w-3 h-3" /> Worked
+                        <Timer className="w-3 h-3" /> {t('attendanceExtra.worked')}
                       </span>
                       <span className="font-semibold text-gray-800 dark:text-gray-100">
                         {workedHours}h / {expectedHours}h
@@ -256,28 +257,28 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
 
               {/* Department + Supervisor */}
               <div className="flex flex-wrap gap-4">
-                {record.user?.department && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <Building2 className="w-4 h-4" />
-                    {record.user.department} department
-                  </div>
-                )}
-                {(record.user as any)?.supervisorName && (
-                  <div className="flex items-center gap-2 text-sm text-blue-500">
-                    <User className="w-4 h-4" />
-                    Supervisor:{' '}
-                    <span className="font-semibold">{(record.user as any).supervisorName}</span>
-                  </div>
-                )}
+                    {record.user?.department && (
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                        <Building2 className="w-4 h-4" />
+                        {t('attendanceExtra.department', { department: record.user.department })}
+                      </div>
+                    )}
+                    {(record.user as any)?.supervisorName && (
+                      <div className="flex items-center gap-2 text-sm text-blue-500">
+                        <User className="w-4 h-4" />
+                        {t('attendanceExtra.supervisor')}:{' '}
+                        <span className="font-semibold">{(record.user as any).supervisorName}</span>
+                      </div>
+                    )}
               </div>
 
               {/* Monthly Stats */}
               {monthlyStats && (
                 <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
-                    <TrendingUp className="w-4 h-4 text-sky-400" />
-                    This Month
-                  </h3>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-4 h-4 text-sky-400" />
+                      {t('attendanceExtra.thisMonth')}
+                    </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="text-center">
                       <p className="text-xl font-bold text-blue-500">{monthlyStats.totalDays}</p>
@@ -306,15 +307,15 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
               {/* Recent 7 days */}
               {recentRecords && recentRecords.length > 0 && (
                 <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
-                    <Calendar className="w-4 h-4 text-blue-500" />
-                    Last 7 Days
-                  </h3>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+                      <Calendar className="w-4 h-4 text-blue-500" />
+                      {t('attendanceExtra.last7Days')}
+                    </h3>
                   <div className="space-y-2">
                     {recentRecords.map((r: any) => (
                       <div key={r.id} className="flex items-center justify-between text-sm">
                         <span className="text-gray-500 dark:text-gray-400">
-                          {new Date(r.date).toLocaleDateString('en-GB', {
+                          {new Date(r.date).toLocaleDateString(i18n.language || 'en-GB', {
                             weekday: 'short',
                             day: 'numeric',
                             month: 'short',
@@ -337,7 +338,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                           )}
                           {r.status === 'checked_in' && (
                             <Badge className="bg-green-500 text-white text-xs py-0">
-                              {t('statuses.active')}Active
+                              {t('statuses.active')} {t('attendanceExtra.active')}
                             </Badge>
                           )}
                         </div>

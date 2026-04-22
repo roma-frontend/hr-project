@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -15,11 +17,11 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const type = searchParams.get('type');
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest) {
       const hours = 24;
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
-      const { data: attempts } = await supabase
+      const { data: attempts } = await supabaseService
         .from('login_attempts')
         .select('*')
         .gte('created_at', since);
@@ -50,15 +52,15 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'leaves') {
-      let query = supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
+      let query = supabaseService.from('leave_requests').select('*').order('created_at', { ascending: false });
 
-      if (!isSuperadmin && userProfile.organizationId) {
-        query = query.eq('organizationId', userProfile.organizationId);
+      if (!isSuperadmin && userProfile.organization_id) {
+        query = query.eq('organization_id', userProfile.organization_id);
       }
 
       const { data: leaves } = await query;
 
-      const { data: users } = await supabase.from('users').select('id, name, avatar_url, role');
+      const { data: users } = await supabaseService.from('users').select('id, name, avatar_url, role');
 
       const enrichedLeaves = (leaves || []).map((leave: any) => {
         const user = users?.find((u: any) => u.id === leave.userid);
@@ -78,10 +80,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'users') {
-      let query = supabase.from('users').select('*');
+      let query = supabaseService.from('users').select('*');
 
-      if (!isSuperadmin && userProfile.organizationId) {
-        query = query.eq('organizationId', userProfile.organizationId);
+      if (!isSuperadmin && userProfile.organization_id) {
+        query = query.eq('organization_id', userProfile.organization_id);
       }
 
       const { data: users } = await query;
@@ -91,7 +93,7 @@ export async function GET(req: NextRequest) {
         .map((u: any) => ({
           ...u,
           id: u.id,
-          organizationId: u.organization_id,
+          organization_id: u.organization_id,
           isActive: u.is_active,
           isApproved: u.is_approved,
           paidLeaveBalance: u.paid_leave_balance || 0,
@@ -103,7 +105,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'user-leaves' && user.id) {
-      const { data: userLeaves } = await supabase
+      const { data: userLeaves } = await supabaseService
         .from('leave_requests')
         .select('*')
         .eq('userid', user.id)
@@ -122,7 +124,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'user-data' && user.id) {
-      const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
+      const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
 
       if (!userData) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -131,7 +133,7 @@ export async function GET(req: NextRequest) {
         const mapped = {
           ...userData,
           id: userData.id,
-          organizationId: userData.organizationId,
+          organizationId: userData.organization_id,
         paidLeaveBalance: userData.paid_leave_balance || 0,
         sickLeaveBalance: userData.sick_leave_balance || 0,
         familyLeaveBalance: userData.family_leave_balance || 0,
@@ -149,7 +151,7 @@ export async function GET(req: NextRequest) {
         .eq('employee_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!rating) {
         return NextResponse.json(null);
@@ -159,7 +161,7 @@ export async function GET(req: NextRequest) {
         .from('users')
         .select('id, name')
         .eq('id', rating.supervisorid)
-        .single();
+        .maybeSingle();
 
       const mapped = {
         ...rating,
@@ -183,7 +185,7 @@ export async function GET(req: NextRequest) {
       const { data: records } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userId', user.id);
+        .eq('userid', user.id);
 
       const monthRecords = (records || []).filter((r: any) => r.date.startsWith(month));
 
@@ -223,20 +225,20 @@ export async function GET(req: NextRequest) {
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       const totalDaysTaken = (userLeaves || [])
         .filter((l: any) => l.status === 'approved')
-        .reduce((sum: number, l: any) => sum + l.days, 0);
+        .reduce((sum: number, l: any) => sum + (l.total_days || 0), 0);
 
       const pendingDays = (userLeaves || [])
         .filter((l: any) => l.status === 'pending')
-        .reduce((sum: number, l: any) => sum + l.days, 0);
+        .reduce((sum: number, l: any) => sum + (l.total_days || 0), 0);
 
       const leavesByType = (userLeaves || []).reduce(
         (acc: any, leave: any) => {
           const type = leave.type;
-          acc[type] = (acc[type] || 0) + (leave.status === 'approved' ? leave.days : 0);
+          acc[type] = (acc[type] || 0) + (leave.status === 'approved' ? leave.total_days : 0);
           return acc;
         },
         {} as Record<string, number>
@@ -250,7 +252,7 @@ export async function GET(req: NextRequest) {
         userLeaves: (userLeaves || []).map((l: any) => ({
           ...l,
           id: l.id,
-          userId: l.user_id,
+          userId: l.userid,
           startDate: l.start_date,
           endDate: l.end_date,
           createdAt: l.created_at,
@@ -271,7 +273,7 @@ export async function GET(req: NextRequest) {
       const { data: records } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userId', user.id);
+        .eq('userid', user.id);
 
       const monthRecords = (records || []).filter((r: any) => r.date.startsWith(month));
 
@@ -307,14 +309,14 @@ export async function GET(req: NextRequest) {
       const { data: records } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userId', user.id)
+        .eq('userid', user.id)
         .order('created_at', { ascending: false })
         .limit(limit);
 
       const mapped = (records || []).map((r: any) => ({
         ...r,
         id: r.id,
-        userId: r.user_id,
+        userId: r.userid,
         checkInTime: r.check_in_time,
         checkOutTime: r.check_out_time,
         totalWorkedMinutes: r.total_worked_minutes,
@@ -340,7 +342,7 @@ export async function GET(req: NextRequest) {
       const { data: records } = await supabase
         .from('time_tracking')
         .select('*')
-        .eq('userId', userId);
+        .eq('userid', userId);
 
       const filtered = (records || []).filter((r: any) => r.date.startsWith(month));
       const sorted = filtered.sort((a: any, b: any) => b.date.localeCompare(a.date));
@@ -348,7 +350,7 @@ export async function GET(req: NextRequest) {
       const mapped = sorted.map((r: any) => ({
         ...r,
         id: r.id,
-        userId: r.user_id,
+        userId: r.userid,
         checkInTime: r.check_in_time,
         checkOutTime: r.check_out_time,
         totalWorkedMinutes: r.total_worked_minutes,

@@ -268,9 +268,9 @@ export default function OrganizationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('filters.allPlans')}</SelectItem>
-                    <SelectItem value="starter">Starter</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                    <SelectItem value="starter">{t('superadmin.organizations.planStarter', 'Starter')}</SelectItem>
+                    <SelectItem value="professional">{t('superadmin.organizations.planProfessional', 'Professional')}</SelectItem>
+                    <SelectItem value="enterprise">{t('superadmin.organizations.planEnterprise', 'Enterprise')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -279,8 +279,8 @@ export default function OrganizationsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
-                    <SelectItem value="active">{t('statuses.active')}</SelectItem>
-                    <SelectItem value="inactive">{t('statuses.inactive')}</SelectItem>
+                    <SelectItem value="active">{t('superadmin.organizations.statusActive', 'Active')}</SelectItem>
+                    <SelectItem value="inactive">{t('superadmin.organizations.statusInactive', 'Inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
                 {selectedOrgId && (

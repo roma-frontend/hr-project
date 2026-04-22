@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function SmartReply({ message, context, onSelect, lang = 'en' }: Props) {
+  const { t } = useTranslation();
   const [replies, setReplies] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
@@ -37,7 +39,11 @@ export function SmartReply({ message, context, onSelect, lang = 'en' }: Props) {
       const fallbacks: Record<string, string[]> = {
         ru: ['👍 Понял!', 'Можете уточнить?', 'Сделаю позже'],
         hy: ['👍 Հասկացա!', 'Կարող եք պարզաբանել:', 'Կանեմ ավելի ուշ'],
-        en: ['👍 Got it!', 'Can you clarify?', "I'll do it later"],
+        en: [
+          t('chat.smartReply.fallbackGotIt'),
+          t('chat.smartReply.fallbackClarify'),
+          t('chat.smartReply.fallbackLater'),
+        ],
       };
       const key = lang.startsWith('ru') ? 'ru' : lang.startsWith('hy') ? 'hy' : 'en';
       setReplies(fallbacks[key]!);
@@ -60,7 +66,7 @@ export function SmartReply({ message, context, onSelect, lang = 'en' }: Props) {
           }}
         >
           <Sparkles className="sm:w-2.5 w-3.5 sm:h-2.5 h-3.5" />
-          Smart Reply
+          {t('chat.smartReply.button')}
         </button>
       )}
       {loading && (
@@ -69,7 +75,7 @@ export function SmartReply({ message, context, onSelect, lang = 'en' }: Props) {
           style={{ color: 'var(--text-muted)' }}
         >
           <ShieldLoader size="xs" variant="inline" />
-          Thinking…
+          {t('chat.smartReply.thinking')}
         </div>
       )}
       {replies.map((r, i) => (

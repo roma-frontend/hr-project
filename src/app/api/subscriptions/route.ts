@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       .from('subscriptions')
       .select('*')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
     if (error || !subscription) {
       return NextResponse.json({

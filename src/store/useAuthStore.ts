@@ -39,85 +39,63 @@ interface AuthState {
 }
 
 async function fetchUserProfile(supabaseUserId: string, userEmail?: string): Promise<UserProfile | null> {
-  // First try by ID (primary key match)
-  let { data, error } = await supabase
-    .from('users')
-    .select(`
-      id,
-      name,
-      email,
-      role,
-      employee_type,
-      department,
-      position,
-      phone,
-      avatar_url,
-      presence_status,
-      is_active,
-      is_approved,
-      "organizationId",
-      organizations (
-        id,
-        name,
-        slug
-      )
-    `)
-    .eq('id', supabaseUserId)
-    .maybeSingle();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const params = new URLSearchParams();
+    if (supabaseUserId) params.set('userId', supabaseUserId);
+    if (userEmail) params.set('email', userEmail);
 
-  // Fallback: try by email
-  if (!data && userEmail) {
-    const normalizedEmail = userEmail.toLowerCase().trim();
-    const { data: emailData } = await supabase
-      .from('users')
-      .select(`
-        id,
-        name,
-        email,
-        role,
-        employee_type,
-        department,
-        position,
-        phone,
-        avatar_url,
-        presence_status,
-        is_active,
-        is_approved,
-        "organizationId",
-        organizations (
-          id,
-          name,
-          slug
-        )
-      `)
-      .eq('email', normalizedEmail)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const url = `/api/user/profile?${params.toString()}`;
+    console.log('[fetchUserProfile] Fetching from:', url);
 
-    if (emailData) {
-      data = emailData;
+    const response = await fetch(url, { signal: controller.signal });
+    console.log('[fetchUserProfile] Response status:', response.status);
+    
+    const responseText = await response.text();
+    console.log('[fetchUserProfile] Response body:', responseText);
+    
+    if (!response.ok) {
+      console.error('[fetchUserProfile] API error:', response.status, responseText);
+      return null;
     }
+
+    const data = JSON.parse(responseText);
+    console.log('[fetchUserProfile] Parsed data:', data);
+    
+    if (!data || data.error) {
+      console.error('[fetchUserProfile] No profile found:', data?.error);
+      return null;
+    }
+
+    const org = data.organization;
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      avatar: data.avatar_url || undefined,
+      department: data.department || undefined,
+      position: data.position || undefined,
+      employeeType: data.employee_type || undefined,
+      organizationId: data.organization_id || undefined,
+      organizationSlug: org?.slug || undefined,
+      organizationName: org?.name || undefined,
+      isApproved: data.is_approved,
+      phone: data.phone || undefined,
+      presenceStatus: data.presence_status || undefined,
+    };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('[fetchUserProfile] Request timed out after 10s');
+    } else {
+      console.error('[fetchUserProfile] Error:', error);
+    }
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (!data) return null;
-
-  return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    role: data.role,
-    avatar: data.avatar_url || undefined,
-    department: data.department || undefined,
-    position: data.position || undefined,
-    employeeType: data.employee_type || undefined,
-    organizationId: data.organizationId || undefined,
-    organizationSlug: data.organizations?.slug || undefined,
-    organizationName: data.organizations?.name || undefined,
-    isApproved: data.is_approved,
-    phone: data.phone || undefined,
-    presenceStatus: data.presence_status || undefined,
-  };
 }
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
@@ -129,7 +107,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   isLoading: true,
 
   setUser: (user: UserProfile) => {
-    const needsOnboarding = !user.organizationId || !user.isApproved;
+    const needsOnboarding = user.role !== 'superadmin' && (!user.organizationId || !user.isApproved);
     set({ user, needsOnboarding });
   },
 
@@ -142,58 +120,179 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   login: (user: UserProfile) => {
-    const needsOnboarding = !user.organizationId || !user.isApproved;
+    const needsOnboarding = user.role !== 'superadmin' && (!user.organizationId || !user.isApproved);
     set({ user, isAuthenticated: true, needsOnboarding });
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    console.log('[useAuthStore.logout] Starting logout...');
+    
+    // Clear localStorage first (before any async operations)
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    console.log('[useAuthStore.logout] Cleared all localStorage keys');
+    
+    // Try to sign out from Supabase (but don't wait for it)
+    supabase.auth.signOut().catch(error => {
+      console.error('[useAuthStore.logout] signOut error (non-fatal):', error);
+    });
+    
+    // Clear state immediately
     set({
       user: null,
       supabaseUser: null,
       session: null,
       isAuthenticated: false,
       needsOnboarding: false,
+      isLoading: false,
     });
+    
+    console.log('[useAuthStore.logout] Logout completed');
   },
 
   checkOnboarding: () => {
     const { user } = get();
-    const needsOnboarding = !user?.organizationId || !user?.isApproved;
+    const needsOnboarding = user?.role !== 'superadmin' && (!user?.organizationId || !user?.isApproved);
     set({ needsOnboarding });
   },
 
   initialize: async () => {
+    console.log('[useAuthStore.initialize] START - Checking current state...');
+    
+    // Debug: Check localStorage for session tokens
+    const allStorageKeys = Object.keys(localStorage);
+    console.log('[useAuthStore.initialize] ALL localStorage keys:', allStorageKeys);
+    
+    // Log the actual content of each auth-related key
+    allStorageKeys.forEach(key => {
+      if (key.includes('sb-') || key.includes('auth') || key.includes('supabase') || key.includes('token')) {
+        try {
+          const val = localStorage.getItem(key);
+          if (val) {
+            const parsed = JSON.parse(val);
+            console.log(`[useAuthStore.initialize] Key "${key}":`, {
+              hasAccessToken: !!parsed.access_token,
+              hasRefreshToken: !!parsed.refresh_token,
+              userId: parsed.user?.id,
+              expiresAt: parsed.expires_at,
+            });
+          }
+        } catch (e) {
+          console.log(`[useAuthStore.initialize] Key "${key}" parse error:`, e);
+        }
+      }
+    });
+    
+    // Check what key Supabase is using
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const projectRef = supabaseUrl.split('//')[1]?.split('.')[0] || 'supabase';
+    const expectedKey = `sb-${projectRef}-auth-token`;
+    console.log('[useAuthStore.initialize] Expected Supabase key:', expectedKey);
+    console.log('[useAuthStore.initialize] Value at expected key:', localStorage.getItem(expectedKey));
+    
     // Don't reinitialize if we already have a valid user (e.g., from login page)
     const current = get();
+    console.log('[useAuthStore.initialize] Current state:', {
+      hasUser: !!current.user,
+      isAuthenticated: current.isAuthenticated,
+      isLoading: current.isLoading,
+    });
+    
     if (current.user && current.isAuthenticated) {
+      console.log('[useAuthStore.initialize] Already authenticated, skipping');
       set({ isLoading: false });
       return;
     }
 
     set({ isLoading: true });
 
+    // Try to get session from Supabase client first
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    if (session?.user) {
-      set({ session, supabaseUser: session.user });
+    console.log('[useAuthStore.initialize] Supabase session:', session ? { userId: session.user.id, email: session.user.email } : null);
 
-      const profile = await fetchUserProfile(session.user.id, session.user.email);
+    // Fallback: read session directly from localStorage if Supabase client returns null
+    let effectiveSession = session;
+    if (!effectiveSession) {
+      console.log('[useAuthStore.initialize] Supabase returned null, trying localStorage fallback...');
+      const storedSession = localStorage.getItem(expectedKey);
+      if (storedSession) {
+        try {
+          const parsed = JSON.parse(storedSession);
+          if (parsed.access_token && parsed.user) {
+            console.log('[useAuthStore.initialize] Found session in localStorage, using it directly');
+            effectiveSession = {
+              access_token: parsed.access_token,
+              refresh_token: parsed.refresh_token,
+              token_type: parsed.token_type || 'bearer',
+              expires_in: parsed.expires_in || 3600,
+              expires_at: parsed.expires_at,
+              user: parsed.user,
+            } as Session;
+          }
+        } catch (e) {
+          console.error('[useAuthStore.initialize] Failed to parse localStorage session:', e);
+        }
+      }
+    }
+
+    console.log('[useAuthStore.initialize] Effective session:', effectiveSession ? { userId: effectiveSession.user.id, email: effectiveSession.user.email } : null);
+
+    if (effectiveSession?.user) {
+      set({ session: effectiveSession, supabaseUser: effectiveSession.user });
+
+      const profile = await fetchUserProfile(effectiveSession.user.id, effectiveSession.user.email);
+      console.log('[useAuthStore.initialize] Profile:', profile ? { id: profile.id, name: profile.name, email: profile.email, orgId: profile.organizationId } : null);
 
       if (profile) {
-        const needsOnboarding = !profile.organizationId || !profile.isApproved;
+        const needsOnboarding = profile.role !== 'superadmin' && (!profile.organizationId || !profile.isApproved);
         set({
           user: profile,
           isAuthenticated: true,
           needsOnboarding,
           isLoading: false,
         });
+        console.log('[useAuthStore.initialize] SUCCESS - User authenticated:', profile.name, profile.role);
       } else {
+        // Profile not found - user may need to complete onboarding or there's a data issue
+        // Set isLoading to false to prevent infinite loading
+        console.error('[useAuthStore.initialize] Profile not found for user:', effectiveSession.user.id, effectiveSession.user.email);
         set({ isLoading: false });
       }
     } else {
+      // No session - user needs to login
+      console.log('[useAuthStore.initialize] No session found');
+      set({ isLoading: false });
+    }
+
+    if (session?.user) {
+      set({ session, supabaseUser: session.user });
+
+      const profile = await fetchUserProfile(session.user.id, session.user.email);
+      console.log('[useAuthStore.initialize] Profile:', profile ? { id: profile.id, name: profile.name, email: profile.email, orgId: profile.organizationId } : null);
+
+      if (profile) {
+        const needsOnboarding = profile.role !== 'superadmin' && (!profile.organizationId || !profile.isApproved);
+        set({
+          user: profile,
+          isAuthenticated: true,
+          needsOnboarding,
+          isLoading: false,
+        });
+        console.log('[useAuthStore.initialize] SUCCESS - User authenticated:', profile.name, profile.role);
+      } else {
+        // Profile not found - user may need to complete onboarding or there's a data issue
+        // Set isLoading to false to prevent infinite loading
+        console.error('[useAuthStore.initialize] Profile not found for user:', session.user.id, session.user.email);
+        set({ isLoading: false });
+      }
+    } else {
+      // No session - user needs to login
+      console.log('[useAuthStore.initialize] No session found');
       set({ isLoading: false });
     }
 
@@ -204,7 +303,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         const profile = await fetchUserProfile(session.user.id, session.user.email);
 
         if (profile) {
-          const needsOnboarding = !profile.organizationId || !profile.isApproved;
+          const needsOnboarding = profile.role !== 'superadmin' && (!profile.organizationId || !profile.isApproved);
           set({
             user: profile,
             isAuthenticated: true,
@@ -226,7 +325,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
         const profile = await fetchUserProfile(session.user.id, session.user.email);
         if (profile) {
-          const needsOnboarding = !profile.organizationId || !profile.isApproved;
+          const needsOnboarding = profile.role !== 'superadmin' && (!profile.organizationId || !profile.isApproved);
           set({ user: profile, needsOnboarding });
         }
       }

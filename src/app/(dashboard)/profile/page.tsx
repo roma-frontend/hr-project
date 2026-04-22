@@ -66,7 +66,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user?.id) {
-      console.error('[Profile] No user ID');
+      console.error(t('profile.noUserId', 'No user ID'));
       return;
     }
 
@@ -97,13 +97,13 @@ export default function ProfilePage() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to update session');
+        throw new Error(error.error || t('profile.failedToUpdateSession', 'Failed to update session'));
       }
 
       setName(newName);
       setEmail(newEmail);
     } catch (err) {
-      console.error('[Profile] Save error:', err);
+      console.error(t('profile.saveError', 'Profile save error:'), err);
     } finally {
       setSaving(false);
     }
@@ -128,7 +128,7 @@ export default function ProfilePage() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to delete avatar');
+        throw new Error(error.error || t('profile.failedToDeleteAvatar', 'Failed to delete avatar'));
       }
 
       login({ ...user, avatar: undefined });
@@ -136,8 +136,8 @@ export default function ProfilePage() {
       toast.success(t('toasts.profilePictureDeleted'));
       setShowDeleteDialog(false);
     } catch (err) {
-      console.error('Delete avatar error:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to delete avatar');
+      console.error(t('profile.deleteAvatarError', 'Delete avatar error:'), err);
+      toast.error(err instanceof Error ? t('profile.error', { defaultValue: err.message }) : t('profile.failedToDeleteAvatar', 'Failed to delete avatar'));
     } finally {
       setDeleting(false);
     }
@@ -149,7 +149,7 @@ export default function ProfilePage() {
         month: 'long',
         day: 'numeric',
       })
-    : 'N/A';
+    : t('common.notAvailable', 'N/A');
 
   return (
     <motion.div
@@ -260,7 +260,7 @@ export default function ProfilePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   className="pl-10"
-                  placeholder="john@example.com"
+                  placeholder={t('profile.emailPlaceholder', 'john@example.com')}
                 />
               </div>
             </div>
@@ -275,7 +275,7 @@ export default function ProfilePage() {
                   onChange={(e) => setPhone(e.target.value)}
                   type="tel"
                   className="pl-10"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder={t('profile.phonePlaceholder', '+1 (555) 123-4567')}
                 />
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
                 <Input
-                  value={user?.department ?? 'Not assigned'}
+                  value={user?.department ?? t('common.notAssigned', 'Not assigned')}
                   disabled
                   className="pl-10 opacity-60"
                 />
@@ -342,7 +342,7 @@ export default function ProfilePage() {
               <div className="relative">
                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
                 <Input
-                  value={user?.id ? user.id.slice(0, 16) + '...' : 'N/A'}
+                  value={user?.id ? user.id.slice(0, 16) + '...' : t('common.notAvailable', 'N/A')}
                   disabled
                   className="pl-10 opacity-60 font-mono text-xs"
                 />

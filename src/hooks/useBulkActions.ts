@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface LeaveRequest {
   id: string;
@@ -16,11 +17,12 @@ interface LeaveRequest {
 }
 
 export function useAllLeaves(requesterId: string) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['leaves', 'all', requesterId],
     queryFn: async () => {
       const res = await fetch(`/api/leaves?requesterId=${requesterId}`);
-      if (!res.ok) throw new Error('Failed to fetch leaves');
+      if (!res.ok) throw new Error(t('hooks.bulkactions.failedToFetchLeaves', 'Failed to fetch leaves'));
       const data = await res.json();
       return data.leaves as LeaveRequest[];
     },
@@ -30,6 +32,7 @@ export function useAllLeaves(requesterId: string) {
 
 export function useBulkApproveLeaves() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async ({
       leaveIds,
@@ -45,7 +48,7 @@ export function useBulkApproveLeaves() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve', leaveIds, reviewerId, comment }),
       });
-      if (!res.ok) throw new Error('Failed to bulk approve leaves');
+      if (!res.ok) throw new Error(t('hooks.bulkactions.failedToBulkApprove', 'Failed to bulk approve leaves'));
       return res.json();
     },
     onSuccess: () => {
@@ -56,6 +59,7 @@ export function useBulkApproveLeaves() {
 
 export function useBulkRejectLeaves() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async ({
       leaveIds,
@@ -71,7 +75,7 @@ export function useBulkRejectLeaves() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'reject', leaveIds, reviewerId, comment }),
       });
-      if (!res.ok) throw new Error('Failed to bulk reject leaves');
+      if (!res.ok) throw new Error(t('hooks.bulkactions.failedToBulkReject', 'Failed to bulk reject leaves'));
       return res.json();
     },
     onSuccess: () => {

@@ -25,6 +25,8 @@ import {
   useAddFavorite,
   useRemoveFavorite,
 } from '@/hooks/useDrivers';
+import { format, type Locale } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 
 interface VehicleInfo {
   model: string;
@@ -52,10 +54,16 @@ interface TripRequest {
 }
 
 export default function DriversPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
   const { selectedOrgId: storeSelectedOrgId } = useOrgSelectorStore();
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [capacityFilter, setCapacityFilter] = useState<number | null>(null);
@@ -87,8 +95,8 @@ export default function DriversPage() {
   }, [isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated && user && !orgId) router.push('/onboarding/select-organization');
-  }, [isAuthenticated, user, orgId, router]);
+    if (isAuthenticated && user && !isSuperadmin && !effectiveOrgId) router.push('/onboarding/select-organization');
+  }, [isAuthenticated, user, isSuperadmin, effectiveOrgId, router]);
 
   const { data: availableDrivers, isLoading: isLoadingDrivers } = useAvailableDrivers(effectiveOrgId);
   const { data: myRequests, isLoading: isLoadingRequests } = useMyRequests(userId);
@@ -125,12 +133,12 @@ export default function DriversPage() {
         totalTrips: d.totalTrips ?? 0,
         isOnShift: d.isOnShift,
         vehicleInfo: d.vehicleInfo ?? {
-          model: 'Unknown',
+          model: t('common.unknown', 'Unknown'),
           capacity: 4,
-          plateNumber: 'N/A',
+          plateNumber: t('common.na', 'N/A'),
         },
       })),
-    [availableDrivers],
+    [availableDrivers, t],
   );
 
   const activeRequests = useMemo(
@@ -162,11 +170,11 @@ export default function DriversPage() {
         startTime: trip.schedule?.startTime ?? '08:00',
         endTime: trip.schedule?.endTime ?? '09:00',
         tripInfo: {
-          from: trip.tripInfo?.from ?? 'Unknown',
-          to: trip.tripInfo?.to ?? 'Unknown',
+          from: trip.tripInfo?.from ?? t('common.unknown', 'Unknown'),
+          to: trip.tripInfo?.to ?? t('common.unknown', 'Unknown'),
         },
       })),
-    [recurringTrips],
+    [recurringTrips, t],
   );
 
   const stats = useMemo(
@@ -250,7 +258,7 @@ export default function DriversPage() {
         }
       } catch (e: unknown) {
         setOptimisticFavoriteIds(optimisticFavoriteIds);
-        toast.error(e instanceof Error ? e.message : t('driver.failed', 'Failed'));
+        toast.error(e instanceof Error ? t('driver.error', { defaultValue: e.message }) : t('driver.failed', 'Failed'));
       }
     },
     [userId, effectiveOrgId, optimisticFavoriteIds, addFavoriteMutation, removeFavoriteMutation, t],
@@ -320,7 +328,7 @@ export default function DriversPage() {
             maxTripsPerDay: data.maxTripsPerDay || 3,
           }),
         });
-        if (!res.ok) throw new Error('Failed to register driver');
+        if (!res.ok) throw new Error(t('driver.failedToRegister', 'Failed to register driver'));
         toast.success(t('driver.registered', 'Registered as driver!'));
         setShowRegisterModal(false);
         setSelectedDriverCandidate(null);

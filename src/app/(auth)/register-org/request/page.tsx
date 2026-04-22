@@ -37,7 +37,7 @@ const passwordStrength = (pwd: string) => {
 };
 
 const STRENGTH_COLORS = ['#ef4444', '#f59e0b', '#22c55e', '#10b981'];
-const STRENGTH_LABELS = ['Weak', 'Fair', 'Good', 'Strong'];
+const STRENGTH_LABELS = ['Weak', 'Fair', 'Good', 'Strong'] as const;
 
 const TEAM_SIZES = ['1-10', '11-50', '51-200', '200+'];
 
@@ -78,17 +78,17 @@ export default function RequestOrgPage() {
     setError(null);
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('registerOrg.passwordMinLength', 'Password must be at least 8 characters'));
       return;
     }
 
     if (!formData.slug) {
-      setError('Organization slug is required');
+      setError(t('registerOrg.slugRequired', 'Organization slug is required'));
       return;
     }
 
     if (!plan) {
-      setError('Plan not selected');
+      setError(t('registerOrg.planNotSelected', 'Plan not selected'));
       return;
     }
 
@@ -112,12 +112,12 @@ export default function RequestOrgPage() {
           description: formData.description || undefined,
         });
 
-        toast.success('🎉 Request submitted successfully!');
+        toast.success(t('orgRequests.requestSubmitted', '🎉 Request submitted successfully!'));
 
         // Redirect to confirmation page
         router.push('/register-org/pending');
       } catch (_err) {
-        const errorMessage = _err instanceof Error ? _err.message : 'Failed to submit request';
+        const errorMessage = _err instanceof Error ? t('orgRequests.error', { defaultValue: _err.message }) : t('orgRequests.requestFailed', 'Failed to submit request');
         setError(errorMessage);
         toast.error(errorMessage);
       }
@@ -169,13 +169,13 @@ export default function RequestOrgPage() {
                 className="text-2xl font-bold capitalize"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Request {plan} Plan
+                {t('registerOrg.requestPlan', 'Request {{plan}} Plan', { plan })}
               </h1>
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {plan === 'enterprise'
-                  ? 'Custom pricing • 100+ employees'
-                  : '$79/mo • Up to 50 employees'}{' '}
-                • Approved within 24h
+                  ? t('registerOrg.enterpriseSubtitle', 'Custom pricing • 100+ employees')
+                  : t('registerOrg.professionalSubtitle', '$79/mo • Up to 50 employees')}{' '}
+                • {t('registerOrg.approvedWithin24h', 'Approved within 24h')}
               </p>
             </div>
           </div>
@@ -188,12 +188,12 @@ export default function RequestOrgPage() {
               style={{ background: 'rgba(37,99,235,0.05)' }}
             >
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Organization Details
+                {t('registerOrg.organizationDetails', 'Organization Details')}
               </h3>
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Organization Name
+                  {t('registerOrg.organizationName', 'Organization Name')}
                 </label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -227,7 +227,7 @@ export default function RequestOrgPage() {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Organization URL
+                  {t('registerOrg.organizationUrl', 'Organization URL')}
                 </label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -241,7 +241,7 @@ export default function RequestOrgPage() {
                         slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                       }))
                     }
-                    placeholder="acme-corp"
+                    placeholder={t('registerOrg.slugPlaceholder', 'acme-corp')}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                     style={{
                       background: 'var(--input)',
@@ -262,7 +262,7 @@ export default function RequestOrgPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Industry
+                    {t('registerOrg.industry', 'Industry')}
                   </label>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -287,7 +287,7 @@ export default function RequestOrgPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Team Size
+                    {t('registerOrg.teamSize', 'Team Size')}
                   </label>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -305,10 +305,10 @@ export default function RequestOrgPage() {
                       }
                       onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
                     >
-                      <option value="">Select size</option>
+                      <option value="">{t('auth.selectSize', 'Select size')}</option>
                       {TEAM_SIZES.map((size) => (
                         <option key={size} value={size}>
-                          {size} employees
+                          {t('registerOrg.teamSizeOption', '{{size}} employees', { size })}
                         </option>
                       ))}
                     </select>
@@ -320,13 +320,13 @@ export default function RequestOrgPage() {
             {/* Your Details */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Your Details (Admin Account)
+                {t('registerOrg.yourDetails', 'Your Details (Admin Account)')}
               </h3>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Your Name
+                    {t('registerOrg.yourName', 'Your Name')}
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -361,7 +361,7 @@ export default function RequestOrgPage() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
-                      placeholder="you@company.com"
+                      placeholder={t('registerOrg.emailPlaceholder', 'you@company.com')}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                       style={{
                         background: 'var(--input)',
@@ -380,7 +380,7 @@ export default function RequestOrgPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Phone
+                    {t('registerOrg.phone', 'Phone')}
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
@@ -388,7 +388,7 @@ export default function RequestOrgPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                      placeholder="+1 234 567 890"
+                      placeholder={t('registerOrg.phonePlaceholder', '+1 234 567 890')}
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
                       style={{
                         background: 'var(--input)',
@@ -405,7 +405,7 @@ export default function RequestOrgPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Country
+                    {t('registerOrg.country', 'Country')}
                   </label>
                   <input
                     type="text"
@@ -477,7 +477,7 @@ export default function RequestOrgPage() {
                         color: strength > 0 ? STRENGTH_COLORS[strength - 1] : 'var(--text-muted)',
                       }}
                     >
-                      {strength > 0 ? STRENGTH_LABELS[strength - 1] : ''}
+                      {strength > 0 ? t(`registerOrg.strength${STRENGTH_LABELS[strength - 1]}`, STRENGTH_LABELS[strength - 1] ?? 'Weak') : ''}
                     </p>
                   </div>
                 )}
@@ -487,7 +487,7 @@ export default function RequestOrgPage() {
             {/* Additional Info */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                Tell us about your needs (optional)
+                {t('registerOrg.tellUsAboutNeeds', 'Tell us about your needs (optional)')}
               </label>
               <div className="relative">
                 <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-(--text-muted)" />
@@ -531,17 +531,17 @@ export default function RequestOrgPage() {
             >
               {isPending ? (
                 <>
-                  <ShieldLoader size="xs" variant="inline" className="mr-2" /> Submitting request...
+                  <ShieldLoader size="xs" variant="inline" className="mr-2" /> {t('registerOrg.submittingRequest', 'Submitting request...')}
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" /> Submit Request
+                  <CheckCircle2 className="w-4 h-4" /> {t('registerOrg.submitRequest', 'Submit Request')}
                 </>
               )}
             </button>
 
             <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-              We'll review your request and get back to you within 24 hours.
+              {t('registerOrg.reviewMessage', "We'll review your request and get back to you within 24 hours.")}
             </p>
           </form>
         </div>

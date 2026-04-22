@@ -39,7 +39,7 @@ const TEMPLATES = [
     labelKey: 'messageTemplates.arrived.label',
     messageKey: 'messageTemplates.arrived.message',
     label: "I've Arrived",
-    message: "Hi! I've arrived at the pickup location. Ready when you are! 🚗",
+    message: "Hi {passengerName}! I've arrived at the pickup location. Ready when you are! 🚗",
   },
   {
     id: 'delayed',
@@ -47,21 +47,21 @@ const TEMPLATES = [
     messageKey: 'messageTemplates.delayed.message',
     label: 'Running Late',
     message:
-      "Hi! I'm running about 5 minutes late due to traffic. Apologies for the inconvenience! ⏰",
+      "Hi {passengerName}! I'm running about 5 minutes late due to traffic. Apologies for the inconvenience! ⏰",
   },
   {
     id: 'waiting',
     labelKey: 'messageTemplates.waiting.label',
     messageKey: 'messageTemplates.waiting.message',
     label: 'Waiting',
-    message: "Hi! I'm waiting at the pickup point. Please let me know when you're ready. 👋",
+    message: "Hi {passengerName}! I'm waiting at the pickup point. Please let me know when you're ready. 👋",
   },
   {
     id: 'confirming',
     labelKey: 'messageTemplates.confirming.label',
     messageKey: 'messageTemplates.confirming.message',
     label: 'Confirming Trip',
-    message: 'Hi! Confirming your trip from {from} to {to}. See you soon! ✅',
+    message: 'Hi {passengerName}! Confirming your trip from {from} to {to}. See you soon! ✅',
   },
   {
     id: 'completed',
@@ -69,7 +69,7 @@ const TEMPLATES = [
     messageKey: 'messageTemplates.completed.message',
     label: 'Trip Completed',
     message:
-      'Thank you for choosing our service! Hope you had a great trip. Please rate your experience. ⭐',
+      "Thank you for choosing our service {passengerName}! Hope you had a great trip. Please rate your experience. ⭐",
   },
 ];
 
@@ -88,7 +88,7 @@ export function MessageTemplates({
   const [open, setOpen] = useState(false);
 
   const handleSendMessage = async (template: (typeof TEMPLATES)[0]) => {
-    let message = t(template.messageKey);
+    let message = t(template.messageKey, template.message);
 
     if (tripInfo) {
       message = message.replace('{from}', tripInfo.from);
@@ -96,7 +96,10 @@ export function MessageTemplates({
     }
 
     if (passengerName) {
-      message = message.replace('Hi!', `Hi ${passengerName}!`);
+      message = message.replace(/\{passengerName\}/g, passengerName);
+      if (message.includes('Hi!')) {
+        message = message.replace('Hi!', `Hi ${passengerName}!`);
+      }
     }
 
     if (onSendMessage) {
@@ -139,10 +142,10 @@ export function MessageTemplates({
                 className="flex flex-col items-start gap-1 py-3"
               >
                 <div className="flex items-center gap-2 w-full">
-                  <span className="font-medium">{t(template.labelKey)}</span>
+                  <span className="font-medium">{t(template.labelKey, template.label)}</span>
                 </div>
                 <span className="text-xs text-muted-foreground line-clamp-2">
-                  {t(template.messageKey)}
+                  {t(template.messageKey, template.message)}
                 </span>
               </DropdownMenuItem>
             ))}

@@ -126,7 +126,7 @@ export const ChatWindow = React.memo(function ChatWindow({
 
   // Debug: Log first message sender
   if (messages && messages.length > 0 && !messages[0]?.sender) {
-    console.warn('[ChatWindow] Message without sender:', messages[0]);
+    console.warn(t('chat.messageWithoutSender', 'Message without sender:'), messages[0]);
   }
   const { data: members } = useChatMembers(conversationId);
   const { data: typingUsers } = useTypingUsers(conversationId, currentUserId);
@@ -324,7 +324,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         inputRef.current.style.height = 'auto';
       }
     } catch (err) {
-      console.error('Send failed:', err);
+      console.error(t('chat.sendFailed', 'Send failed:'), err);
     } finally {
       setSending(false);
     }
@@ -446,10 +446,10 @@ export const ChatWindow = React.memo(function ChatWindow({
         setShowVoiceRecorder(false);
         setIsRecording(false);
       } catch (err) {
-        console.error('Error sending voice message:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Error details:', errorMessage);
-        toast.error(`${t('chat.voiceMessageFailed')}: ${errorMessage}`);
+        console.error(t('chat.voiceMessageSendError', 'Error sending voice message:'), err);
+        const errorMessage = err instanceof Error ? err.message : t('chat.unknownError', 'Unknown error');
+        console.error(t('chat.errorDetails', 'Error details:'), errorMessage);
+        toast.error(t('chat.voiceMessageFailed', { error: errorMessage }));
         setShowVoiceRecorder(false);
         setIsRecording(false);
       }
@@ -602,7 +602,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               <Link
                 href={`/employees/${otherUser.id}`}
                 className="block rounded-full transition-transform duration-200 hover:scale-110 hover:opacity-90"
-                title={`View ${displayName}'s profile`}
+                title={t('chat.viewProfile', 'View {{name}}\'s profile', { name: displayName })}
               >
                 <Avatar className="w-9 h-9">
                   {otherUser?.avatarUrl && <AvatarImage src={otherUser.avatarUrl} />}
@@ -745,7 +745,9 @@ export const ChatWindow = React.memo(function ChatWindow({
             />
             {searchResults && searchResults.length > 0 && (
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                {searchResults.length} result{searchResults.length > 1 ? 's' : ''}
+                {searchResults.length === 1
+                  ? t('chat.resultCount', { count: 1 })
+                  : t('chat.resultCount', { count: searchResults.length })}
               </p>
             )}
           </div>
@@ -774,7 +776,7 @@ export const ChatWindow = React.memo(function ChatWindow({
           style={{ background: 'var(--background)' }}
         >
           {dedupedMessages === undefined ? (
-            <div className="space-y-3 animate-pulse" role="status" aria-label="Loading messages">
+            <div className="space-y-3 animate-pulse" role="status" aria-label={t('chat.loadingMessages')}>
               {[...Array(5)].map((_: any, i: any) => (
                 <div key={i} className={cn('flex gap-3', i % 2 === 0 ? '' : 'flex-row-reverse')}>
                   <div className="w-8 h-8 rounded-full bg-white/5 shrink-0" />
@@ -794,7 +796,7 @@ export const ChatWindow = React.memo(function ChatWindow({
           ) : (
             <div
               role="log"
-              aria-label="Chat messages"
+              aria-label={t('chat.chatMessages')}
               aria-live="polite"
               aria-relevant="additions"
               style={{
@@ -1176,7 +1178,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                   color:
                     showVoiceRecorder || isRecording ? 'var(--primary)' : 'var(--text-disabled)',
                 }}
-                title="Voice message"
+                title={t('chat.voiceMessage')}
               >
                 <Mic className="w-4 xs:w-4.5 h-4 xs:h-4.5" />
               </button>
@@ -1191,7 +1193,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                   >
                     {mentionSuggestions.map((m: any, idx: any) => (
                       <button
-                        key={m.userId}
+                        key={m.userid}
                         onClick={() => m.user?.name && insertMention(m.user.name)}
                         className="w-full flex items-center gap-2 px-2 xs:px-3 py-1.5 xs:py-2 text-[9px] xs:text-xs transition-all"
                         style={{
@@ -1235,7 +1237,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                   }
                   rows={1}
                   className="w-full resize-none bg-transparent outline-none text-xs xs:text-sm leading-5"
-                  style={{ color: 'var(--text-primary)', maxHeight: '120px' }}
+                  style={{ color: 'var(--text-primary)', height: '17px', overflowY: 'hidden' }}
                 />
               </div>
 
@@ -1317,10 +1319,10 @@ export const ChatWindow = React.memo(function ChatWindow({
                 className="text-xs xs:text-sm font-medium"
                 style={{ color: 'var(--text-primary)' }}
               >
-                🔒 Read-Only Channel
+                {t('chat.readOnlyChannel')}
               </p>
               <p className="text-[9px] xs:text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                This is an information-only channel. Messages are sent by administrators only.
+                {t('chat.readOnlyChannelDesc')}
               </p>
             </div>
           </div>

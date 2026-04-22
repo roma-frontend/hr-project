@@ -33,7 +33,7 @@ export async function verifyTotpCode(userId: string, token: string): Promise<boo
     .from('users')
     .select('totp_secret, totp_enabled')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data?.totp_secret) return false;
 
@@ -74,7 +74,7 @@ export async function verifyBackupCode(userId: string, code: string): Promise<bo
     .from('users')
     .select('backup_codes')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data?.backup_codes) return false;
 
@@ -99,9 +99,10 @@ export async function getTotpStatus(userId: string) {
     .from('users')
     .select('totp_enabled, totp_secret')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
   if (error) return { enabled: false, configured: false };
+  if (!data) return { enabled: false, configured: false };
 
   return {
     enabled: data.totp_enabled || false,

@@ -16,7 +16,7 @@ export default function Footer() {
   const footerLinks = {
     product: [
       { nameKey: 'landing.features', href: '#features' },
-      { nameKey: 'landing.pricing', href: '#pricing' },
+      { nameKey: 'landing.pricingLabel', href: '#pricing' },
       { nameKey: 'landing.testimonials', href: '#testimonials' },
       { nameKey: 'landing.faq', href: '#faq' },
     ],

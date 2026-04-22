@@ -1,14 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
+
+async function requireSuperadmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: serverT('superadmin.api.unauthorized', 'Unauthorized') }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== 'superadmin') {
+    return { error: NextResponse.json({ error: serverT('superadmin.api.forbidden', 'Forbidden') }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireSuperadmin();
+    if (auth.error) return auth.error;
+    const { user, supabase: supabaseService } = auth;
 
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
@@ -17,84 +34,74 @@ export async function GET(request: NextRequest) {
       case 'get-user-360': {
         const userId = searchParams.get('userId');
         if (!userId) {
-          return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+          return NextResponse.json({ error: serverT('superadmin.api.missingUserId', 'Missing userId') }, { status: 400 });
         }
 
-        // Get user profile
-        const { data: userProfile } = await supabase
+        const { data: userProfile } = await supabaseService
           .from('users')
           .select('*')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (!userProfile) {
-          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ error: serverT('superadmin.api.userNotFound', 'User not found') }, { status: 404 });
         }
 
-        // Get organization
         let organization = null;
-        if (userProfile.organizationId) {
-          const { data: org } = await supabase
+        if (userProfile.organization_id) {
+          const { data: org } = await supabaseService
             .from('organizations')
             .select('*')
-            .eq('id', userProfile.organizationId)
-            .single();
+            .eq('id', userProfile.organization_id)
+            .maybeSingle();
           organization = org;
         }
 
-        // Get leaves
-        const { data: leaves } = await supabase
+        const { data: leaves } = await supabaseService
           .from('leave_requests')
           .select('*')
           .eq('userid', userId)
           .order('created_at', { ascending: false });
 
-        // Get tasks
-        const { data: tasks } = await supabase
+        const { data: tasks } = await supabaseService
           .from('tasks')
           .select('*')
           .eq('assigned_to', userId)
           .order('created_at', { ascending: false });
 
-        // Get driver requests
-        const { data: driverRequests } = await supabase
+        const { data: driverRequests } = await supabaseService
           .from('driver_requests')
           .select('*')
-          .eq('requester.id', userId)
+          .eq('requesterid', userId)
           .order('created_at', { ascending: false });
 
-        // Get support tickets
-        const { data: supportTickets } = await (supabase as any)
-          .from('support_tickets')
+        const { data: supportTickets } = await supabaseService
+          .from('tickets')
           .select('*')
-          .eq('created_by', userId)
-          .order('created_at', { ascending: false });
+          .eq('createdBy', userId)
+          .order('createdAt', { ascending: false });
 
-        // Get login attempts
-        const { data: loginAttempts } = await supabase
+        const { data: loginAttempts } = await supabaseService
           .from('login_attempts')
           .select('*')
           .eq('userid', userId)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        // Get notifications
-        const { data: notifications } = await supabase
+        const { data: notifications } = await supabaseService
           .from('notifications')
           .select('*')
-          .eq('user.id', userId)
+          .eq('userid', userId)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        // Get chat messages
-        const { data: chatMessages } = await supabase
+        const { data: chatMessages } = await supabaseService
           .from('chat_messages')
           .select('*')
           .eq('senderid', userId)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        // Stats
         const approvedLeaves = (leaves || []).filter((l: any) => l.status === 'approved');
         const pendingLeaves = (leaves || []).filter((l: any) => l.status === 'pending');
         const completedTasks = (tasks || []).filter((t: any) => t.status === 'completed');
@@ -129,14 +136,14 @@ export async function GET(request: NextRequest) {
             organization,
             leaves: (leaves || []).map((l: any) => ({
               id: l.id,
-              type: l.leave_type,
+              type: l.type,
               startDate: l.start_date,
               endDate: l.end_date,
-              days: l.days,
+              totalDays: l.total_days,
               status: l.status,
               reason: l.reason,
               reviewComment: l.review_comment,
-              reviewerName: l.reviewer_name,
+              reviewedBy: l.reviewed_by,
               createdAt: l.created_at,
             })),
             tasks: (tasks || []).map((t: any) => ({
@@ -151,11 +158,13 @@ export async function GET(request: NextRequest) {
             driverRequests: (driverRequests || []).map((d: any) => ({
               id: d.id,
               status: d.status,
-              priority: d.priority,
               startTime: d.start_time,
-              tripInfo: d.trip_info,
-              driverName: d.driver_name,
-              driverPhone: d.driver_phone,
+              endTime: d.end_time,
+              tripFrom: d.trip_from,
+              tripTo: d.trip_to,
+              tripPurpose: d.trip_purpose,
+              driverId: d.driverid,
+              requesterId: d.requesterid,
             })),
             supportTickets: (supportTickets || []).map((t: any) => ({
               id: t.id,
@@ -194,66 +203,62 @@ export async function GET(request: NextRequest) {
 
         const searchPattern = `%${query}%`;
 
-        // Search users
-        const { data: users } = await supabase
+        const { data: users } = await supabaseService
           .from('users')
-          .select('id, name, email, organizationId')
+          .select('id, name, email, organization_id')
           .ilike('name', searchPattern)
           .limit(limit);
 
-        // Search organizations
-        const { data: organizations } = await supabase
+        const { data: organizations } = await supabaseService
           .from('organizations')
           .select('id, name, plan, slug')
           .ilike('name', searchPattern)
           .limit(limit);
 
-        // Search leave requests
-        const { data: leaveRequests } = await supabase
+        const { data: leaveRequests } = await supabaseService
           .from('leave_requests')
           .select(`
             id,
             userid,
-            leave_type,
+            type,
             start_date,
             end_date,
             status,
-            user:users!userid(name)
+            user:users!leave_requests_userid_fkey(name)
           `)
-          .or(`reason.ilike.${searchPattern},leave_type.ilike.${searchPattern}`)
+          .or(`type.ilike.${searchPattern}`)
           .limit(limit);
 
-        // Search tasks
-        const { data: tasks } = await supabase
+        const { data: tasks } = await supabaseService
           .from('tasks')
           .select('id, title, description, status, priority')
           .or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`)
           .limit(limit);
 
-        // Search driver requests
-        const { data: driverRequests } = await supabase
+        const { data: driverRequests } = await supabaseService
           .from('driver_requests')
           .select(`
             id,
-            requester_id,
+            requesterid,
             status,
-            trip_info,
-            requester:users!requester_id(name)
+            trip_from,
+            trip_to,
+            trip_purpose,
+            requester:users!driver_requests_requesterid_fkey(name)
           `)
           .ilike('status', searchPattern)
           .limit(limit);
 
-        // Search support tickets
-        const { data: supportTickets } = await (supabase as any)
-          .from('support_tickets')
-          .select('id, ticket_number, title, status, priority')
-          .or(`title.ilike.${searchPattern},ticket_number.ilike.${searchPattern}`)
+        const { data: supportTickets } = await supabaseService
+          .from('tickets')
+          .select('id, title, description, status, priority')
+          .or(`title.ilike.${searchPattern}`)
           .limit(limit);
 
         const mappedLeaveRequests = (leaveRequests || []).map((l: any) => ({
           id: l.id,
           userName: l.user?.name || 'Unknown',
-          type: l.leave_type,
+          type: l.type,
           startDate: l.start_date,
           endDate: l.end_date,
           status: l.status,
@@ -263,7 +268,9 @@ export async function GET(request: NextRequest) {
           id: d.id,
           requesterName: d.requester?.name || 'Unknown',
           status: d.status,
-          tripInfo: d.trip_info,
+          tripFrom: d.trip_from,
+          tripTo: d.trip_to,
+          tripPurpose: d.trip_purpose,
         }));
 
         return NextResponse.json({
@@ -281,13 +288,13 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+        default:
+          return NextResponse.json({ error: serverT('superadmin.api.invalidAction', 'Invalid action') }, { status: 400 });
     }
   } catch (error) {
     console.error('[Superadmin API Error]', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: error instanceof Error ? error.message : serverT('superadmin.api.internalServerError', 'Internal server error') },
       { status: 500 }
     );
   }

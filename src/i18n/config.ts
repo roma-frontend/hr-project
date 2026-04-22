@@ -25,70 +25,46 @@ if (typeof window !== 'undefined') {
   i18n.use(LanguageDetector);
 }
 
-// Get language from localStorage if available
-const getInitialLanguage = () => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('i18nextLng');
-    if (saved && ['en', 'hy', 'ru'].includes(saved)) {
-      console.log('🔄 config.ts: Loading saved language:', saved);
-      return saved;
-    }
-  }
-  return 'en';
-};
-
 i18n
-  .use(initReactI18next) // Pass i18n to react-i18next
+  .use(initReactI18next)
   .init({
     resources,
     defaultNS,
     fallbackLng: 'en',
-    lng: getInitialLanguage(), // Use saved language or default to 'en'
-    supportedLngs: ['en', 'hy', 'ru'], // Explicitly define supported languages
-    nonExplicitSupportedLngs: false, // Only use exact matches
-    debug: process.env.NODE_ENV === 'development', // Enable debug mode only in development
+    supportedLngs: ['en', 'hy', 'ru'],
+    nonExplicitSupportedLngs: false,
+    debug: process.env.NODE_ENV === 'development',
 
     interpolation: {
-      escapeValue: false, // React already escapes
+      escapeValue: false,
     },
 
     // Client-side language detection
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
+      lookupCookie: 'NEXT_LOCALE',
       lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage'],
-      // Custom detection function
-      lookupQuerystring: 'lng',
-      lookupCookie: 'i18next',
-      lookupSessionStorage: 'i18nextLng',
+      caches: ['cookie', 'localStorage'],
+      cookieMinutes: 525600, // 1 year
+      cookieOptions: {
+        path: '/',
+        sameSite: 'lax',
+      },
     },
 
     // SSR support
     react: {
-      useSuspense: false, // Disable Suspense for SSR compatibility
+      useSuspense: false,
     },
   });
 
-// Listen to language changes and persist to localStorage
+// Listen to language changes and persist to localStorage and cookie
 i18n.on('languageChanged', (lng) => {
   if (typeof window !== 'undefined') {
-    console.log('🔄 i18n languageChanged event:', lng);
     localStorage.setItem('i18nextLng', lng);
-    console.log('💾 Persisted to localStorage:', lng);
-
-    // Also update HTML lang attribute
+    document.cookie = `NEXT_LOCALE=${lng}; path=/; max-age=31536000; SameSite=Lax`;
     document.documentElement.lang = lng;
   }
 });
-
-// Log for debugging
-if (typeof window !== 'undefined') {
-  console.log('🌍 i18n initialized:', {
-    language: i18n.language,
-    languages: Object.keys(resources),
-    keysCount: Object.keys(enTranslations).length,
-    savedLanguage: localStorage.getItem('i18nextLng'),
-  });
-}
 
 export default i18n;

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 export interface LeaveConflictAlert {
   id: string;
@@ -21,6 +22,7 @@ export interface LeaveConflictAlert {
 }
 
 export function useLeaveConflictAlerts(organizationId: string, isReviewed: boolean) {
+  const { t } = useTranslation();
   return useQuery({
     queryKey: ['events', 'leave-conflicts', organizationId, isReviewed],
     queryFn: async () => {
@@ -29,7 +31,7 @@ export function useLeaveConflictAlerts(organizationId: string, isReviewed: boole
         isReviewed: String(isReviewed),
       });
       const res = await fetch(`/api/events?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch conflict alerts');
+      if (!res.ok) throw new Error(t('hooks.events.failedToFetchConflictAlerts', 'Failed to fetch conflict alerts'));
       const json = await res.json();
       return json.data as LeaveConflictAlert[];
     },
@@ -39,6 +41,7 @@ export function useLeaveConflictAlerts(organizationId: string, isReviewed: boole
 
 export function useReviewConflictAlert() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async (data: {
       alertId: string;
@@ -51,7 +54,7 @@ export function useReviewConflictAlert() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'review-conflict-alert', ...data }),
       });
-      if (!res.ok) throw new Error('Failed to review alert');
+      if (!res.ok) throw new Error(t('hooks.events.failedToReviewAlert', 'Failed to review alert'));
       const json = await res.json();
       return json.data;
     },
@@ -63,6 +66,7 @@ export function useReviewConflictAlert() {
 
 export function useCreateCompanyEvent() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async (data: {
       organizationId: string;
@@ -82,7 +86,10 @@ export function useCreateCompanyEvent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create-company-event', ...data }),
       });
-      if (!res.ok) throw new Error('Failed to create company event');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || t('hooks.events.failedToCreateCompanyEvent', 'Failed to create company event'));
+      }
       const json = await res.json();
       return json.data;
     },
@@ -93,6 +100,7 @@ export function useCreateCompanyEvent() {
 }
 
 export function useCheckLeaveConflictsManual() {
+  const { t } = useTranslation();
   return useMutation({
     mutationFn: async (data: {
       leaveRequestId: string;
@@ -106,7 +114,7 @@ export function useCheckLeaveConflictsManual() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'check-leave-conflicts-manual', ...data }),
       });
-      if (!res.ok) throw new Error('Failed to check leave conflicts');
+      if (!res.ok) throw new Error(t('hooks.events.failedToCheckLeaveConflicts', 'Failed to check leave conflicts'));
       const json = await res.json();
       return json;
     },

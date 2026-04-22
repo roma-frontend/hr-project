@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
+import type { TablesUpdate } from '@/lib/supabase/database.types';
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+
+  const supabaseService = createServiceClient();
+  const { data: profile } = await supabaseService
+    .from('users')
+    .select('role, organization_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
+    return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) };
+  }
+  return { user, profile, supabase: supabaseService };
+}
 
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user, profile, supabase: supabaseService } = auth;
 
     const searchParams = req.nextUrl.searchParams;
     const organizationId = searchParams.get('organizationId');
@@ -20,11 +35,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
     }
 
+    if (profile.role !== 'superadmin' && profile.organization_id !== organizationId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (type === 'pending-leaves') {
-      const { data: leaves, error } = await supabase
+      const { data: leaves, error } = await supabaseService
         .from('leave_requests')
         .select('*')
-        .eq('organizationId', organizationId)
+        .eq('organization_id', organizationId)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -35,7 +54,7 @@ export async function GET(req: NextRequest) {
       const mapped = (leaves || []).map((l: any) => ({
         id: l.id,
         userId: l.userid,
-        organizationId: l.organizationId,
+        organization_id: l.organization_id,
         startDate: l.start_date,
         endDate: l.end_date,
         status: l.status,
@@ -48,10 +67,10 @@ export async function GET(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events: any[] = [];
-    const { data: eventsData, error } = await supabase
+    const { data: eventsData, error } = await supabaseService
       .from('company_events')
       .select('*')
-      .eq('organizationId', organizationId)
+      .eq('organization_id', organizationId)
       .order('start_date', { ascending: true });
 
     if (error) {
@@ -62,17 +81,14 @@ export async function GET(req: NextRequest) {
 
     const mapped = events.map((e: any) => ({
       id: e.id,
-      organizationId: e.organizationId,
+      organizationId: e.organization_id,
       name: e.name,
       description: e.description,
       startDate: e.start_date,
       endDate: e.end_date,
       priority: e.priority,
       eventType: e.event_type,
-      location: e.location,
       requiredDepartments: e.required_departments,
-      creatorId: e.creator_id,
-      creatorName: e.creator_name,
       createdAt: e.created_at,
       isAllDay: e.is_all_day,
     }));
@@ -89,45 +105,44 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { user: authUser, profile, supabase: supabaseService } = auth;
 
     const body = await req.json();
     const { action, ...data } = body;
 
     switch (action) {
       case 'create': {
-        const { name, description, startDate, endDate, priority, eventType, location, requiredDepartments, organizationId, isAllDay } = data;
+        const { name, description, startDate, endDate, priority, eventType, requiredDepartments, organizationId, isAllDay } = data;
 
         if (!organizationId) {
           return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
         }
 
-        const { data: event, error } = await supabase
+        if (profile.role !== 'superadmin' && profile.organization_id !== organizationId) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const now = Date.now();
+        const { data: event, error } = await supabaseService
           .from('company_events')
           .insert({
-            organizationId,
+            organization_id: organizationId,
             name,
             description,
             start_date: startDate,
             end_date: endDate,
             priority,
             event_type: eventType,
-            location,
             required_departments: requiredDepartments,
-            creator_id: user.id,
-            creator_name: user.email,
             is_all_day: isAllDay ?? false,
-            created_at: Date.now(),
+            created_by: authUser.id,
+            created_at: now,
+            updated_at: now,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -139,6 +154,24 @@ export async function POST(req: NextRequest) {
       case 'update': {
         const { eventId, ...updateData } = data;
 
+        if (!eventId) {
+          return NextResponse.json({ error: 'eventId required' }, { status: 400 });
+        }
+
+        const { data: existingEvent } = await supabaseService
+          .from('company_events')
+          .select('organization_id')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (!existingEvent) {
+          return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+        }
+
+        if (profile.role !== 'superadmin' && profile.organization_id !== existingEvent.organization_id) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const updatePayload: Record<string, unknown> = {};
         if (updateData.name !== undefined) updatePayload.name = updateData.name;
         if (updateData.description !== undefined) updatePayload.description = updateData.description;
@@ -146,16 +179,16 @@ export async function POST(req: NextRequest) {
         if (updateData.end_date !== undefined) updatePayload.end_date = updateData.end_date;
         if (updateData.priority !== undefined) updatePayload.priority = updateData.priority;
         if (updateData.event_type !== undefined) updatePayload.event_type = updateData.event_type;
-        if (updateData.location !== undefined) updatePayload.location = updateData.location;
         if (updateData.required_departments !== undefined) updatePayload.required_departments = updateData.required_departments;
         if (updateData.is_all_day !== undefined) updatePayload.is_all_day = updateData.is_all_day;
+        updatePayload.updated_at = Date.now();
 
-        const { data: event, error } = await supabase
+        const { data: event, error } = await supabaseService
           .from('company_events')
           .update(updatePayload as any)
           .eq('id', eventId)
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -167,7 +200,25 @@ export async function POST(req: NextRequest) {
       case 'delete': {
         const { eventId } = data;
 
-        const { error } = await supabase
+        if (!eventId) {
+          return NextResponse.json({ error: 'eventId required' }, { status: 400 });
+        }
+
+        const { data: existingEvent } = await supabaseService
+          .from('company_events')
+          .select('organization_id')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (!existingEvent) {
+          return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+        }
+
+        if (profile.role !== 'superadmin' && profile.organization_id !== existingEvent.organization_id) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { error } = await supabaseService
           .from('company_events')
           .delete()
           .eq('id', eventId);

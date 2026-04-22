@@ -4,15 +4,30 @@ import { cookies } from 'next/headers';
 import { signJWT, verifyJWT } from '@/lib/jwt';
 import { log } from '@/lib/logger';
 import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { serverT } from '@/lib/i18n/server-actions-i18n';
 
 async function registerUser(name: string, email: string, password: string, phone?: string, organizationId?: string, inviteToken?: string) {
   const supabase = await createClient();
   
+  // Check if user already exists
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id, email')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (existingUser) {
+    throw new Error(serverT('actions.auth.emailExists', 'An account with this email already exists. Please login instead.'));
+  }
+  
   // Sign up user with Supabase Auth
+  // The trigger will automatically create a profile in public.users
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
       data: { 
         name,
         phone: phone || undefined,
@@ -27,7 +42,32 @@ async function registerUser(name: string, email: string, password: string, phone
   }
 
   if (!authData.user) {
-    throw new Error('Failed to create user');
+    throw new Error(serverT('actions.auth.failedCreateUser', 'Failed to create user'));
+  }
+
+  // Wait a moment for the trigger to create the profile
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Fetch the profile that was created by the trigger
+  const { data: userProfile } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authData.user.id)
+    .maybeSingle();
+
+  if (!userProfile) {
+    // Profile might not have been created yet, try by email
+    const { data: profileByEmail } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!profileByEmail) {
+      throw new Error(serverT('actions.auth.profileNotCreated', 'User profile was not created. Please contact support.'));
+    }
   }
 
   // All users are auto-approved in Supabase (approval flow handled separately)
@@ -37,7 +77,7 @@ async function registerUser(name: string, email: string, password: string, phone
     userId: authData.user.id,
     name,
     email,
-    role: 'employee',
+    role: userProfile?.role || 'employee',
     organizationId: organizationId || null,
     organizationSlug: null,
     organizationName: null,
@@ -62,18 +102,45 @@ async function loginUser(email: string, password: string, isFaceLogin: boolean =
   }
 
   if (!authData.user) {
-    throw new Error('Authentication failed');
+    throw new Error(serverT('actions.auth.authenticationFailed', 'Authentication failed'));
   }
 
-  // Get user profile from database
-  const { data: user } = await supabase
+  // Get user profile from database - try by ID first (primary key)
+  let { data: user } = await supabase
     .from('users')
     .select('*')
     .eq('id', authData.user.id)
-    .single();
+    .maybeSingle();
+
+  // Fallback: try by email
+  if (!user) {
+    const { data: userByEmail } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    user = userByEmail;
+  }
 
   if (!user) {
-    throw new Error('User profile not found');
+    throw new Error(serverT('actions.auth.profileNotFound', 'User profile not found. Please contact support.'));
+  }
+
+  // Get organization info if needed
+  let orgSlug = null;
+  let orgName = null;
+  if (user.organization_id) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('slug, name')
+      .eq('id', user.organization_id)
+      .maybeSingle();
+    if (org) {
+      orgSlug = org.slug;
+      orgName = org.name;
+    }
   }
 
   return {
@@ -81,9 +148,9 @@ async function loginUser(email: string, password: string, isFaceLogin: boolean =
     name: user.name,
     email: user.email,
     role: user.role,
-    organizationId: user.organizationId,
-    organizationSlug: null, // TODO: Get from organizations table
-    organizationName: null, // TODO: Get from organizations table
+    organizationId: user.organization_id,
+    organizationSlug: orgSlug,
+    organizationName: orgName,
     department: user.department,
     position: user.position,
     employeeType: user.employee_type,
@@ -100,8 +167,8 @@ export async function registerAction(formData: FormData) {
   const organizationId = formData.get('organizationId') as string | undefined;
   const inviteToken = formData.get('inviteToken') as string | undefined;
 
-  if (!name || !email || !password) throw new Error('All fields required');
-  if (password.length < 8) throw new Error('Password must be at least 8 characters');
+  if (!name || !email || !password) throw new Error(serverT('actions.auth.allFieldsRequired', 'All fields required'));
+  if (password.length < 8) throw new Error(serverT('actions.auth.passwordMinLength', 'Password must be at least 8 characters'));
 
   const result = await registerUser(name, email, password, phone, organizationId, inviteToken);
 
@@ -112,7 +179,7 @@ export async function registerAction(formData: FormData) {
       role: result.role,
       needsApproval: true,
       message:
-        'Your account has been created and is pending admin approval. You will be notified once approved.',
+        serverT('actions.auth.accountPendingApproval', 'Your account has been created and is pending admin approval. You will be notified once approved.'),
     };
   }
 
@@ -198,7 +265,7 @@ export async function loginAction(
 
     // For Face ID login, we don't need password validation
     if (!isFaceLogin && (!email || !password)) {
-      throw new Error('Email and password required');
+      throw new Error(serverT('actions.auth.emailPasswordRequired', 'Email and password required'));
     }
 
     const sessionToken = crypto.randomUUID();
@@ -228,7 +295,7 @@ export async function loginAction(
         errorName: loginError?.name,
       });
       // Re-throw with a cleaner message
-      throw new Error(loginError?.message || 'Authentication failed');
+      throw new Error(loginError?.message || serverT('actions.auth.authenticationFailed', 'Authentication failed'));
     }
 
     log.debug('Creating JWT token', { userId: result.userId, name: result.name });
@@ -238,26 +305,16 @@ export async function loginAction(
       name: result.name,
       email: result.email,
       role: result.role,
-      organizationId: result.organizationId,
-      organizationSlug: result.organizationSlug,
-      organizationName: result.organizationName,
-      isApproved: result.isApproved,
-      department: result.department,
-      position: result.position,
-      employeeType: result.employeeType,
-      avatar: result.avatarUrl,
-    });
+    organizationId: result.organizationId,
+    organizationSlug: result.organizationSlug,
+    organizationName: result.organizationName,
+    department: result.department,
+    position: result.position,
+    employeeType: result.employeeType,
+    avatar: result.avatarUrl,
+  });
 
-    console.log('[loginAction] 🔐 Password login - JWT created with:', {
-      userId: result.userId,
-      name: result.name,
-      email: result.email,
-      role: result.role,
-      organizationId: result.organizationId,
-      isApproved: result.isApproved,
-    });
-
-    log.debug('JWT token created successfully');
+  log.debug('JWT token created successfully');
 
     log.debug('Setting authentication cookies');
 
@@ -366,23 +423,17 @@ export async function updateSessionProfileAction(userId: string, name: string, e
     const jwt = cookieStore.get('hr-auth-token')?.value;
 
     if (!jwt) {
-      console.error('[updateSessionProfileAction] No JWT token found');
-      throw new Error('Not authenticated');
+      throw new Error(serverT('actions.auth.notAuthenticated', 'Not authenticated'));
     }
 
     const payload = await verifyJWT(jwt);
 
     if (!payload) {
-      console.error('[updateSessionProfileAction] Invalid JWT payload');
-      throw new Error('Invalid token');
+      throw new Error(serverT('actions.auth.invalidToken', 'Invalid token'));
     }
 
     if (payload.userId !== userId) {
-      console.error('[updateSessionProfileAction] User ID mismatch', {
-        payloadUserId: payload.userId,
-        requestUserId: userId,
-      });
-      throw new Error('Unauthorized');
+      throw new Error(serverT('actions.auth.unauthorized', 'Unauthorized'));
     }
 
     const newJwt = await signJWT({
@@ -390,38 +441,36 @@ export async function updateSessionProfileAction(userId: string, name: string, e
       name,
       email,
       role: payload.role,
-      organizationId: payload.organizationId,
-      organizationSlug: payload.organizationSlug,
-      organizationName: payload.organizationName,
-      department: payload.department,
-      position: payload.position,
-      employeeType: payload.employeeType,
-      avatar: payload.avatar,
-    });
+    organizationId: payload.organizationId,
+    organizationSlug: payload.organizationSlug,
+    organizationName: payload.organizationName,
+    department: payload.department,
+    position: payload.position,
+    employeeType: payload.employeeType,
+    avatar: payload.avatar,
+  });
 
-    cookieStore.set('hr-auth-token', newJwt, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60,
-      path: '/',
-    });
+  cookieStore.set('hr-auth-token', newJwt, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60,
+    path: '/',
+  });
 
-    console.log('[updateSessionProfileAction] Success', { userId, name, email });
-    return { success: true };
-  } catch (error) {
-    console.error('[updateSessionProfileAction] Error:', error);
-    throw error;
-  }
+  return { success: true };
+} catch (error) {
+  throw error;
+}
 }
 
 export async function updateSessionAvatarAction(userId: string, avatarUrl: string) {
   const cookieStore = await cookies();
   const jwt = cookieStore.get('hr-auth-token')?.value;
-  if (!jwt) throw new Error('Not authenticated');
+  if (!jwt) throw new Error(serverT('actions.auth.notAuthenticated', 'Not authenticated'));
 
   const payload = await verifyJWT(jwt);
-  if (!payload || payload.userId !== userId) throw new Error('Unauthorized');
+  if (!payload || payload.userId !== userId) throw new Error(serverT('actions.auth.unauthorized', 'Unauthorized'));
 
   // Update JWT with new avatar
   const newJwt = await signJWT({
@@ -454,21 +503,44 @@ export async function updateSessionAvatarAction(userId: string, avatarUrl: strin
  * Call this on app startup or during first-time setup.
  */
 export async function ensureSuperadminExists() {
-  const supabase = await createClient();
   const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+  const SUPERADMIN_PASSWORD = process.env.SUPERADMIN_PASSWORD;
+
+  if (!SUPERADMIN_PASSWORD) {
+    console.error('[ensureSuperadminExists] SUPERADMIN_PASSWORD environment variable is not set');
+    return { success: false, error: 'Superadmin password not configured' };
+  }
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[ensureSuperadminExists] Supabase environment variables are not set');
+    return { success: false, error: 'Supabase configuration missing' };
+  }
+
+  // Create service role client to bypass RLS
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      cookies: {
+        get() { return undefined; },
+        set() {},
+        remove() {},
+      },
+    }
+  );
 
   // Check if superadmin user exists
   const { data: superadmin } = await supabase
     .from('users')
     .select('id, email, role, is_active, is_approved')
     .eq('email', SUPERADMIN_EMAIL)
-    .single();
+    .maybeSingle();
 
   if (!superadmin) {
     // Create superadmin user via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: SUPERADMIN_EMAIL,
-      password: 'SuperAdmin123!@#', // Change this immediately after first login
+      password: SUPERADMIN_PASSWORD,
       options: {
         data: {
           name: 'Roman Gulanyan',
@@ -478,7 +550,6 @@ export async function ensureSuperadminExists() {
     });
 
     if (authError) {
-      console.error('[ensureSuperadminExists] Failed to create superadmin auth:', authError);
       return { success: false, error: authError.message };
     }
 
@@ -487,7 +558,7 @@ export async function ensureSuperadminExists() {
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          organizationId: null,
+          organization_id: null,
           role: 'superadmin',
           employee_type: 'staff',
           is_active: true,
@@ -500,11 +571,9 @@ export async function ensureSuperadminExists() {
         .eq('id', authData.user.id);
 
       if (updateError) {
-        console.error('[ensureSuperadminExists] Failed to update superadmin profile:', updateError);
         return { success: false, error: updateError.message };
       }
 
-      console.log('[ensureSuperadminExists] Superadmin account created successfully');
       return { success: true, userId: authData.user.id };
     }
   }
@@ -521,11 +590,28 @@ export async function ensureSuperadminExists() {
       .eq('email', SUPERADMIN_EMAIL);
 
     if (updateError) {
-      console.error('[ensureSuperadminExists] Failed to update superadmin role:', updateError);
       return { success: false, error: updateError.message };
     }
   }
 
-  console.log('[ensureSuperadminExists] Superadmin account already exists');
+  // Always ensure name and other fields are correct for existing superadmin
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      name: 'Roman Gulanyan',
+      role: 'superadmin',
+      is_active: true,
+      is_approved: true,
+      travel_allowance: 9999,
+      paid_leave_balance: 999,
+      sick_leave_balance: 999,
+      family_leave_balance: 999,
+    })
+    .eq('email', SUPERADMIN_EMAIL);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
   return { success: true, userId: superadmin?.id };
 }

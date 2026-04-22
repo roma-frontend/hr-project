@@ -19,7 +19,8 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, type Locale } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
 import { motion } from '@/lib/cssMotion';
 
 interface Request {
@@ -68,7 +69,7 @@ const statusLabel = (status: string, t: (key: string, fallback: string) => strin
     completed: t('driver.status.completed', 'Completed'),
     cancelled: t('driver.status.cancelled', 'Cancelled'),
   };
-  return labels[status] || status;
+  return labels[status] || t(`driver.status.${status}`, status);
 };
 
 const RequestItem = memo(function RequestItem({
@@ -86,13 +87,19 @@ const RequestItem = memo(function RequestItem({
   onDelete?: () => void;
   onCancel?: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const statusColors: Record<string, string> = {
     completed: 'bg-green-500',
     pending: 'bg-amber-500',
     approved: 'bg-blue-500',
     cancelled: 'bg-gray-400',
   };
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   return (
     <motion.div
@@ -126,7 +133,7 @@ const RequestItem = memo(function RequestItem({
             </div>
             {request.startTime && (
               <p className="text-xs text-(--text-muted)">
-                {format(new Date(request.startTime), 'MMM dd, HH:mm')}
+                {format(new Date(request.startTime), 'dd MMM, HH:mm', { locale: dateFnsLocale })}
               </p>
             )}
             {request.assignedDriver && (
@@ -201,9 +208,15 @@ const RecurringTripItem = memo(function RecurringTripItem({
   onToggle: () => void;
   onDelete: () => void;
 }) {
-  const { t } = useTranslation();
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const activeDays = trip.days.map((d) => dayNames[d - 1]).join(', ');
+  const { t, i18n } = useTranslation();
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
+  const dayKeys = ['common.days.monday', 'common.days.tuesday', 'common.days.wednesday', 'common.days.thursday', 'common.days.friday', 'common.days.saturday', 'common.days.sunday'];
+  const dayDefaults = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const activeDays = trip.days.map((d) => t(dayKeys[d - 1] ?? '', dayDefaults[d - 1] ?? '')).join(', ');
 
   return (
     <div className="p-4 rounded-xl border border-(--border) bg-(--card)">

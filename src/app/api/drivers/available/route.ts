@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from '@/lib/api-utils';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+}
+
+const SUPABASE_URL = supabaseUrl as string;
+const SUPABASE_SERVICE_KEY = supabaseServiceKey as string;
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
     const organizationId = searchParams.get('organizationId');
@@ -14,7 +24,7 @@ export async function GET(req: NextRequest) {
     const endTime = searchParams.get('endTime');
     const excludeDriverId = searchParams.get('excludeDriverId');
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     if (action === 'get-available-drivers') {
       if (!organizationId) {
@@ -91,7 +101,7 @@ export async function GET(req: NextRequest) {
       const { data: leave, error } = await supabase
         .from('leave_requests')
         .select('*')
-        .eq('driver_id', driverId)
+        .eq('driverid', driverId)
         .eq('status', 'approved')
         .lte('start_date', endDate)
         .gte('end_date', startDate)
@@ -160,41 +170,45 @@ export async function GET(req: NextRequest) {
         throw error;
       }
 
-      const availableDrivers = [];
-      for (const driver of drivers || []) {
-        const { data: leave } = await supabase
-          .from('leave_requests')
-          .select('*')
-          .eq('driver_id', driver.id)
-          .eq('status', 'approved')
-          .lte('start_date', endDate)
-          .gte('end_date', startDate)
-          .maybeSingle();
+      // Batch fetch all leave requests for the date range instead of N+1 queries
+      const driverIds = (drivers || []).map((d: any) => d.id);
+      const { data: leaves } = driverIds.length > 0
+        ? await supabase
+            .from('leave_requests')
+            .select('driverid, id, start_date, end_date, status')
+            .in('driverid', driverIds)
+            .eq('status', 'approved')
+            .lte('start_date', endDate)
+            .gte('end_date', startDate)
+        : { data: [] };
 
-        if (!leave) {
-          availableDrivers.push({
-            id: driver.id,
-            userName: driver.users?.name,
-            userAvatar: driver.users?.avatar_url,
-            userPosition: driver.users?.position,
-            vehicleInfo: driver.vehicles
-              ? {
-                  model: driver.vehicles.model,
-                  plateNumber: driver.vehicles.plate_number,
-                  capacity: driver.vehicles.capacity,
-                  color: driver.vehicles.color,
-                  year: driver.vehicles.year,
-                }
-              : null,
-            rating: driver.rating || 0,
-            totalTrips: driver.total_trips || 0,
-            isOnShift: driver.is_on_shift,
-            isAvailable: driver.is_available,
-            isActive: driver.is_active,
-            organizationId: driver.organization_id,
-          });
-        }
-      }
+      // Create a set of driver IDs that are on leave
+      const driversOnLeave = new Set((leaves || []).map((l: any) => l.driverid));
+
+      // Filter out drivers who are not on leave
+      const availableDrivers = (drivers || [])
+        .filter((driver: any) => !driversOnLeave.has(driver.id))
+        .map((driver: any) => ({
+          id: driver.id,
+          userName: driver.users?.name,
+          userAvatar: driver.users?.avatar_url,
+          userPosition: driver.users?.position,
+          vehicleInfo: driver.vehicles
+            ? {
+                model: driver.vehicles.model,
+                plateNumber: driver.vehicles.plate_number,
+                capacity: driver.vehicles.capacity,
+                color: driver.vehicles.color,
+                year: driver.vehicles.year,
+              }
+            : null,
+          rating: driver.rating || 0,
+          totalTrips: driver.total_trips || 0,
+          isOnShift: driver.is_on_shift,
+          isAvailable: driver.is_available,
+          isActive: driver.is_active,
+          organizationId: driver.organization_id,
+        }));
 
       return NextResponse.json({ data: availableDrivers });
     }
@@ -208,23 +222,26 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth();
+    if (auth instanceof NextResponse) return auth;
+
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
     const body = await req.json();
+    const requesterId = auth.user.id;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     if (action === 'request-driver') {
       const {
         organizationId,
-        requesterId,
         driverId,
         startTime,
         endTime,
         tripInfo,
       } = body;
 
-      if (!organizationId || !requesterId || !driverId || !startTime || !endTime) {
+      if (!organizationId || !driverId || !startTime || !endTime) {
         return NextResponse.json(
           { error: 'Missing required fields' },
           { status: 400 },
@@ -244,7 +261,7 @@ export async function POST(req: NextRequest) {
           created_at: new Date().toISOString(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         throw error;
@@ -253,7 +270,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         data: {
           id: request.id,
-          organizationId: request.organization_id,
+          organization_id: request.organization_id,
           requesterId: request.requester_id,
           driverId: request.driver_id,
           startTime: request.start_time,

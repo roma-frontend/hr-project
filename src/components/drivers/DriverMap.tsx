@@ -515,6 +515,7 @@ export function DriverMap({
 const NAVIGATORS = [
   {
     id: 'google',
+    nameKey: 'driver.navigator.google',
     name: 'Google Maps',
     color: '#4285F4',
     icon: '🗺️',
@@ -523,6 +524,7 @@ const NAVIGATORS = [
   },
   {
     id: 'yandex',
+    nameKey: 'driver.navigator.yandex',
     name: 'Yandex Maps',
     color: '#FC3F1D',
     icon: '🧭',
@@ -530,6 +532,7 @@ const NAVIGATORS = [
   },
   {
     id: '2gis',
+    nameKey: 'driver.navigator.2gis',
     name: '2GIS',
     color: '#1DAD4E',
     icon: '🏢',
@@ -538,6 +541,7 @@ const NAVIGATORS = [
   },
   {
     id: 'waze',
+    nameKey: 'driver.navigator.waze',
     name: 'Waze',
     color: '#33CCFF',
     icon: '🚗',
@@ -637,7 +641,7 @@ function NavigatorButtons({
                 className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <span className="text-base leading-none">{nav.icon}</span>
-                <span className="font-medium">{nav.name}</span>
+                <span className="font-medium">{t(nav.nameKey, nav.name)}</span>
                 <svg
                   className="w-3.5 h-3.5 ml-auto text-gray-400"
                   fill="none"

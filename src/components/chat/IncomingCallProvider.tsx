@@ -7,8 +7,10 @@ import { CallModal } from './CallModal';
 import type { ActiveCall } from './ChatClient';
 import { Phone, Video, PhoneOff } from 'lucide-react';
 import { playChatMessageSound } from '@/lib/notificationSound';
+import { useTranslation } from 'react-i18next';
 
 export function IncomingCallProvider() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { selectedOrgId } = useOrgSelectorStore();
 
@@ -68,11 +70,11 @@ export function IncomingCallProvider() {
               <p className="text-white/60 text-sm flex items-center justify-center gap-1 mt-1">
                 {incomingCall.type === 'video' ? (
                   <>
-                    <Video className="w-3.5 h-3.5" /> Входящий видеозвонок…
+                    <Video className="w-3.5 h-3.5" /> {t('chat.incomingVideoCall')}
                   </>
                 ) : (
                   <>
-                    <Phone className="w-3.5 h-3.5" /> Входящий аудиозвонок…
+                    <Phone className="w-3.5 h-3.5" /> {t('chat.incomingAudioCall')}
                   </>
                 )}
               </p>
@@ -85,7 +87,7 @@ export function IncomingCallProvider() {
                   setIncomingCall(null);
                 }}
                 className="w-14 h-14 rounded-full flex items-center justify-center bg-red-500 hover:bg-red-600 transition-all hover:scale-110 shadow-lg shadow-red-500/30"
-                title="Отклонить"
+                title={t('chat.declineCall')}
               >
                 <PhoneOff className="w-6 h-6 text-white" />
               </button>
@@ -97,7 +99,7 @@ export function IncomingCallProvider() {
                   setIncomingCall(null);
                 }}
                 className="w-14 h-14 rounded-full flex items-center justify-center bg-green-500 hover:bg-green-600 transition-all hover:scale-110 shadow-lg shadow-green-500/30"
-                title="Принять"
+                title={t('chat.acceptCall')}
               >
                 <Phone className="w-6 h-6 text-white" />
               </button>

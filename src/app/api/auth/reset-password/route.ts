@@ -25,13 +25,13 @@ export async function POST(req: NextRequest) {
       .from('users')
       .select('id, reset_password_token, reset_password_expiry')
       .eq('reset_password_token', token)
-      .single();
+      .maybeSingle();
 
     if (error || !user) {
       return NextResponse.json({ error: 'Invalid or expired reset token' }, { status: 400 });
     }
 
-    if (!user.reset_password_expiry || Date.now() > user.reset_password_expiry) {
+    if (!user.reset_password_expiry || Math.floor(Date.now() / 1000) > user.reset_password_expiry) {
       return NextResponse.json({ error: 'Reset token has expired' }, { status: 400 });
     }
 

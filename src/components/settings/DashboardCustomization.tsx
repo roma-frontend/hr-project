@@ -82,12 +82,12 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="dashboard">📊 Dashboard</SelectItem>
-                <SelectItem value="tasks">✓ Tasks</SelectItem>
-                <SelectItem value="calendar">📅 Calendar</SelectItem>
-                <SelectItem value="leaves">📋 Leaves</SelectItem>
-                <SelectItem value="attendance">⏰ Attendance</SelectItem>
-                <SelectItem value="analytics">📈 Analytics</SelectItem>
+                <SelectItem value="dashboard">{t('nav.dashboard')}</SelectItem>
+                <SelectItem value="tasks">{t('nav.tasks')}</SelectItem>
+                <SelectItem value="calendar">{t('nav.calendar')}</SelectItem>
+                <SelectItem value="leaves">{t('nav.leaves')}</SelectItem>
+                <SelectItem value="attendance">{t('nav.attendance')}</SelectItem>
+                <SelectItem value="analytics">{t('nav.analytics')}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-(--text-muted)">
@@ -108,36 +108,30 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
         </CardHeader>
         <CardContent className="space-y-4">
           {Object.entries(widgets).map(([key, enabled]) => {
-            const widgetLabels: Record<string, { name: string; desc: string; emoji: string }> = {
+            const widgetLabels: Record<string, { name: string; desc: string }> = {
               quickStats: {
                 name: t('settingsDashboard.quickStatistics'),
                 desc: t('settingsDashboard.quickStatisticsDesc'),
-                emoji: '📊',
               },
               leaveCalendar: {
                 name: t('settingsDashboard.leaveCalendar'),
                 desc: t('settingsDashboard.leaveCalendarDesc'),
-                emoji: '📅',
               },
               upcomingTasks: {
                 name: t('settingsDashboard.upcomingTasks'),
                 desc: t('settingsDashboard.upcomingTasksDesc'),
-                emoji: '✓',
               },
               teamActivity: {
                 name: t('settingsDashboard.teamActivity'),
                 desc: t('settingsDashboard.teamActivityDesc'),
-                emoji: '👥',
               },
               recentLeaves: {
                 name: t('settingsDashboard.recentLeaves'),
                 desc: t('settingsDashboard.recentLeavesDesc'),
-                emoji: '📋',
               },
               analytics: {
                 name: t('settingsDashboard.analyticsChart'),
                 desc: t('settingsDashboard.analyticsChartDesc'),
-                emoji: '📈',
               },
             };
 
@@ -148,8 +142,7 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
               <div key={key}>
                 <div className="flex items-center justify-between py-3">
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{widget.emoji}</span>
-                    <div>
+                  <div>
                       <p className="text-sm font-medium text-(--text-primary)">
                         {widget.name}
                       </p>
@@ -180,7 +173,6 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
             <div className="flex items-start gap-3">
-              <span className="text-2xl">📐</span>
               <div>
                 <p className="text-sm font-medium text-(--text-primary)">
                   {t('settingsDashboard.compactMode')}
@@ -201,13 +193,13 @@ export function DashboardCustomization({ user, onSettingsChange }: DashboardCust
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="realtime">
-                  ⚡ {t('settingsDashboard.realtimeUpdates')}
+                  {t('settingsDashboard.realtimeUpdates')}
                 </SelectItem>
-                <SelectItem value="5min">🔄 {t('settingsDashboard.every5Minutes')}</SelectItem>
-                <SelectItem value="15min">⏱️ {t('settingsDashboard.every15Minutes')}</SelectItem>
-                <SelectItem value="30min">⏰ {t('settingsDashboard.every30Minutes')}</SelectItem>
+                <SelectItem value="5min">{t('settingsDashboard.every5Minutes')}</SelectItem>
+                <SelectItem value="15min">{t('settingsDashboard.every15Minutes')}</SelectItem>
+                <SelectItem value="30min">{t('settingsDashboard.every30Minutes')}</SelectItem>
                 <SelectItem value="manual">
-                  🤚 {t('settingsDashboard.manualRefreshOnly')}
+                  {t('settingsDashboard.manualRefreshOnly')}
                 </SelectItem>
               </SelectContent>
             </Select>

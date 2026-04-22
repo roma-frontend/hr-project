@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         created_at: Date.now(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('[Contact POST] Error:', error);

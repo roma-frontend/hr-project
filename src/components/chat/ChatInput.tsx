@@ -125,7 +125,7 @@ export function ChatInput({
           style={{
             color: showVoiceRecorder ? 'var(--primary)' : 'var(--text-disabled)',
           }}
-          title="Voice message"
+          title={t('chat.voiceMessage')}
         >
           <Mic className="w-4 xs:w-4.5 h-4 xs:h-4.5" />
         </button>
@@ -181,7 +181,7 @@ export function ChatInput({
             }
             rows={1}
             className="w-full resize-none bg-transparent outline-none text-xs xs:text-sm leading-5"
-            style={{ color: 'var(--text-primary)', maxHeight: '120px' }}
+            style={{ color: 'var(--text-primary)', height: '17px', overflowY: 'hidden' }}
           />
         </div>
 

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -15,11 +17,11 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const type = searchParams.get('type');
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -30,84 +32,29 @@ export async function GET(req: NextRequest) {
     if (type === 'today-summary' && isAdminOrSupervisor) {
       const today = new Date().toISOString().split('T')[0];
 
-      const { data: records } = await supabase
+      const { data: records } = await supabaseService
         .from('time_tracking')
         .select('*')
         .eq('date', today as string);
 
       let filteredRecords = records || [];
-      if (userProfile.role !== 'superadmin' && userProfile.organizationId) {
-        const { data: orgUsers } = await supabase
+      if (userProfile.role !== 'superadmin' && userProfile.organization_id) {
+        const { data: orgUsers } = await supabaseService
           .from('users')
           .select('id')
-          .eq('organizationId', userProfile.organizationId);
+          .eq('organization_id', userProfile.organization_id);
 
         const orgUserIds = orgUsers?.map((u: any) => u.id) || [];
-        filteredRecords = filteredRecords.filter((r: any) => orgUserIds.includes(r.userId));
-      }
-
-      const checkedIn = filteredRecords.filter((r: any) => r.status === 'present').length;
-      const checkedOut = filteredRecords.filter((r: any) => r.status === 'absent').length;
-      const late = filteredRecords.filter((r: any) => r.status === 'late').length;
-      const earlyLeave = filteredRecords.filter((r: any) => r.status === 'half_day').length;
-
-      const { data: allUsers } = await supabase
-        .from('users')
-        .select('id')
-        .eq('is_active', true)
-        .neq('role', 'superadmin');
-
-      let activeCount = allUsers?.length || 0;
-      if (userProfile.role !== 'superadmin' && userProfile.organizationId) {
-        const { data: orgActiveUsers } = await supabase
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .eq('organizationId', userProfile.organizationId)
-          .neq('role', 'superadmin');
-
-        activeCount = orgActiveUsers?.length || 0;
-      }
-
-      const absent = activeCount - filteredRecords.length;
-
-      return NextResponse.json({
-        checkedIn,
-        checkedOut,
-        late,
-        earlyLeave,
-        absent,
-        totalActive: activeCount,
-        attendanceRate: activeCount > 0 ? ((filteredRecords.length / activeCount) * 100).toFixed(1) : '0',
-      });
-    }
-
-    if (type === 'today-all' && isAdminOrSupervisor) {
-      const today = new Date().toISOString().split('T')[0];
-
-      const { data: records } = await supabase
-        .from('time_tracking')
-        .select('*')
-        .eq('date', today as string);
-
-      let filteredRecords = records || [];
-      if (userProfile.role !== 'superadmin' && userProfile.organizationId) {
-        const { data: orgUsers } = await supabase
-          .from('users')
-          .select('id')
-          .eq('organizationId', userProfile.organizationId);
-
-        const orgUserIds = orgUsers?.map((u: any) => u.id) || [];
-        filteredRecords = filteredRecords.filter((r: any) => orgUserIds.includes(r.userId));
+        filteredRecords = filteredRecords.filter((r: any) => orgUserIds.includes(r.userid));
       }
 
       const withUsers = await Promise.all(
         filteredRecords.map(async (record: any) => {
-          const { data: emp } = await supabase
+          const { data: emp } = await supabaseService
             .from('users')
             .select('id, name, email, department, position, role, avatar_url, face_image_url')
-            .eq('id', record.userId)
-            .single();
+            .eq('id', record.userid)
+            .maybeSingle();
 
           if (!emp) return null;
           if (emp.role === 'superadmin') return null;
@@ -115,7 +62,7 @@ export async function GET(req: NextRequest) {
           return {
             ...record,
             id: record.id,
-            userId: record.userId,
+            userId: record.userid,
             checkInTime: record.check_in_time,
             checkOutTime: record.check_out_time,
             totalWorkedMinutes: record.total_worked_minutes || 0,
@@ -148,14 +95,14 @@ export async function GET(req: NextRequest) {
     if (type === 'all-employees' && isAdminOrSupervisor) {
       const month = searchParams.get('month') || new Date().toISOString().slice(0, 7);
 
-      let usersQuery = supabase
+      let usersQuery = supabaseService
         .from('users')
         .select('*')
         .eq('is_active', true)
         .eq('role', 'employee');
 
-      if (userProfile.role !== 'superadmin' && userProfile.organizationId) {
-        usersQuery = usersQuery.eq('organizationId', userProfile.organizationId);
+      if (userProfile.role !== 'superadmin' && userProfile.organization_id) {
+        usersQuery = usersQuery.eq('organization_id', userProfile.organization_id);
       }
 
       const { data: activeUsers } = await usersQuery;
@@ -166,10 +113,10 @@ export async function GET(req: NextRequest) {
 
       const results = await Promise.all(
         activeUsers.map(async (user: any) => {
-          const { data: records } = await supabase
+          const { data: records } = await supabaseService
             .from('time_tracking')
             .select('*')
-            .eq('userId', user.id);
+            .eq('userid', user.id);
 
           const monthRecords = (records || []).filter((r: any) => r.date.startsWith(month));
 
@@ -184,12 +131,12 @@ export async function GET(req: NextRequest) {
             totalDays > 0 ? (((totalDays - lateDays) / totalDays) * 100).toFixed(0) : '100';
 
           let supervisor = null;
-          if (user.supervisor_id) {
-            const { data: sup } = await supabase
+          if (user.supervisorid) {
+            const { data: sup } = await supabaseService
               .from('users')
               .select('id, name')
-              .eq('id', user.supervisor_id)
-              .single();
+              .eq('id', user.supervisorid)
+              .maybeSingle();
             supervisor = sup;
           }
 
@@ -205,7 +152,7 @@ export async function GET(req: NextRequest) {
               position: user.position,
               department: user.department,
               avatarUrl: user.avatar_url || user.face_image_url,
-              supervisorId: user.supervisor_id,
+              supervisorId: user.supervisorid,
             },
             supervisor,
             stats: {
@@ -219,7 +166,7 @@ export async function GET(req: NextRequest) {
               ? {
                   ...lastRecord,
                   id: lastRecord.id,
-                  userId: lastRecord.userId,
+                  userId: lastRecord.userid,
                   checkInTime: lastRecord.check_in_time,
                   checkOutTime: lastRecord.check_out_time,
                   totalWorkedMinutes: lastRecord.total_worked_minutes,
@@ -228,7 +175,7 @@ export async function GET(req: NextRequest) {
                   isEarlyLeave: lastRecord.is_early_leave,
                   earlyLeaveMinutes: lastRecord.early_leave_minutes,
                   overtimeMinutes: lastRecord.overtime_minutes,
-                  createdAt: lastRecord.createdAt,
+                  createdAt: lastRecord.created_at,
                 }
               : null,
           };
@@ -241,15 +188,15 @@ export async function GET(req: NextRequest) {
     if (type === 'needs-rating' && isAdminOrSupervisor) {
       const currentPeriod = new Date().toISOString().slice(0, 7);
 
-      let usersQuery = supabase
+      let usersQuery = supabaseService
         .from('users')
         .select('*')
         .eq('is_active', true)
         .neq('role', 'admin')
         .neq('role', 'superadmin');
 
-      if (userProfile.role !== 'superadmin' && userProfile.organizationId) {
-        usersQuery = usersQuery.eq('organizationId', userProfile.organizationId);
+      if (userProfile.role !== 'superadmin' && userProfile.organization_id) {
+        usersQuery = usersQuery.eq('organization_id', userProfile.organization_id);
       }
 
       const { data: activeEmployees } = await usersQuery;
@@ -260,13 +207,13 @@ export async function GET(req: NextRequest) {
 
       const needsRating = await Promise.all(
         activeEmployees.map(async (employee: any) => {
-          const { data: rating } = await supabase
+          const { data: rating } = await supabaseService
             .from('supervisor_ratings')
             .select('*')
             .eq('employee_id', employee.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           const needsRatingThisMonth = !rating || rating.rating_period !== currentPeriod;
 
@@ -297,6 +244,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
+    const supabaseService = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -305,11 +253,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await supabaseService
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!userProfile) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -347,7 +295,7 @@ export async function POST(req: NextRequest) {
       const overallRating = ratings.reduce((sum: number, r: number) => sum + r, 0) / ratings.length;
       const period = ratingPeriod || new Date().toISOString().slice(0, 7);
 
-      const { data: rating, error } = await supabase
+      const { data: rating, error } = await supabaseService
         .from('supervisor_ratings')
         .insert({
           employee_id: employeeId,
@@ -367,7 +315,7 @@ export async function POST(req: NextRequest) {
           created_at: Date.now(),
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

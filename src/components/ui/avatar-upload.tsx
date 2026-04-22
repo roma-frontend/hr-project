@@ -113,7 +113,7 @@ export function AvatarUpload({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update avatar');
+        throw new Error(t('profile.failedToUpdateAvatar', 'Failed to update avatar'));
       }
 
       log.debug('Avatar URL saved to database', { userId });
@@ -157,7 +157,7 @@ export function AvatarUpload({
       });
 
       setPreview(null);
-      toast.error(err instanceof Error ? err.message : t('toasts.uploadFailed'));
+      toast.error(err instanceof Error ? t('profile.error', { defaultValue: err.message }) : t('toasts.uploadFailed'));
       endTimer();
     } finally {
       setUploading(false);

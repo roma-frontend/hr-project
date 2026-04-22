@@ -44,7 +44,7 @@ export function ConversationInfoPanel({
     queryKey: ['my-conversations', currentUserId, organizationId],
     queryFn: async () => {
       const res = await fetch(`/api/chat?action=get-my-conversations&userId=${currentUserId}&organizationId=${organizationId}`);
-      if (!res.ok) throw new Error('Failed to fetch conversations');
+      if (!res.ok) throw new Error(t('hooks.chat.failedToFetchConversations', 'Failed to fetch conversations'));
       const json = await res.json();
       return json.data;
     },
@@ -61,7 +61,7 @@ export function ConversationInfoPanel({
     queryKey: ['org-users', selectedOrgId, currentUserId],
     queryFn: async () => {
       const res = await fetch(`/api/chat?action=get-org-users&organizationId=${selectedOrgId}&currentUserId=${currentUserId}`);
-      if (!res.ok) throw new Error('Failed to fetch org users');
+      if (!res.ok) throw new Error(t('chat.failedToFetchOrgUsers', 'Failed to fetch org users'));
       const json = await res.json();
       return json.data;
     },
@@ -78,7 +78,7 @@ export function ConversationInfoPanel({
 
   // Filter users not already in the conversation
   const availableUsers = (orgUsers ?? []).filter(
-    (user: any) => !members?.some((m: any) => m.userId === user.id),
+    (user: any) => !members?.some((m: any) => m.userid === user.id),
   );
 
   // Filter by search query
@@ -102,13 +102,13 @@ export function ConversationInfoPanel({
             organizationId: selectedOrgId,
           }),
         });
-        if (!res.ok) throw new Error('Failed to add member');
+        if (!res.ok) throw new Error(t('chat.failedToAddMember', 'Failed to add member'));
       }
       setSelectedUsers([]);
       setSearchQuery('');
       setShowAddMember(false);
     } catch (err) {
-      console.error('[handleAddMembers] Failed to add members:', err);
+      console.error(t('chat.addMembersFailed', 'Failed to add members:'), err);
     } finally {
       setAdding(false);
     }
@@ -160,7 +160,7 @@ export function ConversationInfoPanel({
               {(conversation &&
                 'name' in conversation &&
                 ((conversation as Record<string, unknown>).name as string)) ||
-                'Unnamed Group'}
+                t('chat.unnamedGroup', 'Unnamed Group')}
             </p>
           </div>
         )}
@@ -380,7 +380,7 @@ export function ConversationInfoPanel({
           <div className="space-y-2">
             {members?.map((member: any) => (
               <div
-                key={member.userId}
+                key={member.userid}
                 className="flex items-center gap-2 p-2 rounded-lg"
                 style={{ background: 'var(--sidebar-item-hover)' }}
               >
@@ -395,10 +395,10 @@ export function ConversationInfoPanel({
                     className="text-xs font-medium truncate"
                     style={{ color: 'var(--text-primary)' }}
                   >
-                    {member.user?.name ?? 'Unknown'}
+                    {member.user?.name ?? t('chat.unknown', 'Unknown')}
                   </p>
                 </div>
-                {member.userId === currentUserId && (
+                {member.userid === currentUserId && (
                   <span className="text-[10px]" style={{ color: 'var(--primary)' }}>
                     {t('chat.you')}
                   </span>

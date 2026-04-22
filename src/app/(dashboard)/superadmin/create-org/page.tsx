@@ -5,10 +5,22 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useCreateOrganization } from '@/hooks/useOrganizations';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 export default function SuperadminCreateOrgPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const router = useRouter();
   const createOrgMutation = useCreateOrganization();
 
   const [loading, setLoading] = useState(false);
@@ -22,26 +34,22 @@ export default function SuperadminCreateOrgPage() {
     adminEmail: '',
   });
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading user data...</p>
-      </div>
-    );
-  }
-
   const isSuperadmin =
     user?.role === 'superadmin' || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
 
-  if (!isSuperadmin) {
+  if (!user || !isSuperadmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">{t('ui.accessDenied')}</h1>
-          <p>{t('ui.onlySuperadminCanAccess')}</p>
-          <p className="text-sm mt-2">
-            {t('ui.yourEmail')} {user.email} | {t('ui.role')} {user.role}
-          </p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            {t('ui.accessDenied')}
+          </h1>
+          <p className="text-muted-foreground">{t('ui.onlySuperadminCanAccess')}</p>
+          {user && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {t('ui.yourEmail')} {user.email} | {t('ui.role')} {user.role}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -87,7 +95,7 @@ export default function SuperadminCreateOrgPage() {
         adminEmail: '',
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create organization';
+      const message = error instanceof Error ? t('orgCreate.error', { defaultValue: error.message }) : t('orgRequests.createFailed', 'Failed to create organization');
       console.error('Full error:', error);
       toast.error(message);
     } finally {
@@ -96,59 +104,53 @@ export default function SuperadminCreateOrgPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: 'var(--background)' }}
-    >
-      <div className="w-full max-w-2xl">
-        <div
-          className="rounded-2xl shadow-xl p-4 sm:p-8"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
-        >
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
           <h1
-            className="text-3xl font-bold text-left sm:text-center mb-2"
+            className="text-3xl font-bold md:text-4xl"
             style={{ color: 'var(--text-primary)' }}
           >
             {t('superadmin.organizations.createTitle')}
           </h1>
-          <p className="text-left sm:text-center mb-8" style={{ color: 'var(--text-secondary)' }}>
+          <p className="mt-2 text-muted-foreground">
             {t('superadmin.organizations.createSubtitle')}
           </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Form Card */}
+        <div className="rounded-xl border" style={{ background: 'var(--card)' }}>
+          <form onSubmit={handleSubmit} className="space-y-6 p-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Organization Name */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.nameLabel')}
+                  <span className="text-destructive">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
                   placeholder={t('placeholders.acmeCorp')}
                   required
                 />
               </div>
 
               {/* Slug */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.slugLabel')}
+                  <span className="text-destructive">*</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formData.slug}
                   onChange={(e) =>
@@ -157,160 +159,148 @@ export default function SuperadminCreateOrgPage() {
                       slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
                     })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
                   placeholder={t('placeholders.acmeInc')}
                   required
                 />
               </div>
 
               {/* Admin Email */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.adminEmailLabel')}
+                  <span className="text-destructive">*</span>
                 </label>
-                <input
+                <Input
                   type="email"
                   value={formData.adminEmail}
                   onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
                   placeholder={t('placeholders.enterYourEmail')}
                   required
                 />
               </div>
 
               {/* Plan */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.planLabel')}
                 </label>
-                <select
+                <Select
                   value={formData.plan}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      plan: e.target.value as 'starter' | 'professional' | 'enterprise',
+                      plan: value as 'starter' | 'professional' | 'enterprise',
                     })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
                 >
-                  <option value="starter">{t('superadmin.organizations.planStarterFree')}</option>
-                  <option value="professional">
-                    {t('superadmin.organizations.planProfessionalPaid')}
-                  </option>
-                  <option value="enterprise">
-                    {t('superadmin.organizations.planEnterpriseCustom')}
-                  </option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('superadmin.organizations.planLabel')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="starter">
+                      {t('superadmin.organizations.planStarterFree')}
+                    </SelectItem>
+                    <SelectItem value="professional">
+                      {t('superadmin.organizations.planProfessionalPaid')}
+                    </SelectItem>
+                    <SelectItem value="enterprise">
+                      {t('superadmin.organizations.planEnterpriseCustom')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Country */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.countryLabel')}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
                   placeholder={t('placeholders.unitedStates')}
                 />
               </div>
 
               {/* Timezone */}
-              <div>
+              <div className="space-y-2">
                 <label
-                  className="block text-sm font-semibold mb-2"
+                  className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {t('superadmin.organizations.timezoneLabel')}
                 </label>
-                <select
+                <Select
                   value={formData.timezone}
-                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
+                  onValueChange={(value) => setFormData({ ...formData, timezone: value })}
                 >
-                  <option value="UTC">UTC</option>
-                  <option value="America/New_York">Eastern Time</option>
-                  <option value="America/Chicago">Central Time</option>
-                  <option value="America/Los_Angeles">Pacific Time</option>
-                  <option value="Europe/London">London</option>
-                  <option value="Europe/Paris">Paris</option>
-                  <option value="Asia/Tokyo">Tokyo</option>
-                  <option value="Asia/Yerevan">Yerevan</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('superadmin.organizations.timezoneLabel')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UTC">{t('superadmin.createOrg.timezoneUTC', 'UTC')}</SelectItem>
+                    <SelectItem value="America/New_York">{t('superadmin.createOrg.timezoneET', 'Eastern Time')}</SelectItem>
+                    <SelectItem value="America/Chicago">{t('superadmin.createOrg.timezoneCT', 'Central Time')}</SelectItem>
+                    <SelectItem value="America/Los_Angeles">{t('superadmin.createOrg.timezonePT', 'Pacific Time')}</SelectItem>
+                    <SelectItem value="Europe/London">{t('superadmin.createOrg.timezoneGMT', 'London')}</SelectItem>
+                    <SelectItem value="Europe/Paris">{t('superadmin.createOrg.timezoneCET', 'Paris')}</SelectItem>
+                    <SelectItem value="Asia/Tokyo">{t('superadmin.createOrg.timezoneJST', 'Tokyo')}</SelectItem>
+                    <SelectItem value="Asia/Yerevan">{t('superadmin.createOrg.timezoneAMT', 'Yerevan')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Industry */}
-            <div>
+            <div className="space-y-2">
               <label
-                className="block text-sm font-semibold mb-2"
+                className="text-sm font-medium"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {t('superadmin.organizations.industryLabel')}
               </label>
-              <input
+              <Input
                 type="text"
                 value={formData.industry}
                 onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                style={{
-                  background: 'var(--background-subtle)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
                 placeholder={t('placeholders.technologyHealthcare')}
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-all py-3 px-4 text-white font-semibold rounded-xl disabled:opacity-50"
-            >
-              {loading
-                ? t('superadmin.organizations.creating')
-                : t('superadmin.organizations.createOrganization')}
-            </button>
-
-            <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
-              {t('superadmin.organizations.requiredNotice')}
-            </p>
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
+                {t('actions.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="min-w-[160px]"
+              >
+                {loading ? (
+                  <>
+                    <ShieldLoader size="sm" className="mr-2" />
+                    {t('superadmin.organizations.creating')}
+                  </>
+                ) : (
+                  t('superadmin.organizations.createOrganization')
+                )}
+              </Button>
+            </div>
           </form>
         </div>
       </div>

@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wizard, WizardStep } from '@/components/ui/wizard';
 import { CardSelectionStep, TextInputStep } from '@/components/ui/wizard-step-components';
@@ -14,12 +14,53 @@ import { useCreateSchedule } from '@/hooks/useDrivers';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useWizardContext } from '@/components/ui/wizard';
 
 interface BlockTimeWizardProps {
   driverId: string;
   organizationId: string;
   onComplete?: () => void;
   onCancel?: () => void;
+}
+
+function DateTimeStep() {
+  const { t } = useTranslation();
+  const { stepData, updateStepData } = useWizardContext();
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="startTime">{t('driverCalendar.startTime')}</Label>
+        <Input
+          id="startTime"
+          type="datetime-local"
+          value={String(stepData.startTime || '')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            updateStepData('startTime', e.target.value)
+          }
+          className="bg-(--background) border-(--border) text-(--text-primary)"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="endTime">{t('driverCalendar.endTime')}</Label>
+        <Input
+          id="endTime"
+          type="datetime-local"
+          value={String(stepData.endTime || '')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            updateStepData('endTime', e.target.value)
+          }
+          className="bg-(--background) border-(--border) text-(--text-primary)"
+        />
+      </div>
+      <TextInputStep
+        field="reason"
+        label={t('driverCalendar.reason')}
+        placeholder={t('driverCalendar.enterReason')}
+        required
+      />
+    </div>
+  );
 }
 
 export function BlockTimeWizard({
@@ -31,12 +72,6 @@ export function BlockTimeWizard({
   const { t } = useTranslation();
   const createSchedule = useCreateSchedule();
 
-  const [wizardData, setWizardData] = useState<Record<string, any>>({});
-
-  const updateStepData = (key: string, value: string | number | boolean | null) => {
-    setWizardData((prev) => ({ ...prev, [key]: value }));
-  };
-
   const steps: WizardStep[] = [
     {
       id: 'type',
@@ -45,8 +80,6 @@ export function BlockTimeWizard({
       icon: <Calendar className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={wizardData}
-          updateStepData={updateStepData}
           field="type"
           label={t('driverCalendar.type')}
           options={[
@@ -82,42 +115,7 @@ export function BlockTimeWizard({
       title: t('driverCalendar.wizardSteps.datetime.title'),
       description: t('driverCalendar.wizardSteps.datetime.description'),
       icon: <Clock className="w-5 h-5" />,
-      content: (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="startTime">{t('driverCalendar.startTime')}</Label>
-            <Input
-              id="startTime"
-              type="datetime-local"
-              value={String(wizardData.startTime || '')}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateStepData('startTime', e.target.value)
-              }
-              className="bg-(--background) border-(--border) text-(--text-primary)"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="endTime">{t('driverCalendar.endTime')}</Label>
-            <Input
-              id="endTime"
-              type="datetime-local"
-              value={String(wizardData.endTime || '')}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateStepData('endTime', e.target.value)
-              }
-              className="bg-(--background) border-(--border) text-(--text-primary)"
-            />
-          </div>
-          <TextInputStep
-            stepData={wizardData}
-            updateStepData={updateStepData}
-            field="reason"
-            label={t('driverCalendar.reason')}
-            placeholder={t('driverCalendar.enterReason')}
-            required
-          />
-        </div>
-      ),
+      content: <DateTimeStep />,
     },
   ];
 
@@ -125,12 +123,10 @@ export function BlockTimeWizard({
     data: Record<string, string | number | boolean | string[] | null>,
   ) => {
     try {
-      const mergedData = { ...wizardData, ...data };
-
-      const type = mergedData.type as string;
-      const startTimeStr = mergedData.startTime as string;
-      const endTimeStr = mergedData.endTime as string;
-      const reason = mergedData.reason as string;
+      const type = data.type as string;
+      const startTimeStr = data.startTime as string;
+      const endTimeStr = data.endTime as string;
+      const reason = data.reason as string;
 
       if (!type || !startTimeStr || !endTimeStr || !reason) {
         toast.error(t('toasts.pleaseFillAllFields'));

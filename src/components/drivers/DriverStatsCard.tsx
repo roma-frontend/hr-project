@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, MapPin, Clock, Download, FileText, BarChart3 } from 'lucide-react';
 import { exportTripsToExcel } from '@/lib/exportDriversToExcel';
 import { exportTripsToPDF } from '@/lib/exportDriversToPDF';
+import { format } from 'date-fns';
+import { enUS, ru, hy, type Locale } from 'date-fns/locale';
 
 interface DriverStatsCardProps {
   driverId: string;
@@ -20,8 +22,14 @@ interface DriverStatsCardProps {
 }
 
 export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [period, setPeriod] = React.useState<'week' | 'month' | 'year'>('month');
+
+  const dateFnsLocale: Locale = {
+    en: enUS,
+    ru: ru,
+    hy: hy,
+  }[i18n.language] || enUS;
 
   const timeRange = useMemo(() => {
     const now = Date.now();
@@ -50,12 +58,12 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
     const trips = schedules
       .filter((s: any) => s.type === 'trip' && s.status === 'completed')
       .map((s: any) => ({
-        date: new Date(s.startTime).toLocaleDateString(),
-        driver: s.userName || 'Unknown',
-        passenger: s.userName || 'Unknown',
-        from: s.tripInfo?.from || 'N/A',
-        to: s.tripInfo?.to || 'N/A',
-        purpose: s.tripInfo?.purpose || 'N/A',
+        date: format(new Date(s.startTime), 'PPP', { locale: dateFnsLocale }),
+        driver: s.userName || t('driver.unknown', 'Unknown'),
+        passenger: s.userName || t('driver.unknown', 'Unknown'),
+        from: s.tripInfo?.from || t('common.na', 'N/A'),
+        to: s.tripInfo?.to || t('common.na', 'N/A'),
+        purpose: s.tripInfo?.purpose || t('common.na', 'N/A'),
         distanceKm: s.tripInfo?.distanceKm || 0,
         durationMin: s.tripInfo?.durationMinutes || 0,
         status: s.status,
@@ -70,12 +78,12 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
     const trips = schedules
       .filter((s: any) => s.type === 'trip' && s.status === 'completed')
       .map((s: any) => ({
-        date: new Date(s.startTime).toLocaleDateString(),
-        driver: s.userName || 'Unknown',
-        passenger: s.userName || 'Unknown',
-        from: s.tripInfo?.from || 'N/A',
-        to: s.tripInfo?.to || 'N/A',
-        purpose: s.tripInfo?.purpose || 'N/A',
+        date: format(new Date(s.startTime), 'PPP', { locale: dateFnsLocale }),
+        driver: s.userName || t('driver.unknown', 'Unknown'),
+        passenger: s.userName || t('driver.unknown', 'Unknown'),
+        from: s.tripInfo?.from || t('common.na', 'N/A'),
+        to: s.tripInfo?.to || t('common.na', 'N/A'),
+        purpose: s.tripInfo?.purpose || t('common.na', 'N/A'),
         distanceKm: s.tripInfo?.distanceKm || 0,
         durationMin: s.tripInfo?.durationMinutes || 0,
         status: s.status,
@@ -139,7 +147,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
             className="flex-1 sm:flex-none text-xs"
           >
             <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-            Excel
+            {t('driver.stats.exportExcel', 'Excel')}
           </Button>
           <Button
             variant="secondary"
@@ -148,7 +156,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
             className="flex-1 sm:flex-none text-xs"
           >
             <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-            PDF
+            {t('driver.stats.exportPdf', 'PDF')}
           </Button>
         </div>
       </div>
@@ -175,9 +183,9 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-(--warning)" />
           </CardHeader>
           <CardContent className="px-3 py-2 pb-3">
-            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">N/A</div>
+            <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">{t('common.na', 'N/A')}</div>
             <p className="text-[10px] sm:text-xs text-(--text-muted) mt-1">
-              Distance tracking coming soon
+              {t('driver.stats.distanceComingSoon', 'Distance tracking coming soon')}
             </p>
           </CardContent>
         </Card>
@@ -190,7 +198,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
           </CardHeader>
           <CardContent className="px-3 py-2 pb-3">
             <div className="text-xl sm:text-2xl font-bold text-(--text-primary)">
-              {Math.round(stats.totalWorkedHours * 60)} min
+              {Math.round(stats.totalWorkedHours * 60)} {t('driver.stats.minutes', 'min')}
             </div>
           </CardContent>
         </Card>
@@ -206,7 +214,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
               {stats.totalTrips > 0
                 ? ((stats.totalWorkedHours * 60) / stats.totalTrips).toFixed(0)
                 : 0}{' '}
-              min
+              {t('driver.stats.minutes', 'min')}
             </div>
           </CardContent>
         </Card>

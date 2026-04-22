@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateRestrictedOrgFromRequest } from '@/lib/restricted-org';
+import { requireAuth } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth();
+  if (auth instanceof NextResponse) return auth;
+
   const validation = await validateRestrictedOrgFromRequest(request);
 
   if (!validation.allowed) {
@@ -15,11 +19,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No authorization code' }, { status: 400 });
   }
 
-  const clientId = process.env.MICROSOFT_CLIENTid;
+  const clientId = process.env.MICROSOFT_CLIENT_ID;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/calendar/outlook/auth`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const redirectUri = `${appUrl}/api/calendar/outlook/auth`;
 
-  if (!clientId || !clientSecret) {
+  if (!clientId || !clientSecret || !appUrl) {
     return NextResponse.json({ error: 'Microsoft OAuth not configured' }, { status: 500 });
   }
 
@@ -34,7 +39,7 @@ export async function GET(request: NextRequest) {
         },
         body: new URLSearchParams({
           code,
-          clientid: clientId,
+          client_id: clientId,
           client_secret: clientSecret,
           redirect_uri: redirectUri,
           grant_type: 'authorization_code',

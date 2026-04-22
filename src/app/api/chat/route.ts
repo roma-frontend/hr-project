@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabaseService = createServiceClient();
 
     const searchParams = request.nextUrl.searchParams;
     const action = searchParams.get('action');
@@ -22,10 +25,10 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { data: users } = await supabase
+        const { data: users } = await supabaseService
           .from('users')
           .select('*')
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .eq('is_active', true)
           .eq('is_approved', true)
           .neq('id', currentUserId)
@@ -40,13 +43,13 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { data: conversation } = await supabase
+        const { data: conversation } = await supabaseService
           .from('chat_conversations')
           .select('created_by')
           .eq('id', conversationId)
-          .single();
+          .maybeSingle();
 
-        const { data: messages } = await supabase
+        const { data: messages } = await supabaseService
           .from('chat_messages')
           .select('senderid')
           .eq('conversationid', conversationId);
@@ -57,7 +60,7 @@ export async function GET(request: NextRequest) {
         }
         messages?.forEach(msg => memberIds.add(msg.senderid));
 
-        const { data: users } = await supabase
+        const { data: users } = await supabaseService
           .from('users')
           .select('*')
           .in('id', Array.from(memberIds));
@@ -86,10 +89,10 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { data: conversations } = await supabase
+        const { data: conversations } = await supabaseService
           .from('chat_conversations')
           .select('*')
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .eq('is_deleted', false)
           .order('last_message_at', { ascending: false, nullsFirst: false });
 
@@ -99,7 +102,7 @@ export async function GET(request: NextRequest) {
 
         const formattedConversations = await Promise.all(
           conversations.map(async (conv) => {
-            const { data: messages } = await supabase
+            const { data: messages } = await supabaseService
               .from('chat_messages')
               .select('senderid')
               .eq('conversationid', conv.id);
@@ -107,7 +110,7 @@ export async function GET(request: NextRequest) {
             const memberIds = new Set<string>([conv.created_by]);
             messages?.forEach(msg => memberIds.add(msg.senderid));
 
-            const { data: members } = await supabase
+            const { data: members } = await supabaseService
               .from('users')
               .select('id, name, avatar_url')
               .in('id', Array.from(memberIds));
@@ -165,7 +168,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { data: messages } = await supabase
+        const { data: messages } = await supabaseService
           .from('chat_messages')
           .select('*')
           .eq('conversationid', conversationId)
@@ -179,26 +182,26 @@ export async function GET(request: NextRequest) {
 
         const formattedMessages = await Promise.all(
           messages.map(async (msg) => {
-            const { data: sender } = await supabase
+            const { data: sender } = await supabaseService
               .from('users')
               .select('id, name, avatar_url')
               .eq('id', msg.senderid)
-              .single();
+              .maybeSingle();
 
             let replyTo = null;
             if (msg.reply_toid) {
-              const { data: replyMsg } = await supabase
+              const { data: replyMsg } = await supabaseService
                 .from('chat_messages')
                 .select('id, content, senderid')
                 .eq('id', msg.reply_toid)
-                .single();
+                .maybeSingle();
 
               if (replyMsg) {
-                const { data: replySender } = await supabase
+                const { data: replySender } = await supabaseService
                   .from('users')
                   .select('name')
                   .eq('id', replyMsg.senderid)
-                  .single();
+                  .maybeSingle();
 
                 replyTo = {
                   id: replyMsg.id,
@@ -211,7 +214,7 @@ export async function GET(request: NextRequest) {
             return {
               id: msg.id,
               conversationid: msg.conversationid,
-              organizationId: msg.organizationId,
+              organizationId: msg.organization_id,
               senderid: msg.senderid,
               type: msg.type,
               content: msg.content,
@@ -263,7 +266,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { data: messages } = await supabase
+        const { data: messages } = await supabaseService
           .from('chat_messages')
           .select('*')
           .eq('conversationid', conversationId)
@@ -277,16 +280,16 @@ export async function GET(request: NextRequest) {
 
         const formattedMessages = await Promise.all(
           messages.map(async (msg) => {
-            const { data: sender } = await supabase
+            const { data: sender } = await supabaseService
               .from('users')
               .select('id, name, avatar_url')
               .eq('id', msg.senderid)
-              .single();
+              .maybeSingle();
 
             return {
               id: msg.id,
               conversationid: msg.conversationid,
-              organizationId: msg.organizationId,
+              organizationId: msg.organization_id,
               senderid: msg.senderid,
               type: msg.type,
               content: msg.content,
@@ -316,7 +319,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const { data: messages } = await supabase
+        const { data: messages } = await supabaseService
           .from('chat_messages')
           .select('*')
           .eq('conversationid', conversationId)
@@ -330,16 +333,16 @@ export async function GET(request: NextRequest) {
 
         const formattedMessages = await Promise.all(
           messages.map(async (msg) => {
-            const { data: sender } = await supabase
+            const { data: sender } = await supabaseService
               .from('users')
               .select('id, name, avatar_url')
               .eq('id', msg.senderid)
-              .single();
+              .maybeSingle();
 
             return {
               id: msg.id,
               conversationid: msg.conversationid,
-              organizationId: msg.organizationId,
+              organizationId: msg.organization_id,
               senderid: msg.senderid,
               type: msg.type,
               content: msg.content,
@@ -379,41 +382,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseService = createServiceClient();
+
     const body = await request.json();
     const action = request.nextUrl.searchParams.get('action');
 
     switch (action) {
       case 'get-or-create-dm': {
-        const { organizationId, currentUserId, targetUserId } = body;
+        const { organizationId, targetUserId } = body;
+        const currentUserId = user.id;
 
-        if (!organizationId || !currentUserId || !targetUserId) {
+        if (!organizationId || !targetUserId) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         const dmKey = [currentUserId, targetUserId].sort().join('-');
 
-        const { data: existingConv } = await supabase
+        const { data: existingConv } = await supabaseService
           .from('chat_conversations')
           .select('*')
-          .eq('organizationId', organizationId)
+          .eq('organization_id', organizationId)
           .eq('type', 'direct')
           .eq('dm_key', dmKey)
-          .single();
+          .maybeSingle();
 
         if (existingConv) {
           return NextResponse.json({ data: existingConv });
         }
 
-        const { data: newConv, error } = await supabase
+        const { data: newConv, error } = await supabaseService
           .from('chat_conversations')
           .insert({
-            organizationId: organizationId,
+            organization_id: organizationId,
             type: 'direct',
             created_by: currentUserId,
             dm_key: dmKey,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -423,23 +429,24 @@ export async function POST(request: NextRequest) {
       }
 
       case 'create-group': {
-        const { organizationId, createdBy, name, memberIds, description } = body;
+        const { organizationId, name, memberIds, description } = body;
+        const createdBy = user.id;
 
-        if (!organizationId || !createdBy || !name) {
+        if (!organizationId || !name) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: newConv, error } = await supabase
+        const { data: newConv, error } = await supabaseService
           .from('chat_conversations')
           .insert({
-            organizationId: organizationId,
+            organization_id: organizationId,
             type: 'group',
             name,
             description: description || null,
             created_by: createdBy,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -459,26 +466,27 @@ export async function POST(request: NextRequest) {
       }
 
       case 'send-message': {
-        const { conversationId, senderId, organizationId, type, content, attachments, replyToId, mentionedUserIds, audioDuration } = body;
+        const { conversationId, organizationId, type, content, attachments, replyToId, mentionedUserIds, audioDuration } = body;
+        const senderId = user.id;
 
-        if (!conversationId || !senderId || !organizationId) {
+        if (!conversationId || !organizationId) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         let replyToData = {};
         if (replyToId) {
-          const { data: replyMsg } = await supabase
+          const { data: replyMsg } = await supabaseService
             .from('chat_messages')
             .select('content, senderid')
             .eq('id', replyToId)
-            .single();
+            .maybeSingle();
 
           if (replyMsg) {
-            const { data: replySender } = await supabase
+            const { data: replySender } = await supabaseService
               .from('users')
               .select('name')
               .eq('id', replyMsg.senderid)
-              .single();
+              .maybeSingle();
 
             replyToData = {
               reply_toid: replyToId,
@@ -488,11 +496,11 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const { data: newMessage, error } = await supabase
+        const { data: newMessage, error } = await supabaseService
           .from('chat_messages')
           .insert({
             conversationid: conversationId,
-            organizationId: organizationId,
+            organization_id: organizationId,
             senderid: senderId,
             type: type || 'text',
             content: content || '',
@@ -502,13 +510,17 @@ export async function POST(request: NextRequest) {
             call_duration: audioDuration || null,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        await supabase
+        if (!newMessage) {
+          return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+        }
+
+        await supabaseService
           .from('chat_conversations')
           .update({
             last_message_at: newMessage.created_at,
@@ -521,9 +533,10 @@ export async function POST(request: NextRequest) {
       }
 
       case 'mark-as-read': {
-        const { conversationId, userId } = body;
+        const { conversationId } = body;
+        const userId = user.id;
 
-        if (!conversationId || !userId) {
+        if (!conversationId) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -531,9 +544,10 @@ export async function POST(request: NextRequest) {
       }
 
       case 'set-typing': {
-        const { conversationId, userId, organizationId, isTyping } = body;
+        const { conversationId, organizationId, isTyping } = body;
+        const userId = user.id;
 
-        if (!conversationId || !userId) {
+        if (!conversationId) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
@@ -541,13 +555,14 @@ export async function POST(request: NextRequest) {
       }
 
       case 'delete-message': {
-        const { messageId, conversationId, userId } = body;
+        const { messageId, conversationId } = body;
+        const userId = user.id;
 
         if (!messageId) {
           return NextResponse.json({ error: 'Missing messageId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_messages')
           .update({
             is_deleted: true,
@@ -570,7 +585,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_messages')
           .update({
             content,
@@ -593,7 +608,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_messages')
           .update({
             is_pinned: true,
@@ -616,7 +631,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing messageId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_messages')
           .update({
             is_pinned: false,
@@ -633,17 +648,18 @@ export async function POST(request: NextRequest) {
       }
 
       case 'react-to-message': {
-        const { messageId, userId, reaction, reactionAction } = body;
+        const { messageId, reaction, reactionAction } = body;
+        const userId = user.id;
 
-        if (!messageId || !userId || !reaction) {
+        if (!messageId || !reaction) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: message } = await supabase
+        const { data: message } = await supabaseService
           .from('chat_messages')
           .select('reactions')
           .eq('id', messageId)
-          .single();
+          .maybeSingle();
 
         const reactions = (message?.reactions as Record<string, string[]> | null) || {};
         
@@ -663,7 +679,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_messages')
           .update({ reactions })
           .eq('id', messageId);
@@ -676,19 +692,20 @@ export async function POST(request: NextRequest) {
       }
 
       case 'toggle-pin-conversation': {
-        const { conversationId, userId } = body;
+        const { conversationId } = body;
+        const userId = user.id;
 
         if (!conversationId) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { data: conv } = await supabase
+        const { data: conv } = await supabaseService
           .from('chat_conversations')
           .select('is_pinned')
           .eq('id', conversationId)
-          .single();
+          .maybeSingle();
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_conversations')
           .update({
             is_pinned: !conv?.is_pinned,
@@ -709,13 +726,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { data: conv } = await supabase
+        const { data: conv } = await supabaseService
           .from('chat_conversations')
           .select('is_archived')
           .eq('id', conversationId)
-          .single();
+          .maybeSingle();
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_conversations')
           .update({
             is_archived: !conv?.is_archived,
@@ -736,7 +753,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_conversations')
           .update({
             is_deleted: true,
@@ -759,7 +776,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_conversations')
           .update({
             is_deleted: false,
@@ -782,11 +799,11 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { data: newMessage, error } = await supabase
+        const { data: newMessage, error } = await supabaseService
           .from('chat_messages')
           .insert({
             conversationid: conversationId,
-            organizationId: organizationId,
+            organization_id: organizationId,
             senderid: senderId,
             type: 'text',
             content,
@@ -794,7 +811,7 @@ export async function POST(request: NextRequest) {
             is_sent: false,
           })
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) {
           return NextResponse.json({ error: error.message }, { status: 500 });
@@ -819,7 +836,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseService
           .from('chat_conversations')
           .update(updateData)
           .eq('id', conversationId);

@@ -33,7 +33,7 @@ import { useAllLeaves, useBulkApproveLeaves, useBulkRejectLeaves } from '@/hooks
 
 export default function BulkActionsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [selectedLeaves, setSelectedLeaves] = useState<Set<string>>(new Set());
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -296,10 +296,10 @@ export default function BulkActionsPage() {
                         <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
-                            {leave.userDepartment || 'N/A'}
+                            {leave.userDepartment || t('superadmin.bulkActions.na') || 'N/A'}
                           </span>
                           <span>📧 {leave.userEmail}</span>
-                          <span>📅 {new Date(leave.createdAt).toLocaleDateString()}</span>
+                          <span>📅 {new Date(leave.createdAt).toLocaleDateString(i18n.language)}</span>
                         </div>
                       </div>
                     </div>
@@ -342,7 +342,7 @@ export default function BulkActionsPage() {
             </Button>
             <Button onClick={handleBulkApprove} className="bg-green-600 hover:bg-green-700" disabled={bulkApprove.isPending}>
               <CheckCircle className="w-4 h-4 mr-2" />
-              {bulkApprove.isPending ? 'Approving...' : t('superadmin.bulkActions.approve.submit', { count: selectedLeaves.size })}
+              {bulkApprove.isPending ? t('superadmin.bulkActions.approving') || 'Approving...' : t('superadmin.bulkActions.approve.submit', { count: selectedLeaves.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -380,7 +380,7 @@ export default function BulkActionsPage() {
             </Button>
             <Button variant="destructive" onClick={handleBulkReject} disabled={bulkReject.isPending}>
               <XCircle className="w-4 h-4 mr-2" />
-              {bulkReject.isPending ? 'Rejecting...' : t('superadmin.bulkActions.reject.submit', { count: selectedLeaves.size })}
+              {bulkReject.isPending ? t('superadmin.bulkActions.rejecting') || 'Rejecting...' : t('superadmin.bulkActions.reject.submit', { count: selectedLeaves.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
