@@ -296,92 +296,90 @@ export default function DashboardClient() {
           </div>
 
           {/* Welcome header - now hidden since we have sticky header */}
-      <div variants={itemVariants} className="hidden">
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-          {user?.role === 'superadmin' && (
-            <>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                className="hover:text-(--text-primary) transition-colors"
-              >
-                <Link href="/superadmin/organizations">
-                  <Building2 className="w-4 h-4" />
-                  {t('dashboard.manageOrgs')}
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                  background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <Link href="/superadmin/create-org">
-                  <Building2 className="w-4 h-4" />
-                  {t('dashboard.createOrg')}
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--success) 25%, transparent)',
-                  background: 'color-mix(in srgb, var(--success) 6%, transparent)',
-                  color: 'var(--success)',
-                }}
-              >
-                <Link href="/superadmin/stripe-dashboard">
-                  <CreditCard className="w-4 h-4" />
-                  {t('dashboard.stripeDashboard')}
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="sm"
-                variant="outline"
-                style={{
-                  borderColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                  background: 'color-mix(in srgb, var(--primary) 10%, transparent)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <Link href="/superadmin/security">
-                  <ShieldCheck className="w-4 h-4" />
-                  {t('landingExtra.securityCenter')}
-                </Link>
-              </Button>
-            </>
-          
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="hover:text-(--text-primary) transition-colors"
-          >
-            <Link href="/calendar">
-              <CalendarDays className="w-4 h-4" />
-              {t('nav.calendar')}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="default"
-            className="flex items-center gap-2 w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg"
-          >
-            <Link href="/leaves">
-              <Plus className="w-4 h-4" />
-              {t('dashboard.newRequest')}
-            </Link>
-          </Button>
-        </div>
-          )}
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+            {user?.role === 'superadmin' && (
+              <>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="hover:text-(--text-primary) transition-colors"
+                >
+                  <Link href="/superadmin/organizations">
+                    <Building2 className="w-4 h-4" />
+                    {t('dashboard.manageOrgs')}
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
+                    background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  <Link href="/superadmin/create-org">
+                    <Building2 className="w-4 h-4" />
+                    {t('dashboard.createOrg')}
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--success) 25%, transparent)',
+                    background: 'color-mix(in srgb, var(--success) 6%, transparent)',
+                    color: 'var(--success)',
+                  }}
+                >
+                  <Link href="/superadmin/stripe-dashboard">
+                    <CreditCard className="w-4 h-4" />
+                    {t('dashboard.stripeDashboard')}
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  style={{
+                    borderColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
+                    background: 'color-mix(in srgb, var(--primary) 10%, transparent)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  <Link href="/superadmin/security">
+                    <ShieldCheck className="w-4 h-4" />
+                    {t('landingExtra.securityCenter')}
+                  </Link>
+                </Button>
+              </>
+            )}
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="hover:text-(--text-primary) transition-colors"
+            >
+              <Link href="/calendar">
+                <CalendarDays className="w-4 h-4" />
+                {t('nav.calendar')}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="default"
+              className="flex items-center gap-2 w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity font-medium shadow-md hover:shadow-lg"
+            >
+              <Link href="/leaves">
+                <Plus className="w-4 h-4" />
+                {t('dashboard.newRequest')}
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
