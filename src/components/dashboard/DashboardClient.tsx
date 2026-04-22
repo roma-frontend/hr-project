@@ -294,21 +294,9 @@ export default function DashboardClient() {
             </h2>
             <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy')}</p>
           </div>
-        </div>
-      </div>
 
-      {/* Welcome header - now hidden since we have sticky header */}
-      <motion.div variants={itemVariants} className="hidden">
-        <div>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-(--text-muted) text-xs sm:text-sm"
-          >
-            {format(today, 'EEEE, MMMM d, yyyy')}
-          </motion.p>
-        </div>
+          {/* Welcome header - now hidden since we have sticky header */}
+      <div variants={itemVariants} className="hidden">
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           {user?.role === 'superadmin' && (
             <>
@@ -369,7 +357,7 @@ export default function DashboardClient() {
                 </Link>
               </Button>
             </>
-          )}
+          
           <Button
             asChild
             size="sm"
@@ -393,7 +381,9 @@ export default function DashboardClient() {
             </Link>
           </Button>
         </div>
-      </motion.div>
+          )}
+        </div>
+      </div>
 
       {/* Smart Banners - only render if there are active banners */}
       <DashboardBanners />
