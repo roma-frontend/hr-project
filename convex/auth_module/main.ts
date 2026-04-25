@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import bcrypt from 'bcryptjs';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 // ── Password Hashing Helpers ─────────────────────────────────────────────────
 const BCRYPT_ROUNDS = 12;
@@ -57,7 +58,6 @@ function wrapConvexError<T>(fn: () => T, operation: string): T {
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
 
 /**
  * Check if a user is a superadmin.

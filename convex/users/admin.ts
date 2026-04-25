@@ -3,8 +3,7 @@ import { mutation } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 // ── Security helpers ──────────────────────────────────────────────────────────
 /** Verify caller has admin/superadmin role and return their organizationId */

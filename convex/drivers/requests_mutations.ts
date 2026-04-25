@@ -7,8 +7,7 @@
 import { v } from 'convex/values';
 import { mutation } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 /** Request a driver for a trip */
 export const requestDriver = mutation({

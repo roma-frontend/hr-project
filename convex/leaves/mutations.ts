@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { SUPERADMIN_EMAIL } from './helpers';
+import { isSuperadminEmail } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -455,7 +456,7 @@ export const markAllLeavesAsRead = mutation({
   handler: async (ctx, { requesterId }) => {
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Requester not found');
-    if (!requester.organizationId && requester.email.toLowerCase() !== 'romangulanyan@gmail.com') {
+    if (!requester.organizationId && !isSuperadminEmail(requester.email)) {
       throw new Error('User does not belong to an organization');
     }
 

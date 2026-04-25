@@ -1,6 +1,7 @@
 import type { Doc, Id } from '../_generated/dataModel';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+export { SUPERADMIN_EMAIL };
 
 /**
  * Helper function to batch load users and enrich leave data
@@ -45,5 +46,3 @@ export async function enrichLeavesWithUserData(
     };
   });
 }
-
-export { SUPERADMIN_EMAIL };

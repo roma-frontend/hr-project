@@ -3,8 +3,7 @@ import { query } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+import { SUPERADMIN_EMAIL } from '../lib/auth';
 
 // ── Helper: Get user ID from email or userId ────────────────────────────────
 async function getUserIdIdentityOrEmail(
