@@ -116,22 +116,27 @@ export function EmployeesClient() {
   const isSuperadmin = user?.role === 'superadmin';
   const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
 
-  // Paginated query - fetches current page based on cursor
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const queryFn: any = useOrgFilter ? api.organizations.getOrgMembers : api.users.getAllUsers;
-  const queryArgs =
-    mounted && user?.id
-      ? useOrgFilter
-        ? {
-            organizationId: selectedOrgId as Id<'organizations'>,
-            superadminUserId: user.id as Id<'users'>,
-            cursor,
-            limit: 50,
-          }
-        : { requesterId: user.id as Id<'users'>, cursor, limit: 50 }
-      : 'skip';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const currentPage = useQuery(queryFn, queryArgs) as any[] | undefined;
+  // Paginated queries - separate to avoid TS2589 deep type instantiation
+  const currentPageOrg = useQuery(
+    api.organizations.getOrgMembers,
+    mounted && user?.id && useOrgFilter
+      ? {
+          organizationId: selectedOrgId as Id<'organizations'>,
+          superadminUserId: user.id as Id<'users'>,
+          cursor,
+          limit: 50,
+        }
+      : 'skip',
+  );
+
+  const currentPageAll = useQuery(
+    api.users.getAllUsers,
+    mounted && user?.id && !useOrgFilter
+      ? { requesterId: user.id as Id<'users'>, cursor, limit: 50 }
+      : 'skip',
+  );
+
+  const currentPage = useOrgFilter ? currentPageOrg : currentPageAll;
 
   // Accumulate pages
   React.useEffect(() => {
