@@ -893,6 +893,7 @@ export default function LoginPage() {
                     <button
                       className="text-xs font-semibold hover:underline"
                       style={{ color: '#047857' }}
+                      aria-label={t('auth.createNewOrganization', 'Create new organization')}
                     >
                       🏢 {t('auth.createNewOrganization')}
                     </button>

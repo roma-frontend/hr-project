@@ -49,9 +49,10 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
   }, []);
 
   // Check if user has seen this tour
+  // @ts-expect-error Convex type inference issue with optional sessionToken
   const hasSeenTour = useQuery(api.userPreferences.hasSeenTour, {
     tourId,
-    sessionToken,
+    sessionToken: sessionToken ?? undefined,
   });
   const markTourAsSeenMutation = useMutation(api.userPreferences.markTourAsSeen);
   const [localStorageChecked, setLocalStorageChecked] = useState(false);
@@ -480,6 +481,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
                   onClick={handleSkip}
                   className="p-0.5 rounded-lg hover:bg-muted transition-colors"
                   style={{ color: 'var(--text-muted)' }}
+                  aria-label="Skip tour"
                 >
                   <X className="w-4 h-4" />
                 </button>
