@@ -1,6 +1,6 @@
-/**
- * Request Driver Wizard - Пошаговая форма заказа водителя
- * Использует универсальный Wizard компонент
+﻿/**
+ * Request Driver Wizard - ÐŸÐ¾ÑˆÐ°Ð³Ð¾Ð²Ð°Ñ Ñ„Ð¾Ñ€Ð¼Ð° Ð·Ð°ÐºÐ°Ð·Ð° Ð²Ð¾Ð´Ð¸Ñ‚ÐµÐ»Ñ
+ * Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ ÑƒÐ½Ð¸Ð²ÐµÑ€ÑÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Wizard ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚
  */
 
 'use client';
@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
+import { useOptimisticDriverRequest } from '@/hooks/useOptimisticActions';
 
 interface RequestDriverWizardProps {
   userId: Id<'users'>;
@@ -37,7 +38,7 @@ export function RequestDriverWizard({
   preselectedDriverId,
 }: RequestDriverWizardProps) {
   const { t } = useTranslation();
-  const requestDriver = useMutation(api.drivers.requests_mutations.requestDriver);
+  const { requestOptimistic } = useOptimisticDriverRequest();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
   const organizationId = (selectedOrgId ?? user?.organizationId) as Id<'organizations'> | undefined;
@@ -248,29 +249,29 @@ export function RequestDriverWizard({
 
       const endTime = startTime + 3600000;
 
-      const result = await requestDriver({
+      const result = await requestOptimistic(
         organizationId,
-        requesterId: userId,
-        driverId: mergedData.driverId as Id<'drivers'>,
+        userId,
+        mergedData.driverId as Id<'drivers'>,
         startTime,
         endTime,
-        tripInfo: {
+        {
           from: String(mergedData.from),
           to: String(mergedData.to),
           purpose: String(mergedData.purpose),
           passengerCount: Number(mergedData.passengerCount) || 1,
           notes: mergedData.notes ? String(mergedData.notes) : undefined,
         },
-        tripCategory: mergedData.tripCategory as
+        mergedData.tripCategory as
           | 'client_meeting'
           | 'airport'
           | 'office_transfer'
           | 'emergency'
           | 'team_event'
           | 'personal',
-      });
+      );
 
-      if (result.error) {
+      if (result?.error) {
         toast.error(result.error.message);
         return;
       }
@@ -293,3 +294,4 @@ export function RequestDriverWizard({
     />
   );
 }
+

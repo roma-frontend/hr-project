@@ -402,6 +402,36 @@ export function EmployeesClient() {
           </div>
         </motion.div>
 
+        {/* Empty State - No Employees */}
+        {allUsers.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex flex-col items-center justify-center py-20 gap-4 text-center border-2 border-dashed rounded-2xl"
+            style={{ borderColor: 'var(--border)', background: 'var(--background-subtle)' }}
+          >
+            <Users className="w-16 h-16 opacity-30" style={{ color: 'var(--text-muted)' }} />
+            <div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {t('employees.noEmployees', 'No employees yet')}
+              </h3>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                {t('employees.noEmployeesDesc', 'Get started by adding your first team member')}
+              </p>
+            </div>
+            {canManage && (
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md"
+                variant="default"
+              >
+                <Plus className="w-4 h-4" /> {t('employees.addFirstEmployee', 'Add First Employee')}
+              </Button>
+            )}
+          </motion.div>
+        )}
+
         {/* Presence badge helper */}
         {(() => {
           const getPresenceBadge = (status: string | undefined) => {

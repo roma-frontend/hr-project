@@ -29,6 +29,7 @@ import { format } from 'date-fns';
 import { SmartReply } from './SmartReply';
 import { LinkPreview, extractUrl } from './LinkPreview';
 import { createPortal } from 'react-dom';
+import { useOptimisticReaction } from '@/hooks/useOptimisticActions';
 
 // ── i18n labels for delivered / seen ──────────────────────────────────────────
 type Lang = 'en' | 'ru' | 'hy';
@@ -482,11 +483,18 @@ export const MessageBubble = React.memo(function MessageBubble({
     );
   }
 
-  const handleReaction = (emoji: string) => {
+  const { toggleOptimistic: toggleOptimisticReaction } = useOptimisticReaction(message._id, currentUserId);
+
+  const handleReaction = async (emoji: string) => {
     // Sanitize emoji to remove spaces and control characters
     const sanitizedEmoji = emoji.replace(/[\s\x00-\x1F\x7F]/g, '');
     if (!sanitizedEmoji) return; // Skip if emoji becomes empty after sanitization
-    toggleReaction({ messageId: message._id, userId: currentUserId, emoji: sanitizedEmoji });
+
+    try {
+      await toggleOptimisticReaction(sanitizedEmoji, (message.reactions?.[emojiToKey(sanitizedEmoji)] ?? []) as Id<"users">[]);
+    } catch (err) {
+      console.error('Reaction failed:', err);
+    }
   };
 
   const handleEdit = async () => {
@@ -1279,3 +1287,4 @@ function MenuItem({
     </button>
   );
 }
+

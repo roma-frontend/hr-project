@@ -14,7 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
-import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { SkeletonTable } from '@/components/ui/Skeleton';
+import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import type { AttendanceRecord } from '@/components/attendance/AttendanceDetailModal';
 import type { EmployeeInfo } from '@/components/attendance/EmployeeAttendanceDrawer';
@@ -162,7 +163,8 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="space-y-6">
+    <WidgetErrorBoundary name="AttendancePage">
+      <div className="space-y-6">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div>
@@ -437,8 +439,8 @@ export default function AttendancePage() {
             </CardHeader>
             <CardContent>
               {allEmployeesOverview === undefined ? (
-                <div className="flex items-center justify-center py-12">
-                  <ShieldLoader size="sm" />
+                <div className="p-6">
+                  <SkeletonTable rows={5} />
                 </div>
               ) : filteredEmployees.length === 0 ? (
                 <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
@@ -698,5 +700,6 @@ export default function AttendancePage() {
       {/* Employee Attendance History Drawer */}
       <EmployeeAttendanceDrawer employee={drawerEmployee} onClose={() => setDrawerEmployee(null)} />
     </div>
+    </WidgetErrorBoundary>
   );
 }

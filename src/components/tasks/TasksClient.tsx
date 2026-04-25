@@ -23,8 +23,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'sonner';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useOptimisticTaskStatus } from '@/hooks/useOptimisticActions';
+import { memo } from 'react';
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type Status = 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type ViewMode = 'kanban' | 'list';
@@ -102,7 +104,7 @@ const PRIORITY_CONFIG: Record<
 
 const KANBAN_COLUMNS: Status[] = ['pending', 'in_progress', 'review', 'completed'];
 
-// ── Avatar helper ──────────────────────────────────────────────────────────
+// â”€â”€ Avatar helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Avatar({
   name,
   url,
@@ -137,7 +139,7 @@ function Avatar({
   );
 }
 
-// ── Deadline badge ─────────────────────────────────────────────────────────
+// â”€â”€ Deadline badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status }) {
   const { t } = useTranslation();
   if (!deadline) return null;
@@ -160,13 +162,13 @@ function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status
   if (soon)
     return (
       <span className="text-xs font-medium text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
-        ⚡ {dateStr}
+        âš¡ {dateStr}
       </span>
     );
-  return <span className="text-xs text-(--text-muted)">📅 {dateStr}</span>;
+  return <span className="text-xs text-(--text-muted)">ðŸ“… {dateStr}</span>;
 }
 
-// ── Task Card (base content, reused in both draggable and overlay) ──────────
+// â”€â”€ Task Card (base content, reused in both draggable and overlay) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?: boolean }) {
   const { t } = useTranslation();
   const statusCfg = STATUS_CONFIG[task.status as Status];
@@ -220,7 +222,7 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
               key={idx}
               className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-(--background-subtle) text-(--text-secondary) border border-(--border)"
             >
-              <span>📎</span>
+              <span>ðŸ“Ž</span>
               <span className="truncate max-w-[80px]">{att.name}</span>
             </div>
           ))}
@@ -239,17 +241,17 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
             size="sm"
           />
           <span className="text-xs text-(--text-muted) truncate max-w-[100px]">
-            {task.assignedToUser?.name ?? '—'}
+            {task.assignedToUser?.name ?? 'â€”'}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {task.attachments && task.attachments.length > 0 && (
             <span className="text-xs text-(--text-muted) flex items-center gap-1">
-              📎 {task.attachments.length}
+              ðŸ“Ž {task.attachments.length}
             </span>
           )}
           {task.commentCount > 0 && (
-            <span className="text-xs text-(--text-muted)">💬 {task.commentCount}</span>
+            <span className="text-xs text-(--text-muted)">ðŸ’¬ {task.commentCount}</span>
           )}
           <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
         </div>
@@ -258,7 +260,7 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
   );
 }
 
-// ── Draggable Task Card ────────────────────────────────────────────────────
+// â”€â”€ Draggable Task Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DraggableTaskCard({ task, onOpen }: { task: any; onOpen: () => void }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -294,7 +296,7 @@ function DraggableTaskCard({ task, onOpen }: { task: any; onOpen: () => void }) 
   );
 }
 
-// ── Droppable Kanban Column ────────────────────────────────────────────────
+// â”€â”€ Droppable Kanban Column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DroppableKanbanColumn({
   status,
   tasks,
@@ -344,7 +346,7 @@ function DroppableKanbanColumn({
   );
 }
 
-// ── List Row ───────────────────────────────────────────────────────────────
+// â”€â”€ List Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
   const { t } = useTranslation();
   const statusCfg = STATUS_CONFIG[task.status as Status];
@@ -373,7 +375,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
               size="sm"
             />
             <span className="text-sm text-(--text-secondary)">
-              {task.assignedToUser?.name ?? '—'}
+              {task.assignedToUser?.name ?? 'â€”'}
             </span>
           </div>
         </td>
@@ -395,11 +397,11 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
           <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
         </td>
         <td className="px-4 py-3 text-xs text-(--text-muted)">
-          {task.commentCount > 0 && `💬 ${task.commentCount}`}
+          {task.commentCount > 0 && `ðŸ’¬ ${task.commentCount}`}
         </td>
       </tr>
 
-      {/* Mobile card — wrapped in <tr> for valid HTML */}
+      {/* Mobile card â€” wrapped in <tr> for valid HTML */}
       <tr className="sm:hidden group">
         <td colSpan={6} className="p-0">
           <div
@@ -439,7 +441,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
               </span>
               <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
               {task.commentCount > 0 && (
-                <span className="text-xs text-(--text-muted)">💬 {task.commentCount}</span>
+                <span className="text-xs text-(--text-muted)">ðŸ’¬ {task.commentCount}</span>
               )}
             </div>
           </div>
@@ -449,13 +451,13 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
   );
 }
 
-// ── Main Client ────────────────────────────────────────────────────────────
+// â”€â”€ Main Client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface TasksClientProps {
   userId: string;
   userRole: 'superadmin' | 'admin' | 'supervisor' | 'employee' | 'driver';
 }
 
-export function TasksClient({ userId, userRole }: TasksClientProps) {
+export const TasksClient = memo(function TasksClient({ userId, userRole }: TasksClientProps) {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [showCreate, setShowCreate] = useState(false);
@@ -474,9 +476,9 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
   // For superadmin, use selectedOrgId if available; for admin, use their org from user
   const effectiveOrgId = isSuperadmin && selectedOrgId ? selectedOrgId : undefined;
 
-  // DnD sensors — require 5px movement before drag starts (prevents accidental drags)
+  // DnD sensors â€” require 5px movement before drag starts (prevents accidental drags)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const updateStatus = useMutation(api.tasks.updateTaskStatus);
+  const { updateOptimistic } = useOptimisticTaskStatus();
 
   // Queries - for admin/superadmin, get all tasks in their organization
   const adminTasks = useQuery(
@@ -646,7 +648,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
         {/* Search */}
         <div className="relative flex-1 min-w-[150px] sm:min-w-[200px]">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted) text-sm">
-            🔍
+            ðŸ”
           </span>
           <input
             value={search}
@@ -720,11 +722,12 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
             const task = tasks.find((t) => t._id === active.id);
             if (!task || task.status === newStatus) return;
             try {
-              await updateStatus({
-                taskId: task._id as Id<'tasks'>,
-                status: newStatus,
-                userId: convexId,
-              });
+              await updateOptimistic(
+                task._id as Id<'tasks'>,
+                newStatus,
+                convexId,
+                task.status,
+              );
               toast.success(
                 t('tasks.status.moved', { status: t(STATUS_CONFIG[newStatus].labelKey) }),
                 {
@@ -747,7 +750,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
               />
             ))}
           </div>
-          {/* Drag overlay — floating card while dragging */}
+          {/* Drag overlay â€” floating card while dragging */}
           <DragOverlay dropAnimation={{ duration: 200, easing: 'ease' }}>
             {activeTask ? (
               <div className="w-[280px] rotate-2">
@@ -760,7 +763,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
         <div className="bg-(--card) rounded-2xl border border-(--border) shadow-sm overflow-x-auto">
           {tasks.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-4xl mb-3">📋</p>
+              <p className="text-4xl mb-3">ðŸ“‹</p>
               <p className="text-(--text-secondary) font-medium">{t('tasksClient.noTasksFound')}</p>
               <p className="text-(--text-muted) text-sm mt-1">
                 {canManage ? t('tasksClient.createNewTask') : t('tasksClient.noTasksAssigned')}
@@ -817,6 +820,7 @@ export function TasksClient({ userId, userRole }: TasksClientProps) {
       {showAssign && <AssignSupervisorModal onClose={() => setShowAssign(false)} />}
     </div>
   );
-}
+});
 
 export default TasksClient;
+

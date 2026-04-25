@@ -34,19 +34,21 @@ import dynamic from 'next/dynamic';
 import { playNotificationSound, sendBrowserNotification } from '@/lib/notificationSound';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { ShieldLoader } from '../ui/ShieldLoader';
+import { SkeletonTable } from '@/components/ui/Skeleton';
+import { useOptimisticLeaveActions } from '@/hooks/useOptimisticActions';
 
 const AILeaveAssistant = dynamic(() => import('@/components/leaves/AILeaveAssistant'), {
   ssr: false,
 });
 
 function safeFormat(dateStr: string | undefined | null, fmt: string): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'â€”';
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return 'â€”';
     return format(d, fmt);
   } catch {
-    return '—';
+    return 'â€”';
   }
 }
 
@@ -112,9 +114,7 @@ export function LeavesClient() {
     user?.id ? { requesterId: user.id as Id<'users'> } : 'skip',
   );
 
-  const approveLeave = useMutation(api.leaves.approveLeave);
-  const rejectLeave = useMutation(api.leaves.rejectLeave);
-  const deleteLeave = useMutation(api.leaves.deleteLeave);
+  const { approveOptimistic, rejectOptimistic, deleteOptimistic } = useOptimisticLeaveActions();
   const markLeaveAsRead = useMutation(api.leaves.markLeaveAsRead);
 
   // Play notification sound when new unread requests appear (only for admin, once per request)
@@ -126,7 +126,7 @@ export function LeavesClient() {
     if (unreadCount > previousUnreadCount && !hasPlayed) {
       sessionStorage.setItem(`leave_sound_${unreadCount}`, '1');
       playNotificationSound('new_request');
-      sendBrowserNotification('New Leave Request! 🏖️', {
+      sendBrowserNotification('New Leave Request! ðŸ–ï¸', {
         body: `You have ${unreadCount} pending leave request(s)`,
         soundType: 'new_request',
       });
@@ -155,11 +155,11 @@ export function LeavesClient() {
       // Mark as read first
       await markLeaveAsRead({ leaveId: id });
 
-      await approveLeave({
-        leaveId: id,
-        reviewerId: user.id as Id<'users'>,
+      await approveOptimistic(
+        id,
+        user.id as Id<'users'>,
         comment,
-      });
+      );
 
       playNotificationSound('approved');
       toast.success(t('leave.approvedSuccess'));
@@ -178,11 +178,11 @@ export function LeavesClient() {
       // Mark as read first
       await markLeaveAsRead({ leaveId: id });
 
-      await rejectLeave({
-        leaveId: id,
-        reviewerId: user.id as Id<'users'>,
+      await rejectOptimistic(
+        id,
+        user.id as Id<'users'>,
         comment,
-      });
+      );
 
       playNotificationSound('rejected');
       toast.success(t('leave.rejectedSuccess'));
@@ -198,7 +198,7 @@ export function LeavesClient() {
       return;
     }
     try {
-      await deleteLeave({ leaveId: id, requesterId: user.id as Id<'users'> });
+      await deleteOptimistic(id, user.id as Id<'users'>);
       toast.success(t('leave.deletedSuccess'));
     } catch (err) {
       console.error('Delete error:', err);
@@ -306,8 +306,8 @@ export function LeavesClient() {
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-12 flex items-center justify-center">
-                <ShieldLoader size="lg" />
+              <div className="p-6">
+                <SkeletonTable rows={5} />
               </div>
             ) : filtered.length === 0 ? (
               <div className="p-12 text-center">
@@ -371,7 +371,7 @@ export function LeavesClient() {
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
                             <p className="text-xs text-(--text-secondary)">
-                              {safeFormat(req.startDate, 'MMM d')} –{' '}
+                              {safeFormat(req.startDate, 'MMM d')} â€“{' '}
                               {safeFormat(req.endDate, 'MMM d, yyyy')}
                             </p>
                           </td>
@@ -474,3 +474,4 @@ export function LeavesClient() {
 }
 
 export default LeavesClient;
+

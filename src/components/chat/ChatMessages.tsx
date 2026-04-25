@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
-import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useTranslation } from 'react-i18next';
 
 interface ChatMessagesProps {
@@ -23,7 +22,7 @@ interface ChatMessagesProps {
   isLoading?: boolean;
 }
 
-export function ChatMessages({
+export const ChatMessages = React.memo(function ChatMessages({
   messages,
   typingUsers,
   currentUserId,
@@ -154,4 +153,4 @@ export function ChatMessages({
       )}
     </>
   );
-}
+});

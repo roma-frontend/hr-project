@@ -35,6 +35,7 @@ import { playChatMessageSound } from '@/lib/notificationSound';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getInitials, formatFileSize } from '@/lib/stringUtils';
+import { useOptimisticSendMessage } from '@/hooks/useOptimisticActions';
 
 interface Props {
   conversationId: Id<'chatConversations'>;
@@ -69,9 +70,6 @@ export const ChatWindow = React.memo(function ChatWindow({
   onStartCall,
 }: Props) {
   const { t, i18n } = useTranslation();
-  console.log(
-    `[ChatWindow] Loaded with organizationId: ${organizationId}, userId: ${currentUserId}`,
-  );
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState<{
     id: Id<'chatMessages'>;
@@ -119,7 +117,14 @@ export const ChatWindow = React.memo(function ChatWindow({
     });
   }, [messages]);
 
-  // Debug: Log first message sender
+
+  const { sendOptimistic, optimisticMessages: optMessages } = useOptimisticSendMessage(
+    conversationId,
+    currentUserId,
+    organizationId,
+  );
+  const sendMessage = useMutation(api.chat.mutations.sendMessage); // Keep for non-optimistic uses
+
   if (messages && messages.length > 0 && !messages[0]?.sender) {
     console.warn('[ChatWindow] Message without sender:', messages[0]);
   }
@@ -138,15 +143,23 @@ export const ChatWindow = React.memo(function ChatWindow({
       : 'skip',
   );
 
+  // Merge real messages with optimistic messages for instant UI feedback
+  const allMessages = React.useMemo(() => {
+    const real = dedupedMessages ?? [];
+    const optimistic = optMessages ?? [];
+    // Filter out optimistic messages that have been confirmed by server (matching by _id)
+    const realIds = new Set(real.map((m: any) => m._id));
+    const pendingOptimistic = optimistic.filter((m: any) => !realIds.has(m._id));
+    return [...real, ...pendingOptimistic];
+  }, [dedupedMessages, optMessages]);
+
   // Virtualization for messages
   const virtualizer = useVirtualizer({
-    count: dedupedMessages?.length ?? 0,
+    count: allMessages?.length ?? 0,
     getScrollElement: () => messagesParentRef.current,
     estimateSize: () => 100, // Estimate average message height
     overscan: 5,
   });
-
-  const sendMessage = useMutation(api.chat.mutations.sendMessage);
   const scheduleMessage = useMutation(api.chat.mutations.scheduleMessage);
   const markAsRead = useMutation(api.chat.mutations.markAsRead);
   const setTyping = useMutation(api.chat.mutations.setTyping);
@@ -179,8 +192,8 @@ export const ChatWindow = React.memo(function ChatWindow({
   }, [conversationId, markAsRead, currentUserId]);
 
   useEffect(() => {
-    if (dedupedMessages === undefined) return;
-    const count = dedupedMessages.filter(Boolean).length;
+    if (allMessages === undefined) return;
+    const count = allMessages.filter(Boolean).length;
     if (isFirstLoadRef.current) {
       // First load: jump instantly to bottom, no animation
       messagesEndRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior });
@@ -191,7 +204,7 @@ export const ChatWindow = React.memo(function ChatWindow({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       prevMsgCountRef.current = count;
     }
-  }, [dedupedMessages]);
+  }, [allMessages]);
 
   const handleTyping = useCallback(() => {
     setTyping({ conversationId, userId: currentUserId, organizationId, isTyping: true });
@@ -202,7 +215,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     setIsTypingTimeout(t);
   }, [conversationId, currentUserId, organizationId, isTypingTimeout, setTyping]);
 
-  // ── File picking ──────────────────────────────────────────────────────────
+  // â”€â”€ File picking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
@@ -227,7 +240,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     });
   };
 
-  // ── Send ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Send â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text && pendingFiles.length === 0) return;
@@ -297,7 +310,7 @@ export const ChatWindow = React.memo(function ChatWindow({
 
       // Parse @mentions
       const mentionRegex =
-        /@([a-zA-Zа-яА-ЯёЁа-ֆА-Ֆ\u0531-\u0587][a-zA-Zа-яА-ЯёЁа-ֆА-Ֆ\u0531-\u0587\s]*?)(?=\s|$|[^a-zA-Zа-яА-ЯёЁ])/g;
+        /@([a-zA-ZÐ°-ÑÐ-Ð¯Ñ‘ÐÐ°-Ö†Ð-Õ–\u0531-\u0587][a-zA-ZÐ°-ÑÐ-Ð¯Ñ‘ÐÐ°-Ö†Ð-Õ–\u0531-\u0587\s]*?)(?=\s|$|[^a-zA-ZÐ°-ÑÐ-Ð¯Ñ‘Ð])/g;
       const mentionedIds: Id<'users'>[] = [];
       let match;
       while ((match = mentionRegex.exec(text)) !== null) {
@@ -403,7 +416,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     }, 0);
   };
 
-  // ── Voice Message ──────────────────────────────────────────────────────────
+  // â”€â”€ Voice Message â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleVoiceMessage = useCallback(
     async (blob: Blob, duration: number) => {
       try {
@@ -465,7 +478,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     // The textarea uses CSS max-height and resize: none with overflow-y: auto
     // No JS height calculation needed
 
-    // Detect @mention — look backward from cursor for '@'
+    // Detect @mention â€” look backward from cursor for '@'
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = value.slice(0, cursorPos);
     const atIdx = textBeforeCursor.lastIndexOf('@');
@@ -509,7 +522,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         senderId: currentUserId,
         organizationId,
         type: 'text',
-        content: `📊 ${q}`,
+        content: `ðŸ“Š ${q}`,
         poll: {
           question: q,
           options: opts.map((text: any, i: any) => ({ id: `opt_${i}`, text, votes: [] })),
@@ -529,17 +542,17 @@ export const ChatWindow = React.memo(function ChatWindow({
 
   // Browser notification + sound for incoming messages
   useEffect(() => {
-    if (!dedupedMessages || dedupedMessages.length === 0) return;
+    if (!allMessages || allMessages.length === 0) return;
 
-    // Skip sound on the very first load — just mark as loaded
+    // Skip sound on the very first load â€” just mark as loaded
     if (!initialLoadDoneRef.current) {
       initialLoadDoneRef.current = true;
-      const latest = dedupedMessages[dedupedMessages.length - 1];
+      const latest = allMessages[allMessages.length - 1];
       if (latest) lastPlayedMsgIdRef.current = latest._id;
       return;
     }
 
-    const latest = dedupedMessages[dedupedMessages.length - 1];
+    const latest = allMessages[allMessages.length - 1];
     if (!latest) return;
     // Don't play for own messages
     if (latest.senderId === currentUserId) return;
@@ -551,7 +564,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     if (conv?.membership?.isMuted) return;
     lastPlayedMsgIdRef.current = latest._id;
 
-    // If chat is active (tab focused) — mark as read immediately, play sound
+    // If chat is active (tab focused) â€” mark as read immediately, play sound
     if (document.hasFocus()) {
       // Ensure this call completes by using Promise handling
       void markAsRead({ conversationId, userId: currentUserId });
@@ -559,11 +572,11 @@ export const ChatWindow = React.memo(function ChatWindow({
       return;
     }
 
-    // Tab not focused — play sound + show browser notification
+    // Tab not focused â€” play sound + show browser notification
     playChatMessageSound();
     if (Notification.permission === 'granted') {
       new Notification(latest.sender?.name ?? 'New message', {
-        body: latest.content?.slice(0, 80) || '📎 Attachment',
+        body: latest.content?.slice(0, 80) || 'ðŸ“Ž Attachment',
         icon: latest.sender?.avatarUrl ?? '/favicon.ico',
         badge: '/favicon.ico',
         tag: latest._id,
@@ -572,7 +585,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     } else if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, [dedupedMessages, conv?.membership?.isMuted, currentUserId, conversationId, markAsRead]);
+  }, [allMessages, conv?.membership?.isMuted, currentUserId, conversationId, markAsRead]);
 
   const canSend = (input.trim().length > 0 || pendingFiles.length > 0) && !sending;
 
@@ -595,7 +608,7 @@ export const ChatWindow = React.memo(function ChatWindow({
             <ArrowLeft className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
           </button>
 
-          {/* Avatar — clickable for DM (goes to employee profile) */}
+          {/* Avatar â€” clickable for DM (goes to employee profile) */}
           <div className="relative shrink-0">
             {conv?.type === 'direct' && otherUser?._id ? (
               <Link
@@ -761,7 +774,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               className="text-xs font-medium truncate flex-1"
               style={{ color: 'var(--text-muted)' }}
             >
-              📌 {pinnedMessages[pinnedMessages.length - 1]?.content}
+              ðŸ“Œ {pinnedMessages[pinnedMessages.length - 1]?.content}
             </span>
           </div>
         )}
@@ -772,7 +785,7 @@ export const ChatWindow = React.memo(function ChatWindow({
           className="flex-1 overflow-y-auto overflow-x-hidden px-2 xs:px-3 sm:px-4 py-3 xs:py-4 custom-scrollbar"
           style={{ background: 'var(--background)' }}
         >
-          {dedupedMessages === undefined ? (
+          {allMessages === undefined ? (
             <div className="space-y-3 animate-pulse" role="status" aria-label="Loading messages">
               {[...Array(5)].map((_: any, i: any) => (
                 <div key={i} className={cn('flex gap-3', i % 2 === 0 ? '' : 'flex-row-reverse')}>
@@ -784,7 +797,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 </div>
               ))}
             </div>
-          ) : dedupedMessages.length === 0 ? (
+          ) : allMessages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
                 {t('chat.noMessagesYet')}
@@ -803,7 +816,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow: any) => {
-                const msg = dedupedMessages[virtualRow.index];
+                const msg = allMessages[virtualRow.index];
                 if (!msg) return null;
 
                 const isOwn = msg.senderId === currentUserId;
@@ -910,7 +923,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                     className="w-14 xs:w-16 h-14 xs:h-16 rounded-xl border flex flex-col items-center justify-center gap-0.5 px-1"
                     style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
                   >
-                    <span className="text-lg">📎</span>
+                    <span className="text-lg">ðŸ“Ž</span>
                     <span
                       className="text-[7px] xs:text-[9px] text-center truncate w-full"
                       style={{ color: 'var(--text-muted)' }}
@@ -966,7 +979,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               onClick={() => setReplyTo(null)}
               className="w-5 h-5 flex items-center justify-center rounded-full hover:opacity-70 shrink-0"
             >
-              ✕
+              âœ•
             </button>
           </div>
         )}
@@ -993,7 +1006,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 className="text-[9px] hover:opacity-70"
                 style={{ color: 'var(--text-muted)' }}
               >
-                ✕
+                âœ•
               </button>
             </div>
             <input
@@ -1019,7 +1032,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                     onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}
                     className="text-red-400 hover:opacity-70 px-1"
                   >
-                    ✕
+                    âœ•
                   </button>
                 )}
               </div>
@@ -1079,7 +1092,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               className="text-[9px] hover:opacity-70"
               style={{ color: 'var(--text-muted)' }}
             >
-              ✕
+              âœ•
             </button>
           </div>
         )}
@@ -1316,7 +1329,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 className="text-xs xs:text-sm font-medium"
                 style={{ color: 'var(--text-primary)' }}
               >
-                🔒 Read-Only Channel
+                ðŸ”’ Read-Only Channel
               </p>
               <p className="text-[9px] xs:text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                 This is an information-only channel. Messages are sent by administrators only.
@@ -1326,7 +1339,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         )}
       </div>
 
-      {/* Thread Panel — slides in from right */}
+      {/* Thread Panel â€” slides in from right */}
       {thread && (
         <ThreadPanel
           parentMessageId={thread.id}
@@ -1338,7 +1351,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         />
       )}
 
-      {/* Conversation Info Panel — slides in from right */}
+      {/* Conversation Info Panel â€” slides in from right */}
       {showInfo && (
         <ConversationInfoPanel
           conversationId={conversationId}
@@ -1350,3 +1363,6 @@ export const ChatWindow = React.memo(function ChatWindow({
     </div>
   );
 });
+
+
+

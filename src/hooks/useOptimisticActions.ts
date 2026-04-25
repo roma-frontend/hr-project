@@ -1,16 +1,21 @@
 /**
- * useOptimisticSendMessage - Optimistic message sending hook
+ * Optimistic UI hooks using React 19's useOptimistic
  *
- * Provides instant UI feedback when sending messages
- * Rolls back automatically on error
+ * These hooks provide instant UI feedback during mutations.
+ * Convex's real-time subscriptions automatically reconcile optimistic state
+ * with server-confirmed data. On error, the optimistic state is rolled back.
  */
 
 'use client';
 
-import { useMutation, useQuery } from 'convex/react';
+import { useOptimistic, useCallback, useState } from 'react';
+import { useMutation } from 'convex/react';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
-import { useOptimistic, useState, useCallback } from 'react';
+
+// -----------------------------------------------------------------------------
+// Chat: Optimistic Send Message
+// -----------------------------------------------------------------------------
 
 interface OptimisticMessage {
   _id: string;
@@ -19,76 +24,107 @@ interface OptimisticMessage {
   content: string;
   createdAt: number;
   pending: boolean;
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'image' | 'file' | 'audio';
   attachmentUrl?: string;
+  replyToId?: Id<'chatMessages'>;
+  replyToContent?: string;
+  replyToSenderName?: string;
+  mentionedUserIds?: Id<'users'>[];
+  poll?: {
+    question: string;
+    options: Array<{ id: string; text: string; votes: Id<'users'>[] }>;
+  };
+  attachments?: Array<{ url: string; name: string; type: string; size: number }>;
+  audioDuration?: number;
 }
 
 export function useOptimisticSendMessage(
   conversationId: Id<'chatConversations'>,
   userId: Id<'users'>,
-  organizationId: Id<'organizations'>,
+  organizationId: Id<'organizations'> | undefined,
 ) {
-  const [optimisticMessages, setOptimisticMessages] = useState<OptimisticMessage[]>([]);
-
-  const addOptimisticMessage = useCallback((newMessage: OptimisticMessage) => {
-    setOptimisticMessages((prev) => [...prev, newMessage]);
-  }, []);
-
   const sendMessage = useMutation(api.chat.mutations.sendMessage);
-  const messages =
-    useQuery(api.chat.queries.getMessages, { conversationId, userId, limit: 60 }) ?? [];
-
-  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [optimisticMessages, addOptimisticMessage] = useOptimistic<
+    OptimisticMessage[],
+    OptimisticMessage
+  >([], (current, newMessage) => {
+    return [...current, newMessage];
+  });
 
   const sendOptimistic = useCallback(
     async (
       content: string,
-      replyToId?: Id<'chatMessages'>,
-      attachmentUrl?: string,
-      attachmentType?: 'image' | 'file',
+      options?: {
+        replyToId?: Id<'chatMessages'>;
+        replyToContent?: string;
+        replyToSenderName?: string;
+        attachmentUrl?: string;
+        attachmentType?: 'image' | 'file';
+        attachmentSize?: number;
+        mentionedUserIds?: Id<'users'>[];
+        poll?: {
+          question: string;
+          options: Array<{ id: string; text: string; votes: Id<'users'>[] }>;
+        };
+        attachments?: Array<{ url: string; name: string; type: string; size: number }>;
+        audioDuration?: number;
+      },
     ) => {
-      if (!content.trim() && !attachmentUrl) return;
+      if (!content.trim() && !options?.attachmentUrl && !options?.poll) return;
 
-      setIsSending(true);
-      setError(null);
+      const msgType = options?.poll
+        ? 'text'
+        : options?.attachmentUrl
+          ? options.attachmentType === 'image'
+            ? 'image'
+            : 'file'
+          : options?.audioDuration
+            ? 'audio'
+            : 'text';
 
-      // Create optimistic message
       const optimisticMsg: OptimisticMessage = {
-        _id: `temp-${Date.now()}`,
+        _id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         conversationId,
         senderId: userId,
         content,
         createdAt: Date.now(),
         pending: true,
-        type: attachmentUrl ? (attachmentType === 'image' ? 'image' : 'file') : 'text',
-        attachmentUrl: attachmentUrl ?? undefined,
+        type: msgType,
+        attachmentUrl: options?.attachmentUrl,
+        replyToId: options?.replyToId,
+        replyToContent: options?.replyToContent,
+        replyToSenderName: options?.replyToSenderName,
+        mentionedUserIds: options?.mentionedUserIds,
+        poll: options?.poll,
+        attachments: options?.attachments,
+        audioDuration: options?.audioDuration,
       };
 
-      // Add to optimistic state (instant UI update)
-      addOptimisticMessage(optimisticMsg);
-
       try {
-        // Send to server
+        addOptimisticMessage(optimisticMsg);
+
         await sendMessage({
           conversationId,
           senderId: userId,
           organizationId,
+          type: msgType,
           content,
-          replyToId,
-          type: attachmentUrl ? (attachmentType === 'image' ? 'image' : 'file') : 'text',
-          attachments: attachmentUrl
-            ? [{ url: attachmentUrl, name: 'attachment', type: attachmentType || 'file', size: 0 }]
-            : undefined,
+          replyToId: options?.replyToId,
+          mentionedUserIds:
+            options?.mentionedUserIds && options.mentionedUserIds.length > 0
+              ? options.mentionedUserIds
+              : undefined,
+          poll: options?.poll,
+          attachments: options?.attachments,
+          audioDuration: options?.audioDuration,
         });
 
-        // Clear optimistic on success (real message will appear from Convex)
-        setIsSending(false);
+        setError(null);
         return true;
       } catch (err) {
-        // Remove optimistic message on error
         setError(err instanceof Error ? err.message : 'Failed to send message');
-        setIsSending(false);
         throw err;
       }
     },
@@ -97,165 +133,394 @@ export function useOptimisticSendMessage(
 
   return {
     sendOptimistic,
-    isSending,
     error,
-    messages: [...messages, ...optimisticMessages],
+    optimisticMessages,
   };
 }
 
-/**
- * useOptimisticReaction - Optimistic reaction hook
- */
-export function useOptimisticReaction(messageId: Id<'chatMessages'>, userId: Id<'users'>) {
-  const [optimisticReactions, setOptimisticReactions] = useState<
-    Array<{ userId: Id<'users'>; emoji: string }>
-  >([]);
+// -----------------------------------------------------------------------------
+// Chat: Optimistic Thread Reply
+// -----------------------------------------------------------------------------
 
-  const addOptimisticReaction = useCallback((reaction: { userId: Id<'users'>; emoji: string }) => {
-    setOptimisticReactions((prev) => [...prev, reaction]);
-  }, []);
+interface OptimisticThreadReply {
+  _id: string;
+  parentMessageId: Id<'chatMessages'>;
+  conversationId: Id<'chatConversations'>;
+  senderId: Id<'users'>;
+  content: string;
+  createdAt: number;
+  pending: boolean;
+  sender?: { _id: Id<'users'>; name: string; avatarUrl?: string };
+}
 
-  const toggleReaction = useMutation(api.chat.mutations.toggleReaction);
-  const [isToggling, setIsToggling] = useState(false);
+export function useOptimisticThreadReply(
+  parentMessageId: Id<'chatMessages'>,
+  conversationId: Id<'chatConversations'>,
+  userId: Id<'users'>,
+  organizationId: Id<'organizations'> | undefined,
+) {
+  const sendReply = useMutation(api.chat.mutations.sendThreadReply);
+  const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('You');
 
-  const toggleOptimistic = useCallback(
-    async (emoji: string) => {
-      setIsToggling(true);
+  const [optimisticReplies, addOptimisticReply] = useOptimistic<
+    OptimisticThreadReply[],
+    OptimisticThreadReply
+  >([], (current, newReply) => {
+    return [...current, newReply];
+  });
 
-      const reaction = { userId, emoji };
-      addOptimisticReaction(reaction);
+  const replyOptimistic = useCallback(
+    async (content: string) => {
+      if (!content.trim()) return;
+
+      const optimisticReply: OptimisticThreadReply = {
+        _id: `temp-reply-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        parentMessageId,
+        conversationId,
+        senderId: userId,
+        content,
+        createdAt: Date.now(),
+        pending: true,
+        sender: { _id: userId, name: userName, avatarUrl: undefined },
+      };
 
       try {
-        await toggleReaction({ messageId, userId, emoji });
-        setIsToggling(false);
+        addOptimisticReply(optimisticReply);
+
+        await sendReply({
+          parentMessageId,
+          conversationId,
+          senderId: userId,
+          organizationId,
+          content: content.trim(),
+        });
+
+        setError(null);
+        return true;
       } catch (err) {
-        setIsToggling(false);
+        setError(err instanceof Error ? err.message : 'Failed to send reply');
         throw err;
       }
     },
-    [messageId, userId, toggleReaction, addOptimisticReaction],
+    [parentMessageId, conversationId, userId, organizationId, sendReply, addOptimisticReply, userName],
+  );
+
+  return {
+    replyOptimistic,
+    error,
+    optimisticReplies,
+    setUserName,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Chat: Optimistic Reaction
+// -----------------------------------------------------------------------------
+
+export function useOptimisticReaction(messageId: Id<'chatMessages'>, userId: Id<'users'>) {
+  const toggleReaction = useMutation(api.chat.mutations.toggleReaction);
+  const [error, setError] = useState<string | null>(null);
+
+  const [optimisticReactions, setOptimisticReactions] = useOptimistic<
+    Record<string, Id<'users'>[]>,
+    { emojiKey: string; userId: Id<'users'>; toggle: boolean }
+  >({}, (current, action) => {
+    const next = { ...current };
+    const existing = next[action.emojiKey]; const users = existing ? [...existing] : [];
+
+    if (action.toggle) {
+      if (!users.includes(action.userId)) {
+        users.push(action.userId);
+      }
+    } else {
+      const idx = users.indexOf(action.userId);
+      if (idx >= 0) users.splice(idx, 1);
+    }
+
+    if (users.length === 0) {
+      delete next[action.emojiKey];
+    } else {
+      next[action.emojiKey] = users;
+    }
+
+    return next;
+  });
+
+  const toggleOptimistic = useCallback(
+    async (emoji: string, currentUsers: Id<'users'>[]) => {
+      const sanitizedEmoji = emoji.replace(/[\s\x00-\x1F\x7F]/g, '');
+      if (!sanitizedEmoji) return;
+
+      const emojiKey = emojiToKey(sanitizedEmoji);
+      const hasReaction = currentUsers.includes(userId);
+
+      try {
+        setOptimisticReactions({ emojiKey, userId, toggle: !hasReaction });
+
+        await toggleReaction({
+          messageId,
+          userId,
+          emoji: sanitizedEmoji,
+        });
+
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to toggle reaction');
+        throw err;
+      }
+    },
+    [messageId, userId, toggleReaction, setOptimisticReactions],
   );
 
   return {
     toggleOptimistic,
-    isToggling,
-    reactions: optimisticReactions,
-  };
-}
-
-/**
- * useOptimisticLeaveRequest - Optimistic leave request hook
- */
-export function useOptimisticLeaveRequest() {
-  const [optimisticRequests, setOptimisticRequests] = useState<
-    Array<{ id: string; type: string; startDate: string; endDate: string; status: 'pending' }>
-  >([]);
-
-  const addOptimisticRequest = useCallback(
-    (request: {
-      id: string;
-      type: string;
-      startDate: string;
-      endDate: string;
-      status: 'pending';
-    }) => {
-      setOptimisticRequests((prev) => [...prev, request]);
-    },
-    [],
-  );
-
-  const createLeave = useMutation(api.leaves.createLeave);
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const createOptimistic = useCallback(
-    async (
-      userId: Id<'users'>,
-      type: 'paid' | 'unpaid' | 'sick' | 'family' | 'doctor',
-      startDate: string,
-      endDate: string,
-      days: number,
-      reason: string,
-      comment?: string,
-    ) => {
-      setIsCreating(true);
-      setError(null);
-
-      const optimisticRequest = {
-        id: `temp-${Date.now()}`,
-        type,
-        startDate,
-        endDate,
-        status: 'pending' as const,
-      };
-
-      addOptimisticRequest(optimisticRequest);
-
-      try {
-        await createLeave({ userId, type, startDate, endDate, days, reason, comment });
-        setIsCreating(false);
-        return true;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create leave request');
-        setIsCreating(false);
-        throw err;
-      }
-    },
-    [createLeave, addOptimisticRequest],
-  );
-
-  return {
-    createOptimistic,
-    isCreating,
     error,
-    requests: optimisticRequests,
+    optimisticReactions,
   };
 }
 
-/**
- * useOptimisticTaskStatus - Optimistic task status update hook
- */
+// -----------------------------------------------------------------------------
+// Tasks: Optimistic Status Update
+// -----------------------------------------------------------------------------
+
+interface OptimisticTaskUpdate {
+  taskId: Id<'tasks'>;
+  newStatus: string;
+  oldStatus: string;
+}
+
 export function useOptimisticTaskStatus() {
-  const [optimisticUpdates, setOptimisticUpdates] = useState<
-    Array<{ taskId: Id<'tasks'>; status: string }>
-  >([]);
-
-  const addOptimisticUpdate = useCallback((update: { taskId: Id<'tasks'>; status: string }) => {
-    setOptimisticUpdates((prev) => [...prev, update]);
-  }, []);
-
   const updateTaskStatus = useMutation(api.tasks.updateTaskStatus);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [optimisticUpdates, setOptimisticUpdate] = useOptimistic<
+    Map<string, OptimisticTaskUpdate>,
+    OptimisticTaskUpdate
+  >(new Map(), (current, update) => {
+    const next = new Map(current);
+    next.set(update.taskId, update);
+    return next;
+  });
 
   const updateOptimistic = useCallback(
     async (
       taskId: Id<'tasks'>,
       status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled',
       userId: Id<'users'>,
+      oldStatus: string,
     ) => {
-      setIsUpdating(true);
-      setError(null);
-
-      addOptimisticUpdate({ taskId, status });
-
       try {
+        setOptimisticUpdate({ taskId, newStatus: status, oldStatus });
+
         await updateTaskStatus({ taskId, status, userId });
-        setIsUpdating(false);
+
+        setError(null);
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update task status');
-        setIsUpdating(false);
         throw err;
       }
     },
-    [updateTaskStatus, addOptimisticUpdate],
+    [updateTaskStatus, setOptimisticUpdate],
   );
 
   return {
     updateOptimistic,
-    isUpdating,
     error,
-    updates: optimisticUpdates,
+    optimisticUpdates,
   };
+}
+
+// -----------------------------------------------------------------------------
+// Leaves: Optimistic Approve/Reject/Delete
+// -----------------------------------------------------------------------------
+
+interface OptimisticLeaveAction {
+  leaveId: Id<'leaveRequests'>;
+  action: 'approve' | 'reject' | 'delete';
+  previousStatus?: string;
+}
+
+export function useOptimisticLeaveActions() {
+  const approveLeave = useMutation(api.leaves.approveLeave);
+  const rejectLeave = useMutation(api.leaves.rejectLeave);
+  const deleteLeave = useMutation(api.leaves.deleteLeave);
+  const [error, setError] = useState<string | null>(null);
+
+  const [optimisticActions, setOptimisticAction] = useOptimistic<
+    Map<string, OptimisticLeaveAction>,
+    OptimisticLeaveAction
+  >(new Map(), (current, action) => {
+    const next = new Map(current);
+    next.set(action.leaveId, action);
+    return next;
+  });
+
+  const approveOptimistic = useCallback(
+    async (leaveId: Id<'leaveRequests'>, reviewerId: Id<'users'>, comment?: string) => {
+      try {
+        setOptimisticAction({ leaveId, action: 'approve', previousStatus: 'pending' });
+
+        await approveLeave({ leaveId, reviewerId, comment });
+
+        setError(null);
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to approve leave');
+        throw err;
+      }
+    },
+    [approveLeave, setOptimisticAction],
+  );
+
+  const rejectOptimistic = useCallback(
+    async (leaveId: Id<'leaveRequests'>, reviewerId: Id<'users'>, comment?: string) => {
+      try {
+        setOptimisticAction({ leaveId, action: 'reject', previousStatus: 'pending' });
+
+        await rejectLeave({ leaveId, reviewerId, comment });
+
+        setError(null);
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to reject leave');
+        throw err;
+      }
+    },
+    [rejectLeave, setOptimisticAction],
+  );
+
+  const deleteOptimistic = useCallback(
+    async (leaveId: Id<'leaveRequests'>, requesterId: Id<'users'>) => {
+      try {
+        setOptimisticAction({ leaveId, action: 'delete' });
+
+        await deleteLeave({ leaveId, requesterId });
+
+        setError(null);
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete leave');
+        throw err;
+      }
+    },
+    [deleteLeave, setOptimisticAction],
+  );
+
+  return {
+    approveOptimistic,
+    rejectOptimistic,
+    deleteOptimistic,
+    error,
+    optimisticActions,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Drivers: Optimistic Request
+// -----------------------------------------------------------------------------
+
+interface OptimisticDriverRequest {
+  requestId: string;
+  organizationId: Id<'organizations'>;
+  requesterId: Id<'users'>;
+  driverId: Id<'drivers'>;
+  startTime: number;
+  endTime: number;
+  tripInfo: {
+    from: string;
+    to: string;
+    purpose: string;
+    passengerCount: number;
+    notes?: string;
+  };
+  tripCategory: string;
+  createdAt: number;
+  pending: boolean;
+}
+
+export function useOptimisticDriverRequest() {
+  const requestDriver = useMutation(api.drivers.requests_mutations.requestDriver);
+  const [error, setError] = useState<string | null>(null);
+
+  const [optimisticRequests, addOptimisticRequest] = useOptimistic<
+    OptimisticDriverRequest[],
+    OptimisticDriverRequest
+  >([], (current, newRequest) => {
+    return [...current, newRequest];
+  });
+
+  const requestOptimistic = useCallback(
+    async (
+      organizationId: Id<'organizations'>,
+      requesterId: Id<'users'>,
+      driverId: Id<'drivers'>,
+      startTime: number,
+      endTime: number,
+      tripInfo: {
+        from: string;
+        to: string;
+        purpose: string;
+        passengerCount: number;
+        notes?: string;
+      },
+      tripCategory: 'client_meeting' | 'airport' | 'office_transfer' | 'emergency' | 'team_event' | 'personal',
+    ) => {
+      const optimisticRequest: OptimisticDriverRequest = {
+        requestId: `temp-driver-${Date.now()}`,
+        organizationId,
+        requesterId,
+        driverId,
+        startTime,
+        endTime,
+        tripInfo,
+        tripCategory,
+        createdAt: Date.now(),
+        pending: true,
+      };
+
+      try {
+        addOptimisticRequest(optimisticRequest);
+
+        const result = await requestDriver({
+          organizationId,
+          requesterId,
+          driverId,
+          startTime,
+          endTime,
+          tripInfo,
+          tripCategory,
+        });
+
+        setError(null);
+        return result;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to request driver');
+        throw err;
+      }
+    },
+    [requestDriver, addOptimisticRequest],
+  );
+
+  return {
+    requestOptimistic,
+    error,
+    optimisticRequests,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Helper: Emoji to ASCII-safe key (same as server)
+// -----------------------------------------------------------------------------
+
+function emojiToKey(emoji: string): string {
+  const codePoints: string[] = [];
+  for (const char of emoji) {
+    const codePoint = char.codePointAt(0);
+    if (codePoint !== undefined) {
+      codePoints.push('u' + codePoint.toString(16).toLowerCase());
+    }
+  }
+  return codePoints.join('_');
 }

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { X, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useOptimisticThreadReply } from '@/hooks/useOptimisticActions';
 
 interface Props {
   parentMessageId: Id<'chatMessages'>;
@@ -15,6 +16,7 @@ interface Props {
   currentUserId: Id<'users'>;
   conversationId: Id<'chatConversations'>;
   organizationId?: Id<'organizations'>;
+  currentUserName?: string;
   onClose: () => void;
 }
 
@@ -33,6 +35,7 @@ export function ThreadPanel({
   currentUserId,
   conversationId,
   organizationId,
+  currentUserName,
   onClose,
 }: Props) {
   const [input, setInput] = useState('');
@@ -40,24 +43,39 @@ export function ThreadPanel({
   const endRef = useRef<HTMLDivElement>(null);
 
   const replies = useQuery(api.chat.queries.getThreadReplies, { parentMessageId });
-  const sendReply = useMutation(api.chat.mutations.sendThreadReply);
+
+  const { replyOptimistic, optimisticReplies: optReplies, setUserName } = useOptimisticThreadReply(
+    parentMessageId,
+    conversationId,
+    currentUserId,
+    organizationId,
+  );
+
+  useEffect(() => {
+    if (currentUserName) setUserName(currentUserName);
+  }, [currentUserName, setUserName]);
+
+  // Merge real replies with optimistic replies for instant UI feedback
+  const allReplies = React.useMemo(() => {
+    const real = replies ?? [];
+    const optimistic = optReplies ?? [];
+    const realIds = new Set(real.map((r: any) => r._id));
+    const pendingOptimistic = optimistic.filter((r: any) => !realIds.has(r._id));
+    return [...real, ...pendingOptimistic];
+  }, [replies, optReplies]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [replies?.length]);
+  }, [allReplies?.length]);
 
   const handleSend = async () => {
     if (!input.trim() || sending) return;
     setSending(true);
     try {
-      await sendReply({
-        parentMessageId,
-        conversationId,
-        senderId: currentUserId,
-        organizationId,
-        content: input.trim(),
-      });
+      await replyOptimistic(input.trim());
       setInput('');
+    } catch (err) {
+      console.error('Thread reply failed:', err);
     } finally {
       setSending(false);
     }
@@ -83,7 +101,7 @@ export function ThreadPanel({
             Thread
           </h3>
           <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-            {replies?.length ?? 0} repl{(replies?.length ?? 0) !== 1 ? 'ies' : 'y'}
+            {allReplies?.length ?? 0} repl{(allReplies?.length ?? 0) !== 1 ? 'ies' : 'y'}
           </p>
         </div>
         <button
@@ -107,12 +125,12 @@ export function ThreadPanel({
 
       {/* Replies */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
-        {replies === undefined && (
+        {allReplies === undefined && (
           <div className="flex items-center justify-center py-8">
             <ShieldLoader size="xs" variant="inline" />
           </div>
         )}
-        {replies?.map((r: any) => {
+        {allReplies?.map((r: any) => {
           const isOwn = r.senderId === currentUserId;
           return (
             <div
@@ -177,7 +195,7 @@ export function ThreadPanel({
                 handleSend();
               }
             }}
-            placeholder="Reply in thread…"
+            placeholder="Reply in threadâ€¦"
             className="flex-1 bg-transparent outline-none text-xs"
             style={{ color: 'var(--text-primary)' }}
           />
@@ -198,3 +216,5 @@ export function ThreadPanel({
     </div>
   );
 }
+
+

@@ -98,7 +98,7 @@ function PresenceDot({ status }: { status?: string }) {
   );
 }
 
-export function ConversationList({
+export const ConversationList = React.memo(function ConversationList({
   conversations,
   selectedId,
   currentUserId,
@@ -673,4 +673,4 @@ export function ConversationList({
       </div>
     </div>
   );
-}
+});
