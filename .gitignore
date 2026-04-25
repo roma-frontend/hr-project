@@ -118,3 +118,10 @@ setup-hr-testing.sh
 # Reports and analysis directories
 reports/
 tests/
+
+# Audit/debug scripts (temporary)
+audit-*.js
+add-*.js
+fix-*.js
+check-*.js
+src/app/api/csrf-token/

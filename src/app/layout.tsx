@@ -138,10 +138,7 @@ export const metadata: Metadata = {
       { url: '/favicon-16x16.svg?v=3', sizes: '16x16', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon-animated.svg?v=3',
-    apple: [
-      { url: '/apple-touch-icon.svg?v=3', sizes: '180x180', type: 'image/svg+xml' },
-      { url: '/apple-touch-icon.png?v=3', sizes: '180x180' },
-    ],
+    apple: [{ url: '/apple-touch-icon.svg?v=3', sizes: '180x180', type: 'image/svg+xml' }],
   },
   manifest: '/site.webmanifest',
 };

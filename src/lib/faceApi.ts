@@ -1,10 +1,30 @@
 // Lazy load @vladmandic/face-api to reduce initial bundle size
 let faceapi: typeof import('@vladmandic/face-api') | null = null;
 let modelsLoaded = false;
+let tfInitialized = false;
+
+// Initialize TensorFlow.js backend before using face-api
+async function initTensorFlow() {
+  if (tfInitialized) return;
+
+  try {
+    const tf = await import('@tensorflow/tfjs');
+    // Explicitly set the backend to ensure it's initialized
+    await tf.setBackend('cpu');
+    await tf.ready();
+    tfInitialized = true;
+    console.log('✅ TensorFlow.js backend initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize TensorFlow.js:', error);
+    throw error;
+  }
+}
 
 // Dynamically import @vladmandic/face-api only when needed
 async function loadFaceApiLibrary() {
   if (!faceapi) {
+    // Ensure TF.js is initialized first
+    await initTensorFlow();
     faceapi = await import('@vladmandic/face-api');
   }
   return faceapi;

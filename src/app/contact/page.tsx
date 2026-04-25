@@ -21,7 +21,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
-import Navbar from '@/components/layout/Navbar';
+import Navbar from '@/components/landing/Navbar';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -244,7 +244,7 @@ export default function ContactPage() {
                           required
                           value={form.name}
                           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder-muted-foreground/50 text-sm outline-none font-medium"
+                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
                         />
                       </Field>
                       <Field label={t('contact.email') + ' *'} icon={<Mail size={14} />}>
@@ -254,7 +254,7 @@ export default function ContactPage() {
                           required
                           value={form.email}
                           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder-muted-foreground/50 text-sm outline-none font-medium"
+                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
                         />
                       </Field>
                     </div>
@@ -267,7 +267,7 @@ export default function ContactPage() {
                           placeholder={t('placeholders.acmeCorp')}
                           value={form.company}
                           onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder-muted-foreground/50 text-sm outline-none font-medium"
+                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
                         />
                       </Field>
                       <Field label={t('contact.teamSize')} icon={<Users size={14} />}>
@@ -276,7 +276,11 @@ export default function ContactPage() {
                           onChange={(e) => setForm((f) => ({ ...f, teamSize: e.target.value }))}
                           className="w-full bg-transparent text-foreground text-sm outline-none appearance-none cursor-pointer font-medium"
                         >
-                          <option value="" disabled className="bg-background text-muted-foreground">
+                          <option
+                            value=""
+                            disabled
+                            className="bg-background text-muted-foreground/40"
+                          >
                             {t('contactPage.selectTeamSize')}
                           </option>
                           {TEAM_SIZES.map((s) => (

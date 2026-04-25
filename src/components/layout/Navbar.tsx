@@ -330,7 +330,8 @@ export function Navbar() {
                                 n.type === 'ticket_created' ||
                                 n.type === 'ticket_updated' ||
                                 n.type === 'ticket' ||
-                                n.type === 'system' && n.relatedId?.startsWith('support_ticket:') ||
+                                (n.type === 'system' &&
+                                  n.relatedId?.startsWith('support_ticket:')) ||
                                 n.message?.toLowerCase().includes('ticket') ||
                                 n.title?.toLowerCase().includes('ticket') ||
                                 n.title?.includes('🎫')
@@ -419,217 +420,244 @@ export function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* User dropdown */}
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-(--background-subtle) transition-colors outline-none focus-visible:outline-none focus:outline-none"
-                aria-label={t('nav.userMenu', { defaultValue: 'User menu' })}
+          {/* User dropdown - only show when logged in */}
+          {user ? (
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-(--background-subtle) transition-colors outline-none focus-visible:outline-none focus:outline-none"
+                  aria-label={t('nav.userMenu', { defaultValue: 'User menu' })}
+                >
+                  <div className="relative">
+                    <Avatar className="w-8 h-8">
+                      {user?.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                      <AvatarFallback className="text-xs bg-linear-to-br from-[#1d4ed8] to-[#0ea5e9] text-white font-semibold">
+                        {user?.name ? getInitials(user.name) : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    {/* Presence dot */}
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-(--navbar-bg) ${presenceCfg.dot}`}
+                    />
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-xs font-semibold text-(--text-primary) leading-tight">
+                      {user?.name ?? 'User'}
+                    </p>
+                    <p className="text-[10px] text-(--text-muted) capitalize">
+                      <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
+                    </p>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-(--text-muted) hidden sm:block" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                collisionPadding={{ top: 72, bottom: 16, left: 16, right: 16 }}
+                className="w-[calc(100vw-2rem)] sm:w-80 max-h-[calc(100vh-90px)] overflow-y-auto bg-(--card) border-(--border) shadow-xl z-60"
               >
-                <div className="relative">
-                  <Avatar className="w-8 h-8">
-                    {user?.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-                    <AvatarFallback className="text-xs bg-linear-to-br from-[#1d4ed8] to-[#0ea5e9] text-white font-semibold">
-                      {user?.name ? getInitials(user.name) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/* Presence dot */}
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-(--navbar-bg) ${presenceCfg.dot}`}
+                {/* Mobile close button */}
+                <button
+                  className="sm:hidden absolute top-3 right-3 p-1.5 rounded-lg text-(--text-muted) hover:text-(--text-primary) hover:bg-(--background-subtle) transition-colors"
+                  style={{ zIndex: 999 }}
+                  onClick={() => setMenuOpen(false)}
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {/* Productivity Widgets */}
+                {mounted && user && (
+                  <>
+                    {/* Quick Stats Widget */}
+                    <QuickStatsWidget />
+                    <DropdownMenuSeparator className="bg-(--border)" />
+
+                    {/* Focus Mode */}
+                    <FocusMode currentPresence={currentPresence} />
+                    <DropdownMenuSeparator className="bg-(--border)" />
+
+                    {/* Pomodoro Timer */}
+                    <PomodoroTimer />
+                    <DropdownMenuSeparator className="bg-(--border)" />
+
+                    {/* Team Presence */}
+                    <TeamPresence />
+                    <DropdownMenuSeparator className="bg-(--border)" />
+                  </>
+                )}
+                <DropdownMenuLabel className="text-(--text-muted) text-xs">
+                  {t('nav.quickActions')}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-(--border)" />
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2 font-medium"
+                  onClick={() => router.push('/tasks?new=true')}
+                >
+                  <Plus className="w-4 h-4 text-blue-500" />
+                  <span>{t('shortcuts.newTask')}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
+                    ⌘T
+                  </kbd>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => router.push('/leaves?new=true')}
+                >
+                  <Calendar className="w-4 h-4 text-purple-500" />
+                  <span>{t('leave.requestLeave')}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
+                    ⌘L
+                  </kbd>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => router.push('/attendance')}
+                >
+                  <Clock className="w-4 h-4 text-green-500" />
+                  <span>{t('navbar.clockInOut')}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
+                    ⌘A
+                  </kbd>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => router.push('/reports')}
+                >
+                  <FileText className="w-4 h-4 text-orange-500" />
+                  {t('navbar.myReports')}
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-(--border)" />
+                <DropdownMenuLabel className="text-(--text-muted) text-xs">
+                  {t('nav.accountSettings')}
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => router.push('/profile')}
+                >
+                  <User className="w-4 h-4 text-(--text-muted)" />
+                  {t('nav.profile')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => router.push('/settings')}
+                >
+                  <Settings className="w-4 h-4 text-(--text-muted)" />
+                  {t('nav.settings')}
+                </DropdownMenuItem>
+
+                {/* Status selector - collapsible */}
+                <DropdownMenuSeparator className="bg-(--border)" />
+
+                {/* Status trigger button */}
+                <div
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setStatusExpanded(!statusExpanded);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-all duration-200 hover:bg-(--background-subtle)/60 hover:pl-2.5 cursor-pointer"
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${presenceCfg.dot}`} />
+                  <span className="flex-1 text-left font-medium text-(--text-primary)">
+                    <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-(--text-muted) transition-transform duration-200 ${
+                      statusExpanded ? 'rotate-180' : ''
+                    }`}
                   />
                 </div>
-                <div className="hidden sm:block text-left">
-                  <p className="text-xs font-semibold text-(--text-primary) leading-tight">
-                    {user?.name ?? 'User'}
-                  </p>
-                  <p className="text-[10px] text-(--text-muted) capitalize">
-                    <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
-                  </p>
-                </div>
-                <ChevronDown className="w-3 h-3 text-(--text-muted) hidden sm:block" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={8}
-              collisionPadding={{ top: 72, bottom: 16, left: 16, right: 16 }}
-              className="w-[calc(100vw-2rem)] sm:w-80 max-h-[calc(100vh-90px)] overflow-y-auto bg-(--card) border-(--border) shadow-xl z-60"
-            >
-              {/* Mobile close button */}
-              <button
-                className="sm:hidden absolute top-3 right-3 p-1.5 rounded-lg text-(--text-muted) hover:text-(--text-primary) hover:bg-(--background-subtle) transition-colors"
-                style={{ zIndex: 999 }}
-                onClick={() => setMenuOpen(false)}
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              {/* Productivity Widgets */}
-              {mounted && user && (
-                <>
-                  {/* Quick Stats Widget */}
-                  <QuickStatsWidget />
-                  <DropdownMenuSeparator className="bg-(--border)" />
 
-                  {/* Focus Mode */}
-                  <FocusMode currentPresence={currentPresence} />
-                  <DropdownMenuSeparator className="bg-(--border)" />
-
-                  {/* Pomodoro Timer */}
-                  <PomodoroTimer />
-                  <DropdownMenuSeparator className="bg-(--border)" />
-
-                  {/* Team Presence */}
-                  <TeamPresence />
-                  <DropdownMenuSeparator className="bg-(--border)" />
-                </>
-              )}
-              <DropdownMenuLabel className="text-(--text-muted) text-xs">
-                {t('nav.quickActions')}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-(--border)" />
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2 font-medium"
-                onClick={() => router.push('/tasks?new=true')}
-              >
-                <Plus className="w-4 h-4 text-blue-500" />
-                <span>{t('shortcuts.newTask')}</span>
-                <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
-                  ⌘T
-                </kbd>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => router.push('/leaves?new=true')}
-              >
-                <Calendar className="w-4 h-4 text-purple-500" />
-                <span>{t('leave.requestLeave')}</span>
-                <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
-                  ⌘L
-                </kbd>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => router.push('/attendance')}
-              >
-                <Clock className="w-4 h-4 text-green-500" />
-                <span>{t('navbar.clockInOut')}</span>
-                <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
-                  ⌘A
-                </kbd>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => router.push('/reports')}
-              >
-                <FileText className="w-4 h-4 text-orange-500" />
-                {t('navbar.myReports')}
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator className="bg-(--border)" />
-              <DropdownMenuLabel className="text-(--text-muted) text-xs">
-                {t('nav.accountSettings')}
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => router.push('/profile')}
-              >
-                <User className="w-4 h-4 text-(--text-muted)" />
-                {t('nav.profile')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => router.push('/settings')}
-              >
-                <Settings className="w-4 h-4 text-(--text-muted)" />
-                {t('nav.settings')}
-              </DropdownMenuItem>
-
-              {/* Status selector - collapsible */}
-              <DropdownMenuSeparator className="bg-(--border)" />
-
-              {/* Status trigger button */}
-              <div
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setStatusExpanded(!statusExpanded);
-                }}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none transition-all duration-200 hover:bg-(--background-subtle)/60 hover:pl-2.5 cursor-pointer"
-              >
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${presenceCfg.dot}`} />
-                <span className="flex-1 text-left font-medium text-(--text-primary)">
-                  <PresenceEmoji emoji={presenceCfg.icon} /> {presenceLabel}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 text-(--text-muted) transition-transform duration-200 ${
-                    statusExpanded ? 'rotate-180' : ''
+                {/* Expandable status list */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    statusExpanded ? 'max-h-75 opacity-100' : 'max-h-0 opacity-0'
                   }`}
-                />
-              </div>
-
-              {/* Expandable status list */}
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-out ${
-                  statusExpanded ? 'max-h-75 opacity-100' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <div className="py-1">
-                  {(
-                    Object.entries(PRESENCE_CONFIG) as [
-                      PresenceStatus,
-                      (typeof PRESENCE_CONFIG)[PresenceStatus],
-                    ][]
-                  ).map(([key, cfg]) => (
-                    <DropdownMenuItem
-                      key={key}
-                      onClick={async () => {
-                        if (user?.id) {
-                          await updatePresence({
-                            userId: user.id as Id<'users'>,
-                            presenceStatus: key,
-                          });
-                          showNotification(key, t(cfg.labelKey));
-                          setStatusExpanded(false); // Close after selection
-                        }
-                      }}
-                      className={`ml-4 ${currentPresence === key ? 'bg-(--background-subtle)/40' : ''}`}
-                    >
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
-                      <span
-                        className={`text-sm flex-1 ${currentPresence === key ? 'font-semibold text-(--text-primary)' : 'text-(--text-muted)'}`}
+                >
+                  <div className="py-1">
+                    {(
+                      Object.entries(PRESENCE_CONFIG) as [
+                        PresenceStatus,
+                        (typeof PRESENCE_CONFIG)[PresenceStatus],
+                      ][]
+                    ).map(([key, cfg]) => (
+                      <DropdownMenuItem
+                        key={key}
+                        onClick={async () => {
+                          if (user?.id) {
+                            await updatePresence({
+                              userId: user.id as Id<'users'>,
+                              presenceStatus: key,
+                            });
+                            showNotification(key, t(cfg.labelKey));
+                            setStatusExpanded(false); // Close after selection
+                          }
+                        }}
+                        className={`ml-4 ${currentPresence === key ? 'bg-(--background-subtle)/40' : ''}`}
                       >
-                        {t(cfg.labelKey)}
-                      </span>
-                      {currentPresence === key && <Check className="w-3.5 h-3.5 text-[#2563eb]" />}
-                    </DropdownMenuItem>
-                  ))}
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                        <span
+                          className={`text-sm flex-1 ${currentPresence === key ? 'font-semibold text-(--text-primary)' : 'text-(--text-muted)'}`}
+                        >
+                          {t(cfg.labelKey)}
+                        </span>
+                        {currentPresence === key && (
+                          <Check className="w-3.5 h-3.5 text-[#2563eb]" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Keyboard Shortcuts hint */}
-              <DropdownMenuSeparator className="bg-(--border)" />
-              <DropdownMenuItem
-                className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
-                onClick={() => setShowShortcutsModal(true)}
-              >
-                <Keyboard className="w-4 h-4 text-(--text-muted)" />
-                <span>{t('shortcuts.keyboardShortcuts')}</span>
-                <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
-                  ⌘/
-                </kbd>
-              </DropdownMenuItem>
+                {/* Keyboard Shortcuts hint */}
+                <DropdownMenuSeparator className="bg-(--border)" />
+                <DropdownMenuItem
+                  className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                  onClick={() => setShowShortcutsModal(true)}
+                >
+                  <Keyboard className="w-4 h-4 text-(--text-muted)" />
+                  <span>{t('shortcuts.keyboardShortcuts')}</span>
+                  <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-(--background-subtle) border border-(--border) rounded">
+                    ⌘/
+                  </kbd>
+                </DropdownMenuItem>
 
-              <DropdownMenuSeparator className="bg-(--border)" />
-              <DropdownMenuItem
-                className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer gap-2"
-                onClick={handleLogout}
+                <DropdownMenuSeparator className="bg-(--border)" />
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t('nav.logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            /* Not logged in — show login/signup buttons */
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-(--text-muted) hover:text-(--text-primary)"
+                onClick={() => router.push('/login')}
               >
-                <LogOut className="w-4 h-4" />
-                {t('nav.logout')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {t('auth.signIn') || 'Sign In'}
+              </Button>
+              <Button
+                size="sm"
+                className="text-white"
+                style={{
+                  background:
+                    'linear-gradient(135deg, var(--primary), var(--primary-dark, var(--primary)))',
+                }}
+                onClick={() => router.push('/register')}
+              >
+                {t('auth.signUp') || 'Sign Up'}
+              </Button>
+            </div>
+          )}
         </div>
       </header>
       {/* Notification toasts removed — NotificationBanner handles visual + sound */}

@@ -95,8 +95,38 @@ export function useAuthSync() {
       if (status === 'loading') return;
 
       if (status === 'unauthenticated') {
-        const { isAuthenticated } = useAuthStore.getState();
-        if (isAuthenticated) return;
+        const { isAuthenticated: storeAuthenticated } = useAuthStore.getState();
+        if (storeAuthenticated) return;
+
+        // Check for JWT cookie from email/password login
+        try {
+          const { getSessionAction } = await import('@/actions/auth');
+          const jwtSession = await getSessionAction();
+
+          if (jwtSession && jwtSession.userId) {
+            // Email login session exists — hydrate Zustand store
+            const userData = {
+              id: jwtSession.userId,
+              name: jwtSession.name,
+              email: jwtSession.email,
+              role: jwtSession.role,
+              organizationId: jwtSession.organizationId,
+              organizationSlug: jwtSession.organizationSlug,
+              organizationName: jwtSession.organizationName,
+              department: jwtSession.department,
+              position: jwtSession.position,
+              employeeType: jwtSession.employeeType,
+              avatar: jwtSession.avatar,
+            };
+            login(userData);
+            setUserEmail(jwtSession.email);
+            return;
+          }
+        } catch (error) {
+          console.error('[useAuthSync] Failed to restore email session:', error);
+        }
+
+        // No valid session found — logout
         logout();
         setUserEmail(null);
         sessionCreated.current = false;

@@ -107,6 +107,7 @@ function safeUser(user: {
   avatarUrl?: string;
   travelAllowance: number;
   isApproved: boolean;
+  totpSecret?: string;
 }) {
   return {
     userId: user._id,
@@ -120,6 +121,7 @@ function safeUser(user: {
     avatarUrl: user.avatarUrl,
     travelAllowance: user.travelAllowance,
     isApproved: user.isApproved,
+    totpSecret: user.totpSecret,
   };
 }
 
@@ -318,6 +320,7 @@ export const register = mutation({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOGIN — validates credentials + organizationId scoping
+// Password verification is done in Next.js API route to avoid bcrypt setTimeout issue
 // ─────────────────────────────────────────────────────────────────────────────
 export const login = mutation({
   args: {
@@ -329,7 +332,7 @@ export const login = mutation({
   },
   handler: async (
     ctx,
-    { email, password: passwordHash, sessionToken, sessionExpiry, isFaceLogin },
+    { email, password: _passwordHash, sessionToken, sessionExpiry, isFaceLogin },
   ) => {
     return wrapConvexError(async () => {
       const user = await ctx.db
@@ -346,20 +349,8 @@ export const login = mutation({
         );
       }
 
-      // Skip password check for Face ID login
-      if (!isFaceLogin) {
-        // SECURITY: Use bcrypt.compare instead of direct string comparison
-        const passwordValid = await verifyPassword(passwordHash, user.passwordHash);
-        if (!passwordValid) {
-          throw new Error('Invalid email or password');
-        }
-
-        // Auto-upgrade: if password was legacy (not bcrypt), re-hash with bcrypt
-        if (!user.passwordHash.startsWith('$2')) {
-          const hashedPassword = await hashPassword(passwordHash);
-          await ctx.db.patch(user._id, { passwordHash: hashedPassword });
-        }
-      }
+      // Password check is done in Next.js API route (bcrypt uses setTimeout which Convex forbids)
+      // isFaceLogin flag indicates caller has already verified credentials
 
       // Verify org is still active
       if (!user.organizationId) throw new Error('User has no organization');
@@ -379,6 +370,7 @@ export const login = mutation({
         organizationName: org.name,
         organizationSlug: org.slug,
         organizationPlan: org.plan,
+        totpEnabled: !!user.totpSecret,
       };
     }, 'login');
   },
@@ -560,6 +552,25 @@ export const changePassword = mutation({
     await ctx.db.patch(userId, {
       passwordHash: hashedPassword,
       sessionToken: undefined, // force re-login on other devices
+    });
+
+    return { success: true };
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DISABLE 2FA (TOTP)
+// ─────────────────────────────────────────────────────────────────────────────
+export const disableTotp = mutation({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, { userId }) => {
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error('User not found');
+
+    await ctx.db.patch(userId, {
+      totpSecret: undefined,
     });
 
     return { success: true };

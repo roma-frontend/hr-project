@@ -37,8 +37,6 @@ export function CreateIncidentWizard({ userId, onComplete, onCancel }: CreateInc
       icon: <AlertTriangle className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="severity"
           label={t('incidentWizard.steps.severity.severityLabel')}
           options={[
@@ -84,16 +82,12 @@ export function CreateIncidentWizard({ userId, onComplete, onCancel }: CreateInc
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="title"
             label={t('incidentWizard.steps.details.titleLabel')}
             placeholder={t('incidentWizard.steps.details.titlePlaceholder')}
             required
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="description"
             label={t('incidentWizard.steps.details.descriptionLabel')}
             placeholder={t('incidentWizard.steps.details.descriptionPlaceholder')}
@@ -112,16 +106,12 @@ export function CreateIncidentWizard({ userId, onComplete, onCancel }: CreateInc
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextInputStep
-              stepData={{}}
-              updateStepData={() => {}}
               field="affectedUsers"
               label={t('incidentWizard.steps.impact.affectedUsersLabel')}
               type="number"
               placeholder="0"
             />
             <TextInputStep
-              stepData={{}}
-              updateStepData={() => {}}
               field="affectedOrgs"
               label={t('incidentWizard.steps.impact.affectedOrgsLabel')}
               type="number"

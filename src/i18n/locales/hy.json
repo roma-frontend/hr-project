@@ -349,7 +349,9 @@
     "getStarted": "Սկսել",
     "aiSiteEditor": "AI Կայքի խմբագիր",
     "subscriptions": "Բաժանորդագրություններ",
-    "security": "Անվտանգություն"
+    "security": "Անվտանգություն",
+    "openMenu": "Բացել մենյուն",
+    "userMenu": "Օգտատիրոջ մենյու"
   },
   "superadmin": {
     "quickActions": {
@@ -2380,6 +2382,7 @@
     "lightThemeDesc": "Լուսավոր թեմա յարկ լուսավորության համար",
     "systemTheme": "Սիստեմային",
     "systemThemeDesc": "Համապատասխանում սիստեմային կարգավորումներին",
+    "systemMode": "Սիստեմային",
     "accentColor": "Ակցենտային գույն",
     "chooseAccentColor": "Ընտրեք ձեր նախընտրված ակցենտային գույնը (շղթակից)"
   },
@@ -3236,7 +3239,8 @@
     "smartHint": "Ես ամեն ինչ գիտեմ Shield HR-ի մասին — հարցրեք ինչ ուզեք!",
     "thinking": "Վերլուծում...",
     "bookDriver": "Պատվիրել վարորդ",
-    "submitting": "Ուղարկում..."
+    "submitting": "Ուղարկում...",
+    "openAssistant": "Բացել AI օգնականը"
   },
   "analytics": {
     "approvalRate": "Հաստատման տոկոս",

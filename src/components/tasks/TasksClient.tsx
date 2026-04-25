@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
@@ -165,7 +165,7 @@ function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status
         âš¡ {dateStr}
       </span>
     );
-  return <span className="text-xs text-(--text-muted)">ðŸ“… {dateStr}</span>;
+  return <span className="text-xs text-(--text-muted)">📅 {dateStr}</span>;
 }
 
 // â”€â”€ Task Card (base content, reused in both draggable and overlay) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -222,7 +222,7 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
               key={idx}
               className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-(--background-subtle) text-(--text-secondary) border border-(--border)"
             >
-              <span>ðŸ“Ž</span>
+              <span>📎</span>
               <span className="truncate max-w-[80px]">{att.name}</span>
             </div>
           ))}
@@ -241,17 +241,17 @@ function TaskCardContent({ task, isDragging = false }: { task: any; isDragging?:
             size="sm"
           />
           <span className="text-xs text-(--text-muted) truncate max-w-[100px]">
-            {task.assignedToUser?.name ?? 'â€”'}
+            {task.assignedToUser?.name ?? '—'}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {task.attachments && task.attachments.length > 0 && (
             <span className="text-xs text-(--text-muted) flex items-center gap-1">
-              ðŸ“Ž {task.attachments.length}
+              📎 {task.attachments.length}
             </span>
           )}
           {task.commentCount > 0 && (
-            <span className="text-xs text-(--text-muted)">ðŸ’¬ {task.commentCount}</span>
+            <span className="text-xs text-(--text-muted)">💬 {task.commentCount}</span>
           )}
           <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
         </div>
@@ -375,7 +375,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
               size="sm"
             />
             <span className="text-sm text-(--text-secondary)">
-              {task.assignedToUser?.name ?? 'â€”'}
+              {task.assignedToUser?.name ?? '—'}
             </span>
           </div>
         </td>
@@ -397,11 +397,11 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
           <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
         </td>
         <td className="px-4 py-3 text-xs text-(--text-muted)">
-          {task.commentCount > 0 && `ðŸ’¬ ${task.commentCount}`}
+          {task.commentCount > 0 && `💬 ${task.commentCount}`}
         </td>
       </tr>
 
-      {/* Mobile card â€” wrapped in <tr> for valid HTML */}
+      {/* Mobile card — wrapped in <tr> for valid HTML */}
       <tr className="sm:hidden group">
         <td colSpan={6} className="p-0">
           <div
@@ -441,7 +441,7 @@ function TaskRow({ task, onOpen }: { task: any; onOpen: () => void }) {
               </span>
               <DeadlineBadge deadline={task.deadline} status={task.status as Status} />
               {task.commentCount > 0 && (
-                <span className="text-xs text-(--text-muted)">ðŸ’¬ {task.commentCount}</span>
+                <span className="text-xs text-(--text-muted)">💬 {task.commentCount}</span>
               )}
             </div>
           </div>
@@ -476,7 +476,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
   // For superadmin, use selectedOrgId if available; for admin, use their org from user
   const effectiveOrgId = isSuperadmin && selectedOrgId ? selectedOrgId : undefined;
 
-  // DnD sensors â€” require 5px movement before drag starts (prevents accidental drags)
+  // DnD sensors — require 5px movement before drag starts (prevents accidental drags)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const { updateOptimistic } = useOptimisticTaskStatus();
 
@@ -648,7 +648,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
         {/* Search */}
         <div className="relative flex-1 min-w-[150px] sm:min-w-[200px]">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-(--text-muted) text-sm">
-            ðŸ”
+            🔍
           </span>
           <input
             value={search}
@@ -722,12 +722,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
             const task = tasks.find((t) => t._id === active.id);
             if (!task || task.status === newStatus) return;
             try {
-              await updateOptimistic(
-                task._id as Id<'tasks'>,
-                newStatus,
-                convexId,
-                task.status,
-              );
+              await updateOptimistic(task._id as Id<'tasks'>, newStatus, convexId, task.status);
               toast.success(
                 t('tasks.status.moved', { status: t(STATUS_CONFIG[newStatus].labelKey) }),
                 {
@@ -750,7 +745,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
               />
             ))}
           </div>
-          {/* Drag overlay â€” floating card while dragging */}
+          {/* Drag overlay — floating card while dragging */}
           <DragOverlay dropAnimation={{ duration: 200, easing: 'ease' }}>
             {activeTask ? (
               <div className="w-[280px] rotate-2">
@@ -763,7 +758,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
         <div className="bg-(--card) rounded-2xl border border-(--border) shadow-sm overflow-x-auto">
           {tasks.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-4xl mb-3">ðŸ“‹</p>
+              <p className="text-4xl mb-3">📋</p>
               <p className="text-(--text-secondary) font-medium">{t('tasksClient.noTasksFound')}</p>
               <p className="text-(--text-muted) text-sm mt-1">
                 {canManage ? t('tasksClient.createNewTask') : t('tasksClient.noTasksAssigned')}
@@ -823,4 +818,3 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
 });
 
 export default TasksClient;
-

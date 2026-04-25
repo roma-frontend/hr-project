@@ -145,11 +145,12 @@ export function SelectStep({
   placeholder = 'Select...',
   description,
   required = false,
+  defaultValue,
 }: SelectStepProps) {
   const context = useWizardContext();
   const data = stepData ?? context.stepData;
   const update = updateStepData ?? context.updateStepData;
-  const value = data[field] as string | undefined;
+  const value = (data[field] as string | undefined) ?? defaultValue;
   return (
     <div className="space-y-2">
       <Label htmlFor={field} className="text-(--text-primary)">

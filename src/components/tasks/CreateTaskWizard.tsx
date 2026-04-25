@@ -39,16 +39,12 @@ export function CreateTaskWizard({ assigneeId, onComplete, onCancel }: CreateTas
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="title"
             label={t('taskWizard.steps.details.titleLabel')}
             placeholder={t('taskWizard.steps.details.titlePlaceholder')}
             required
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="description"
             label={t('taskWizard.steps.details.descriptionLabel')}
             placeholder={t('taskWizard.steps.details.descriptionPlaceholder')}
@@ -65,8 +61,6 @@ export function CreateTaskWizard({ assigneeId, onComplete, onCancel }: CreateTas
       content: (
         <div className="space-y-4">
           <SelectStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="priority"
             label={t('taskWizard.steps.priority.priorityLabel')}
             options={[
@@ -78,8 +72,6 @@ export function CreateTaskWizard({ assigneeId, onComplete, onCancel }: CreateTas
             defaultValue="medium"
           />
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="deadline"
             label={t('taskWizard.steps.priority.deadlineLabel')}
             type="date"
@@ -95,8 +87,6 @@ export function CreateTaskWizard({ assigneeId, onComplete, onCancel }: CreateTas
       icon: <User className="w-5 h-5" />,
       content: (
         <SelectStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="assigneeId"
           label={t('taskWizard.steps.assignee.assigneeLabel')}
           options={employees

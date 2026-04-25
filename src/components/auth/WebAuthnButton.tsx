@@ -6,6 +6,7 @@ import { Fingerprint } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../ui/button';
 
 interface WebAuthnButtonProps {
   mode: 'register' | 'login';
@@ -141,22 +142,16 @@ export function WebAuthnButton({ mode, userId, onSuccess, disabled }: WebAuthnBu
   const handle = mode === 'register' ? handleRegister : handleLogin;
 
   return (
-    <motion.button
+    <Button
       type="button"
+      variant="outline"
       onClick={handle}
       disabled={disabled || loading}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 font-medium transition-all disabled:opacity-50"
-      style={{
-        borderColor: 'var(--primary)',
-        color: 'var(--primary)',
-        background: 'var(--primary-muted)',
-      }}
       title={mode === 'register' ? 'Register biometric' : 'Sign in with biometric'}
     >
       {loading ? <ShieldLoader size="sm" variant="inline" /> : <Fingerprint className="w-4 h-4" />}
       {!loading && <span className="text-xs">Touch ID</span>}
-    </motion.button>
+    </Button>
   );
 }

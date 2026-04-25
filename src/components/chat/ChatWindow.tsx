@@ -117,7 +117,6 @@ export const ChatWindow = React.memo(function ChatWindow({
     });
   }, [messages]);
 
-
   const { sendOptimistic, optimisticMessages: optMessages } = useOptimisticSendMessage(
     conversationId,
     currentUserId,
@@ -478,7 +477,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     // The textarea uses CSS max-height and resize: none with overflow-y: auto
     // No JS height calculation needed
 
-    // Detect @mention â€” look backward from cursor for '@'
+    // Detect @mention — look backward from cursor for '@'
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = value.slice(0, cursorPos);
     const atIdx = textBeforeCursor.lastIndexOf('@');
@@ -522,7 +521,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         senderId: currentUserId,
         organizationId,
         type: 'text',
-        content: `ðŸ“Š ${q}`,
+        content: `📊 ${q}`,
         poll: {
           question: q,
           options: opts.map((text: any, i: any) => ({ id: `opt_${i}`, text, votes: [] })),
@@ -544,7 +543,7 @@ export const ChatWindow = React.memo(function ChatWindow({
   useEffect(() => {
     if (!allMessages || allMessages.length === 0) return;
 
-    // Skip sound on the very first load â€” just mark as loaded
+    // Skip sound on the very first load — just mark as loaded
     if (!initialLoadDoneRef.current) {
       initialLoadDoneRef.current = true;
       const latest = allMessages[allMessages.length - 1];
@@ -564,7 +563,7 @@ export const ChatWindow = React.memo(function ChatWindow({
     if (conv?.membership?.isMuted) return;
     lastPlayedMsgIdRef.current = latest._id;
 
-    // If chat is active (tab focused) â€” mark as read immediately, play sound
+    // If chat is active (tab focused) — mark as read immediately, play sound
     if (document.hasFocus()) {
       // Ensure this call completes by using Promise handling
       void markAsRead({ conversationId, userId: currentUserId });
@@ -572,11 +571,11 @@ export const ChatWindow = React.memo(function ChatWindow({
       return;
     }
 
-    // Tab not focused â€” play sound + show browser notification
+    // Tab not focused — play sound + show browser notification
     playChatMessageSound();
     if (Notification.permission === 'granted') {
       new Notification(latest.sender?.name ?? 'New message', {
-        body: latest.content?.slice(0, 80) || 'ðŸ“Ž Attachment',
+        body: latest.content?.slice(0, 80) || '📎 Attachment',
         icon: latest.sender?.avatarUrl ?? '/favicon.ico',
         badge: '/favicon.ico',
         tag: latest._id,
@@ -608,7 +607,7 @@ export const ChatWindow = React.memo(function ChatWindow({
             <ArrowLeft className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
           </button>
 
-          {/* Avatar â€” clickable for DM (goes to employee profile) */}
+          {/* Avatar — clickable for DM (goes to employee profile) */}
           <div className="relative shrink-0">
             {conv?.type === 'direct' && otherUser?._id ? (
               <Link
@@ -774,7 +773,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               className="text-xs font-medium truncate flex-1"
               style={{ color: 'var(--text-muted)' }}
             >
-              ðŸ“Œ {pinnedMessages[pinnedMessages.length - 1]?.content}
+              📌 {pinnedMessages[pinnedMessages.length - 1]?.content}
             </span>
           </div>
         )}
@@ -923,7 +922,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                     className="w-14 xs:w-16 h-14 xs:h-16 rounded-xl border flex flex-col items-center justify-center gap-0.5 px-1"
                     style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
                   >
-                    <span className="text-lg">ðŸ“Ž</span>
+                    <span className="text-lg">📎</span>
                     <span
                       className="text-[7px] xs:text-[9px] text-center truncate w-full"
                       style={{ color: 'var(--text-muted)' }}
@@ -1329,7 +1328,7 @@ export const ChatWindow = React.memo(function ChatWindow({
                 className="text-xs xs:text-sm font-medium"
                 style={{ color: 'var(--text-primary)' }}
               >
-                ðŸ”’ Read-Only Channel
+                🔒 Read-Only Channel
               </p>
               <p className="text-[9px] xs:text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                 This is an information-only channel. Messages are sent by administrators only.
@@ -1339,7 +1338,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         )}
       </div>
 
-      {/* Thread Panel â€” slides in from right */}
+      {/* Thread Panel — slides in from right */}
       {thread && (
         <ThreadPanel
           parentMessageId={thread.id}
@@ -1351,7 +1350,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         />
       )}
 
-      {/* Conversation Info Panel â€” slides in from right */}
+      {/* Conversation Info Panel — slides in from right */}
       {showInfo && (
         <ConversationInfoPanel
           conversationId={conversationId}
@@ -1363,6 +1362,3 @@ export const ChatWindow = React.memo(function ChatWindow({
     </div>
   );
 });
-
-
-

@@ -348,7 +348,9 @@
     "getStarted": "Get Started",
     "aiSiteEditor": "AI Site Editor",
     "subscriptions": "Subscriptions",
-    "security": "Security"
+    "security": "Security",
+    "openMenu": "Open menu",
+    "userMenu": "User menu"
   },
   "superadmin": {
     "quickActions": {
@@ -1662,7 +1664,8 @@
     "tryAgain": "Please try again",
     "reloadingPage": "Reloading page...",
     "scrollLeft": "Scroll left",
-    "scrollRight": "Scroll right"
+    "scrollRight": "Scroll right",
+    "systemMode": "System"
   },
   "notifications": {
     "title": "Notifications",
@@ -2373,6 +2376,7 @@
     "lightThemeDesc": "Light theme for bright environments",
     "systemTheme": "System",
     "systemThemeDesc": "Match your system preference",
+    "systemMode": "System",
     "accentColor": "Accent Color",
     "chooseAccentColor": "Choose your preferred accent color (coming soon)"
   },
@@ -3229,7 +3233,8 @@
     "smartHint": "I know everything about Shield HR — ask me anything!",
     "thinking": "Analyzing...",
     "bookDriver": "Book Driver",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "openAssistant": "Open AI assistant"
   },
   "analytics": {
     "approvalRate": "Approval Rate",

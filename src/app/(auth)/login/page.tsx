@@ -326,7 +326,7 @@ export default function LoginPage() {
 
     startTransition(async () => {
       try {
-        console.error('🔐 Attempting login...');
+        console.log('🔐 Attempting login...');
 
         // Collect keystroke sample and device fingerprint
         const keystrokeSample = getSample();
@@ -381,7 +381,7 @@ export default function LoginPage() {
           return;
         }
 
-        console.error('✅ Login successful:', result);
+        console.log('✅ Login successful:', result);
 
         if (!result.session) {
           throw new Error('No session data in response');
@@ -400,7 +400,7 @@ export default function LoginPage() {
           avatar: session.avatar,
         };
 
-        console.error('💾 Saving user to store:', userData);
+        console.log('💾 Saving user to store:', userData);
         login(userData);
         reset(); // clear keystroke buffer after successful login
 
@@ -416,11 +416,11 @@ export default function LoginPage() {
         }
 
         // Redirect to dashboard or callback URL
-        console.error('🔄 Redirecting to dashboard...');
+        console.log('🔄 Redirecting to dashboard...');
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
         const redirectUrl = nextUrl || '/dashboard';
-        console.error('🔄 Redirect URL:', redirectUrl);
+        console.log('🔄 Redirect URL:', redirectUrl);
         window.location.href = redirectUrl;
       } catch (err) {
         console.error('❌ Login failed:', err);

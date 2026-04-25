@@ -44,8 +44,6 @@ export function CreateSupportTicketWizard({
       icon: <Ticket className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="type"
           label={t('supportWizard.steps.type.typeLabel')}
           options={[
@@ -91,16 +89,12 @@ export function CreateSupportTicketWizard({
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="title"
             label={t('supportWizard.steps.details.titleLabel')}
             placeholder={t('supportWizard.steps.details.titlePlaceholder')}
             required
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="description"
             label={t('supportWizard.steps.details.descriptionLabel')}
             placeholder={t('supportWizard.steps.details.descriptionPlaceholder')}
@@ -118,8 +112,6 @@ export function CreateSupportTicketWizard({
       content: (
         <div className="space-y-4">
           <SelectStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="priority"
             label={t('supportWizard.steps.priority.priorityLabel')}
             options={[
@@ -132,8 +124,6 @@ export function CreateSupportTicketWizard({
             defaultValue="medium"
           />
           <SelectStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="category"
             label={t('supportWizard.steps.priority.categoryLabel')}
             options={[

@@ -42,13 +42,13 @@ const AILeaveAssistant = dynamic(() => import('@/components/leaves/AILeaveAssist
 });
 
 function safeFormat(dateStr: string | undefined | null, fmt: string): string {
-  if (!dateStr) return 'â€”';
+  if (!dateStr) return '—';
   try {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return 'â€”';
+    if (isNaN(d.getTime())) return '—';
     return format(d, fmt);
   } catch {
-    return 'â€”';
+    return '—';
   }
 }
 
@@ -126,7 +126,7 @@ export function LeavesClient() {
     if (unreadCount > previousUnreadCount && !hasPlayed) {
       sessionStorage.setItem(`leave_sound_${unreadCount}`, '1');
       playNotificationSound('new_request');
-      sendBrowserNotification('New Leave Request! ðŸ–ï¸', {
+      sendBrowserNotification('New Leave Request! 🏖️', {
         body: `You have ${unreadCount} pending leave request(s)`,
         soundType: 'new_request',
       });
@@ -155,11 +155,7 @@ export function LeavesClient() {
       // Mark as read first
       await markLeaveAsRead({ leaveId: id });
 
-      await approveOptimistic(
-        id,
-        user.id as Id<'users'>,
-        comment,
-      );
+      await approveOptimistic(id, user.id as Id<'users'>, comment);
 
       playNotificationSound('approved');
       toast.success(t('leave.approvedSuccess'));
@@ -178,11 +174,7 @@ export function LeavesClient() {
       // Mark as read first
       await markLeaveAsRead({ leaveId: id });
 
-      await rejectOptimistic(
-        id,
-        user.id as Id<'users'>,
-        comment,
-      );
+      await rejectOptimistic(id, user.id as Id<'users'>, comment);
 
       playNotificationSound('rejected');
       toast.success(t('leave.rejectedSuccess'));
@@ -474,4 +466,3 @@ export function LeavesClient() {
 }
 
 export default LeavesClient;
-
