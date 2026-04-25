@@ -49,7 +49,6 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
   }, []);
 
   // Check if user has seen this tour
-  // @ts-expect-error Convex type inference issue with optional sessionToken
   const hasSeenTour = useQuery(api.userPreferences.hasSeenTour, {
     tourId,
     sessionToken: sessionToken ?? undefined,
