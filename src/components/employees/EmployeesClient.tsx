@@ -100,9 +100,9 @@ export function EmployeesClient() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false); // Закрыт по умолчанию
 
-  // Pagination state
+  // Server-side pagination state
   const [cursor, setCursor] = useState<Id<'users'> | undefined>(undefined);
-  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [accumulatedUsers, setAccumulatedUsers] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -116,54 +116,81 @@ export function EmployeesClient() {
   const isSuperadmin = user?.role === 'superadmin';
   const useOrgFilter = mounted && isSuperadmin && selectedOrgId;
 
-  // TEMP: Load all users without pagination for testing
-  const allUsersDirect = useQuery(
-    useOrgFilter ? api.organizations.getOrgMembers : api.users.getAllUsers,
+  // Paginated query - fetches current page based on cursor
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const queryFn: any = useOrgFilter ? api.organizations.getOrgMembers : api.users.getAllUsers;
+  const queryArgs =
     mounted && user?.id
       ? useOrgFilter
         ? {
             organizationId: selectedOrgId as Id<'organizations'>,
             superadminUserId: user.id as Id<'users'>,
+            cursor,
+            limit: 50,
           }
-        : { requesterId: user.id as Id<'users'> }
-      : 'skip',
-  );
+        : { requesterId: user.id as Id<'users'>, cursor, limit: 50 }
+      : 'skip';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentPage = useQuery(queryFn, queryArgs) as any[] | undefined;
 
-  // Use direct load for now
+  // Accumulate pages
   React.useEffect(() => {
-    if (allUsersDirect && allUsersDirect.length > 0) {
-      setAllUsers(allUsersDirect);
-      setHasMore(false);
-    }
-  }, [allUsersDirect]);
+    if (currentPage && currentPage.length > 0) {
+      const hasMorePages = currentPage.length > 10;
+      const pageUsers = hasMorePages ? currentPage.slice(0, 10) : currentPage;
 
-  // Build supervisor lookup map from allUsers (more reliable than separate query)
-  const supervisorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    (allUsers || [])
-      .filter((u) => u.role === 'supervisor' || u.role === 'admin')
-      .forEach((u) => map.set(u._id, u.name));
-    return map;
-  }, [allUsers]);
-  const deleteUser = useMutation(api.users.deleteUser);
+      setAccumulatedUsers((prev) => {
+        // Avoid duplicates by checking if we already have these users
+        const existingIds = new Set(prev.map((u: any) => u._id));
+        const newUsers = pageUsers.filter((u: any) => !existingIds.has(u._id));
+        return [...prev, ...newUsers];
+      });
+
+      setHasMore(hasMorePages);
+      if (hasMorePages && pageUsers.length > 0) {
+        const lastUser = pageUsers[pageUsers.length - 1];
+        if (lastUser?._id) {
+          setCursor(lastUser._id);
+        }
+      }
+    }
+  }, [currentPage]);
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setAccumulatedUsers([]);
+    setCursor(undefined);
+    setHasMore(true);
+  }, [debouncedSearch, filterRole, filterType, filterStatus, useOrgFilter]);
 
   // Load more function
   const loadMore = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!hasMore || isLoadingMore) return;
-    const lastUser = allUsers[allUsers.length - 1];
-    if (lastUser) {
-      setCursor(lastUser._id);
-      setIsLoadingMore(true);
+    setIsLoadingMore(true);
+    // Trigger refetch by updating cursor
+    if (accumulatedUsers.length > 0) {
+      setCursor(accumulatedUsers[accumulatedUsers.length - 1]._id);
     }
+    setTimeout(() => setIsLoadingMore(false), 500);
   };
+
+  // Build supervisor lookup map from accumulatedUsers
+  const supervisorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (accumulatedUsers || [])
+      .filter((u) => u.role === 'supervisor' || u.role === 'admin')
+      .forEach((u) => map.set(u._id, u.name));
+    return map;
+  }, [accumulatedUsers]);
+  const deleteUser = useMutation(api.users.deleteUser);
 
   const isAdmin = user?.role === 'admin';
   const isSupervisor = user?.role === 'supervisor';
   const canManage = isAdmin || isSupervisor || isSuperadmin;
 
   const filtered = useMemo(() => {
-    const usersToFilter = allUsers || [];
+    const usersToFilter = accumulatedUsers || [];
     if (usersToFilter.length === 0) return [];
 
     return usersToFilter.filter((u) => {
@@ -185,12 +212,12 @@ export function EmployeesClient() {
         (filterStatus === 'inactive' && !u.isActive);
       return matchSearch && matchRole && matchType && matchStatus;
     });
-  }, [allUsers, debouncedSearch, filterRole, filterType, filterStatus]);
+  }, [accumulatedUsers, debouncedSearch, filterRole, filterType, filterStatus]);
 
   const stats = useMemo(() => {
-    if (!allUsers || allUsers.length === 0)
+    if (!accumulatedUsers || accumulatedUsers.length === 0)
       return { total: 0, staff: 0, contractors: 0, admins: 0, supervisors: 0 };
-    const active = allUsers.filter((u) => u.isActive);
+    const active = accumulatedUsers.filter((u) => u.isActive);
     return {
       total: active.length,
       staff: active.filter((u: any) => (u as any).employeeType === 'staff').length,
@@ -198,7 +225,7 @@ export function EmployeesClient() {
       admins: active.filter((u) => u.role === 'admin').length,
       supervisors: active.filter((u) => u.role === 'supervisor').length,
     };
-  }, [allUsers]);
+  }, [accumulatedUsers]);
 
   const handleDelete = async (userId: string) => {
     if (!user?.id) {
@@ -215,7 +242,7 @@ export function EmployeesClient() {
   };
 
   if (!mounted) return null;
-  if (allUsers === undefined)
+  if (accumulatedUsers === undefined)
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <ShieldLoader size="lg" />
@@ -228,7 +255,10 @@ export function EmployeesClient() {
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            <h1
+              className="text-2xl sm:text-3xl font-bold tracking-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
               {t('nav.employees')}
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -256,7 +286,6 @@ export function EmployeesClient() {
           paddingRight: isMobile ? '0' : isPanelOpen ? '19rem' : '5rem',
         }}
       >
-
         {/* Info Banner for Admins */}
         {canManage && (
           <motion.div
@@ -403,7 +432,7 @@ export function EmployeesClient() {
         </motion.div>
 
         {/* Empty State - No Employees */}
-        {allUsers.length === 0 && (
+        {accumulatedUsers.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -883,6 +912,24 @@ export function EmployeesClient() {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Load More Button for List View */}
+              {hasMore && filtered.length > 0 && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={loadMore}
+                    disabled={isLoadingMore}
+                    className="px-6 py-3 rounded-xl border text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: 'var(--card)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {isLoadingMore ? <ShieldLoader /> : t('common.loadMore')}
+                  </button>
                 </div>
               )}
             </>

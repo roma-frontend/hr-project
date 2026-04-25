@@ -297,7 +297,7 @@ export const getOrgMembers = query({
     superadminUserId: v.id('users'),
     organizationId: v.id('organizations'),
     cursor: v.optional(v.id('users')),
-    limit: v.optional(v.number()), // Optional with default
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, { superadminUserId, organizationId, cursor, limit }) => {
     const DEFAULT_LIMIT = 50;
