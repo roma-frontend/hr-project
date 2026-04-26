@@ -178,7 +178,7 @@ export function QuickActions() {
             >
               <Button
                 onClick={() => handleAction(action.href, action.label)}
-                className={`w-full h-28 flex flex-col items-center justify-center gap-2.5 text-wrap rounded-2xl transition-all duration-200 ${action.color} text-white shadow-md hover:shadow-xl hover:shadow-gray-900/10 dark:hover:shadow-black/30 border border-white/20 dark:border-white/10`}
+                className={`w-full h-28 flex flex-col items-center justify-center gap-2.5 text-wrap rounded-2xl transition-all duration-200 ${action.color} text-white shadow-md hover:shadow-xl hover:shadow-gray-900/10 dark:hover:shadow-black/30 border border-white/20 dark:border-white/10 whitespace-pre-wrap`}
                 variant="ghost"
               >
                 <div className="p-2.5 rounded-full bg-white/25 backdrop-blur-sm shadow-inner">

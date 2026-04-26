@@ -112,7 +112,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
             style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
           >
             {/* Header gradient */}
-            <div className="relative h-28 bg-linear-to-br from-blue-600 to-sky-700 flex items-end px-6 pb-4">
+            <div className="relative h-28 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) flex items-end px-6 pb-4">
               <Button
                 onClick={onClose}
                 variant="ghost"
@@ -124,7 +124,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
 
               {/* Avatar */}
               <div className="flex items-end gap-4">
-                <div className="w-16 h-16 rounded-full shrink-0 overflow-hidden shadow-lg bg-linear-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center text-white text-2xl font-bold">
+                <div className="w-16 h-16 rounded-full shrink-0 overflow-hidden shadow-lg bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) flex items-center justify-center text-white text-2xl font-bold">
                   {record.user?.avatarUrl ? (
                     <img
                       src={record.user.avatarUrl}
@@ -165,12 +165,14 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 </div>
                 <div className="flex gap-2">
                   {record.status === 'checked_in' && (
-                    <Badge className="bg-green-500 text-white">🟢 Active</Badge>
+                    <Badge className="bg-green-500 text-white">{t('common.active')}</Badge>
                   )}
                   {record.status === 'checked_out' && (
-                    <Badge className="bg-blue-500 text-white">✅ Done</Badge>
+                    <Badge className="bg-blue-500 text-white">{t('common.done')}</Badge>
                   )}
-                  {record.status === 'absent' && <Badge variant="destructive">❌ Absent</Badge>}
+                  {record.status === 'absent' && (
+                    <Badge variant="destructive">{t('statuses.absent')}</Badge>
+                  )}
                 </div>
               </div>
 
@@ -178,14 +180,16 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
               <div className="rounded-xl p-4 space-y-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-blue-500" />
-                  Time Timeline
+                  {t('attendance.timeLine')}
                 </h3>
                 <div className="flex items-center gap-3">
                   {/* Check In */}
                   <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-center gap-2 mb-1">
                       <LogIn className="w-4 h-4 text-green-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Check In</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('attendance.checkIn')}
+                      </span>
                     </div>
                     <p className="text-lg font-bold text-green-500">
                       {record.checkInTime ? formatTime(record.checkInTime) : '—'}
@@ -193,13 +197,13 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                     {record.isLate && (
                       <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
-                        Late by {record.lateMinutes} min
+                        {t('attendance.lateBy', { minutes: record.lateMinutes })}
                       </p>
                     )}
                     {!record.isLate && record.checkInTime && (
                       <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        On time
+                        {t('attendance.onTime')}
                       </p>
                     )}
                   </div>
@@ -211,7 +215,9 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
                     <div className="flex items-center gap-2 mb-1">
                       <LogOut className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Check Out</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('attendance.checkOut')}
+                      </span>
                     </div>
                     <p className="text-lg font-bold text-blue-500">
                       {record.checkOutTime ? formatTime(record.checkOutTime) : '—'}
@@ -219,17 +225,17 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                     {record.isEarlyLeave && record.earlyLeaveMinutes && (
                       <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
-                        Early by {record.earlyLeaveMinutes} min
+                        {t('attendance.earlyLeave', { minutes: record.earlyLeaveMinutes })}
                       </p>
                     )}
                     {record.checkOutTime && !record.isEarlyLeave && (
                       <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
-                        Full day
+                        {t('attendance.fullDay')}
                       </p>
                     )}
                     {!record.checkOutTime && record.status === 'checked_in' && (
-                      <p className="text-xs text-green-500 mt-1">Still working...</p>
+                      <p className="text-xs text-green-500 mt-1">{t('attendance.stillWorking')}</p>
                     )}
                   </div>
                 </div>
@@ -239,7 +245,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   <div>
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                       <span className="flex items-center gap-1">
-                        <Timer className="w-3 h-3" /> Worked
+                        <Timer className="w-3 h-3" /> {t('attendance.worked')}
                       </span>
                       <span className="font-semibold text-gray-800 dark:text-gray-100">
                         {workedHours}h / {expectedHours}h
@@ -267,7 +273,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 {record.user?.department && (
                   <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <Building2 className="w-4 h-4" />
-                    {record.user.department} department
+                    {record.user.department} {t('common.department')}
                   </div>
                 )}
                 {(record.user as any)?.supervisorName && (
@@ -284,7 +290,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
                     <TrendingUp className="w-4 h-4 text-sky-400" />
-                    This Month
+                    {t('attendance.thisMonth')}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="text-center">
@@ -316,7 +322,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
                     <Calendar className="w-4 h-4 text-blue-500" />
-                    Last 7 Days
+                    {t('attendance.last7Days')}
                   </h3>
                   <div className="space-y-2">
                     {recentRecords.map((r: any) => (

@@ -1033,7 +1033,7 @@ export function ChatWidget() {
           >
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-(--border) shrink-0 bg-linear-to-r from-[#2563eb]/10 to-[#0ea5e9]/10">
-              <div className="w-8 h-8 rounded-xl bg-linear-to-br from-[#2563eb] to-[#0ea5e9] flex items-center justify-center shadow">
+              <div className="w-8 h-8 rounded-xl bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity flex items-center justify-center shadow">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -1401,7 +1401,7 @@ export function ChatWidget() {
                 <Button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="bg-linear-to-br from-[#2563eb] to-[#0ea5e9] hover:opacity-90 disabled:opacity-50"
+                  className="bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {isLoading ? (
                     <ShieldLoader size="xs" variant="inline" />
