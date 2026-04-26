@@ -100,6 +100,19 @@ body.scroll-locked {
   --color-slate-600: #475569;
 }
 
+/* Light Desktop Theme - for desktop/favicon use */
+.desktop {
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-lighter: #93c5fd;
+  --color-primary-lightest: #bfdbfe;
+  --color-bg-deep: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-bg-elevated: #f1f5f9;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+}
+
 /* Body background moved to line 280 to avoid duplication */
 
 /* Skip to content link - hidden by default, visible on focus */
