@@ -14,6 +14,10 @@ export const organizations = {
     country: v.optional(v.string()),
     industry: v.optional(v.string()),
     employeeLimit: v.number(),
+    taxCountry: v.optional(v.string()),
+    currency: v.optional(v.string()),
+    payrollCycle: v.optional(v.string()),
+    overtimeMultiplier: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

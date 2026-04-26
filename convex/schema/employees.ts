@@ -14,6 +14,12 @@ export const employees = {
         languages: v.optional(v.array(v.string())),
       }),
     ),
+    baseSalary: v.optional(v.number()),
+    bonuses: v.optional(v.number()),
+    overtimeHours: v.optional(v.number()),
+    hourlyRate: v.optional(v.number()),
+    salaryCurrency: v.optional(v.string()),
+    salaryUpdatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

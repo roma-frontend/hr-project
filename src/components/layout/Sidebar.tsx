@@ -30,6 +30,7 @@ import {
   AlertTriangle,
   HelpCircle,
   Cpu,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebarStore } from '@/store/useSidebarStore';
@@ -102,6 +103,12 @@ const navItems = [
     labelKey: 'nav.tasks',
     icon: CheckSquare,
     roles: ['superadmin', 'admin', 'supervisor', 'employee', 'driver'],
+  },
+  {
+    href: '/payroll',
+    labelKey: 'nav.payroll',
+    icon: Wallet,
+    roles: ['superadmin', 'admin', 'supervisor'],
   },
   {
     href: '/chat',
@@ -293,12 +300,8 @@ export function Sidebar() {
                   width: collapsed ? 0 : 'auto',
                 }}
               >
-                <h1 className="text-sm font-bold text-text-primary">
-                  {t('sidebar.appName')}
-                </h1>
-                <p className="text-[10px] text-text-muted">
-                  {t('sidebar.subtitle')}
-                </p>
+                <h1 className="text-sm font-bold text-text-primary">{t('sidebar.appName')}</h1>
+                <p className="text-[10px] text-text-muted">{t('sidebar.subtitle')}</p>
               </div>
             </Link>
 

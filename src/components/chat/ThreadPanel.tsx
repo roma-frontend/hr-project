@@ -44,12 +44,11 @@ export function ThreadPanel({
 
   const replies = useQuery(api.chat.queries.getThreadReplies, { parentMessageId });
 
-  const { replyOptimistic, optimisticReplies: optReplies, setUserName } = useOptimisticThreadReply(
-    parentMessageId,
-    conversationId,
-    currentUserId,
-    organizationId,
-  );
+  const {
+    replyOptimistic,
+    optimisticReplies: optReplies,
+    setUserName,
+  } = useOptimisticThreadReply(parentMessageId, conversationId, currentUserId, organizationId);
 
   useEffect(() => {
     if (currentUserName) setUserName(currentUserName);
@@ -195,7 +194,7 @@ export function ThreadPanel({
                 handleSend();
               }
             }}
-            placeholder="Reply in threadâ€¦"
+            placeholder="Reply in thread…"
             className="flex-1 bg-transparent outline-none text-xs"
             style={{ color: 'var(--text-primary)' }}
           />
@@ -216,5 +215,3 @@ export function ThreadPanel({
     </div>
   );
 }
-
-

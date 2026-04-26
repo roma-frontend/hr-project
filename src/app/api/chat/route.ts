@@ -53,7 +53,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       lang === 'ru'
         ? 'ЯЗЫК: Пользователь пишет на русском. Отвечай ТОЛЬКО на русском языке.'
         : lang === 'hy'
-          ? 'ԼԵdelays: Delaysdelays delays. Delaysdelays delaysdelaysdelaysdelays delaysdelays.'
+          ? 'ԼԵԶՈՒ: Օգտացախան գրում է հայերենով.'
           : 'LANGUAGE: The user is writing in English. Reply ONLY in English.';
 
     // Current date & time context
@@ -377,6 +377,49 @@ ${insights.teamConflicts?.length ? `⚠️ TEAM CONFLICTS (people already on lea
           )
           .join('\n');
 
+        // Tickets info
+        const ticketsInfo = (data.tickets ?? [])
+          .map(
+            (t: any) =>
+              `  🎫 ${t.ticketNumber}: ${t.title} [${t.status}] Priority: ${t.priority} | Category: ${t.category} | Created by: ${t.createdBy}${t.assignedTo ? ` | Assigned to: ${t.assignedTo}` : ''}${t.isOverdue ? ' ⚠️ OVERDUE' : ''}`,
+          )
+          .join('\n');
+
+        const ticketStatsInfo = data.ticketStats
+          ? `  Total: ${data.ticketStats.total} | Open: ${data.ticketStats.open} | In Progress: ${data.ticketStats.inProgress} | Resolved: ${data.ticketStats.resolved} | Closed: ${data.ticketStats.closed} | Critical: ${data.ticketStats.critical}`
+          : 'No ticket stats available';
+
+        // Company events info
+        const companyEventsInfo = (data.companyEvents ?? [])
+          .map(
+            (e: any) =>
+              `  📅 ${e.name}: ${e.startDate} → ${e.endDate} [${e.eventType}] Priority: ${e.priority || 'N/A'} | Created by: ${e.createdBy} | Required depts: ${e.requiredDepartments?.join(', ') || 'All'}`,
+          )
+          .join('\n');
+
+        // Automation workflows info
+        const automationInfo = (data.automationWorkflows ?? [])
+          .map(
+            (w: any) =>
+              `  ⚙️ ${w.name}: ${w.description || 'No description'} [${w.isActive ? 'Active' : 'Inactive'}]`,
+          )
+          .join('\n');
+
+        // Driver requests info
+        const driverRequestsInfo = (data.driverRequests ?? [])
+          .map(
+            (r: any) =>
+              `  🚗 Request: ${r.pickupLocation} → ${r.dropoffLocation} [${r.status}] Scheduled: ${r.scheduledFor || 'TBD'} | Requested by: ${r.requestedBy}`,
+          )
+          .join('\n');
+
+        // Available drivers info (from full-context, not the separate API call)
+        const availableDriversContextInfo = (data.availableDrivers ?? [])
+          .map(
+            (d: any) => `  🚘 ${d.name}: ${d.vehicle || 'No vehicle'} [${d.status || 'Available'}]`,
+          )
+          .join('\n');
+
         fullContext = `
 
 === COMPLETE SYSTEM DATA ===
@@ -393,6 +436,22 @@ ${attendanceInfo || 'No attendance records today'}
 
 CALENDAR — APPROVED LEAVES (next 90 days):
 ${calendarInfo || 'No upcoming approved leaves'}
+
+SUPPORT TICKETS:
+Stats: ${ticketStatsInfo}
+${ticketsInfo || 'No tickets found'}
+
+COMPANY EVENTS:
+${companyEventsInfo || 'No upcoming events'}
+
+AUTOMATION WORKFLOWS:
+${automationInfo || 'No automation workflows'}
+
+DRIVER REQUESTS:
+${driverRequestsInfo || 'No pending driver requests'}
+
+AVAILABLE DRIVERS:
+${availableDriversContextInfo || 'No drivers available'}
 ${availableDriversInfo || ''}
 `;
       }

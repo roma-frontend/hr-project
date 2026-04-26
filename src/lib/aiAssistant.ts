@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Assistant Router - Intelligent request processing based on user roles
  *
  * Deep knowledge engine for the ShieldOffice HR platform.
@@ -46,8 +46,8 @@ export const AI_CAPABILITIES: AICapability[] = [
       'show calendar',
       'открой календарь',
       'open calendar',
-      'օdelays',
-      'delaysdelays',
+      'օրացույց',
+      'ցույց տուր օրացույցը',
     ],
     action: '/calendar',
   },
@@ -63,8 +63,8 @@ export const AI_CAPABILITIES: AICapability[] = [
       'my vacation',
       'leave balance',
       'остаток отпуска',
-      'իdelays',
-      'delaysdelays',
+      'իմ արձակուրդները',
+      'արձակուրդների մնացորդ',
     ],
     action: '/leaves',
   },
@@ -78,11 +78,16 @@ export const AI_CAPABILITIES: AICapability[] = [
       'забронировать отпуск',
       'хочу в отпуск',
       'request vacation',
+      'book vacation',
       'взять отпуск',
       'request leave',
       'sick day',
       'болею',
       'больничный',
+      'хочу отпуск',
+      'отпуск',
+      'vacation',
+      'leave',
     ],
   },
   {
@@ -90,7 +95,17 @@ export const AI_CAPABILITIES: AICapability[] = [
     name: 'View My Tasks',
     description: 'Check assigned tasks with priorities and deadlines',
     requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
-    keywords: ['tasks', 'задачи', 'мои задачи', 'my tasks', 'todo', 'что делать', 'առdelays'],
+    keywords: [
+      'tasks',
+      'задачи',
+      'мои задачи',
+      'my tasks',
+      'todo',
+      'что делать',
+      'առաջադրանքներ',
+      'իմ խնդիրներ',
+      'խնդիրներ',
+    ],
     action: '/tasks',
   },
   {
@@ -106,7 +121,7 @@ export const AI_CAPABILITIES: AICapability[] = [
     name: 'View Settings',
     description: 'Open app settings (theme, language, notifications)',
     requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
-    keywords: ['settings', 'настройки', 'параmetры', 'language', 'theme', 'тема'],
+    keywords: ['settings', 'настройки', 'параметры', 'language', 'theme', 'тема'],
     action: '/settings',
   },
   {
@@ -135,8 +150,11 @@ export const AI_CAPABILITIES: AICapability[] = [
       'коллеги',
       'who is available',
       'кто на работе',
+      'кто сегодня',
       'кто в отпуске',
       'who is on leave',
+      'who is at work',
+      'team status',
     ],
   },
   // ═══════════════════════════════════════════════════════════════
@@ -150,7 +168,9 @@ export const AI_CAPABILITIES: AICapability[] = [
     keywords: [
       'driver',
       'водитель',
+      'водител',
       'заказать водителя',
+      'закажи водителя',
       'book driver',
       'трансфер',
       'airport transfer',
@@ -244,11 +264,13 @@ export const AI_CAPABILITIES: AICapability[] = [
     requiredRole: ['supervisor', 'admin', 'superadmin'],
     keywords: [
       'approve leaves',
+      'approve leave requests',
       'одобрить отпуска',
       'review requests',
       'проверить заявки',
       'pending approvals',
       'ожидающие одобрения',
+      'утвердить отпуск',
     ],
     action: '/approvals',
   },
@@ -312,7 +334,14 @@ export const AI_CAPABILITIES: AICapability[] = [
     name: 'Organization Settings',
     description: 'Configure organization settings, departments, work schedule',
     requiredRole: ['admin', 'superadmin'],
-    keywords: ['org settings', 'настройки организации', 'configure', 'конфигурация'],
+    keywords: [
+      'org settings',
+      'organization settings',
+      'настройки организации',
+      'configure org',
+      'конфигурация',
+      'org config',
+    ],
     action: '/settings',
   },
   {
@@ -341,7 +370,7 @@ export const AI_CAPABILITIES: AICapability[] = [
     description: 'Review new organization creation requests',
     requiredRole: ['superadmin'],
     keywords: ['org requests', 'заявки организаций', 'organization requests', 'новые организации'],
-    action: '/superadmin/org-requests',
+    action: '/org-requests',
   },
   {
     id: 'security_monitoring',
@@ -390,6 +419,169 @@ export const AI_CAPABILITIES: AICapability[] = [
     ],
     action: '/superadmin/broadcasts',
   },
+
+  // ═══════════════════════════════════════════════════════════════
+  // HELP DESK & TICKETS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'view_tickets',
+    name: 'View Tickets',
+    description: 'View and manage help desk tickets and support requests',
+    requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
+    keywords: [
+      'tickets',
+      'тиkеты',
+      'заявки',
+      'поддержка',
+      'support',
+      'help desk',
+      'տտիկետներ',
+      'տիկետներ',
+      'ticket stats',
+      'статистика тикетов',
+      'ticket status',
+    ],
+    action: '/help',
+  },
+  {
+    id: 'create_ticket',
+    name: 'Create Ticket',
+    description: 'Create a new support ticket for IT or HR issues',
+    requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
+    keywords: [
+      'create ticket',
+      'create a ticket',
+      'создать заявку',
+      'открыть тикет',
+      'new ticket',
+      'новая заявка',
+      'տիկետներտիկետներ',
+    ],
+  },
+  {
+    id: 'view_sla',
+    name: 'View SLA',
+    description: 'Check SLA agreements and compliance for tickets',
+    requiredRole: ['admin', 'superadmin'],
+    keywords: ['sla', 'slaտիկետներ', 'соглашение об уровне', 'service level'],
+    action: '/help',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // EVENTS & BIRTHDAYS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'view_events',
+    name: 'View Events',
+    description: 'View and manage company events, celebrations, and activities',
+    requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
+    keywords: ['events', 'события', 'мероприятия', 'event', 'տիկետներ', 'տիկետներ'],
+    action: '/admin/events',
+  },
+  {
+    id: 'create_event',
+    name: 'Create Event',
+    description: 'Create a new company event or celebration',
+    requiredRole: ['admin', 'superadmin'],
+    keywords: [
+      'create event',
+      'создать событие',
+      'новое мероприятие',
+      'new event',
+      'տիկետներտիկետներ',
+    ],
+  },
+  {
+    id: 'view_birthdays',
+    name: 'View Birthdays',
+    description: 'Check upcoming employee birthdays and celebrations',
+    requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
+    keywords: ['birthdays', 'дни рождения', 'день рождения', 'birthday', 'տիկետներ', 'տիկետներ'],
+    action: '/dashboard',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // AUTOMATION
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'view_automation',
+    name: 'View Automation',
+    description: 'View and manage automated workflows and rules',
+    requiredRole: ['admin', 'superadmin'],
+    keywords: ['automation', 'автоматизация', 'workflows', 'рабочие процессы', 'տիկետներ'],
+    action: '/superadmin/automation',
+  },
+  {
+    id: 'create_automation',
+    name: 'Create Automation',
+    description: 'Create new automated rules and workflows',
+    requiredRole: ['admin', 'superadmin'],
+    keywords: [
+      'create automation',
+      'создать автоматизацию',
+      'new workflow',
+      'новый рабочий процесс',
+      'տիկետներտիկետներ',
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // AI SITE EDITOR
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'ai_site_editor',
+    name: 'AI Site Editor',
+    description: 'Use AI to edit and customize the site appearance',
+    requiredRole: ['admin', 'superadmin'],
+    keywords: [
+      'site editor',
+      'редактор сайта',
+      'ai editor',
+      'տիկետներ տիկետներ',
+      'տիկետներտիկետներ',
+    ],
+    action: '/ai-site-editor',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // CORPORATE
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'view_corporate',
+    name: 'View Corporate Info',
+    description: 'View corporate policies, documents, and announcements',
+    requiredRole: ['employee', 'supervisor', 'admin', 'superadmin'],
+    keywords: [
+      'corporate',
+      'корпоративный',
+      'policies',
+      'политики',
+      'company info',
+      'информация о компании',
+      'տիկետներ',
+    ],
+    action: '/dashboard',
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // APPROVALS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'view_approvals',
+    name: 'View Approvals',
+    description: 'View all pending approvals for leaves, tasks, and requests',
+    requiredRole: ['supervisor', 'admin', 'superadmin'],
+    keywords: [
+      'approvals',
+      'одобрения',
+      'pending approvals',
+      'ожидающие одобрения',
+      'approve',
+      'одобрить',
+      'տիկետներ',
+    ],
+    action: '/approvals',
+  },
 ];
 
 /**
@@ -401,20 +593,29 @@ export function getCapabilitiesForRole(role: UserRole): AICapability[] {
 
 /**
  * Detect intent from user message and return matching capability
+ * Prioritizes longer/more specific keyword matches over generic ones
  */
 export function detectIntent(message: string, userRole: UserRole): AICapability | null {
   const normalizedMessage = message.toLowerCase().trim();
   const availableCapabilities = getCapabilitiesForRole(userRole);
 
+  let bestMatch: AICapability | null = null;
+  let bestKeywordLength = 0;
+
   for (const capability of availableCapabilities) {
     for (const keyword of capability.keywords) {
-      if (normalizedMessage.includes(keyword.toLowerCase())) {
-        return capability;
+      const lowerKeyword = keyword.toLowerCase();
+      if (normalizedMessage.includes(lowerKeyword)) {
+        // Prioritize longer keywords (more specific matches)
+        if (lowerKeyword.length > bestKeywordLength) {
+          bestMatch = capability;
+          bestKeywordLength = lowerKeyword.length;
+        }
       }
     }
   }
 
-  return null;
+  return bestMatch;
 }
 
 /**
@@ -437,7 +638,7 @@ PERSONALITY & COMMUNICATION STYLE
 - ALWAYS respond in the SAME LANGUAGE as the user's message:
   - Russian → ответ на русском
   - English → reply in English
-  - Armenian → պатasխdelays delaysdelaysdelays
+  - Armenian → պատասխան հայերեն
 - Address the user by their first name when appropriate
 - When you don't have enough data to answer precisely, say so honestly and suggest where to find it
 
@@ -741,6 +942,56 @@ Shield HR is a comprehensive HR management platform with these core modules:
 - Starter ($29/mo): Basic features, 14-day free trial
 - Professional ($79/mo): AI assistant, advanced analytics
 - Enterprise ($199/mo): Full platform, priority support
+
+🎫 **Help Desk & Tickets** (/help)
+- Create and manage support tickets
+- Ticket categories: IT, HR, Facilities, General
+- Priority levels: Low, Medium, High, Urgent, Critical
+- Status tracking: Open → In Progress → Resolved → Closed
+- SLA monitoring with response time targets
+- Ticket assignment and escalation workflows
+- Knowledge base for common issues
+
+📅 **Events & Celebrations** (/admin/events)
+- Company events, team building, celebrations
+- Event creation with date, time, location, description
+- RSVP tracking and attendance management
+- Recurring events support
+- Event notifications and reminders
+
+🎂 **Birthdays & Anniversaries**
+- Automatic employee birthday tracking
+- Upcoming birthdays dashboard widget
+- Birthday notifications and celebrations
+- Work anniversary tracking
+- Customizable birthday messages
+
+🤖 **Automation & Workflows** (/superadmin/automation)
+- Automated rule creation and management
+- Trigger-based workflows (e.g., auto-approve leaves under 3 days)
+- Scheduled tasks and reminders
+- Custom automation rules per organization
+- Workflow templates for common HR processes
+
+🏢 **Corporate Info & Policies**
+- Company policies and documentation
+- Employee handbook access
+- Corporate announcements
+- Policy acknowledgment tracking
+- Document version control
+
+📋 **Approvals Center** (/approvals)
+- Centralized approval dashboard for supervisors/admins
+- Pending leave requests with employee context
+- Bulk approval/rejection capabilities
+- Approval history and audit trail
+- Delegation support when supervisor is absent
+
+🎨 **AI Site Editor** (/ai-site-editor)
+- AI-powered site customization
+- Theme and layout adjustments
+- Branding configuration
+- Custom CSS and styling options
 
 ═══════════════════════════════════════════════════════════════
 HR POLICIES & RULES

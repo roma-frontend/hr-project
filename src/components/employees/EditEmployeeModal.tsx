@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft,
   CheckCircle,
+  DollarSign,
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
@@ -96,7 +97,7 @@ const DEPARTMENTS_LIST = [
   'IT',
 ];
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModalProps) {
   const { t } = useTranslation();
@@ -119,6 +120,11 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
       : 'skip',
   );
   const updateUser = useMutation(api.users.mutations.updateUser);
+  const updateSalary = useMutation(api.employeeProfiles.updateSalary);
+  const currentSalary = useQuery(
+    api.employeeProfiles.getSalary,
+    open ? { userId: employee._id as Id<'users'> } : 'skip',
+  );
   const organizations = useQuery(
     api.organizations.getAllOrganizations,
     user?.role === 'superadmin' ? {} : 'skip',
@@ -135,6 +141,10 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
     paidLeaveBalance: employee.paidLeaveBalance,
     sickLeaveBalance: employee.sickLeaveBalance,
     familyLeaveBalance: employee.familyLeaveBalance,
+    baseSalary: 0,
+    bonuses: 0,
+    overtimeHours: 0,
+    salaryCurrency: 'AMD',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -162,10 +172,27 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
         paidLeaveBalance: employee.paidLeaveBalance,
         sickLeaveBalance: employee.sickLeaveBalance,
         familyLeaveBalance: employee.familyLeaveBalance,
+        baseSalary: 0,
+        bonuses: 0,
+        overtimeHours: 0,
+        salaryCurrency: 'AMD',
       });
       setErrors({});
     }
   }, [open, employee]);
+
+  // Hydrate salary fields when query resolves
+  useEffect(() => {
+    if (currentSalary) {
+      setForm((p) => ({
+        ...p,
+        baseSalary: currentSalary.baseSalary ?? 0,
+        bonuses: currentSalary.bonuses ?? 0,
+        overtimeHours: currentSalary.overtimeHours ?? 0,
+        salaryCurrency: currentSalary.salaryCurrency ?? 'AMD',
+      }));
+    }
+  }, [currentSalary]);
 
   // Reset supervisorId when organization changes (can't have supervisor from another org)
   useEffect(() => {
@@ -325,6 +352,14 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
         sickLeaveBalance: form.sickLeaveBalance,
         familyLeaveBalance: form.familyLeaveBalance,
       });
+      await updateSalary({
+        userId: employee._id as Id<'users'>,
+        organizationId: (employee.organizationId || undefined) as Id<'organizations'> | undefined,
+        baseSalary: form.baseSalary,
+        bonuses: form.bonuses,
+        overtimeHours: form.overtimeHours,
+        salaryCurrency: form.salaryCurrency,
+      });
       toast.success(t('modals.editEmployee.updatedSuccess'));
       onClose();
     } catch (err) {
@@ -338,6 +373,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
     ...(isSuperadmin ? [{ icon: Building2, label: t('employees.organization') }] : []),
     { icon: User, label: t('common.name') },
     { icon: Briefcase, label: t('employees.position') },
+    { icon: DollarSign, label: t('payroll.salary') || 'Salary' },
     { icon: CheckCircle, label: t('common.review') || 'Review' },
   ];
 
@@ -672,8 +708,115 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
               </motion.div>
             )}
 
-            {/* Step: Review */}
+            {/* Step: Salary */}
             {step === (isSuperadmin ? 3 : 2) && (
+              <motion.div
+                key="step-salary"
+                initial={{ x: direction > 0 ? 300 : -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: direction > 0 ? -300 : 300, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                className="space-y-4"
+              >
+                <div>
+                  <h3 className="text-sm font-semibold mb-1 flex items-center gap-1.5">
+                    <DollarSign className="w-4 h-4" /> {t('payroll.salary') || 'Salary'}
+                  </h3>
+                  <p className="text-xs text-(--text-muted)">
+                    {t('payroll.salaryStepDesc') ||
+                      'Set base salary and compensation for payroll calculations'}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">
+                    {t('payroll.baseSalary')} ({form.salaryCurrency})
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={form.baseSalary || ''}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, baseSalary: parseFloat(e.target.value) || 0 }))
+                    }
+                    placeholder={t('payroll.baseSalaryPlaceholder') || '0'}
+                    className="w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all"
+                    style={{
+                      background: 'var(--input)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text-primary)',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
+                    onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">{t('payroll.bonuses')}</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={form.bonuses || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, bonuses: parseFloat(e.target.value) || 0 }))
+                      }
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all"
+                      style={{
+                        background: 'var(--input)',
+                        borderColor: 'var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium">{t('payroll.overtimeHours')}</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={form.overtimeHours || ''}
+                      onChange={(e) =>
+                        setForm((p) => ({ ...p, overtimeHours: parseFloat(e.target.value) || 0 }))
+                      }
+                      placeholder="0"
+                      className="w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all"
+                      style={{
+                        background: 'var(--input)',
+                        borderColor: 'var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">
+                    {t('payroll.currency') || 'Currency'}
+                  </label>
+                  <Select
+                    value={form.salaryCurrency}
+                    onValueChange={(v) => setForm((p) => ({ ...p, salaryCurrency: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AMD">AMD</SelectItem>
+                      <SelectItem value="RUB">RUB</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step: Review */}
+            {step === (isSuperadmin ? 4 : 3) && (
               <motion.div
                 key="step-review"
                 initial={{ x: direction > 0 ? 300 : -300, opacity: 0 }}

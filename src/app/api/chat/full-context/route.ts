@@ -10,13 +10,60 @@ export async function GET(req: NextRequest) {
     const requesterId = req.nextUrl.searchParams.get('requesterId');
     if (!requesterId) return NextResponse.json({ error: 'requesterId required' }, { status: 400 });
 
-    // Fetch ALL system data in parallel
-    const [users, leaves, todayAttendance, allTasks] = await Promise.all([
-      fetchQuery(api.users.queries.getAllUsers, { requesterId: requesterId as any }),
-      fetchQuery(api.leaves.getAllLeaves, { requesterId: requesterId as any }),
-      fetchQuery(api.timeTracking.getTodayAllAttendance, { adminId: requesterId as any }),
-      fetchQuery(api.tasks.getAllTasks, { requesterId: requesterId as any }),
-    ]);
+    // Fetch core system data in parallel first
+    const [users, leaves, todayAttendance, allTasks, allTickets, automationWorkflows] =
+      await Promise.all([
+        fetchQuery(api.users.queries.getAllUsers, { requesterId: requesterId as any }),
+        fetchQuery(api.leaves.getAllLeaves, { requesterId: requesterId as any }),
+        fetchQuery(api.timeTracking.getTodayAllAttendance, { adminId: requesterId as any }),
+        fetchQuery(api.tasks.getAllTasks, { requesterId: requesterId as any }),
+        fetchQuery(api.tickets.getAllTickets, {
+          status: undefined,
+          priority: undefined,
+          organizationId: undefined,
+          assignedTo: undefined,
+          limit: undefined,
+          cursor: undefined,
+        }),
+        fetchQuery(api.automation.getActiveWorkflows, {}),
+      ]);
+
+    // Get organizationId from first user for dependent queries
+    const orgId = (users as any[])?.[0]?.organizationId;
+
+    // Fetch events if we have an organization
+    let allEvents: any[] = [];
+    if (orgId) {
+      try {
+        allEvents = await fetchQuery(api.events.getCompanyEvents, {
+          organizationId: orgId,
+        });
+      } catch (e) {
+        console.warn('Failed to fetch events:', e);
+      }
+    }
+
+    // Fetch driver data if we have organization
+    let driverRequests: any[] = [];
+    let availableDrivers: any[] = [];
+    if (orgId) {
+      try {
+        // Get first driver for requests
+        const drivers = await fetchQuery(api.drivers.queries.getFilteredDrivers, {
+          organizationId: orgId,
+        });
+        if ((drivers as any[])?.length > 0) {
+          driverRequests = await fetchQuery(api.drivers.requests_queries.getDriverRequests, {
+            driverId: (drivers as any[])[0]._id,
+          });
+        }
+        availableDrivers = await fetchQuery(api.drivers.queries.getAvailableDrivers, {
+          organizationId: orgId,
+        });
+      } catch (e) {
+        console.warn('Failed to fetch driver data:', e);
+      }
+    }
 
     // Build rich employee map with leave info
     // Filter out superadmins from employee data
@@ -182,9 +229,77 @@ export async function GET(req: NextRequest) {
       totalEmployees: filteredUsers.length,
       currentlyAtWork: presentToday.filter((t: any) => t.status === 'checked_in').length,
       onLeaveToday: employeeData.filter((e: any) => e.currentLeave).length,
+      // Tickets
+      tickets: (allTickets as any[]).map((t: any) => ({
+        ticketId: t._id,
+        ticketNumber: t.ticketNumber,
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        priority: t.priority,
+        category: t.category,
+        createdBy: t.creatorName ?? 'Unknown',
+        assignedTo: t.assigneeName,
+        createdAt: t.createdAt,
+        isOverdue: t.isOverdue,
+      })),
+      ticketStats: {
+        total: (allTickets as any[]).length,
+        open: (allTickets as any[]).filter((t: any) => t.status === 'open').length,
+        inProgress: (allTickets as any[]).filter((t: any) => t.status === 'in_progress').length,
+        resolved: (allTickets as any[]).filter((t: any) => t.status === 'resolved').length,
+        closed: (allTickets as any[]).filter((t: any) => t.status === 'closed').length,
+        critical: (allTickets as any[]).filter(
+          (t: any) => t.priority === 'critical' && t.status !== 'closed',
+        ).length,
+      },
+      // Events
+      companyEvents: (allEvents as any[]).map((e: any) => ({
+        eventId: e._id,
+        name: e.name,
+        description: e.description,
+        startDate: new Date(e.startDate).toISOString().split('T')[0],
+        endDate: new Date(e.endDate).toISOString().split('T')[0],
+        eventType: e.eventType,
+        priority: e.priority,
+        createdBy: e.creatorName,
+        requiredDepartments: e.requiredDepartments,
+      })),
+      // Automation
+      automationWorkflows: (automationWorkflows as any[]).map((w: any) => ({
+        workflowId: w._id,
+        name: w.name,
+        description: w.description,
+        isActive: w.isActive,
+        createdAt: w.createdAt,
+      })),
+      // Drivers
+      driverRequests: (driverRequests as any[]).map((r: any) => ({
+        requestId: r._id,
+        status: r.status,
+        pickupLocation: r.pickupLocation,
+        dropoffLocation: r.dropoffLocation,
+        requestedBy: r.requestedBy,
+        scheduledFor: r.scheduledFor,
+      })),
+      availableDrivers: (availableDrivers as any[]).map((d: any) => ({
+        driverId: d._id,
+        name: d.name,
+        vehicle: d.vehicle,
+        status: d.status,
+      })),
     });
   } catch (error) {
     console.error('Full context error:', error);
-    return NextResponse.json({ employees: [], calendarEvents: [], todayAttendance: [] });
+    return NextResponse.json({
+      employees: [],
+      calendarEvents: [],
+      todayAttendance: [],
+      tickets: [],
+      companyEvents: [],
+      automationWorkflows: [],
+      driverRequests: [],
+      availableDrivers: [],
+    });
   }
 }

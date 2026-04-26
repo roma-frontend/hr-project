@@ -363,13 +363,14 @@ export function LeavesClient() {
                           </td>
                           <td className="px-4 py-3 hidden md:table-cell">
                             <p className="text-xs text-(--text-secondary)">
-                              {safeFormat(req.startDate, 'MMM d')} â€“{' '}
+                              {safeFormat(req.startDate, 'MMM d')} –{' '}
                               {safeFormat(req.endDate, 'MMM d, yyyy')}
                             </p>
                           </td>
                           <td className="px-4 py-3 hidden sm:table-cell">
                             <span className="text-sm font-medium text-(--text-primary)">
-                              {req.days}d
+                              {req.days}
+                              {t('leave.daysSuffix')}
                             </span>
                           </td>
                           <td className="px-4 py-3 hidden lg:table-cell">
