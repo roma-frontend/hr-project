@@ -71,6 +71,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&plan=${plan}`,
       cancel_url: `${origin}/#pricing`,
       metadata: { plan, organizationId: organizationId ?? '' },
+      client_reference_id: organizationId ?? undefined,
     });
 
     return NextResponse.json({ url: session.url });
