@@ -11,82 +11,161 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { detectFace, loadFaceApiModels, findBestMatch, isFaceMatch } from '@/lib/faceApi';
 import { useAuthStore } from '@/store/useAuthStore';
-// Removed loginAction import - using API route instead
 import { useRouter } from 'next/navigation';
 
 export function FaceLogin() {
   const { t } = useTranslation();
   const router = useRouter();
+
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // ===== Refs (чтобы в setInterval всегда были актуальные значения) =====
+  const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const playStartedRef = useRef(false);
+  const loopStartedRef = useRef(false);
+
+  const processingRef = useRef(false);
+  const autoTriggeredRef = useRef(false);
+  const lastAttemptRef = useRef(0);
+
+  const progressRef = useRef(0);
+  const qualityRef = useRef<'poor' | 'good' | 'excellent'>('poor');
+  const faceDetectedRef = useRef(false);
+
+  const lastDescriptorRef = useRef<Float32Array | null>(null);
+  const noFaceFramesRef = useRef(0);
+
+  // ===== UI State =====
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+
   const [matchStatus, setMatchStatus] = useState<'idle' | 'searching' | 'found' | 'not_found'>(
     'idle',
   );
   const [matchedUser, setMatchedUser] = useState<string | null>(null);
+
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
+
   const [scanningProgress, setScanningProgress] = useState(0);
   const [detectionQuality, setDetectionQuality] = useState<'poor' | 'good' | 'excellent'>('poor');
+
   const [autoLoginTriggered, setAutoLoginTriggered] = useState(false);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
-  const setUser = useAuthStore((state) => state.setUser);
+  // sync a few refs (безопасно, но триггер используем ref’ы)
+  useEffect(() => {
+    processingRef.current = isProcessing;
+  }, [isProcessing]);
+  useEffect(() => {
+    lastAttemptRef.current = lastAttemptTime;
+  }, [lastAttemptTime]);
+  useEffect(() => {
+    autoTriggeredRef.current = autoLoginTriggered;
+  }, [autoLoginTriggered]);
+
+  // ===== Data =====
   const allFaceDescriptors = useQuery(api.faceRecognition.getAllFaceDescriptors);
-  const verifyFaceLogin = useMutation(api.faceRecognition.verifyFaceLogin);
   const recordFaceIdAttempt = useMutation(api.users.auth.recordFaceIdAttempt);
-  const checkFaceIdStatus = useQuery(
-    api.users.queries.checkFaceIdStatus,
-    matchedUser ? { email: matchedUser } : 'skip',
-  );
 
-  // Debug: Log face descriptors count
+  // ===== Init once: models + camera list =====
   useEffect(() => {
-    if (allFaceDescriptors !== undefined) {
-      console.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
-      if (allFaceDescriptors.length === 0) {
-        console.warn('⚠️ No registered faces in the database');
-      }
-    }
-  }, [allFaceDescriptors]);
-
-  useEffect(() => {
-    // Load models on mount
     loadFaceApiModels().catch((err) => {
       console.error('Failed to load face models:', err);
       toast.error(t('faceLogin.modelsFailed', 'Failed to load face recognition models'));
     });
 
-    // Get available cameras
-    async function getCameras() {
+    (async () => {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter((d) => d.kind === 'videoinput');
-        console.log('Available cameras:', videoDevices);
         setCameras(videoDevices);
-        if (videoDevices.length > 0) {
-          setSelectedCamera(videoDevices[0]!.deviceId);
-        }
+        if (videoDevices.length > 0) setSelectedCamera(videoDevices[0]!.deviceId);
       } catch (err) {
         console.error('Failed to enumerate devices:', err);
       }
-    }
-    getCameras();
+    })();
 
     return () => {
-      // Cleanup webcam on unmount
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      stopDetectionLoop();
+      stopStreamTracks();
     };
-  }, [stream]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (allFaceDescriptors !== undefined) {
+      console.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
+      if (allFaceDescriptors.length === 0) console.warn('⚠️ No registered faces in the database');
+    }
+  }, [allFaceDescriptors]);
+
+  // ===== Helpers =====
+  const stopStreamTracks = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const stopDetectionLoop = () => {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    loopStartedRef.current = false;
+  };
+
+  const resetRefs = () => {
+    progressRef.current = 0;
+    qualityRef.current = 'poor';
+    faceDetectedRef.current = false;
+    lastDescriptorRef.current = null;
+    autoTriggeredRef.current = false;
+    processingRef.current = false;
+    lastAttemptRef.current = 0;
+    noFaceFramesRef.current = 0;
+  };
+
+  const hardResetUiState = () => {
+    setFaceDetected(false);
+    setMatchStatus('idle');
+    setMatchedUser(null);
+
+    setScanningProgress(0);
+    setDetectionQuality('poor');
+
+    setAutoLoginTriggered(false);
+    setIsProcessing(false);
+
+    resetRefs();
+  };
+
+  const stopWebcam = () => {
+    stopDetectionLoop();
+    stopStreamTracks();
+
+    if (videoRef.current) {
+      try {
+        videoRef.current.onloadedmetadata = null;
+        videoRef.current.srcObject = null;
+      } catch {}
+    }
+
+    setStream(null);
+    setIsWebcamActive(false);
+    playStartedRef.current = false;
+
+    hardResetUiState();
+  };
 
   const startWebcam = async () => {
-    // Проверка блокировки перед запуском камеры
     if (isBlocked) {
       toast.error(t('faceLogin.blocked', 'Face ID is blocked. Please use email/password login.'), {
         duration: 5000,
@@ -95,7 +174,6 @@ export function FaceLogin() {
     }
 
     try {
-      // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast.error(
           'Camera access is not supported in this browser. Please use Chrome, Edge, or Firefox.',
@@ -103,126 +181,71 @@ export function FaceLogin() {
         return;
       }
 
-      console.log('🎥 Requesting camera access...');
-      console.log('Selected camera:', selectedCamera);
+      if (isWebcamActive || streamRef.current) {
+        console.warn('⚠️ Webcam already active, ignoring startWebcam');
+        return;
+      }
 
       const constraints: MediaStreamConstraints = {
         video: selectedCamera
-          ? {
-              deviceId: { exact: selectedCamera },
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-            }
-          : {
-              width: { ideal: 640 },
-              height: { ideal: 480 },
-              facingMode: 'user',
-            },
+          ? { deviceId: { exact: selectedCamera }, width: { ideal: 640 }, height: { ideal: 480 } }
+          : { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      console.log('✅ Camera access granted');
-      console.log(
-        '📹 Media stream tracks:',
-        mediaStream.getTracks().map((t) => ({
-          kind: t.kind,
-          label: t.label,
-          enabled: t.enabled,
-          readyState: t.readyState,
-        })),
-      );
-
-      // Set state to trigger video element rendering
+      streamRef.current = mediaStream;
       setStream(mediaStream);
       setIsWebcamActive(true);
 
-      // Wait for React to render the video element
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      // дождаться, когда React нарисует <video/>
+      await new Promise((r) => setTimeout(r, 0));
 
-      // Wait for video element to be available in DOM
-      const waitForVideoElement = async (maxAttempts = 20) => {
+      const waitForVideo = async (maxAttempts = 20) => {
         for (let i = 0; i < maxAttempts; i++) {
-          if (videoRef.current) {
-            console.log('📹 Video element found on attempt', i + 1);
-            return true;
-          }
-          console.log(`⏳ Waiting for video element... attempt ${i + 1}`);
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          if (videoRef.current) return true;
+          await new Promise((r) => setTimeout(r, 50));
         }
         return false;
       };
 
-      const videoElementAvailable = await waitForVideoElement();
-
-      if (!videoElementAvailable || !videoRef.current) {
-        console.error('❌ Video element ref is null after waiting!');
+      const ok = await waitForVideo();
+      if (!ok || !videoRef.current) {
         toast.error(t('faceLogin.videoNotFound', 'Video element not found. Please try again.'));
-        // Stop the stream and reset state
-        mediaStream.getTracks().forEach((track) => track.stop());
-        setStream(null);
-        setIsWebcamActive(false);
+        stopWebcam();
         return;
       }
 
-      console.log('📹 Setting up video element...');
       videoRef.current.srcObject = mediaStream;
 
-      console.log('⏳ Waiting for metadata to load...');
-
-      // Ensure video plays
-      const playVideo = async () => {
-        if (!videoRef.current) {
-          console.error('❌ videoRef is null when trying to play');
-          return;
-        }
+      const playVideoOnce = async () => {
+        if (!videoRef.current) return;
+        if (playStartedRef.current) return;
+        playStartedRef.current = true;
 
         try {
-          console.log('🎬 Attempting to play video...');
-          console.log('Video element state:', {
-            readyState: videoRef.current.readyState,
-            paused: videoRef.current.paused,
-            srcObject: !!videoRef.current.srcObject,
-          });
           await videoRef.current.play();
-          console.log('✅ Video playing successfully');
-          console.log('🎯 About to start face detection loop...');
-          console.log('videoRef.current exists?', !!videoRef.current);
-          console.log('isWebcamActive?', isWebcamActive);
-          detectFaceLoop(true); // Force start with true flag
+          startDetectionLoop();
         } catch (err) {
           console.error('❌ Failed to play video:', err);
           toast.error(t('faceLogin.videoPlaybackFailed', 'Failed to start video playback'));
+          playStartedRef.current = false;
         }
       };
 
-      // Wait for metadata and play
       videoRef.current.onloadedmetadata = () => {
-        console.log('✅ Video metadata loaded');
-        playVideo();
+        playVideoOnce();
       };
 
-      // Fallback: try to play after a short delay if metadata event doesn't fire
+      // fallback
       setTimeout(() => {
-        if (videoRef.current && isWebcamActive) {
-          console.log("⚠️ Metadata event didn't fire, trying to play anyway...");
-          playVideo();
-        }
+        if (videoRef.current && streamRef.current && isWebcamActive) playVideoOnce();
       }, 1000);
     } catch (error: any) {
       console.error('❌ Error accessing webcam:', error);
-      console.error('Error details:', {
-        name: error?.name,
-        message: error?.message,
-        constraint: error?.constraint,
-        stack: error?.stack,
-      });
+      stopWebcam();
 
-      // Reset state on error
-      setIsWebcamActive(false);
-      setStream(null);
-
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+      if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') {
         toast.error(
           'Camera permission denied. Please allow camera access in your browser settings.',
           {
@@ -230,442 +253,305 @@ export function FaceLogin() {
             description: 'Click the lock icon in the address bar and allow camera access.',
           },
         );
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+      } else if (error?.name === 'NotFoundError' || error?.name === 'DevicesNotFoundError') {
         toast.error('No camera found. Please connect a camera and try again.');
-      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+      } else if (error?.name === 'NotReadableError' || error?.name === 'TrackStartError') {
         toast.error(
           'Camera is already in use by another application. Please close other apps using the camera.',
         );
-      } else if (
-        error.name === 'OverconstrainedError' ||
-        error.name === 'ConstraintNotSatisfiedError'
-      ) {
-        console.log('🔄 Camera constraint error, retrying with basic settings...');
-        toast.error("Selected camera doesn't support required settings. Trying basic settings...");
-
-        // Retry with minimal constraints
-        try {
-          const basicStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' },
-          });
-          setStream(basicStream);
-          setIsWebcamActive(true);
-          toast.success('Camera started successfully!');
-        } catch (retryError: any) {
-          console.error('❌ Retry failed:', retryError);
-          toast.error(`Still unable to access camera: ${retryError.message}`);
-        }
       } else {
-        toast.error(`Unable to access camera: ${error.message || 'Unknown error'}`, {
-          description: `Error type: ${error.name || 'Unknown'}`,
-        });
+        toast.error(`Unable to access camera: ${error?.message || 'Unknown error'}`);
       }
     }
   };
 
-  const stopWebcam = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-    setIsWebcamActive(false);
-    setFaceDetected(false);
-    setMatchStatus('idle');
-    setMatchedUser(null);
-    setScanningProgress(0);
-    setDetectionQuality('poor');
-    setAutoLoginTriggered(false);
-  };
+  // ===== Detection loop =====
+  const startDetectionLoop = () => {
+    if (!videoRef.current) return;
+    if (!streamRef.current) return;
 
-  // Функция для сброса блокировки Face ID (можно вызвать после успешного входа через email/password)
-  const resetFaceIdBlock = () => {
-    setIsBlocked(false);
-    setFailedAttempts(0);
-    toast.success('Face ID has been unlocked. You can try again.');
-  };
+    if (loopStartedRef.current) return;
+    loopStartedRef.current = true;
 
-  const detectFaceLoop = (forceStart = false) => {
-    console.log('🔄 Starting face detection loop...');
-    console.log(
-      'forceStart:',
-      forceStart,
-      'videoRef.current:',
-      !!videoRef.current,
-      'isWebcamActive:',
-      isWebcamActive,
-    );
+    // reset for new session
+    hardResetUiState();
 
-    if (!videoRef.current) {
-      console.warn('⚠️ Cannot start detection loop - videoRef is null');
-      return;
-    }
-
-    if (!forceStart && !isWebcamActive) {
-      console.warn('⚠️ Cannot start detection loop - isWebcamActive is false');
-      return;
-    }
-
-    const interval = setInterval(async () => {
-      if (!videoRef.current) {
-        console.log('🛑 Stopping face detection loop - videoRef is null');
-        clearInterval(interval);
+    intervalRef.current = window.setInterval(async () => {
+      const video = videoRef.current;
+      if (!video || !streamRef.current) {
+        stopDetectionLoop();
         return;
       }
 
+      // пока идёт логин — не гоняем детекцию
+      if (processingRef.current) return;
+
+      if (video.readyState < 2) return;
+
       try {
-        // Check if video is actually playing and has valid dimensions
-        if (videoRef.current.readyState < 2) {
-          console.log('⏳ Video not ready yet, readyState:', videoRef.current.readyState);
+        const detection = await detectFace(video);
+        const faceFound = !!detection;
+
+        if (!faceFound) {
+          noFaceFramesRef.current += 1;
+
+          if (faceDetectedRef.current) {
+            faceDetectedRef.current = false;
+            setFaceDetected(false);
+          }
+
+          // мягкий сброс после нескольких кадров без лица
+          if (noFaceFramesRef.current >= 3) {
+            progressRef.current = 0;
+            setScanningProgress(0);
+
+            qualityRef.current = 'poor';
+            setDetectionQuality('poor');
+
+            lastDescriptorRef.current = null;
+
+            autoTriggeredRef.current = false;
+            setAutoLoginTriggered(false);
+          }
           return;
         }
 
-        const detection = await detectFace(videoRef.current);
-        const faceFound = !!detection;
+        // face found
+        noFaceFramesRef.current = 0;
 
-        // Only log when face detection status changes
-        if (faceFound !== faceDetected) {
-          console.log(faceFound ? '✅ Face detected!' : '❌ No face detected');
+        if (!faceDetectedRef.current) {
+          faceDetectedRef.current = true;
+          setFaceDetected(true);
         }
 
-        setFaceDetected(faceFound);
+        // cache descriptor
+        lastDescriptorRef.current = detection!.descriptor;
 
-        // Анимированное сканирование при обнаружении лица
-        if (faceFound && detection) {
-          // Симуляция прогресса сканирования
-          let currentProgress = 0;
-          setScanningProgress((prev) => {
-            const newProgress = Math.min(prev + 20, 100);
-            currentProgress = newProgress;
-            if (newProgress === 100 && prev !== 100) {
-              console.log('📊 Scanning reached 100%!');
-            }
-            return newProgress;
-          });
+        // progress via ref (не через prev => prev+..)
+        const nextProgress = Math.min(progressRef.current + 20, 100);
+        progressRef.current = nextProgress;
+        setScanningProgress(nextProgress);
 
-          // Определение качества детекции на основе размера лица
-          const box = detection.detection.box;
-          const faceSize = box.width * box.height;
+        // quality via ref
+        const box = detection!.detection.box;
+        const faceSize = box.width * box.height;
 
-          let quality: 'poor' | 'good' | 'excellent' = 'poor';
-          if (faceSize > 40000) {
-            quality = 'excellent';
-          } else if (faceSize > 20000) {
-            quality = 'good';
+        let quality: 'poor' | 'good' | 'excellent' = 'poor';
+        if (faceSize > 40000) quality = 'excellent';
+        else if (faceSize > 20000) quality = 'good';
+
+        qualityRef.current = quality;
+        setDetectionQuality(quality);
+
+        // auto-trigger (только ref)
+        const now = Date.now();
+
+        const shouldTrigger =
+          (qualityRef.current === 'good' || qualityRef.current === 'excellent') &&
+          progressRef.current >= 100 &&
+          !autoTriggeredRef.current &&
+          !processingRef.current &&
+          now - lastAttemptRef.current >= 5000;
+
+        if (shouldTrigger) {
+          if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
+            toast.error('No registered faces found. Please register your face first.', {
+              id: 'no-faces',
+            });
+
+            progressRef.current = 0;
+            setScanningProgress(0);
+
+            autoTriggeredRef.current = false;
+            setAutoLoginTriggered(false);
+            return;
           }
-          setDetectionQuality(quality);
 
-          // Auto-login when face is detected with good quality and scanning is complete
-          console.log('🔍 Auto-login check:', {
-            quality,
-            scanningProgress: currentProgress,
-            autoLoginTriggered,
-            isProcessing,
-            shouldTrigger:
-              (quality === 'good' || quality === 'excellent') &&
-              currentProgress >= 100 &&
-              !autoLoginTriggered &&
-              !isProcessing,
-          });
+          autoTriggeredRef.current = true;
+          lastAttemptRef.current = now;
+          setAutoLoginTriggered(true);
+          setLastAttemptTime(now);
 
-          if (
-            (quality === 'good' || quality === 'excellent') &&
-            currentProgress >= 100 &&
-            !autoLoginTriggered &&
-            !isProcessing
-          ) {
-            // Cooldown: prevent multiple attempts within 5 seconds
-            const now = Date.now();
-            if (now - lastAttemptTime < 5000) {
-              console.warn('⚠️ Cooldown active - preventing rapid retry');
-              return;
-            }
-
-            // Check if there are registered faces before triggering auto-login
-            if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
-              console.warn('⚠️ Cannot auto-trigger login - no registered faces');
-              setScanningProgress(0);
-              setAutoLoginTriggered(false);
-              toast.error('No registered faces found. Please register your face first.', {
-                id: 'no-faces',
-              });
-              return;
-            }
-
-            console.log('🚀 Auto-triggering face login NOW!');
-            setAutoLoginTriggered(true);
-            setLastAttemptTime(now);
-            setTimeout(() => {
-              console.log('🚀 Calling attemptFaceLogin...');
-              attemptFaceLogin();
-            }, 100); // Small delay to ensure state is updated
-          }
-        } else {
-          setScanningProgress(0);
-          setDetectionQuality('poor');
-          setAutoLoginTriggered(false);
+          console.log('🚀 Auto-triggering attemptFaceLogin()');
+          attemptFaceLogin();
         }
-      } catch (error) {
-        console.error('❌ Error in face detection loop:', error);
+      } catch (e) {
+        console.error('❌ Error in face detection loop:', e);
       }
-    }, 500);
-
-    return () => clearInterval(interval);
+    }, 350);
   };
 
+  // ===== Login =====
   const attemptFaceLogin = useCallback(async () => {
-    // Проверка блокировки
-    if (isBlocked) {
-      console.warn('⚠️ Face ID is blocked');
-      return;
-    }
+    if (isBlocked) return;
 
-    if (!videoRef.current) {
-      console.warn('⚠️ Video ref is null');
-      return;
-    }
+    const video = videoRef.current;
+    if (!video) return;
 
-    if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
-      console.warn('⚠️ No registered faces found in the system');
-      // Only show toast once, not repeatedly
-      if (!isProcessing) {
-        toast.error('No registered faces found in the system. Please register your face first.');
-        setAutoLoginTriggered(false); // Reset to prevent infinite loop
-      }
-      return;
-    }
+    // hard-guard
+    if (processingRef.current) return;
 
+    processingRef.current = true;
     setIsProcessing(true);
     setMatchStatus('searching');
 
     try {
-      console.log('🔍 Step 1: Detecting face...');
-      // Detect face and get descriptor
-      const detection = await detectFace(videoRef.current);
-
-      if (!detection) {
-        console.error('❌ No face detected in frame');
-        toast.error(
-          t(
-            'faceLogin.noFaceDetected',
-            'No face detected. Please position your face in the frame.',
-          ),
-        );
-        setIsProcessing(false);
-        setMatchStatus('not_found');
-
-        // Локальное увеличение счетчика неудачных попыток
-        const newAttempts = failedAttempts + 1;
-        setFailedAttempts(newAttempts);
-
-        if (newAttempts >= 3) {
-          setIsBlocked(true);
-          toast.error(
-            'Too many failed attempts. Face ID is now blocked. Please use email/password login.',
-          );
-          stopWebcam();
-        }
-
-        setTimeout(() => setMatchStatus('idle'), 2000);
+      if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
+        toast.error('No registered faces found in the system. Please register your face first.');
+        autoTriggeredRef.current = false;
+        setAutoLoginTriggered(false);
         return;
       }
 
-      console.log('✅ Face detected, getting descriptor...');
-      // Get face descriptor
-      const descriptor = detection.descriptor;
-      console.log('✅ Descriptor obtained, length:', descriptor.length);
+      // prefer cached descriptor
+      let descriptor = lastDescriptorRef.current;
+      if (!descriptor) {
+        const det = await detectFace(video);
+        if (!det) {
+          throw new Error(
+            t(
+              'faceLogin.noFaceDetected',
+              'No face detected. Please position your face in the frame.',
+            ),
+          );
+        }
+        descriptor = det.descriptor;
+      }
 
-      // Find best match from registered faces
-      console.log(
-        '🔍 Step 2: Finding best match from',
-        allFaceDescriptors.length,
-        'registered faces',
-      );
       const knownFaces = allFaceDescriptors.map((user: any) => ({
         userId: user.userId,
         name: user.name,
         descriptor: user.faceDescriptor,
+        email: user.email,
       }));
 
-      const bestMatch = await findBestMatch(descriptor, knownFaces);
-      console.log('🎯 Best match found:', bestMatch);
+      const bestMatch = await findBestMatch(
+        descriptor,
+        knownFaces.map(({ userId, name, descriptor }) => ({ userId, name, descriptor })),
+      );
 
       if (!bestMatch) {
-        console.error('❌ No matching face found');
-        toast.error('No matching face found.');
         setMatchStatus('not_found');
-        setTimeout(() => setMatchStatus('idle'), 2000);
-        setIsProcessing(false);
+        toast.error('No matching face found.');
+        autoTriggeredRef.current = false;
+        setAutoLoginTriggered(false);
         return;
       }
 
-      // Check if match is good enough (threshold: 0.6)
-      console.log(
-        '🔍 Step 3: Checking match quality. Distance:',
-        bestMatch.distance,
-        'Threshold: 0.6',
-      );
       if (!isFaceMatch(bestMatch.distance, 0.6)) {
-        console.error('❌ Match quality too low. Distance:', bestMatch.distance);
+        // record failed attempt (best-effort)
+        try {
+          const result = await recordFaceIdAttempt({
+            userId: bestMatch.userId as any,
+            success: false,
+          });
+          setFailedAttempts(result.attempts);
 
-        // Записываем неудачную попытку в базу данных
-        if (bestMatch.userId) {
-          try {
-            const result = await recordFaceIdAttempt({
-              userId: bestMatch.userId as any,
-              success: false,
-            });
+          if (result.blocked) {
+            setIsBlocked(true);
+            toast.error(
+              'Too many failed attempts. Face ID is now blocked. Please use email/password login.',
+            );
+            stopWebcam();
+            return;
+          }
 
-            setFailedAttempts(result.attempts);
+          toast.error(`Face not recognized. Attempt ${result.attempts} of 3.`);
+        } catch {
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+          toast.error(`Face not recognized. Attempt ${newAttempts} of 3.`);
 
-            if (result.blocked) {
-              setIsBlocked(true);
-              toast.error(
-                'Too many failed attempts. Face ID is now blocked. Please use email/password login.',
-              );
-              stopWebcam();
-            } else {
-              toast.error(`Face not recognized. Attempt ${result.attempts} of 3.`);
-            }
-          } catch (error) {
-            console.error('Failed to record attempt:', error);
-            // Фоллбэк на локальное увеличение
-            const newAttempts = failedAttempts + 1;
-            setFailedAttempts(newAttempts);
-            toast.error(`Face not recognized. Attempt ${newAttempts} of 3.`);
-
-            if (newAttempts >= 3) {
-              setIsBlocked(true);
-              toast.error('Too many failed attempts. Face ID is now blocked.');
-              stopWebcam();
-            }
+          if (newAttempts >= 3) {
+            setIsBlocked(true);
+            toast.error('Too many failed attempts. Face ID is now blocked.');
+            stopWebcam();
+            return;
           }
         }
 
         setMatchStatus('not_found');
-        setTimeout(() => setMatchStatus('idle'), 2000);
-        setIsProcessing(false);
+        autoTriggeredRef.current = false;
+        setAutoLoginTriggered(false);
         return;
       }
 
-      // Match found! Успешная попытка - записываем в БД и сбрасываем счетчик
-      console.log('✅ Match confirmed! User:', bestMatch.name);
-
-      // Записываем успешную попытку в базу данных
+      // success
       try {
-        await recordFaceIdAttempt({
-          userId: bestMatch.userId as any,
-          success: true,
-        });
-      } catch (error) {
-        console.error('Failed to record successful attempt:', error);
-      }
+        await recordFaceIdAttempt({ userId: bestMatch.userId as any, success: true });
+      } catch {}
 
       setFailedAttempts(0);
       setMatchedUser(bestMatch.name);
       setMatchStatus('found');
 
-      // Find matched user data
-      console.log('🔍 Step 4: Finding matched user data...');
-      const matchedUserData = allFaceDescriptors.find((u) => u.userId === bestMatch.userId);
-      if (!matchedUserData) {
-        console.error('❌ User data not found in allFaceDescriptors');
-        throw new Error('User data not found');
-      }
-      console.log('✅ Matched user data:', matchedUserData);
+      const matchedUserData = allFaceDescriptors.find((u: any) => u.userId === bestMatch.userId);
+      if (!matchedUserData) throw new Error('User data not found');
 
-      console.log('🔍 Step 5: Creating session via API...');
-      console.log('📧 Login params:', {
-        email: matchedUserData.email,
-        isFaceLogin: true,
+      const response = await fetch('/api/auth/face-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: matchedUserData.email, isFaceLogin: true }),
       });
 
-      try {
-        const response = await fetch('/api/auth/face-login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: matchedUserData.email,
-            isFaceLogin: true,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (errorData.error === 'maintenance') {
-            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
-            return;
-          }
-          throw new Error(errorData.error || 'Login failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData?.error === 'maintenance') {
+          window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+          return;
         }
-
-        const data = await response.json();
-        console.log('✅ Session created successfully', data);
-
-        // Save user data to auth store so it persists after redirect
-        if (data.session) {
-          const { login } = useAuthStore.getState();
-          login({
-            id: data.session.userId,
-            name: data.session.name,
-            email: data.session.email,
-            role: data.session.role,
-            organizationId: data.session.organizationId,
-            organizationSlug: data.session.organizationSlug,
-            organizationName: data.session.organizationName,
-            department: data.session.department,
-            position: data.session.position,
-            employeeType: data.session.employeeType,
-            avatar: data.session.avatar,
-          });
-          console.log('💾 User saved to auth store:', data.session.name);
-        }
-      } catch (loginError: any) {
-        console.error('❌ Face login API failed:', loginError);
-        console.error('Error details:', {
-          name: loginError?.name,
-          message: loginError?.message,
-        });
-        throw new Error(`Login failed: ${loginError?.message || 'Unknown error'}`);
+        throw new Error(errorData?.error || 'Login failed');
       }
 
-      // Redirect to dashboard or callback URL
-      console.log('🔍 Step 6: Redirecting to dashboard...');
+      const data = await response.json();
+
+      if (data?.session) {
+        const { login } = useAuthStore.getState();
+        login({
+          id: data.session.userId,
+          name: data.session.name,
+          email: data.session.email,
+          role: data.session.role,
+          organizationId: data.session.organizationId,
+          organizationSlug: data.session.organizationSlug,
+          organizationName: data.session.organizationName,
+          department: data.session.department,
+          position: data.session.position,
+          employeeType: data.session.employeeType,
+          avatar: data.session.avatar,
+        });
+      }
+
+      // stop before redirect
+      stopWebcam();
+
       const params = new URLSearchParams(window.location.search);
       const nextUrl = params.get('next');
-      const redirectUrl = nextUrl || '/dashboard';
-      window.location.href = redirectUrl;
+      window.location.href = nextUrl || '/dashboard';
     } catch (error: any) {
       console.error('❌ Error during face login:', error);
-      console.error('Error name:', error?.name);
-      console.error('Error message:', error?.message);
-      console.error('Error stack:', error?.stack);
 
-      // Determine specific error message
-      let errorMessage = 'Failed to login with Face ID. Please try again.';
-      if (error?.message?.includes('Failed to fetch')) {
-        errorMessage = 'Network error: Cannot connect to server. Please check your connection.';
-      } else if (error?.message?.includes('Login action failed')) {
-        errorMessage = 'Server error: ' + error.message.replace('Login action failed: ', '');
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
+      const msg = error?.message?.includes('Failed to fetch')
+        ? 'Network error: Cannot connect to server. Please check your connection.'
+        : error?.message || 'Failed to login with Face ID. Please try again.';
 
-      // Only show toast once with specific error
-      toast.error(errorMessage, {
-        id: 'face-login-error',
-        duration: 5000,
-      });
+      toast.error(msg, { id: 'face-login-error', duration: 5000 });
 
       setMatchStatus('not_found');
-      setAutoLoginTriggered(false); // Reset to allow retry
-      setScanningProgress(0); // Reset scanning
+
+      // allow retry
+      autoTriggeredRef.current = false;
+      setAutoLoginTriggered(false);
+
+      progressRef.current = 0;
+      setScanningProgress(0);
+
       setTimeout(() => setMatchStatus('idle'), 2000);
     } finally {
+      processingRef.current = false;
       setIsProcessing(false);
     }
-  }, [isBlocked, allFaceDescriptors, recordFaceIdAttempt, failedAttempts, setUser, isProcessing]);
+  }, [isBlocked, allFaceDescriptors, recordFaceIdAttempt, failedAttempts, t]);
 
   return (
     <Card className="p-6 bg-[var(--surface-base)] border-[var(--border-primary)]">
@@ -767,19 +653,12 @@ export function FaceLogin() {
                         : 'border-white/50'
                     }`}
                   >
-                    {/* Scanning animation */}
                     {faceDetected && scanningProgress > 0 && (
                       <>
-                        {/* Scanning line */}
                         <div
                           className="absolute left-0 right-0 h-1 bg-linear-to-r from-transparent via-green-400 to-transparent animate-pulse"
-                          style={{
-                            top: `${scanningProgress}%`,
-                            transition: 'top 0.5s ease-out',
-                          }}
+                          style={{ top: `${scanningProgress}%`, transition: 'top 0.35s ease-out' }}
                         />
-
-                        {/* Corner indicators */}
                         <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-green-400 animate-pulse" />
                         <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-green-400 animate-pulse" />
                         <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-green-400 animate-pulse" />
@@ -788,7 +667,6 @@ export function FaceLogin() {
                     )}
                   </div>
 
-                  {/* Scanning progress */}
                   {faceDetected && scanningProgress > 0 && (
                     <div className="absolute -bottom-8 left-0 right-0 text-center">
                       <div className="text-white text-xs bg-black/50 px-2 py-1 rounded">
@@ -805,15 +683,13 @@ export function FaceLogin() {
         {/* Camera Selection */}
         {!isWebcamActive && cameras.length > 1 && (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-(--text-secondary)">
-              Select Camera:
-            </label>
+            <label className="text-sm font-medium text-(--text-secondary)">Select Camera:</label>
             <select
               value={selectedCamera}
               onChange={(e) => setSelectedCamera(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-base)] text-(--text-primary)"
             >
-              {cameras.map((camera: any) => (
+              {cameras.map((camera) => (
                 <option key={camera.deviceId} value={camera.deviceId}>
                   {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
                 </option>
@@ -877,7 +753,6 @@ export function FaceLogin() {
             </>
           )}
 
-          {/* Alternative login button when blocked */}
           {isBlocked && (
             <Button onClick={() => router.push('/login')} className="flex-1" variant="default">
               {t('faceLogin.useEmailPassword', 'Use Email/Password Login')}

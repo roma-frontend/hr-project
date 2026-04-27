@@ -1,4 +1,7 @@
 {
+  "ui": {
+    "skipToContent": "Skip to content"
+  },
   "landing": {
     "scroll": "Scroll",
     "leaveTypes": "Leave Types",
@@ -2643,6 +2646,8 @@
     "footerLegal": "Legal",
     "footerPrivacy": "Privacy Policy",
     "footerTerms": "Terms of Service",
+    "footerTermsDesc": "Read our terms of service and conditions",
+    "footerPrivacyDesc": "View our privacy policy and data protection information",
     "footerRights": "All rights reserved.",
     "securityCenter": "Security Center",
     "securityCritical": "⚠ Critical",
