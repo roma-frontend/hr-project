@@ -2,6 +2,13 @@
 
 import dynamic from 'next/dynamic';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
+import { useTranslation } from 'react-i18next';
+import '@/i18n/config';
+import Link from 'next/link';
+import { Settings, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const PayrollDashboard = dynamic(
   () =>
@@ -36,8 +43,40 @@ function PayrollSkeleton() {
 }
 
 export default function PayrollPage() {
+  const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
+  const canManage = isAdmin || user?.role === 'superadmin';
+
   return (
     <>
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-backdrop-filter:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-(--text-primary)">{t('payroll.dashboard')}</h1>
+            <p className="text-(--text-muted) mt-1">{t('payroll.subtitle')}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {canManage && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/payroll/settings">
+                  <Settings className="w-4 h-4 mr-2" />
+                  {t('payroll.settings')}
+                </Link>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/payroll/export">
+                  <Download className="w-4 h-4 mr-2" />
+                  {t('payroll.export')}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
       <PayrollDashboard />
     </>
   );

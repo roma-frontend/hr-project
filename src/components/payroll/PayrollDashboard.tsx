@@ -147,256 +147,222 @@ export default function PayrollDashboard() {
       animate="visible"
       className="space-y-6"
     >
-      {/* Header */}
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border) sticky top-0 z-10 flex items-center justify-between flex-wrap gap-3 py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-(--text-primary)">{t('payroll.dashboard')}</h1>
-            <p className="text-(--text-muted) mt-1">{t('payroll.subtitle')}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canManage && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/payroll/settings">
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t('payroll.settings')}
-                </Link>
-              </Button>
-            )}
-            {isAdmin && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/payroll/export">
-                  <Download className="w-4 h-4 mr-2" />
-                  {t('payroll.export')}
-                </Link>
-              </Button>
-            )}
-            {canManage && (
-              <Button size="sm" onClick={() => setNewRunOpen(true)} disabled={!orgId}>
-                <ArrowRight className="w-4 h-4 mr-2" />
-                {t('payroll.newRun')}
-              </Button>
-            )}
-          </div>
-        </div>
+      {!orgId && (
+        <Card>
+          <CardContent className="py-12 text-center text-(--text-muted)">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>{t('common.selectOrganization')}</p>
+          </CardContent>
+        </Card>
+      )}
 
-        {!orgId && (
-          <Card>
-            <CardContent className="py-12 text-center text-(--text-muted)">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>{t('common.selectOrganization')}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {orgId && !hasAnyData && canManage && (
-          <Card>
-            <CardContent className="py-10">
-              <div className="text-left sm:text-center space-y-4">
-                <FileText className="w-10 h-10 mx-left sm:mx-auto text-(--text-muted) opacity-40" />
-                <div>
-                  <h3 className="font-semibold text-(--text-primary)">
-                    {t('payroll.getStartedTitle')}
-                  </h3>
-                  <p className="text-sm text-(--text-muted) mt-1 max-w-md mx-auto">
-                    {t('payroll.getStartedDesc') ||
-                      'Configure tax country and currency, set salaries on each employee, then create your first payroll run.'}
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap items-start sm:items-center sm:justify-center">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/payroll/settings">
-                      <Settings className="w-4 h-4 mr-2" />
-                      {t('payroll.configureSettings')}
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/employees">
-                      <Users className="w-4 h-4 mr-2" />
-                      {t('payroll.setSalaries')}
-                    </Link>
-                  </Button>
-                  <Button size="sm" onClick={() => setNewRunOpen(true)}>
-                    <ArrowRight className="w-4 h-4 mr-2" />
-                    {t('payroll.createFirstRun')}
-                  </Button>
-                </div>
+      {orgId && !hasAnyData && canManage && (
+        <Card>
+          <CardContent className="py-10">
+            <div className="text-left sm:text-center space-y-4">
+              <FileText className="w-10 h-10 mx-left sm:mx-auto text-(--text-muted) opacity-40" />
+              <div>
+                <h3 className="font-semibold text-(--text-primary)">
+                  {t('payroll.getStartedTitle')}
+                </h3>
+                <p className="text-sm text-(--text-muted) mt-1 max-w-md mx-auto">
+                  {t('payroll.getStartedDesc') ||
+                    'Configure tax country and currency, set salaries on each employee, then create your first payroll run.'}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {!isAdmin && (
-          <Card>
-            <CardContent className="py-12 text-center text-(--text-muted)">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>{t('errors.unauthorized')}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stats Cards */}
-        {orgId && hasAnyData && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
-            <motion.div variants={itemVariants}>
-              <StatsCard
-                title={t('payroll.totalPayroll')}
-                value={formatCurrency(safeStats.totalGross)}
-                icon={<DollarSign className="w-5 h-5" />}
-                color="blue"
-              />
-            </motion.div>
-            <motion.div variants={itemVariants}>
-              <StatsCard
-                title={t('payroll.totalNet')}
-                value={formatCurrency(safeStats.totalNet)}
-                icon={<TrendingUp className="w-5 h-5" />}
-                color="green"
-              />
-            </motion.div>
-            <motion.div variants={itemVariants}>
-              <StatsCard
-                title={t('payroll.pendingAmount')}
-                value={safeStats.pendingRuns}
-                icon={<Clock className="w-5 h-5" />}
-                color="yellow"
-              />
-            </motion.div>
-            <motion.div variants={itemVariants}>
-              <StatsCard
-                title={t('payroll.paidAmount')}
-                value={safeStats.paidRuns}
-                icon={<CheckCircle className="w-5 h-5" />}
-                color="purple"
-              />
-            </motion.div>
-          </div>
-        )}
-
-        {/* Charts */}
-        {orgId && hasAnyData && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t('payroll.fundOverview')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={departmentData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <RechartsTooltip />
-                      <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t('payroll.dynamics')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={departmentData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={(entry: any) =>
-                          `${entry.name ?? ''}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
-                        }
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {departmentData.map((_entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Recent Runs */}
-        {orgId && (
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                <CardTitle className="text-lg">{t('payroll.recentRuns')}</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/payroll/runs">
-                    {t('payroll.viewDetails')}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+              <div className="flex gap-2 flex-wrap items-start sm:items-center sm:justify-center">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/payroll/settings">
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t('payroll.configureSettings')}
                   </Link>
                 </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/employees">
+                    <Users className="w-4 h-4 mr-2" />
+                    {t('payroll.setSalaries')}
+                  </Link>
+                </Button>
+                <Button size="sm" onClick={() => setNewRunOpen(true)}>
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  {t('payroll.createFirstRun')}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isAdmin && (
+        <Card>
+          <CardContent className="py-12 text-center text-(--text-muted)">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>{t('errors.unauthorized')}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats Cards */}
+      {orgId && hasAnyData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-4">
+          <motion.div variants={itemVariants}>
+            <StatsCard
+              title={t('payroll.totalPayroll')}
+              value={formatCurrency(safeStats.totalGross)}
+              icon={<DollarSign className="w-5 h-5" />}
+              color="blue"
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatsCard
+              title={t('payroll.totalNet')}
+              value={formatCurrency(safeStats.totalNet)}
+              icon={<TrendingUp className="w-5 h-5" />}
+              color="green"
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatsCard
+              title={t('payroll.pendingAmount')}
+              value={safeStats.pendingRuns}
+              icon={<Clock className="w-5 h-5" />}
+              color="yellow"
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <StatsCard
+              title={t('payroll.paidAmount')}
+              value={safeStats.paidRuns}
+              icon={<CheckCircle className="w-5 h-5" />}
+              color="purple"
+            />
+          </motion.div>
+        </div>
+      )}
+
+      {/* Charts */}
+      {orgId && hasAnyData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t('payroll.fundOverview')}</CardTitle>
               </CardHeader>
               <CardContent>
-                {recentRuns && recentRuns.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentRuns.slice(0, 5).map((run: any) => (
-                      <div
-                        key={run._id}
-                        className="flex flex-wrap gap-3 items-center justify-between p-3 rounded-lg bg-(--card) border border-(--border)"
-                      >
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                          <FileText className="w-5 h-5 text-(--text-muted)" />
-                          <div>
-                            <p className="font-medium text-(--text-primary)">{run.period}</p>
-                            <p className="text-sm text-(--text-muted)">
-                              {run.recordCount} {t('payroll.employees')}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-start sm:items-center gap-4">
-                          <div className="text-left sm:text-right">
-                            <p className="font-medium text-(--text-primary)">
-                              {formatCurrency(run.totalGross || 0)}
-                            </p>
-                            <p className="text-sm text-(--text-muted)">
-                              {formatCurrency(run.totalNet || 0)}
-                            </p>
-                          </div>
-                          {getStatusBadge(run.status, t)}
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/payroll/${run._id}`}>
-                              <ArrowRight className="w-4 h-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-(--text-muted)">
-                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>{t('payroll.noRuns')}</p>
-                  </div>
-                )}
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={departmentData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           </motion.div>
-        )}
 
-        {orgId && (
-          <CreatePayrollRunDialog
-            open={newRunOpen}
-            onOpenChange={setNewRunOpen}
-            organizationId={orgId}
-          />
-        )}
-      </div>
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">{t('payroll.dynamics')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={departmentData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry: any) =>
+                        `${entry.name ?? ''}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
+                      }
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {departmentData.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Recent Runs */}
+      {orgId && (
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <CardTitle className="text-lg">{t('payroll.recentRuns')}</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/payroll/runs">
+                  {t('payroll.viewDetails')}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {recentRuns && recentRuns.length > 0 ? (
+                <div className="space-y-3">
+                  {recentRuns.slice(0, 5).map((run: any) => (
+                    <div
+                      key={run._id}
+                      className="flex flex-wrap gap-3 items-center justify-between p-3 rounded-lg bg-(--card) border border-(--border)"
+                    >
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <FileText className="w-5 h-5 text-(--text-muted)" />
+                        <div>
+                          <p className="font-medium text-(--text-primary)">{run.period}</p>
+                          <p className="text-sm text-(--text-muted)">
+                            {run.recordCount} {t('payroll.employees')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-start sm:items-center gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="font-medium text-(--text-primary)">
+                            {formatCurrency(run.totalGross || 0)}
+                          </p>
+                          <p className="text-sm text-(--text-muted)">
+                            {formatCurrency(run.totalNet || 0)}
+                          </p>
+                        </div>
+                        {getStatusBadge(run.status, t)}
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/payroll/${run._id}`}>
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-(--text-muted)">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>{t('payroll.noRuns')}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {orgId && (
+        <CreatePayrollRunDialog
+          open={newRunOpen}
+          onOpenChange={setNewRunOpen}
+          organizationId={orgId}
+        />
+      )}
     </motion.div>
   );
 }
