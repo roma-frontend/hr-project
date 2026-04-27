@@ -6,21 +6,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from '@/lib/cssMotion';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Building2,
+  Globe,
+  Briefcase,
+  Users,
   User,
   Mail,
   Lock,
   Phone,
-  Globe,
-  Briefcase,
-  Eye,
-  EyeOff,
   ArrowLeft,
   CheckCircle2,
-  AlertCircle,
-  Users,
-  MessageSquare,
   Crown,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -68,6 +67,10 @@ export default function RequestOrgPage() {
 
   const plan = searchParams.get('plan') as 'professional' | 'enterprise' | null;
 
+  const accentColor = plan === 'enterprise' ? '#a855f7' : '#2563eb';
+  const gradientColor =
+    plan === 'enterprise' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500';
+
   useEffect(() => {
     if (plan !== 'professional' && plan !== 'enterprise') {
       router.push('/register-org');
@@ -79,12 +82,12 @@ export default function RequestOrgPage() {
     setError(null);
 
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('auth.passwordMin8', 'Password must be at least 8 characters'));
       return;
     }
 
     if (!formData.slug) {
-      setError('Organization slug is required');
+      setError(t('registerOrgPage.orgUrl') + ' is required');
       return;
     }
 
@@ -95,10 +98,8 @@ export default function RequestOrgPage() {
 
     startTransition(async () => {
       try {
-        // Hash password
         const hashedPassword = await bcrypt.hash(formData.password, 10);
 
-        // Create request
         await requestOrg({
           name: formData.orgName,
           slug: formData.slug,
@@ -113,9 +114,7 @@ export default function RequestOrgPage() {
           description: formData.description || undefined,
         });
 
-        toast.success('🎉 Request submitted successfully!');
-
-        // Redirect to confirmation page
+        toast.success(t('registerOrgPage.requestSubmitted', 'Request submitted successfully!'));
         router.push('/register-org/pending');
       } catch (_err) {
         const errorMessage = _err instanceof Error ? _err.message : 'Failed to submit request';
@@ -125,26 +124,21 @@ export default function RequestOrgPage() {
     });
   };
 
-  const planColor =
-    plan === 'enterprise' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500';
-  const planIcon = plan === 'enterprise' ? Crown : Building2;
-  const Icon = planIcon;
+  const planLabel = plan === 'enterprise' ? 'Enterprise' : 'Professional';
+  const PlanIcon = plan === 'enterprise' ? Crown : Building2;
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex items-center justify-center py-12 px-4"
       style={{ background: 'var(--background)' }}
     >
-      {/* Background blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div
-          className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-20"
-          style={{
-            background: `radial-gradient(circle, ${plan === 'enterprise' ? '#a855f7' : '#2563eb'}, transparent)`,
-          }}
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-15"
+          style={{ background: `radial-gradient(circle, ${accentColor}, transparent)` }}
         />
         <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-20"
+          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-15"
           style={{
             background: `radial-gradient(circle, ${plan === 'enterprise' ? '#ec4899' : '#0ea5e9'}, transparent)`,
           }}
@@ -152,57 +146,50 @@ export default function RequestOrgPage() {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        className="w-full max-w-2xl relative"
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-xl relative"
       >
         <div
-          className="rounded-2xl p-8 shadow-2xl border"
+          className="rounded-2xl p-6 sm:p-8 shadow-xl border"
           style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
         >
-          {/* Header */}
           <div className="flex items-center gap-3 mb-6">
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
-              style={{ background: `linear-gradient(135deg, ${planColor})` }}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${gradientColor})` }}
             >
-              <Icon className="w-6 h-6 text-white" />
+              <PlanIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
               <h1
-                className="text-2xl font-bold capitalize"
+                className="text-xl sm:text-2xl font-bold"
                 style={{ color: 'var(--text-primary)' }}
               >
-                Request {plan} Plan
+                {t('registerOrgPage.requestTitle', { plan: planLabel })}
               </h1>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              <p className="text-xs sm:text-sm" style={{ color: 'var(--text-muted)' }}>
                 {plan === 'enterprise'
-                  ? 'Custom pricing • 100+ employees'
-                  : '$79/mo • Up to 50 employees'}{' '}
-                • Approved within 24h
+                  ? `${t('registerOrgPage.enterpriseCustom')} • ${t('registerOrgPage.enterpriseTeam')}`
+                  : `${t('registerOrgPage.proPrice')} • ${t('registerOrgPage.proTeam')}`}{' '}
+                • {t('registerOrgPage.approvalNote')}
               </p>
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Organization Details */}
-            <div
-              className="space-y-4 p-4 rounded-xl"
-              style={{ background: 'rgba(37,99,235,0.05)' }}
-            >
+            <div className="space-y-4 p-4 rounded-xl" style={{ background: 'var(--muted)' }}>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Organization Details
+                {t('registerOrgPage.orgDetails')}
               </h3>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Organization Name
-                </label>
+                <Label htmlFor="orgName">{t('registerOrgPage.orgName')}</Label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                  <input
+                  <Input
+                    id="orgName"
                     type="text"
                     required
                     value={formData.orgName}
@@ -216,27 +203,18 @@ export default function RequestOrgPage() {
                       setFormData((p) => ({ ...p, orgName, slug }));
                     }}
                     placeholder={t('placeholders.acmeCorporation')}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                    style={{
-                      background: 'var(--input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) =>
-                      (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                    }
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                    className="pl-10"
+                    style={{ '--focus-ring': accentColor } as React.CSSProperties}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Organization URL
-                </label>
+                <Label htmlFor="slug">{t('registerOrgPage.orgUrl')}</Label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                  <input
+                  <Input
+                    id="slug"
                     type="text"
                     required
                     value={formData.slug}
@@ -247,73 +225,49 @@ export default function RequestOrgPage() {
                       }))
                     }
                     placeholder="acme-corp"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                    style={{
-                      background: 'var(--input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) =>
-                      (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                    }
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                    className="pl-10"
                   />
                 </div>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  yourteam.officehub.com/<strong>{formData.slug || 'your-org'}</strong>
+                  {t('registerOrgPage.yourTeam')}
+                  <strong>{formData.slug || 'your-org'}</strong>
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Industry
-                  </label>
+                  <Label htmlFor="industry">{t('registerOrgPage.industry')}</Label>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                    <input
+                    <Input
+                      id="industry"
                       type="text"
                       value={formData.industry}
                       onChange={(e) => setFormData((p) => ({ ...p, industry: e.target.value }))}
                       placeholder={t('placeholders.technology')}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                      style={{
-                        background: 'var(--input)',
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                      }
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                      className="pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Team Size
-                  </label>
+                  <Label htmlFor="teamSize">{t('registerOrgPage.teamSize')}</Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
                     <select
+                      id="teamSize"
                       value={formData.teamSize}
                       onChange={(e) => setFormData((p) => ({ ...p, teamSize: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-2 rounded-xl border text-sm outline-none transition-all appearance-none bg-[var(--input)]"
                       style={{
-                        background: 'var(--input)',
                         borderColor: 'var(--border)',
                         color: 'var(--text-primary)',
                       }}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                      }
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
                     >
-                      <option value="">Select size</option>
+                      <option value="">{t('registerOrgPage.selectSize')}</option>
                       {TEAM_SIZES.map((size) => (
                         <option key={size} value={size}>
-                          {size} employees
+                          {size} {t('registerOrgPage.employees')}
                         </option>
                       ))}
                     </select>
@@ -322,144 +276,126 @@ export default function RequestOrgPage() {
               </div>
             </div>
 
-            {/* Your Details */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Your Details (Admin Account)
+                {t('registerOrgPage.yourDetails')} ({t('registerOrgPage.adminAccount')})
               </h3>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Your Name
-                  </label>
+                  <Label htmlFor="userName">{t('registerOrgPage.yourName')}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                    <input
+                    <Input
+                      id="userName"
                       type="text"
                       required
                       value={formData.userName}
                       onChange={(e) => setFormData((p) => ({ ...p, userName: e.target.value }))}
                       placeholder={t('placeholders.johnDoe')}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                      style={{
-                        background: 'var(--input)',
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                      }
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                      className="pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    {t('auth.email')}
-                  </label>
+                  <Label htmlFor="email">{t('auth.email')}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                    <input
+                    <Input
+                      id="email"
                       type="email"
                       required
                       value={formData.email}
                       onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
                       placeholder="you@company.com"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                      style={{
-                        background: 'var(--input)',
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                      }
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                      className="pl-10"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Phone
-                  </label>
+                  <Label htmlFor="phone">{t('registerOrgPage.phone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                    <input
+                    <Input
+                      id="phone"
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
-                      placeholder="+1 234 567 890"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                      style={{
-                        background: 'var(--input)',
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                      onFocus={(e) =>
-                        (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                      }
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                      placeholder={t('registerOrg.phonePlaceholder', '+1 234 567 890')}
+                      className="pl-10"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Country
-                  </label>
-                  <input
+                  <Label htmlFor="country">{t('registerOrgPage.country')}</Label>
+                  <Input
+                    id="country"
                     type="text"
                     value={formData.country}
                     onChange={(e) => setFormData((p) => ({ ...p, country: e.target.value }))}
                     placeholder={t('placeholders.unitedStates')}
-                    className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                    style={{
-                      background: 'var(--input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) =>
-                      (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                    }
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {t('auth.password')}
-                </label>
+                <Label htmlFor="password">{t('registerOrgPage.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                  <input
+                  <Input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={formData.password}
                     onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
                     placeholder={t('placeholders.minCharacters')}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border text-sm outline-none transition-all"
-                    style={{
-                      background: 'var(--input)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) =>
-                      (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                    }
-                    onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                    className="pl-10 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-muted)"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.29 3.29m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-1.415 3.12M6 18a6 6 0 0012 0"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
                   </button>
                 </div>
                 {formData.password && (
@@ -489,33 +425,22 @@ export default function RequestOrgPage() {
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                Tell us about your needs (optional)
-              </label>
-              <div className="relative">
-                <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-(--text-muted)" />
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
-                  placeholder={t('placeholders.whatFeaturesImportant')}
-                  rows={3}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm outline-none transition-all resize-none"
-                  style={{
-                    background: 'var(--input)',
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) =>
-                    (e.target.style.borderColor = plan === 'enterprise' ? '#a855f7' : '#2563eb')
-                  }
-                  onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-                />
-              </div>
+              <Label htmlFor="description">{t('registerOrgPage.tellUsNeeds')}</Label>
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+                placeholder={t('placeholders.whatFeaturesImportant')}
+                rows={3}
+                className="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all resize-none bg-[var(--input)]"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-primary)',
+                }}
+              />
             </div>
 
-            {/* Error */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
@@ -523,33 +448,44 @@ export default function RequestOrgPage() {
                 className="flex items-center gap-2 p-3 rounded-xl text-sm"
                 style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}
               >
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 {error}
               </motion.div>
             )}
 
-            {/* Submit */}
-            <motion.button
+            <Button
               type="submit"
               disabled={isPending}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              className="w-full py-3 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 disabled:opacity-70"
-              style={{ background: `linear-gradient(135deg, ${planColor})` }}
+              className="w-full"
+              style={{ background: `linear-gradient(135deg, ${gradientColor})` }}
             >
               {isPending ? (
                 <>
-                  <ShieldLoader size="xs" variant="inline" className="mr-2" /> Submitting request...
+                  <ShieldLoader size="xs" variant="inline" className="mr-2" />
+                  {t('registerOrgPage.submitting')}
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" /> Submit Request
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  {t('registerOrgPage.submitRequest')}
                 </>
               )}
-            </motion.button>
+            </Button>
 
             <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-              We'll review your request and get back to you within 24 hours.
+              {t('registerOrgPage.approvalNoteDesc')}
             </p>
           </form>
         </div>
@@ -557,10 +493,11 @@ export default function RequestOrgPage() {
         <div className="text-center mt-4">
           <Link
             href="/register-org"
-            className="text-sm hover:underline flex items-center justify-center gap-1"
+            className="text-sm hover:underline inline-flex items-center gap-1"
             style={{ color: 'var(--text-muted)' }}
           >
-            <ArrowLeft className="w-3 h-3" /> {t('ui.backToPlans')}
+            <ArrowLeft className="w-3 h-3" />
+            {t('registerOrgPage.backToPlans')}
           </Link>
         </div>
       </motion.div>
