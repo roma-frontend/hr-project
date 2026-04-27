@@ -698,7 +698,6 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
 
     // Проверяем лимиты плана
     console.log('[AI Site Editor] Checking limits...');
-    // @ts-expect-error Convex type instantiation depth limit
     const canEdit = await fetchQuery(api.aiSiteEditor.canMakeEdit, {
       userId: userId as Id<'users'>,
       organizationId: organizationId as Id<'organizations'>,
