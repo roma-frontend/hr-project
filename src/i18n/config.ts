@@ -68,26 +68,4 @@ i18n
     },
   });
 
-// Listen to language changes and persist to localStorage
-i18n.on('languageChanged', (lng) => {
-  if (typeof window !== 'undefined') {
-    console.log('🔄 i18n languageChanged event:', lng);
-    localStorage.setItem('i18nextLng', lng);
-    console.log('💾 Persisted to localStorage:', lng);
-
-    // Also update HTML lang attribute
-    document.documentElement.lang = lng;
-  }
-});
-
-// Log for debugging
-if (typeof window !== 'undefined') {
-  console.log('🌍 i18n initialized:', {
-    language: i18n.language,
-    languages: Object.keys(resources),
-    keysCount: Object.keys(enTranslations).length,
-    savedLanguage: localStorage.getItem('i18nextLng'),
-  });
-}
-
 export default i18n;

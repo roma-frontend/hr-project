@@ -120,14 +120,14 @@ export default function PayrollRunDetailPage() {
     >
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/payroll">
               <ArrowLeft className="w-5 h-5" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-(--text-primary)">
+            <h1 className="text-xl sm:text-2xl font-bold text-(--text-primary)">
               {t('payroll.run')} #{run._id.slice(-6)}
             </h1>
             <div className="flex items-center gap-2 mt-1">
@@ -219,7 +219,7 @@ export default function PayrollRunDetailPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 mb-2">

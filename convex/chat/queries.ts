@@ -32,28 +32,9 @@ export const getMyConversations = query({
       ? user.role === 'superadmin' || user.email === SUPERADMIN_EMAIL
       : false;
 
-    // Debug: log memberships
-    if (isSuperadmin) {
-      console.log(
-        `[getMyConversations] Superadmin ${args.userId} has ${memberships.length} memberships`,
-      );
-      memberships.forEach((m, idx) => {
-        console.log(
-          `  Membership ${idx}: conversationId=${m.conversationId}, isDeleted=${m.isDeleted}`,
-        );
-      });
-    }
-
     // Step 3: Batch load all conversations
     const conversationIds = memberships.map((m) => m.conversationId);
     const conversations = await Promise.all(conversationIds.map((id) => ctx.db.get(id)));
-
-    // Debug: log conversations
-    if (isSuperadmin) {
-      conversations.forEach((conv, idx) => {
-        console.log(`  Conversation ${idx}: ${conv?._id}, name=${conv?.name}, type=${conv?.type}`);
-      });
-    }
 
     // Step 4: Filter valid conversations (not deleted)
     const validConvs: Array<{ conv: Doc<'chatConversations'>; membership: Doc<'chatMembers'> }> =
@@ -87,13 +68,6 @@ export const getMyConversations = query({
         dedupedMemberships.push(membership);
       }
     });
-
-    // Debug: log for superadmin
-    if (isSuperadmin) {
-      console.log(
-        `[getMyConversations] Superadmin ${args.userId} has ${memberships.length} memberships, found ${validConvs.length} valid conversations, ${dedupedConvs.length} after dedup`,
-      );
-    }
 
     const filteredConvs = dedupedConvs.filter(Boolean) as Array<{
       _id: Id<'chatConversations'>;
