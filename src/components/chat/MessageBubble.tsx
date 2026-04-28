@@ -566,9 +566,9 @@ export const MessageBubble = React.memo(function MessageBubble({
 
       {/* Delete dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in overflow-auto">
           <div
-            className="rounded-2xl shadow-2xl border p-5 w-72 flex flex-col gap-3 animate-slide-up"
+            className="rounded-2xl shadow-2xl border p-5 w-72 max-h-[90vh] overflow-auto flex flex-col gap-3 animate-slide-up my-4"
             style={{ background: 'var(--background)', borderColor: 'var(--border)' }}
           >
             <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
