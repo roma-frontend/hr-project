@@ -377,7 +377,7 @@ export default function DriversPage() {
       };
       maxTripsPerDay?: number;
     }) => {
-      if (!userId || (!effectiveOrgId && !isSuperadmin) || !selectedDriverCandidate) return;
+      if (!userId || !effectiveOrgId || !selectedDriverCandidate) return;
       try {
         await registerAsDriver({
           userId: selectedDriverCandidate._id,
