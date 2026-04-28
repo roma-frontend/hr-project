@@ -2,6 +2,8 @@
 
 import { useTranslation } from 'react-i18next';
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 
 interface LeaveHeatmapProps {
   leaves: Array<{
@@ -14,6 +16,8 @@ interface LeaveHeatmapProps {
 
 export function LeaveHeatmap({ leaves, month = new Date() }: LeaveHeatmapProps) {
   const { t } = useTranslation();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const days = eachDayOfInterval({
     start: startOfMonth(month),
     end: endOfMonth(month),
@@ -42,7 +46,7 @@ export function LeaveHeatmap({ leaves, month = new Date() }: LeaveHeatmapProps) 
   return (
     <div className="bg-(--background) rounded-2xl p-6 shadow-lg border border-(--border)">
       <h3 className="text-xl font-bold mb-4 text-(--text-primary)">
-        📅 {t('leaveHeatmap.title')} - {format(month, 'MMMM yyyy')}
+        📅 {t('leaveHeatmap.title')} - {format(month, 'MMMM yyyy', { locale: dateFnsLocale })}
       </h3>
 
       <div className="grid grid-cols-7 gap-2">
@@ -68,11 +72,17 @@ export function LeaveHeatmap({ leaves, month = new Date() }: LeaveHeatmapProps) 
               className={`aspect-square rounded-lg ${getColor(count)} flex items-center justify-center text-xs font-medium text-white cursor-pointer hover:scale-110 transition-transform`}
               title={
                 count === 1
-                  ? t('leaveHeatmap.tooltipSingle', { date: format(day, 'MMM d'), count })
-                  : t('leaveHeatmap.tooltipMultiple', { date: format(day, 'MMM d'), count })
+                  ? t('leaveHeatmap.tooltipSingle', {
+                      date: format(day, 'MMM d', { locale: dateFnsLocale }),
+                      count,
+                    })
+                  : t('leaveHeatmap.tooltipMultiple', {
+                      date: format(day, 'MMM d', { locale: dateFnsLocale }),
+                      count,
+                    })
               }
             >
-              {format(day, 'd')}
+              {format(day, 'd', { locale: dateFnsLocale })}
             </div>
           );
         })}

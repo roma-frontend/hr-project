@@ -27,7 +27,10 @@ import {
   addMonths,
   subMonths,
   isToday,
+  Locale,
 } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,11 +107,13 @@ function safeDate(dateStr: string | undefined | null): Date | null {
 
 function safeFormat(dateStr: string | undefined | null, fmt: string): string {
   const d = safeDate(dateStr);
-  if (!d) return '�';
+  if (!d) return '';
+  const lang = i18n.language || 'en';
+  const dfLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   try {
-    return format(d, fmt);
+    return format(d, fmt, { locale: dfLocale });
   } catch {
-    return '�';
+    return '';
   }
 }
 
@@ -296,6 +301,8 @@ export const CalendarClient = React.memo(function CalendarClient() {
   const [selectedGoogleEvent, setSelectedGoogleEvent] = useState<GoogleCalendarEvent | null>(null);
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const DAYS_OF_WEEK = [
     t('weekdays.sun'),
@@ -590,7 +597,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-lg font-bold text-(--text-primary) min-w-40 text-center"
                   >
-                    {format(currentMonth, 'MMMM yyyy')}
+                    {format(currentMonth, 'MMMM yyyy', { locale: dateFnsLocale })}
                   </motion.h3>
                   <Button size="icon-sm" variant="ghost" onClick={nextMonth}>
                     <ChevronRight className="w-4 h-4" />
@@ -825,8 +832,8 @@ export const CalendarClient = React.memo(function CalendarClient() {
                           </div>
                           {evt.startTime && (
                             <p className="text-[10px] text-(--text-muted) mt-0.5">
-                              {format(new Date(evt.startTime), 'h:mm a')}
-                              {evt.endTime && ` – ${format(new Date(evt.endTime), 'h:mm a')}`}
+                              {format(new Date(evt.startTime), 'HH:mm')}
+                              {evt.endTime && ` – ${format(new Date(evt.endTime), 'HH:mm')}`}
                             </p>
                           )}
                           {!evt.startTime && (
@@ -878,8 +885,8 @@ export const CalendarClient = React.memo(function CalendarClient() {
                             </Badge>
                           </div>
                           <p className="text-[10px] text-(--text-muted) mt-0.5">
-                            {format(new Date(evt.startTime), 'h:mm a')} –{' '}
-                            {format(new Date(evt.endTime), 'h:mm a')}
+                            {format(new Date(evt.startTime), 'HH:mm')} –{' '}
+                            {format(new Date(evt.endTime), 'HH:mm')}
                           </p>
                           {evt.tripInfo && (
                             <p className="text-[10px] text-(--text-muted) mt-0.5 truncate">
@@ -1318,13 +1325,19 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         {t('driver.from', 'From')}
                       </p>
                       <p className="text-3xl font-bold text-(--text-primary) leading-none">
-                        {format(new Date(selectedDriverEvent.startTime), 'd')}
+                        {format(new Date(selectedDriverEvent.startTime), 'd', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                       <p className="text-xs text-(--text-muted) mt-1">
-                        {format(new Date(selectedDriverEvent.startTime), 'MMM')}
+                        {format(new Date(selectedDriverEvent.startTime), 'MMM', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                       <p className="text-[10px] text-(--text-muted) mt-0.5">
-                        {format(new Date(selectedDriverEvent.startTime), 'HH:mm')}
+                        {format(new Date(selectedDriverEvent.startTime), 'HH:mm', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                     </div>
 
@@ -1333,8 +1346,13 @@ export const CalendarClient = React.memo(function CalendarClient() {
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--background-subtle) border border-(--border)">
                         <Clock className="w-3.5 h-3.5 text-(--text-muted)" />
                         <span className="text-xs font-bold text-(--text-primary)">
-                          {format(new Date(selectedDriverEvent.startTime), 'HH:mm')} -{' '}
-                          {format(new Date(selectedDriverEvent.endTime), 'HH:mm')}
+                          {format(new Date(selectedDriverEvent.startTime), 'HH:mm', {
+                            locale: dateFnsLocale,
+                          })}{' '}
+                          -{' '}
+                          {format(new Date(selectedDriverEvent.endTime), 'HH:mm', {
+                            locale: dateFnsLocale,
+                          })}
                         </span>
                       </div>
                       <div className="w-10 h-px bg-(--border) mt-2" />
@@ -1345,13 +1363,19 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         {t('driver.to', 'To')}
                       </p>
                       <p className="text-3xl font-bold text-(--text-primary) leading-none">
-                        {format(new Date(selectedDriverEvent.endTime), 'd')}
+                        {format(new Date(selectedDriverEvent.endTime), 'd', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                       <p className="text-xs text-(--text-muted) mt-1">
-                        {format(new Date(selectedDriverEvent.endTime), 'MMM')}
+                        {format(new Date(selectedDriverEvent.endTime), 'MMM', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                       <p className="text-[10px] text-(--text-muted) mt-0.5">
-                        {format(new Date(selectedDriverEvent.endTime), 'HH:mm')}
+                        {format(new Date(selectedDriverEvent.endTime), 'HH:mm', {
+                          locale: dateFnsLocale,
+                        })}
                       </p>
                     </div>
                   </div>

@@ -1236,7 +1236,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               </button>
 
               {/* Text input + @mention popup */}
-              <div className="flex-1 relative min-w-0">
+              <div className="flex-1 relative min-w-0" style={{ height: '20px' }}>
                 {/* @mention autocomplete popup */}
                 {mentionQuery !== null && mentionSuggestions.length > 0 && (
                   <div

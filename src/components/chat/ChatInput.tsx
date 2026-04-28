@@ -130,7 +130,7 @@ export function ChatInput({
           <Mic className="w-4 xs:w-4.5 h-4 xs:h-4.5" />
         </button>
 
-        <div className="flex-1 relative min-w-0 h-4.75">
+        <div className="flex-1 relative min-w-0" style={{ height: '20px' }}>
           {mentionQuery !== null && mentionSuggestions.length > 0 && (
             <div
               className="absolute bottom-full left-0 right-0 mb-2 rounded-xl shadow-2xl border overflow-hidden z-50 animate-slide-up"

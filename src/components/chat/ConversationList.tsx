@@ -28,7 +28,9 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ru, hy, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 interface Conversation {
@@ -132,6 +134,8 @@ export const ConversationList = React.memo(function ConversationList({
   onToggleMute,
 }: Props) {
   const { t } = useTranslation();
+  const currentLang = i18n.language || 'en';
+  const dateFnsLocale = currentLang === 'ru' ? ru : currentLang === 'hy' ? hy : enUS;
   const [search, setSearch] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterType[]>(getStoredFilters);
   const [loadingOpId, setLoadingOpId] = useState<string | null>(null);
@@ -340,7 +344,9 @@ export const ConversationList = React.memo(function ConversationList({
                     : 'transparent',
                   cursor: 'pointer',
                 }}
-                title={f === 'archived' ? 'Archived conversations - tap to restore' : undefined}
+                title={
+                  f === 'archived' ? t('chat.filterArchived') + ' - tap to restore' : undefined
+                }
               >
                 {f === 'all' && t('chat.filterAll', 'All')}
                 {f === 'chat' && t('chat.filterChat', 'Chat')}
@@ -386,13 +392,16 @@ export const ConversationList = React.memo(function ConversationList({
           const isSelected = conv._id === selectedId;
           const isGroup = conv.type === 'group';
           const displayName = isGroup
-            ? (conv.name ?? 'Group')
-            : (conv.otherUser?.name ?? 'Unknown');
+            ? (conv.name ?? t('chat.groupLabel', 'Group'))
+            : (conv.otherUser?.name ?? t('chat.unknownUser', 'Unknown'));
           const avatarUrl = isGroup ? conv.avatarUrl : conv.otherUser?.avatarUrl;
           // If conversation is selected, hide the unread count (client-side optimization)
           const unread = isSelected ? 0 : (conv.membership.unreadCount ?? 0);
           const lastTime = conv.lastMessageAt
-            ? formatDistanceToNow(new Date(conv.lastMessageAt), { addSuffix: false })
+            ? formatDistanceToNow(new Date(conv.lastMessageAt), {
+                addSuffix: false,
+                locale: dateFnsLocale,
+              })
             : '';
 
           // Sender prefix for last message
@@ -431,7 +440,7 @@ export const ConversationList = React.memo(function ConversationList({
           const lastMsgPreview = isSystemAnnouncements
             ? t('maintenance.notificationLabel')
             : isDeleted
-              ? t('chat.deleted') || 'This message was deleted'
+              ? t('chat.deleted')
               : displayLastText
                 ? senderName && !isSystemAnnouncements && !isDeleted
                   ? `${senderName}: ${displayLastText}`
@@ -574,7 +583,7 @@ export const ConversationList = React.memo(function ConversationList({
                               : 'var(--text-muted)',
                           }}
                         >
-                          {isDeleted ? t('chat.deleted') || '[Удалено]' : lastMsgPreview}
+                          {isDeleted ? t('chat.deleted') : lastMsgPreview}
                         </p>
                       </div>
                       {unread > 0 && !conv.membership.isMuted && (
@@ -602,7 +611,7 @@ export const ConversationList = React.memo(function ConversationList({
                             }, conv._id);
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-(--sidebar-item-hover)"
-                          title={t('chat.restore') || 'Восстановить'}
+                          title={t('chat.restore')}
                         >
                           <RotateCcw className="w-3.5 h-3.5" style={{ color: 'var(--primary)' }} />
                         </button>
@@ -616,7 +625,7 @@ export const ConversationList = React.memo(function ConversationList({
                             );
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-(--sidebar-item-hover)"
-                          title={t('chat.unarchive') || 'Разархивировать'}
+                          title={t('chat.unarchive')}
                         >
                           <Archive className="w-3.5 h-3.5" style={{ color: 'var(--primary)' }} />
                         </button>
@@ -649,7 +658,7 @@ export const ConversationList = React.memo(function ConversationList({
                     className="flex items-center gap-2"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    {t('chat.restore') || 'Восстановить'}
+                    {t('chat.restore')}
                   </ContextMenuItem>
                 ) : (
                   <>
@@ -664,7 +673,7 @@ export const ConversationList = React.memo(function ConversationList({
                       className="flex items-center gap-2"
                     >
                       <Pin className="w-4 h-4" />
-                      {conv.isPinned ? 'Открепить' : 'Закрепить'}
+                      {conv.isPinned ? t('chat.unpin') : t('chat.pin')}
                     </ContextMenuItem>
 
                     <ContextMenuItem
@@ -680,12 +689,12 @@ export const ConversationList = React.memo(function ConversationList({
                       {conv.membership.isMuted ? (
                         <>
                           <Volume2 className="w-4 h-4" />
-                          {t('chat.unmute') || 'Включить звук'}
+                          {t('chat.unmute')}
                         </>
                       ) : (
                         <>
                           <VolumeX className="w-4 h-4" />
-                          {t('chat.mute') || 'Отключить звук'}
+                          {t('chat.mute')}
                         </>
                       )}
                     </ContextMenuItem>
@@ -702,8 +711,8 @@ export const ConversationList = React.memo(function ConversationList({
                     >
                       <Archive className="w-4 h-4" />
                       {conv.membership.isArchived || conv.isArchived
-                        ? t('chat.unarchive') || 'Разархивировать'
-                        : t('chat.archive') || 'Архивировать'}
+                        ? t('chat.unarchive')
+                        : t('chat.archive')}
                     </ContextMenuItem>
 
                     <ContextMenuSeparator />
@@ -716,7 +725,7 @@ export const ConversationList = React.memo(function ConversationList({
                       className="flex items-center gap-2 text-red-500 focus:text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Удалить
+                      {t('chat.delete')}
                     </ContextMenuItem>
                   </>
                 )}

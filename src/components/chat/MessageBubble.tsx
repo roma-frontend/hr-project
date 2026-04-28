@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { SmartReply } from './SmartReply';
 import { LinkPreview, extractUrl } from './LinkPreview';
 import { createPortal } from 'react-dom';
@@ -343,6 +346,7 @@ export const MessageBubble = React.memo(function MessageBubble({
   lang = 'en',
 }: Props) {
   const L = UI_LABELS[getLabelLang(lang)];
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const [showActions, setShowActions] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuOpenDown, setMenuOpenDown] = useState(false);
@@ -432,7 +436,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
               {/* Timestamp */}
               <div className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                {format(new Date(message.createdAt), 'HH:mm, dd MMM')}
+                {format(new Date(message.createdAt), 'HH:mm, dd MMM', { locale: dateFnsLocale })}
               </div>
             </div>
           </div>
@@ -1072,7 +1076,7 @@ export const MessageBubble = React.memo(function MessageBubble({
               className="sm:text-[10px] text-xs opacity-60"
               style={{ color: 'var(--text-muted)' }}
             >
-              {format(new Date(message.createdAt), 'HH:mm')}
+              {format(new Date(message.createdAt), 'HH:mm', { locale: dateFnsLocale })}
             </span>
             {isOwn && (
               <ReadReceipt readBy={message.readBy} isOwn={isOwn} isDirect={isDirect} lang={lang} />

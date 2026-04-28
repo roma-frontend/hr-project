@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import type { Id } from '../../../../convex/_generated/dataModel';
 
 export default function ApprovalsPage() {
@@ -21,6 +23,8 @@ export default function ApprovalsPage() {
   const selectedOrgId = useSelectedOrganization();
   const isSuperadmin = user?.role === 'superadmin';
   const _effectiveOrgId = isSuperadmin && selectedOrgId ? selectedOrgId : user?.organizationId;
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const pendingUsers = useQuery(
     api.users.queries.getPendingApprovalUsers,
@@ -164,7 +168,9 @@ export default function ApprovalsPage() {
                     <p className="text-(--text-primary) font-medium flex items-center gap-1">
                       <Calendar className="w-3 h-3 shrink-0" />
                       <span className="truncate">
-                        {format(new Date(pendingUser.createdAt), 'MMM d, yyyy')}
+                        {format(new Date(pendingUser.createdAt), 'MMM d, yyyy', {
+                          locale: dateFnsLocale,
+                        })}
                       </span>
                     </p>
                   </div>

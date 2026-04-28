@@ -27,6 +27,8 @@ import { toast } from 'sonner';
 import type { LeaveType } from '@/lib/types';
 import { calculateDays } from '@/lib/types';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +65,8 @@ export function LeaveRequestWizard({
 }: LeaveRequestWizardProps) {
   const { t } = useTranslation();
   const createLeave = useMutation(api.leaves.createLeave);
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const useOrgFilter = isSuperadmin && selectedOrgId;
   const allUsers = useQuery(
@@ -535,7 +539,8 @@ function DatesStep({
               {days} {days === 1 ? t('leave.day', 'day') : t('leave.days', 'days')}
             </p>
             <p className="text-xs text-(--text-muted)">
-              {format(new Date(start), 'MMM d')} – {format(new Date(end), 'MMM d, yyyy')}
+              {format(new Date(start), 'MMM d', { locale: dateFnsLocale })} –{' '}
+              {format(new Date(end), 'MMM d, yyyy', { locale: dateFnsLocale })}
             </p>
           </div>
         </motion.div>
@@ -625,8 +630,8 @@ function DetailsStep({
           <span className="text-sm text-(--text-muted)">{t('labels.dates', 'Dates')}</span>
           <div className="text-right">
             <p className="text-sm font-medium text-(--text-primary)">
-              {format(new Date(stepData.startDate), 'MMM d')} –{' '}
-              {format(new Date(stepData.endDate), 'MMM d, yyyy')}
+              {format(new Date(stepData.startDate), 'MMM d', { locale: dateFnsLocale })} –{' '}
+              {format(new Date(stepData.endDate), 'MMM d, yyyy', { locale: dateFnsLocale })}
             </p>
             <p className="text-xs text-(--text-muted)">
               {days} {days === 1 ? t('leave.day', 'day') : t('leave.days', 'days')}

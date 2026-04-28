@@ -14,6 +14,8 @@ import {
   Star,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -80,6 +82,8 @@ StarRating.displayName = 'StarRating';
 export function EmployeeDashboard() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   // ═══════════════════════════════════════════════════════════════
   // HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
@@ -149,7 +153,7 @@ export function EmployeeDashboard() {
           {t('dashboard.welcome')}, {user?.name?.split(' ')[0]} 👋
         </h2>
         <p className="text-(--text-muted) text-sm mt-1">
-          {format(today, 'EEEE, MMMM d, yyyy')}
+          {format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
         </p>
       </motion.div>
 
@@ -184,9 +188,7 @@ export function EmployeeDashboard() {
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold text-sky-400">{monthlyStats.punctualityRate}%</p>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('dashboard.punctuality')}
-                </p>
+                <p className="text-xs text-(--text-muted) mt-1">{t('dashboard.punctuality')}</p>
               </CardContent>
             </Card>
             <Card>
@@ -274,9 +276,7 @@ export function EmployeeDashboard() {
                   <p className="text-xs font-semibold text-(--text-muted) mb-1">
                     💬 {t('dashboard.comments')}
                   </p>
-                  <p className="text-sm text-(--text-primary)">
-                    {latestRating.generalComments}
-                  </p>
+                  <p className="text-sm text-(--text-primary)">{latestRating.generalComments}</p>
                 </div>
               )}
 
@@ -294,9 +294,7 @@ export function EmployeeDashboard() {
           <Card className="border-dashed">
             <CardContent className="p-6 text-center">
               <Star className="w-10 h-10 text-(--text-muted) mx-auto mb-2 opacity-30" />
-              <p className="text-sm text-(--text-muted)">
-                {t('dashboard.noPerformanceRating')}
-              </p>
+              <p className="text-sm text-(--text-muted)">{t('dashboard.noPerformanceRating')}</p>
               <p className="text-xs text-(--text-muted) mt-1">
                 {t('dashboard.supervisorWillRate')}
               </p>
@@ -329,9 +327,7 @@ export function EmployeeDashboard() {
                 <p className="text-2xl font-bold text-[#10b981]">
                   {userData?.familyLeaveBalance ?? 0}
                 </p>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('dashboard.familyLeave')}
-                </p>
+                <p className="text-xs text-(--text-muted) mt-1">{t('dashboard.familyLeave')}</p>
               </div>
             </div>
           </CardContent>
@@ -433,9 +429,9 @@ export function EmployeeDashboard() {
                         {LEAVE_TYPE_LABELS[leave.type as LeaveType]}
                       </p>
                       <p className="text-xs text-(--text-muted) mt-0.5">
-                        {format(new Date(leave.startDate), 'MMM d')} –{' '}
-                        {format(new Date(leave.endDate), 'MMM d, yyyy')} ({leave.days}{' '}
-                        {t('ui.days').toLowerCase()})
+                        {format(new Date(leave.startDate), 'MMM d', { locale: dateFnsLocale })} –{' '}
+                        {format(new Date(leave.endDate), 'MMM d, yyyy', { locale: dateFnsLocale })}{' '}
+                        ({leave.days} {t('ui.days').toLowerCase()})
                       </p>
                     </div>
                     <StatusBadge status={leave.status as LeaveStatus} />

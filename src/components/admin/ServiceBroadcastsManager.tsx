@@ -17,7 +17,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit2, Trash2, MessageCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import type { Id } from '../../../convex/_generated/dataModel';
 
 interface ServiceBroadcastsManagerProps {
@@ -32,6 +33,8 @@ export function ServiceBroadcastsManager({
   const broadcasts = useQuery(api.chat.queries.getServiceBroadcasts, {
     organizationId,
   });
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const deleteMessage = useMutation(api.chat.mutations.deleteMessage);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -154,7 +157,7 @@ export function ServiceBroadcastsManager({
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {format(new Date(broadcast.createdAt), 'd MMM yyyy, HH:mm', {
-                          locale: ru,
+                          locale: dateFnsLocale,
                         })}
                       </div>
                       <div>

@@ -16,6 +16,9 @@ import { Button } from '@/components/ui/button';
 import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
+import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import type { Id } from '../../../../convex/_generated/dataModel';
 import type { AttendanceRecord } from '@/components/attendance/AttendanceDetailModal';
 import type { EmployeeInfo } from '@/components/attendance/EmployeeAttendanceDrawer';
@@ -78,6 +81,8 @@ export default function AttendancePage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const [selectedEmployee, setSelectedEmployee] = useState<{
     id: Id<'users'>;
     name: string;
@@ -274,11 +279,7 @@ export default function AttendancePage() {
                 <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <Users className="w-5 h-5 text-blue-500" />
                   {t('attendance.todaysAttendance')} —{' '}
-                  {new Date().toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                  })}
+                  {format(new Date(), 'EEEE, d MMMM', { locale: dateFnsLocale })}
                   <Badge className="ml-0 sm:ml-auto bg-blue-500/10 text-blue-500 border-blue-500/30">
                     {todayAllAttendance.length} {t('common.recorded', 'recorded')}
                   </Badge>

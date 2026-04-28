@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Car, Eye, Star, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 
 interface RequestCardProps {
   request: {
@@ -47,6 +49,8 @@ export const RequestCard = memo(function RequestCard({
   onViewDetails,
   onRate,
 }: RequestCardProps) {
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   return (
     <div className="p-4 rounded-xl border border-(--border) bg-(--card) hover:border-(--primary)/30 transition-all duration-300 hover:shadow-lg hover:translate-x-1">
       <div className="flex items-start justify-between gap-4">
@@ -76,7 +80,7 @@ export const RequestCard = memo(function RequestCard({
             {request.startTime && (
               <p className="text-xs text-(--text-muted) flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {format(new Date(request.startTime), 'MMM dd, HH:mm')}
+                {format(new Date(request.startTime), 'MMM dd, HH:mm', { locale: dateFnsLocale })}
               </p>
             )}
             {request.assignedDriver && (

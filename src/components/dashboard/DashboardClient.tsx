@@ -35,6 +35,8 @@ import {
 } from 'recharts';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -138,6 +140,8 @@ StatusBadgeMemo.displayName = 'StatusBadgeMemo';
 export default function DashboardClient() {
   const { t } = useTranslation();
   const user = useAuthUser();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   // ═══════════════════════════════════════════════════════════════
   // HOOKS MUST BE CALLED IN THE SAME ORDER EVERY RENDER
@@ -160,10 +164,10 @@ export default function DashboardClient() {
   const selectedOrganization = organizationsList?.find((o) => o._id === selectedOrgId);
 
   // If no org selected, show all data (superadmin sees all); otherwise filter locally
-  const leaves = useQuery(
-    api.leaves.getAllLeaves,
-    userId ? { requesterId: userId } : 'skip',
-  ) as any[] | null | undefined;
+  const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip') as
+    | any[]
+    | null
+    | undefined;
 
   const usersFromConvex = useQuery(
     api.users.queries.getAllUsers,
@@ -198,21 +202,15 @@ export default function DashboardClient() {
   // ═══════════════════════════════════════════════════════════════════════
 
   // Filter data by selected org when superadmin has one selected
-  const filteredUsers = useMemo(
-    () => {
-      if (!selectedOrgId) return users;
-      return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
-    },
-    [users, selectedOrgId],
-  );
+  const filteredUsers = useMemo(() => {
+    if (!selectedOrgId) return users;
+    return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
+  }, [users, selectedOrgId]);
 
-  const filteredLeaves = useMemo(
-    () => {
-      if (!selectedOrgId) return leaves;
-      return leaves?.filter((l) => l.organizationId === selectedOrgId) ?? [];
-    },
-    [leaves, selectedOrgId],
-  );
+  const filteredLeaves = useMemo(() => {
+    if (!selectedOrgId) return leaves;
+    return leaves?.filter((l) => l.organizationId === selectedOrgId) ?? [];
+  }, [leaves, selectedOrgId]);
 
   const stats = useMemo(
     () => ({
@@ -223,8 +221,9 @@ export default function DashboardClient() {
           (r) => r.status === 'approved' && r.startDate <= todayStr && r.endDate >= todayStr,
         ).length ?? 0,
       approvedThisMonth:
-        filteredLeaves?.filter((r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today))
-          .length ?? 0,
+        filteredLeaves?.filter(
+          (r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today),
+        ).length ?? 0,
     }),
     [filteredUsers, filteredLeaves, todayStr, today],
   );
@@ -321,7 +320,9 @@ export default function DashboardClient() {
                 ? `${t('nav.dashboard', { defaultValue: 'Dashboard' })} - ${selectedOrganization.name}`
                 : t('nav.dashboard', { defaultValue: 'Dashboard' })}
             </h2>
-            <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy')}</p>
+            <p className="text-sm text-muted-foreground">
+              {format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
+            </p>
           </div>
 
           {/* Welcome header - now hidden since we have sticky header */}

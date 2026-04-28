@@ -26,6 +26,8 @@ import {
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import { SupervisorRatingForm } from '@/components/attendance/SupervisorRatingForm';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +54,8 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { t } = useTranslation();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const employee = useQuery(api.users.queries.getUserById, { userId: employeeId });
   const profile = useQuery(api.employeeProfiles.getEmployeeProfile, { userId: employeeId });
@@ -159,9 +163,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
               {score && (
                 <div className="text-left sm:text-right">
                   <p className="text-xs text-(--text-muted)">{t('employeeProfile.aiScore')}</p>
-                  <p className="text-3xl font-bold text-(--primary)">
-                    {score.overallScore}/100
-                  </p>
+                  <p className="text-3xl font-bold text-(--primary)">{score.overallScore}/100</p>
                 </div>
               )}
               <div className="flex gap-2">
@@ -222,9 +224,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             <div className="flex items-center gap-3">
               <Building2 className="w-5 h-5 text-(--text-muted)" />
               <div>
-                <p className="text-xs text-(--text-muted)">
-                  {t('employeeProfile.department')}
-                </p>
+                <p className="text-xs text-(--text-muted)">{t('employeeProfile.department')}</p>
                 <p className="text-sm font-medium">{employee.department}</p>
               </div>
             </div>
@@ -234,7 +234,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             <div>
               <p className="text-xs text-(--text-muted)">{t('employeeProfile.joined')}</p>
               <p className="text-sm font-medium">
-                {format(new Date(employee.createdAt), 'MMM d, yyyy')}
+                {format(new Date(employee.createdAt), 'MMM d, yyyy', { locale: dateFnsLocale })}
               </p>
             </div>
           </div>
@@ -264,23 +264,17 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center p-3 rounded-lg bg-(--background-subtle)">
                 <p className="text-2xl font-bold text-blue-500">{monthlyStats.totalDays}</p>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('attendance.daysWorked')}
-                </p>
+                <p className="text-xs text-(--text-muted) mt-1">{t('attendance.daysWorked')}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-(--background-subtle)">
                 <p className="text-2xl font-bold text-green-500">
                   {monthlyStats.totalWorkedHours}h
                 </p>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('attendance.totalHours')}
-                </p>
+                <p className="text-xs text-(--text-muted) mt-1">{t('attendance.totalHours')}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-(--background-subtle)">
                 <p className="text-2xl font-bold text-sky-400">{monthlyStats.punctualityRate}%</p>
-                <p className="text-xs text-(--text-muted) mt-1">
-                  {t('attendance.punctuality')}
-                </p>
+                <p className="text-xs text-(--text-muted) mt-1">{t('attendance.punctuality')}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-(--background-subtle)">
                 <p
@@ -442,21 +436,15 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
         <CardContent className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-[#2563eb]">{employee.paidLeaveBalance}</p>
-            <p className="text-xs text-(--text-muted) mt-1">
-              {t('employeeProfile.paidLeave')}
-            </p>
+            <p className="text-xs text-(--text-muted) mt-1">{t('employeeProfile.paidLeave')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-[#ef4444]">{employee.sickLeaveBalance}</p>
-            <p className="text-xs text-(--text-muted) mt-1">
-              {t('employeeProfile.sickLeave')}
-            </p>
+            <p className="text-xs text-(--text-muted) mt-1">{t('employeeProfile.sickLeave')}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-[#10b981]">{employee.familyLeaveBalance}</p>
-            <p className="text-xs text-(--text-muted) mt-1">
-              {t('employeeProfile.familyLeave')}
-            </p>
+            <p className="text-xs text-(--text-muted) mt-1">{t('employeeProfile.familyLeave')}</p>
           </div>
         </CardContent>
       </Card>
@@ -473,29 +461,19 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-(--text-muted)">{t('employeeProfile.performance')}</p>
-              <p className="text-2xl font-bold text-(--primary)">
-                {score.breakdown.performance}%
-              </p>
+              <p className="text-2xl font-bold text-(--primary)">{score.breakdown.performance}%</p>
             </div>
             <div>
               <p className="text-sm text-(--text-muted)">{t('employeeProfile.attendance')}</p>
-              <p className="text-2xl font-bold text-(--primary)">
-                {score.breakdown.attendance}%
-              </p>
+              <p className="text-2xl font-bold text-(--primary)">{score.breakdown.attendance}%</p>
             </div>
             <div>
               <p className="text-sm text-(--text-muted)">{t('employeeProfile.behavior')}</p>
-              <p className="text-2xl font-bold text-(--primary)">
-                {score.breakdown.behavior}%
-              </p>
+              <p className="text-2xl font-bold text-(--primary)">{score.breakdown.behavior}%</p>
             </div>
             <div>
-              <p className="text-sm text-(--text-muted)">
-                {t('employeeProfile.leaveHistory')}
-              </p>
-              <p className="text-2xl font-bold text-(--primary)">
-                {score.breakdown.leaveHistory}%
-              </p>
+              <p className="text-sm text-(--text-muted)">{t('employeeProfile.leaveHistory')}</p>
+              <p className="text-2xl font-bold text-(--primary)">{score.breakdown.leaveHistory}%</p>
             </div>
           </CardContent>
         </Card>
@@ -558,7 +536,7 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
                     </div>
                   </div>
                   <p className="text-xs text-(--text-muted)">
-                    {format(new Date(doc.uploadedAt), 'MMM d, yyyy')}
+                    {format(new Date(doc.uploadedAt), 'MMM d, yyyy', { locale: dateFnsLocale })}
                   </p>
                 </div>
               ))}

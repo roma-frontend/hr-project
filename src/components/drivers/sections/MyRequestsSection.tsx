@@ -20,6 +20,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { motion } from '@/lib/cssMotion';
 
 interface Request {
@@ -87,6 +89,8 @@ const RequestItem = memo(function RequestItem({
   onCancel?: () => void;
 }) {
   const { t } = useTranslation();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const statusColors: Record<string, string> = {
     completed: 'bg-green-500',
     pending: 'bg-amber-500',
@@ -126,7 +130,7 @@ const RequestItem = memo(function RequestItem({
             </div>
             {request.startTime && (
               <p className="text-xs text-(--text-muted)">
-                {format(new Date(request.startTime), 'MMM dd, HH:mm')}
+                {format(new Date(request.startTime), 'MMM dd, HH:mm', { locale: dateFnsLocale })}
               </p>
             )}
             {request.assignedDriver && (
@@ -262,6 +266,8 @@ export const MyRequestsSection = memo(function MyRequestsSection({
 }: MyRequestsSectionProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('active');
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   return (
     <Card className="mb-6 sm:mb-8 border-(--border)">

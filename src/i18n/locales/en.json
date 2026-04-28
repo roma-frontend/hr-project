@@ -473,7 +473,8 @@
     },
     "maintenance": {
       "title": "Maintenance",
-      "config": "Config"
+      "config": "Config",
+      "notificationLabel": "System Announcement"
     },
     "automation": {
       "title": "Automation",
@@ -4202,7 +4203,18 @@
     "filterPinned": "Pinned",
     "filterArchived": "Archived",
     "noMessagesYet": "No messages yet",
-    "startConversationHint": "Start a conversation"
+    "startConversationHint": "Start a conversation",
+    "deleted": "This message was deleted",
+    "restore": "Restore",
+    "unarchive": "Unarchive",
+    "archive": "Archive",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "delete": "Delete",
+    "groupLabel": "Group",
+    "unknownUser": "Unknown"
   },
   "broadcasts": {
     "title": "Service Announcements",

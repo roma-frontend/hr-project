@@ -10,12 +10,16 @@ import { Calendar, Clock, TrendingUp, AlertTriangle, Award, Target } from 'lucid
 import { motion } from '@/lib/cssMotion';
 import { useAuthStore } from '@/store/useAuthStore';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 export function AttendanceDashboard() {
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const currentMonth = new Date().toISOString().slice(0, 7); // "2026-02"
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const monthlyStats = useQuery(
     api.timeTracking.getMonthlyStats,
@@ -158,11 +162,18 @@ export function AttendanceDashboard() {
                   <div className="flex items-center gap-4">
                     <div>
                       <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {format(new Date(record.date), 'MMMM dd, yyyy')}
+                        {format(new Date(record.date), 'MMMM dd, yyyy', { locale: dateFnsLocale })}
                       </p>
                       <p className="text-sm text-(--text-muted)">
-                        {record.checkInTime ? format(new Date(record.checkInTime), 'HH:mm') : '—'} →{' '}
-                        {record.checkOutTime ? format(new Date(record.checkOutTime), 'HH:mm') : '—'}
+                        {record.checkInTime
+                          ? format(new Date(record.checkInTime), 'HH:mm', { locale: dateFnsLocale })
+                          : '—'}{' '}
+                        →{' '}
+                        {record.checkOutTime
+                          ? format(new Date(record.checkOutTime), 'HH:mm', {
+                              locale: dateFnsLocale,
+                            })
+                          : '—'}
                       </p>
                     </div>
                   </div>
@@ -176,8 +187,7 @@ export function AttendanceDashboard() {
                     {record.status === 'checked_out' && record.totalWorkedMinutes && (
                       <Badge variant="secondary">
                         {Math.floor(record.totalWorkedMinutes / 60)}
-                        {t('attendanceExtra.hoursShort')}{' '}
-                        {record.totalWorkedMinutes % 60}
+                        {t('attendanceExtra.hoursShort')} {record.totalWorkedMinutes % 60}
                         {t('attendanceExtra.minutesShort')}
                       </Badge>
                     )}
@@ -190,8 +200,7 @@ export function AttendanceDashboard() {
                     {record.overtimeMinutes && record.overtimeMinutes > 0 && (
                       <Badge className="bg-sky-400 text-white">
                         +{Math.floor(record.overtimeMinutes / 60)}
-                        {t('attendanceExtra.hoursShort')}{' '}
-                        {t('attendanceExtra.overtimeShort')}
+                        {t('attendanceExtra.hoursShort')} {t('attendanceExtra.overtimeShort')}
                       </Badge>
                     )}
                   </div>

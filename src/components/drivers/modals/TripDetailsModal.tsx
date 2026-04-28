@@ -311,8 +311,8 @@ export function TripDetailsModal({
                     <p className="text-xs text-muted-foreground">{t('driver.time', 'Time')}</p>
                   </div>
                   <p className="text-lg font-bold text-foreground">
-                    {format(new Date(schedule.startTime), 'HH:mm')} -{' '}
-                    {format(new Date(schedule.endTime), 'HH:mm')}
+                    {format(new Date(schedule.startTime), 'HH:mm', { locale: dateFnsLocale })} -{' '}
+                    {format(new Date(schedule.endTime), 'HH:mm', { locale: dateFnsLocale })}
                   </p>
                 </div>
                 {schedule.tripInfo.distanceKm && (

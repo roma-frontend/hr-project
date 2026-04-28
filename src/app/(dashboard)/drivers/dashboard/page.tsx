@@ -32,6 +32,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { toast } from 'sonner';
 import { DriverStatsCard } from '@/components/drivers/DriverStatsCard';
 import { DriverShiftControls } from '@/components/drivers/DriverShiftControls';
@@ -47,6 +49,8 @@ export default function DriverDashboardPage() {
   const { t } = useTranslation();
   const _router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
   const userId = user?.id as Id<'users'> | undefined;
   const orgId = user?.organizationId as Id<'organizations'> | undefined;
@@ -269,8 +273,10 @@ export default function DriverDashboardPage() {
                             {req.tripInfo.from} → {req.tripInfo.to}
                           </p>
                           <p className="text-xs text-(--text-muted)">
-                            {format(new Date(req.startTime), 'MMM dd, HH:mm')} -{' '}
-                            {format(new Date(req.endTime), 'HH:mm')}
+                            {format(new Date(req.startTime), 'MMM dd, HH:mm', {
+                              locale: dateFnsLocale,
+                            })}{' '}
+                            - {format(new Date(req.endTime), 'HH:mm', { locale: dateFnsLocale })}
                           </p>
                         </div>
                       </div>
@@ -386,8 +392,8 @@ export default function DriverDashboardPage() {
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-xs sm:text-sm">
-                              {format(new Date(s.startTime), 'HH:mm')} -{' '}
-                              {format(new Date(s.endTime), 'HH:mm')}
+                              {format(new Date(s.startTime), 'HH:mm', { locale: dateFnsLocale })} -{' '}
+                              {format(new Date(s.endTime), 'HH:mm', { locale: dateFnsLocale })}
                             </span>
                             <Badge
                               variant={s.type === 'trip' ? 'default' : 'secondary'}

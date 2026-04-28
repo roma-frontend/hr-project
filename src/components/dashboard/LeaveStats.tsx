@@ -11,6 +11,9 @@ import { api } from '../../../convex/_generated/api';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Id } from '../../../convex/_generated/dataModel';
 import { Calendar, AlertTriangle, CheckCircle, TrendingUp, Award } from 'lucide-react';
+import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -25,6 +28,8 @@ export default React.memo(
     const { t } = useTranslation();
     const analytics = useQuery(api.analytics.getUserAnalytics, { userId });
     const user = useQuery(api.users.queries.getUserById, { userId });
+    const lang = i18n.language || 'en';
+    const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
     // ═══════════════════════════════════════════════════════════════
     // Extract data BEFORE hooks (non-hook values)
@@ -146,7 +151,10 @@ export default React.memo(
                   ⚠️ {t('leaveStats.notOnLeave', { days: stats.daysSinceLastLeave })}
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-400">
-                  {t('leaveStats.lastLeave')}: {stats.lastLeaveDate?.toLocaleDateString('ru-RU')}
+                  {t('leaveStats.lastLeave')}:{' '}
+                  {stats.lastLeaveDate
+                    ? format(new Date(stats.lastLeaveDate), 'd MMM yyyy', { locale: dateFnsLocale })
+                    : t('leaveStats.never')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge variant="destructive">
@@ -169,7 +177,7 @@ export default React.memo(
                 <p className="text-xs text-green-600 dark:text-green-400">
                   {t('leaveStats.lastLeave')}:{' '}
                   {stats.lastLeaveDate
-                    ? stats.lastLeaveDate.toLocaleDateString('ru-RU')
+                    ? format(new Date(stats.lastLeaveDate), 'd MMM yyyy', { locale: dateFnsLocale })
                     : t('leaveStats.never')}
                   {stats.daysSinceLastLeave !== null &&
                     ` (${stats.daysSinceLastLeave} ${t('leaveStats.daysAgo')})`}

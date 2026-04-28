@@ -5,6 +5,8 @@ import { motion } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
 import { Plus, Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
@@ -42,10 +44,12 @@ const AILeaveAssistant = dynamic(() => import('@/components/leaves/AILeaveAssist
 
 function safeFormat(dateStr: string | undefined | null, fmt: string): string {
   if (!dateStr) return '—';
+  const lang = i18n.language || 'en';
+  const dfLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '—';
-    return format(d, fmt);
+    return format(d, fmt, { locale: dfLocale });
   } catch {
     return '—';
   }
@@ -87,6 +91,8 @@ export function LeavesClient() {
   const { t } = useTranslation();
   const user = useAuthStore(useShallow((state: { user: User | null }) => state.user));
   const selectedOrgId = useSelectedOrganization();
+  const lang = i18n.language || 'en';
+  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const [wizardOpen, setWizardOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState('');

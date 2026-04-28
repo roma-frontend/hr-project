@@ -470,7 +470,8 @@
     },
     "maintenance": {
       "title": "Սպասարկում",
-      "config": "Կոնֆիգուրացիա"
+      "config": "Կոնֆիգուրացիա",
+      "notificationLabel": "Համակարգային ծանուցում"
     },
     "automation": {
       "title": "Ավտոմատացում",
@@ -4062,7 +4063,18 @@
     "filterPinned": "Ամրացված",
     "filterArchived": "Արխիվ",
     "noMessagesYet": "Հաղորդագրություններ դեռ չկան",
-    "startConversationHint": "Սկսել զրուցում"
+    "startConversationHint": "Սկսել զրուցում",
+    "deleted": "Այս հաղորդագրությունը ջնջված է",
+    "restore": "Վերականգնել",
+    "unarchive": "Չդուրս բերել դիս դի",
+    "archive": "Դի դուք",
+    "pin": "Ամրացնել",
+    "unpin": "Չխլել",
+    "mute": "Ապահովձ ձայնը",
+    "unmute": "Միացնել ձայնը",
+    "delete": "Ջնջել",
+    "groupLabel": "Խումբ",
+    "unknownUser": "Անհայտ"
   },
   "broadcasts": {
     "title": "Ծառայության հայտարարություններ",

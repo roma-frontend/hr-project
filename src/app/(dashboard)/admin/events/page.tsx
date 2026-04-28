@@ -11,6 +11,9 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { enUS, ru, hy } from 'date-fns/locale';
+import i18n from 'i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
@@ -97,8 +100,10 @@ const EVENT_TYPE_ICONS: Record<string, string> = {
 };
 
 const formatDate = (ts: number) => {
+  const lang = i18n.language || 'en';
+  const dfLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
   const d = new Date(ts);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return format(d, 'MMM d, yyyy', { locale: dfLocale });
 };
 
 const daysUntil = (ts: number) => {
