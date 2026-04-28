@@ -124,7 +124,7 @@ export function CookiePreferences() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
           <div className="flex items-center gap-2">
             <Cookie className="w-4 h-4 text-(--primary)" />
             <CardTitle className="text-base">{t('cookies.privacyAndCookies')}</CardTitle>

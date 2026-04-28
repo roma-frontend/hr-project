@@ -151,10 +151,19 @@ export default function DashboardClient() {
   // Convex useQuery arguments - properly typed
   const userId = user?.id as Id<'users'> | undefined;
 
-  const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip') as
-    | any[]
-    | null
-    | undefined;
+  // Get org name when selected
+  const organizationsList = useQuery(
+    api.organizations.getOrganizationsForPicker,
+    userId ? { userId } : 'skip',
+  ) as any[] | null | undefined;
+
+  const selectedOrganization = organizationsList?.find((o) => o._id === selectedOrgId);
+
+  // If no org selected, show all data (superadmin sees all); otherwise filter locally
+  const leaves = useQuery(
+    api.leaves.getAllLeaves,
+    userId ? { requesterId: userId } : 'skip',
+  ) as any[] | null | undefined;
 
   const usersFromConvex = useQuery(
     api.users.queries.getAllUsers,
@@ -186,32 +195,50 @@ export default function DashboardClient() {
 
   // ═══════════════════════════════════════════════════════════════
   // OPTIMIZED: Memoize all data transformations
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Filter data by selected org when superadmin has one selected
+  const filteredUsers = useMemo(
+    () => {
+      if (!selectedOrgId) return users;
+      return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
+    },
+    [users, selectedOrgId],
+  );
+
+  const filteredLeaves = useMemo(
+    () => {
+      if (!selectedOrgId) return leaves;
+      return leaves?.filter((l) => l.organizationId === selectedOrgId) ?? [];
+    },
+    [leaves, selectedOrgId],
+  );
+
   const stats = useMemo(
     () => ({
-      totalEmployees: users?.filter((u) => u.role !== 'superadmin').length ?? 0,
-      pendingRequests: leaves?.filter((r) => r.status === 'pending').length ?? 0,
+      totalEmployees: filteredUsers?.filter((u) => u.role !== 'superadmin').length ?? 0,
+      pendingRequests: filteredLeaves?.filter((r) => r.status === 'pending').length ?? 0,
       onLeaveNow:
-        leaves?.filter(
+        filteredLeaves?.filter(
           (r) => r.status === 'approved' && r.startDate <= todayStr && r.endDate >= todayStr,
         ).length ?? 0,
       approvedThisMonth:
-        leaves?.filter((r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today))
+        filteredLeaves?.filter((r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today))
           .length ?? 0,
     }),
-    [users, leaves, todayStr, today],
+    [filteredUsers, filteredLeaves, todayStr, today],
   );
 
-  const recentLeaves = useMemo(() => leaves?.slice(0, 6) ?? [], [leaves]);
+  const recentLeaves = useMemo(() => filteredLeaves?.slice(0, 6) ?? [], [filteredLeaves]);
 
   const pieData = useMemo(() => {
     const data = (Object.keys(LEAVE_TYPE_COLORS) as LeaveType[]).map((key) => ({
       name: t(`leaveTypes.${key}`) || LEAVE_TYPE_LABELS[key],
-      value: leaves?.filter((r) => r.type === key).length ?? 0,
+      value: filteredLeaves?.filter((r) => r.type === key).length ?? 0,
       color: LEAVE_TYPE_COLORS[key],
     }));
     return data.filter((d) => d.value > 0);
-  }, [leaves, t]);
+  }, [filteredLeaves, t]);
 
   const monthlyTrend = useMemo(() => {
     const months: Record<
@@ -245,19 +272,19 @@ export default function DashboardClient() {
       };
     }
 
-    leaves?.forEach((l) => {
+    filteredLeaves?.forEach((l) => {
       const key = l.startDate.slice(0, 7);
       if (months[key]) {
         months[key][l.status as 'approved' | 'pending' | 'rejected']++;
       }
     });
     return Object.values(months);
-  }, [leaves]);
+  }, [filteredLeaves]);
 
   if (!mounted) return null;
 
-  const isLoading = leaves === undefined || users === undefined;
-  const isError = leaves === null || users === null;
+  const isLoading = filteredLeaves === undefined || filteredUsers === undefined;
+  const isError = filteredLeaves === null || filteredUsers === null;
 
   if (isError)
     return (
@@ -283,14 +310,16 @@ export default function DashboardClient() {
       <h1 className="sr-only">{t('nav.dashboard', { defaultValue: 'Dashboard' })}</h1>
 
       {/* Sticky Header */}
-      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-backdrop-filter:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex flex-col sm:justify-between gap-3">
           <div>
             <h2
               className="text-2xl sm:text-3xl font-bold tracking-tight mb-1"
               style={{ color: 'var(--text-primary)' }}
             >
-              {t('nav.dashboard', { defaultValue: 'Dashboard' })}
+              {selectedOrganization?.name
+                ? `${t('nav.dashboard', { defaultValue: 'Dashboard' })} - ${selectedOrganization.name}`
+                : t('nav.dashboard', { defaultValue: 'Dashboard' })}
             </h2>
             <p className="text-sm text-muted-foreground">{format(today, 'EEEE, MMMM d, yyyy')}</p>
           </div>

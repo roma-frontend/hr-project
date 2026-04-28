@@ -114,8 +114,13 @@ export default function DriversPage() {
   const orgId = user?.organizationId as Id<'organizations'> | undefined;
   const isSuperadmin = user?.role === 'superadmin';
   
-  // For superadmin, use selected org from store, otherwise use user's org
-  const effectiveOrgId = isSuperadmin ? (storeSelectedOrgId as Id<'organizations'> | undefined) : orgId;
+  const effectiveOrgId = isSuperadmin 
+    ? (storeSelectedOrgId as Id<'organizations'> | undefined)
+    : orgId;
+
+  // For superadmin: show all drivers if no org selected, otherwise filter by org
+  // For regular users: always use their org
+  const shouldFilterByOrg = isSuperadmin ? !!storeSelectedOrgId : !!orgId;
 
   // 2. Mutation hooks
   const addFavorite = useMutation(api.drivers.driver_registration.addFavoriteDriver);
@@ -137,9 +142,10 @@ export default function DriversPage() {
     userId && orgId ? { userId } : 'skip',
   );
 
+  // Query drivers - if no org filter, returns all drivers
   const availableDrivers = useQuery(
     api.drivers.queries.getAvailableDrivers,
-    effectiveOrgId ? { organizationId: effectiveOrgId } : 'skip',
+    shouldFilterByOrg ? { organizationId: effectiveOrgId } : {},
   );
 
   const myRequests = useQuery(
@@ -166,7 +172,7 @@ export default function DriversPage() {
   // Get all employees with driver role for registration
   const driverCandidates = useQuery(
     api.users.queries.getUsersByRole,
-    effectiveOrgId ? { organizationId: effectiveOrgId, role: 'driver' } : 'skip',
+    shouldFilterByOrg ? { organizationId: effectiveOrgId, role: 'driver' } : { role: 'driver' },
   );
 
   // 5. Redirect effect
@@ -298,7 +304,7 @@ export default function DriversPage() {
 
   const handleToggleFavorite = useCallback(
     async (id: string) => {
-      if (!userId || !effectiveOrgId) return;
+      if (!userId) return;
 
       // Optimistic update
       const wasFavorite = optimisticFavoriteIds.has(id);
@@ -309,6 +315,12 @@ export default function DriversPage() {
         newSet.add(id);
       }
       setOptimisticFavoriteIds(newSet);
+
+      // Need organization to add/remove favorites
+      if (!effectiveOrgId && isSuperadmin) {
+        toast.error(t('driver.selectOrgForFavorite', 'Select an organization first'));
+        return;
+      }
 
       try {
         if (wasFavorite) {
@@ -323,7 +335,7 @@ export default function DriversPage() {
         toast.error(e instanceof Error ? e.message : t('driver.failed', 'Failed'));
       }
     },
-    [userId, effectiveOrgId, optimisticFavoriteIds, addFavorite, removeFavorite, t],
+    [userId, effectiveOrgId, isSuperadmin, optimisticFavoriteIds, addFavorite, removeFavorite, t],
   );
 
   const handleRequestDriver = useCallback(() => {
@@ -365,7 +377,7 @@ export default function DriversPage() {
       };
       maxTripsPerDay?: number;
     }) => {
-      if (!userId || !effectiveOrgId || !selectedDriverCandidate) return;
+      if (!userId || (!effectiveOrgId && !isSuperadmin) || !selectedDriverCandidate) return;
       try {
         await registerAsDriver({
           userId: selectedDriverCandidate._id,
@@ -412,10 +424,12 @@ export default function DriversPage() {
   const [currentTime] = useState(() => Date.now());
   const tripModalTime = currentTime;
 
+  // Superadmin can view without org selected (shows all drivers)
+  // Regular users must have org
   if (
     !isAuthenticated ||
     !userId ||
-    !effectiveOrgId ||
+    (!shouldFilterByOrg && !isSuperadmin) ||
     driverRecord === undefined ||
     availableDrivers === undefined ||
     myRequests === undefined ||

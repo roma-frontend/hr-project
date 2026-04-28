@@ -9,18 +9,27 @@ import { query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
 
-/** Get all available drivers in organization */
+/** Get all available drivers - optionally scoped to organization */
 export const getAvailableDrivers = query({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, { organizationId }) => {
-    const drivers = await ctx.db
-      .query('drivers')
-      .withIndex('by_org_available', (q) =>
-        q.eq('organizationId', organizationId).eq('isAvailable', true),
-      )
-      .take(MAX_PAGE_SIZE);
+    let drivers;
+    if (organizationId) {
+      drivers = await ctx.db
+        .query('drivers')
+        .withIndex('by_org_available', (q) =>
+          q.eq('organizationId', organizationId).eq('isAvailable', true),
+        )
+        .take(MAX_PAGE_SIZE);
+    } else {
+      // No index for isAvailable alone, scan all and filter
+      drivers = await ctx.db
+        .query('drivers')
+        .filter((q) => q.eq(q.field('isAvailable'), true))
+        .take(MAX_PAGE_SIZE);
+    }
 
     // Enrich with user info and filter only users with role 'driver'
     const enriched = await Promise.all(

@@ -2297,7 +2297,12 @@
     "tryDifferentSearch": "Попробуйте другой поисковый запрос",
     "clearFilters": "Очистить фильтры",
     "addFirst": "Добавить первый",
-    "getStarted": "Начать"
+    "getStarted": "Начать",
+    "noDrivers": {
+      "title": "Нет доступных водителей",
+      "description": "В данный момент нет доступных водителей. Попробуйте позже.",
+      "requestDriver": "Заказать водителя"
+    }
   },
   "organization": {
     "organization": "Организация",

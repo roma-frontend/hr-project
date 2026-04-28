@@ -206,7 +206,7 @@ export default React.memo(
             </div>
 
             {/* Балансы */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="text-center p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
                 <p className="text-xs text-muted-foreground">{t('leaveTypes.paid')}</p>
                 <p className="text-2xl font-bold text-blue-600">{stats.balances.paid}</p>

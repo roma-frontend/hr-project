@@ -32,8 +32,8 @@ function RecordsSkeleton() {
 
 export default function PayrollRunsPage() {
   return (
-    <div className="p-4 md:p-6">
+    <>
       <PayrollRecordsTable />
-    </div>
+    </>
   );
 }

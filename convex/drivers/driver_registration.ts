@@ -100,20 +100,32 @@ export const updateDriverAvailability = mutation({
 /** Add driver to favorites */
 export const addFavoriteDriver = mutation({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     userId: v.id('users'),
     driverId: v.id('drivers'),
   },
   handler: async (ctx, args) => {
+    const { organizationId, userId, driverId } = args;
+    // If org not provided, get from driver record
+    let orgId = organizationId;
+    if (!orgId) {
+      const driver = await ctx.db.get(driverId);
+      if (driver) {
+        orgId = driver.organizationId;
+      }
+    }
+    if (!orgId) {
+      throw new Error('Organization not found');
+    }
     const existing = await ctx.db
       .query('favoriteDrivers')
-      .withIndex('by_user_driver', (q) => q.eq('userId', args.userId).eq('driverId', args.driverId))
+      .withIndex('by_user_driver', (q) => q.eq('userId', userId).eq('driverId', driverId))
       .first();
     if (existing) return existing._id;
     return await ctx.db.insert('favoriteDrivers', {
-      organizationId: args.organizationId,
-      userId: args.userId,
-      driverId: args.driverId,
+      organizationId: orgId,
+      userId,
+      driverId,
       createdAt: Date.now(),
     });
   },

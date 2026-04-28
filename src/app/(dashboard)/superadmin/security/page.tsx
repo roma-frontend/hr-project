@@ -395,7 +395,7 @@ export default function SecurityDashboard() {
         <div
           ref={tabsRef}
           onScroll={checkScroll}
-          className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-hide border-b scroll-smooth"
+          className="flex gap-1 sm:gap-2 overflow-x-auto overflow-y-hidden scrollbar-hide border-b"
           style={{
             borderColor: 'var(--border)',
             scrollbarWidth: 'none',

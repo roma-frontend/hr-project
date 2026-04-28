@@ -129,7 +129,7 @@ export default function PayrollRecordsTable() {
     >
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
             <CardTitle>{t('payroll.records')}</CardTitle>
             {canManage && (
               <Button variant="outline" size="sm" asChild>
@@ -157,7 +157,7 @@ export default function PayrollRecordsTable() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-(--text-muted)" />
+              <Filter className="hidden sm:block w-4 h-4 text-(--text-muted)" />
               <Select
                 value={statusFilter}
                 onValueChange={(v) => {

@@ -189,7 +189,7 @@ export default function StripeSupportStudio() {
           <h1 className="text-3xl font-bold mb-1">Stripe Support Studio</h1>
           <p className="text-muted-foreground">Поиск транзакций, данные карт и поддержка</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <Button variant="outline" onClick={() => router.push('/superadmin/stripe-dashboard')}>
             📊 Дашборд
           </Button>

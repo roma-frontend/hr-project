@@ -206,7 +206,7 @@ export function IntegrationSettings() {
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Google Calendar — working */}
-          <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
             <div className="flex items-start gap-3 flex-1">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-blue-500" />
@@ -252,7 +252,7 @@ export function IntegrationSettings() {
 
           {/* Outlook Calendar — RESTRICTED TO ADB-ARRM ONLY */}
           {isRestrictedOrg && (
-            <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
               <div className="flex items-start gap-3 flex-1">
                 <div className="w-10 h-10 rounded-lg bg-blue-600/10 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-blue-600" />
@@ -296,7 +296,7 @@ export function IntegrationSettings() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
               <div className="flex items-start gap-3 flex-1">
                 <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
                   <Users className="w-5 h-5 text-teal-500" />
@@ -371,7 +371,7 @@ export function IntegrationSettings() {
           <CardDescription>{t('settingsIntegration.emailReports')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-center justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
             <div className="flex items-start gap-3">
               <span className="text-2xl">📧</span>
               <div>
@@ -412,7 +412,7 @@ export function IntegrationSettings() {
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Slack */}
-          <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
             <div className="flex items-start gap-3 flex-1">
               <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-purple-500" />
@@ -445,7 +445,7 @@ export function IntegrationSettings() {
           </div>
 
           {/* Microsoft Teams — coming soon */}
-          <div className="flex items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
+          <div className="flex flex-wrap gap-3 items-start justify-between p-4 rounded-lg bg-(--surface-hover) border border-(--border) opacity-70">
             <div className="flex items-start gap-3 flex-1">
               <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-indigo-500" />

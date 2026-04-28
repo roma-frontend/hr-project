@@ -255,11 +255,11 @@ export const getSupervisors = query({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET USERS BY ROLE — scoped to org, for driver registration
+// GET USERS BY ROLE — optionally scoped to organization, for driver registration
 // ─────────────────────────────────────────────────────────────────────────────
 export const getUsersByRole = query({
   args: {
-    organizationId: v.id('organizations'),
+    organizationId: v.optional(v.id('organizations')),
     role: v.union(
       v.literal('superadmin'),
       v.literal('admin'),
@@ -269,11 +269,21 @@ export const getUsersByRole = query({
     ),
   },
   handler: async (ctx, { organizationId, role }) => {
-    const users = await ctx.db
-      .query('users')
-      .withIndex('by_org_role', (q) => q.eq('organizationId', organizationId).eq('role', role))
-      .filter((q) => q.eq(q.field('isActive'), true))
-      .take(MAX_PAGE_SIZE);
+    let users;
+    if (organizationId) {
+      users = await ctx.db
+        .query('users')
+        .withIndex('by_org_role', (q) => q.eq('organizationId', organizationId).eq('role', role))
+        .filter((q) => q.eq(q.field('isActive'), true))
+        .take(MAX_PAGE_SIZE);
+    } else {
+      // No index by role alone, filter by role only (will be slower)
+      users = await ctx.db
+        .query('users')
+        .filter((q) => q.eq(q.field('role'), role))
+        .filter((q) => q.eq(q.field('isActive'), true))
+        .take(MAX_PAGE_SIZE);
+    }
 
     return users.map((u) => ({
       _id: u._id,

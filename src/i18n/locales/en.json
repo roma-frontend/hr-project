@@ -2291,7 +2291,12 @@
     "tryDifferentSearch": "Try a different search term",
     "clearFilters": "Clear all filters",
     "addFirst": "Add your first item",
-    "getStarted": "Get started by creating one"
+    "getStarted": "Get started by creating one",
+    "noDrivers": {
+      "title": "No Drivers Available",
+      "description": "There are no drivers available right now. Try again later.",
+      "requestDriver": "Request Driver"
+    }
   },
   "organization": {
     "organization": "Organization",

@@ -2143,7 +2143,12 @@
     "tryDifferentSearch": "Փորձեք այլ որոնում",
     "clearFilters": "Մաքրել բոլոր ֆիլտրերը",
     "addFirst": "Ավելացրեք ձեր առաջին տարրը",
-    "getStarted": "Սկսեք ստեղծելով"
+    "getStarted": "Սկսեք ստեղծելով",
+    "noDrivers": {
+      "title": "Մատչելի վարորդներ չկան",
+      "description": "Ներկայումս մատչելի վարորդներ չկան: Փորձեք ուշ դիմել:",
+      "requestDriver": "Պատվիրել վարորդ"
+    }
   },
   "organization": {
     "organization": "Կազմակերպություն",
