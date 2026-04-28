@@ -512,16 +512,12 @@ export const ChatWindow = React.memo(function ChatWindow({
       setIsTypingTimeout(t);
     }
 
-    // Detect @mention — look backward from cursor for '@'
-    const cursorPos = e.target.selectionStart;
-    const textBeforeCursor = value.slice(0, cursorPos);
-    const atIdx = textBeforeCursor.lastIndexOf('@');
+    // Detect @mention only when @ is typed - optimize per keystroke
+    const atIdx = value.lastIndexOf('@');
     if (atIdx >= 0) {
-      const charBeforeAt = atIdx > 0 ? (textBeforeCursor[atIdx - 1] ?? ' ') : ' ';
-      // Only trigger if @ is at start or preceded by whitespace
+      const charBeforeAt = atIdx > 0 ? (value[atIdx - 1] ?? ' ') : ' ';
       if (atIdx === 0 || /\s/.test(charBeforeAt)) {
-        const query = textBeforeCursor.slice(atIdx + 1);
-        // No spaces in the query (to avoid false positives on regular text)
+        const query = value.slice(atIdx + 1);
         if (!query.includes(' ') || query.length < 20) {
           setMentionQuery(query);
           setMentionStart(atIdx);

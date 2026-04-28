@@ -130,7 +130,7 @@ export function ChatInput({
           <Mic className="w-4 xs:w-4.5 h-4 xs:h-4.5" />
         </button>
 
-        <div className="flex-1 relative min-w-0">
+        <div className="flex-1 relative min-w-0 h-4.75">
           {mentionQuery !== null && mentionSuggestions.length > 0 && (
             <div
               className="absolute bottom-full left-0 right-0 mb-2 rounded-xl shadow-2xl border overflow-hidden z-50 animate-slide-up"
@@ -180,7 +180,7 @@ export function ChatInput({
               pendingFilesCount > 0 ? t('chat.addCaption') : t('chat.messagePlaceholder')
             }
             rows={1}
-            className="w-full resize-none bg-transparent outline-none text-xs xs:text-sm leading-5 self-center"
+            className="w-full resize-none bg-transparent outline-none text-xs xs:text-sm leading-5"
             style={{ color: 'var(--text-primary)', maxHeight: '120px' }}
           />
         </div>

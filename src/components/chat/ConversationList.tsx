@@ -598,7 +598,7 @@ export const ConversationList = React.memo(function ConversationList({
                             handleOperation(async () => {
                               await onRestore?.(conv._id);
                               // Force refresh by switching to chat filter after a small delay
-                              setTimeout(() => setFilter('chat'), 100);
+                              setTimeout(() => setActiveFilters(['chat']), 100);
                             }, conv._id);
                           }}
                           className="p-1.5 rounded-lg transition-colors hover:bg-(--sidebar-item-hover)"
