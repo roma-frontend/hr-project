@@ -564,9 +564,9 @@ export const MessageBubble = React.memo(function MessageBubble({
         </div>
       )}
 
-      {/* Delete dialog */}
-      {showDeleteDialog && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in overflow-auto">
+      {/* Delete dialog - use portal to render outside virtual list */}
+      {showDeleteDialog && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in overflow-auto">
           <div
             className="rounded-2xl shadow-2xl border p-5 w-72 max-h-[90vh] overflow-auto flex flex-col gap-3 animate-slide-up my-4"
             style={{ background: 'var(--background)', borderColor: 'var(--border)' }}
@@ -604,7 +604,8 @@ export const MessageBubble = React.memo(function MessageBubble({
               {L.cancel}
             </Button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Message row */}
