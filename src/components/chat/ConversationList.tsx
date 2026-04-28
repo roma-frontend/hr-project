@@ -362,8 +362,10 @@ export const ConversationList = React.memo(function ConversationList({
                       ?.find((m) => m.userId === conv.lastMessageSenderId)
                       ?.user?.name?.split(' ')[0] ?? '')
                   : '';
-          const rawLastText =
-            conv.lastMessageText === 'This message was deleted' ? '' : conv.lastMessageText;
+          const deletedMessages = ['This message was deleted', 'Это сообщение было удалено', 'Այս հաղորդագրությունը ջնջված է'];
+          const rawLastText = deletedMessages.includes(conv.lastMessageText || '')
+            ? ''
+            : conv.lastMessageText;
 
           // Remove sender prefix for System Announcements (in case it's still there)
           let displayLastText = rawLastText;
