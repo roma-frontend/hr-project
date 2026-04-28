@@ -642,7 +642,7 @@ export const ConversationList = React.memo(function ConversationList({
                     onClick={() =>
                       handleOperation(async () => {
                         await onRestore?.(conv._id);
-                        setFilter('chat');
+                        setActiveFilters(['chat']);
                       }, conv._id)
                     }
                     disabled={isLoading}
