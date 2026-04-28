@@ -797,14 +797,14 @@ export default function SecurityDashboard() {
                         {log.userEmail}
                       </span>
                     </div>
-                    <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>
                       <span
-                        className="font-mono text-xs px-1.5 py-0.5 rounded mr-2"
+                        className="font-mono text-xs px-1.5 py-0.5 rounded mr-2 inline-block shrink-0"
                         style={{ background: 'rgba(37,99,235,0.12)', color: 'var(--primary)' }}
                       >
                         {log.action}
                       </span>
-                      {log.details}
+                      <span className="truncate">{log.details}</span>
                     </div>
                     {log.ip && (
                       <div className="text-xs mt-0.5" style={{ color: 'var(--text-disabled)' }}>
