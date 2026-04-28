@@ -48,7 +48,7 @@ export function SmartReply({ message, context, onSelect, lang = 'en' }: Props) {
   };
 
   return (
-    <div className="flex items-center gap-2 mt-2 flex-wrap">
+    <div className="w-30 flex items-center gap-2 mt-2 flex-wrap">
       {!fetched && !loading && (
         <button
           onClick={fetchReplies}

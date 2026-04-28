@@ -4237,7 +4237,9 @@
     "filterUnread": "Непрочитанные",
     "filterGroups": "Группы",
     "filterPinned": "Закреплённые",
-    "filterArchived": "В архиве"
+    "filterArchived": "В архиве",
+    "noMessagesYet": "Сообщений пока нет",
+    "startConversationHint": "Начать переписку"
   },
   "broadcasts": {
     "title": "Сервисные Объявления",

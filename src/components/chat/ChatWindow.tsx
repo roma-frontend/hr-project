@@ -1163,7 +1163,7 @@ export const ChatWindow = React.memo(function ChatWindow({
         {/* Input area */}
         {canUserSendMessage ? (
           <div
-            className="px-2 xs:px-3 sm:px-4 py-2 xs:py-3 border-t shrink-0"
+            className="px-2 xs:px-3 sm:px-4 py-3 xs:py-3 border-t shrink-0"
             style={{ borderColor: 'var(--border)', background: 'var(--background)' }}
           >
             <div
@@ -1356,7 +1356,7 @@ export const ChatWindow = React.memo(function ChatWindow({
               </button>
             </div>
             <p
-              className="text-[11px] xs:text-[12px] mt-1 text-center"
+              className="text-[11px] sm:text-[12px] mt-1 text-center"
               style={{ color: 'var(--text-disabled)' }}
             >
               {t('chat.enterHint')}

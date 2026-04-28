@@ -4060,7 +4060,9 @@
     "filterUnread": "Չընթերցված",
     "filterGroups": "Խմբեր",
     "filterPinned": "Ամրացված",
-    "filterArchived": "Արխիվ"
+    "filterArchived": "Արխիվ",
+    "noMessagesYet": "Հաղորդագրություններ դեռ չկան",
+    "startConversationHint": "Սկսել զրուցում"
   },
   "broadcasts": {
     "title": "Ծառայության հայտարարություններ",

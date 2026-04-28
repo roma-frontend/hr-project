@@ -4200,7 +4200,9 @@
     "filterUnread": "Unread",
     "filterGroups": "Groups",
     "filterPinned": "Pinned",
-    "filterArchived": "Archived"
+    "filterArchived": "Archived",
+    "noMessagesYet": "No messages yet",
+    "startConversationHint": "Start a conversation"
   },
   "broadcasts": {
     "title": "Service Announcements",
