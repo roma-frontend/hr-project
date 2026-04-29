@@ -78,7 +78,7 @@ interface EmployeeNeedingRating {
 }
 
 export default function AttendancePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
   const lang = i18n.language || 'en';
@@ -142,18 +142,18 @@ export default function AttendancePage() {
   ];
 
   const MONTHS: string[] = [
-    t('months.january'),
-    t('months.february'),
-    t('months.march'),
-    t('months.april'),
+    t('months.jan'),
+    t('months.feb'),
+    t('months.mar'),
+    t('months.apr'),
     t('months.may'),
-    t('months.june'),
-    t('months.july'),
-    t('months.august'),
-    t('months.september'),
-    t('months.october'),
-    t('months.november'),
-    t('months.december'),
+    t('months.jun'),
+    t('months.jul'),
+    t('months.aug'),
+    t('months.sep'),
+    t('months.oct'),
+    t('months.nov'),
+    t('months.dec'),
   ];
   const monthOptions: string[] = Array.from({ length: 12 }, (_, i) => {
     const d = new Date(new Date().getFullYear(), new Date().getMonth() - i, 1);

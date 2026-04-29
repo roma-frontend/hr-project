@@ -14,7 +14,7 @@ interface PersonalAnalyticsProps {
 const COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
 
 export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const analytics = useQuery(api.analytics.getUserAnalytics, { userId });
 
   if (!analytics) {
@@ -138,8 +138,21 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
                       {leave.type.charAt(0).toUpperCase() + leave.type.slice(1)} Leave
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(leave.startDate).toLocaleDateString()} -{' '}
-                      {new Date(leave.endDate).toLocaleDateString()}
+                      {new Date(leave.startDate).toLocaleDateString(
+                        i18n.language === 'ru'
+                          ? 'ru-RU'
+                          : i18n.language === 'hy'
+                            ? 'hy-AM'
+                            : 'en-US',
+                      )}{' '}
+                      -{' '}
+                      {new Date(leave.endDate).toLocaleDateString(
+                        i18n.language === 'ru'
+                          ? 'ru-RU'
+                          : i18n.language === 'hy'
+                            ? 'hy-AM'
+                            : 'en-US',
+                      )}
                     </p>
                   </div>
                   <span

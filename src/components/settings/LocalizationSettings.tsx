@@ -210,7 +210,10 @@ export function LocalizationSettings({
                 </SelectContent>
               </Select>
               <p className="text-xs text-(--text-muted)">
-                Preview: {new Date().toLocaleDateString()}
+                Preview:{' '}
+                {new Date().toLocaleDateString(
+                  i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+                )}
               </p>
             </div>
 
@@ -226,7 +229,10 @@ export function LocalizationSettings({
                 </SelectContent>
               </Select>
               <p className="text-xs text-(--text-muted)">
-                Preview: {new Date().toLocaleTimeString()}
+                Preview:{' '}
+                {new Date().toLocaleTimeString(
+                  i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+                )}
               </p>
             </div>
           </div>

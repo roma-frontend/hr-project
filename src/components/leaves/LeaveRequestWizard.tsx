@@ -169,7 +169,7 @@ export function LeaveRequestWizard({
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[70vh]">
+    <div className="bg-(--card) flex flex-col h-full max-h-[70vh]">
       {/* Stepper */}
       <div className="px-4 pt-4 pb-3 md:px-6">
         {/* Progress bar */}

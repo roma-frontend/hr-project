@@ -1278,6 +1278,16 @@
     "recentLeaves": "Recent Leaves",
     "noRecentLeaves": "No recent leaves",
     "recentRequests": "Recent Requests",
+    "hello": [
+      "Hi! How can I help you today?",
+      "Hello! What can I do for you?",
+      "Hey! I'm here to help. What do you need?"
+    ],
+    "hints": {
+      "help": "Need help? I'm here!",
+      "leaveRequest": "Try /leave to request time off",
+      "reports": "Ask me about team reports"
+    },
     "daysWorked": "days worked",
     "totalHours": "total hours",
     "punctuality": "punctuality",
@@ -1550,6 +1560,10 @@
     "employeeType": "Employee Type",
     "travelAllowance": "Travel Allowance",
     "enterDetails": "Enter the employee details",
+    "aboutHours": "about {{count}} hours",
+    "aboutDays": "about {{count}} days",
+    "about1Hour": "about 1 hour",
+    "about1Day": "about 1 day",
     "contractorHint": "Add \"contractor\" in email if this is a contractor (auto-detected)",
     "adding": "Adding...",
     "staff": "Staff",
@@ -1984,6 +1998,18 @@
     "start": "Start"
   },
   "months": {
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec",
     "january": "January",
     "february": "February",
     "march": "March",
@@ -2023,7 +2049,10 @@
     "design": "Design",
     "management": "Management",
     "legal": "Legal",
-    "it": "IT"
+    "it": "IT",
+    "itSupport": "IT Support",
+    "customerService": "Customer Service",
+    "administrative": "Administrative"
   },
   "taskStatus": {
     "pending": "Pending",
@@ -2988,6 +3017,7 @@
     "daysWorked": "Days Worked",
     "totalHours": "Total Hours",
     "punctuality": "Punctuality",
+    "lateDays": "Late Days",
     "hoursShort": "h",
     "minutesShort": "m",
     "overtimeShort": "OT"
@@ -3351,6 +3381,7 @@
     "seconds": "seconds",
     "ago": "ago",
     "justNow": "Just now",
+    "hoursAgo": "{{count}} hours ago",
     "selectDateRange": "Select date range"
   },
   "filters": {

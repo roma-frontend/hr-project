@@ -47,23 +47,23 @@ function formatDuration(min: number) {
 // Months will be translated using i18n in the component
 
 export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.toISOString().slice(0, 7));
 
   const MONTHS = [
-    t('months.january'),
-    t('months.february'),
-    t('months.march'),
-    t('months.april'),
+    t('months.jan'),
+    t('months.feb'),
+    t('months.mar'),
+    t('months.apr'),
     t('months.may'),
-    t('months.june'),
-    t('months.july'),
-    t('months.august'),
-    t('months.september'),
-    t('months.october'),
-    t('months.november'),
-    t('months.december'),
+    t('months.jun'),
+    t('months.jul'),
+    t('months.aug'),
+    t('months.sep'),
+    t('months.oct'),
+    t('months.nov'),
+    t('months.dec'),
   ];
 
   const history = useQuery(
@@ -262,11 +262,18 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                       ? (record.totalWorkedMinutes / 60).toFixed(1)
                       : null;
                     const dateObj = new Date(record.date + 'T00:00:00');
-                    const dayLabel = dateObj.toLocaleDateString('en-GB', {
-                      weekday: 'short',
-                      day: 'numeric',
-                      month: 'short',
-                    });
+                    const dayLabel = dateObj.toLocaleDateString(
+                      i18n?.language === 'ru'
+                        ? 'ru-RU'
+                        : i18n?.language === 'hy'
+                          ? 'hy-AM'
+                          : 'en-GB',
+                      {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                      },
+                    );
 
                     return (
                       <div

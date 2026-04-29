@@ -206,7 +206,15 @@ const RecurringTripItem = memo(function RecurringTripItem({
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNames = [
+    t('weekdays.mon', 'Mon'),
+    t('weekdays.tue', 'Tue'),
+    t('weekdays.wed', 'Wed'),
+    t('weekdays.thu', 'Thu'),
+    t('weekdays.fri', 'Fri'),
+    t('weekdays.sat', 'Sat'),
+    t('weekdays.sun', 'Sun'),
+  ];
   const activeDays = trip.days.map((d) => dayNames[d - 1]).join(', ');
 
   return (

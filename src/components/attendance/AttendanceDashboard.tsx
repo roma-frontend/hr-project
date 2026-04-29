@@ -156,7 +156,7 @@ export function AttendanceDashboard() {
               {history.map((record: any) => (
                 <div
                   key={record._id}
-                  className="flex items-center justify-between p-4 rounded-lg border"
+                  className="flex flex-wrap gap-2 items-center justify-between p-4 rounded-lg border"
                   style={{ borderColor: 'var(--border)', background: 'var(--background-subtle)' }}
                 >
                   <div className="flex items-center gap-4">

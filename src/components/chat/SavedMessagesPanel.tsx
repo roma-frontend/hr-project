@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function SavedMessagesPanel({ userId, organizationId, onClose, onSelectMessage }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // TODO: Implement saved messages feature
   const { user } = useAuthStore();
 
@@ -139,7 +139,10 @@ export function SavedMessagesPanel({ userId, organizationId, onClose, onSelectMe
 
                   {/* Saved timestamp */}
                   <div className="mt-2 text-xs" style={{ color: 'var(--text-disabled)' }}>
-                    Saved {new Date(saved.savedAt).toLocaleDateString()}
+                    {t('chat.messages')}{' '}
+                    {new Date(saved.savedAt).toLocaleDateString(
+                      i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+                    )}
                   </div>
                 </div>
               );

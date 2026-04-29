@@ -138,7 +138,7 @@ const StatusBadgeMemo = React.memo(({ status, label }: { status: LeaveStatus; la
 StatusBadgeMemo.displayName = 'StatusBadgeMemo';
 
 export default function DashboardClient() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthUser();
   const lang = i18n.language || 'en';
   const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
@@ -245,26 +245,16 @@ export default function DashboardClient() {
       { month: string; approved: number; pending: number; rejected: number }
     > = {};
     const now = new Date();
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey =
+        ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][
+          d.getMonth()
+        ] ?? 'jan';
       months[key] = {
-        month: monthNames[d.getMonth()] ?? 'Unknown',
+        month: t(`months.${monthKey}`),
         approved: 0,
         pending: 0,
         rejected: 0,
@@ -278,7 +268,7 @@ export default function DashboardClient() {
       }
     });
     return Object.values(months);
-  }, [filteredLeaves]);
+  }, [filteredLeaves, t, i18n?.language]);
 
   if (!mounted) return null;
 

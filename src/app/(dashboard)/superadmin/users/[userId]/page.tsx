@@ -43,7 +43,7 @@ export default function UserProfile360Page() {
 
   const data = useQuery(api.superadmin.getUser360, userId ? { userId } : 'skip');
 
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (!data) {
     return (
@@ -324,7 +324,13 @@ export default function UserProfile360Page() {
                             )}
                           </div>
                           <div className="text-right text-xs text-muted-foreground">
-                            {new Date(leave.createdAt).toLocaleDateString()}
+                            {new Date(leave.createdAt).toLocaleDateString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
                             {leave.reviewerName && (
                               <div className="mt-1">
                                 {t('superadmin.users.reviewedBy', { name: leave.reviewerName })}
@@ -392,13 +398,25 @@ export default function UserProfile360Page() {
                               <p className="text-xs text-muted-foreground mt-2">
                                 ⏰{' '}
                                 {t('superadmin.users.deadline', {
-                                  date: new Date(task.deadline).toLocaleDateString(),
+                                  date: new Date(task.deadline).toLocaleDateString(
+                                    i18n.language === 'ru'
+                                      ? 'ru-RU'
+                                      : i18n.language === 'hy'
+                                        ? 'hy-AM'
+                                        : 'en-US',
+                                  ),
                                 })}
                               </p>
                             )}
                           </div>
                           <div className="text-right text-xs text-muted-foreground">
-                            {new Date(task.createdAt).toLocaleDateString()}
+                            {new Date(task.createdAt).toLocaleDateString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
                           </div>
                         </div>
                       </div>
@@ -454,7 +472,13 @@ export default function UserProfile360Page() {
                             )}
                           </div>
                           <div className="text-right text-xs text-muted-foreground">
-                            {new Date(req.startTime).toLocaleString()}
+                            {new Date(req.startTime).toLocaleString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
                           </div>
                         </div>
                       </div>
@@ -512,7 +536,13 @@ export default function UserProfile360Page() {
                             </p>
                           </div>
                           <div className="text-right text-xs text-muted-foreground">
-                            {new Date(ticket.createdAt).toLocaleDateString()}
+                            {new Date(ticket.createdAt).toLocaleDateString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
                           </div>
                         </div>
                       </div>
@@ -546,7 +576,13 @@ export default function UserProfile360Page() {
                         <p className="text-xs text-muted-foreground">{notif.message}</p>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(notif.createdAt).toLocaleDateString()}
+                        {new Date(notif.createdAt).toLocaleDateString(
+                          i18n.language === 'ru'
+                            ? 'ru-RU'
+                            : i18n.language === 'hy'
+                              ? 'hy-AM'
+                              : 'en-US',
+                        )}
                       </div>
                     </div>
                   ))}
@@ -603,7 +639,13 @@ export default function UserProfile360Page() {
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(attempt.createdAt).toLocaleString()}
+                        {new Date(attempt.createdAt).toLocaleString(
+                          i18n.language === 'ru'
+                            ? 'ru-RU'
+                            : i18n.language === 'hy'
+                              ? 'hy-AM'
+                              : 'en-US',
+                        )}
                       </div>
                     </div>
                   ))}

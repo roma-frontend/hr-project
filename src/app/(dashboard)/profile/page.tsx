@@ -40,7 +40,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 export default function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, login } = useAuthStore();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -177,8 +177,9 @@ export default function ProfilePage() {
   };
 
   // Format date
+  const locale = i18n?.language === 'ru' ? 'ru-RU' : i18n?.language === 'hy' ? 'hy-AM' : 'en-US';
   const joinDate = userData?._creationTime
-    ? new Date(userData._creationTime).toLocaleDateString('en-US', {
+    ? new Date(userData._creationTime).toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

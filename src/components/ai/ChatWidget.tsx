@@ -212,7 +212,7 @@ const getInitialSuggestions = (role: UserRole | undefined): string[] => {
 };
 
 export function ChatWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -269,9 +269,9 @@ export function ChatWidget() {
   const getHintText = useCallback(
     (index: number): string => {
       const hints = [
-        t('aiAssistant.hints.help', { defaultValue: "Need help? I'm here! 💡" }),
-        t('aiAssistant.hints.leaveRequest', { defaultValue: 'Try /leave to request time off' }),
-        t('aiAssistant.hints.reports', { defaultValue: 'Ask me about team reports' }),
+        t('hints.help', { defaultValue: "Need help? I'm here! 💡" }),
+        t('hints.leaveRequest', { defaultValue: 'Try /leave to request time off' }),
+        t('hints.reports', { defaultValue: 'Ask me about team reports' }),
       ];
       return hints[index % hints.length] ?? '';
     },
@@ -338,11 +338,7 @@ export function ChatWidget() {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
 
-    const greetings = [
-      'Hi! How can I help you today?',
-      'Hello! What can I do for you?',
-      "Hey! I'm here to help. What do you need?",
-    ];
+    const greetings = t('hello', { returnObjects: true }) as string[];
     const text = greetings[Math.floor(Math.random() * greetings.length)];
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
@@ -1167,7 +1163,13 @@ export function ChatWidget() {
                                         📅{' '}
                                         {new Date(
                                           (action as BookDriverAction).startTime,
-                                        ).toLocaleString()}
+                                        ).toLocaleString(
+                                          i18n.language === 'ru'
+                                            ? 'ru-RU'
+                                            : i18n.language === 'hy'
+                                              ? 'hy-AM'
+                                              : 'en-US',
+                                        )}
                                       </p>
                                       <p>
                                         📍 {(action as BookDriverAction).from} →{' '}

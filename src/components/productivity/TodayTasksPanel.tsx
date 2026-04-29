@@ -10,7 +10,7 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 export function TodayTasksPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const tasks = useQuery(
     api.productivity.getTodayTasks,
@@ -57,7 +57,8 @@ export function TodayTasksPanel() {
     if (date.toDateString() === tomorrow.toDateString()) return t('tasks.tomorrow', 'Tomorrow');
 
     const isOverdue = date < today;
-    return isOverdue ? t('tasks.overdue', 'Overdue') : date.toLocaleDateString();
+    const locale = i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US';
+    return isOverdue ? t('tasks.overdue', 'Overdue') : date.toLocaleDateString(locale);
   };
 
   return (
@@ -101,9 +102,7 @@ export function TodayTasksPanel() {
                 <div className="flex-1 min-w-0">
                   <p
                     className={`text-sm font-medium leading-snug ${
-                      isCompleted
-                        ? 'line-through text-(--text-muted)'
-                        : 'text-(--text-primary)'
+                      isCompleted ? 'line-through text-(--text-muted)' : 'text-(--text-primary)'
                     }`}
                   >
                     {task.title}

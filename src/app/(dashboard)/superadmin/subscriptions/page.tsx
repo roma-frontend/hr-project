@@ -31,7 +31,7 @@ import { CreateManualSubscriptionWizard } from '@/components/superadmin/CreateMa
 const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
 
 export default function SubscriptionsManagementPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const subscriptions = useQuery(api.subscriptions_admin.listAllWithUsers);
 
   // Get current user from useAuthStore (works with both email/password and OAuth)
@@ -115,7 +115,11 @@ export default function SubscriptionsManagementPage() {
               {t('superadmin.subscriptions.subtitle')}
             </p>
           </div>
-          <Button onClick={() => setShowForm(!showForm)} variant="ghost" className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg">
+          <Button
+            onClick={() => setShowForm(!showForm)}
+            variant="ghost"
+            className="flex items-center gap-2 w-full sm:w-auto justify-center bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) hover:opacity-90 transition-opacity text-white font-medium shadow-md hover:shadow-lg"
+          >
             <Plus className="w-4 h-4" />
             {showForm
               ? t('superadmin.subscriptions.cancelButtonText')
@@ -244,7 +248,13 @@ export default function SubscriptionsManagementPage() {
                     <td className="py-3 px-2 text-(--text-muted) text-sm">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(sub.currentPeriodEnd ?? 0).toLocaleDateString()}
+                        {new Date(sub.currentPeriodEnd ?? 0).toLocaleDateString(
+                          i18n.language === 'ru'
+                            ? 'ru-RU'
+                            : i18n.language === 'hy'
+                              ? 'hy-AM'
+                              : 'en-US',
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-2">

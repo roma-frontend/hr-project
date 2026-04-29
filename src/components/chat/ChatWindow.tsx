@@ -1145,7 +1145,10 @@ export const ChatWindow = React.memo(function ChatWindow({
           >
             <Clock className="w-2.5 xs:w-3 h-2.5 xs:h-3" style={{ color: 'var(--primary)' }} />
             <span className="text-[8px] xs:text-[9px]" style={{ color: 'var(--primary)' }}>
-              {t('chat.scheduledFor')} {new Date(scheduledFor).toLocaleString()}
+              {t('chat.scheduledFor')}{' '}
+              {new Date(scheduledFor).toLocaleString(
+                i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+              )}
             </span>
             <button
               onClick={() => setScheduledFor('')}

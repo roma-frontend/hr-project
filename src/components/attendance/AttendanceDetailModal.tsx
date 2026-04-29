@@ -67,7 +67,7 @@ function formatDuration(minutes: number) {
 }
 
 export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetailModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentMonth = new Date().toISOString().slice(0, 7); // "2026-02"
   const monthlyStats = useQuery(
     api.timeTracking.getMonthlyStats,
@@ -108,11 +108,10 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+            className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-border bg-background"
           >
             {/* Header gradient */}
-            <div className="relative h-28 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) flex items-end px-6 pb-4">
+            <div className="relative h-28 bg-gradient-to-r from-primary to-primary/80 flex items-end px-6 pb-4">
               <Button
                 onClick={onClose}
                 variant="ghost"
@@ -124,7 +123,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
 
               {/* Avatar */}
               <div className="flex items-end gap-4">
-                <div className="w-16 h-16 rounded-full shrink-0 overflow-hidden shadow-lg bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) flex items-center justify-center text-white text-2xl font-bold">
+                <div className="w-16 h-16 rounded-full shrink-0 overflow-hidden shadow-lg bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center text-white text-2xl font-bold">
                   {record.user?.avatarUrl ? (
                     <img
                       src={record.user.avatarUrl}
@@ -151,17 +150,20 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            <div className="bg-background p-6 space-y-5 max-h-[70vh] overflow-y-auto">
               {/* Date & Status */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
-                  {new Date(record.date).toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {new Date(record.date).toLocaleDateString(
+                    i18n?.language === 'ru' ? 'ru-RU' : i18n?.language === 'hy' ? 'hy-AM' : 'en-GB',
+                    {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    },
+                  )}
                 </div>
                 <div className="flex gap-2">
                   {record.status === 'checked_in' && (
@@ -177,21 +179,21 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
               </div>
 
               {/* Timeline */}
-              <div className="rounded-xl p-4 space-y-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <div className="rounded-xl p-4 space-y-4 border border-border bg-muted/30 shadow-sm">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Clock className="w-4 h-4 text-blue-500" />
                   {t('attendance.timeLine')}
                 </h3>
                 <div className="flex items-center gap-3">
                   {/* Check In */}
-                  <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
+                  <div className="flex-1 rounded-lg p-3 bg-muted/30 border border-border">
                     <div className="flex items-center gap-2 mb-1">
                       <LogIn className="w-4 h-4 text-green-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {t('attendance.checkIn')}
                       </span>
                     </div>
-                    <p className="text-lg font-bold text-green-500">
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
                       {record.checkInTime ? formatTime(record.checkInTime) : '—'}
                     </p>
                     {record.isLate && (
@@ -209,17 +211,17 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                   </div>
 
                   {/* Arrow */}
-                  <div className="text-(--text-muted) text-lg">→</div>
+                  <div className="text-muted-foreground text-lg">→</div>
 
                   {/* Check Out */}
-                  <div className="flex-1 rounded-lg p-3 bg-white dark:bg-gray-900">
+                  <div className="flex-1 rounded-lg p-3 bg-muted/30 border border-border">
                     <div className="flex items-center gap-2 mb-1">
                       <LogOut className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {t('attendance.checkOut')}
                       </span>
                     </div>
-                    <p className="text-lg font-bold text-blue-500">
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {record.checkOutTime ? formatTime(record.checkOutTime) : '—'}
                     </p>
                     {record.isEarlyLeave && record.earlyLeaveMinutes && (
@@ -243,15 +245,15 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                 {/* Work duration */}
                 {workedHours && (
                   <div>
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
                       <span className="flex items-center gap-1">
                         <Timer className="w-3 h-3" /> {t('attendance.worked')}
                       </span>
-                      <span className="font-semibold text-gray-800 dark:text-gray-100">
+                      <span className="font-semibold text-foreground">
                         {workedHours}h / {expectedHours}h
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${workCompletion}%` }}
@@ -260,7 +262,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                       />
                     </div>
                     {record.overtimeMinutes && record.overtimeMinutes > 0 && (
-                      <p className="text-xs text-sky-400 mt-1">
+                      <p className="text-xs text-sky-500 mt-1">
                         +{formatDuration(record.overtimeMinutes)} {t('attendanceExtra.overtime')}
                       </p>
                     )}
@@ -271,13 +273,13 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
               {/* Department + Supervisor */}
               <div className="flex flex-wrap gap-4">
                 {record.user?.department && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 px-3 py-2 rounded-lg">
                     <Building2 className="w-4 h-4" />
                     {record.user.department} {t('common.department')}
                   </div>
                 )}
                 {(record.user as any)?.supervisorName && (
-                  <div className="flex items-center gap-2 text-sm text-blue-500">
+                  <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 bg-muted/30 px-3 py-2 rounded-lg">
                     <User className="w-4 h-4" />
                     Supervisor:{' '}
                     <span className="font-semibold">{(record.user as any).supervisorName}</span>
@@ -287,29 +289,33 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
 
               {/* Monthly Stats */}
               {monthlyStats && (
-                <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
-                    <TrendingUp className="w-4 h-4 text-sky-400" />
+                <div className="rounded-xl p-4 bg-muted/30 border border-border shadow-sm">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-4 h-4 text-sky-500" />
                     {t('attendance.thisMonth')}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="text-center">
-                      <p className="text-xl font-bold text-blue-500">{monthlyStats.totalDays}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-center p-3 bg-background rounded-lg">
+                      <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                        {monthlyStats.totalDays}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
                         {t('attendanceExtra.daysWorked')}
                       </p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xl font-bold text-green-500">
+                    <div className="text-center p-3 bg-background rounded-lg">
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">
                         {monthlyStats.punctualityRate}%
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {t('attendanceExtra.punctuality')}
                       </p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xl font-bold text-orange-500">{monthlyStats.lateDays}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-center p-3 bg-background rounded-lg">
+                      <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                        {monthlyStats.lateDays}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
                         {t('attendanceExtra.lateDays')}
                       </p>
                     </div>
@@ -319,24 +325,34 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
 
               {/* Recent 7 days */}
               {recentRecords && recentRecords.length > 0 && (
-                <div className="rounded-xl p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-3">
+                <div className="rounded-xl p-4 bg-muted/30 border border-border shadow-sm">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                     <Calendar className="w-4 h-4 text-blue-500" />
                     {t('attendance.last7Days')}
                   </h3>
                   <div className="space-y-2">
                     {recentRecords.map((r: any) => (
-                      <div key={r._id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {new Date(r.date).toLocaleDateString('en-GB', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                          })}
+                      <div
+                        key={r._id}
+                        className="flex items-center justify-between text-sm p-2 bg-background rounded-lg"
+                      >
+                        <span className="text-muted-foreground">
+                          {new Date(r.date).toLocaleDateString(
+                            i18n?.language === 'ru'
+                              ? 'ru-RU'
+                              : i18n?.language === 'hy'
+                                ? 'hy-AM'
+                                : 'en-GB',
+                            {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short',
+                            },
+                          )}
                         </span>
                         <div className="flex items-center gap-2">
                           {r.checkInTime ? (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-muted-foreground">
                               {formatTime(r.checkInTime)} →{' '}
                               {r.checkOutTime ? formatTime(r.checkOutTime) : '...'}
                             </span>
@@ -351,7 +367,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                           )}
                           {r.status === 'checked_in' && (
                             <Badge className="bg-green-500 text-white text-xs py-0">
-                              {t('statuses.active')}Active
+                              {t('statuses.active')}
                             </Badge>
                           )}
                         </div>

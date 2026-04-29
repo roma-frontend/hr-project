@@ -620,7 +620,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-3xl"
+              className="w-full max-w-3xl h-[85vh]"
               style={{ pointerEvents: 'auto' }}
             >
               <TripDetailsModal

@@ -45,7 +45,7 @@ interface OrganizationRequest {
 }
 
 export default function OrgRequestsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const _router = useRouter();
   const { user } = useAuthStore();
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('pending');
@@ -364,7 +364,11 @@ export default function OrgRequestsPage() {
                   style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
                 >
                   <span>Requested by {request.requesterName}</span>
-                  <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {new Date(request.createdAt).toLocaleDateString(
+                      i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+                    )}
+                  </span>
                 </div>
               </motion.div>
             );

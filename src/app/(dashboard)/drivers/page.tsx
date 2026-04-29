@@ -113,8 +113,8 @@ export default function DriversPage() {
   const userId = user?.id as Id<'users'> | undefined;
   const orgId = user?.organizationId as Id<'organizations'> | undefined;
   const isSuperadmin = user?.role === 'superadmin';
-  
-  const effectiveOrgId = isSuperadmin 
+
+  const effectiveOrgId = isSuperadmin
     ? (storeSelectedOrgId as Id<'organizations'> | undefined)
     : orgId;
 
@@ -327,7 +327,11 @@ export default function DriversPage() {
           await removeFavorite({ userId, driverId: id as Id<'drivers'> });
           toast.success(t('driver.removedFromFavorites', 'Removed from favorites'));
         } else {
-          await addFavorite({ organizationId: effectiveOrgId, userId, driverId: id as Id<'drivers'> });
+          await addFavorite({
+            organizationId: effectiveOrgId,
+            userId,
+            driverId: id as Id<'drivers'>,
+          });
           toast.success(t('driver.addedToFavorites', 'Added to favorites'));
         }
       } catch (e: unknown) {
@@ -540,7 +544,7 @@ export default function DriversPage() {
       {showTripDetails && selectedRequest && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div
-            className="w-full max-w-3xl rounded-2xl bg-(--card) shadow-2xl flex flex-col overflow-hidden"
+            className="w-full max-w-3xl h-[85vh] rounded-2xl bg-(--card) shadow-2xl flex flex-col overflow-hidden"
             style={{ maxHeight: '85vh' }}
           >
             <TripDetailsModal

@@ -23,7 +23,7 @@ interface DriverStatsCardProps {
 }
 
 export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [period, setPeriod] = React.useState<'week' | 'month' | 'year'>('month');
 
   const stats = useQuery(api.drivers.requests_queries.getDriverStats, { driverId, period });
@@ -51,11 +51,12 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
 
   const handleExportExcel = () => {
     if (!schedules) return;
+    const locale = i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US';
 
     const trips = schedules
       .filter((s) => s.type === 'trip' && s.status === 'completed')
       .map((s) => ({
-        date: new Date(s.startTime).toLocaleDateString(),
+        date: new Date(s.startTime).toLocaleDateString(locale),
         driver: s.userName || 'Unknown',
         passenger: s.userName || 'Unknown',
         from: s.tripInfo?.from || 'N/A',
@@ -71,11 +72,12 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
 
   const handleExportPDF = () => {
     if (!schedules || !stats) return;
+    const locale = i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US';
 
     const trips = schedules
       .filter((s) => s.type === 'trip' && s.status === 'completed')
       .map((s) => ({
-        date: new Date(s.startTime).toLocaleDateString(),
+        date: new Date(s.startTime).toLocaleDateString(locale),
         driver: s.userName || 'Unknown',
         passenger: s.userName || 'Unknown',
         from: s.tripInfo?.from || 'N/A',

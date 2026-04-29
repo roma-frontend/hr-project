@@ -16,7 +16,7 @@ interface SecuritySettingsProps {
 }
 
 export function SecuritySettings({ userId }: SecuritySettingsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showFaceRegistration, setShowFaceRegistration] = useState(false);
 
   // Get face descriptor status
@@ -42,9 +42,7 @@ export function SecuritySettings({ userId }: SecuritySettingsProps) {
             <div className="flex items-center gap-3 p-4 rounded-lg bg-(--surface-hover) border border-(--border)">
               <span className="text-3xl">🔐</span>
               <div className="flex-1">
-                <p className="text-sm text-(--text-muted)">
-                  {t('settingsSecurity.touchIdEnable')}
-                </p>
+                <p className="text-sm text-(--text-muted)">{t('settingsSecurity.touchIdEnable')}</p>
               </div>
             </div>
             <WebAuthnButton
@@ -91,7 +89,13 @@ export function SecuritySettings({ userId }: SecuritySettingsProps) {
                     </p>
                     <p className="text-xs text-(--text-muted) mt-1 truncate">
                       {t('settingsSecurity.registeredOn')}{' '}
-                      {new Date(faceData.faceRegisteredAt || 0).toLocaleDateString()}
+                      {new Date(faceData.faceRegisteredAt || 0).toLocaleDateString(
+                        i18n.language === 'ru'
+                          ? 'ru-RU'
+                          : i18n.language === 'hy'
+                            ? 'hy-AM'
+                            : 'en-US',
+                      )}
                     </p>
                   </div>
                 </div>

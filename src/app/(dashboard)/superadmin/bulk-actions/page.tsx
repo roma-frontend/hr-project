@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 
 export default function BulkActionsPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [selectedLeaves, setSelectedLeaves] = useState<Set<string>>(new Set());
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -303,7 +303,16 @@ export default function BulkActionsPage() {
                             {leave.userDepartment || 'N/A'}
                           </span>
                           <span>📧 {leave.userEmail}</span>
-                          <span>📅 {new Date(leave.createdAt).toLocaleDateString()}</span>
+                          <span>
+                            📅{' '}
+                            {new Date(leave.createdAt).toLocaleDateString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
+                          </span>
                         </div>
                       </div>
                     </div>

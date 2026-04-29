@@ -22,7 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 export default function JoinRequestsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
 
   const requests = useQuery(
@@ -189,7 +189,14 @@ export default function JoinRequestsPage() {
                         {request.requesterEmail}
                         {request.requestedAt && (
                           <span className="text-xs">
-                            • {new Date(request.requestedAt).toLocaleDateString()}
+                            •{' '}
+                            {new Date(request.requestedAt).toLocaleDateString(
+                              i18n.language === 'ru'
+                                ? 'ru-RU'
+                                : i18n.language === 'hy'
+                                  ? 'hy-AM'
+                                  : 'en-US',
+                            )}
                           </span>
                         )}
                       </CardDescription>
@@ -276,7 +283,15 @@ export default function JoinRequestsPage() {
                     <CheckCircle2 className="w-5 h-5" />
                     <span>
                       {t('joinRequests.approvedOn', 'Approved on')}{' '}
-                      {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : ''}
+                      {request.reviewedAt
+                        ? new Date(request.reviewedAt).toLocaleDateString(
+                            i18n.language === 'ru'
+                              ? 'ru-RU'
+                              : i18n.language === 'hy'
+                                ? 'hy-AM'
+                                : 'en-US',
+                          )
+                        : ''}
                     </span>
                   </div>
                 )}
