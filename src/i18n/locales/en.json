@@ -3002,6 +3002,7 @@
     "daysWorked": "Days Worked",
     "totalHours": "Total Hours",
     "punctuality": "Punctuality",
+    "lateDays": "Late Days",
     "hoursShort": "h",
     "minutesShort": "m",
     "overtimeShort": "OT"
