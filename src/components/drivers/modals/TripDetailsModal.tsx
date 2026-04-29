@@ -140,7 +140,7 @@ export function TripDetailsModal({
           </button>
 
           <div className="flex items-start justify-between pr-10">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
               <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                 {isTrip ? (
                   <Car className="w-6 h-6 text-white" />
