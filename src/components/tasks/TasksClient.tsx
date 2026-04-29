@@ -141,14 +141,15 @@ function Avatar({
 
 // â”€â”€ Deadline badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeadlineBadge({ deadline, status }: { deadline?: number; status: Status }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!deadline) return null;
   const now = Date.now();
   const diff = deadline - now;
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
   const overdue = diff < 0 && status !== 'completed' && status !== 'cancelled';
   const soon = diff > 0 && days <= 2 && status !== 'completed';
-  const dateStr = new Date(deadline).toLocaleDateString('en-GB', {
+  const locale = i18n?.language === 'ru' ? 'ru-RU' : i18n?.language === 'hy' ? 'hy-AM' : 'en-GB';
+  const dateStr = new Date(deadline).toLocaleDateString(locale, {
     day: '2-digit',
     month: 'short',
   });
