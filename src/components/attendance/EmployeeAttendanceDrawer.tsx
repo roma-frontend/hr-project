@@ -52,18 +52,18 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
   const [selectedMonth, setSelectedMonth] = useState(now.toISOString().slice(0, 7));
 
   const MONTHS = [
-    t('months.january'),
-    t('months.february'),
-    t('months.march'),
-    t('months.april'),
+    t('months.jan'),
+    t('months.feb'),
+    t('months.mar'),
+    t('months.apr'),
     t('months.may'),
-    t('months.june'),
-    t('months.july'),
-    t('months.august'),
-    t('months.september'),
-    t('months.october'),
-    t('months.november'),
-    t('months.december'),
+    t('months.jun'),
+    t('months.jul'),
+    t('months.aug'),
+    t('months.sep'),
+    t('months.oct'),
+    t('months.nov'),
+    t('months.dec'),
   ];
 
   const history = useQuery(

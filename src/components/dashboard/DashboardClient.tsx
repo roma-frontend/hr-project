@@ -136,7 +136,7 @@ const StatusBadgeMemo = React.memo(({ status, label }: { status: LeaveStatus; la
 StatusBadgeMemo.displayName = 'StatusBadgeMemo';
 
 export default function DashboardClient() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAuthUser();
 
   // ═══════════════════════════════════════════════════════════════
@@ -160,10 +160,10 @@ export default function DashboardClient() {
   const selectedOrganization = organizationsList?.find((o) => o._id === selectedOrgId);
 
   // If no org selected, show all data (superadmin sees all); otherwise filter locally
-  const leaves = useQuery(
-    api.leaves.getAllLeaves,
-    userId ? { requesterId: userId } : 'skip',
-  ) as any[] | null | undefined;
+  const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip') as
+    | any[]
+    | null
+    | undefined;
 
   const usersFromConvex = useQuery(
     api.users.queries.getAllUsers,
@@ -198,21 +198,15 @@ export default function DashboardClient() {
   // ═══════════════════════════════════════════════════════════════════════
 
   // Filter data by selected org when superadmin has one selected
-  const filteredUsers = useMemo(
-    () => {
-      if (!selectedOrgId) return users;
-      return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
-    },
-    [users, selectedOrgId],
-  );
+  const filteredUsers = useMemo(() => {
+    if (!selectedOrgId) return users;
+    return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
+  }, [users, selectedOrgId]);
 
-  const filteredLeaves = useMemo(
-    () => {
-      if (!selectedOrgId) return leaves;
-      return leaves?.filter((l) => l.organizationId === selectedOrgId) ?? [];
-    },
-    [leaves, selectedOrgId],
-  );
+  const filteredLeaves = useMemo(() => {
+    if (!selectedOrgId) return leaves;
+    return leaves?.filter((l) => l.organizationId === selectedOrgId) ?? [];
+  }, [leaves, selectedOrgId]);
 
   const stats = useMemo(
     () => ({
@@ -223,8 +217,9 @@ export default function DashboardClient() {
           (r) => r.status === 'approved' && r.startDate <= todayStr && r.endDate >= todayStr,
         ).length ?? 0,
       approvedThisMonth:
-        filteredLeaves?.filter((r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today))
-          .length ?? 0,
+        filteredLeaves?.filter(
+          (r) => r.status === 'approved' && isSameMonth(new Date(r.startDate), today),
+        ).length ?? 0,
     }),
     [filteredUsers, filteredLeaves, todayStr, today],
   );
@@ -246,26 +241,16 @@ export default function DashboardClient() {
       { month: string; approved: number; pending: number; rejected: number }
     > = {};
     const now = new Date();
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey =
+        ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'][
+          d.getMonth()
+        ] ?? 'jan';
       months[key] = {
-        month: monthNames[d.getMonth()] ?? 'Unknown',
+        month: t(`common.months.${monthKey}`),
         approved: 0,
         pending: 0,
         rejected: 0,
@@ -279,7 +264,7 @@ export default function DashboardClient() {
       }
     });
     return Object.values(months);
-  }, [filteredLeaves]);
+  }, [filteredLeaves, t, i18n?.language]);
 
   if (!mounted) return null;
 

@@ -109,7 +109,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             className="relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border"
-            style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+            style={{ borderColor: 'var(--border)' }}
           >
             {/* Header gradient */}
             <div className="relative h-28 bg-linear-to-r from-(--primary) to-(--primary-dark,var(--primary)) flex items-end px-6 pb-4">
@@ -151,7 +151,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            <div className="bg-(--card) p-6 space-y-5 max-h-[70vh] overflow-y-auto">
               {/* Date & Status */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
