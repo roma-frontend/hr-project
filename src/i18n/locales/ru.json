@@ -1,4 +1,7 @@
 {
+  "ui": {
+    "skipToContent": "Перейти к контенту"
+  },
   "landing": {
     "scroll": "Прокрутить",
     "leaveTypes": "Типы отпусков",
