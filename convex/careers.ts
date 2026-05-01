@@ -1,6 +1,48 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
 
+// Public query: list ALL open vacancies across all organizations (for global /careers page)
+export const listAllOpenVacancies = query({
+  args: {},
+  handler: async (ctx) => {
+    const vacancies = await ctx.db
+      .query('vacancies')
+      .withIndex('by_status', (q) => q.eq('status', 'open'))
+      .collect();
+
+    // Get unique org IDs
+    const orgIds = [...new Set(vacancies.map((v) => v.organizationId))];
+    const orgs = await Promise.all(orgIds.map((id) => ctx.db.get(id)));
+    const orgMap = Object.fromEntries(orgs.filter(Boolean).map((o) => [o!._id, o!]));
+
+    return vacancies
+      .filter((v) => {
+        const org = orgMap[v.organizationId];
+        return org && org.isActive;
+      })
+      .map((v) => {
+        const org = orgMap[v.organizationId]!;
+        return {
+          _id: v._id,
+          title: v.title,
+          department: v.department,
+          location: v.location,
+          employmentType: v.employmentType,
+          salary: v.salary,
+          createdAt: v.createdAt,
+          excerpt: v.description.length > 200 ? v.description.slice(0, 200) + '...' : v.description,
+          org: {
+            _id: org._id,
+            name: org.name,
+            slug: org.slug,
+            logoUrl: org.logoUrl,
+            industry: org.industry,
+          },
+        };
+      });
+  },
+});
+
 // Public query: list open vacancies for an organization by slug
 export const listOpenVacancies = query({
   args: { orgSlug: v.string() },
@@ -13,9 +55,7 @@ export const listOpenVacancies = query({
 
     const vacancies = await ctx.db
       .query('vacancies')
-      .withIndex('by_org_status', (q) =>
-        q.eq('organizationId', org._id).eq('status', 'open')
-      )
+      .withIndex('by_org_status', (q) => q.eq('organizationId', org._id).eq('status', 'open'))
       .collect();
 
     return {
@@ -35,9 +75,7 @@ export const listOpenVacancies = query({
         salary: v.salary,
         createdAt: v.createdAt,
         // Truncated description for cards (first 200 chars)
-        excerpt: v.description.length > 200
-          ? v.description.slice(0, 200) + '...'
-          : v.description,
+        excerpt: v.description.length > 200 ? v.description.slice(0, 200) + '...' : v.description,
       })),
     };
   },
@@ -94,9 +132,7 @@ export const applyToVacancy = mutation({
     // Deduplicate candidate profile by email within org
     let candidate = await ctx.db
       .query('candidateProfiles')
-      .withIndex('by_org_email', (q) =>
-        q.eq('organizationId', orgId).eq('email', normalizedEmail)
-      )
+      .withIndex('by_org_email', (q) => q.eq('organizationId', orgId).eq('email', normalizedEmail))
       .first();
 
     if (!candidate) {
@@ -147,6 +183,27 @@ export const applyToVacancy = mutation({
       reason: 'Applied via career page',
       createdAt: Date.now(),
     });
+
+    // 🔔 Notify org admins about new application
+    const orgAdmins = await ctx.db
+      .query('users')
+      .withIndex('by_organization', (q) => q.eq('organizationId', orgId))
+      .filter((q) => q.or(q.eq(q.field('role'), 'admin'), q.eq(q.field('role'), 'superadmin')))
+      .collect();
+
+    const now = Date.now();
+    for (const admin of orgAdmins) {
+      await ctx.db.insert('notifications', {
+        organizationId: orgId,
+        userId: admin._id,
+        type: 'system',
+        title: '📩 New Application Received',
+        message: `${args.name} applied for "${vacancy.title}" via career page`,
+        isRead: false,
+        relatedId: applicationId,
+        createdAt: now,
+      });
+    }
 
     return { success: true };
   },

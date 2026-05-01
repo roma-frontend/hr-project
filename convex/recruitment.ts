@@ -14,7 +14,9 @@ export const listVacancies = query({
       vacancies = await ctx.db
         .query('vacancies')
         .withIndex('by_org_status', (q) =>
-          q.eq('organizationId', organizationId).eq('status', status as 'draft' | 'open' | 'paused' | 'closed')
+          q
+            .eq('organizationId', organizationId)
+            .eq('status', status as 'draft' | 'open' | 'paused' | 'closed'),
         )
         .order('desc')
         .collect();
@@ -46,7 +48,7 @@ export const listVacancies = query({
             rejected: apps.filter((a) => a.stage === 'rejected').length,
           },
         };
-      })
+      }),
     );
 
     return enriched;
@@ -74,7 +76,12 @@ export const listCandidatesByVacancy = query({
       apps = await ctx.db
         .query('applications')
         .withIndex('by_vacancy_stage', (q) =>
-          q.eq('vacancyId', vacancyId).eq('stage', stage as 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected')
+          q
+            .eq('vacancyId', vacancyId)
+            .eq(
+              'stage',
+              stage as 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected',
+            ),
         )
         .collect();
     } else {
@@ -91,16 +98,19 @@ export const listCandidatesByVacancy = query({
           .query('interviewScorecards')
           .withIndex('by_application', (q) => q.eq('applicationId', app._id))
           .collect();
-        const avgScore = scorecards.length > 0
-          ? Math.round((scorecards.reduce((s, sc) => s + sc.overallScore, 0) / scorecards.length) * 10) / 10
-          : null;
+        const avgScore =
+          scorecards.length > 0
+            ? Math.round(
+                (scorecards.reduce((s, sc) => s + sc.overallScore, 0) / scorecards.length) * 10,
+              ) / 10
+            : null;
         return {
           ...app,
           candidate: profile,
           scorecardsCount: scorecards.length,
           avgScore,
         };
-      })
+      }),
     );
 
     return enriched.sort((a, b) => b.createdAt - a.createdAt);
@@ -125,7 +135,7 @@ export const getCandidate = query({
       interviews.map(async (iv) => {
         const interviewer = await ctx.db.get(iv.interviewerId);
         return { ...iv, interviewerName: interviewer?.name ?? 'Unknown' };
-      })
+      }),
     );
 
     const scorecards = await ctx.db
@@ -137,7 +147,7 @@ export const getCandidate = query({
       scorecards.map(async (sc) => {
         const interviewer = await ctx.db.get(sc.interviewerId);
         return { ...sc, interviewerName: interviewer?.name ?? 'Unknown' };
-      })
+      }),
     );
 
     const events = await ctx.db
@@ -149,7 +159,7 @@ export const getCandidate = query({
       events.map(async (ev) => {
         const user = await ctx.db.get(ev.changedBy);
         return { ...ev, changedByName: user?.name ?? 'Unknown' };
-      })
+      }),
     );
 
     return {
@@ -175,7 +185,10 @@ export const getMyInterviews = query({
       .collect();
 
     const upcoming = interviews.filter(
-      (iv) => iv.organizationId === organizationId && iv.status === 'scheduled' && iv.scheduledAt > Date.now()
+      (iv) =>
+        iv.organizationId === organizationId &&
+        iv.status === 'scheduled' &&
+        iv.scheduledAt > Date.now(),
     );
 
     const enriched = await Promise.all(
@@ -188,7 +201,7 @@ export const getMyInterviews = query({
           candidateName: profile?.name ?? 'Unknown',
           vacancyTitle: vacancy?.title ?? 'Unknown',
         };
-      })
+      }),
     );
 
     return enriched.sort((a, b) => a.scheduledAt - b.scheduledAt);
@@ -201,7 +214,7 @@ export const getPipelineStats = query({
     const openVacancies = await ctx.db
       .query('vacancies')
       .withIndex('by_org_status', (q) =>
-        q.eq('organizationId', organizationId).eq('status', 'open')
+        q.eq('organizationId', organizationId).eq('status', 'open'),
       )
       .collect();
 
@@ -241,9 +254,7 @@ export const createVacancy = mutation({
     ),
     description: v.string(),
     requirements: v.optional(v.string()),
-    salary: v.optional(
-      v.object({ min: v.number(), max: v.number(), currency: v.string() })
-    ),
+    salary: v.optional(v.object({ min: v.number(), max: v.number(), currency: v.string() })),
     hiringManagerId: v.id('users'),
     createdBy: v.id('users'),
   },
@@ -266,8 +277,18 @@ export const updateVacancy = mutation({
     location: v.optional(v.string()),
     description: v.optional(v.string()),
     requirements: v.optional(v.string()),
+    employmentType: v.optional(
+      v.union(
+        v.literal('full_time'),
+        v.literal('part_time'),
+        v.literal('contract'),
+        v.literal('internship'),
+      ),
+    ),
+    salary: v.optional(v.object({ min: v.number(), max: v.number(), currency: v.string() })),
+    hiringManagerId: v.optional(v.id('users')),
     status: v.optional(
-      v.union(v.literal('draft'), v.literal('open'), v.literal('paused'), v.literal('closed'))
+      v.union(v.literal('draft'), v.literal('open'), v.literal('paused'), v.literal('closed')),
     ),
   },
   handler: async (ctx, { vacancyId, ...updates }) => {
@@ -280,12 +301,91 @@ export const updateVacancy = mutation({
     if (updates.location !== undefined) patch.location = updates.location;
     if (updates.description !== undefined) patch.description = updates.description;
     if (updates.requirements !== undefined) patch.requirements = updates.requirements;
+    if (updates.employmentType !== undefined) patch.employmentType = updates.employmentType;
+    if (updates.salary !== undefined) patch.salary = updates.salary;
+    if (updates.hiringManagerId !== undefined) patch.hiringManagerId = updates.hiringManagerId;
     if (updates.status !== undefined) {
       patch.status = updates.status;
       if (updates.status === 'closed') patch.closedAt = Date.now();
     }
 
     await ctx.db.patch(vacancyId, patch);
+  },
+});
+
+export const deleteVacancy = mutation({
+  args: { vacancyId: v.id('vacancies') },
+  handler: async (ctx, { vacancyId }) => {
+    const vac = await ctx.db.get(vacancyId);
+    if (!vac) throw new Error('Vacancy not found');
+
+    // Delete all related applications and events
+    const applications = await ctx.db
+      .query('applications')
+      .withIndex('by_vacancy', (q) => q.eq('vacancyId', vacancyId))
+      .collect();
+
+    for (const app of applications) {
+      // Delete application events
+      const events = await ctx.db
+        .query('applicationEvents')
+        .filter((q) => q.eq(q.field('applicationId'), app._id))
+        .collect();
+      for (const ev of events) {
+        await ctx.db.delete(ev._id);
+      }
+      await ctx.db.delete(app._id);
+    }
+
+    // Delete interviews for this vacancy
+    const interviews = await ctx.db
+      .query('interviews')
+      .filter((q) => q.eq(q.field('vacancyId'), vacancyId))
+      .collect();
+    for (const interview of interviews) {
+      await ctx.db.delete(interview._id);
+    }
+
+    await ctx.db.delete(vacancyId);
+  },
+});
+
+export const deleteCandidate = mutation({
+  args: { applicationId: v.id('applications') },
+  handler: async (ctx, { applicationId }) => {
+    const app = await ctx.db.get(applicationId);
+    if (!app) throw new Error('Application not found');
+
+    // Delete application events
+    const events = await ctx.db
+      .query('applicationEvents')
+      .filter((q) => q.eq(q.field('applicationId'), applicationId))
+      .collect();
+    for (const ev of events) {
+      await ctx.db.delete(ev._id);
+    }
+
+    // Delete interviews for this application
+    const interviews = await ctx.db
+      .query('interviews')
+      .filter((q) => q.eq(q.field('applicationId'), applicationId))
+      .collect();
+    for (const interview of interviews) {
+      await ctx.db.delete(interview._id);
+    }
+
+    // Delete the application
+    await ctx.db.delete(applicationId);
+
+    // Check if candidate has other applications — if not, delete profile too
+    const otherApps = await ctx.db
+      .query('applications')
+      .filter((q) => q.eq(q.field('candidateId'), app.candidateId))
+      .first();
+
+    if (!otherApps) {
+      await ctx.db.delete(app.candidateId);
+    }
   },
 });
 
@@ -308,14 +408,22 @@ export const addCandidate = mutation({
     createdBy: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const { vacancyId, name, email, phone, resumeText, source, referredBy, organizationId, createdBy } = args;
+    const {
+      vacancyId,
+      name,
+      email,
+      phone,
+      resumeText,
+      source,
+      referredBy,
+      organizationId,
+      createdBy,
+    } = args;
 
     // Check if candidate profile exists by email
     const existing = await ctx.db
       .query('candidateProfiles')
-      .withIndex('by_org_email', (q) =>
-        q.eq('organizationId', organizationId).eq('email', email)
-      )
+      .withIndex('by_org_email', (q) => q.eq('organizationId', organizationId).eq('email', email))
       .first();
 
     const now = Date.now();
@@ -356,6 +464,28 @@ export const addCandidate = mutation({
       changedBy: createdBy,
       createdAt: now,
     });
+
+    // 🔔 Notify org admins about new candidate
+    const orgAdmins = await ctx.db
+      .query('users')
+      .withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+      .filter((q) => q.or(q.eq(q.field('role'), 'admin'), q.eq(q.field('role'), 'superadmin')))
+      .collect();
+
+    const vacancy = await ctx.db.get(vacancyId);
+    for (const admin of orgAdmins) {
+      if (admin._id === createdBy) continue; // don't notify self
+      await ctx.db.insert('notifications', {
+        organizationId,
+        userId: admin._id,
+        type: 'system',
+        title: '📩 New Candidate Added',
+        message: `${name} was added to "${vacancy?.title || 'vacancy'}" (${source})`,
+        isRead: false,
+        relatedId: applicationId,
+        createdAt: now,
+      });
+    }
 
     return applicationId;
   },
@@ -458,11 +588,7 @@ export const scheduleInterview = mutation({
 export const updateInterviewStatus = mutation({
   args: {
     interviewId: v.id('interviews'),
-    status: v.union(
-      v.literal('completed'),
-      v.literal('cancelled'),
-      v.literal('no_show'),
-    ),
+    status: v.union(v.literal('completed'), v.literal('cancelled'), v.literal('no_show')),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { interviewId, status, notes }) => {
@@ -483,7 +609,7 @@ export const submitScorecard = mutation({
         criterion: v.string(),
         score: v.number(),
         comment: v.optional(v.string()),
-      })
+      }),
     ),
     overallScore: v.number(),
     recommendation: v.union(

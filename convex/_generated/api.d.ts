@@ -45,6 +45,7 @@ import type * as drivers_recurring_trips from "../drivers/recurring_trips.js";
 import type * as drivers_requests_mutations from "../drivers/requests_mutations.js";
 import type * as drivers_requests_queries from "../drivers/requests_queries.js";
 import type * as drivers_shifts_mutations from "../drivers/shifts_mutations.js";
+import type * as emailValidation from "../emailValidation.js";
 import type * as employeeNotes from "../employeeNotes.js";
 import type * as employeeProfiles from "../employeeProfiles.js";
 import type * as events from "../events.js";
@@ -192,6 +193,7 @@ declare const fullApi: ApiFromModules<{
   "drivers/requests_mutations": typeof drivers_requests_mutations;
   "drivers/requests_queries": typeof drivers_requests_queries;
   "drivers/shifts_mutations": typeof drivers_shifts_mutations;
+  emailValidation: typeof emailValidation;
   employeeNotes: typeof employeeNotes;
   employeeProfiles: typeof employeeProfiles;
   events: typeof events;

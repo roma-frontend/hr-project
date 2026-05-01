@@ -21,7 +21,7 @@ export const recruitment = {
         min: v.number(),
         max: v.number(),
         currency: v.string(),
-      })
+      }),
     ),
     status: v.union(
       v.literal('draft'),
@@ -37,6 +37,7 @@ export const recruitment = {
   })
     .index('by_org', ['organizationId'])
     .index('by_org_status', ['organizationId', 'status'])
+    .index('by_status', ['status'])
     .index('by_manager', ['hiringManagerId']),
 
   // Candidate profiles (person-level, reusable across vacancies)
@@ -138,7 +139,7 @@ export const recruitment = {
         criterion: v.string(),
         score: v.number(),
         comment: v.optional(v.string()),
-      })
+      }),
     ),
     overallScore: v.number(),
     recommendation: v.union(
