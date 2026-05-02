@@ -188,7 +188,7 @@ export function PomodoroTimer() {
           onClick={() => handleModeChange('pomodoro')}
           className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
             mode === 'pomodoro'
-              ? 'bg-(--primary) text-white shadow-sm'
+              ? 'btn-gradient text-white shadow-sm'
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >
@@ -198,7 +198,7 @@ export function PomodoroTimer() {
           onClick={() => handleModeChange('shortBreak')}
           className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
             mode === 'shortBreak'
-              ? 'bg-(--primary) text-white shadow-sm'
+              ? 'btn-gradient text-white shadow-sm'
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >
@@ -208,7 +208,7 @@ export function PomodoroTimer() {
           onClick={() => handleModeChange('longBreak')}
           className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
             mode === 'longBreak'
-              ? 'bg-(--primary) text-white shadow-sm'
+              ? 'btn-gradient text-white shadow-sm'
               : 'bg-(--background-subtle) text-(--text-muted) hover:bg-(--background-subtle)/80'
           }`}
         >

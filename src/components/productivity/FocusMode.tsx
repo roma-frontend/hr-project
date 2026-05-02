@@ -72,7 +72,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all ${
               isFocusMode
-                ? 'bg-(--primary) shadow-lg'
+                ? 'btn-gradient shadow-lg'
                 : 'bg-(--background-subtle) border border-(--border)'
             }`}
           >
@@ -95,7 +95,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
           <button
             onClick={toggleFocusMode}
             className={`relative h-6 w-11 rounded-full transition-all shrink-0 ${
-              isFocusMode ? 'bg-(--primary)' : 'bg-gray-300 dark:bg-gray-700'
+              isFocusMode ? 'btn-gradient' : 'bg-gray-300 dark:bg-gray-700'
             }`}
           >
             <span
@@ -114,9 +114,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
             ) : (
               <Bell className="w-3.5 h-3.5 text-(--text-muted)" />
             )}
-            <span
-              className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}
-            >
+            <span className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}>
               {isFocusMode ? t('focusMode.notificationsMuted') : t('focusMode.muteNotifications')}
             </span>
           </div>
@@ -125,9 +123,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
             <div
               className={`w-2 h-2 rounded-full ${isFocusMode ? 'bg-red-500' : 'bg-(--text-muted)'}`}
             />
-            <span
-              className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}
-            >
+            <span className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}>
               {isFocusMode ? t('focusMode.statusBusy') : t('focusMode.setStatusBusy')}
             </span>
           </div>
@@ -136,9 +132,7 @@ export function FocusMode({ currentPresence, onFocusChange }: FocusModeProps) {
             <Zap
               className={`w-3.5 h-3.5 ${isFocusMode ? 'text-(--primary)' : 'text-(--text-muted)'}`}
             />
-            <span
-              className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}
-            >
+            <span className={isFocusMode ? 'text-(--text-primary)' : 'text-(--text-muted)'}>
               {isFocusMode ? t('focusMode.deepWorkEnabled') : t('focusMode.enableDeepWork')}
             </span>
           </div>

@@ -51,9 +51,18 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   useEffect(() => {
@@ -228,21 +237,23 @@ export default function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all outline-none focus-visible:outline-none focus:outline-none hover:bg-(--background-subtle)">
-                  <Avatar className="w-8 h-8">
+                <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 md:px-3 md:py-2 transition-all outline-none focus-visible:outline-none focus:outline-none hover:bg-(--background-subtle)">
+                  <Avatar className="w-7 h-7 md:w-8 md:h-8">
                     {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
                     <AvatarFallback className="text-xs bg-linear-to-br from-blue-500 to-blue-600 text-white font-semibold">
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-xs font-semibold text-(--text-primary) leading-tight">
+                  <div className="text-left max-w-[100px] md:max-w-none">
+                    <p className="text-xs font-semibold text-(--text-primary) leading-tight truncate">
                       {user.name}
                     </p>
-                    <p className="text-[10px] text-(--text-muted) capitalize">{user.role}</p>
+                    <p className="text-[10px] text-(--text-muted) capitalize hidden md:block">
+                      {user.role}
+                    </p>
                   </div>
                   <svg
-                    className="w-3 h-3 text-(--text-muted) hidden sm:block"
+                    className="w-3 h-3 text-(--text-muted) shrink-0"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -255,7 +266,7 @@ export default function Navbar() {
               <DropdownMenuContent
                 align="end"
                 sideOffset={8}
-                className="w-56 bg-(--card) border-(--border) shadow-xl"
+                className="w-60 bg-(--card) border-(--border) shadow-xl max-h-[80vh] overflow-y-auto"
               >
                 <DropdownMenuLabel className="text-(--text-muted) text-xs">
                   {t('landingExtra.myAccount')}
@@ -296,6 +307,93 @@ export default function Navbar() {
                   {t('nav.settings')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-(--border)" />
+                {/* Show landing page links only when main navbar is hidden (screen < lg) */}
+                {!isDesktop && (
+                  <>
+                    <DropdownMenuItem
+                      className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                      onClick={() => router.push('/features')}
+                    >
+                      <svg
+                        className="w-4 h-4 text-(--primary)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      {t('landing.features')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                      onClick={() => router.push('/#pricing')}
+                    >
+                      <svg
+                        className="w-4 h-4 text-(--primary)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                      {t('landing.pricing')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                      onClick={() => router.push('/#testimonials')}
+                    >
+                      <svg
+                        className="w-4 h-4 text-(--primary)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      {t('landing.testimonials')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                      onClick={() => router.push('/#faq')}
+                    >
+                      <svg
+                        className="w-4 h-4 text-(--primary)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      {t('landing.faq')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-(--text-primary) cursor-pointer hover:bg-(--background-subtle) focus:bg-(--background-subtle) gap-2"
+                      onClick={() => router.push('/careers')}
+                    >
+                      <svg
+                        className="w-4 h-4 text-(--primary)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      {t('nav.recruitment', 'Careers')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-(--border)" />
+                  </>
+                )}
                 <DropdownMenuItem
                   className="text-red-400 cursor-pointer hover:bg-red-500/10 focus:bg-red-500/10 hover:text-red-300 gap-2"
                   onClick={handleLogout}
