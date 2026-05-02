@@ -876,6 +876,8 @@ export function ChatWidget() {
         throw new Error(errData.error || `Server error ${res.status}`);
       }
 
+      console.log('📡 Response status:', res.status, 'type:', res.headers.get('content-type'));
+
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
