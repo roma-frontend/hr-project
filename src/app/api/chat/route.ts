@@ -508,12 +508,13 @@ Example: "Открываю календарь... 📅 <NAVIGATE>/calendar</NAVIG
 DO NOT navigate! Just help them with their request using <ACTION> tags if needed, or provide information.`;
     }
 
-    // Try Groq first, fallback to Google Gemini if rate limited
+    // Try Groq first (no retry - fallback to Gemini on rate limit), fallback to Google Gemini if rate limited
     let result;
     try {
-      console.log('🔄 Trying Groq AI...');
+      console.log('🔄 Trying Groq AI (no retry)...');
       result = await streamText({
-        model: groq('llama-3.3-70b-versatile'),
+        model: groq('llama-3.3-70b-versatile', { parallelToolCalls: false }),
+        maxRetries: 0,
         system: `${roleBasedPrompt}
 
 ${dateContext}
