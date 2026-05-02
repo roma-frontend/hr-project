@@ -33,22 +33,49 @@ export async function GET(req: NextRequest) {
     const isSupervisor = userRole === 'supervisor';
 
     // Fetch core system data first (needed to get orgId)
-    const [users, leaves, todayAttendance, allTasks, allTickets, automationWorkflows] =
-      await Promise.all([
-        fetchQuery(api.users.queries.getAllUsers, { requesterId: requesterId as any }),
-        fetchQuery(api.leaves.getAllLeaves, { requesterId: requesterId as any }),
-        fetchQuery(api.timeTracking.getTodayAllAttendance, { adminId: requesterId as any }),
-        fetchQuery(api.tasks.getAllTasks, { requesterId: requesterId as any }),
-        fetchQuery(api.tickets.getAllTickets, {
-          status: undefined,
-          priority: undefined,
-          organizationId: undefined,
-          assignedTo: undefined,
-          limit: undefined,
-          cursor: undefined,
-        }),
-        fetchQuery(api.automation.getActiveWorkflows, {}),
-      ]);
+    let users: any[] = [],
+      leaves: any[] = [],
+      todayAttendance: any[] = [],
+      allTasks: any[] = [],
+      allTickets: any[] = [],
+      automationWorkflows: any[] = [];
+    try {
+      users =
+        (await fetchQuery(api.users.queries.getAllUsers, { requesterId: requesterId as any })) ||
+        [];
+    } catch (e) {
+      console.warn('getAllUsers failed:', e);
+    }
+    try {
+      leaves =
+        (await fetchQuery(api.leaves.getAllLeaves, { requesterId: requesterId as any })) || [];
+    } catch (e) {
+      console.warn('getAllLeaves failed:', e);
+    }
+    try {
+      todayAttendance =
+        (await fetchQuery(api.timeTracking.getTodayAllAttendance, {
+          adminId: requesterId as any,
+        })) || [];
+    } catch (e) {
+      console.warn('getTodayAllAttendance failed:', e);
+    }
+    try {
+      allTasks =
+        (await fetchQuery(api.tasks.getAllTasks, { requesterId: requesterId as any })) || [];
+    } catch (e) {
+      console.warn('getAllTasks failed:', e);
+    }
+    try {
+      allTickets = (await fetchQuery(api.tickets.getAllTickets, {})) || [];
+    } catch (e) {
+      console.warn('getAllTickets failed:', e);
+    }
+    try {
+      automationWorkflows = (await fetchQuery(api.automation.getActiveWorkflows, {})) || [];
+    } catch (e) {
+      console.warn('getActiveWorkflows failed:', e);
+    }
 
     // Get organizationId from users list (first user with orgId)
     const firstUserWithOrg = (users as any[])?.find((u: any) => u.organizationId);
@@ -156,28 +183,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fetch Unread Messages (chat module)
+    // Fetch Unread Messages (chat module) - simplified
     let unreadMessages = 0;
-    let unreadConversations: any[] = [];
+    const unreadConversations: any[] = [];
     try {
-      unreadMessages = await fetchQuery((api.chat.queries as any).getTotalUnread, {
+      const unreadData = await fetchQuery((api.chat.queries as any).getTotalUnread, {
         userId: requesterId as any,
       });
-      const convos = await fetchQuery((api.chat.queries as any).getUnreadConversations, {
-        userId: requesterId as any,
-      });
-      unreadConversations = (convos as any[]) || [];
-      console.log(
-        '[Full Context] Unread messages:',
-        unreadMessages,
-        'conversations:',
-        unreadConversations?.length,
-      );
+      unreadMessages = (unreadData as any)?.total || 0;
+      console.log('[Full Context] Unread messages:', unreadMessages);
     } catch (e) {
       console.warn('Failed to fetch unread messages:', e);
     }
 
-    // Fetch Unread Notifications
+    // Fetch Unread Notifications - simplified
     let unreadNotifications = 0;
     try {
       const notifData = await fetchQuery(api.notifications.getUnreadCount, {
