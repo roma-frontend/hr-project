@@ -1,4 +1,5 @@
 import { groq } from '@ai-sdk/groq';
+import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { buildRoleBasedPrompt, detectIntent } from '@/lib/aiAssistant';
 import type { UserRole } from '@/lib/aiAssistant';
@@ -454,141 +455,8 @@ AVAILABLE DRIVERS:
 ${availableDriversContextInfo || 'No drivers available'}
 ${availableDriversInfo || ''}
 
-ALL SURVEYS IN ORGANIZATION:
-${(() => {
-  const surveyList = (data.surveys as any[]) || [];
-  console.log(
-    '[AI Chat] Surveys in context:',
-    surveyList.length,
-    surveyList.map((s: any) => s.title),
-  );
-  if (surveyList.length === 0)
-    return '📝 No surveys found in the system - tell user there are no surveys';
-  return (
-    '📝 AVAILABLE SURVEYS (show ALL, not just active):\n' +
-    surveyList
-      .map(
-        (s: any) =>
-          `• "${s.title}" - Status: ${s.status || 'unknown'} | Responses: ${s.responseCount || 0}${s.description ? ` | ${s.description}` : ''}`,
-      )
-      .join('\n')
-  );
-})()}
-
-GOALS & OKR:
-${(() => {
-  const allGoals = (data.goals as any[]) || [];
-  const myGoals = (data.myGoals as any[]) || [];
-  if (allGoals.length === 0 && myGoals.length === 0) return '🎯 No goals found in the system';
-  let result = '🎯 GOALS IN ORGANIZATION:\n';
-  if (allGoals.length > 0) {
-    result += allGoals
-      .slice(0, 10)
-      .map(
-        (g: any) =>
-          `• "${g.title}" - Progress: ${g.progress || 0}% | Status: ${g.status || 'unknown'} | Owner: ${g.ownerName || 'Unknown'}${g.dueDate ? ` | Due: ${g.dueDate}` : ''}`,
-      )
-      .join('\n');
-  }
-  if (myGoals.length > 0) {
-    result += '\n\n🎯 YOUR GOALS:\n';
-    result += myGoals
-      .slice(0, 5)
-      .map(
-        (g: any) =>
-          `• "${g.title}" - Progress: ${g.progress || 0}% | Status: ${g.status || 'unknown'}`,
-      )
-      .join('\n');
-  }
-  return result;
-})()}
-
-RECOGNITION & KUDOS:
-${(() => {
-  const kudos = (data.kudosFeed as any[]) || [];
-  const leaderboard = (data.leaderboard as any[]) || [];
-  if (kudos.length === 0 && leaderboard.length === 0) return '⭐ No recognition data found';
-  let result = '⭐ RECENT KUDOS:\n';
-  if (kudos.length > 0) {
-    result += kudos
-      .slice(0, 5)
-      .map(
-        (k: any) =>
-          `• ${k.senderName} → ${k.receiverName}: "${k.message}"${k.badge ? ` [${k.badge}]` : ''}`,
-      )
-      .join('\n');
-  }
-  if (leaderboard.length > 0) {
-    result += '\n🏆 LEADERBOARD:\n';
-    result += leaderboard
-      .slice(0, 5)
-      .map((l: any) => `#${l.rank} ${l.userName} - ${l.points} points`)
-      .join('\n');
-  }
-  return result;
-})()}
-
-CORPORATE POLICIES:
-${(() => {
-  const docs = (data.corporateDocs as any[]) || [];
-  if (docs.length === 0) return '📋 No corporate documents found';
-  return (
-    '📋 CORPORATE DOCUMENTS:\n' +
-    docs
-      .slice(0, 10)
-      .map((d: any) => `• "${d.title}" - ${d.category || 'General'}`)
-      .join('\n')
-  );
-})()}
-
-${
-  userRole === 'admin' || userRole === 'superadmin' || userRole === 'supervisor'
-    ? `PERFORMANCE REVIEWS:
-${(() => {
-  const reviews = (data.performanceReviews as any[]) || [];
-  if (reviews.length === 0) return '📈 No performance reviews found';
-  return (
-    '📈 PERFORMANCE REVIEWS:\n' +
-    reviews
-      .slice(0, 10)
-      .map(
-        (p: any) =>
-          `• ${p.employeeName} - ${p.status || 'Pending'} | Rating: ${p.rating || 'N/A'} | Period: ${p.period || 'N/A'}`,
-      )
-      .join('\n')
-  );
-})()}`
-    : ''
-}
-
-YOUR NOTIFICATIONS & MESSAGES:
-${(() => {
-  const unreadMsg = (data.unreadMessages as number) || 0;
-  const unreadNotif = (data.unreadNotifications as number) || 0;
-  const unreadApprovals = (data.unreadLeaveApprovals as number) || 0;
-  const convos = (data.unreadConversations as any[]) || [];
-  if (unreadMsg === 0 && unreadNotif === 0 && unreadApprovals === 0)
-    return '✅ You have no unread notifications or messages!';
-  let result = '';
-  if (unreadMsg > 0) result += `💬 You have ${unreadMsg} unread message${unreadMsg > 1 ? 's' : ''}`;
-  if (convos.length > 0) {
-    result += '\nRecent unread conversations:\n';
-    result += convos
-      .map(
-        (c: any) =>
-          `• ${c.name}: ${c.lastMessage?.slice(0, 50) || 'No message'} (${c.unreadCount})`,
-      )
-      .join('\n');
-  }
-  if (unreadNotif > 0)
-    result += `\n🔔 You have ${unreadNotif} unread notification${unreadNotif > 1 ? 's' : ''}`;
-  if (
-    unreadApprovals > 0 &&
-    (userRole === 'admin' || userRole === 'supervisor' || userRole === 'superadmin')
-  )
-    result += `\n✅ You have ${unreadApprovals} pending leave request${unreadApprovals > 1 ? 's' : ''} to review!`;
-  return result;
-})()}
+ACTIVE SURVEYS:
+${((data.activeSurveys as any[]) || []).map((s: any) => `📝 "${s.title}" - ${s.description || 'No description'} (Questions: ${s.questionsCount || 0}, Responses: ${s.responsesCount || 0})`).join('\n') || 'No active surveys'}
 `;
       }
     } catch (e) {
@@ -640,9 +508,13 @@ Example: "Открываю календарь... 📅 <NAVIGATE>/calendar</NAVIG
 DO NOT navigate! Just help them with their request using <ACTION> tags if needed, or provide information.`;
     }
 
-    const result = await streamText({
-      model: groq('llama-3.3-70b-versatile'),
-      system: `${roleBasedPrompt}
+    // Try Groq first, fallback to Google Gemini if rate limited
+    let result;
+    try {
+      console.log('🔄 Trying Groq AI...');
+      result = await streamText({
+        model: groq('llama-3.3-70b-versatile'),
+        system: `${roleBasedPrompt}
 
 ${dateContext}
 
@@ -662,9 +534,6 @@ CORE CAPABILITIES:
 - Presence status: who is available, in meeting, in call, out of office, busy
 - Supervisor relationships: who reports to whom, who manages whom
 - Employee info: department, position, contact details, type (staff/contractor)
-- **SURVEYS** - When user asks about surveys, ALWAYS show the ACTUAL survey data from "ALL SURVEYS IN ORGANIZATION" section above. If there are surveys listed, show them to user. If truly empty, say "no surveys found in database".
-- **GOALS** - Show goals and OKRs from the system
-- **UNREAD MESSAGES & NOTIFICATIONS** - When user asks "есть ли непрочитанные?" or "unread messages" - ALWAYS use the "YOUR NOTIFICATIONS & MESSAGES" section to answer. Show exact count of unread messages and notifications.
 
 CRITICAL RULE FOR LEAVE BOOKING:
 - When user says "хочу отпуск", "book leave", "request vacation", "организуй отпуск" → GENERATE <ACTION> TAG!
@@ -863,16 +732,74 @@ IMPORTANT:
 - If dates are not specified, ask the user for them before booking
 
 When asked about specific employees, use the COMPLETE SYSTEM DATA above to give precise answers.`,
-      messages,
-    });
+        messages,
+      });
+    } catch (groqError: any) {
+      // Check if it's a rate limit error
+      const isRateLimit =
+        groqError?.cause?.message?.includes('rate_limit') ||
+        groqError?.message?.includes('rate_limit') ||
+        groqError?.statusCode === 429;
 
-    console.log(
-      '📤 Messages to AI:',
-      messages.length,
-      'last:',
-      messages[messages.length - 1]?.content?.slice(0, 30),
-    );
-    console.log('✅ OpenAI response received');
+      if (isRateLimit) {
+        console.log('⚠️ Groq rate limited, falling back to Google Gemini...');
+
+        // Fallback to Google Gemini
+        const systemPrompt = `${roleBasedPrompt}
+
+${dateContext}
+
+${userContext}${aiInsights}${fullContext}${conflictCheckData}
+${userId ? `CURRENT USER ID: ${userId}` : ''}
+${navigationHint}
+
+CORE CAPABILITIES:
+- Information about ANY employee's leave balances, attendance, schedule (based on role permissions)
+- Questions about leave policies
+- Recommendations for optimal leave dates
+- Information about team availability and calendar
+- General HR questions
+- **BOOKING LEAVES, SICK DAYS, VACATIONS** — you can submit requests on behalf of the employee!
+- Answering questions like "Is John in today?", "When is Anna on vacation?", "Who is on leave this week?"
+- Task management: who has what tasks, what's their status, deadlines, priorities
+- Presence status: who is available, in meeting, in call, out of office, busy
+- Supervisor relationships: who reports to whom, who manages whom
+- Employee info: department, position, contact details, type (staff/contractor)
+
+CRITICAL RULE FOR LEAVE BOOKING:
+- When user says "хочу отпуск", "book leave", "request vacation", "организуй отпуск" → GENERATE <ACTION> TAG!
+- DO NOT navigate to /leaves page when user wants to BOOK a leave!
+- Only navigate to /leaves when user explicitly says "show leaves", "view my leaves", "покажи отпуска"
+- <ACTION> tag is used for CREATING/EDITING/DELETING leaves
+- <NAVIGATE> tag is used only for VIEWING pages
+- If user does not specify dates for leave booking → ASK for dates, do NOT navigate!
+- **NAVIGATION** - ONLY when user EXPLICITLY says "открой страницу...", "покажи страницу...", "перейди на...", "open page...", "show page...", "go to..."
+  Use <NAVIGATE>route</NAVIGATE> tags ONLY for explicit navigation requests.
+
+IMPORTANT:
+- You have FULL ACCESS to all employee data — use it to answer any question about any employee
+- Always use exact numbers and names from the data above
+- Check if user has enough balance before booking
+- Be helpful, concise, and professional
+- Use emojis occasionally to be friendly 😊
+- **ALWAYS respond in the same language as the user's question**
+- ${langInstruction}
+- All leave requests go to admin for approval — inform the user about this
+- If dates are not specified, ask the user for them before booking
+
+When asked about specific employees, use the COMPLETE SYSTEM DATA above to give precise answers.`;
+
+        result = await streamText({
+          model: google('gemini-2.0-flash'),
+          system: systemPrompt,
+          messages,
+        });
+      } else {
+        throw groqError;
+      }
+    }
+
+    console.log('✅ AI response received');
     return result.toTextStreamResponse();
   } catch (error) {
     console.error('❌ Chat API error:', error);
