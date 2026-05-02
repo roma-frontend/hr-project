@@ -1,5 +1,4 @@
 import { groq } from '@ai-sdk/groq';
-import { google } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { buildRoleBasedPrompt, detectIntent } from '@/lib/aiAssistant';
 import type { UserRole } from '@/lib/aiAssistant';
@@ -513,7 +512,7 @@ DO NOT navigate! Just help them with their request using <ACTION> tags if needed
     try {
       console.log('🔄 Trying Groq AI (no retry)...');
       result = await streamText({
-        model: google('gemini-2.0-flash'),
+        model: groq('llama-3.1-8b-instant'),
         maxRetries: 0,
         system: `${roleBasedPrompt}
 
