@@ -513,7 +513,7 @@ DO NOT navigate! Just help them with their request using <ACTION> tags if needed
     try {
       console.log('🔄 Trying Groq AI (no retry)...');
       result = await streamText({
-        model: groq('llama-3.3-70b-versatile', { parallelToolCalls: false }),
+        model: google('gemini-2.0-flash'),
         maxRetries: 0,
         system: `${roleBasedPrompt}
 
