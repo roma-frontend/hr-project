@@ -454,7 +454,7 @@ AVAILABLE DRIVERS:
 ${availableDriversContextInfo || 'No drivers available'}
 ${availableDriversInfo || ''}
 
-ACTIVE SURVEYS:
+ALL SURVEYS IN ORGANIZATION:
 ${(() => {
   const surveyList = (data.surveys as any[]) || [];
   console.log(
@@ -462,13 +462,17 @@ ${(() => {
     surveyList.length,
     surveyList.map((s: any) => s.title),
   );
-  if (surveyList.length === 0) return '📝 No surveys found in the system';
-  return surveyList
-    .map(
-      (s: any) =>
-        `📝 "${s.title}" - Status: ${s.status || 'unknown'} | Responses: ${s.responseCount || 0}${s.description ? ` | ${s.description}` : ''}`,
-    )
-    .join('\n');
+  if (surveyList.length === 0)
+    return '📝 No surveys found in the system - tell user there are no surveys';
+  return (
+    '📝 AVAILABLE SURVEYS (show ALL, not just active):\n' +
+    surveyList
+      .map(
+        (s: any) =>
+          `• "${s.title}" - Status: ${s.status || 'unknown'} | Responses: ${s.responseCount || 0}${s.description ? ` | ${s.description}` : ''}`,
+      )
+      .join('\n')
+  );
 })()}
 `;
       }

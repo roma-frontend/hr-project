@@ -3528,7 +3528,8 @@
     "thinking": "Analyzing...",
     "bookDriver": "Book Driver",
     "submitting": "Submitting...",
-    "openAssistant": "Open AI assistant"
+    "openAssistant": "Open AI assistant",
+    "closeChat": "Close chat"
   },
   "analytics": {
     "approvalRate": "Approval Rate",
