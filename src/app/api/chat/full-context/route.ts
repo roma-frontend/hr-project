@@ -58,14 +58,21 @@ export async function GET(req: NextRequest) {
     let allSurveys: any[] = [];
     if (orgId) {
       try {
+        console.log('[Full Context] Fetching surveys for orgId:', orgId, typeof orgId);
         allSurveys = await fetchQuery(api.surveys.listSurveys, {
-          organizationId: orgId,
+          organizationId: orgId as any, // Convex will validate
           limit: 20,
         });
-        console.log('[Full Context] Surveys fetched:', allSurveys?.length);
+        console.log(
+          '[Full Context] Surveys fetched:',
+          allSurveys?.length,
+          allSurveys?.map((s: any) => s.title),
+        );
       } catch (e) {
         console.warn('Failed to fetch surveys:', e);
       }
+    } else {
+      console.log('[Full Context] No orgId, skipping surveys fetch');
     }
 
     // Fetch events if we have an organization
