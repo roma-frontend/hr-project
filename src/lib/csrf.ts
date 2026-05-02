@@ -12,8 +12,9 @@ const CSRF_SECRET =
 
 // Assert for TypeScript — guaranteed to be a string
 const secret: string = CSRF_SECRET;
-const CSRF_TOKEN_NAME = 'X-CSRF-Token';
-const CSRF_COOKIE_NAME = 'csrf-token';
+
+export const CSRF_TOKEN_NAME = 'X-CSRF-Token';
+export const CSRF_COOKIE_NAME = 'csrf-token';
 
 /**
  * Generate CSRF token
@@ -28,7 +29,6 @@ export function generateCsrfToken(): string {
 export function createCsrfToken(): { token: string; signature: string } {
   const token = generateCsrfToken();
   const signature = crypto.createHmac('sha256', secret).update(token).digest('hex');
-
   return { token, signature };
 }
 
@@ -37,6 +37,9 @@ export function createCsrfToken(): { token: string; signature: string } {
  */
 export function verifyCsrfToken(token: string, signature: string): boolean {
   const expectedSignature = crypto.createHmac('sha256', secret).update(token).digest('hex');
+
+  // ✅ timingSafeEqual throws if buffers have different length
+  if (signature.length !== expectedSignature.length) return false;
 
   // Use constant-time comparison to prevent timing attacks
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
@@ -49,9 +52,7 @@ export function verifyCsrfFromRequest(request: Request): boolean {
   const token = request.headers.get(CSRF_TOKEN_NAME);
   const signature = request.headers.get(`${CSRF_TOKEN_NAME}-Signature`);
 
-  if (!token || !signature) {
-    return false;
-  }
+  if (!token || !signature) return false;
 
   try {
     return verifyCsrfToken(token, signature);
@@ -63,11 +64,11 @@ export function verifyCsrfFromRequest(request: Request): boolean {
 /**
  * Methods that require CSRF protection
  */
-export const CSRF_PROTECTED_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH'];
+export const CSRF_PROTECTED_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH'] as const;
 
 /**
  * Check if method requires CSRF protection
  */
 export function requiresCsrfProtection(method: string): boolean {
-  return CSRF_PROTECTED_METHODS.includes(method.toUpperCase());
+  return CSRF_PROTECTED_METHODS.includes(method.toUpperCase() as any);
 }

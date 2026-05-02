@@ -2,45 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyCsrfFromRequest, requiresCsrfProtection } from '@/lib/csrf';
 
 /**
- * CSRF protection middleware for API routes
- * Usage: Apply to all POST/PUT/DELETE/PATCH requests
+ * CSRF protection wrapper for API Route Handlers (App Router)
+ * Apply to POST/PUT/DELETE/PATCH handlers
  */
 export function withCsrfProtection(
   handler: (req: NextRequest) => Promise<Response | NextResponse | undefined>,
 ) {
   return async (req: NextRequest): Promise<Response | NextResponse> => {
-    const result = await handler(req);
-    if (result === undefined) {
-      // Возвращаем 500, если handler не вернул ответ
-      return NextResponse.json(
-        { error: 'Internal Server Error: No response returned from handler.' },
-        { status: 500 },
-      );
-    }
-    // Skip GET requests - they don't modify state
-    if (req.method === 'GET') {
-      const getResult = await handler(req);
-      if (getResult === undefined) {
-        return NextResponse.json(
+    // Safe methods: skip CSRF
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+      const res = await handler(req);
+      return (
+        res ??
+        NextResponse.json(
           { error: 'Internal Server Error: No response returned from handler.' },
           { status: 500 },
+        )
+      );
+    }
+
+    // ✅ requiresCsrfProtection ждёт string -> передаём req.method
+    if (requiresCsrfProtection(req.method)) {
+      // ✅ verifyCsrfFromRequest ждёт Request -> передаём req
+      const valid = verifyCsrfFromRequest(req);
+      if (!valid) {
+        return NextResponse.json(
+          { error: 'CSRF validation failed: Invalid token' },
+          { status: 403 },
         );
       }
-      return getResult;
-    }
-    return result;
-  };
-}
-
-
-
-      return new NextResponse(JSON.stringify({ error: 'CSRF validation failed: Invalid token' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
     }
 
-    // CSRF validation passed, proceed to handler
-    return handler(req);
+    const res = await handler(req);
+    return (
+      res ??
+      NextResponse.json(
+        { error: 'Internal Server Error: No response returned from handler.' },
+        { status: 500 },
+      )
+    );
   };
 }
