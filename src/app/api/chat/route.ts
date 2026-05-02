@@ -474,6 +474,92 @@ ${(() => {
       .join('\n')
   );
 })()}
+
+GOALS & OKR:
+${(() => {
+  const allGoals = (data.goals as any[]) || [];
+  const myGoals = (data.myGoals as any[]) || [];
+  if (allGoals.length === 0 && myGoals.length === 0) return '🎯 No goals found in the system';
+  let result = '🎯 GOALS IN ORGANIZATION:\n';
+  if (allGoals.length > 0) {
+    result += allGoals
+      .slice(0, 10)
+      .map(
+        (g: any) =>
+          `• "${g.title}" - Progress: ${g.progress || 0}% | Status: ${g.status || 'unknown'} | Owner: ${g.ownerName || 'Unknown'}${g.dueDate ? ` | Due: ${g.dueDate}` : ''}`,
+      )
+      .join('\n');
+  }
+  if (myGoals.length > 0) {
+    result += '\n\n🎯 YOUR GOALS:\n';
+    result += myGoals
+      .slice(0, 5)
+      .map(
+        (g: any) =>
+          `• "${g.title}" - Progress: ${g.progress || 0}% | Status: ${g.status || 'unknown'}`,
+      )
+      .join('\n');
+  }
+  return result;
+})()}
+
+RECOGNITION & KUDOS:
+${(() => {
+  const kudos = (data.kudosFeed as any[]) || [];
+  const leaderboard = (data.leaderboard as any[]) || [];
+  if (kudos.length === 0 && leaderboard.length === 0) return '⭐ No recognition data found';
+  let result = '⭐ RECENT KUDOS:\n';
+  if (kudos.length > 0) {
+    result += kudos
+      .slice(0, 5)
+      .map(
+        (k: any) =>
+          `• ${k.senderName} → ${k.receiverName}: "${k.message}"${k.badge ? ` [${k.badge}]` : ''}`,
+      )
+      .join('\n');
+  }
+  if (leaderboard.length > 0) {
+    result += '\n🏆 LEADERBOARD:\n';
+    result += leaderboard
+      .slice(0, 5)
+      .map((l: any) => `#${l.rank} ${l.userName} - ${l.points} points`)
+      .join('\n');
+  }
+  return result;
+})()}
+
+CORPORATE POLICIES:
+${(() => {
+  const docs = (data.corporateDocs as any[]) || [];
+  if (docs.length === 0) return '📋 No corporate documents found';
+  return (
+    '📋 CORPORATE DOCUMENTS:\n' +
+    docs
+      .slice(0, 10)
+      .map((d: any) => `• "${d.title}" - ${d.category || 'General'}`)
+      .join('\n')
+  );
+})()}
+
+${
+  userRole === 'admin' || userRole === 'superadmin' || userRole === 'supervisor'
+    ? `PERFORMANCE REVIEWS:
+${(() => {
+  const reviews = (data.performanceReviews as any[]) || [];
+  if (reviews.length === 0) return '📈 No performance reviews found';
+  return (
+    '📈 PERFORMANCE REVIEWS:\n' +
+    reviews
+      .slice(0, 10)
+      .map(
+        (p: any) =>
+          `• ${p.employeeName} - ${p.status || 'Pending'} | Rating: ${p.rating || 'N/A'} | Period: ${p.period || 'N/A'}`,
+      )
+      .join('\n')
+  );
+})()}`
+    : ''
+}
 `;
       }
     } catch (e) {

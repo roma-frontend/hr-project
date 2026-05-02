@@ -109,6 +109,53 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Fetch Goals/OKR
+    let allGoals: any[] = [];
+    let myGoals: any[] = [];
+    try {
+      allGoals = await fetchQuery(api.goals.listObjectives, { requesterId: requesterId as any });
+      myGoals = await fetchQuery(api.goals.getMyObjectives, { requesterId: requesterId as any });
+      console.log('[Full Context] Goals fetched:', allGoals?.length, 'My goals:', myGoals?.length);
+    } catch (e) {
+      console.warn('Failed to fetch goals:', e);
+    }
+
+    // Fetch Recognition/Kudos (if user role allows)
+    let kudosFeed: any[] = [];
+    let leaderboard: any[] = [];
+    try {
+      kudosFeed = await fetchQuery(api.recognition.getKudosFeed, { limit: 20 });
+      leaderboard = await fetchQuery(api.recognition.getLeaderboard, { limit: 10 });
+      console.log('[Full Context] Kudos fetched:', kudosFeed?.length);
+    } catch (e) {
+      console.warn('Failed to fetch recognition:', e);
+    }
+
+    // Fetch Corporate Policies
+    let corporateDocs: any[] = [];
+    if (orgId) {
+      try {
+        const allDocs = await fetchQuery(api.signatures.listDocuments, {});
+        corporateDocs = (allDocs as any[])?.filter((d: any) => d.organizationId === orgId) || [];
+        console.log('[Full Context] Corporate docs fetched:', corporateDocs?.length);
+      } catch (e) {
+        console.warn('Failed to fetch corporate docs:', e);
+      }
+    }
+
+    // Fetch Performance Reviews (admin/supervisor only)
+    let performanceData: any = null;
+    if (isAdmin || isSupervisor) {
+      try {
+        performanceData = await fetchQuery(api.performance.getCycleSummary, {
+          requesterId: requesterId as any,
+        });
+        console.log('[Full Context] Performance data fetched:', performanceData?.cycles?.length);
+      } catch (e) {
+        console.warn('Failed to fetch performance data:', e);
+      }
+    }
+
     // Build rich employee map with leave info
     // Filter out superadmins from employee data
     const filteredUsers = (users as any[]).filter((u: any) => u.role !== 'superadmin');
@@ -352,6 +399,62 @@ export async function GET(req: NextRequest) {
         createdBy: s.creator?.name || 'Unknown',
         responseCount: s.responseCount || 0,
       })),
+      // Goals & OKR
+      goals: (allGoals as any[]).map((g: any) => ({
+        goalId: g._id,
+        title: g.title,
+        description: g.description,
+        progress: g.progress,
+        status: g.status,
+        dueDate: g.dueDate,
+        ownerId: g.ownerId,
+        ownerName: g.owner?.name || g.ownerName,
+        keyResults: (g.keyResults || []).map((kr: any) => ({
+          title: kr.title,
+          progress: kr.progress,
+          currentValue: kr.currentValue,
+          targetValue: kr.targetValue,
+        })),
+      })),
+      myGoals: (myGoals as any[]).map((g: any) => ({
+        goalId: g._id,
+        title: g.title,
+        progress: g.progress,
+        status: g.status,
+        dueDate: g.dueDate,
+      })),
+      // Recognition & Kudos
+      kudosFeed: (kudosFeed as any[]).map((k: any) => ({
+        kudosId: k._id,
+        message: k.message,
+        senderName: k.sender?.name || k.senderName,
+        receiverName: k.receiver?.name || k.receiverName,
+        badge: k.badge?.name || k.badgeName,
+        createdAt: k._creationTime,
+      })),
+      leaderboard: (leaderboard as any[]).map((l: any) => ({
+        userId: l.userId,
+        userName: l.user?.name || l.userName,
+        points: l.totalPoints,
+        rank: l.rank,
+      })),
+      // Corporate Policies
+      corporateDocs: (corporateDocs as any[]).map((d: any) => ({
+        docId: d._id,
+        title: d.title,
+        category: d.category,
+        createdAt: d._creationTime,
+      })),
+      // Performance Reviews (admin/supervisor only)
+      performanceReviews: (performanceData?.cycles || []).map((c: any) => ({
+        cycleId: c._id,
+        name: c.name,
+        status: c.status,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        totalParticipants: c.totalParticipants || 0,
+        completedReviews: c.completedReviews || 0,
+      })),
     });
   } catch (error) {
     console.error('Full context error:', error);
@@ -365,6 +468,12 @@ export async function GET(req: NextRequest) {
       driverRequests: [],
       availableDrivers: [],
       surveys: [],
+      goals: [],
+      myGoals: [],
+      kudosFeed: [],
+      leaderboard: [],
+      corporateDocs: [],
+      performanceReviews: [],
     });
   }
 }

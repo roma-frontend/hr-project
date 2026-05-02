@@ -779,6 +779,29 @@ export function ChatWidget() {
         'show surveys': '/surveys',
         'show poll': '/surveys',
         poll: '/surveys',
+
+        цели: '/goals',
+        'покажи цели': '/goals',
+        'покажи мои цели': '/goals',
+        goals: '/goals',
+        okr: '/goals',
+        'покажи OKR': '/goals',
+
+        kudos: '/recognition',
+        'покажи kudos': '/recognition',
+        'покажи признание': '/recognition',
+        recognition: '/recognition',
+        leaderboard: '/recognition',
+
+        политики: '/corporate',
+        'покажи политики': '/corporate',
+        corporate: '/corporate',
+        документы: '/corporate',
+
+        'performance review': '/performance',
+        'покажи performance': '/performance',
+        performance: '/performance',
+        оценка: '/performance',
       };
 
       for (const [keyword, path] of Object.entries(navigationMap)) {
