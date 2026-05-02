@@ -771,6 +771,14 @@ export function ChatWidget() {
         profile: '/profile',
         'мой профиль': '/profile',
         'my profile': '/profile',
+
+        'покажи опрос': '/surveys',
+        'покажи опросы': '/surveys',
+        опросы: '/surveys',
+        surveys: '/surveys',
+        'show surveys': '/surveys',
+        'show poll': '/surveys',
+        poll: '/surveys',
       };
 
       for (const [keyword, path] of Object.entries(navigationMap)) {
