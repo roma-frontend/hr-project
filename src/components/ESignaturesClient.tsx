@@ -35,7 +35,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
@@ -160,7 +166,12 @@ interface CreateDocumentWizardProps {
   userId: Id<'users'>;
 }
 
-function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateDocumentWizardProps) {
+function CreateDocumentWizard({
+  open,
+  onClose,
+  organizationId,
+  userId,
+}: CreateDocumentWizardProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
 
@@ -179,7 +190,10 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
   const [expiresAt, setExpiresAt] = useState('');
 
   const templates = useQuery(api.signatures.listTemplates, { organizationId });
-  const employees = useQuery(api.users.getUsersByOrganizationId as never, organizationId ? { organizationId, requesterId: userId } as never : 'skip');
+  const employees = useQuery(
+    api.users.getUsersByOrganizationId as never,
+    organizationId ? ({ organizationId, requesterId: userId } as never) : 'skip',
+  );
   const createDocument = useMutation(api.signatures.createDocument);
 
   const steps = [
@@ -209,7 +223,10 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
         const filtered = prev.filter((s) => s.userId !== user._id);
         return filtered.map((s, i) => ({ ...s, order: i + 1 }));
       }
-      return [...prev, { userId: user._id, name: user.name, email: user.email, order: prev.length + 1 }];
+      return [
+        ...prev,
+        { userId: user._id, name: user.name, email: user.email, order: prev.length + 1 },
+      ];
     });
   };
 
@@ -255,14 +272,20 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
   const employeeList = useMemo(() => {
     if (!employees) return [];
     return (employees as { _id: Id<'users'>; name: string; email: string; role: string }[]).filter(
-      (e) => e.role !== 'superadmin' && e._id !== (userId as string)
+      (e) => e.role !== 'superadmin' && e._id !== (userId as string),
     );
   }, [employees, userId]);
 
   if (!open) return null;
 
   return (
-    <Dialog open={open} onOpenChange={() => { onClose(); resetForm(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={() => {
+        onClose();
+        resetForm();
+      }}
+    >
       <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
         {/* Progress Bar */}
         <div className="relative h-1.5 bg-muted overflow-hidden">
@@ -298,7 +321,9 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
               >
                 {i < step ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
               </motion.div>
-              <span className={`text-xs hidden sm:inline ${i === step ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+              <span
+                className={`text-xs hidden sm:inline ${i === step ? 'text-primary font-medium' : 'text-muted-foreground'}`}
+              >
                 {label}
               </span>
               {i < steps.length - 1 && <div className="w-6 h-0.5 bg-muted-foreground/20" />}
@@ -323,7 +348,12 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                       <Label>{t('signatures.fields.template', 'Template (optional)')}</Label>
                       <Select value={templateId} onValueChange={handleTemplateSelect}>
                         <SelectTrigger className="mt-1">
-                          <SelectValue placeholder={t('signatures.fields.selectTemplate', 'Select a template...')} />
+                          <SelectValue
+                            placeholder={t(
+                              'signatures.fields.selectTemplate',
+                              'Select a template...',
+                            )}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {templates.map((tpl) => (
@@ -341,7 +371,10 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                       className="mt-1"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder={t('signatures.fields.titlePlaceholder', 'e.g., Employment Contract — John Doe')}
+                      placeholder={t(
+                        'signatures.fields.titlePlaceholder',
+                        'e.g., Employment Contract — John Doe',
+                      )}
                     />
                   </div>
                   <div>
@@ -350,7 +383,10 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                       className="mt-1 min-h-[150px]"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder={t('signatures.fields.contentPlaceholder', 'Enter document text...')}
+                      placeholder={t(
+                        'signatures.fields.contentPlaceholder',
+                        'Enter document text...',
+                      )}
                     />
                   </div>
                 </div>
@@ -359,7 +395,10 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
               {step === 1 && (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    {t('signatures.wizard.selectSigners', 'Select employees who need to sign. Order determines signing sequence.')}
+                    {t(
+                      'signatures.wizard.selectSigners',
+                      'Select employees who need to sign. Order determines signing sequence.',
+                    )}
                   </p>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {employeeList.map((emp) => {
@@ -369,7 +408,9 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                           key={emp._id}
                           onClick={() => toggleSigner(emp)}
                           className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                            selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                            selected
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/50'
                           }`}
                         >
                           <Checkbox checked={!!selected} />
@@ -408,19 +449,27 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                   <Card>
                     <CardContent className="p-4 space-y-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">{t('signatures.fields.title', 'Title')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('signatures.fields.title', 'Title')}
+                        </p>
                         <p className="font-medium">{title}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">{t('signatures.fields.content', 'Content')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('signatures.fields.content', 'Content')}
+                        </p>
                         <p className="text-sm whitespace-pre-wrap line-clamp-4">{content}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">{t('signatures.wizard.signers', 'Signers')}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('signatures.wizard.signers', 'Signers')}
+                        </p>
                         <div className="space-y-1 mt-1">
                           {selectedSigners.map((s) => (
                             <div key={s.userId} className="flex items-center gap-2 text-sm">
-                              <Badge variant="outline" className="text-xs">#{s.order}</Badge>
+                              <Badge variant="outline" className="text-xs">
+                                #{s.order}
+                              </Badge>
                               <span>{s.name}</span>
                               <span className="text-muted-foreground">({s.email})</span>
                             </div>
@@ -429,7 +478,9 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
                       </div>
                       {expiresAt && (
                         <div>
-                          <p className="text-xs text-muted-foreground">{t('signatures.fields.expiresAt', 'Expires')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('signatures.fields.expiresAt', 'Expires')}
+                          </p>
                           <p className="text-sm">{new Date(expiresAt).toLocaleDateString()}</p>
                         </div>
                       )}
@@ -446,7 +497,7 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
           <Button
             variant="outline"
             size="sm"
-            onClick={() => step > 0 ? setStep(step - 1) : onClose()}
+            onClick={() => (step > 0 ? setStep(step - 1) : onClose())}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             {step > 0 ? t('common.back', 'Back') : t('common.cancel', 'Cancel')}
@@ -454,7 +505,7 @@ function CreateDocumentWizard({ open, onClose, organizationId, userId }: CreateD
           <Button
             size="sm"
             disabled={!canNext()}
-            onClick={() => step < 2 ? setStep(step + 1) : handleSubmit()}
+            onClick={() => (step < 2 ? setStep(step + 1) : handleSubmit())}
           >
             {step < 2 ? (
               <>
@@ -495,7 +546,7 @@ function SignDocumentDialog({ open, onClose, request, userId }: SignDocumentDial
 
   const doc = useQuery(
     api.signatures.getDocument,
-    request ? { documentId: request.documentId } : 'skip'
+    request ? { documentId: request.documentId } : 'skip',
   );
   const signMutation = useMutation(api.signatures.signDocument);
   const declineMutation = useMutation(api.signatures.declineDocument);
@@ -562,7 +613,9 @@ function SignDocumentDialog({ open, onClose, request, userId }: SignDocumentDial
 
               {!declineMode ? (
                 <div>
-                  <Label className="mb-2 block">{t('signatures.pad.drawSignature', 'Draw your signature below')}</Label>
+                  <Label className="mb-2 block">
+                    {t('signatures.pad.drawSignature', 'Draw your signature below')}
+                  </Label>
                   {signatureData ? (
                     <div className="space-y-2">
                       <div className="border rounded-lg p-3 bg-white">
@@ -576,17 +629,25 @@ function SignDocumentDialog({ open, onClose, request, userId }: SignDocumentDial
                     <SignaturePad onSave={setSignatureData} />
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    {t('signatures.consent', 'By signing, you agree to be legally bound by this document.')}
+                    {t(
+                      'signatures.consent',
+                      'By signing, you agree to be legally bound by this document.',
+                    )}
                   </p>
                 </div>
               ) : (
                 <div>
-                  <Label>{t('signatures.fields.declineReason', 'Reason for declining (optional)')}</Label>
+                  <Label>
+                    {t('signatures.fields.declineReason', 'Reason for declining (optional)')}
+                  </Label>
                   <Textarea
                     className="mt-1"
                     value={declineReason}
                     onChange={(e) => setDeclineReason(e.target.value)}
-                    placeholder={t('signatures.fields.declineReasonPlaceholder', 'Explain why you are declining...')}
+                    placeholder={t(
+                      'signatures.fields.declineReasonPlaceholder',
+                      'Explain why you are declining...',
+                    )}
                   />
                 </div>
               )}
@@ -635,14 +696,8 @@ interface DocumentDetailDialogProps {
 
 function DocumentDetailDialog({ open, onClose, documentId, userId }: DocumentDetailDialogProps) {
   const { t } = useTranslation();
-  const doc = useQuery(
-    api.signatures.getDocument,
-    documentId ? { documentId } : 'skip'
-  );
-  const auditLog = useQuery(
-    api.signatures.getAuditLog,
-    documentId ? { documentId } : 'skip'
-  );
+  const doc = useQuery(api.signatures.getDocument, documentId ? { documentId } : 'skip');
+  const auditLog = useQuery(api.signatures.getAuditLog, documentId ? { documentId } : 'skip');
   const cancelMutation = useMutation(api.signatures.cancelDocument);
   const reminderMutation = useMutation(api.signatures.sendReminder);
 
@@ -701,7 +756,8 @@ function DocumentDetailDialog({ open, onClose, documentId, userId }: DocumentDet
                 <Badge variant="outline">{t(`signatures.status.${doc.status}`, doc.status)}</Badge>
                 {doc.expiresAt && (
                   <span className="text-xs text-muted-foreground">
-                    {t('signatures.expiresOn', 'Expires')}: {new Date(doc.expiresAt).toLocaleDateString()}
+                    {t('signatures.expiresOn', 'Expires')}:{' '}
+                    {new Date(doc.expiresAt).toLocaleDateString()}
                   </span>
                 )}
               </div>
@@ -716,9 +772,14 @@ function DocumentDetailDialog({ open, onClose, documentId, userId }: DocumentDet
                 <h4 className="text-sm font-semibold mb-2">{t('signatures.signers', 'Signers')}</h4>
                 <div className="space-y-2">
                   {doc.requests?.map((req) => (
-                    <div key={req._id} className="flex items-center justify-between p-2 rounded border">
+                    <div
+                      key={req._id}
+                      className="flex items-center justify-between p-2 rounded border"
+                    >
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">#{req.order}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          #{req.order}
+                        </Badge>
                         <span className="text-sm">{req.signerName}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -744,15 +805,22 @@ function DocumentDetailDialog({ open, onClose, documentId, userId }: DocumentDet
               {/* Audit Log */}
               {auditLog && auditLog.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">{t('signatures.auditLog', 'Activity Log')}</h4>
+                  <h4 className="text-sm font-semibold mb-2">
+                    {t('signatures.auditLog', 'Activity Log')}
+                  </h4>
                   <div className="space-y-1 max-h-[150px] overflow-y-auto">
                     {auditLog.map((entry) => {
                       const Icon = actionIcons[entry.action] || FileText;
                       return (
-                        <div key={entry._id} className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                        <div
+                          key={entry._id}
+                          className="flex items-center gap-2 text-xs text-muted-foreground py-1"
+                        >
                           <Icon className="w-3 h-3 shrink-0" />
                           <span>{t(`signatures.actions.${entry.action}`, entry.action)}</span>
-                          <span className="ml-auto">{new Date(entry.timestamp).toLocaleString()}</span>
+                          <span className="ml-auto">
+                            {new Date(entry.timestamp).toLocaleString()}
+                          </span>
                         </div>
                       );
                     })}
@@ -767,12 +835,14 @@ function DocumentDetailDialog({ open, onClose, documentId, userId }: DocumentDet
           <Button variant="outline" size="sm" onClick={onClose}>
             {t('common.close', 'Close')}
           </Button>
-          {doc && doc.createdBy === userId && (doc.status === 'pending' || doc.status === 'partially_signed') && (
-            <Button variant="destructive" size="sm" onClick={handleCancel}>
-              <XCircle className="w-4 h-4 mr-1" />
-              {t('signatures.cancel', 'Cancel Document')}
-            </Button>
-          )}
+          {doc &&
+            doc.createdBy === userId &&
+            (doc.status === 'pending' || doc.status === 'partially_signed') && (
+              <Button variant="destructive" size="sm" onClick={handleCancel}>
+                <XCircle className="w-4 h-4 mr-1" />
+                {t('signatures.cancel', 'Cancel Document')}
+              </Button>
+            )}
         </div>
       </DialogContent>
     </Dialog>
@@ -843,7 +913,10 @@ function TemplateManager({ open, onClose, organizationId, userId }: TemplateMana
                 {t('signatures.createTemplate', 'New Template')}
               </Button>
               {templates?.map((tpl) => (
-                <div key={tpl._id} className="flex items-center justify-between p-3 rounded-lg border">
+                <div
+                  key={tpl._id}
+                  className="flex items-center justify-between p-3 rounded-lg border"
+                >
                   <div>
                     <p className="text-sm font-medium">{tpl.title}</p>
                     <p className="text-xs text-muted-foreground">
@@ -869,7 +942,12 @@ function TemplateManager({ open, onClose, organizationId, userId }: TemplateMana
             <div className="space-y-3">
               <div>
                 <Label>{t('signatures.fields.title', 'Title')}</Label>
-                <Input className="mt-1" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., NDA Agreement" />
+                <Input
+                  className="mt-1"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., NDA Agreement"
+                />
               </div>
               <div>
                 <Label>{t('signatures.fields.category', 'Category')}</Label>
@@ -879,27 +957,47 @@ function TemplateManager({ open, onClose, organizationId, userId }: TemplateMana
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="nda">{t('signatures.category.nda', 'NDA')}</SelectItem>
-                    <SelectItem value="offer">{t('signatures.category.offer', 'Offer Letter')}</SelectItem>
-                    <SelectItem value="contract">{t('signatures.category.contract', 'Contract')}</SelectItem>
-                    <SelectItem value="policy">{t('signatures.category.policy', 'Policy')}</SelectItem>
-                    <SelectItem value="custom">{t('signatures.category.custom', 'Custom')}</SelectItem>
+                    <SelectItem value="offer">
+                      {t('signatures.category.offer', 'Offer Letter')}
+                    </SelectItem>
+                    <SelectItem value="contract">
+                      {t('signatures.category.contract', 'Contract')}
+                    </SelectItem>
+                    <SelectItem value="policy">
+                      {t('signatures.category.policy', 'Policy')}
+                    </SelectItem>
+                    <SelectItem value="custom">
+                      {t('signatures.category.custom', 'Custom')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>{t('signatures.fields.description', 'Description')}</Label>
-                <Input className="mt-1" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <Input
+                  className="mt-1"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
               </div>
               <div>
                 <Label>{t('signatures.fields.content', 'Content')}</Label>
-                <Textarea className="mt-1 min-h-[120px]" value={content} onChange={(e) => setContent(e.target.value)} />
+                <Textarea
+                  className="mt-1 min-h-[120px]"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
               </div>
             </div>
           )}
         </div>
 
         <div className="px-5 py-4 border-t bg-muted/30 flex items-center justify-between">
-          <Button variant="outline" size="sm" onClick={() => creating ? setCreating(false) : onClose()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (creating ? setCreating(false) : onClose())}
+          >
             {creating ? t('common.back', 'Back') : t('common.close', 'Close')}
           </Button>
           {creating && (
@@ -918,9 +1016,7 @@ function TemplateManager({ open, onClose, organizationId, userId }: TemplateMana
 
 export function ESignaturesClient() {
   const { t } = useTranslation();
-  const { user } = useAuthStore(
-    useShallow((state) => ({ user: state.user }))
-  );
+  const { user } = useAuthStore(useShallow((state) => ({ user: state.user })));
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -936,15 +1032,15 @@ export function ESignaturesClient() {
 
   const documents = useQuery(
     api.signatures.listDocuments,
-    organizationId ? { organizationId } : 'skip'
+    organizationId ? { organizationId } : 'skip',
   );
   const myPending = useQuery(
     api.signatures.getMyPendingSignatures,
-    organizationId && userId ? { organizationId, userId } : 'skip'
+    organizationId && userId ? { organizationId, userId } : 'skip',
   );
   const stats = useQuery(
     api.signatures.getStats,
-    organizationId && userId ? { organizationId, userId } : 'skip'
+    organizationId && userId ? { organizationId, userId } : 'skip',
   );
 
   const isAdmin = user?.role === 'admin' || user?.role === 'supervisor';
@@ -963,7 +1059,7 @@ export function ESignaturesClient() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-0 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -974,11 +1070,20 @@ export function ESignaturesClient() {
         </div>
         {isAdmin && (
           <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" onClick={() => setTemplatesOpen(true)} className="flex-1 sm:flex-initial">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTemplatesOpen(true)}
+              className="flex-1 sm:flex-initial"
+            >
               <FileText className="w-4 h-4 mr-1" />
               {t('signatures.templates', 'Templates')}
             </Button>
-            <Button size="sm" onClick={() => setWizardOpen(true)} className="flex-1 sm:flex-initial">
+            <Button
+              size="sm"
+              onClick={() => setWizardOpen(true)}
+              className="flex-1 sm:flex-initial"
+            >
               <Plus className="w-4 h-4 mr-1" />
               {t('signatures.createDocument', 'New Document')}
             </Button>
@@ -996,7 +1101,9 @@ export function ESignaturesClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.pendingMySignature}</p>
-                <p className="text-xs text-muted-foreground">{t('signatures.stats.pending', 'Awaiting My Signature')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('signatures.stats.pending', 'Awaiting My Signature')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -1007,7 +1114,9 @@ export function ESignaturesClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.completed}</p>
-                <p className="text-xs text-muted-foreground">{t('signatures.stats.completed', 'Completed')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('signatures.stats.completed', 'Completed')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -1018,7 +1127,9 @@ export function ESignaturesClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.awaitingOthers}</p>
-                <p className="text-xs text-muted-foreground">{t('signatures.stats.awaitingOthers', 'Awaiting Others')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('signatures.stats.awaitingOthers', 'Awaiting Others')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -1031,7 +1142,10 @@ export function ESignaturesClient() {
           <TabsTrigger value="pending">
             {t('signatures.tabs.mySignatures', 'My Signatures')}
             {myPending && myPending.length > 0 && (
-              <Badge variant="destructive" className="ml-2 text-xs h-5 w-5 p-0 flex items-center justify-center rounded-full">
+              <Badge
+                variant="destructive"
+                className="ml-2 text-xs h-5 w-5 p-0 flex items-center justify-center rounded-full"
+              >
                 {myPending.length}
               </Badge>
             )}
@@ -1059,7 +1173,13 @@ export function ESignaturesClient() {
                 <Card
                   key={req._id}
                   className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSignDialogData({ _id: req._id, documentId: req.documentId, signerName: req.signerName })}
+                  onClick={() =>
+                    setSignDialogData({
+                      _id: req._id,
+                      documentId: req.documentId,
+                      signerName: req.signerName,
+                    })
+                  }
                 >
                   <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -1067,7 +1187,9 @@ export function ESignaturesClient() {
                         <PenTool className="w-5 h-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{req.document?.title ?? 'Document'}</p>
+                        <p className="font-medium text-sm truncate">
+                          {req.document?.title ?? 'Document'}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {t('signatures.signingOrder', 'Order')}: #{req.order}
                         </p>

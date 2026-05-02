@@ -155,14 +155,8 @@ export default function DriverDashboardPage() {
   return (
     <div className="max-w-400 mx-auto px-0 sm:px-4 lg:px-6">
       {/* Header */}
-      <div className="-mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 mb-4 sm:mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
-        <div
-          className="relative p-4 sm:p-6 rounded-xl sm:rounded-2xl overflow-hidden"
-          style={{
-            background:
-              'linear-gradient(135deg, color-mix(in srgb, var(--primary) 90%, var(--background)) 0%, color-mix(in srgb, var(--primary) 70%, var(--background)) 100%)',
-          }}
-        >
+      <div className="-mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 mb-4 sm:mb-6 btn-gradient rounded-xl backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+        <div className="relative p-4 sm:p-6 rounded-xl sm:rounded-2xl overflow-hidden">
           <div
             className="absolute top-[-50%] right-[-10%] w-64 sm:w-125 h-64 sm:h-125 rounded-full pointer-events-none"
             style={{
@@ -185,7 +179,11 @@ export default function DriverDashboardPage() {
               <span className="text-xs sm:text-sm text-white/90">
                 {driver.isAvailable ? t('driver.available') : t('driver.busy')}
               </span>
-              <Switch checked={driver.isAvailable} onCheckedChange={handleToggleAvailability} />
+              <Switch
+                checked={driver.isAvailable}
+                onCheckedChange={handleToggleAvailability}
+                className="border-0"
+              />
             </div>
           </div>
         </div>

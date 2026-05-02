@@ -30,12 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -55,10 +50,7 @@ interface QuestionDraft {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const QUESTION_TYPE_CONFIG: Record<
-  QuestionType,
-  { icon: LucideIcon; labelKey: string }
-> = {
+const QUESTION_TYPE_CONFIG: Record<QuestionType, { icon: LucideIcon; labelKey: string }> = {
   rating: { icon: Star, labelKey: 'surveys.questionType.rating' },
   multiple_choice: { icon: Hash, labelKey: 'surveys.questionType.multipleChoice' },
   text: { icon: MessageSquare, labelKey: 'surveys.questionType.text' },
@@ -81,12 +73,7 @@ interface CreateSurveyWizardProps {
   createdBy: Id<'users'>;
 }
 
-function CreateSurveyWizard({
-  open,
-  onClose,
-  organizationId,
-  createdBy,
-}: CreateSurveyWizardProps) {
+function CreateSurveyWizard({ open, onClose, organizationId, createdBy }: CreateSurveyWizardProps) {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [title, setTitle] = useState('');
@@ -104,17 +91,29 @@ function CreateSurveyWizard({
   const createSurveyMutation = useMutation(api.surveys.createSurvey);
 
   const steps = [
-    { id: 'info', title: t('surveys.wizard.surveyInfo'), icon: <ClipboardList className="w-4 h-4" /> },
-    { id: 'questions', title: t('surveys.wizard.questions'), icon: <MessageSquare className="w-4 h-4" /> },
+    {
+      id: 'info',
+      title: t('surveys.wizard.surveyInfo'),
+      icon: <ClipboardList className="w-4 h-4" />,
+    },
+    {
+      id: 'questions',
+      title: t('surveys.wizard.questions'),
+      icon: <MessageSquare className="w-4 h-4" />,
+    },
     { id: 'review', title: t('surveys.wizard.review'), icon: <CheckCircle className="w-4 h-4" /> },
   ];
 
   const canGoNext = (): boolean => {
     switch (currentStep) {
-      case 0: return !!title.trim();
-      case 1: return questions.length > 0;
-      case 2: return true;
-      default: return true;
+      case 0:
+        return !!title.trim();
+      case 1:
+        return questions.length > 0;
+      case 2:
+        return true;
+      default:
+        return true;
     }
   };
 
@@ -342,9 +341,7 @@ function CreateSurveyWizard({
                   {/* Question text */}
                   <Input
                     value={newQuestion.text}
-                    onChange={(e) =>
-                      setNewQuestion((p) => ({ ...p, text: e.target.value }))
-                    }
+                    onChange={(e) => setNewQuestion((p) => ({ ...p, text: e.target.value }))}
                     placeholder={t('surveys.form.questionTextPlaceholder')}
                     className="text-sm"
                   />
@@ -418,7 +415,9 @@ function CreateSurveyWizard({
                   </div>
                   {description && (
                     <div>
-                      <p className="text-xs text-muted-foreground">{t('surveys.form.description')}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('surveys.form.description')}
+                      </p>
                       <p className="text-sm">{description}</p>
                     </div>
                   )}
@@ -437,13 +436,8 @@ function CreateSurveyWizard({
                   {questions.map((q, idx) => {
                     const TypeIcon = QUESTION_TYPE_CONFIG[q.type].icon;
                     return (
-                      <div
-                        key={idx}
-                        className="flex items-start gap-2 p-2 rounded border"
-                      >
-                        <span className="text-xs text-muted-foreground mt-0.5">
-                          {idx + 1}.
-                        </span>
+                      <div key={idx} className="flex items-start gap-2 p-2 rounded border">
+                        <span className="text-xs text-muted-foreground mt-0.5">{idx + 1}.</span>
                         <TypeIcon className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm">{q.text}</p>
@@ -518,10 +512,7 @@ function TakeSurveyDialog({
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const surveyData = useQuery(
-    api.surveys.getSurveyWithQuestions,
-    surveyId ? { surveyId } : 'skip',
-  );
+  const surveyData = useQuery(api.surveys.getSurveyWithQuestions, surveyId ? { surveyId } : 'skip');
 
   const submitMutation = useMutation(api.surveys.submitResponse);
 
@@ -590,9 +581,7 @@ function TakeSurveyDialog({
         <DialogHeader>
           <DialogTitle>{surveyData.title}</DialogTitle>
           {surveyData.description && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {surveyData.description}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">{surveyData.description}</p>
           )}
         </DialogHeader>
 
@@ -600,20 +589,14 @@ function TakeSurveyDialog({
           {surveyData.questions.map((question, idx) => (
             <div key={question._id} className="space-y-2">
               <div className="flex items-start gap-2">
-                <span className="text-xs text-muted-foreground font-mono mt-0.5">
-                  {idx + 1}.
-                </span>
+                <span className="text-xs text-muted-foreground font-mono mt-0.5">{idx + 1}.</span>
                 <div className="flex-1">
                   <p className="text-sm font-medium">
                     {question.text}
-                    {question.isRequired && (
-                      <span className="text-destructive ml-1">*</span>
-                    )}
+                    {question.isRequired && <span className="text-destructive ml-1">*</span>}
                   </p>
                   {question.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {question.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{question.description}</p>
                   )}
                 </div>
               </div>
@@ -633,9 +616,7 @@ function TakeSurveyDialog({
                       }`}
                     >
                       <Star
-                        className={`h-4 w-4 ${
-                          answers[question._id] >= val ? 'fill-current' : ''
-                        }`}
+                        className={`h-4 w-4 ${answers[question._id] >= val ? 'fill-current' : ''}`}
                       />
                     </button>
                   ))}
@@ -679,9 +660,7 @@ function TakeSurveyDialog({
                           handleAnswer(question._id, updated);
                         }}
                         className={`w-full text-left px-3 py-2 rounded-md border text-sm transition-all ${
-                          selected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:bg-muted'
+                          selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'
                         }`}
                       >
                         {option}
@@ -797,9 +776,7 @@ function SurveyResultsDialog({
                 {/* Rating / NPS average */}
                 {(qr.question.type === 'rating' || qr.question.type === 'nps') && (
                   <div className="flex items-center gap-3">
-                    <div className="text-2xl font-bold text-primary">
-                      {qr.average?.toFixed(1)}
-                    </div>
+                    <div className="text-2xl font-bold text-primary">{qr.average?.toFixed(1)}</div>
                     <div className="text-xs text-muted-foreground">
                       / {qr.question.type === 'nps' ? '10' : '5'} avg
                       <br />
@@ -835,10 +812,18 @@ function SurveyResultsDialog({
                 {qr.question.type === 'yes_no' && (
                   <div className="flex gap-4 text-sm">
                     <span className="text-green-600">
-                      👍 {qr.yesCount} ({qr.totalResponses > 0 ? Math.round((qr.yesCount / qr.totalResponses) * 100) : 0}%)
+                      👍 {qr.yesCount} (
+                      {qr.totalResponses > 0
+                        ? Math.round((qr.yesCount / qr.totalResponses) * 100)
+                        : 0}
+                      %)
                     </span>
                     <span className="text-red-600">
-                      👎 {qr.noCount} ({qr.totalResponses > 0 ? Math.round((qr.noCount / qr.totalResponses) * 100) : 0}%)
+                      👎 {qr.noCount} (
+                      {qr.totalResponses > 0
+                        ? Math.round((qr.noCount / qr.totalResponses) * 100)
+                        : 0}
+                      %)
                     </span>
                   </div>
                 )}
@@ -933,17 +918,13 @@ export function SurveysClient() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6 p-0 sm:p-4 sm:p-6 lg:p-8">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              {t('surveys.title')}
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {t('surveys.subtitle')}
-            </p>
+            <h1 className="text-2xl font-bold flex items-center gap-2">{t('surveys.title')}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{t('surveys.subtitle')}</p>
           </div>
           {isAdmin && (
             <Button onClick={() => setShowCreateWizard(true)} className="gap-2 w-full sm:w-auto">
@@ -955,10 +936,7 @@ export function SurveysClient() {
       </div>
 
       {/* Status filter tabs */}
-      <Tabs
-        value={statusFilter}
-        onValueChange={(v) => setStatusFilter(v as any)}
-      >
+      <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
         <TabsList>
           <TabsTrigger value="all">{t('surveys.filter.all')}</TabsTrigger>
           <TabsTrigger value="active">{t('surveys.filter.active')}</TabsTrigger>
@@ -993,9 +971,7 @@ export function SurveysClient() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-base truncate">
-                        {survey.title}
-                      </h3>
+                      <h3 className="font-semibold text-base truncate">{survey.title}</h3>
                       <Badge className={STATUS_COLORS[survey.status] || ''}>
                         {t(`surveys.status.${survey.status}`)}
                       </Badge>

@@ -135,7 +135,7 @@ export default function CareersGlobalPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-32 pb-16 px-4 text-center relative overflow-hidden">
+      <section className="pt-20 sm:pt-32 pb-16 px-4 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-20 left-1/4 w-72 h-72 rounded-full opacity-20 blur-3xl"

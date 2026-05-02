@@ -1,7 +1,5 @@
 'use client';
 
-import './drivers-animations.css';
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -489,7 +487,7 @@ export default function DriversPage() {
 
       {showRequestWizard && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl">
+          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl">
             <div className="p-6 border-b border-(--border) flex items-center justify-between">
               <h2 className="text-xl font-bold">{t('driver.requestDriver', 'Request Driver')}</h2>
               <button
@@ -544,7 +542,7 @@ export default function DriversPage() {
       {showTripDetails && selectedRequest && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <div
-            className="w-full max-w-3xl h-[85vh] rounded-2xl bg-(--card) shadow-2xl flex flex-col overflow-hidden"
+            className="w-full max-w-3xl h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
             style={{ maxHeight: '85vh' }}
           >
             <TripDetailsModal

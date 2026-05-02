@@ -5,7 +5,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useWizardContext } from '@/components/ui/wizard';
+import { uploadTaskAttachment } from '@/actions/cloudinary';
+import { toast } from 'sonner';
+import { Upload, FileText, Image as ImageIcon, Video, Music, File } from 'lucide-react';
+import { AnimatePresence, motion } from '@/lib/cssMotion';
 
 // ═══════════════════════════════════════════════════════════════
 // Text Input Step
@@ -433,6 +438,321 @@ export function CheckboxStep({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// File Upload Step
+// ═══════════════════════════════════════════════════════════════
+
+interface FileUploadStepProps {
+  stepData?: Record<string, string | number | boolean | null | string[]>;
+  updateStepData?: (key: string, value: string | number | boolean | null | string[]) => void;
+  field: string;
+  label: string;
+  description?: string;
+  maxFiles?: number;
+  maxSizeMB?: number;
+}
+
+interface AttachmentData {
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
+interface LocalFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  preview?: string;
+  base64?: string;
+}
+
+const FILE_ICONS: Record<string, React.ReactNode> = {
+  'application/pdf': <FileText className="w-8 h-8 text-red-400" />,
+  'image/': <ImageIcon className="w-8 h-8 text-blue-400" />,
+  'video/': <Video className="w-8 h-8 text-purple-400" />,
+  'audio/': <Music className="w-8 h-8 text-green-400" />,
+};
+
+function getFileIcon(type: string): React.ReactNode {
+  for (const [key, icon] of Object.entries(FILE_ICONS)) {
+    if (type.startsWith(key)) return icon;
+  }
+  return <File className="w-8 h-8 text-gray-400" />;
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function FileUploadStep({
+  stepData,
+  updateStepData,
+  field,
+  label,
+  description,
+  maxFiles = 5,
+  maxSizeMB = 1,
+}: FileUploadStepProps) {
+  const context = useWizardContext();
+  const data = stepData ?? context.stepData;
+  const update = updateStepData ?? context.updateStepData;
+
+  const [localFiles, setLocalFiles] = useState<LocalFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const storedJson = (data[field] as string | undefined) || '[]';
+  const storedAttachments: AttachmentData[] = JSON.parse(storedJson);
+
+  const handleFileSelect = useCallback(
+    async (files: FileList | File[]) => {
+      const fileArray = Array.from(files);
+      const validFiles = fileArray
+        .filter((f) => {
+          const sizeMB = f.size / (1024 * 1024);
+          if (sizeMB > maxSizeMB) {
+            toast.error(`File "${f.name}" exceeds ${maxSizeMB}MB limit`);
+            return false;
+          }
+          return true;
+        })
+        .slice(0, maxFiles - localFiles.length);
+
+      if (validFiles.length === 0) return;
+
+      const newFiles: LocalFile[] = await Promise.all(
+        validFiles.map(async (file) => {
+          let preview: string | undefined;
+          if (file.type.startsWith('image/')) {
+            preview = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+          }
+
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+
+          return {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            preview,
+            base64,
+          };
+        }),
+      );
+
+      setLocalFiles((prev) => [...prev, ...newFiles]);
+
+      // Auto-upload files immediately after selection
+      await uploadFiles([...localFiles, ...newFiles]);
+    },
+    [localFiles.length, maxFiles, maxSizeMB, storedAttachments, update],
+  );
+
+  const uploadFiles = async (filesToUpload: LocalFile[]) => {
+    if (filesToUpload.length === 0) return;
+
+    setUploading(true);
+    try {
+      const newAttachments: AttachmentData[] = [];
+
+      for (const file of filesToUpload) {
+        if (file.base64) {
+          const url = await uploadTaskAttachment(file.base64, file.name);
+          newAttachments.push({
+            url,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+        }
+      }
+
+      const allAttachments = [...storedAttachments, ...newAttachments];
+      update(field as string, JSON.stringify(allAttachments) as string);
+      setLocalFiles([]);
+
+      toast.success(`Uploaded ${newAttachments.length} file(s)`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload files');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveLocal = (id: string) => {
+    setLocalFiles((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const handleRemoveUploaded = (url: string) => {
+    const filtered = storedAttachments.filter((a) => a.url !== url);
+    update(field as string, JSON.stringify(filtered) as string);
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files);
+    }
+  };
+
+  return (
+    <div className="space-y-3 md:space-y-4">
+      <div>
+        <Label className="text-(--text-primary) text-sm md:text-base">{label}</Label>
+        {description && (
+          <p className="text-[10px] md:text-xs text-(--text-muted) mt-1">{description}</p>
+        )}
+      </div>
+
+      {/* Drop zone */}
+      <div
+        className={cn(
+          'border-2 border-dashed rounded-xl p-4 md:p-6 text-center transition-colors cursor-pointer',
+          dragActive
+            ? 'border-(--primary) bg-(--primary)/5'
+            : 'border-(--border) hover:border-(--primary)/50 hover:bg-(--background-subtle)',
+        )}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="*/*"
+          className="hidden"
+          onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
+        />
+        <Upload className="w-8 h-8 mx-auto mb-2 text-(--text-muted)" />
+        <p className="text-sm text-(--text-secondary)">Drag files here or click to select</p>
+        <p className="text-xs text-(--text-muted) mt-1">
+          Max {maxFiles} files, up to {maxSizeMB}MB each
+        </p>
+      </div>
+
+      {/* Local files preview (not yet uploaded) */}
+      <AnimatePresence>
+        {localFiles.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-(--text-muted)">Uploading...</p>
+            <div className="grid grid-cols-2 gap-2">
+              {localFiles.map((file) => (
+                <motion.div
+                  key={file.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="relative rounded-lg border border-(--border) overflow-hidden bg-(--background-subtle)"
+                >
+                  {file.preview ? (
+                    <img src={file.preview} alt={file.name} className="w-full h-20 object-cover" />
+                  ) : (
+                    <div className="h-20 flex items-center justify-center">
+                      {getFileIcon(file.type)}
+                    </div>
+                  )}
+                  <div className="p-2">
+                    <p className="text-xs font-medium text-(--text-primary) truncate">
+                      {file.name}
+                    </p>
+                    <p className="text-[10px] text-(--text-muted)">{formatSize(file.size)}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {uploading && (
+              <p className="text-xs text-(--text-muted) text-center">Uploading to Cloudinary...</p>
+            )}
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Already uploaded files */}
+      <AnimatePresence>
+        {storedAttachments.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-(--text-muted)">Uploaded:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {storedAttachments.map((attachment) => {
+                const isImage = attachment.type.startsWith('image/');
+
+                return (
+                  <motion.div
+                    key={attachment.url}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative rounded-lg border border-(--border) overflow-hidden bg-(--background-subtle)"
+                  >
+                    {isImage ? (
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="w-full h-20 object-cover"
+                      />
+                    ) : (
+                      <div className="h-20 flex items-center justify-center">
+                        {getFileIcon(attachment.type)}
+                      </div>
+                    )}
+                    <div className="p-2">
+                      <p className="text-xs font-medium text-(--text-primary) truncate">
+                        {attachment.name}
+                      </p>
+                      <p className="text-[10px] text-(--text-muted)">
+                        {formatSize(attachment.size)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveUploaded(attachment.url);
+                      }}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

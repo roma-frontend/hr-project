@@ -27,12 +27,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -67,13 +62,20 @@ interface KRInput {
 function getPeriodDates(type: PeriodType, year: number): { start: number; end: number } {
   const y = year;
   switch (type) {
-    case 'Q1': return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 2, 31).getTime() };
-    case 'Q2': return { start: new Date(y, 3, 1).getTime(), end: new Date(y, 5, 30).getTime() };
-    case 'Q3': return { start: new Date(y, 6, 1).getTime(), end: new Date(y, 8, 30).getTime() };
-    case 'Q4': return { start: new Date(y, 9, 1).getTime(), end: new Date(y, 11, 31).getTime() };
-    case 'H1': return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 5, 30).getTime() };
-    case 'H2': return { start: new Date(y, 6, 1).getTime(), end: new Date(y, 11, 31).getTime() };
-    case 'FY': return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 11, 31).getTime() };
+    case 'Q1':
+      return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 2, 31).getTime() };
+    case 'Q2':
+      return { start: new Date(y, 3, 1).getTime(), end: new Date(y, 5, 30).getTime() };
+    case 'Q3':
+      return { start: new Date(y, 6, 1).getTime(), end: new Date(y, 8, 30).getTime() };
+    case 'Q4':
+      return { start: new Date(y, 9, 1).getTime(), end: new Date(y, 11, 31).getTime() };
+    case 'H1':
+      return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 5, 30).getTime() };
+    case 'H2':
+      return { start: new Date(y, 6, 1).getTime(), end: new Date(y, 11, 31).getTime() };
+    case 'FY':
+      return { start: new Date(y, 0, 1).getTime(), end: new Date(y, 11, 31).getTime() };
   }
 }
 
@@ -85,10 +87,14 @@ function getProgressColor(progress: number): string {
 
 function getConfidenceBadge(confidence: string) {
   switch (confidence) {
-    case 'high': return { color: 'bg-green-100 text-green-800', label: 'High' };
-    case 'medium': return { color: 'bg-yellow-100 text-yellow-800', label: 'Medium' };
-    case 'low': return { color: 'bg-red-100 text-red-800', label: 'Low' };
-    default: return { color: 'bg-gray-100 text-gray-600', label: '—' };
+    case 'high':
+      return { color: 'bg-green-100 text-green-800', label: 'High' };
+    case 'medium':
+      return { color: 'bg-yellow-100 text-yellow-800', label: 'Medium' };
+    case 'low':
+      return { color: 'bg-red-100 text-red-800', label: 'Low' };
+    default:
+      return { color: 'bg-gray-100 text-gray-600', label: '—' };
   }
 }
 
@@ -121,7 +127,16 @@ function CreateObjectiveWizard({
   const [periodYear, setPeriodYear] = useState(new Date().getFullYear());
   const [parentId, setParentId] = useState<string>('');
   const [keyResults, setKeyResults] = useState<KRInput[]>([
-    { title: '', description: '', metricType: 'number', direction: 'increase', startValue: 0, targetValue: 100, unit: '', weight: 100 },
+    {
+      title: '',
+      description: '',
+      metricType: 'number',
+      direction: 'increase',
+      startValue: 0,
+      targetValue: 100,
+      unit: '',
+      weight: 100,
+    },
   ]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -131,7 +146,16 @@ function CreateObjectiveWizard({
   const addKR = () => {
     setKeyResults([
       ...keyResults,
-      { title: '', description: '', metricType: 'number', direction: 'increase', startValue: 0, targetValue: 100, unit: '', weight: 0 },
+      {
+        title: '',
+        description: '',
+        metricType: 'number',
+        direction: 'increase',
+        startValue: 0,
+        targetValue: 100,
+        unit: '',
+        weight: 0,
+      },
     ]);
   };
 
@@ -254,245 +278,294 @@ function CreateObjectiveWizard({
 
         {/* Step Content */}
         <div className="px-5 py-4 min-h-[280px] overflow-y-auto max-h-[50vh]">
-      {step === 0 && (
-        <div className="space-y-4">
-          <div>
-            <Label>{t('goals.wizard.titleLabel', 'Objective Title')}</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t('goals.wizard.titlePlaceholder', 'e.g. Increase customer satisfaction')}
-            />
-          </div>
-          <div>
-            <Label>{t('goals.wizard.description', 'Description')}</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('goals.wizard.descPlaceholder', 'What does achieving this look like?')}
-              rows={3}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label>{t('goals.wizard.level', 'Level')}</Label>
-              <Select value={level} onValueChange={(v) => setLevel(v as ObjectiveLevel)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {canCreateCompany && (
-                    <SelectItem value="company">{t('goals.level.company', 'Company')}</SelectItem>
-                  )}
-                  {canCreateTeam && (
-                    <SelectItem value="team">{t('goals.level.team', 'Team')}</SelectItem>
-                  )}
-                  <SelectItem value="individual">{t('goals.level.individual', 'Individual')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {level === 'team' && (
+          {step === 0 && (
+            <div className="space-y-4">
               <div>
-                <Label>{t('goals.wizard.department', 'Department')}</Label>
+                <Label>{t('goals.wizard.titleLabel', 'Objective Title')}</Label>
                 <Input
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  placeholder={t('goals.wizard.deptPlaceholder', 'e.g. Engineering')}
-                />
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label>{t('goals.wizard.period', 'Period')}</Label>
-              <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Q1">Q1</SelectItem>
-                  <SelectItem value="Q2">Q2</SelectItem>
-                  <SelectItem value="Q3">Q3</SelectItem>
-                  <SelectItem value="Q4">Q4</SelectItem>
-                  <SelectItem value="H1">H1</SelectItem>
-                  <SelectItem value="H2">H2</SelectItem>
-                  <SelectItem value="FY">FY</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>{t('goals.wizard.year', 'Year')}</Label>
-              <Select value={String(periodYear)} onValueChange={(v) => setPeriodYear(Number(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
-                  <SelectItem value="2027">2027</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {parentOptions.length > 0 && (
-            <div>
-              <Label>{t('goals.wizard.alignTo', 'Align to Parent Objective')}</Label>
-              <Select value={parentId} onValueChange={setParentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('goals.wizard.noAlignment', 'None (top-level)')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">{t('goals.wizard.noAlignment', 'None (top-level)')}</SelectItem>
-                  {parentOptions.map((p) => (
-                    <SelectItem key={p._id} value={p._id}>
-                      [{p.level}] {p.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 2: Key Results */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t('goals.wizard.krHint', 'Define measurable outcomes. Weights should sum to 100.')}
-          </p>
-          {keyResults.map((kr, i) => (
-            <Card key={i} className="relative">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">
-                    {t('goals.wizard.kr', 'Key Result')} #{i + 1}
-                  </span>
-                  {keyResults.length > 1 && (
-                    <Button variant="ghost" size="sm" onClick={() => removeKR(i)} className="text-destructive h-7">
-                      &times;
-                    </Button>
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t(
+                    'goals.wizard.titlePlaceholder',
+                    'e.g. Increase customer satisfaction',
                   )}
-                </div>
-                <Input
-                  value={kr.title}
-                  onChange={(e) => updateKR(i, 'title', e.target.value)}
-                  placeholder={t('goals.wizard.krTitlePlaceholder', 'e.g. Reach 95% NPS score')}
                 />
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <Label className="text-xs">{t('goals.wizard.metric', 'Metric')}</Label>
-                    <Select value={kr.metricType} onValueChange={(v) => updateKR(i, 'metricType', v)}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="number">{t('goals.metric.number', 'Number')}</SelectItem>
-                        <SelectItem value="percentage">{t('goals.metric.percentage', 'Percentage')}</SelectItem>
-                        <SelectItem value="currency">{t('goals.metric.currency', 'Currency')}</SelectItem>
-                        <SelectItem value="boolean">{t('goals.metric.boolean', 'Yes/No')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">{t('goals.wizard.direction', 'Direction')}</Label>
-                    <Select value={kr.direction} onValueChange={(v) => updateKR(i, 'direction', v)}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="increase">{t('goals.direction.increase', 'Increase')}</SelectItem>
-                        <SelectItem value="decrease">{t('goals.direction.decrease', 'Decrease')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">{t('goals.wizard.start', 'Start')}</Label>
-                    <Input
-                      type="number"
-                      className="h-8 text-xs"
-                      value={kr.startValue}
-                      onChange={(e) => updateKR(i, 'startValue', Number(e.target.value))}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">{t('goals.wizard.target', 'Target')}</Label>
-                    <Input
-                      type="number"
-                      className="h-8 text-xs"
-                      value={kr.targetValue}
-                      onChange={(e) => updateKR(i, 'targetValue', Number(e.target.value))}
-                    />
-                  </div>
+              </div>
+              <div>
+                <Label>{t('goals.wizard.description', 'Description')}</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t(
+                    'goals.wizard.descPlaceholder',
+                    'What does achieving this look like?',
+                  )}
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>{t('goals.wizard.level', 'Level')}</Label>
+                  <Select value={level} onValueChange={(v) => setLevel(v as ObjectiveLevel)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {canCreateCompany && (
+                        <SelectItem value="company">
+                          {t('goals.level.company', 'Company')}
+                        </SelectItem>
+                      )}
+                      {canCreateTeam && (
+                        <SelectItem value="team">{t('goals.level.team', 'Team')}</SelectItem>
+                      )}
+                      <SelectItem value="individual">
+                        {t('goals.level.individual', 'Individual')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                {level === 'team' && (
                   <div>
-                    <Label className="text-xs">{t('goals.wizard.unit', 'Unit')}</Label>
+                    <Label>{t('goals.wizard.department', 'Department')}</Label>
                     <Input
-                      className="h-8 text-xs"
-                      value={kr.unit}
-                      onChange={(e) => updateKR(i, 'unit', e.target.value)}
-                      placeholder={t('goals.wizard.unitPlaceholder', 'e.g. %, $, users')}
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder={t('goals.wizard.deptPlaceholder', 'e.g. Engineering')}
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs">{t('goals.wizard.weight', 'Weight %')}</Label>
-                    <Input
-                      type="number"
-                      className="h-8 text-xs"
-                      value={kr.weight}
-                      onChange={(e) => updateKR(i, 'weight', Number(e.target.value))}
-                      min={0}
-                      max={100}
-                    />
-                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>{t('goals.wizard.period', 'Period')}</Label>
+                  <Select value={periodType} onValueChange={(v) => setPeriodType(v as PeriodType)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Q1">Q1</SelectItem>
+                      <SelectItem value="Q2">Q2</SelectItem>
+                      <SelectItem value="Q3">Q3</SelectItem>
+                      <SelectItem value="Q4">Q4</SelectItem>
+                      <SelectItem value="H1">H1</SelectItem>
+                      <SelectItem value="H2">H2</SelectItem>
+                      <SelectItem value="FY">FY</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-          <Button variant="outline" size="sm" onClick={addKR} className="w-full">
-            <Plus className="h-4 w-4 mr-1" /> {t('goals.wizard.addKR', 'Add Key Result')}
-          </Button>
-          {keyResults.reduce((s, kr) => s + kr.weight, 0) !== 100 && (
-            <p className="text-xs text-destructive">
-              {t('goals.wizard.weightWarning', 'Weights must sum to 100. Current: {{sum}}', {
-                sum: keyResults.reduce((s, kr) => s + kr.weight, 0),
-              })}
-            </p>
+                <div>
+                  <Label>{t('goals.wizard.year', 'Year')}</Label>
+                  <Select
+                    value={String(periodYear)}
+                    onValueChange={(v) => setPeriodYear(Number(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2025">2025</SelectItem>
+                      <SelectItem value="2026">2026</SelectItem>
+                      <SelectItem value="2027">2027</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {parentOptions.length > 0 && (
+                <div>
+                  <Label>{t('goals.wizard.alignTo', 'Align to Parent Objective')}</Label>
+                  <Select value={parentId} onValueChange={setParentId}>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t('goals.wizard.noAlignment', 'None (top-level)')}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">
+                        {t('goals.wizard.noAlignment', 'None (top-level)')}
+                      </SelectItem>
+                      {parentOptions.map((p) => (
+                        <SelectItem key={p._id} value={p._id}>
+                          [{p.level}] {p.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      {/* Step 3: Review */}
-      {step === 2 && (
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-4 space-y-2">
-              <h3 className="font-semibold">{title}</h3>
-              {description && <p className="text-sm text-muted-foreground">{description}</p>}
-              <div className="flex flex-wrap gap-2 text-xs">
-                <Badge variant="outline">{level}</Badge>
-                <Badge variant="outline">{periodType} {periodYear}</Badge>
-                {level === 'team' && department && <Badge variant="outline">{department}</Badge>}
-              </div>
-            </CardContent>
-          </Card>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">{t('goals.wizard.krSummary', 'Key Results')} ({keyResults.length})</h4>
-            {keyResults.map((kr, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm p-2 border rounded">
-                <span className="font-medium w-6 shrink-0">#{i + 1}</span>
-                <span className="flex-1 truncate">{kr.title}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {kr.startValue} → {kr.targetValue} {kr.unit}
-                </Badge>
-                <Badge variant="outline" className="text-xs">{kr.weight}%</Badge>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+          {/* Step 2: Key Results */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t('goals.wizard.krHint', 'Define measurable outcomes. Weights should sum to 100.')}
+              </p>
+              {keyResults.map((kr, i) => (
+                <Card key={i} className="relative">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {t('goals.wizard.kr', 'Key Result')} #{i + 1}
+                      </span>
+                      {keyResults.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeKR(i)}
+                          className="text-destructive h-7"
+                        >
+                          &times;
+                        </Button>
+                      )}
+                    </div>
+                    <Input
+                      value={kr.title}
+                      onChange={(e) => updateKR(i, 'title', e.target.value)}
+                      placeholder={t('goals.wizard.krTitlePlaceholder', 'e.g. Reach 95% NPS score')}
+                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div>
+                        <Label className="text-xs">{t('goals.wizard.metric', 'Metric')}</Label>
+                        <Select
+                          value={kr.metricType}
+                          onValueChange={(v) => updateKR(i, 'metricType', v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="number">
+                              {t('goals.metric.number', 'Number')}
+                            </SelectItem>
+                            <SelectItem value="percentage">
+                              {t('goals.metric.percentage', 'Percentage')}
+                            </SelectItem>
+                            <SelectItem value="currency">
+                              {t('goals.metric.currency', 'Currency')}
+                            </SelectItem>
+                            <SelectItem value="boolean">
+                              {t('goals.metric.boolean', 'Yes/No')}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">
+                          {t('goals.wizard.direction', 'Direction')}
+                        </Label>
+                        <Select
+                          value={kr.direction}
+                          onValueChange={(v) => updateKR(i, 'direction', v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="increase">
+                              {t('goals.direction.increase', 'Increase')}
+                            </SelectItem>
+                            <SelectItem value="decrease">
+                              {t('goals.direction.decrease', 'Decrease')}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">{t('goals.wizard.start', 'Start')}</Label>
+                        <Input
+                          type="number"
+                          className="h-8 text-xs"
+                          value={kr.startValue}
+                          onChange={(e) => updateKR(i, 'startValue', Number(e.target.value))}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">{t('goals.wizard.target', 'Target')}</Label>
+                        <Input
+                          type="number"
+                          className="h-8 text-xs"
+                          value={kr.targetValue}
+                          onChange={(e) => updateKR(i, 'targetValue', Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">{t('goals.wizard.unit', 'Unit')}</Label>
+                        <Input
+                          className="h-8 text-xs"
+                          value={kr.unit}
+                          onChange={(e) => updateKR(i, 'unit', e.target.value)}
+                          placeholder={t('goals.wizard.unitPlaceholder', 'e.g. %, $, users')}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">{t('goals.wizard.weight', 'Weight %')}</Label>
+                        <Input
+                          type="number"
+                          className="h-8 text-xs"
+                          value={kr.weight}
+                          onChange={(e) => updateKR(i, 'weight', Number(e.target.value))}
+                          min={0}
+                          max={100}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              <Button variant="outline" size="sm" onClick={addKR} className="w-full">
+                <Plus className="h-4 w-4 mr-1" /> {t('goals.wizard.addKR', 'Add Key Result')}
+              </Button>
+              {keyResults.reduce((s, kr) => s + kr.weight, 0) !== 100 && (
+                <p className="text-xs text-destructive">
+                  {t('goals.wizard.weightWarning', 'Weights must sum to 100. Current: {{sum}}', {
+                    sum: keyResults.reduce((s, kr) => s + kr.weight, 0),
+                  })}
+                </p>
+              )}
+            </div>
+          )}
 
+          {/* Step 3: Review */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-4 space-y-2">
+                  <h3 className="font-semibold">{title}</h3>
+                  {description && <p className="text-sm text-muted-foreground">{description}</p>}
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="outline">{level}</Badge>
+                    <Badge variant="outline">
+                      {periodType} {periodYear}
+                    </Badge>
+                    {level === 'team' && department && (
+                      <Badge variant="outline">{department}</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">
+                  {t('goals.wizard.krSummary', 'Key Results')} ({keyResults.length})
+                </h4>
+                {keyResults.map((kr, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm p-2 border rounded">
+                    <span className="font-medium w-6 shrink-0">#{i + 1}</span>
+                    <span className="flex-1 truncate">{kr.title}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {kr.startValue} → {kr.targetValue} {kr.unit}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {kr.weight}%
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -507,7 +580,9 @@ function CreateObjectiveWizard({
             </Button>
           ) : (
             <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? t('common.saving', 'Saving...') : t('goals.wizard.create', 'Create Objective')}
+              {submitting
+                ? t('common.saving', 'Saving...')
+                : t('goals.wizard.create', 'Create Objective')}
             </Button>
           )}
         </div>
@@ -574,7 +649,10 @@ function CheckinDialog({
         <div className="flex items-center gap-3">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{t('goals.checkin.current', 'Current')}</p>
-            <p className="text-lg font-bold">{currentValue}{unit}</p>
+            <p className="text-lg font-bold">
+              {currentValue}
+              {unit}
+            </p>
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
           <div className="flex-1">
@@ -599,7 +677,10 @@ function CheckinDialog({
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{t('goals.checkin.target', 'Target')}</p>
-            <p className="text-lg font-bold text-primary">{targetValue}{unit}</p>
+            <p className="text-lg font-bold text-primary">
+              {targetValue}
+              {unit}
+            </p>
           </div>
         </div>
         <div>
@@ -631,7 +712,9 @@ function CheckinDialog({
           />
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>{t('common.cancel', 'Cancel')}</Button>
+          <Button variant="outline" onClick={onClose}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {submitting ? '...' : t('goals.checkin.submit', 'Submit Check-in')}
           </Button>
@@ -650,7 +733,14 @@ function ObjectiveDetailDialog({
 }: {
   objectiveId: Id<'objectives'>;
   onClose: () => void;
-  onCheckin: (kr: { _id: Id<'keyResults'>; title: string; currentValue: number; targetValue: number; unit?: string; metricType: string }) => void;
+  onCheckin: (kr: {
+    _id: Id<'keyResults'>;
+    title: string;
+    currentValue: number;
+    targetValue: number;
+    unit?: string;
+    metricType: string;
+  }) => void;
 }) {
   const { t } = useTranslation();
   const user = useAuthUser();
@@ -658,7 +748,12 @@ function ObjectiveDetailDialog({
   const deleteObjective = useMutation(api.goals.deleteObjective);
   const completeObjective = useMutation(api.goals.completeObjective);
 
-  if (!objective) return <DialogContent className="sm:max-w-2xl"><ShieldLoader /></DialogContent>;
+  if (!objective)
+    return (
+      <DialogContent className="sm:max-w-2xl">
+        <ShieldLoader />
+      </DialogContent>
+    );
 
   const isOwner = user?.id === objective.ownerId;
   const isActive = objective.status === 'active';
@@ -676,8 +771,18 @@ function ObjectiveDetailDialog({
         {/* Meta */}
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">{objective.level}</Badge>
-          <Badge variant="outline">{objective.periodType} {objective.periodYear}</Badge>
-          <Badge className={objective.status === 'active' ? 'bg-green-100 text-green-800' : objective.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}>
+          <Badge variant="outline">
+            {objective.periodType} {objective.periodYear}
+          </Badge>
+          <Badge
+            className={
+              objective.status === 'active'
+                ? 'bg-green-100 text-green-800'
+                : objective.status === 'completed'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-600'
+            }
+          >
             {t(`goals.status.${objective.status}`, objective.status)}
           </Badge>
         </div>
@@ -690,7 +795,9 @@ function ObjectiveDetailDialog({
         <div>
           <div className="flex items-center justify-between text-sm mb-1">
             <span className="font-medium">{t('goals.overallProgress', 'Overall Progress')}</span>
-            <span className={`font-bold ${getProgressColor(objective.progress)}`}>{objective.progress}%</span>
+            <span className={`font-bold ${getProgressColor(objective.progress)}`}>
+              {objective.progress}%
+            </span>
           </div>
           <Progress value={objective.progress} className="h-3" />
         </div>
@@ -710,7 +817,12 @@ function ObjectiveDetailDialog({
                         {getConfidenceBadge(kr.confidence).label}
                       </Badge>
                       {isOwner && isActive && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onCheckin(kr)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => onCheckin(kr)}
+                        >
                           <TrendingUp className="h-3 w-3 mr-1" />
                           {t('goals.checkin.btn', 'Check-in')}
                         </Button>
@@ -718,20 +830,39 @@ function ObjectiveDetailDialog({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{kr.startValue}{kr.unit || ''}</span>
+                    <span>
+                      {kr.startValue}
+                      {kr.unit || ''}
+                    </span>
                     <Progress value={pct} className="h-2 flex-1" />
-                    <span className="font-medium">{kr.currentValue}{kr.unit || ''}</span>
-                    <span>/ {kr.targetValue}{kr.unit || ''}</span>
+                    <span className="font-medium">
+                      {kr.currentValue}
+                      {kr.unit || ''}
+                    </span>
+                    <span>
+                      / {kr.targetValue}
+                      {kr.unit || ''}
+                    </span>
                   </div>
                   {kr.checkins.length > 0 && (
                     <div className="border-t pt-2 mt-2">
-                      <p className="text-xs font-medium mb-1">{t('goals.recentCheckins', 'Recent Check-ins')}</p>
+                      <p className="text-xs font-medium mb-1">
+                        {t('goals.recentCheckins', 'Recent Check-ins')}
+                      </p>
                       {kr.checkins.slice(0, 3).map((c) => (
-                        <div key={c._id} className="text-xs text-muted-foreground flex items-center gap-2">
+                        <div
+                          key={c._id}
+                          className="text-xs text-muted-foreground flex items-center gap-2"
+                        >
                           <Calendar className="h-3 w-3" />
                           <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-                          <span>{c.previousValue} → {c.newValue}{kr.unit || ''}</span>
-                          {c.note && <span className="italic truncate max-w-[150px]">{c.note}</span>}
+                          <span>
+                            {c.previousValue} → {c.newValue}
+                            {kr.unit || ''}
+                          </span>
+                          {c.note && (
+                            <span className="italic truncate max-w-[150px]">{c.note}</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -745,12 +876,19 @@ function ObjectiveDetailDialog({
         {/* Children */}
         {objective.children && objective.children.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold mb-2">{t('goals.alignedGoals', 'Aligned Goals')}</h4>
+            <h4 className="text-sm font-semibold mb-2">
+              {t('goals.alignedGoals', 'Aligned Goals')}
+            </h4>
             {objective.children.map((child) => (
-              <div key={child._id} className="text-sm flex items-center gap-2 p-2 border rounded mb-1">
+              <div
+                key={child._id}
+                className="text-sm flex items-center gap-2 p-2 border rounded mb-1"
+              >
                 <Crosshair className="h-4 w-4 text-muted-foreground" />
                 <span className="flex-1 truncate">{child.title}</span>
-                <span className={`font-medium ${getProgressColor(child.progress)}`}>{child.progress}%</span>
+                <span className={`font-medium ${getProgressColor(child.progress)}`}>
+                  {child.progress}%
+                </span>
               </div>
             ))}
           </div>
@@ -767,7 +905,9 @@ function ObjectiveDetailDialog({
                   await completeObjective({ objectiveId });
                   toast.success(t('goals.completed', 'Objective completed!'));
                   onClose();
-                } catch (e) { toast.error(String(e)); }
+                } catch (e) {
+                  toast.error(String(e));
+                }
               }}
             >
               <CheckCircle className="h-4 w-4 mr-1" />
@@ -781,7 +921,9 @@ function ObjectiveDetailDialog({
                   await deleteObjective({ objectiveId });
                   toast.success(t('goals.deleted', 'Objective deleted'));
                   onClose();
-                } catch (e) { toast.error(String(e)); }
+                } catch (e) {
+                  toast.error(String(e));
+                }
               }}
             >
               {t('common.delete', 'Delete')}
@@ -824,17 +966,17 @@ export default function GoalsClient() {
           periodYear: filterYear,
           periodType: filterPeriod !== 'all' ? filterPeriod : undefined,
         }
-      : 'skip'
+      : 'skip',
   );
 
   const myObjectives = useQuery(
     api.goals.getMyObjectives,
-    organizationId && userId ? { organizationId, userId } : 'skip'
+    organizationId && userId ? { organizationId, userId } : 'skip',
   );
 
   const teamProgress = useQuery(
     api.goals.getTeamProgress,
-    organizationId ? { organizationId, periodYear: filterYear } : 'skip'
+    organizationId ? { organizationId, periodYear: filterYear } : 'skip',
   );
 
   // Parent options for alignment (company & team level objectives)
@@ -869,7 +1011,7 @@ export default function GoalsClient() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6 p-0 sm:p-4 sm:p-6 lg:p-8">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -877,7 +1019,9 @@ export default function GoalsClient() {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               {t('goals.title', 'OKR & Goals')}
             </h1>
-            <p className="text-sm text-muted-foreground">{t('goals.subtitle', 'Set objectives, track key results, and align your team')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('goals.subtitle', 'Set objectives, track key results, and align your team')}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Select value={String(filterYear)} onValueChange={(v) => setFilterYear(Number(v))}>
@@ -890,7 +1034,10 @@ export default function GoalsClient() {
                 <SelectItem value="2027">2027</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterPeriod} onValueChange={(v) => setFilterPeriod(v as PeriodType | 'all')}>
+            <Select
+              value={filterPeriod}
+              onValueChange={(v) => setFilterPeriod(v as PeriodType | 'all')}
+            >
               <SelectTrigger className="w-20 h-9">
                 <SelectValue />
               </SelectTrigger>
@@ -922,7 +1069,9 @@ export default function GoalsClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{teamProgress.total}</p>
-                <p className="text-xs text-muted-foreground">{t('goals.stats.total', 'Total Objectives')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('goals.stats.total', 'Total Objectives')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -933,7 +1082,9 @@ export default function GoalsClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{teamProgress.avgProgress}%</p>
-                <p className="text-xs text-muted-foreground">{t('goals.stats.avgProgress', 'Avg Progress')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('goals.stats.avgProgress', 'Avg Progress')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -944,7 +1095,9 @@ export default function GoalsClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{teamProgress.onTrack}</p>
-                <p className="text-xs text-muted-foreground">{t('goals.stats.onTrack', 'On Track')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('goals.stats.onTrack', 'On Track')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -955,7 +1108,9 @@ export default function GoalsClient() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{teamProgress.atRisk + teamProgress.behind}</p>
-                <p className="text-xs text-muted-foreground">{t('goals.stats.atRisk', 'At Risk / Behind')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('goals.stats.atRisk', 'At Risk / Behind')}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -969,7 +1124,9 @@ export default function GoalsClient() {
             <User className="h-4 w-4 mr-1 hidden sm:inline" />
             {t('goals.tabs.my', 'My Goals')}
             {myObjectives && (
-              <Badge variant="secondary" className="ml-1 text-xs">{myObjectives.length}</Badge>
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {myObjectives.length}
+              </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="team">
@@ -1017,7 +1174,9 @@ export default function GoalsClient() {
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{obj.ownerName}</span>
                             <span>•</span>
-                            <span>{obj.periodType} {obj.periodYear}</span>
+                            <span>
+                              {obj.periodType} {obj.periodYear}
+                            </span>
                             <span>•</span>
                             <span>{obj.keyResultsCount} KRs</span>
                           </div>
@@ -1026,7 +1185,9 @@ export default function GoalsClient() {
                       <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
                         <div className="w-24 sm:w-32">
                           <div className="flex items-center justify-between text-xs mb-0.5">
-                            <span className={`font-bold ${getProgressColor(obj.progress)}`}>{obj.progress}%</span>
+                            <span className={`font-bold ${getProgressColor(obj.progress)}`}>
+                              {obj.progress}%
+                            </span>
                           </div>
                           <Progress value={obj.progress} className="h-2" />
                         </div>

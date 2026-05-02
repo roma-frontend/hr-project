@@ -201,7 +201,7 @@ export default function LeaveTypesPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
       <Navbar />
-      <div className="max-w-6xl mx-auto px-6 pt-28 pb-12">
+      <div className="flex flex-col items-center max-w-6xl mx-auto px-3 md:px-12 pt-20 md:pt-28 pb-12">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-sm font-medium mb-8 hover:opacity-70 transition-opacity"

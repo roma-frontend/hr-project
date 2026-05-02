@@ -72,7 +72,7 @@ export function RatingModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative p-6 bg-linear-to-r from-(--primary) to-(--primary)/80">
+        <div className="relative p-6 btn-gradient">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"

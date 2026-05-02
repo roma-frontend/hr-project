@@ -26,12 +26,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
@@ -40,18 +35,47 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 
 // ── Category Config ──────────────────────────────────────────────────────────
 
-const CATEGORY_CONFIG: Record<
-  string,
-  { icon: LucideIcon; color: string; labelKey: string }
-> = {
-  teamwork: { icon: Users, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', labelKey: 'recognition.category.teamwork' },
-  innovation: { icon: Sparkles, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', labelKey: 'recognition.category.innovation' },
-  leadership: { icon: Trophy, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300', labelKey: 'recognition.category.leadership' },
-  dedication: { icon: Heart, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300', labelKey: 'recognition.category.dedication' },
-  customer_focus: { icon: Star, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300', labelKey: 'recognition.category.customerFocus' },
-  mentorship: { icon: Award, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300', labelKey: 'recognition.category.mentorship' },
-  excellence: { icon: TrendingUp, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300', labelKey: 'recognition.category.excellence' },
-  above_and_beyond: { icon: Sparkles, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300', labelKey: 'recognition.category.aboveAndBeyond' },
+const CATEGORY_CONFIG: Record<string, { icon: LucideIcon; color: string; labelKey: string }> = {
+  teamwork: {
+    icon: Users,
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    labelKey: 'recognition.category.teamwork',
+  },
+  innovation: {
+    icon: Sparkles,
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    labelKey: 'recognition.category.innovation',
+  },
+  leadership: {
+    icon: Trophy,
+    color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+    labelKey: 'recognition.category.leadership',
+  },
+  dedication: {
+    icon: Heart,
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    labelKey: 'recognition.category.dedication',
+  },
+  customer_focus: {
+    icon: Star,
+    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    labelKey: 'recognition.category.customerFocus',
+  },
+  mentorship: {
+    icon: Award,
+    color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    labelKey: 'recognition.category.mentorship',
+  },
+  excellence: {
+    icon: TrendingUp,
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    labelKey: 'recognition.category.excellence',
+  },
+  above_and_beyond: {
+    icon: Sparkles,
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    labelKey: 'recognition.category.aboveAndBeyond',
+  },
 };
 
 const REACTION_EMOJIS = ['👏', '❤️', '🔥', '🎉', '💪'];
@@ -77,17 +101,15 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
   const sendKudosMutation = useMutation(api.recognition.sendKudos);
 
   // Load user points balance
-  const userPoints = useQuery(api.recognition.getUserPoints,
-    organizationId && senderId
-      ? { organizationId, userId: senderId }
-      : 'skip',
+  const userPoints = useQuery(
+    api.recognition.getUserPoints,
+    organizationId && senderId ? { organizationId, userId: senderId } : 'skip',
   );
 
   // Load org users for recipient selection
-  const orgUsers = useQuery(api.users.getUsersByOrganizationId, 
-    organizationId && senderId
-      ? { organizationId, requesterId: senderId }
-      : 'skip',
+  const orgUsers = useQuery(
+    api.users.getUsersByOrganizationId,
+    organizationId && senderId ? { organizationId, requesterId: senderId } : 'skip',
   );
 
   const availableRecipients = useMemo(() => {
@@ -103,17 +125,25 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
   );
 
   const steps = [
-    { id: 'recipient', title: t('recognition.form.recipient'), icon: <Users className="w-4 h-4" /> },
+    {
+      id: 'recipient',
+      title: t('recognition.form.recipient'),
+      icon: <Users className="w-4 h-4" />,
+    },
     { id: 'category', title: t('recognition.form.category'), icon: <Award className="w-4 h-4" /> },
     { id: 'message', title: t('recognition.form.message'), icon: <Send className="w-4 h-4" /> },
   ];
 
   const canGoNext = (): boolean => {
     switch (currentStep) {
-      case 0: return !!receiverId;
-      case 1: return !!category;
-      case 2: return !!message.trim();
-      default: return true;
+      case 0:
+        return !!receiverId;
+      case 1:
+        return !!category;
+      case 2:
+        return !!message.trim();
+      default:
+        return true;
     }
   };
 
@@ -171,9 +201,7 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
             </Badge>
           </DialogTitle>
           {(userPoints?.balance ?? 0) < 3 && (
-            <p className="text-xs text-destructive mt-1">
-              {t('recognition.points.notEnough')}
-            </p>
+            <p className="text-xs text-destructive mt-1">{t('recognition.points.notEnough')}</p>
           )}
         </DialogHeader>
 
@@ -202,11 +230,7 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
                               : 'border-muted-foreground/30 bg-background text-muted-foreground'
                         }`}
                       >
-                        {isCompleted ? (
-                          <CheckCircle className="w-4 h-4" />
-                        ) : (
-                          step.icon
-                        )}
+                        {isCompleted ? <CheckCircle className="w-4 h-4" /> : step.icon}
                       </div>
                       <p
                         className={`text-[10px] font-medium mt-1.5 text-center truncate w-full px-1 ${
@@ -370,7 +394,11 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
             </Button>
             <Button
               onClick={handleNext}
-              disabled={!canGoNext() || isSubmitting || (currentStep === steps.length - 1 && (userPoints?.balance ?? 0) < 3)}
+              disabled={
+                !canGoNext() ||
+                isSubmitting ||
+                (currentStep === steps.length - 1 && (userPoints?.balance ?? 0) < 3)
+              }
               size="sm"
               className="gap-1"
             >
@@ -418,16 +446,12 @@ export function RecognitionClient() {
 
   const myStats = useQuery(
     api.recognition.getUserKudosStats,
-    orgId && user?.id
-      ? { organizationId: orgId, userId: user.id as Id<'users'> }
-      : 'skip',
+    orgId && user?.id ? { organizationId: orgId, userId: user.id as Id<'users'> } : 'skip',
   );
 
   const myPoints = useQuery(
     api.recognition.getUserPoints,
-    orgId && user?.id
-      ? { organizationId: orgId, userId: user.id as Id<'users'> }
-      : 'skip',
+    orgId && user?.id ? { organizationId: orgId, userId: user.id as Id<'users'> } : 'skip',
   );
 
   // Mutations
@@ -455,17 +479,13 @@ export function RecognitionClient() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6 p-0 sm:p-4 sm:p-6 lg:p-8">
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {t('recognition.title')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('recognition.subtitle')}
-            </p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('recognition.title')}</h1>
+            <p className="text-muted-foreground">{t('recognition.subtitle')}</p>
           </div>
           <Button onClick={() => setShowSendModal(true)} className="gap-2 w-full sm:w-auto">
             <Send className="h-4 w-4" />
@@ -485,9 +505,7 @@ export function RecognitionClient() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{myStats.totalReceived}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('recognition.stats.received')}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('recognition.stats.received')}</p>
                 </div>
               </div>
             </CardContent>
@@ -500,9 +518,7 @@ export function RecognitionClient() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{myStats.totalSent}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('recognition.stats.sent')}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('recognition.stats.sent')}</p>
                 </div>
               </div>
             </CardContent>
@@ -515,9 +531,7 @@ export function RecognitionClient() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{myPoints?.balance ?? 0}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t('recognition.points.balance')}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t('recognition.points.balance')}</p>
                 </div>
               </div>
             </CardContent>
@@ -540,7 +554,7 @@ export function RecognitionClient() {
 
         {/* Feed Tab */}
         <TabsContent value="feed" className="mt-4">
-           {kudosFeed === undefined ? (
+          {kudosFeed === undefined ? (
             <ShieldLoader size="md" />
           ) : kudosFeed.length === 0 ? (
             <Card>
@@ -572,10 +586,7 @@ export function RecognitionClient() {
         {/* Leaderboard Tab */}
         <TabsContent value="leaderboard" className="mt-4">
           <div className="flex justify-end mb-4">
-            <Select
-              value={leaderboardPeriod}
-              onValueChange={(v) => setLeaderboardPeriod(v as any)}
-            >
+            <Select value={leaderboardPeriod} onValueChange={(v) => setLeaderboardPeriod(v as any)}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
@@ -610,9 +621,7 @@ export function RecognitionClient() {
                     </div>
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={entry.avatarUrl} />
-                      <AvatarFallback>
-                        {entry.name?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarFallback>{entry.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{entry.name}</p>
@@ -680,9 +689,7 @@ function KudoCard({ kudo, onReact, t }: KudoCardProps) {
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarImage src={kudo.sender?.avatarUrl} />
-            <AvatarFallback>
-              {kudo.sender?.name?.slice(0, 2).toUpperCase() ?? '??'}
-            </AvatarFallback>
+            <AvatarFallback>{kudo.sender?.name?.slice(0, 2).toUpperCase() ?? '??'}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
@@ -715,15 +722,17 @@ function KudoCard({ kudo, onReact, t }: KudoCardProps) {
                   <span>{count as number}</span>
                 </button>
               ))}
-              {REACTION_EMOJIS.filter((e) => !reactionCounts[e]).slice(0, 3).map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => onReact(kudo._id, emoji)}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full border border-dashed border-muted-foreground/30 hover:bg-muted text-xs text-muted-foreground transition-colors"
-                >
-                  {emoji}
-                </button>
-              ))}
+              {REACTION_EMOJIS.filter((e) => !reactionCounts[e])
+                .slice(0, 3)
+                .map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReact(kudo._id, emoji)}
+                    className="inline-flex items-center px-2 py-0.5 rounded-full border border-dashed border-muted-foreground/30 hover:bg-muted text-xs text-muted-foreground transition-colors"
+                  >
+                    {emoji}
+                  </button>
+                ))}
             </div>
           </div>
         </div>

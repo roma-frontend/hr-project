@@ -8,10 +8,22 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wizard, WizardStep } from '@/components/ui/wizard';
-import { TextInputStep, TextareaStep, SelectStep } from '@/components/ui/wizard-step-components';
-import { CheckSquare, User, AlertCircle, Tag } from 'lucide-react';
+import {
+  TextInputStep,
+  TextareaStep,
+  SelectStep,
+  FileUploadStep,
+} from '@/components/ui/wizard-step-components';
+import { CheckSquare, User, AlertCircle, Tag, Paperclip } from 'lucide-react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+
+interface AttachmentData {
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+}
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 
@@ -32,6 +44,7 @@ export function CreateTaskWizard({
 }: CreateTaskWizardProps) {
   const { t } = useTranslation();
   const createTask = useMutation(api.tasks.createTask);
+  const addAttachment = useMutation(api.tasks.addAttachment);
 
   const employees = useQuery(api.tasks.getUsersForAssignment, { requesterId: currentUserId });
   const myEmployees = useQuery(
@@ -129,6 +142,21 @@ export function CreateTaskWizard({
         />
       ),
     },
+    {
+      id: 'attachments',
+      title: t('task.attachments', 'Attachments'),
+      description: t('task.attachmentsHint', 'optional'),
+      icon: <Paperclip className="w-5 h-5" />,
+      content: (
+        <FileUploadStep
+          field="attachments"
+          label={t('task.attachments', 'Attachments')}
+          description={t('task.attachmentsHint', 'Add files to your task (optional)')}
+          maxFiles={5}
+          maxSizeMB={1}
+        />
+      ),
+    },
   ];
 
   const handleSubmit = async (
@@ -141,7 +169,7 @@ export function CreateTaskWizard({
         .map((t) => t.trim())
         .filter(Boolean);
 
-      await createTask({
+      const taskId = await createTask({
         assignedTo: String(data.assigneeId) as Id<'users'>,
         assignedBy: currentUserId,
         title: String(data.title).trim(),
@@ -150,6 +178,21 @@ export function CreateTaskWizard({
         deadline: data.deadline ? new Date(String(data.deadline)).getTime() : undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
+
+      const attachmentsJson = data.attachments as string | undefined;
+      if (attachmentsJson && attachmentsJson !== '[]' && attachmentsJson.length > 2) {
+        const attachments: AttachmentData[] = JSON.parse(attachmentsJson);
+        for (const attachment of attachments) {
+          await addAttachment({
+            taskId,
+            url: attachment.url,
+            name: attachment.name,
+            type: attachment.type,
+            size: attachment.size,
+            uploadedBy: currentUserId,
+          });
+        }
+      }
 
       toast.success(t('taskWizard.toast.success'));
       onComplete?.();

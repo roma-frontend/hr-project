@@ -126,9 +126,7 @@ export function TripDetailsModal({
         {/* Header with gradient */}
         <div
           className={`relative p-6 shrink-0 ${
-            isTrip
-              ? 'bg-linear-to-r from-(--primary) to-(--primary)/80'
-              : 'bg-linear-to-r from-amber-500 to-orange-500'
+            isTrip ? 'btn-gradient' : 'bg-linear-to-r from-amber-500 to-orange-500'
           }`}
         >
           {/* Close button */}

@@ -13,6 +13,7 @@ import {
   MessageCircle,
   LogIn,
   Rocket,
+  RocketIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,6 +30,7 @@ const menuItemsConfig = [
   { key: 'analytics', href: '#stats', icon: BarChart3 },
   { key: 'pricing', href: '#pricing', icon: DollarSign },
   { key: 'testimonials', href: '#testimonials', icon: MessageCircle },
+  { key: 'recruitment', href: '/careers', icon: RocketIcon },
 ];
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
@@ -102,7 +104,12 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
     onClose();
 
     if (pathname !== '/') {
-      router.push(`/${href}`);
+      router.push(href);
+      return;
+    }
+
+    if (href.startsWith('/')) {
+      router.push(href);
       return;
     }
 
@@ -161,12 +168,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
           <div className="relative z-10">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 cursor-pointer">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg"
-                style={{
-                  background: 'btn-gradient',
-                }}
-              >
+              <div className="btn-gradient w-8 h-8 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-sm">HR</span>
               </div>
               <div>

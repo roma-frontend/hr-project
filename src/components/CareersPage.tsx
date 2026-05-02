@@ -370,7 +370,7 @@ export default function CareersPage({ orgSlug }: { orgSlug: string }) {
       </section>
 
       {/* Search & Filters */}
-      <section className="max-w-6xl mx-auto px-6 md:px-12 -mt-4">
+      <section className="max-w-6xl mx-auto px-3 md:px-12 -mt-4">
         <div
           className="rounded-2xl p-4 md:p-6 backdrop-blur-sm"
           style={{
@@ -470,7 +470,7 @@ export default function CareersPage({ orgSlug }: { orgSlug: string }) {
       </section>
 
       {/* Vacancies Grid */}
-      <section className="max-w-6xl mx-auto px-6 md:px-12 py-12">
+      <section className="max-w-6xl mx-auto px-3 md:px-12 py-12">
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <BriefcaseIcon className="mx-auto mb-4 opacity-40 w-12 h-12" />
@@ -498,7 +498,7 @@ export default function CareersPage({ orgSlug }: { orgSlug: string }) {
       </section>
 
       {/* Footer banner */}
-      <section className="max-w-6xl mx-auto px-6 md:px-12 pb-16">
+      <section className="max-w-6xl mx-auto px-3 md:px-12 pb-16">
         <div
           className="rounded-2xl p-8 md:p-12 text-center relative overflow-hidden"
           style={{

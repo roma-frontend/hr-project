@@ -135,7 +135,7 @@ export function Wizard({
                         className={cn(
                           'w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-colors shrink-0',
                           isCompleted
-                            ? 'bg-(--primary) border-(--primary) text-white'
+                            ? 'btn-gradient border-(--primary) text-white'
                             : isCurrent
                               ? 'border-(--primary) bg-(--background) text-(--primary)'
                               : 'border-(--border) bg-(--background) text-(--muted-foreground)',

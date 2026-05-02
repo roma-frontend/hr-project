@@ -269,9 +269,9 @@ export function ChatWidget() {
   const getHintText = useCallback(
     (index: number): string => {
       const hints = [
-        t('hints.help', { defaultValue: "Need help? I'm here! 💡" }),
-        t('hints.leaveRequest', { defaultValue: 'Try /leave to request time off' }),
-        t('hints.reports', { defaultValue: 'Ask me about team reports' }),
+        t('dashboard.hints.help', { defaultValue: "Need help? I'm here! 💡" }),
+        t('dashboard.hints.leaveRequest', { defaultValue: 'Try /leave to request time off' }),
+        t('dashboard.hints.reports', { defaultValue: 'Ask me about team reports' }),
       ];
       return hints[index % hints.length] ?? '';
     },

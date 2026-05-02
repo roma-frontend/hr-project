@@ -336,7 +336,6 @@ export default function DashboardClient() {
                   variant="outline"
                   style={{
                     borderColor: 'color-mix(in srgb, var(--primary) 40%, transparent)',
-                    background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
                     color: 'var(--primary)',
                   }}
                 >
@@ -366,7 +365,6 @@ export default function DashboardClient() {
                   variant="outline"
                   style={{
                     borderColor: 'color-mix(in srgb, var(--primary) 30%, transparent)',
-                    background: 'color-mix(in srgb, var(--primary) 10%, transparent)',
                     color: 'var(--primary)',
                   }}
                 >
