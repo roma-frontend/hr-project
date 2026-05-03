@@ -36,6 +36,7 @@ export function FaceLogin() {
 
   const lastDescriptorRef = useRef<Float32Array | null>(null);
   const noFaceFramesRef = useRef(0);
+  const detectionInProgressRef = useRef(false);
 
   // ===== UI State =====
   const [isWebcamActive, setIsWebcamActive] = useState(false);
@@ -132,6 +133,7 @@ export function FaceLogin() {
     processingRef.current = false;
     lastAttemptRef.current = 0;
     noFaceFramesRef.current = 0;
+    detectionInProgressRef.current = false;
   };
 
   const hardResetUiState = () => {
@@ -287,11 +289,18 @@ export function FaceLogin() {
       // пока идёт логин — не гоняем детекцию
       if (processingRef.current) return;
 
+      // предотвращаем overlapping вызовы detectFace
+      if (detectionInProgressRef.current) return;
+
       if (video.readyState < 2) return;
 
       try {
+        detectionInProgressRef.current = true;
+
         const detection = await detectFace(video);
         const faceFound = !!detection;
+
+        detectionInProgressRef.current = false;
 
         if (!faceFound) {
           noFaceFramesRef.current += 1;
@@ -378,8 +387,9 @@ export function FaceLogin() {
         }
       } catch (e) {
         console.error('❌ Error in face detection loop:', e);
+        detectionInProgressRef.current = false;
       }
-    }, 350);
+    }, 500);
   };
 
   // ===== Login =====

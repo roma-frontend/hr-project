@@ -102,24 +102,17 @@ export async function findBestMatch(
 ): Promise<{ userId: string; name: string; distance: number } | null> {
   if (knownDescriptors.length === 0) return null;
 
-  let bestMatch = {
-    userId: knownDescriptors[0]!.userId,
-    name: knownDescriptors[0]!.name,
-    distance: await compareFaces(inputDescriptor, knownDescriptors[0]!.descriptor),
-  };
+  // Run all comparisons in parallel instead of sequentially
+  const distances = await Promise.all(
+    knownDescriptors.map(async ({ userId, name, descriptor }) => ({
+      userId,
+      name,
+      distance: await compareFaces(inputDescriptor, descriptor),
+    })),
+  );
 
-  for (let i = 1; i < knownDescriptors.length; i++) {
-    const distance = await compareFaces(inputDescriptor, knownDescriptors[i]!.descriptor);
-    if (distance < bestMatch.distance) {
-      bestMatch = {
-        userId: knownDescriptors[i]!.userId,
-        name: knownDescriptors[i]!.name,
-        distance,
-      };
-    }
-  }
-
-  return bestMatch;
+  // Find the best (lowest distance) match
+  return distances.reduce((best, current) => (current.distance < best.distance ? current : best));
 }
 
 export function createCanvasFromVideo(video: HTMLVideoElement): HTMLCanvasElement {

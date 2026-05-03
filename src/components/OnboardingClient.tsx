@@ -165,7 +165,7 @@ export default function OnboardingClient() {
 
       {/* Tabs */}
       <Tabs defaultValue={myOnboarding ? 'my' : 'programs'}>
-        <TabsList className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
+        <TabsList className="w-full my-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
           {myOnboarding && (
             <TabsTrigger value="my">{t('onboarding.tabs.my', 'My Onboarding')}</TabsTrigger>
           )}

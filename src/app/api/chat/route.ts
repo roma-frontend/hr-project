@@ -473,15 +473,25 @@ ${((data.activeSurveys as any[]) || []).map((s: any) => `📝 "${s.title}" - ${s
     }
 
     // Build role-based system prompt
-    const roleBasedPrompt = buildRoleBasedPrompt({
-      userId: userId || '',
-      name: userName,
-      email: userEmail,
-      role: userRole,
-      organizationId: userOrgId,
-      department: userDepartment,
-      position: userPosition,
-    });
+    const roleBasedSystemPrompt = buildRoleBasedPrompt(
+      {
+        userId: userId || '',
+        name: userName,
+        email: userEmail,
+        role: userRole,
+        organizationId: userOrgId,
+        department: userDepartment,
+        position: userPosition,
+      },
+      {
+        userContext,
+        fullContext,
+        aiInsights,
+        conflictCheckData,
+        availableDriversInfo,
+        dateContext,
+      },
+    );
 
     // Detect intent from last user message - ONLY for explicit navigation requests
     // lastUserMessage уже объявлена выше для Conflict Check
@@ -519,30 +529,7 @@ DO NOT navigate! Just help them with their request using <ACTION> tags if needed
 
     // Try Groq first (no retry - fallback to Gemini on rate limit), fallback to Google Gemini if rate limited
     let result;
-    const corePrompt = `You are an HR assistant for this company. You have access to ALL company data based on user role.
-
-ROLE: ${userRole}
-
-DATE: ${dateContext}
-
-YOUR DATA:
-${userContext.slice(0, 800)}
-
-ALL COMPANY DATA:
-${fullContext.slice(0, 1500)}
-
-${langInstruction}
-
-AVAILABLE MODULES (in company data):
-- Employees: list, departments, positions, contact info
-- Leaves: balances, history, requests, approvals (you can BOOK leaves!)
-- Attendance: check-in/out times, daily status, late minutes
-- Tasks: assigned tasks, deadlines, priorities, status
-- Tickets: IT tickets, status, priorities, categories
-- Surveys: available surveys, responses, status
-- Drivers: available drivers, booking requests
-- Calendar: approved leaves, company events
-- Automation: workflow status
+    const corePrompt = `${roleBasedSystemPrompt}
 
 🎨 FORMATTING RULES - Make responses BEAUTIFUL and SATISFYING:
 

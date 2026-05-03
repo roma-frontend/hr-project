@@ -995,7 +995,7 @@ export default function RecruitmentClient() {
 
       {/* Tabs */}
       <Tabs defaultValue="vacancies">
-        <TabsList className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
+        <TabsList className="w-full my-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-3">
           <TabsTrigger
             className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] transition-all duration-200 shadow-sm font-medium flex items-center justify-center"
             value="vacancies"

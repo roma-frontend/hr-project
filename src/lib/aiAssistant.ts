@@ -1120,10 +1120,49 @@ HR POLICIES & RULES
 • When requesting leave, system checks for department conflicts
 • If >30% of department is on leave, alternative dates are recommended
 
-${fullContext ? `\nSYSTEM CONTEXT:\n${JSON.stringify(fullContext, null, 2)}` : ''}
+${fullContext ? formatFullContext(fullContext) : ''}
 `;
 
   return prompt;
+}
+
+/**
+ * Format full context data into readable AI prompt section
+ */
+function formatFullContext(ctx: any): string {
+  const sections: string[] = [];
+
+  // User context
+  if (ctx.userContext) {
+    sections.push(`👤 USER DETAILS:\n${ctx.userContext}`);
+  }
+
+  // Full company data
+  if (ctx.fullContext) {
+    sections.push(`🏢 COMPANY DATA:\n${ctx.fullContext}`);
+  }
+
+  // AI insights
+  if (ctx.aiInsights) {
+    sections.push(`💡 AI INSIGHTS:\n${ctx.aiInsights}`);
+  }
+
+  // Conflict check
+  if (ctx.conflictCheckData) {
+    sections.push(`⚠️ CONFLICT STATUS:\n${ctx.conflictCheckData}`);
+  }
+
+  // Available drivers
+  if (ctx.availableDriversInfo) {
+    sections.push(`🚗 DRIVER INFO:\n${ctx.availableDriversInfo}`);
+  }
+
+  // Date context
+  if (ctx.dateContext) {
+    sections.push(`📅 CURRENT DATE: ${ctx.dateContext}`);
+  }
+
+  return sections.length ? `\n\n═══ LIVE SYSTEM DATA ═══\n\n${sections.join('\n\n')}` : '';
 }
 
 /**
