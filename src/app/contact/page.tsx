@@ -23,6 +23,7 @@ import {
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import Navbar from '@/components/landing/Navbar';
+import Footer from '@/components/landing/Footer';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -77,32 +78,37 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background">
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: 'var(--landing-bg)' }}
+    >
       {/* Navbar */}
       <Navbar />
 
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-150 h-150 bg-blue-600/8 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-1/4 w-125 h-125 bg-indigo-600/8 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-cyan-600/4 rounded-full blur-[160px]" />
+        <div
+          className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[120px]"
+          style={{ background: 'var(--landing-orb-1)' }}
+        />
+        <div
+          className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-[120px]"
+          style={{ background: 'var(--landing-orb-2)' }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[160px]"
+          style={{ background: 'var(--landing-orb-3)' }}
+        />
       </div>
 
-      {/* Grid pattern */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05]"
-        style={{
-          backgroundImage:
-            'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 mt-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 mt-12 pb-24">
         {/* Back link */}
         <Link
           href="/#pricing"
-          className="inline-flex items-center gap-2 text-primary/70 hover:text-primary text-sm mb-12 transition-colors group"
+          className="inline-flex items-center gap-2 text-sm mb-12 transition-colors group"
+          style={{ color: 'var(--landing-text-muted)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--landing-text-secondary)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--landing-text-muted)')}
         >
           <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           {t('contactPage.backToPricing')}
@@ -112,16 +118,25 @@ export default function ContactPage() {
           {/* ── Left — Info ─────────────────────────────────────────────────── */}
           <div>
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-xs font-semibold uppercase tracking-widest mb-6">
-              <Building2 size={12} />
+            <span
+              className="inline-flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-full mb-6"
+              style={{ background: 'rgba(37,99,235,0.1)', color: '#2563eb' }}
+            >
+              <Building2 size={14} />
               {t('contact.enterpriseSupport')}
-            </div>
+            </span>
 
-            <h1 className="text-4xl md:text-5xl font-black text-primary leading-tight mb-6">
+            <h1
+              className="text-4xl md:text-5xl font-black leading-tight mb-6"
+              style={{ color: 'var(--landing-text-primary)' }}
+            >
               {t('contactPage.contactHeader')}
             </h1>
 
-            <p className="text-muted-foreground/80 text-lg leading-relaxed mb-10">
+            <p
+              className="text-lg leading-relaxed mb-10"
+              style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
+            >
               {t('contactPage.enterpriseSubtitle')}
             </p>
 
@@ -130,27 +145,35 @@ export default function ContactPage() {
               {ENTERPRISE_FEATURES.map(({ icon, text }) => (
                 <div
                   key={text}
-                  className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-card/50 backdrop-blur-xl"
+                  className="flex items-center gap-3 p-4 rounded-2xl backdrop-blur-xl"
+                  style={{
+                    backgroundColor: 'var(--landing-card-bg)',
+                    border: '1px solid var(--landing-card-border)',
+                  }}
                 >
                   <div
                     className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
                     style={{
-                      background:
-                        'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(99,102,241,0.1))',
-                      border: '1px solid rgba(56,189,248,0.2)',
-                      color: '#38bdf8',
+                      background: 'rgba(37,99,235,0.1)',
+                      border: '1px solid rgba(37,99,235,0.2)',
+                      color: '#2563eb',
                     }}
                   >
                     {icon}
                   </div>
-                  <span className="text-muted-foreground text-sm">{text}</span>
+                  <span className="text-sm" style={{ color: 'var(--landing-text-secondary)' }}>
+                    {text}
+                  </span>
                 </div>
               ))}
             </div>
 
             {/* Contact info */}
             <div className="space-y-4">
-              <p className="text-muted-foreground/60 text-xs uppercase tracking-widest font-semibold mb-3">
+              <p
+                className="text-xs uppercase tracking-widest font-semibold mb-3"
+                style={{ color: 'var(--landing-text-muted)' }}
+              >
                 {t('contactPage.directContact')}
               </p>
               {[
@@ -164,9 +187,14 @@ export default function ContactPage() {
                 <a
                   key={label}
                   href={href}
-                  className="flex items-center gap-3 text-primary/70 hover:text-primary transition-colors text-sm"
+                  className="flex items-center gap-3 text-sm transition-colors"
+                  style={{ color: 'var(--landing-text-muted)' }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--landing-text-secondary)')
+                  }
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--landing-text-muted)')}
                 >
-                  <span className="text-primary/50">{icon}</span>
+                  <span style={{ color: 'var(--landing-text-muted)', opacity: 0.6 }}>{icon}</span>
                   {label}
                 </a>
               ))}
@@ -177,17 +205,26 @@ export default function ContactPage() {
           <div className="relative">
             {/* Card glow */}
             <div
-              className="absolute -inset-1 rounded-3xl blur-xl opacity-15 dark:opacity-20"
-              style={{ background: 'linear-gradient(135deg, #38bdf8, #6366f1)' }}
+              className="absolute -inset-1 rounded-3xl blur-xl opacity-15"
+              style={{
+                background:
+                  'linear-gradient(135deg, var(--landing-gradient-from), var(--landing-gradient-to))',
+              }}
             />
 
-            <div className="relative rounded-3xl border border-border/80 overflow-hidden bg-card/90 dark:bg-card/70 backdrop-blur-xl shadow-xl">
+            <div
+              className="relative rounded-3xl overflow-hidden backdrop-blur-xl shadow-xl"
+              style={{
+                backgroundColor: 'var(--landing-card-bg)',
+                border: '1px solid var(--landing-card-border)',
+              }}
+            >
               {/* Top accent */}
               <div
-                className="h-px"
+                className="h-[2px] w-full"
                 style={{
                   background:
-                    'linear-gradient(90deg, transparent, rgba(56,189,248,0.4), rgba(99,102,241,0.4), transparent)',
+                    'linear-gradient(90deg, transparent, var(--landing-gradient-from), var(--landing-gradient-to), transparent)',
                 }}
               />
 
@@ -196,31 +233,40 @@ export default function ContactPage() {
                   /* ── Success state ── */
                   <div className="flex flex-col items-center text-center py-8 gap-6">
                     <div className="relative">
-                      <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl scale-150" />
                       <div
-                        className="relative w-20 h-20 rounded-full flex items-center justify-center"
+                        className="absolute inset-0 rounded-full blur-xl scale-150"
+                        style={{ background: 'var(--success)', opacity: 0.2 }}
+                      />
+                      <div
+                        className="relative w-20 h-20 rounded-full flex items-center justify-center success-reveal"
                         style={{
-                          background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                          boxShadow: '0 16px 48px rgba(34,197,94,0.3)',
+                          background: 'linear-gradient(135deg, #34d399, #10b981)',
+                          boxShadow: '0 16px 48px rgba(52,211,153,0.3)',
                         }}
                       >
                         <CheckCircle size={40} className="text-white" />
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-primary mb-2">
+                      <h2
+                        className="text-2xl font-bold mb-2"
+                        style={{ color: 'var(--landing-text-primary)' }}
+                      >
                         {t('contactPage.messageSentTitle')}
                       </h2>
-                      <p className="text-muted-foreground/80 text-sm leading-relaxed">
+                      <p
+                        className="text-sm leading-relaxed"
+                        style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
+                      >
                         {t('contactPage.messageSentDesc')}
                       </p>
                     </div>
                     <Link
                       href="/"
-                      className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold text-white transition-all hover:scale-105"
+                      className="flex items-center gap-2 px-8 py-3.5 rounded-2xl text-sm font-semibold text-white transition-all hover:opacity-90 hover:shadow-lg shadow-md"
                       style={{
-                        background: 'linear-gradient(135deg, #38bdf8, #6366f1)',
-                        boxShadow: '0 4px 16px rgba(56,189,248,0.15)',
+                        background: 'linear-gradient(135deg, #2563eb, #60a5fa)',
+                        boxShadow: '0 4px 16px rgba(37,99,235,0.15)',
                       }}
                     >
                       {t('ui.backToHome')} <ArrowRight size={15} />
@@ -230,8 +276,13 @@ export default function ContactPage() {
                   /* ── Form ── */
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                      <h2 className="text-2xl font-bold text-primary mb-1">{t('contact.title')}</h2>
-                      <p className="text-muted-foreground/60 text-sm">
+                      <h2
+                        className="text-2xl font-bold mb-1"
+                        style={{ color: 'var(--landing-text-primary)' }}
+                      >
+                        {t('contact.title')}
+                      </h2>
+                      <p className="text-sm" style={{ color: 'var(--landing-text-muted)' }}>
                         {t('contactPage.enterpriseSubtitle')}
                       </p>
                     </div>
@@ -245,7 +296,11 @@ export default function ContactPage() {
                           required
                           value={form.name}
                           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
+                          className="w-full text-sm outline-none font-medium"
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'var(--landing-text-primary)',
+                          }}
                         />
                       </Field>
                       <Field label={t('contact.email') + ' *'} icon={<Mail size={14} />}>
@@ -255,7 +310,11 @@ export default function ContactPage() {
                           required
                           value={form.email}
                           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
+                          className="w-full text-sm outline-none font-medium"
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'var(--landing-text-primary)',
+                          }}
                         />
                       </Field>
                     </div>
@@ -268,7 +327,11 @@ export default function ContactPage() {
                           placeholder={t('placeholders.acmeCorp')}
                           value={form.company}
                           onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                          className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm outline-none font-medium"
+                          className="w-full text-sm outline-none font-medium"
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: 'var(--landing-text-primary)',
+                          }}
                         />
                       </Field>
                       <Field label={t('contact.teamSize')} icon={<Users size={14} />}>
@@ -280,7 +343,7 @@ export default function ContactPage() {
                             { value: '', label: t('contactPage.selectTeamSize'), disabled: true },
                             ...TEAM_SIZES.map((s) => ({ value: s, label: s })),
                           ]}
-                          triggerClassName="w-full bg-transparent text-foreground text-sm outline-none appearance-none cursor-pointer font-medium"
+                          triggerClassName="w-full text-sm outline-none appearance-none cursor-pointer font-medium"
                           dropdownClassName="bg-background text-foreground"
                         />
                       </Field>
@@ -294,13 +357,24 @@ export default function ContactPage() {
                         rows={4}
                         value={form.message}
                         onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                        className="w-full bg-transparent text-foreground placeholder-muted-foreground/50 text-sm outline-none resize-none font-medium min-h-25"
+                        className="w-full text-sm outline-none resize-none font-medium min-h-25"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--landing-text-primary)',
+                        }}
                       />
                     </Field>
 
                     {error && (
-                      <p className="text-destructive text-sm flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-destructive shrink-0" />
+                      <p
+                        className="text-sm flex items-center gap-2"
+                        role="alert"
+                        style={{ color: 'var(--destructive)' }}
+                      >
+                        <span
+                          className="w-1 h-1 rounded-full shrink-0"
+                          style={{ backgroundColor: 'var(--destructive)' }}
+                        />
                         {error}
                       </p>
                     )}
@@ -308,10 +382,10 @@ export default function ContactPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-4 rounded-2xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 hover:shadow-lg shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
                       style={{
-                        background: 'linear-gradient(135deg, #38bdf8, #6366f1)',
-                        boxShadow: '0 4px 16px rgba(56,189,248,0.15)',
+                        background: 'linear-gradient(135deg, #2563eb, #60a5fa)',
+                        boxShadow: '0 4px 16px rgba(37,99,235,0.15)',
                       }}
                     >
                       {loading ? (
@@ -325,7 +399,10 @@ export default function ContactPage() {
                       )}
                     </button>
 
-                    <p className="text-center text-muted-foreground/50 text-xs flex items-center justify-center gap-1.5">
+                    <p
+                      className="text-center text-xs flex items-center justify-center gap-1.5"
+                      style={{ color: 'var(--landing-text-muted)' }}
+                    >
                       <Shield size={11} />
                       {t('contact.securityNotice')}
                     </p>
@@ -336,6 +413,8 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
@@ -352,11 +431,20 @@ function Field({
 }) {
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-foreground text-xs font-medium mb-2">
-        <span className="text-foreground/80">{icon}</span>
+      <label
+        className="flex items-center gap-1.5 text-xs font-medium mb-2"
+        style={{ color: 'var(--landing-text-primary)' }}
+      >
+        <span style={{ color: 'var(--landing-text-muted)', opacity: 0.8 }}>{icon}</span>
         {label}
       </label>
-      <div className="px-4 py-3 rounded-xl border border-border/60 bg-background/50 focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10 focus-within:bg-background transition-all shadow-sm">
+      <div
+        className="px-4 py-3 rounded-xl backdrop-blur-sm transition-all focus-within:ring-2 focus-within:ring-primary/10 shadow-sm"
+        style={{
+          backgroundColor: 'var(--landing-card-bg)',
+          border: '1px solid var(--landing-card-border)',
+        }}
+      >
         {children}
       </div>
     </div>
