@@ -194,9 +194,9 @@ export function LeaveRequestWizard({
                     className={cn(
                       'w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-colors shrink-0',
                       isCompleted
-                        ? 'bg-(--primary) border-(--primary) text-white'
+                        ? 'bg-blue-500 border-blue-500 text-white'
                         : isCurrent
-                          ? 'border-(--primary) bg-(--background) text-(--primary)'
+                          ? 'border-blue-500 bg-(--background) text-blue-500'
                           : 'border-(--border) bg-(--background) text-(--muted-foreground)',
                     )}
                     animate={{ scale: isCurrent ? 1.1 : 1 }}
@@ -220,7 +220,7 @@ export function LeaveRequestWizard({
                 {idx < stepIds.length - 1 && (
                   <div className="flex-1 h-0.5 bg-(--border) mx-1 max-w-6">
                     <motion.div
-                      className={cn('h-full', isCompleted ? 'bg-(--primary)' : 'bg-(--border)')}
+                      className={cn('h-full', isCompleted ? 'bg-blue-500' : 'bg-(--border)')}
                       initial={{ width: '0%' }}
                       animate={{ width: isCompleted ? '100%' : '0%' }}
                       transition={{ duration: 0.3 }}

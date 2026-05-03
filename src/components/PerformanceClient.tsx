@@ -213,7 +213,7 @@ function CreateCycleWizard({
                       <div className="flex-1 h-0.5 bg-muted mx-1 max-w-8 rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all duration-300 ${
-                            isCompleted ? 'bg-primary' : 'bg-transparent'
+                            isCompleted ? 'bg-blue-500' : 'bg-transparent'
                           }`}
                           style={{ width: isCompleted ? '100%' : '0%' }}
                         />

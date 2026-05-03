@@ -27,14 +27,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Id } from '@/convex/_generated/dataModel';
 
-type FilterStatus = 'pending' | 'approved' | 'rejected' | 'all';
+type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
 
 // Status badges will be rendered with translation in component
 
 export default function JoinRequestsPage() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const [filter, setFilter] = useState<FilterStatus>('pending');
+  const [filter, setFilter] = useState<FilterStatus>('approved');
   const [search, setSearch] = useState('');
   const [approving, setApproving] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
@@ -224,7 +224,7 @@ export default function JoinRequestsPage() {
       {/* Filters + Search */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex gap-2 overflow-x-auto sm:overflow-x-visible scrollbar-hide pb-1 -mb-1 sm:pb-0 sm:mb-0">
-          {(['pending', 'approved', 'rejected', 'all'] as FilterStatus[]).map((f: any) => (
+          {(['all', 'approved', 'pending', 'rejected'] as FilterStatus[]).map((f: any) => (
             <button
               key={f}
               onClick={() => setFilter(f)}

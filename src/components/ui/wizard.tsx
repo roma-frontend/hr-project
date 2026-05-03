@@ -135,9 +135,9 @@ export function Wizard({
                         className={cn(
                           'w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center border-2 transition-colors shrink-0',
                           isCompleted
-                            ? 'btn-gradient border-(--primary) text-white'
+                            ? 'bg-blue-500 border-blue-500 text-white'
                             : isCurrent
-                              ? 'border-(--primary) bg-(--background) text-(--primary)'
+                              ? 'border-blue-500 bg-(--background) text-blue-500'
                               : 'border-(--border) bg-(--background) text-(--muted-foreground)',
                         )}
                         initial={{ scale: 1 }}
@@ -172,7 +172,7 @@ export function Wizard({
                         <motion.div
                           className={cn(
                             'h-full transition-colors',
-                            isCompleted ? 'bg-(--primary)' : 'bg-(--border)',
+                            isCompleted ? 'bg-blue-500' : 'bg-(--border)',
                           )}
                           initial={{ width: '0%' }}
                           animate={{ width: isCompleted ? '100%' : '0%' }}
