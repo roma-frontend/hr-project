@@ -744,12 +744,13 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         className="flex items-start gap-2.5 p-2.5 rounded-lg border border-(--border) bg-(--background-subtle) cursor-pointer hover:border-(--primary)/50 transition-colors"
                         onClick={() => {
                           setSelectedLeave(leave);
-                          const mainEl = document.querySelector<HTMLElement>('main');
-                          if (mainEl) {
-                            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else {
+                          setTimeout(() => {
+                            const mainEl = document.querySelector<HTMLElement>('main');
+                            if (mainEl) {
+                              mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
+                          }, 100);
                         }}
                       >
                         <Avatar className="w-8 h-8 shrink-0">
@@ -802,12 +803,13 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         className="flex items-start gap-2.5 p-2.5 rounded-lg border border-(--border) bg-(--background-subtle) cursor-pointer hover:border-(--primary)/50 transition-colors"
                         onClick={() => {
                           setSelectedGoogleEvent(evt);
-                          const mainEl = document.querySelector<HTMLElement>('main');
-                          if (mainEl) {
-                            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else {
+                          setTimeout(() => {
+                            const mainEl = document.querySelector<HTMLElement>('main');
+                            if (mainEl) {
+                              mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
+                          }, 100);
                         }}
                       >
                         <div
@@ -872,12 +874,13 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         className="flex items-start gap-2.5 p-2.5 rounded-lg border border-(--border) bg-(--background-subtle) cursor-pointer hover:border-(--primary)/50 transition-colors"
                         onClick={() => {
                           setSelectedDriverEvent(evt);
-                          const mainEl = document.querySelector<HTMLElement>('main');
-                          if (mainEl) {
-                            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else {
+                          setTimeout(() => {
+                            const mainEl = document.querySelector<HTMLElement>('main');
+                            if (mainEl) {
+                              mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
+                          }, 100);
                         }}
                       >
                         <div
