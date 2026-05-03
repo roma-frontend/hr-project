@@ -273,7 +273,7 @@ export default function StripeDashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
+            <div className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
               {metrics.growth}%
               {parseFloat(metrics.growth) >= 0 ? (
                 <ArrowUpRight className="w-4 h-4 text-green-500" />

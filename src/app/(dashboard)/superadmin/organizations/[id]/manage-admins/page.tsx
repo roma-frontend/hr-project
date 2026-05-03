@@ -160,7 +160,8 @@ export default function ManageAdminsPage() {
             {isSuperadmin ? t('ui.organizationNotFound') : t('manageAdmins.onlyManageOwn')}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {t('manageAdmins.yourRole')}: {user.role} | {t('manageAdmins.yourOrg')}: {user.organizationId} | {t('manageAdmins.requested')}: {orgId}
+            {t('manageAdmins.yourRole')}: {user.role} | {t('manageAdmins.yourOrg')}:{' '}
+            {user.organizationId} | {t('manageAdmins.requested')}: {orgId}
           </p>
         </div>
       </div>
@@ -264,7 +265,7 @@ export default function ManageAdminsPage() {
         <div className="mb-8">
           <div className="mb-4">
             <h2
-              className="text-2xl font-bold flex items-center gap-2 mb-4"
+              className="text-2xl sm:text-3xl font-bold flex items-center gap-2 mb-4"
               style={{ color: 'var(--text-primary)' }}
             >
               <Shield className="w-6 h-6 text-purple-500" />
@@ -331,9 +332,7 @@ export default function ManageAdminsPage() {
             >
               <AlertCircle className="w-12 h-12 mx-auto mb-3 text-yellow-500 opacity-50" />
               <p className="text-muted-foreground">{t('manageAdmins.noAdminsYet')}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('manageAdmins.noAdminsHint')}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">{t('manageAdmins.noAdminsHint')}</p>
             </div>
           )}
         </div>
@@ -341,7 +340,7 @@ export default function ManageAdminsPage() {
         {/* Employees Section */}
         <div>
           <h2
-            className="text-2xl font-bold flex items-center gap-2 mb-4"
+            className="text-2xl sm:text-3xl font-bold flex items-center gap-2 mb-4"
             style={{ color: 'var(--text-primary)' }}
           >
             <Users className="w-6 h-6 text-blue-500" />
@@ -439,11 +438,13 @@ export default function ManageAdminsPage() {
           >
             <DialogHeader className="pb-4">
               {/* Icon Badge */}
-              <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
+              <div
+                className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
                 style={{
-                  background: actionType === 'promote'
-                    ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05))'
-                    : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))',
+                  background:
+                    actionType === 'promote'
+                      ? 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05))'
+                      : 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05))',
                 }}
               >
                 {actionType === 'promote' ? (
@@ -454,9 +455,7 @@ export default function ManageAdminsPage() {
               </div>
 
               <DialogTitle className="text-center text-lg">
-                {actionType === 'promote'
-                  ? t('ui.makeAdminTitle')
-                  : t('ui.removeAdminTitle')}
+                {actionType === 'promote' ? t('ui.makeAdminTitle') : t('ui.removeAdminTitle')}
               </DialogTitle>
             </DialogHeader>
 
@@ -464,7 +463,11 @@ export default function ManageAdminsPage() {
               {actionType === 'promote' ? (
                 <Trans
                   i18nKey="ui.makeAdminConfirm"
-                  values={{ name: selectedMember?.name, email: selectedMember?.email, org: organization.name }}
+                  values={{
+                    name: selectedMember?.name,
+                    email: selectedMember?.email,
+                    org: organization.name,
+                  }}
                   components={[
                     <strong key="0" className="text-foreground" />,
                     <span key="1" className="text-muted-foreground" />,
@@ -497,9 +500,10 @@ export default function ManageAdminsPage() {
                 disabled={isLoading}
                 className="flex-1"
                 style={{
-                  background: actionType === 'promote'
-                    ? 'linear-gradient(135deg, #16a34a, #15803d)'
-                    : 'linear-gradient(135deg, #dc2626, #b91c1c)',
+                  background:
+                    actionType === 'promote'
+                      ? 'linear-gradient(135deg, #16a34a, #15803d)'
+                      : 'linear-gradient(135deg, #dc2626, #b91c1c)',
                 }}
               >
                 {isLoading ? (
@@ -507,9 +511,11 @@ export default function ManageAdminsPage() {
                     <ShieldLoader size="xs" variant="inline" className="mr-2" />
                     {t('ui.processing')}
                   </>
-                ) : actionType === 'promote'
-                  ? t('ui.makeAdmin')
-                  : t('ui.removeAdmin')}
+                ) : actionType === 'promote' ? (
+                  t('ui.makeAdmin')
+                ) : (
+                  t('ui.removeAdmin')
+                )}
               </Button>
             </DialogFooter>
           </motion.div>
