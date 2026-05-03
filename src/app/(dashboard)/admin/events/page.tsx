@@ -322,7 +322,7 @@ export default function CompanyEventsPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl bg-(--background-subtle) p-1 w-fit">
+      <div className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-2">
         {[
           { key: 'events' as const, label: t('events.eventsTab', 'Events'), icon: Calendar },
           {
@@ -335,10 +335,10 @@ export default function CompanyEventsPage() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+              'flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all',
               activeTab === tab.key
                 ? 'bg-[#3b82f6] text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                : 'text-muted-foreground hover:text-foreground bg-[var(--background-subtle)]',
             )}
           >
             <tab.icon className="w-4 h-4" />
