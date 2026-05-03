@@ -990,7 +990,7 @@ export function SurveysClient() {
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-1">
                       <h3 className="font-semibold text-base truncate">{survey.title}</h3>
                       <Badge className={STATUS_COLORS[survey.status] || ''}>
                         {t(`surveys.status.${survey.status}`)}
@@ -1020,7 +1020,7 @@ export function SurveysClient() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center gap-1 shrink-0 self-end sm:self-auto">
+                  <div className="w-full sm:w-auto flex flex-wrap items-center gap-1 shrink-0 self-start sm:self-auto">
                     {survey.status === 'active' && (
                       <Button
                         size="sm"
