@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   ClipboardList,
   Plus,
@@ -916,7 +917,7 @@ export function SurveysClient() {
   if (!user || !orgId) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
+        <ShieldLoader size="md" />
       </div>
     );
   }

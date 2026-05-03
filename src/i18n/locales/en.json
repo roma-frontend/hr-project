@@ -172,6 +172,24 @@
       "role": "Chief People Officer",
       "company": "Innovate LLC",
       "text": "Finally, an HR management system that employees actually love to use. The face recognition login is a game-changer!"
+    },
+    "testimonial4": {
+      "name": "David Kim",
+      "role": "VP of Engineering",
+      "company": "StartupFlow",
+      "text": "The automated workflows saved our HR team 15 hours per week. Setup was incredibly easy and the support team is outstanding."
+    },
+    "testimonial5": {
+      "name": "Lisa Thompson",
+      "role": "HR Manager",
+      "company": "Global Retail Co",
+      "text": "Managing leave across 12 offices used to be a nightmare. Now everything is centralized and our compliance rate is 100%."
+    },
+    "testimonial6": {
+      "name": "James Wilson",
+      "role": "CEO",
+      "company": "TechBridge",
+      "text": "We switched from a legacy HR system and saw immediate improvements in employee satisfaction and manager productivity."
     }
   },
   "faq": {
@@ -2698,6 +2716,7 @@
     "footerTerms": "Terms of Service",
     "footerTermsDesc": "Read our terms of service and conditions",
     "footerPrivacyDesc": "View our privacy policy and data protection information",
+    "socialProof": "500+ companies trust us",
     "footerRights": "All rights reserved.",
     "securityCenter": "Security Center",
     "securityCritical": "⚠ Critical",

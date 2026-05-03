@@ -8,6 +8,7 @@ import { Id } from '../../convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import '@/i18n/config';
 import Link from 'next/link';
 
@@ -398,58 +399,35 @@ export default function CareersPage({ orgSlug }: { orgSlug: string }) {
           {/* Filter row */}
           <div className="flex flex-wrap gap-3">
             {departments.length > 0 && (
-              <select
+              <CustomSelect
                 value={filterDept}
-                onChange={(e) => setFilterDept(e.target.value)}
-                className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
-                style={{
-                  background: 'var(--landing-bg)',
-                  border: '1px solid var(--landing-card-border)',
-                  color: 'var(--landing-text-primary)',
-                }}
-              >
-                <option value="">{t('careers.allDepartments', 'All Departments')}</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
+                onChange={setFilterDept}
+                options={[
+                  { value: '', label: t('careers.allDepartments', 'All Departments') },
+                  ...departments.map((d) => ({ value: d, label: d })),
+                ]}
+              />
             )}
-            <select
+            <CustomSelect
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
-              style={{
-                background: 'var(--landing-bg)',
-                border: '1px solid var(--landing-card-border)',
-                color: 'var(--landing-text-primary)',
-              }}
-            >
-              <option value="">{t('careers.allTypes', 'All Types')}</option>
-              <option value="full_time">{t('recruitment.type.fullTime', 'Full-time')}</option>
-              <option value="part_time">{t('recruitment.type.partTime', 'Part-time')}</option>
-              <option value="contract">{t('recruitment.type.contract', 'Contract')}</option>
-              <option value="internship">{t('recruitment.type.internship', 'Internship')}</option>
-            </select>
+              onChange={setFilterType}
+              options={[
+                { value: '', label: t('careers.allTypes', 'All Types') },
+                { value: 'full_time', label: t('recruitment.type.fullTime', 'Full-time') },
+                { value: 'part_time', label: t('recruitment.type.partTime', 'Part-time') },
+                { value: 'contract', label: t('recruitment.type.contract', 'Contract') },
+                { value: 'internship', label: t('recruitment.type.internship', 'Internship') },
+              ]}
+            />
             {locations.length > 0 && (
-              <select
+              <CustomSelect
                 value={filterLocation}
-                onChange={(e) => setFilterLocation(e.target.value)}
-                className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
-                style={{
-                  background: 'var(--landing-bg)',
-                  border: '1px solid var(--landing-card-border)',
-                  color: 'var(--landing-text-primary)',
-                }}
-              >
-                <option value="">{t('careers.allLocations', 'All Locations')}</option>
-                {locations.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+                onChange={setFilterLocation}
+                options={[
+                  { value: '', label: t('careers.allLocations', 'All Locations') },
+                  ...locations.map((l) => ({ value: l, label: l })),
+                ]}
+              />
             )}
             {hasFilters && (
               <button

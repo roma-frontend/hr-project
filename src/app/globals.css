@@ -520,6 +520,7 @@ textarea,
 
 html {
   max-width: 100vw;
+  scroll-behavior: smooth;
   /* Safe area insets for notched devices (iPhone X+) */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
@@ -2089,4 +2090,201 @@ html.dark .quick-action-slate:hover {
 
 .scrollbar-track-transparent::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MESH GRADIENT ORB ANIMATIONS — Hero Section
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes mesh-drift-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(30px, 40px) scale(1.04);
+  }
+}
+
+@keyframes mesh-drift-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-50px, 30px) scale(1.1);
+  }
+  66% {
+    transform: translate(25px, -40px) scale(0.92);
+  }
+}
+
+@keyframes mesh-drift-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(35px, 25px) scale(1.06);
+  }
+  80% {
+    transform: translate(-30px, -15px) scale(0.96);
+  }
+}
+
+.mesh-orb-1 {
+  animation: mesh-drift-1 20s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.mesh-orb-2 {
+  animation: mesh-drift-2 25s ease-in-out infinite;
+  animation-delay: -8s;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.mesh-orb-3 {
+  animation: mesh-drift-3 18s ease-in-out infinite;
+  animation-delay: -5s;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RIPPLE EFFECT — Click animation for buttons
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect .ripple-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  pointer-events: none;
+}
+
+.dark .ripple-effect .ripple-circle {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TESTIMONIALS AUTO-SCROLL CAROUSEL
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.carousel-track {
+  display: flex;
+  gap: 1.5rem;
+  animation: scroll-left 40s linear infinite;
+  width: max-content;
+}
+
+.carousel-track:hover {
+  animation-play-state: paused;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATED GRADIENT BORDER — CTA Banner
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes border-rotate {
+  0% {
+    --angle: 0deg;
+  }
+  100% {
+    --angle: 360deg;
+  }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border-animated {
+  position: relative;
+  border-radius: 1.5rem;
+}
+
+.gradient-border-animated::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--angle), #2563eb, #60a5fa, #38bdf8, #60a5fa, #2563eb);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-rotate 4s linear infinite;
+  pointer-events: none;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border-animated:hover::before {
+  opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER LINK HOVER ANIMATION
+   ═══════════════════════════════════════════════════════════════ */
+.footer-link-animated {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-link-animated::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--primary);
+  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-link-animated:hover::after {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REDUCED MOTION — Disable all animations
+   ═══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .mesh-orb-1,
+  .mesh-orb-2,
+  .mesh-orb-3,
+  .carousel-track,
+  .gradient-border-animated::before {
+    animation: none !important;
+  }
 }

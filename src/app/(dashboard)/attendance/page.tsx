@@ -13,6 +13,7 @@ import { EmployeeAttendanceDrawer } from '@/components/attendance/EmployeeAttend
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
@@ -418,25 +419,16 @@ export default function AttendancePage() {
                       />
                     </div>
                     {/* Month */}
-                    <select
+                    <CustomSelect
                       value={selectedMonth}
-                      onChange={(e) => setSelectedMonth(e.target.value)}
-                      className="px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2"
-                      style={{
-                        border: '1px solid var(--border)',
-                        background: 'var(--background)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {monthOptions.map((m: string) => {
+                      onChange={setSelectedMonth}
+                      options={monthOptions.map((m: string) => {
                         const [y, mo] = m.split('-').map(Number) as [number, number];
-                        return (
-                          <option key={m} value={m}>
-                            {MONTHS[mo - 1]} {y}
-                          </option>
-                        );
+                        return { value: m, label: `${MONTHS[mo - 1]} ${y}` };
                       })}
-                    </select>
+                      triggerClassName="px-3 py-1.5 text-sm rounded-lg focus:outline-none focus:ring-2"
+                      dropdownClassName="border-[var(--border)] bg-[var(--background)] text-[var(--text-primary)]"
+                    />
                   </div>
                 </CardTitle>
               </CardHeader>

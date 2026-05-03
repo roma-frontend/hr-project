@@ -35,10 +35,42 @@ export default function HeroSection() {
 
   return (
     <div
-      className="relative flex flex-col items-center text-center pt-10 pb-20 px-6 min-h-screen justify-center"
+      className="relative flex flex-col items-center text-center pt-10 pb-20 px-6 min-h-screen justify-center overflow-hidden"
       role="banner"
       aria-label="Hero section"
     >
+      {/* Animated mesh gradient background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] rounded-full mesh-orb-1"
+          style={{
+            background: 'radial-gradient(circle, var(--landing-orb-1) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }}
+        />
+        <div
+          className="absolute top-[10%] right-[-15%] w-[700px] h-[700px] rounded-full mesh-orb-2"
+          style={{
+            background: 'radial-gradient(circle, var(--landing-orb-2) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }}
+        />
+        <div
+          className="absolute bottom-[-10%] left-[10%] w-[600px] h-[600px] rounded-full mesh-orb-3"
+          style={{
+            background: 'radial-gradient(circle, var(--landing-orb-3) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+        {/* Noise texture overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
+
       {/* Skip to content link for accessibility */}
       <a
         href="#features"
@@ -57,6 +89,7 @@ export default function HeroSection() {
         style={{
           border: '1px solid var(--landing-card-border)',
           background: 'var(--landing-card-bg)',
+          boxShadow: '0 4px 24px rgba(37, 99, 235, 0.08)',
         }}
         role="status"
         aria-label="Premium HR platform"
@@ -79,8 +112,11 @@ export default function HeroSection() {
       {/* Title — rendered as static HTML, no JS needed */}
       <h1 className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-6 relative">
         <span
-          className="hero-word-1 relative text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-none"
-          style={{ color: 'var(--landing-text-primary)' }}
+          className="hero-word-1 relative text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter leading-none"
+          style={{
+            color: 'var(--landing-text-primary)',
+            textShadow: '0 2px 40px rgba(37, 99, 235, 0.15)',
+          }}
         >
           {t('landing.heroTitle')}
         </span>
@@ -109,8 +145,8 @@ export default function HeroSection() {
           />
         </div>
         <p
-          className="text-lg md:text-xl leading-relaxed font-light text-center"
-          style={{ color: 'var(--landing-text-secondary)' }}
+          className="text-lg md:text-xl leading-loose font-light text-center"
+          style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
         >
           {t('landing.heroSubtitle')}
         </p>
@@ -162,7 +198,7 @@ export default function HeroSection() {
           {TRUSTED.map((name) => (
             <span
               key={name}
-              className="group relative cursor-default text-sm font-bold transition-colors"
+              className="group relative cursor-default text-sm font-bold transition-all duration-300 hover:opacity-100"
               style={{
                 color: 'var(--landing-text-secondary)',
                 opacity: 0.9,
@@ -170,7 +206,7 @@ export default function HeroSection() {
             >
               {name}
               <span
-                className="absolute -bottom-1 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -bottom-1 left-0 w-0 h-[1px] group-hover:w-full transition-all duration-500 ease-out"
                 style={{
                   background: 'linear-gradient(to right, transparent, var(--primary), transparent)',
                 }}

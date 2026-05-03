@@ -121,15 +121,15 @@ export default function FeaturesSection() {
       <div className="text-center mb-16 section-fade">
         <span className="section-eyebrow">{t('landing.leaveTypes')}</span>
         <h2
-          className="mt-3 text-3xl md:text-5xl font-black leading-tight"
+          className="mt-3 text-3xl md:text-5xl font-black leading-tight tracking-tighter"
           style={{ color: 'var(--landing-text-primary)' }}
         >
           {t('landingExtra.everyLeaveType')}{' '}
           <span className="heading-gradient">{t('landing.perfectlyManaged')}</span>
         </h2>
         <p
-          className="mt-4 max-w-xl mx-auto text-lg"
-          style={{ color: 'var(--landing-text-secondary)' }}
+          className="mt-4 max-w-xl mx-auto text-lg leading-loose"
+          style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
         >
           {t('landingExtra.featuresSubtitle')}
         </p>

@@ -8,6 +8,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import { uploadTaskAttachment } from '@/actions/cloudinary';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface Props {
   currentUserId: Id<'users'>;
@@ -186,21 +187,20 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
             <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">
               {t('task.assignToRequired')}
             </label>
-            <select
+            <CustomSelect
               value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-            >
-              <option value="">{t('task.selectEmployee')}</option>
-              {availableEmployees?.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name}
-                  {emp.role ? ` [${t(`roles.${emp.role}`)}]` : ''}
-                  {emp.position ? ` — ${emp.position}` : ''}
-                  {emp.department ? ` (${emp.department})` : ''}
-                </option>
-              ))}
-            </select>
+              onChange={setAssignedTo}
+              fullWidth
+              options={[
+                { value: '', label: t('task.selectEmployee') },
+                ...(availableEmployees?.map((emp) => ({
+                  value: emp._id,
+                  label: `${emp.name}${emp.role ? ` [${t(`roles.${emp.role}`)}]` : ''}${emp.position ? ` — ${emp.position}` : ''}${emp.department ? ` (${emp.department})` : ''}`,
+                })) || []),
+              ]}
+              triggerClassName="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              dropdownClassName="bg-(--background-subtle) border border-(--border) text-(--text-primary)"
+            />
             {availableEmployees?.length === 0 && (
               <p className="text-xs text-amber-400 mt-1">
                 {userRole === 'supervisor'
@@ -216,16 +216,19 @@ export function CreateTaskModal({ currentUserId, userRole, onClose }: Props) {
               <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">
                 {t('task.priority')}
               </label>
-              <select
+              <CustomSelect
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
-                className="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-              >
-                <option value="low">{t('task.low')}</option>
-                <option value="medium">{t('task.medium')}</option>
-                <option value="high">{t('task.high')}</option>
-                <option value="urgent">{t('task.urgent')}</option>
-              </select>
+                onChange={(v) => setPriority(v as any)}
+                fullWidth
+                options={[
+                  { value: 'low', label: t('task.low') },
+                  { value: 'medium', label: t('task.medium') },
+                  { value: 'high', label: t('task.high') },
+                  { value: 'urgent', label: t('task.urgent') },
+                ]}
+                triggerClassName="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                dropdownClassName="bg-(--background-subtle) border border-(--border) text-(--text-primary)"
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">

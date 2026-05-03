@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 // cspell:enable
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 export default function SuperadminCreateOrgPage() {
   const { t } = useTranslation();
@@ -204,29 +205,29 @@ export default function SuperadminCreateOrgPage() {
                 >
                   {t('superadmin.organizations.planLabel')}
                 </label>
-                <select
+                <CustomSelect
                   value={formData.plan}
-                  onChange={(e) =>
+                  onChange={(v) =>
                     setFormData({
                       ...formData,
-                      plan: e.target.value as 'starter' | 'professional' | 'enterprise',
+                      plan: v as 'starter' | 'professional' | 'enterprise',
                     })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <option value="starter">{t('superadmin.organizations.planStarterFree')}</option>
-                  <option value="professional">
-                    {t('superadmin.organizations.planProfessionalPaid')}
-                  </option>
-                  <option value="enterprise">
-                    {t('superadmin.organizations.planEnterpriseCustom')}
-                  </option>
-                </select>
+                  fullWidth
+                  options={[
+                    { value: 'starter', label: t('superadmin.organizations.planStarterFree') },
+                    {
+                      value: 'professional',
+                      label: t('superadmin.organizations.planProfessionalPaid'),
+                    },
+                    {
+                      value: 'enterprise',
+                      label: t('superadmin.organizations.planEnterpriseCustom'),
+                    },
+                  ]}
+                  triggerClassName="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  dropdownClassName="bg-[var(--background-subtle)] border-[var(--border)] text-[var(--text-primary)]"
+                />
               </div>
 
               {/* Country */}
@@ -259,25 +260,23 @@ export default function SuperadminCreateOrgPage() {
                 >
                   {t('superadmin.organizations.timezoneLabel')}
                 </label>
-                <select
+                <CustomSelect
                   value={formData.timezone}
-                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  style={{
-                    background: 'var(--background-subtle)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <option value="UTC">UTC</option>
-                  <option value="America/New_York">Eastern Time</option>
-                  <option value="America/Chicago">Central Time</option>
-                  <option value="America/Los_Angeles">Pacific Time</option>
-                  <option value="Europe/London">London</option>
-                  <option value="Europe/Paris">Paris</option>
-                  <option value="Asia/Tokyo">Tokyo</option>
-                  <option value="Asia/Yerevan">Yerevan</option>
-                </select>
+                  onChange={(v) => setFormData({ ...formData, timezone: v })}
+                  fullWidth
+                  options={[
+                    { value: 'UTC', label: 'UTC' },
+                    { value: 'America/New_York', label: 'Eastern Time' },
+                    { value: 'America/Chicago', label: 'Central Time' },
+                    { value: 'America/Los_Angeles', label: 'Pacific Time' },
+                    { value: 'Europe/London', label: 'London' },
+                    { value: 'Europe/Paris', label: 'Paris' },
+                    { value: 'Asia/Tokyo', label: 'Tokyo' },
+                    { value: 'Asia/Yerevan', label: 'Yerevan' },
+                  ]}
+                  triggerClassName="w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  dropdownClassName="bg-[var(--background-subtle)] border-[var(--border)] text-[var(--text-primary)]"
+                />
               </div>
             </div>
 

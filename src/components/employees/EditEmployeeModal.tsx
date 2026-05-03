@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import {
   X,
   Save,
@@ -637,25 +638,22 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
                     <label className="text-sm font-medium flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5" /> {t('labels.department')} *
                     </label>
-                    <select
+                    <CustomSelect
                       value={form.department}
-                      onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}
-                      className={`w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all ${
+                      onChange={(v) => setForm((p) => ({ ...p, department: v }))}
+                      fullWidth
+                      options={[
+                        { value: '', label: t('placeholders.select', 'Select...') },
+                        ...DEPARTMENTS_LIST.map((d) => ({
+                          value: d,
+                          label: t(`departments.${d.toLowerCase()}`, d),
+                        })),
+                      ]}
+                      triggerClassName={`w-full px-3 py-2 rounded-xl border text-sm outline-none transition-all ${
                         errors.department ? 'border-red-500' : ''
                       }`}
-                      style={{
-                        background: 'var(--input)',
-                        borderColor: errors.department ? undefined : 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      <option value="">{t('placeholders.select', 'Select...')}</option>
-                      {DEPARTMENTS_LIST.map((d) => (
-                        <option key={d} value={d}>
-                          {t(`departments.${d.toLowerCase()}`, d)}
-                        </option>
-                      ))}
-                    </select>
+                      dropdownClassName="bg-[var(--input)] border-[var(--border)] text-[var(--text-primary)]"
+                    />
                     {errors.department && (
                       <p className="text-xs text-red-500">{errors.department}</p>
                     )}

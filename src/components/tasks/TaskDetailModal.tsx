@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import { TaskAttachments } from './TaskAttachments';
 import { Button } from '@/components/ui/button';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import type { Id } from '../../../convex/_generated/dataModel';
 import Image from 'next/image';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
@@ -352,16 +353,18 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                   {t('taskDetail.priority')}
                 </h3>
                 {editMode ? (
-                  <select
+                  <CustomSelect
                     value={editPriority}
-                    onChange={(e) => setEditPriority(e.target.value as Priority)}
-                    className="px-3 py-1.5 rounded-lg border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  >
-                    <option value="low">↓ {t('taskDetail.low')}</option>
-                    <option value="medium">→ {t('taskDetail.medium')}</option>
-                    <option value="high">↑ {t('taskDetail.high')}</option>
-                    <option value="urgent">⚡ {t('taskDetail.urgent')}</option>
-                  </select>
+                    onChange={(v) => setEditPriority(v as Priority)}
+                    options={[
+                      { value: 'low', label: `↓ ${t('taskDetail.low')}` },
+                      { value: 'medium', label: `→ ${t('taskDetail.medium')}` },
+                      { value: 'high', label: `↑ ${t('taskDetail.high')}` },
+                      { value: 'urgent', label: `⚡ ${t('taskDetail.urgent')}` },
+                    ]}
+                    triggerClassName="px-3 py-1.5 rounded-lg border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    dropdownClassName="bg-(--background-subtle) border border-(--border) text-(--text-primary)"
+                  />
                 ) : (
                   <span
                     className={`text-sm font-semibold px-3 py-1 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}

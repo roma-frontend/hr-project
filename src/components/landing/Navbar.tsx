@@ -109,8 +109,8 @@ export default function Navbar() {
         aria-label="Main navigation"
         style={{
           borderColor: 'var(--landing-card-border)',
-          willChange: 'padding, box-shadow',
-          transitionProperty: 'padding, box-shadow, background-color',
+          willChange: 'padding, box-shadow, background-color',
+          transitionProperty: 'padding, box-shadow, background-color, backdrop-filter',
         }}
       >
         <div
@@ -120,9 +120,14 @@ export default function Navbar() {
               ? 'rgba(var(--landing-navbar-bg-rgb, 15, 23, 42), 0.98)'
               : 'rgba(var(--landing-navbar-bg-rgb, 15, 23, 42), 0.7)',
             borderColor: 'var(--landing-card-border)',
-            transition: 'box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease-in-out',
+            transition:
+              'box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease-in-out, backdrop-filter 0.5s ease',
+            backdropFilter: scrolled ? 'blur(24px) saturate(180%)' : 'blur(16px) saturate(140%)',
+            WebkitBackdropFilter: scrolled
+              ? 'blur(24px) saturate(180%)'
+              : 'blur(16px) saturate(140%)',
             boxShadow: scrolled
-              ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+              ? '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)'
               : '0 0 0 0 rgba(0, 0, 0, 0)',
           }}
         />

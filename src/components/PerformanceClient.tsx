@@ -31,6 +31,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -254,16 +255,19 @@ function CreateCycleWizard({
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t('performance.fields.type')}</label>
-                  <select
+                  <CustomSelect
                     value={type}
-                    onChange={(e) => setType(e.target.value as any)}
-                    className="w-full mt-1 px-3 py-2 border rounded-md bg-background text-sm"
-                  >
-                    <option value="quarterly">{t('performance.types.quarterly')}</option>
-                    <option value="semi_annual">{t('performance.types.semiAnnual')}</option>
-                    <option value="annual">{t('performance.types.annual')}</option>
-                    <option value="custom">{t('performance.types.custom')}</option>
-                  </select>
+                    onChange={(v) => setType(v as any)}
+                    fullWidth
+                    options={[
+                      { value: 'quarterly', label: t('performance.types.quarterly') },
+                      { value: 'semi_annual', label: t('performance.types.semiAnnual') },
+                      { value: 'annual', label: t('performance.types.annual') },
+                      { value: 'custom', label: t('performance.types.custom') },
+                    ]}
+                    triggerClassName="w-full mt-1 px-3 py-2 border rounded-md bg-background text-sm"
+                    dropdownClassName="bg-background border text-foreground"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

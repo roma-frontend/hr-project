@@ -3,6 +3,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
+function createRipple(event: React.MouseEvent<HTMLButtonElement>) {
+  const button = event.currentTarget;
+  const existingRipple = button.querySelector('.ripple-circle');
+  if (existingRipple) existingRipple.remove();
+
+  const circle = document.createElement('span');
+  circle.classList.add('ripple-circle');
+
+  const rect = button.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = event.clientX - rect.left - size / 2;
+  const y = event.clientY - rect.top - size / 2;
+
+  circle.style.width = circle.style.height = `${size}px`;
+  circle.style.left = `${x}px`;
+  circle.style.top = `${y}px`;
+
+  button.appendChild(circle);
+  circle.addEventListener('animationend', () => circle.remove());
+}
+
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
@@ -72,7 +93,11 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, className }), 'ripple-effect')}
+      onClick={(e) => {
+        createRipple(e);
+        props.onClick?.(e);
+      }}
       {...props}
     />
   );

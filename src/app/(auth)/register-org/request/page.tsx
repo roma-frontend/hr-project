@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from '@/lib/cssMotion';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -254,23 +255,20 @@ export default function RequestOrgPage() {
                   <Label htmlFor="teamSize">{t('registerOrgPage.teamSize')}</Label>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-muted)" />
-                    <select
-                      id="teamSize"
+                    <CustomSelect
                       value={formData.teamSize}
-                      onChange={(e) => setFormData((p) => ({ ...p, teamSize: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-2 rounded-xl border text-sm outline-none transition-all appearance-none bg-(--input)"
-                      style={{
-                        borderColor: 'var(--border)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      <option value="">{t('registerOrgPage.selectSize')}</option>
-                      {TEAM_SIZES.map((size) => (
-                        <option key={size} value={size}>
-                          {size} {t('registerOrgPage.employees')}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => setFormData((p) => ({ ...p, teamSize: v }))}
+                      fullWidth
+                      options={[
+                        { value: '', label: t('registerOrgPage.selectSize') },
+                        ...TEAM_SIZES.map((size) => ({
+                          value: size,
+                          label: `${size} ${t('registerOrgPage.employees')}`,
+                        })),
+                      ]}
+                      triggerClassName="w-full pl-10 pr-4 py-2 rounded-xl border text-sm outline-none transition-all appearance-none bg-(--input)"
+                      dropdownClassName="bg-[var(--input)] border-[var(--border)] text-[var(--text-primary)]"
+                    />
                   </div>
                 </div>
               </div>

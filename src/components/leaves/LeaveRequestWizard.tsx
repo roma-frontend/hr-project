@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import {
   Calendar,
   Sun,
@@ -349,19 +350,20 @@ function EmployeeStep({
           {t('leaveWizard.selectEmployee', 'Select the employee for this leave request')}
         </p>
       </div>
-      <select
+      <CustomSelect
         value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 rounded-lg border border-(--input-border) bg-(--input) text-(--text-primary) text-sm focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none"
-      >
-        <option value="">{t('placeholders.selectEmployee', 'Select employee...')}</option>
-        {allUsers?.map((emp: any) => (
-          <option key={emp._id} value={emp._id}>
-            {emp.name}
-            {emp.department ? ` · ${emp.department}` : ''}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        fullWidth
+        options={[
+          { value: '', label: t('placeholders.selectEmployee', 'Select employee...') },
+          ...(allUsers?.map((emp: any) => ({
+            value: emp._id,
+            label: `${emp.name}${emp.department ? ` · ${emp.department}` : ''}`,
+          })) || []),
+        ]}
+        triggerClassName="w-full px-3 py-2.5 rounded-lg border border-(--input-border) bg-(--input) text-(--text-primary) text-sm focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none"
+        dropdownClassName="bg-(--input) border border-(--input-border) text-(--text-primary)"
+      />
     </div>
   );
 }

@@ -477,7 +477,7 @@ export function RecognitionClient() {
   if (!user || !orgId) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
+        <ShieldLoader size="md" />
       </div>
     );
   }
@@ -554,7 +554,7 @@ export function RecognitionClient() {
       )}
 
       {/* Tabs */}
-      <Tabs defaultValue="feed" className="w-full">
+      <Tabs defaultValue="feed" className="w-full my-6">
         <TabsList className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-2">
           <TabsTrigger
             value="feed"

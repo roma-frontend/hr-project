@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, Save, ArrowLeft } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { toast } from 'sonner';
 
 export default function EditOrganizationPage() {
@@ -208,21 +209,18 @@ export default function EditOrganizationPage() {
             >
               {t('organization.planLabel')} *
             </label>
-            <select
-              required
+            <CustomSelect
               value={formData.plan}
-              onChange={(e) => setFormData({ ...formData, plan: e.target.value as any })}
-              className="w-full px-4 py-2.5 rounded-lg border outline-none transition-all"
-              style={{
-                background: 'var(--input)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <option value="starter">{t('organization.planStarter')}</option>
-              <option value="professional">{t('organization.planProfessional')}</option>
-              <option value="enterprise">{t('organization.planEnterprise')}</option>
-            </select>
+              onChange={(v) => setFormData({ ...formData, plan: v as any })}
+              fullWidth
+              options={[
+                { value: 'starter', label: t('organization.planStarter') },
+                { value: 'professional', label: t('organization.planProfessional') },
+                { value: 'enterprise', label: t('organization.planEnterprise') },
+              ]}
+              triggerClassName="w-full px-4 py-2.5 rounded-lg border outline-none transition-all"
+              dropdownClassName="bg-[var(--input)] border-[var(--border)] text-[var(--text-primary)]"
+            />
           </div>
 
           {/* Status */}
@@ -253,27 +251,25 @@ export default function EditOrganizationPage() {
             >
               {t('organization.timezoneLabel')}
             </label>
-            <select
+            <CustomSelect
               value={formData.timezone}
-              onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg border outline-none transition-all"
-              style={{
-                background: 'var(--input)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              <option value="UTC">{t('organization.timezoneUTC')}</option>
-              <option value="America/New_York">{t('organization.timezoneET')}</option>
-              <option value="America/Chicago">{t('organization.timezoneCT')}</option>
-              <option value="America/Denver">{t('organization.timezoneMT')}</option>
-              <option value="America/Los_Angeles">{t('organization.timezonePT')}</option>
-              <option value="Europe/London">{t('organization.timezoneGMT')}</option>
-              <option value="Europe/Paris">{t('organization.timezoneCET')}</option>
-              <option value="Asia/Dubai">{t('organization.timezoneGST')}</option>
-              <option value="Asia/Tokyo">{t('organization.timezoneJST')}</option>
-              <option value="Australia/Sydney">{t('organization.timezoneAEST')}</option>
-            </select>
+              onChange={(v) => setFormData({ ...formData, timezone: v })}
+              fullWidth
+              options={[
+                { value: 'UTC', label: t('organization.timezoneUTC') },
+                { value: 'America/New_York', label: t('organization.timezoneET') },
+                { value: 'America/Chicago', label: t('organization.timezoneCT') },
+                { value: 'America/Denver', label: t('organization.timezoneMT') },
+                { value: 'America/Los_Angeles', label: t('organization.timezonePT') },
+                { value: 'Europe/London', label: t('organization.timezoneGMT') },
+                { value: 'Europe/Paris', label: t('organization.timezoneCET') },
+                { value: 'Asia/Dubai', label: t('organization.timezoneGST') },
+                { value: 'Asia/Tokyo', label: t('organization.timezoneJST') },
+                { value: 'Australia/Sydney', label: t('organization.timezoneAEST') },
+              ]}
+              triggerClassName="w-full px-4 py-2.5 rounded-lg border outline-none transition-all"
+              dropdownClassName="bg-[var(--input)] border-[var(--border)] text-[var(--text-primary)]"
+            />
           </div>
 
           {/* Country */}

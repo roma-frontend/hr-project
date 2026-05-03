@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Camera, CheckCircle, XCircle, ScanFace } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { toast } from 'sonner';
 import { detectFace, loadFaceApiModels, findBestMatch, isFaceMatch } from '@/lib/faceApi';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -684,17 +685,17 @@ export function FaceLogin() {
         {!isWebcamActive && cameras.length > 1 && (
           <div className="space-y-2">
             <label className="text-sm font-medium text-(--text-secondary)">Select Camera:</label>
-            <select
+            <CustomSelect
               value={selectedCamera}
-              onChange={(e) => setSelectedCamera(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-base)] text-(--text-primary)"
-            >
-              {cameras.map((camera) => (
-                <option key={camera.deviceId} value={camera.deviceId}>
-                  {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCamera}
+              fullWidth
+              options={cameras.map((camera) => ({
+                value: camera.deviceId,
+                label: camera.label || `Camera ${cameras.indexOf(camera) + 1}`,
+              }))}
+              triggerClassName="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-base)] text-(--text-primary)"
+              dropdownClassName="bg-[var(--surface-base)] border border-[var(--border-primary)] text-[var(--text-primary)]"
+            />
           </div>
         )}
 

@@ -8,6 +8,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { CreateTaskWizard } from './CreateTaskWizard';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { TaskDetailModal } from './TaskDetailModal';
 import { AssignSupervisorModal } from './AssignSupervisorModal';
 import {
@@ -673,31 +674,35 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
         </div>
 
         {/* Priority filter */}
-        <select
+        <CustomSelect
           value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value as any)}
-          className="px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-(--input-border) bg-(--input) text-(--text-secondary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
-        >
-          <option value="all">{t('tasksClient.allPriorities')}</option>
-          <option value="urgent">{t('tasksClient.urgent')}</option>
-          <option value="high">{t('tasksClient.high')}</option>
-          <option value="medium">{t('tasksClient.medium')}</option>
-          <option value="low">{t('tasksClient.low')}</option>
-        </select>
+          onChange={(v) => setFilterPriority(v as any)}
+          options={[
+            { value: 'all', label: t('tasksClient.allPriorities') },
+            { value: 'urgent', label: t('tasksClient.urgent') },
+            { value: 'high', label: t('tasksClient.high') },
+            { value: 'medium', label: t('tasksClient.medium') },
+            { value: 'low', label: t('tasksClient.low') },
+          ]}
+          triggerClassName="px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-(--input-border) bg-(--input) text-(--text-secondary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
+          dropdownClassName="bg-(--input) border border-(--input-border) text-(--text-primary)"
+        />
 
         {/* Status filter */}
-        <select
+        <CustomSelect
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as any)}
-          className="px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-(--border) bg-(--card) text-(--text-secondary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
-        >
-          <option value="all">{t('tasksClient.allStatuses')}</option>
-          <option value="pending">{t('statuses.pending')}</option>
-          <option value="in_progress">{t('taskStatus.inProgress')}</option>
-          <option value="review">{t('taskStatus.inReview')}</option>
-          <option value="completed">{t('statuses.completed')}</option>
-          <option value="cancelled">{t('taskStatus.cancelled')}</option>
-        </select>
+          onChange={(v) => setFilterStatus(v as any)}
+          options={[
+            { value: 'all', label: t('tasksClient.allStatuses') },
+            { value: 'pending', label: t('statuses.pending') },
+            { value: 'in_progress', label: t('taskStatus.inProgress') },
+            { value: 'review', label: t('taskStatus.inReview') },
+            { value: 'completed', label: t('statuses.completed') },
+            { value: 'cancelled', label: t('taskStatus.cancelled') },
+          ]}
+          triggerClassName="px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-(--border) bg-(--card) text-(--text-secondary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shrink-0"
+          dropdownClassName="bg-(--card) border border-(--border) text-(--text-primary)"
+        />
 
         {/* View toggle */}
         <div className="flex items-center bg-(--card) border border-(--border) rounded-xl p-1 ml-auto shrink-0">

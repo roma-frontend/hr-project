@@ -172,6 +172,24 @@
       "role": "Директор по персоналу",
       "company": "Apple",
       "text": "Наконец-то система управления персоналом, которую сотрудники действительно любят использовать. Вход по распознаванию лица - это настоящий прорыв!"
+    },
+    "testimonial4": {
+      "name": "Дэвид Ким",
+      "role": "Вице-президент по инженерии",
+      "company": "StartupFlow",
+      "text": "Автоматизированные рабочие процессы сэкономили нашей HR-команде 15 часов в неделю. Настройка была невероятно простой, а команда поддержки превосходна."
+    },
+    "testimonial5": {
+      "name": "Лиза Томпсон",
+      "role": "HR менеджер",
+      "company": "Global Retail Co",
+      "text": "Управление отпусками в 12 офисах раньше было кошмаром. Теперь всё централизовано, и наш уровень соответствия составляет 100%."
+    },
+    "testimonial6": {
+      "name": "Джеймс Уилсон",
+      "role": "Генеральный директор",
+      "company": "TechBridge",
+      "text": "Мы перешли с устаревшей HR-системы и сразу увидели улучшения в удовлетворенности сотрудников и продуктивности менеджеров."
     }
   },
   "faq": {
@@ -241,7 +259,7 @@
     "contractors": "Подрядчики",
     "leavesByDepartment": "Отпуска по отделам",
     "noDepartmentData": "Данных по отделам пока нет",
-    "loadingUserData": "Загрузка данных пользователя...",
+    "loadingUserData": "",
     "accessDenied": "Доступ запрещен",
     "onlySuperadminAccess": "Только супер-админы могут получить доступ к этой странице",
     "accountSuspended": "Аккаунт приостановлен",
@@ -256,7 +274,7 @@
     "noAdminsYet": "Администраторов пока нет",
     "noEmployeesAvailable": "Нет доступных сотрудников",
     "cancel": "Отменить",
-    "loading": "Загрузка...",
+    "loading": "",
     "historyEmpty": "История пуста",
     "now": "Сейчас",
     "superadmin": "Супер-админ",
@@ -366,6 +384,7 @@
     "recognition": "Признание",
     "surveys": "Опросы",
     "performance": "Оценка",
+    "dashboards": "Панели",
     "signatures": "Э-Подписи",
     "goals": "OKR и Цели",
     "recruitment": "Рекрутинг",
@@ -406,7 +425,7 @@
       "accessDenied": "Доступ запрещен",
       "selectOrganization": "Выберите организацию *",
       "selectOrganizationPlaceholder": "Выберите организацию",
-      "loadingOrganizations": "Загрузка организаций...",
+      "loadingOrganizations": "",
       "noOrganizationsFound": "Организации не найдены",
       "employees": "сотрудников",
       "foundCount": "Найдено {{count}} организаций",
@@ -462,7 +481,7 @@
       "ip": "IP",
       "allSecurityActions": "Все журналы аудита безопасности",
       "noAuditLogs": "Журналы аудита отсутствуют",
-      "loadingDashboard": "Загрузка панели...",
+      "loadingDashboard": "",
       "accessDenied": "Доступ запрещен",
       "auditLogging": "Журналирование аудита",
       "auditLoggingDesc": "Журналировать все действия, связанные с безопасностью",
@@ -868,7 +887,7 @@
         "subtitle": "Последние сообщения пользователя"
       }
     },
-    "loadingUserData": "Загрузка данных пользователя...",
+    "loadingUserData": "",
     "accessDenied": "Доступ запрещен",
     "onlySuperadminAccess": "Только супер-админы могут получить доступ",
     "accountSuspended": "Аккаунт приостановлен",
@@ -883,7 +902,7 @@
     "noAdminsYet": "Администраторов пока нет",
     "noEmployeesAvailable": "Нет доступных сотрудников",
     "cancel": "Отмена",
-    "loading": "Загрузка...",
+    "loading": "",
     "historyEmpty": "История пуста",
     "now": "Сейчас",
     "superadmin": "Супер-админ",
@@ -963,7 +982,7 @@
       "chatDesc": "Последние сообщения пользователя",
       "system": "Системное",
       "noChatMessages": "Сообщений не найдено",
-      "loading": "Загрузка..."
+      "loading": ""
     }
   },
   "help": {
@@ -2164,8 +2183,8 @@
     "optional": "(необязательно)"
   },
   "status": {
-    "loading": "Загрузка",
-    "loadingUserData": "Загрузка данных пользователя...",
+    "loading": "",
+    "loadingUserData": "",
     "error": "Ошибка",
     "success": "Успешно",
     "noData": "Нет данных",
@@ -2552,7 +2571,7 @@
     "assigning": "Назначение...",
     "assignAsAdmin": "Назначить администратором",
     "organizationsTitle": "Организации",
-    "loadingOrganizations": "Загрузка организаций...",
+    "loadingOrganizations": "",
     "noOrganizations": "Организаций еще нет",
     "plan": "План",
     "active": "Активно",
@@ -2581,7 +2600,7 @@
     "verifying": "Проверка"
   },
   "commonUI": {
-    "loading": "Загрузка",
+    "loading": "",
     "pleaseWait": "Пожалуйста, подождите",
     "tryAgain": "Попробовать снова",
     "learnMore": "Узнать больше",
@@ -2703,7 +2722,7 @@
     "peakLeaveMonths": "Пиковые месяцы отпусков",
     "averageLeavePerEmployee": "Средний отпуск на сотрудника",
     "noDataAvailable": "Нет данных",
-    "loadingReport": "Загрузка отчета...",
+    "loadingReport": "",
     "upgradeToProfessional": "Обновитесь до Professional для доступа к расширенным отчетам"
   },
   "landingExtra": {
@@ -2722,6 +2741,9 @@
     "footerLegal": "Юридическая информация",
     "footerPrivacy": "Политика конфиденциальности",
     "footerTerms": "Условия использования",
+    "footerPrivacyDesc": "Ознакомьтесь с нашей политикой конфиденциальности и защитой данных",
+    "footerTermsDesc": "Ознакомьтесь с нашими условиями использования",
+    "socialProof": "500+ компаний доверяют нам",
     "footerRights": "Все права защищены.",
     "securityCenter": "Центр безопасности",
     "securityCritical": "⚠ Критический",
@@ -3701,7 +3723,7 @@
     "minutes": "минут",
     "hours": "часов",
     "ago": "назад",
-    "loading": "Загрузка...",
+    "loading": "",
     "error": "Ошибка загрузки данных",
     "retry": "Повторить"
   },
@@ -3755,7 +3777,7 @@
     "kpi": "KPI"
   },
   "misc": {
-    "loading": "Загрузка",
+    "loading": "",
     "error": "Ошибка",
     "success": "Успех",
     "warning": "Предупреждение",
@@ -4111,7 +4133,7 @@
     "createManualSubDesc": "Вручную назначить план Enterprise клиенту после согласия",
     "selectOrganization": "Выберите организацию",
     "selectOrganizationPlaceholder": "-- Выберите организацию --",
-    "loadingOrganizations": "Загрузка организаций...",
+    "loadingOrganizations": "",
     "noOrganizationsFound": "Организации не найдены",
     "foundCount": "Найдено {count} организаций",
     "selectPlanLabel": "План",
@@ -4667,7 +4689,7 @@
     "orgNotAssigned": "Ваша организация ещё не назначена. Свяжитесь с суперадмином.",
     "confirm": "Подтвердить",
     "reason": "Причина",
-    "loadingRequests": "Загрузка запросов…",
+    "loadingRequests": "",
     "requestApproved": "Запрос одобрен! Аккаунт пользователя создан.",
     "failedToApprove": "Не удалось одобрить",
     "requestRejected": "Запрос отклонён.",
@@ -5933,7 +5955,7 @@
       "running": "Выполняется"
     }
   },
-  "loading": "Загрузка...",
+  "loading": "",
   "subscription": {
     "trial": "Пробный",
     "active": "Активен",
@@ -7315,7 +7337,7 @@
     }
   },
   "careers": {
-    "loading": "Загрузка...",
+    "loading": "",
     "notFound": "Страница не найдена",
     "notFoundHint": "У этой организации нет карьерной страницы.",
     "badge": "Мы нанимаем",
@@ -7839,7 +7861,7 @@
     "assigning": "Назначение...",
     "assignAsAdmin": "Назначить администратором",
     "organizationsTitle": "Организации",
-    "loadingOrganizations": "Загрузка организаций...",
+    "loadingOrganizations": "",
     "noOrganizations": "Организаций пока нет",
     "plan": "План",
     "active": "Активна",

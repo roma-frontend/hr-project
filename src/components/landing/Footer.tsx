@@ -55,13 +55,25 @@ export default function Footer() {
 
   return (
     <footer
-      className="relative border-t"
-      style={{ borderColor: 'var(--landing-card-border)' }}
+      className="relative border-t overflow-hidden"
+      style={{
+        borderColor: 'var(--landing-card-border)',
+      }}
       role="contentinfo"
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+      {/* Top gradient fade */}
+      <div
+        className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, var(--landing-card-bg), transparent)',
+          opacity: 0.5,
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="relative max-w-7xl mx-auto px-6 md:px-12 py-20">
         {/* Main footer grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-16">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-3 mb-4 group">
@@ -102,7 +114,7 @@ export default function Footer() {
                   <li key={link.nameKey}>
                     <Link
                       href={link.href}
-                      className="text-sm transition-colors hover:underline underline-offset-4"
+                      className="footer-link-animated text-sm transition-colors"
                       style={{ color: 'var(--landing-text-secondary)' }}
                       aria-label={
                         link.href === '/privacy'

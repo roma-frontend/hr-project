@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useAuthStore } from '@/store/useAuthStore';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 
 interface Props {
   onClose: () => void;
@@ -120,24 +121,29 @@ export function AssignSupervisorModal({ onClose }: Props) {
             <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">
               {t('modals.assignSupervisor.selectEmployee')}
             </label>
-            <select
+            <CustomSelect
               value={selectedEmployee}
-              onChange={(e) => {
-                setSelectedEmployee(e.target.value);
+              onChange={(v) => {
+                setSelectedEmployee(v);
                 setSelectedSupervisor('');
               }}
-              className="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="">{t('modals.assignSupervisor.chooseEmployee')}</option>
-              {employees === undefined && <option disabled>{t('commonUI.loading')}...</option>}
-              {employees?.length === 0 && <option disabled>{t('employees.noFound')}</option>}
-              {employees?.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name}
-                  {emp.position ? ` — ${emp.position}` : ''}
-                </option>
-              ))}
-            </select>
+              fullWidth
+              options={[
+                { value: '', label: t('modals.assignSupervisor.chooseEmployee') },
+                ...(employees === undefined
+                  ? [{ value: '_loading', label: t('commonUI.loading') + '...', disabled: true }]
+                  : []),
+                ...(employees?.length === 0
+                  ? [{ value: '_empty', label: t('employees.noFound'), disabled: true }]
+                  : []),
+                ...(employees?.map((emp) => ({
+                  value: emp._id,
+                  label: `${emp.name}${emp.position ? ` — ${emp.position}` : ''}`,
+                })) || []),
+              ]}
+              triggerClassName="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dropdownClassName="bg-(--background-subtle) border border-(--border) text-(--text-primary)"
+            />
           </div>
 
           {/* Current supervisor info */}
@@ -146,9 +152,7 @@ export function AssignSupervisorModal({ onClose }: Props) {
               <div className="flex items-center gap-3">
                 <Avatar name={selectedEmp.name} url={selectedEmp.avatarUrl} />
                 <div>
-                  <p className="text-sm font-semibold text-(--text-primary)">
-                    {selectedEmp.name}
-                  </p>
+                  <p className="text-sm font-semibold text-(--text-primary)">{selectedEmp.name}</p>
                   <p className="text-xs text-(--text-muted)">
                     {selectedEmp.position}{' '}
                     {selectedEmp.department ? `· ${selectedEmp.department}` : ''}
@@ -169,20 +173,21 @@ export function AssignSupervisorModal({ onClose }: Props) {
             <label className="block text-sm font-semibold text-(--text-secondary) mb-1.5">
               {t('modals.assignSupervisor.assignSupervisor')}
             </label>
-            <select
+            <CustomSelect
               value={selectedSupervisor}
-              onChange={(e) => setSelectedSupervisor(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              onChange={setSelectedSupervisor}
+              fullWidth
               disabled={!selectedEmployee}
-            >
-              <option value="">— {t('modals.assignSupervisor.removeSupervisor')}</option>
-              {supervisors?.map((sup) => (
-                <option key={sup._id} value={sup._id}>
-                  {sup.name} ({t(`roles.${sup.role}`)}
-                  {sup.department ? ` · ${sup.department}` : ''})
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: `— ${t('modals.assignSupervisor.removeSupervisor')}` },
+                ...(supervisors?.map((sup) => ({
+                  value: sup._id,
+                  label: `${sup.name} (${t(`roles.${sup.role}`)}${sup.department ? ` · ${sup.department}` : ''})`,
+                })) || []),
+              ]}
+              triggerClassName="w-full px-4 py-2.5 rounded-xl border border-(--border) bg-(--background-subtle) text-(--text-primary) text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+              dropdownClassName="bg-(--background-subtle) border border-(--border) text-(--text-primary)"
+            />
           </div>
 
           {/* All employees overview */}
@@ -200,9 +205,7 @@ export function AssignSupervisorModal({ onClose }: Props) {
                   >
                     <div className="flex items-center gap-2">
                       <Avatar name={emp.name} url={emp.avatarUrl} />
-                      <span className="text-xs font-medium text-(--text-primary)">
-                        {emp.name}
-                      </span>
+                      <span className="text-xs font-medium text-(--text-primary)">{emp.name}</span>
                     </div>
                     <span className="text-xs text-(--text-muted)">
                       {sup ? (

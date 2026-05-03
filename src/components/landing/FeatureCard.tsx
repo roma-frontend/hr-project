@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 
@@ -28,6 +28,8 @@ export default function FeatureCard({
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -45,6 +47,14 @@ export default function FeatureCard({
     return () => observer.disconnect();
   }, []);
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, []);
+
   return (
     <div
       ref={ref}
@@ -55,21 +65,39 @@ export default function FeatureCard({
         transform: visible ? 'translateY(0) rotateX(0deg)' : 'translateY(50px) rotateX(8deg)',
         transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
       }}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Glow on hover — CSS only */}
+      {/* Mouse-follow glow */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 rounded-3xl pointer-events-none -z-10 transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, ${accentColor}15, transparent 40%)`,
+            filter: 'blur(40px)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Outer glow on hover */}
       <div
-        className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl -z-10"
+        className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-2xl -z-20"
         style={{ background: gradient }}
         aria-hidden="true"
       />
 
       {/* Glass card */}
       <div
-        className="relative rounded-3xl border backdrop-blur-2xl overflow-hidden h-full"
+        className="relative rounded-[2rem] border backdrop-blur-2xl overflow-hidden h-full"
         style={{
-          transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1)',
+          transition: 'transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease',
           borderColor: 'var(--landing-card-border)',
           backgroundColor: 'var(--landing-card-bg)',
+          boxShadow: isHovered
+            ? `0 8px 32px ${accentColor}20, inset 0 1px 0 rgba(255,255,255,0.1)`
+            : '0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)',
         }}
       >
         {/* Top shimmer border */}

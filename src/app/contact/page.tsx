@@ -21,6 +21,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import Navbar from '@/components/landing/Navbar';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -271,24 +272,17 @@ export default function ContactPage() {
                         />
                       </Field>
                       <Field label={t('contact.teamSize')} icon={<Users size={14} />}>
-                        <select
+                        <CustomSelect
                           value={form.teamSize}
-                          onChange={(e) => setForm((f) => ({ ...f, teamSize: e.target.value }))}
-                          className="w-full bg-transparent text-foreground text-sm outline-none appearance-none cursor-pointer font-medium"
-                        >
-                          <option
-                            value=""
-                            disabled
-                            className="bg-background text-muted-foreground/40"
-                          >
-                            {t('contactPage.selectTeamSize')}
-                          </option>
-                          {TEAM_SIZES.map((s) => (
-                            <option key={s} value={s} className="bg-background text-foreground">
-                              {s}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(v) => setForm((f) => ({ ...f, teamSize: v }))}
+                          fullWidth
+                          options={[
+                            { value: '', label: t('contactPage.selectTeamSize'), disabled: true },
+                            ...TEAM_SIZES.map((s) => ({ value: s, label: s })),
+                          ]}
+                          triggerClassName="w-full bg-transparent text-foreground text-sm outline-none appearance-none cursor-pointer font-medium"
+                          dropdownClassName="bg-background text-foreground"
+                        />
                       </Field>
                     </div>
 

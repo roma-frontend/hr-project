@@ -8,6 +8,7 @@ import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { cn } from '@/lib/utils';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import {
   Plus,
   Search,
@@ -399,18 +400,23 @@ export function EmployeesClient() {
                 return t(`employees.filter_${o}`, { defaultValue: o });
               };
               return (
-                <select
+                <CustomSelect
                   key={label}
                   value={value}
-                  onChange={(e) => setter(e.target.value)}
-                  className="bg-(--card) border-(--border) text-(--text-primary) px-3 py-2 rounded-xl border text-sm outline-none capitalize flex-1 min-w-[100px]"
-                >
-                  {options.map((o: any) => (
-                    <option key={o} value={o} className="capitalize">
-                      {getTranslation(o)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setter}
+                  options={options.map((o: any) => ({
+                    value: o,
+                    label: (() => {
+                      if (label === 'Type')
+                        return t('employees.allTypes', { defaultValue: 'All Types' });
+                      if (label === 'Status')
+                        return t('employees.allStatuses', { defaultValue: 'All Statuses' });
+                      return t(`employees.filter_${o}`, { defaultValue: o });
+                    })(),
+                  }))}
+                  triggerClassName="bg-(--card) border-(--border) text-(--text-primary) px-3 py-2 rounded-xl border text-sm outline-none capitalize flex-1 min-w-[100px]"
+                  dropdownClassName="bg-(--card) border-(--border) text-(--text-primary)"
+                />
               );
             })}
             {/* View toggle */}

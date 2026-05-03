@@ -1,16 +1,26 @@
-"use client"
+'use client';
 
 import { useTranslation } from 'react-i18next';
 import HeroCTA from './HeroCTA';
 
 function SparklesIcon() {
   return (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-      <path d="M5 3v4"/>
-      <path d="M19 17v4"/>
-      <path d="M3 5h4"/>
-      <path d="M17 19h4"/>
+    <svg
+      width="48"
+      height="48"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3v4" />
+      <path d="M19 17v4" />
+      <path d="M3 5h4" />
+      <path d="M17 19h4" />
     </svg>
   );
 }
@@ -44,14 +54,23 @@ export default function CTABanner() {
       />
 
       <div className="section-fade relative max-w-5xl mx-auto px-6 md:px-12">
-        <div className="relative px-10 py-20 text-center flex flex-col items-center">
+        <div className="gradient-border-animated relative px-10 py-20 text-center flex flex-col items-center">
+          {/* Inner background to cover the gradient border */}
+          <div
+            className="absolute inset-0 rounded-[1.5rem]"
+            style={{
+              backgroundColor: 'var(--landing-card-bg)',
+              border: '1px solid var(--landing-card-border)',
+            }}
+          />
+
           {/* Icon — CSS float animation */}
-          <div className="animate-float inline-flex mb-8">
+          <div className="animate-float relative inline-flex mb-8">
             <SparklesIcon />
           </div>
 
           <h2
-            className="text-4xl md:text-6xl font-black mb-4 leading-tight"
+            className="relative text-4xl md:text-6xl font-black mb-4 leading-tight tracking-tighter"
             style={{ color: 'var(--landing-text-primary)' }}
           >
             {t('landingExtra.ctaTitle')}{' '}
@@ -59,14 +78,35 @@ export default function CTABanner() {
           </h2>
 
           <p
-            className="text-lg mb-12 max-w-xl mx-auto leading-relaxed"
+            className="relative text-lg mb-12 max-w-xl mx-auto leading-loose"
             style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
           >
             {t('landingExtra.ctaSubtitle')}
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="relative flex flex-col sm:flex-row justify-center gap-4">
             <HeroCTA />
+          </div>
+
+          {/* Social proof under CTA */}
+          <div className="relative flex items-center justify-center gap-6 mt-10">
+            <div className="flex -space-x-3">
+              {['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'].map((color, i) => (
+                <div
+                  key={i}
+                  className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-white text-xs font-bold"
+                  style={{
+                    backgroundColor: color,
+                    borderColor: 'var(--landing-card-bg)',
+                  }}
+                >
+                  {['A', 'M', 'S', 'R', 'K'][i]}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm font-medium" style={{ color: 'var(--landing-text-muted)' }}>
+              {t('landingExtra.socialProof', '500+ companies trust us')}
+            </p>
           </div>
         </div>
       </div>

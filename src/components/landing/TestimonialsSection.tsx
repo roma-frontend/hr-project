@@ -146,10 +146,28 @@ export default function TestimonialsSection() {
       rating: 5,
       gradient: 'linear-gradient(135deg, rgba(148,163,184,0.12), rgba(148,163,184,0.06))',
     },
+    {
+      id: 4,
+      rating: 5,
+      gradient: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(52,211,153,0.08))',
+    },
+    {
+      id: 5,
+      rating: 5,
+      gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(251,191,36,0.08))',
+    },
+    {
+      id: 6,
+      rating: 5,
+      gradient: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(248,113,113,0.06))',
+    },
   ];
 
+  // Duplicate for infinite scroll effect
+  const allTestimonials = [...testimonials, ...testimonials];
+
   return (
-    <section className="relative z-10 px-6 md:px-12 py-20">
+    <section className="relative z-10 px-6 md:px-12 py-20 overflow-hidden">
       {/* Section header — reveal on scroll */}
       <div
         ref={ref}
@@ -163,29 +181,49 @@ export default function TestimonialsSection() {
       >
         <span className="section-eyebrow">{t('testimonials.eyebrow')}</span>
         <h2
-          className="mt-3 text-3xl md:text-5xl font-black leading-tight"
+          className="mt-3 text-3xl md:text-5xl font-black leading-tight tracking-tighter"
           style={{ color: 'var(--landing-text-primary)' }}
         >
           {t('testimonials.headingStart')}{' '}
           <span className="heading-gradient">{t('testimonials.headingHighlight')}</span>
         </h2>
         <p
-          className="mt-4 max-w-2xl mx-auto text-lg"
+          className="mt-4 max-w-2xl mx-auto text-lg leading-loose"
           style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
         >
           {t('testimonials.subtitle')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {testimonials.map((testimonial, i) => (
-          <TestimonialCard
-            key={testimonial.id}
-            testimonial={testimonial}
-            delay={i * 0.15}
-            index={i}
-          />
-        ))}
+      {/* Auto-scrolling carousel */}
+      <div className="relative">
+        {/* Fade edges */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-24 md:w-40 z-10 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to right, var(--landing-bg-start, transparent), transparent)',
+          }}
+        />
+        <div
+          className="absolute right-0 top-0 bottom-0 w-24 md:w-40 z-10 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to left, var(--landing-bg-start, transparent), transparent)',
+          }}
+        />
+
+        <div className="carousel-track">
+          {allTestimonials.map((testimonial, i) => (
+            <div key={`${testimonial.id}-${i}`} className="flex-shrink-0 w-[340px] md:w-[400px]">
+              <TestimonialCard
+                testimonial={testimonial}
+                delay={0}
+                index={i % testimonials.length}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

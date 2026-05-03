@@ -5,6 +5,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -310,26 +311,19 @@ export function ServiceBroadcastDialog({
             animate={{ opacity: 1, height: 'auto' }}
             className="ml-2"
           >
-            <select
+            <CustomSelect
               value={selectedOrgId as string}
-              onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              style={{
-                borderColor: 'var(--border)',
-                background: 'var(--background-subtle)',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {organizations.map((org: any) => (
-                <option key={org._id} value={org._id}>
-                  {org.name} (
-                  {t('broadcastDialog.employeeCount', {
-                    count: org.activeEmployees ?? org.memberCount ?? 0,
-                  })}
-                  )
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedOrgId}
+              fullWidth
+              options={organizations.map((org: any) => ({
+                value: org._id,
+                label: `${org.name} (${t('broadcastDialog.employeeCount', {
+                  count: org.activeEmployees ?? org.memberCount ?? 0,
+                })} ${t('broadcastDialog.employees', { defaultValue: 'employees' })})`,
+              }))}
+              triggerClassName="w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              dropdownClassName="border-[var(--border)] bg-[var(--background-subtle)] text-[var(--text-primary)]"
+            />{' '}
             {selectedOrg && (
               <div className="mt-2 p-3 rounded-lg bg-(--background-subtle) border border-(--border)">
                 <p className="text-xs text-(--text-muted)">

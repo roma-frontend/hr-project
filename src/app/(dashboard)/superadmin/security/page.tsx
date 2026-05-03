@@ -244,9 +244,8 @@ export default function SecurityDashboard() {
   // STEP 1: Check if user is loading from auth store
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-96" style={{ color: 'var(--text-muted)' }}>
-        <ShieldLoader size="sm" variant="inline" />
-        <span className="ml-2">{t('superadmin.security.loadingDashboard')}</span>
+      <div className="flex items-center justify-center h-96">
+        <ShieldLoader size="md" />
       </div>
     );
   }

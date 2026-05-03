@@ -3,6 +3,7 @@ import Image from 'next/image';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
@@ -171,29 +172,20 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
 
               {/* Month selector */}
               <div className="mt-4">
-                <select
+                <CustomSelect
                   value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="w-full px-4 py-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 [&>option]:text-slate-800 dark:[&>option]:text-slate-100 dark:[&>option]:bg-gray-800"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.15)',
-                    color: 'var(--text-on-primary)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  }}
-                  onFocus={(e) =>
-                    (e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255,255,255,0.3)')
-                  }
-                  onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
-                >
-                  {monthOptions.map((m) => {
+                  onChange={setSelectedMonth}
+                  fullWidth
+                  options={monthOptions.map((m) => {
                     const [y, mo] = m.split('-').map(Number);
-                    return (
-                      <option key={m} value={m}>
-                        {MONTHS[(mo ?? 1) - 1]} {y ?? new Date().getFullYear()}
-                      </option>
-                    );
+                    return {
+                      value: m,
+                      label: `${MONTHS[(mo ?? 1) - 1]} ${y ?? new Date().getFullYear()}`,
+                    };
                   })}
-                </select>
+                  triggerClassName="w-full px-4 py-2 rounded-xl text-sm font-medium focus:outline-none focus:ring-2"
+                  dropdownClassName="bg-gray-800 border border-gray-600 text-white"
+                />
               </div>
             </div>
 

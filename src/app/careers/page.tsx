@@ -8,6 +8,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import Link from 'next/link';
@@ -202,58 +203,35 @@ export default function CareersGlobalPage() {
       <section className="max-w-7xl mx-auto px-4 pb-24">
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 mb-8 items-center">
-          <select
+          <CustomSelect
             value={selectedOrg}
-            onChange={(e) => setSelectedOrg(e.target.value)}
-            className="px-4 py-2.5 rounded-lg text-sm outline-none transition-all cursor-pointer"
-            style={{
-              background: 'var(--landing-card-bg)',
-              border: '1px solid var(--landing-card-border)',
-              color: 'var(--landing-text-primary)',
-            }}
-          >
-            <option value="">{t('careers.allCompanies', 'All Companies')}</option>
-            {orgs.map((o) => (
-              <option key={o.slug} value={o.slug}>
-                {o.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedOrg}
+            options={[
+              { value: '', label: t('careers.allCompanies', 'All Companies') },
+              ...orgs.map((o) => ({ value: o.slug, label: o.name })),
+            ]}
+          />
 
-          <select
+          <CustomSelect
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="px-4 py-2.5 rounded-lg text-sm outline-none transition-all cursor-pointer"
-            style={{
-              background: 'var(--landing-card-bg)',
-              border: '1px solid var(--landing-card-border)',
-              color: 'var(--landing-text-primary)',
-            }}
-          >
-            <option value="">{t('careers.allTypes', 'All Types')}</option>
-            <option value="full_time">{t('recruitment.type.fullTime', 'Full-time')}</option>
-            <option value="part_time">{t('recruitment.type.partTime', 'Part-time')}</option>
-            <option value="contract">{t('recruitment.type.contract', 'Contract')}</option>
-            <option value="internship">{t('recruitment.type.internship', 'Internship')}</option>
-          </select>
+            onChange={setSelectedType}
+            options={[
+              { value: '', label: t('careers.allTypes', 'All Types') },
+              { value: 'full_time', label: t('recruitment.type.fullTime', 'Full-time') },
+              { value: 'part_time', label: t('recruitment.type.partTime', 'Part-time') },
+              { value: 'contract', label: t('recruitment.type.contract', 'Contract') },
+              { value: 'internship', label: t('recruitment.type.internship', 'Internship') },
+            ]}
+          />
 
-          <select
+          <CustomSelect
             value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            className="px-4 py-2.5 rounded-lg text-sm outline-none transition-all cursor-pointer"
-            style={{
-              background: 'var(--landing-card-bg)',
-              border: '1px solid var(--landing-card-border)',
-              color: 'var(--landing-text-primary)',
-            }}
-          >
-            <option value="">{t('careers.allDepartments', 'All Departments')}</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedDept}
+            options={[
+              { value: '', label: t('careers.allDepartments', 'All Departments') },
+              ...departments.map((d) => ({ value: d, label: d })),
+            ]}
+          />
 
           {activeFilters > 0 && (
             <button
