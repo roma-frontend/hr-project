@@ -1033,7 +1033,7 @@ export default function AIChatPage() {
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg p-0"
+              className="absolute! right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg p-0"
               size="sm"
             >
               <Send className="w-4 h-4" />

@@ -1404,34 +1404,32 @@ export function ChatWidget() {
 
             {/* Input */}
             <form onSubmit={handleSubmit} className="p-4 border-t border-(--border) shrink-0">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={
-                      isListening ? t('chatWidget.listening') : t('chatWidget.placeholder')
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={
+                    isListening ? t('chatWidget.listening') : t('chatWidget.placeholder')
+                  }
+                  className={`w-full px-4 py-2.5 pr-20 bg-(--input) border rounded-xl text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm transition-colors ${
+                    isListening ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-(--border)'
+                  }`}
+                  disabled={isLoading}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e as any);
                     }
-                    className={`w-full px-4 py-2 pr-10 bg-(--input) border rounded-xl text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm transition-colors ${
-                      isListening
-                        ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30'
-                        : 'border-(--border)'
-                    }`}
-                    disabled={isLoading}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e as any);
-                      }
-                    }}
-                  />
+                  }}
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <button
                     type="button"
                     onClick={startVoiceInput}
                     disabled={isLoading}
                     title={isListening ? t('chatWidget.stopListening') : t('chatWidget.voiceInput')}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors disabled:opacity-50 ${
+                    className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                       isListening
                         ? 'text-[#2563eb] animate-pulse'
                         : 'text-(--text-muted) hover:text-[#3b82f6]'
@@ -1439,18 +1437,19 @@ export function ChatWidget() {
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading || !input.trim()}
+                    className="btn-gradient disabled:opacity-50 h-8 w-8 p-0 rounded-lg"
+                    size="sm"
+                  >
+                    {isLoading ? (
+                      <ShieldLoader size="xs" variant="inline" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={isLoading || !input.trim()}
-                  className="btn-gradient disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <ShieldLoader size="xs" variant="inline" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                </Button>
               </div>
             </form>
           </motion.div>

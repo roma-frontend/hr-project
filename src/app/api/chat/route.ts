@@ -17,47 +17,59 @@ const openrouter = new OpenAI({
   },
 });
 
-// Remove edge runtime to see better errors
-// export const runtime = 'edge';
+// In-memory cache for context data (5 min TTL)
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
 
-/**
- * Verify JWT auth token for chat API.
- * Chat requires authentication but we don't want to block the stream.
- */
-async function verifyChatAuth(): Promise<{ userId: string; role: string } | null> {
+const contextCache = new Map<string, CacheEntry<any>>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached<T>(key: string): T | null {
+  const entry = contextCache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    return entry.data as T;
+  }
+  if (entry) contextCache.delete(key);
+  return null;
+}
+
+function setCache<T>(key: string, data: T): void {
+  contextCache.set(key, { data, timestamp: Date.now() });
+}
+
+// Fetch with timeout
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = 8000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
-    if (!token) return null;
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return null;
-
-    const secret = new TextEncoder().encode(jwtSecret);
-    const { payload } = await jwtVerify(token.value, secret);
-    return { userId: payload.sub as string, role: (payload.role as string) || 'employee' };
-  } catch {
-    return null;
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 export const POST = withCsrfProtection(async (req: NextRequest) => {
+  const startTime = Date.now();
+
   // SECURITY: Require authentication for AI chat (costly API)
   const auth = await verifyChatAuth();
   if (!auth) {
     return NextResponse.json(
       { error: 'Unauthorized. Please log in to use AI chat.' },
-      {
-        status: 401,
-      },
+      { status: 401 },
     );
   }
 
   try {
     console.log('🤖 AI Chat request received');
     const { messages, userId, lang } = await req.json();
-
-    console.log('📋 [AI Chat] Request params:', { userId, lang, messagesCount: messages.length });
 
     const langInstruction =
       lang === 'ru'
@@ -66,12 +78,92 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
           ? 'ԼԵԶՈՒ: Օգտացախան գրում է հայերենով.'
           : 'LANGUAGE: The user is writing in English. Reply ONLY in English.';
 
-    // Current date & time context
     const now = new Date();
-    const dateContext = `CURRENT DATE & TIME: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}. Use this to determine "today", "this week", "tomorrow", etc.`;
-    console.log('📝 Messages count:', messages.length);
+    const dateContext = `CURRENT DATE & TIME: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
 
-    // Fetch user context
+    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+
+    // Detect intent EARLY to fetch only relevant context
+    const userRoleFromAuth = (auth.role as UserRole) || 'employee';
+    const detectedIntent = detectIntent(lastUserMessage, userRoleFromAuth);
+
+    // Determine what data we need based on intent
+    const needsFullContext = !detectedIntent || detectedIntent.action;
+    const needsConflictCheck =
+      /хочу отпуск|book leave|request vacation|отпуск с \d|sick leave|больничный|заказать водителя|book driver|водитель/i.test(
+        lastUserMessage,
+      );
+    const needsInsights = /отпуск|leave|vacation|баланс|balance|посещаемость|attendance/i.test(
+      lastUserMessage,
+    );
+
+    // ═══════════════════════════════════════════════════════════════
+    // PARALLEL FETCH — Запускаем все запросы одновременно
+    // ═══════════════════════════════════════════════════════════════
+    const origin = req.headers.get('origin') || '';
+    const cookieHeader = req.headers.get('cookie') || '';
+    const authHeaders = { cookie: cookieHeader };
+
+    const [contextResult, insightsResult, fullResult, conflictResult] = await Promise.allSettled([
+      // 1. User context (always needed)
+      fetchWithTimeout(`${origin}/api/chat/context`, { headers: authHeaders }, 5000),
+
+      // 2. AI insights (only if relevant)
+      needsInsights && userId
+        ? fetchWithTimeout(
+            `${origin}/api/chat/insights?userId=${userId}`,
+            { headers: authHeaders },
+            4000,
+          )
+        : Promise.resolve(null),
+
+      // 3. Full context (only if needed)
+      needsFullContext
+        ? fetchWithTimeout(
+            `${origin}/api/chat/full-context?requesterId=${userId}`,
+            { headers: authHeaders },
+            6000,
+          )
+        : Promise.resolve(null),
+
+      // 4. Conflict check (only for booking requests)
+      needsConflictCheck && userId
+        ? (async () => {
+            const dateMatch = lastUserMessage.match(
+              /с (\d{1,2})[\/\.-](\d{1,2})|from (\d{1,2})[\/\.-](\d{1,2})|(\d{1,2})[\/\.-](\d{1,2})/i,
+            );
+            if (!dateMatch) return null;
+            const day1 = parseInt(dateMatch[1] || dateMatch[3] || dateMatch[5]);
+            const monthStr = dateMatch[2] || dateMatch[4] || dateMatch[6];
+            const monthMap: Record<string, number> = {
+              '1': 0,
+              '2': 1,
+              '3': 2,
+              '4': 3,
+              '5': 4,
+              '6': 5,
+              '7': 6,
+              '8': 7,
+              '9': 8,
+              '10': 9,
+              '11': 10,
+              '12': 11,
+            };
+            const month = monthMap[monthStr] ?? parseInt(monthStr) - 1;
+            const year = new Date().getFullYear();
+            const startDate = new Date(year, month, day1).getTime();
+            const endDate = new Date(year, month, day1 + 7).getTime();
+            const requestType = /водитель|driver/i.test(lastUserMessage) ? 'driver' : 'leave';
+            return fetchWithTimeout(
+              `${origin}/api/chat/conflict-check?userId=${userId}&organizationId=&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`,
+              { headers: authHeaders },
+              4000,
+            );
+          })()
+        : Promise.resolve(null),
+    ]);
+
+    // Process user context
     let userContext = '';
     let userRole: UserRole = 'employee';
     let userEmail = '';
@@ -80,15 +172,9 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
     let userPosition = '';
     let userOrgId = '';
 
-    try {
-      const contextRes = await fetch(`${req.headers.get('origin')}/api/chat/context`, {
-        headers: {
-          cookie: req.headers.get('cookie') || '',
-        },
-      });
-
-      if (contextRes.ok) {
-        const context = await contextRes.json();
+    if (contextResult.status === 'fulfilled' && contextResult.value?.ok) {
+      try {
+        const context = await contextResult.value.json();
         userRole = context.user.role as UserRole;
         userEmail = context.user.email;
         userName = context.user.name;
@@ -97,382 +183,175 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
         userOrgId = context.user.organizationId;
 
         userContext = `
-
-USER CONTEXT:
-- Name: ${context.user.name}
-- Role: ${context.user.role}
-- Department: ${context.user.department}
-
-LEAVE BALANCES:
-- Paid Leave: ${context.leaveBalances.paid} days
-- Sick Leave: ${context.leaveBalances.sick} days
-- Family Leave: ${context.leaveBalances.family} days
-
-STATISTICS:
-- Total days taken: ${context.stats.totalDaysTaken}
-- Pending requests: ${context.stats.pendingDays} days
-
-RECENT LEAVES:
-${context.recentLeaves.map((l: any) => `- ${l.type}: ${l.startDate} to ${l.endDate} (${l.status})`).join('\n')}
-
-TEAM AVAILABILITY (Next 30 days):
-${context.teamAvailability.map((l: any) => `- ${l.userName} (${l.department}): ${l.startDate} to ${l.endDate}`).join('\n')}
-`;
-
-        console.log('👤 [AI Chat] User context:', {
-          userId: context.user.id,
-          orgId: context.user.organizationId,
-          role: context.user.role,
-        });
+USER: ${context.user.name} | Role: ${context.user.role} | Dept: ${context.user.department}
+Leave balances: Paid=${context.leaveBalances.paid}d, Sick=${context.leaveBalances.sick}d, Family=${context.leaveBalances.family}d
+Stats: Taken=${context.stats.totalDaysTaken}d, Pending=${context.stats.pendingDays}d
+Recent leaves: ${
+          context.recentLeaves
+            ?.slice(0, 3)
+            .map((l: any) => `${l.type} ${l.startDate}-${l.endDate} (${l.status})`)
+            .join(', ') || 'none'
+        }
+Team on leave: ${
+          context.teamAvailability
+            ?.slice(0, 5)
+            .map((l: any) => `${l.userName} (${l.startDate}-${l.endDate})`)
+            .join(', ') || 'none'
+        }
+`.trim();
+      } catch (e) {
+        console.error('Failed to parse context:', e);
       }
-    } catch (error) {
-      console.error('Failed to fetch context:', error);
     }
 
-    console.log('🧠 Calling Groq AI...');
-
-    // Ensure API key is available
-    const apiKey = process.env.GROQ_API_KEY;
-    console.log('🔑 API Key available:', !!apiKey, 'Length:', apiKey?.length);
-
-    if (!apiKey) {
-      throw new Error('GROQ_API_KEY is not configured');
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // CONFLICT CHECK — Автоматическая проверка конфликтов
-    // ═══════════════════════════════════════════════════════════════
-    let conflictCheckData = '';
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
-
-    // Проверяем, хочет ли пользователь забронировать отпуск или водителя
-    const wantsLeaveBooking =
-      /хочу отпуск|book leave|request vacation|отпуск с \d|vacation from \d|sick leave|больничный/i.test(
-        lastUserMessage,
-      );
-    const wantsDriverBooking = /заказать водителя|book driver|driver from \d|водитель/i.test(
-      lastUserMessage,
-    );
-
-    if ((wantsLeaveBooking || wantsDriverBooking) && userId && userOrgId) {
+    // Process AI insights
+    let aiInsights = '';
+    if (insightsResult.status === 'fulfilled' && insightsResult.value?.ok) {
       try {
-        // Извлекаем даты из сообщения
-        const dateMatch = lastUserMessage.match(
-          /с (\d{1,2})[\/\.-](\d{1,2})|from (\d{1,2})[\/\.-](\d{1,2})|(\d{1,2})[\/\.-](\d{1,2}) (марта|марта|апреля|апреля|мая|мая|июня|июня)/i,
-        );
-
-        if (dateMatch) {
-          const day1 = parseInt(dateMatch[1] || dateMatch[3] || dateMatch[5]);
-          const monthStr = dateMatch[2] || dateMatch[4] || dateMatch[6];
-          const monthMap: Record<string, number> = {
-            '1': 0,
-            '2': 1,
-            '3': 2,
-            '4': 3,
-            '5': 4,
-            '6': 5,
-            марта: 2,
-            апреля: 3,
-            мая: 4,
-            июня: 5,
-          };
-          const month = monthMap[monthStr.toLowerCase()] || parseInt(monthStr) - 1;
-          const year = new Date().getFullYear();
-
-          const startDate = new Date(year, month, day1).getTime();
-          const endDate = new Date(year, month, day1 + 7).getTime(); // +7 дней по умолчанию
-
-          const requestType = wantsLeaveBooking ? 'leave' : 'driver';
-
-          console.log('🔍 [Conflict Check] Checking conflicts:', {
-            userId,
-            userOrgId,
-            requestType,
-            startDate,
-            endDate,
-          });
-
-          const conflictRes = await fetch(
-            `${req.headers.get('origin')}/api/chat/conflict-check?userId=${userId}&organizationId=${userOrgId}&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`,
-            {
-              headers: { cookie: req.headers.get('cookie') || '' },
-            },
-          );
-
-          if (conflictRes.ok) {
-            const conflictData = await conflictRes.json();
-
-            if (conflictData.hasConflicts) {
-              conflictCheckData = `
-
-CONFLICT CHECK RESULTS:
-- Has Conflicts: ${conflictData.hasConflicts}
-- Critical Conflicts: ${conflictData.hasCriticalConflicts}
-- Conflict Count: ${conflictData.conflictCount}
-- AI Message: ${conflictData.aiMessage}
-- Conflicts: ${JSON.stringify(conflictData.conflicts, null, 2)}
-- Can Proceed: ${conflictData.canProceed}
-
-IMPORTANT: If hasCriticalConflicts is true, inform the user about the conflict and suggest alternatives. DO NOT create <ACTION> tag until user confirms alternative dates.
-`;
-              console.log('⚠️ [Conflict Check] Conflicts found:', conflictData.conflictCount);
-            } else {
-              conflictCheckData = `
-
-CONFLICT CHECK RESULTS:
-- Has Conflicts: false
-- Status: ✅ No conflicts detected
-- Can Proceed: true
-
-You can safely create the <ACTION> tag for this booking.
-`;
-              console.log('✅ [Conflict Check] No conflicts');
-            }
-          }
+        const insights = await insightsResult.value.json();
+        if (insights) {
+          aiInsights = [
+            insights.balanceWarning && `⚠️ ${insights.balanceWarning}`,
+            insights.patterns?.length && `Patterns: ${insights.patterns.slice(0, 3).join(', ')}`,
+            insights.bestDates?.length &&
+              `Best dates: ${insights.bestDates.slice(0, 3).join(', ')}`,
+            insights.teamConflicts?.length &&
+              `Conflicts: ${insights.teamConflicts.slice(0, 3).join(', ')}`,
+          ]
+            .filter(Boolean)
+            .join('\n');
         }
       } catch (e) {
-        console.error('[Conflict Check] Error:', e);
-        // Ignore errors, continue without conflict check
+        /* ignore */
       }
     }
 
-    // Fetch AI insights (patterns, best dates, balance warnings)
-    let aiInsights = '';
-    try {
-      const insightsRes = await fetch(
-        `${req.headers.get('origin')}/api/chat/insights${userId ? `?userId=${userId}` : ''}`,
-        {
-          headers: { cookie: req.headers.get('cookie') || '' },
-        },
-      );
-      if (insightsRes.ok) {
-        const insights = await insightsRes.json();
-        if (insights) {
-          aiInsights = `
-
-AI INSIGHTS FOR THIS EMPLOYEE:
-${insights.balanceWarning ? `⚠️ BALANCE WARNING: ${insights.balanceWarning}` : ''}
-${insights.patterns?.length ? `📊 ATTENDANCE PATTERNS:\n${insights.patterns.map((p: string) => `- ${p}`).join('\n')}` : ''}
-${insights.bestDates?.length ? `📅 RECOMMENDED VACATION DATES (no team conflicts):\n${insights.bestDates.map((d: string) => `- ${d}`).join('\n')}` : ''}
-${insights.teamConflicts?.length ? `⚠️ TEAM CONFLICTS (people already on leave):\n${insights.teamConflicts.map((c: string) => `- ${c}`).join('\n')}` : ''}
-`;
+    // Process conflict check
+    let conflictCheckData = '';
+    if (conflictResult.status === 'fulfilled' && conflictResult.value?.ok) {
+      try {
+        const conflictData = await conflictResult.value.json();
+        if (conflictData.hasConflicts) {
+          conflictCheckData = `⚠️ CONFLICTS: ${conflictData.conflictCount} found. ${conflictData.aiMessage || ''}`;
+        } else {
+          conflictCheckData = '✅ No conflicts detected';
         }
+      } catch (e) {
+        /* ignore */
       }
-    } catch (e) {
-      // silently ignore
     }
 
-    // Fetch FULL SYSTEM CONTEXT — all employees, leaves, calendar, attendance
+    // Process full context (compact version)
     let fullContext = '';
     let availableDriversInfo = '';
-    try {
-      const fullRes = await fetch(
-        `${req.headers.get('origin')}/api/chat/full-context?requesterId=${userId}`,
-        {
-          headers: { cookie: req.headers.get('cookie') || '' },
-        },
-      );
-      if (fullRes.ok) {
-        const data = await fullRes.json();
 
-        // Fetch available drivers
-        try {
-          const driversRes = await fetch(
-            `${req.headers.get('origin')}/api/drivers/available?organizationId=${userOrgId}`,
-            {
-              headers: { cookie: req.headers.get('cookie') || '' },
-            },
-          );
-          if (driversRes.ok) {
-            const drivers = await driversRes.json();
-            console.log('[chat] Drivers API response:', {
-              count: drivers?.length,
-              orgId: userOrgId,
-            });
-            if (drivers && drivers.length > 0) {
-              availableDriversInfo = `\n\nAVAILABLE DRIVERS (use these driverId values for booking):\n${drivers.map((d: any) => `  - driverId: "${d._id}" | Name: ${d.userName} | Vehicle: ${d.vehicleInfo.model} (${d.vehicleInfo.plateNumber}) | Capacity: ${d.vehicleInfo.capacity} seats | Status: ${d.isAvailable ? 'Available' : 'Busy'}`).join('\n')}`;
-            } else {
-              availableDriversInfo =
-                '\n\nAVAILABLE DRIVERS: No drivers available in your organization.';
-            }
-          } else {
-            console.error('[chat] Failed to fetch drivers, status:', driversRes.status);
-            availableDriversInfo = '\n\nAVAILABLE DRIVERS: Could not fetch driver list.';
-          }
-        } catch (e) {
-          console.error('[chat] Failed to fetch drivers:', e);
-          availableDriversInfo = '\n\nAVAILABLE DRIVERS: Could not fetch driver list.';
-        }
+    if (fullResult.status === 'fulfilled' && fullResult.value?.ok) {
+      try {
+        const data = await fullResult.value.json();
 
-        // Build employees info
-        const employeesInfo = (data.employees ?? [])
+        // Compact employees summary
+        const employeesSummary = (data.employees ?? [])
+          .slice(0, 15)
           .map((e: any) => {
-            const presenceEmoji: Record<string, string> = {
-              available: '🟢',
-              in_meeting: '📅',
-              in_call: '📞',
-              out_of_office: '🏠',
-              busy: '⛔',
-            };
-            const lines = [
-              `👤 ${e.name} (${e.role}, ${e.department ?? 'No dept'}, ${e.position ?? 'No position'})`,
-            ];
-            lines.push(
-              `  Status: ${presenceEmoji[e.presenceStatus] ?? '🟢'} ${e.presenceStatus ?? 'available'}`,
-            );
-            if (e.supervisorName) lines.push(`  Supervisor: ${e.supervisorName}`);
-            if (e.todayStatus) {
-              lines.push(
-                `  Today: ${e.todayStatus.status} | In: ${e.todayStatus.checkIn ?? '—'} | Out: ${e.todayStatus.checkOut ?? '—'}${e.todayStatus.isLate ? ` | LATE by ${e.todayStatus.lateMinutes}min` : ''} | Worked: ${e.todayStatus.workedHours ?? '—'}h`,
-              );
-            } else {
-              lines.push(`  Today: not checked in`);
-            }
-            if (e.currentLeave) {
-              lines.push(
-                `  🏖 ON LEAVE NOW: ${e.currentLeave.type} (${e.currentLeave.startDate} → ${e.currentLeave.endDate}) [leaveId: ${e.currentLeave.leaveId}]`,
-              );
-            }
-            if (e.upcomingLeaves?.length) {
-              e.upcomingLeaves.forEach((l: any) => {
-                lines.push(
-                  `  📅 Upcoming: ${l.type} ${l.startDate} → ${l.endDate} [leaveId: ${l.leaveId}]`,
-                );
-              });
-            }
-            if (e.pendingLeaves?.length) {
-              e.pendingLeaves.forEach((l: any) => {
-                lines.push(
-                  `  ⏳ Pending: ${l.type} ${l.startDate} → ${l.endDate} (${l.days}d) [leaveId: ${l.leaveId}]`,
-                );
-              });
-            }
-            if (e.allLeaves?.length) {
-              lines.push(`  All leaves:`);
-              e.allLeaves.forEach((l: any) => {
-                lines.push(
-                  `    - ${l.type} ${l.startDate}→${l.endDate} status:${l.status} [leaveId: ${l.leaveId}]`,
-                );
-              });
-            }
-            lines.push(
-              `  Leave balance: Paid: ${e.leaveBalance?.paid ?? '?'}d, Sick: ${e.leaveBalance?.sick ?? '?'}d, Family: ${e.leaveBalance?.family ?? '?'}d`,
-            );
-            if (e.tasks?.length) {
-              lines.push(`  Tasks (${e.tasks.length}):`);
-              e.tasks.forEach((t: any) => {
-                const deadline = t.deadline ? ` | deadline: ${t.deadline}` : '';
-                lines.push(
-                  `    - [${t.status}] ${t.title} (${t.priority} priority${deadline}) assigned by ${t.assignedBy} [taskId: ${t.taskId}]`,
-                );
-              });
-            }
-            return lines.join('\n');
+            const status =
+              e.presenceStatus === 'available'
+                ? '🟢'
+                : e.presenceStatus === 'in_meeting'
+                  ? '📅'
+                  : e.presenceStatus === 'in_call'
+                    ? '📞'
+                    : e.presenceStatus === 'out_of_office'
+                      ? '🏠'
+                      : '⛔';
+            const leaveInfo = e.currentLeave
+              ? ` | ON LEAVE: ${e.currentLeave.type} (${e.currentLeave.startDate}-${e.currentLeave.endDate})`
+              : '';
+            const pendingInfo = e.pendingLeaves?.length
+              ? ` | Pending: ${e.pendingLeaves.length}`
+              : '';
+            return `${status} ${e.name} (${e.department})${leaveInfo}${pendingInfo}`;
           })
-          .join('\n\n');
-
-        // Calendar events next 90 days
-        const calendarInfo = (data.calendarEvents ?? [])
-          .map(
-            (ev: any) =>
-              `  📅 ${ev.employee} (${ev.department}): ${ev.type} ${ev.startDate} → ${ev.endDate} (${ev.days} days)`,
-          )
           .join('\n');
 
-        // Today's attendance
-        const attendanceInfo = (data.todayAttendance ?? [])
+        // Compact calendar
+        const calendarSummary = (data.calendarEvents ?? [])
+          .slice(0, 10)
+          .map((ev: any) => `📅 ${ev.employee}: ${ev.type} ${ev.startDate}-${ev.endDate}`)
+          .join('\n');
+
+        // Compact attendance
+        const attendanceSummary = (data.todayAttendance ?? [])
+          .slice(0, 10)
           .map(
             (t: any) =>
-              `  ${t.status === 'checked_in' ? '🟢' : t.status === 'checked_out' ? '🔵' : '🔴'} ${t.name} (${t.department}): ${t.checkIn ?? '—'} → ${t.checkOut ?? 'still working'}${t.isLate ? ` [LATE ${t.lateMinutes}min]` : ''}`,
+              `${t.status === 'checked_in' ? '🟢' : '🔴'} ${t.name}: ${t.checkIn || '—'}${t.isLate ? ` (LATE ${t.lateMinutes}min)` : ''}`,
           )
           .join('\n');
 
-        // Tickets info
-        const ticketsInfo = (data.tickets ?? [])
+        // Compact tickets
+        const ticketsSummary = (data.tickets ?? [])
+          .slice(0, 5)
           .map(
-            (t: any) =>
-              `  🎫 ${t.ticketNumber}: ${t.title} [${t.status}] Priority: ${t.priority} | Category: ${t.category} | Created by: ${t.createdBy}${t.assignedTo ? ` | Assigned to: ${t.assignedTo}` : ''}${t.isOverdue ? ' ⚠️ OVERDUE' : ''}`,
+            (t: any) => `🎫 ${t.ticketNumber}: ${t.title} [${t.status}] ${t.isOverdue ? '⚠️' : ''}`,
           )
           .join('\n');
 
-        const ticketStatsInfo = data.ticketStats
-          ? `  Total: ${data.ticketStats.total} | Open: ${data.ticketStats.open} | In Progress: ${data.ticketStats.inProgress} | Resolved: ${data.ticketStats.resolved} | Closed: ${data.ticketStats.closed} | Critical: ${data.ticketStats.critical}`
-          : 'No ticket stats available';
-
-        // Company events info
-        const companyEventsInfo = (data.companyEvents ?? [])
+        // Compact drivers
+        const driversSummary = (data.availableDrivers ?? [])
+          .slice(0, 5)
           .map(
-            (e: any) =>
-              `  📅 ${e.name}: ${e.startDate} → ${e.endDate} [${e.eventType}] Priority: ${e.priority || 'N/A'} | Created by: ${e.createdBy} | Required depts: ${e.requiredDepartments?.join(', ') || 'All'}`,
-          )
-          .join('\n');
-
-        // Automation workflows info
-        const automationInfo = (data.automationWorkflows ?? [])
-          .map(
-            (w: any) =>
-              `  ⚙️ ${w.name}: ${w.description || 'No description'} [${w.isActive ? 'Active' : 'Inactive'}]`,
-          )
-          .join('\n');
-
-        // Driver requests info
-        const driverRequestsInfo = (data.driverRequests ?? [])
-          .map(
-            (r: any) =>
-              `  🚗 Request: ${r.pickupLocation} → ${r.dropoffLocation} [${r.status}] Scheduled: ${r.scheduledFor || 'TBD'} | Requested by: ${r.requestedBy}`,
-          )
-          .join('\n');
-
-        // Available drivers info (from full-context, not the separate API call)
-        const availableDriversContextInfo = (data.availableDrivers ?? [])
-          .map(
-            (d: any) => `  🚘 ${d.name}: ${d.vehicle || 'No vehicle'} [${d.status || 'Available'}]`,
+            (d: any) => `🚘 ${d.name}: ${d.vehicle || 'No vehicle'} [${d.status || 'Available'}]`,
           )
           .join('\n');
 
         fullContext = `
+Company: ${data.totalEmployees ?? 0} employees, ${data.currentlyAtWork ?? 0} at work, ${data.onLeaveToday ?? 0} on leave
 
-=== COMPLETE SYSTEM DATA ===
+Employees:
+${employeesSummary || 'No data'}
 
-TOTAL EMPLOYEES: ${data.totalEmployees ?? 0}
-CURRENTLY AT WORK TODAY: ${data.currentlyAtWork ?? 0}
-ON LEAVE TODAY: ${data.onLeaveToday ?? 0}
+Calendar:
+${calendarSummary || 'No upcoming leaves'}
 
-ALL EMPLOYEES (with today's status, leaves, balances):
-${employeesInfo || 'No employees found'}
+Attendance:
+${attendanceSummary || 'No data'}
 
-TODAY'S ATTENDANCE:
-${attendanceInfo || 'No attendance records today'}
+Tickets (${data.ticketStats?.total || 0} total):
+${ticketsSummary || 'No tickets'}
 
-CALENDAR — APPROVED LEAVES (next 90 days):
-${calendarInfo || 'No upcoming approved leaves'}
+Drivers:
+${driversSummary || 'No drivers'}
+`.trim();
 
-SUPPORT TICKETS:
-Stats: ${ticketStatsInfo}
-${ticketsInfo || 'No tickets found'}
-
-COMPANY EVENTS:
-${companyEventsInfo || 'No upcoming events'}
-
-AUTOMATION WORKFLOWS:
-${automationInfo || 'No automation workflows'}
-
-DRIVER REQUESTS:
-${driverRequestsInfo || 'No pending driver requests'}
-
-AVAILABLE DRIVERS:
-${availableDriversContextInfo || 'No drivers available'}
-${availableDriversInfo || ''}
-
-ACTIVE SURVEYS:
-${((data.activeSurveys as any[]) || []).map((s: any) => `📝 "${s.title}" - ${s.description || 'No description'} (Questions: ${s.questionsCount || 0}, Responses: ${s.responsesCount || 0})`).join('\n') || 'No active surveys'}
-`;
+        // Fetch drivers separately if not in full context
+        if (!data.availableDrivers?.length && userOrgId) {
+          try {
+            const driversRes = await fetchWithTimeout(
+              `${origin}/api/drivers/available?organizationId=${userOrgId}`,
+              { headers: authHeaders },
+              3000,
+            );
+            if (driversRes.ok) {
+              const drivers = await driversRes.json();
+              if (drivers?.length) {
+                availableDriversInfo = `Available drivers: ${drivers.map((d: any) => `${d.userName} (${d.vehicleInfo.model})`).join(', ')}`;
+              }
+            }
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse full context:', e);
       }
-    } catch (e) {
-      console.error('Failed to fetch full context:', e);
     }
 
-    // Build role-based system prompt
+    const fetchTime = Date.now() - startTime;
+    console.log(`⚡ Context fetch completed in ${fetchTime}ms`);
+
+    // ═══════════════════════════════════════════════════════════════
+    // BUILD PROMPT — Compact and focused
+    // ═══════════════════════════════════════════════════════════════
     const roleBasedSystemPrompt = buildRoleBasedPrompt(
       {
         userId: userId || '',
@@ -493,13 +372,8 @@ ${((data.activeSurveys as any[]) || []).map((s: any) => `📝 "${s.title}" - ${s
       },
     );
 
-    // Detect intent from last user message - ONLY for explicit navigation requests
-    // lastUserMessage уже объявлена выше для Conflict Check
-    const detectedIntent = detectIntent(lastUserMessage, userRole);
-
+    // Navigation hint
     let navigationHint = '';
-    // ONLY navigate if user explicitly asks to OPEN/SHOW/GO TO a page
-    // Keywords for explicit navigation: "открой", "покажи страницу", "перейди", "open", "show page", "go to"
     const explicitNavigationKeywords = [
       'открой',
       'откройте',
@@ -517,148 +391,76 @@ ${((data.activeSurveys as any[]) || []).map((s: any) => `📝 "${s.title}" - ${s
     );
 
     if (detectedIntent?.action && hasExplicitNavigation) {
-      navigationHint = `\n\nDETECTED EXPLICIT NAVIGATION REQUEST: User wants to OPEN/SHOW page "${detectedIntent.name}".
-Route: ${detectedIntent.action}
-Include this in your response: <NAVIGATE>${detectedIntent.action}</NAVIGATE>
-Example: "Открываю календарь... 📅 <NAVIGATE>/calendar</NAVIGATE>"`;
+      navigationHint = `\n\nNAVIGATION: <NAVIGATE>${detectedIntent.action}</NAVIGATE>`;
     } else if (detectedIntent?.action && !hasExplicitNavigation) {
-      // User wants to DO something, not navigate - just inform them
-      navigationHint = `\n\nDETECTED ACTION REQUEST: User wants to "${detectedIntent.name}" but did NOT ask to navigate.
-DO NOT navigate! Just help them with their request using <ACTION> tags if needed, or provide information.`;
+      navigationHint = `\n\nACTION REQUEST (do NOT navigate): Help with "${detectedIntent.name}" using <ACTION> tags if needed.`;
     }
 
-    // Try Groq first (no retry - fallback to Gemini on rate limit), fallback to Google Gemini if rate limited
-    let result;
+    // ═══════════════════════════════════════════════════════════════
+    // GROQ PRIMARY — Fast inference
+    // ═══════════════════════════════════════════════════════════════
     const corePrompt = `${roleBasedSystemPrompt}
 
-🎨 FORMATTING RULES - Make responses BEAUTIFUL and SATISFYING:
+LIVE DATA:
+${userContext}
+${fullContext ? '\n' + fullContext : ''}
+${aiInsights ? '\n' + aiInsights : ''}
+${conflictCheckData ? '\n' + conflictCheckData : ''}
+${navigationHint}
 
-📊 LISTS/TABLES - When showing multiple items, use markdown tables:
-| Name | Department | Status | Details |
-|------|------------|--------|---------|
-| John | Engineering | ✅ Active | Remote worker |
-
-📋 SUMMARIES - Use bullet points with emojis:
-📌 **Summary:**
-- ✅ 5 approved leaves
-- ⏳ 2 pending requests
-- ⚠️ 1 near limit
-
-💰 NUMBERS - Format nicely:
-- Leave balance: 15 days (not 15.0)
-- Attendance: "8h 30m" not "510 minutes"
-
-🎯 STATUS - Use clear indicators:
-- ✅ Approved
-- ⏳ Pending  
-- ❌ Rejected
-- 🔄 In Progress
-
-🌐 EMOJIS - Use appropriately:
-- 👤 Employee
-- 📅 Leave/Dates
-- ⏰ Time
-- 📊 Stats
-- 🎯 Tasks
-- 🎫 Tickets
-- 📝 Surveys
-- 🚗 Drivers
-
-📖 RESPONSES - Be concise but complete:
-- Greet friendly: "Привет! 👋"
-- Provide useful info
-- End with offer to help: "Нужна помощь с чем-то ещё?"
-
-RULES:
-- Answer in the same language as the user
-- Use EXACT data from above (names, dates, balances, numbers)
-- Format everything beautifully with tables and emojis
-- Make employee feel satisfied with response
-
-NAVIGATION - Only use <NAVIGATE>/path</NAVIGATE> when user explicitly asks to OPEN/SHOW page:
-- "покажи опросы" → show info in chat (NOT navigate)
-- "открой страницу опросов" → <NAVIGATE>/surveys</NAVIGATE>
-- "покажи сотрудников" → show in chat
-- "открой страницу сотрудников" → <NAVIGATE>/employees</NAVIGATE>
-- "открой календарь" → <NAVIGATE>/calendar</NAVIGATE>
-- "открой отпуска" → <NAVIGATE>/leaves</NAVIGATE>
-- "открой задачи" → <NAVIGATE>/tasks</NAVIGATE>
-- "открой тикеты" → <NAVIGATE>/tickets</NAVIGATE>
-- "открой аналитику" → <NAVIGATE>/analytics</NAVIGATE>
-- "открой отчеты" → <NAVIGATE>/reports</NAVIGATE>
-- "открой настройки" → <NAVIGATE>/settings</NAVIGATE>
-
-LEAVE BOOKING - Use <ACTION> tag:
-- "хочу отпуск", "забронировать отпуск" → ask for dates first
-- Then use: <ACTION>{"type":"BOOK_LEAVE","leaveType":"paid","startDate":"YYYY-MM-DD","endDate":"YYYY-MM-DD","days":n,"reason":"..."}</ACTION>
-
-If dates not specified, ask user first.`;
-
-    try {
-      console.log('🔄 Trying OpenRouter AI...');
-      const stream = await openrouter.chat.completions.create({
-        model: 'tencent/hy3-preview:free',
-        messages: [{ role: 'system', content: corePrompt }, ...messages],
-        stream: true,
-      });
-
-      const readableStream = new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content;
-            if (content) {
-              controller.enqueue(encoder.encode(content));
-            }
-          }
-          controller.close();
-        },
-      });
-
-      return new Response(readableStream, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-        },
-      });
-    } catch (openrouterError: any) {
-      console.log('⚠️ OpenRouter failed, trying Groq...', openrouterError.message);
-
-      const fallbackPrompt = `You are an HR assistant. Access to: employees, leaves, attendance, tasks, tickets, surveys, drivers, calendar, events.
-ROLE: ${userRole}
-DATA: ${userContext.slice(0, 500)} ${fullContext.slice(0, 800)}
 ${langInstruction}
 
-🎨 FORMATTING - Make responses BEAUTIFUL:
+FORMAT RULES:
 - Use markdown tables for lists
-- Use emojis: 👤 📅 ⏰ 📊 🎯 🎫 📝 🚗 ✅ ⏳ ❌
-- Format numbers nicely
-- Make employee feel satisfied
-
-Rules:
+- Use emojis: 👤📅⏰📊🎯🎫📝🚗✅⏳❌
+- Be concise but complete
 - Answer in user's language
-- Use exact data from above
-- Format beautifully with tables and emojis
-- <NAVIGATE>/path for "открой страницу..."
-- ACTION for leave booking: <ACTION>{"type":"BOOK_LEAVE","leaveType":"paid","startDate":"YYYY-MM-DD","endDate":"YYYY-MM-DD","days":n,"reason":"..."}</ACTION>
-- If no dates, ask first`;
+- <NAVIGATE>/path only for explicit page requests
+- <ACTION>{"type":"BOOK_LEAVE",...} for leave booking (ask dates first if missing)
+`;
 
-      // Fallback to Groq
-      try {
-        result = await streamText({
-          model: groq('llama-3.1-8b-instant'),
-          maxRetries: 0,
-          system: fallbackPrompt,
-          messages,
-        });
-      } catch {
-        throw openrouterError;
-      }
-    }
+    try {
+      console.log('🚀 Using Groq (primary)...');
+      const result = await streamText({
+        model: groq('llama-3.1-8b-instant'),
+        maxRetries: 0,
+        system: corePrompt,
+        messages,
+      });
 
-    console.log('✅ AI response received');
-    // Groq fallback returns stream response
-    if (result) {
+      console.log(`✅ Groq response streamed in ${Date.now() - startTime}ms`);
       return result.toTextStreamResponse();
+    } catch (groqError: any) {
+      console.log('⚠️ Groq failed, trying OpenRouter...', groqError.message);
+
+      try {
+        const stream = await openrouter.chat.completions.create({
+          model: 'meta-llama/llama-3.3-70b-instruct:free',
+          messages: [{ role: 'system', content: corePrompt }, ...messages],
+          stream: true,
+        });
+
+        const readableStream = new ReadableStream({
+          async start(controller) {
+            const encoder = new TextEncoder();
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content;
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            }
+            controller.close();
+          },
+        });
+
+        console.log(`✅ OpenRouter response streamed in ${Date.now() - startTime}ms`);
+        return new Response(readableStream, {
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+      } catch (openrouterError: any) {
+        console.error('❌ Both providers failed:', openrouterError.message);
+        throw groqError;
+      }
     }
   } catch (error) {
     console.error('❌ Chat API error:', error);
@@ -668,3 +470,23 @@ Rules:
     );
   }
 });
+
+/**
+ * Verify JWT auth token for chat API.
+ */
+async function verifyChatAuth(): Promise<{ userId: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('hr-auth-token') || cookieStore.get('oauth-session');
+    if (!token) return null;
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return null;
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jwtVerify(token.value, secret);
+    return { userId: payload.sub as string, role: (payload.role as string) || 'employee' };
+  } catch {
+    return null;
+  }
+}

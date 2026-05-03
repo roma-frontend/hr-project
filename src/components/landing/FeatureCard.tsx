@@ -160,7 +160,7 @@ export default function FeatureCard({
           {/* Hover arrow — CSS slide-in */}
           <Link
             href={href}
-            className="mt-auto flex items-center gap-2 text-sm font-medium opacity-100 sm:opacity-0 group-hover:opacity-0 sm:group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300"
+            className="mt-auto flex items-center gap-2 text-sm font-medium opacity-100 sm:opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300"
             style={{ color: accentColor }}
           >
             <span>{t('landing.learnMore')}</span>

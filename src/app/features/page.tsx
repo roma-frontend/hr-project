@@ -226,7 +226,7 @@ export default function FeaturesPage() {
                     ))}
                   </ul>
 
-                  {'dashboardLink' in mod && mod.dashboardLink ? (
+                  {mod.dashboardLink ? (
                     <button
                       onClick={() => handleModuleClick(mod)}
                       className="inline-flex items-center gap-1.5 text-sm font-medium transition-all hover:gap-2.5 bg-transparent border-none cursor-pointer p-0"
@@ -240,7 +240,7 @@ export default function FeaturesPage() {
                   ) : (
                     <span
                       className="inline-flex items-center gap-1.5 text-sm font-medium opacity-50"
-                      style={{ color: mod.color }}
+                      style={{ color: (mod as (typeof MODULES)[number]).color }}
                     >
                       {t('featuresPage.comingSoon')}
                     </span>
