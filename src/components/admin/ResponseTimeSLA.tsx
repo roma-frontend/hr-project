@@ -18,7 +18,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 
 interface SLAStatsProps {
   startDate?: number;

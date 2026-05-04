@@ -36,7 +36,7 @@ import {
   Pie,
   Cell,
   Legend,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 import Link from 'next/link';
 import { Id } from '@/convex/_generated/dataModel';
 import { api } from '@/convex/_generated/api';

@@ -164,7 +164,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 // ═══════════════════════════════════════════════════════════════
 // MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Next.js internal paths and static files

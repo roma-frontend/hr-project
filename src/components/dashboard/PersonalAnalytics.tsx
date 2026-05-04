@@ -4,7 +4,7 @@ import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/lib/dynamic-imports';
 import { Calendar, TrendingUp, Clock } from 'lucide-react';
 
 interface PersonalAnalyticsProps {
@@ -35,7 +35,7 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
   }));
 
   // Recent leaves
-  const recentLeaves = userLeaves.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+  const recentLeaves = [...userLeaves].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
 
   return (
     <div className="space-y-6">

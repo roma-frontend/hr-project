@@ -32,7 +32,7 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
-} from 'recharts';
+} from '@/lib/dynamic-imports';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
