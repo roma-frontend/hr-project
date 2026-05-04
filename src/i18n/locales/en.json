@@ -148,7 +148,8 @@
     "starterPrice": "$29",
     "professionalPrice": "$79",
     "calendarIntegrations": "Google & Outlook calendar sync",
-    "priorityProcessing": "Priority AI processing"
+    "priorityProcessing": "Priority AI processing",
+    "custom": "Custom"
   },
   "testimonials": {
     "eyebrow": "Testimonials",

@@ -241,7 +241,7 @@ const pricingTiers: PricingTier[] = [
   {
     id: 'enterprise',
     nameKey: 'pricing.enterprise',
-    priceKey: 'Custom',
+    priceKey: 'pricing.custom',
     descriptionKey: 'pricing.enterpriseDesc',
     icon: <RocketIcon size={22} />,
     featureKeys: [

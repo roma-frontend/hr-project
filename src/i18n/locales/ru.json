@@ -148,7 +148,8 @@
     "starterPrice": "$29",
     "professionalPrice": "$79",
     "calendarIntegrations": "Синхронизация с Google и Outlook календарём",
-    "priorityProcessing": "Приоритетная обработка AI"
+    "priorityProcessing": "Приоритетная обработка AI",
+    "custom": "Индивидуальная"
   },
   "testimonials": {
     "eyebrow": "Отзывы",

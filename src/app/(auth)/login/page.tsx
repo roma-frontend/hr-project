@@ -591,7 +591,7 @@ export default function LoginPage() {
             >
               {/* Card */}
               <div
-                id={t('auth.loginCard')}
+                id="login-card"
                 className="rounded-2xl p-6 shadow-2xl border"
                 style={{
                   background: 'var(--card)',

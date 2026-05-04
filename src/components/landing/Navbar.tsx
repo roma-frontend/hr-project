@@ -149,27 +149,28 @@ export default function Navbar() {
         </Link>
 
         <div className="relative hidden lg:flex items-center gap-6 xl:gap-8">
-          {[
-            { name: t('landing.features'), href: '/features' },
-            { name: t('landing.pricing'), href: '#pricing' },
-            { name: t('landing.testimonials'), href: '#testimonials' },
-            { name: t('landing.faq'), href: '#faq' },
-            { name: t('nav.recruitment', 'Careers'), href: '/careers' },
-          ].map((item) => (
-            <a
-              key={item.name}
-              href={item.href.startsWith('#') && pathname !== '/' ? `/${item.href}` : item.href}
-              className="text-sm transition-colors duration-200 font-medium focus:outline-none focus:underline underline-offset-4"
-              style={{ color: 'var(--landing-navbar-text)' }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = 'var(--landing-navbar-text-hover)')
-              }
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--landing-navbar-text)')}
-              aria-label={`Navigate to ${item.name}`}
-            >
-              {item.name}
-            </a>
-          ))}
+          {mounted &&
+            [
+              { name: t('landing.features'), href: '/features' },
+              { name: t('landing.pricing'), href: '#pricing' },
+              { name: t('landing.testimonials'), href: '#testimonials' },
+              { name: t('landing.faq'), href: '#faq' },
+              { name: t('nav.recruitment', 'Careers'), href: '/careers' },
+            ].map((item) => (
+              <a
+                key={item.name}
+                href={item.href.startsWith('#') && pathname !== '/' ? `/${item.href}` : item.href}
+                className="text-sm transition-colors duration-200 font-medium focus:outline-none focus:underline underline-offset-4"
+                style={{ color: 'var(--landing-navbar-text)' }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = 'var(--landing-navbar-text-hover)')
+                }
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--landing-navbar-text)')}
+                aria-label={`Navigate to ${item.name}`}
+              >
+                {item.name}
+              </a>
+            ))}
         </div>
 
         <div className="relative flex items-center gap-2 md:gap-3">

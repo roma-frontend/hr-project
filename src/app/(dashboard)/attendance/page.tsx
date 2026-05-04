@@ -5,11 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../../../convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
-import { CheckInOutWidget } from '@/components/attendance/CheckInOutWidget';
-import { AttendanceDashboard } from '@/components/attendance/AttendanceDashboard';
-import { SupervisorRatingForm } from '@/components/attendance/SupervisorRatingForm';
-import { AttendanceDetailModal } from '@/components/attendance/AttendanceDetailModal';
-import { EmployeeAttendanceDrawer } from '@/components/attendance/EmployeeAttendanceDrawer';
+import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +20,43 @@ import type { Id } from '../../../../convex/_generated/dataModel';
 import type { AttendanceRecord } from '@/components/attendance/AttendanceDetailModal';
 import type { EmployeeInfo } from '@/components/attendance/EmployeeAttendanceDrawer';
 import Image from 'next/image';
+
+// Lazy load heavy attendance components
+const CheckInOutWidget = dynamic(
+  () =>
+    import('@/components/attendance/CheckInOutWidget').then((m) => ({
+      default: m.CheckInOutWidget,
+    })),
+  { loading: () => <SkeletonTable rows={3} />, ssr: false },
+);
+const AttendanceDashboard = dynamic(
+  () =>
+    import('@/components/attendance/AttendanceDashboard').then((m) => ({
+      default: m.AttendanceDashboard,
+    })),
+  { loading: () => <SkeletonTable rows={5} />, ssr: false },
+);
+const SupervisorRatingForm = dynamic(
+  () =>
+    import('@/components/attendance/SupervisorRatingForm').then((m) => ({
+      default: m.SupervisorRatingForm,
+    })),
+  { loading: () => <SkeletonTable rows={3} />, ssr: false },
+);
+const AttendanceDetailModal = dynamic(
+  () =>
+    import('@/components/attendance/AttendanceDetailModal').then((m) => ({
+      default: m.AttendanceDetailModal,
+    })),
+  { ssr: false },
+);
+const EmployeeAttendanceDrawer = dynamic(
+  () =>
+    import('@/components/attendance/EmployeeAttendanceDrawer').then((m) => ({
+      default: m.EmployeeAttendanceDrawer,
+    })),
+  { ssr: false },
+);
 
 // Isolate Convex API refs to avoid infinite type instantiation
 const getTodaySummaryApi = api.timeTracking.getTodayAttendanceSummary;

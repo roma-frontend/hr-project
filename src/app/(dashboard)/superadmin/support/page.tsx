@@ -580,11 +580,11 @@ function CreateTicketDialog({
             </div>
 
             <div>
-              <Label htmlFor={t('common.description')}>
+              <Label htmlFor="support-description">
                 {t('superadmin.support.create.descriptionLabel')}
               </Label>
               <Textarea
-                id={t('common.description')}
+                id="support-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('superadmin.support.create.descriptionPlaceholder')}

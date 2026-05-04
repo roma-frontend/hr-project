@@ -148,7 +148,8 @@
     "starterPrice": "$29",
     "professionalPrice": "$79",
     "calendarIntegrations": "Google և Outlook օրացույցների սինխրոնիզացիա",
-    "priorityProcessing": "AI առաջնահերթ մշակում"
+    "priorityProcessing": "AI առաջնահերթ մշակում",
+    "custom": "Անհատական"
   },
   "testimonials": {
     "eyebrow": "Վկայություններ",

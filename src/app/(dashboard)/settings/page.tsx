@@ -28,18 +28,74 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import dynamic from 'next/dynamic';
 import { SubscriptionPlanCard } from '@/components/subscription/SubscriptionPlanCard';
-import { CookiePreferences } from '@/components/settings/CookiePreferences';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
-import { NotificationSettings } from '@/components/settings/NotificationSettings';
-import { SecuritySettings } from '@/components/settings/SecuritySettings';
-import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
-import { ProductivitySettings } from '@/components/settings/ProductivitySettings';
-import { LocalizationSettings } from '@/components/settings/LocalizationSettings';
-import { DashboardCustomization } from '@/components/settings/DashboardCustomization';
-import { AdvancedSecuritySettings } from '@/components/settings/AdvancedSecuritySettings';
-import { IntegrationSettings } from '@/components/settings/IntegrationSettings';
-import { ProfileSettings } from '@/components/settings/ProfileSettings';
 
+const CookiePreferences = dynamic(
+  () =>
+    import('@/components/settings/CookiePreferences').then((m) => ({
+      default: m.CookiePreferences,
+    })),
+  { ssr: false },
+);
+const NotificationSettings = dynamic(
+  () =>
+    import('@/components/settings/NotificationSettings').then((m) => ({
+      default: m.NotificationSettings,
+    })),
+  { ssr: false },
+);
+const SecuritySettings = dynamic(
+  () =>
+    import('@/components/settings/SecuritySettings').then((m) => ({ default: m.SecuritySettings })),
+  { ssr: false },
+);
+const AppearanceSettings = dynamic(
+  () =>
+    import('@/components/settings/AppearanceSettings').then((m) => ({
+      default: m.AppearanceSettings,
+    })),
+  { ssr: false },
+);
+const ProductivitySettings = dynamic(
+  () =>
+    import('@/components/settings/ProductivitySettings').then((m) => ({
+      default: m.ProductivitySettings,
+    })),
+  { ssr: false },
+);
+const LocalizationSettings = dynamic(
+  () =>
+    import('@/components/settings/LocalizationSettings').then((m) => ({
+      default: m.LocalizationSettings,
+    })),
+  { ssr: false },
+);
+const DashboardCustomization = dynamic(
+  () =>
+    import('@/components/settings/DashboardCustomization').then((m) => ({
+      default: m.DashboardCustomization,
+    })),
+  { ssr: false },
+);
+const AdvancedSecuritySettings = dynamic(
+  () =>
+    import('@/components/settings/AdvancedSecuritySettings').then((m) => ({
+      default: m.AdvancedSecuritySettings,
+    })),
+  { ssr: false },
+);
+const IntegrationSettings = dynamic(
+  () =>
+    import('@/components/settings/IntegrationSettings').then((m) => ({
+      default: m.IntegrationSettings,
+    })),
+  { ssr: false },
+);
+const ProfileSettings = dynamic(
+  () =>
+    import('@/components/settings/ProfileSettings').then((m) => ({ default: m.ProfileSettings })),
+  { ssr: false },
+);
 const SLASettings = dynamic(() => import('@/components/admin/SLASettings'), { ssr: false });
 
 export default function SettingsPage() {
