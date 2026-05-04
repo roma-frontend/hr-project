@@ -6,29 +6,37 @@ import { jwtVerify } from 'jose';
 // Opt out of static generation — uses request.url
 export const revalidate = 0;
 
-async function getUserRoleFromSession(req: NextRequest): Promise<string> {
+async function verifyAuth(
+  req: NextRequest,
+): Promise<{ userId: string; role: string; email: string } | null> {
   try {
     const token = req.cookies.get('hr-auth-token') || req.cookies.get('oauth-session');
-    if (!token) return 'employee';
+    if (!token) return null;
 
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return 'employee';
+    if (!jwtSecret) return null;
 
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(token.value, secret);
-    return (payload.role as string) || 'employee';
+    return {
+      userId: (payload.sub as string) || '',
+      role: (payload.role as string) || 'employee',
+      email: (payload.email as string) || '',
+    };
   } catch {
-    return 'employee';
+    return null;
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
-    const requesterId = req.nextUrl.searchParams.get('requesterId');
-    if (!requesterId) return NextResponse.json({ error: 'requesterId required' }, { status: 400 });
+    // SECURITY: Require authentication
+    const auth = await verifyAuth(req);
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Get user role and organization from session
-    const userRole = await getUserRoleFromSession(req);
+    const { userId: requesterId, role: userRole } = auth;
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const isSupervisor = userRole === 'supervisor';
 
@@ -112,11 +120,12 @@ export async function GET(req: NextRequest) {
     // NOTE: The following extra fetches are disabled due to API parameter issues
     // Goals, Recognition, Corporate, Performance, Unread - can be re-enabled with correct params
 
-    // Build rich employee map with leave info
-    // Filter out superadmins from employee data
+    // SECURITY: Filter employee data based on requester role
+    // Non-admin users can only see their own data + limited team info
     const filteredUsers = (users as any[]).filter((u: any) => u.role !== 'superadmin');
 
     const employeeData = filteredUsers.map((u: any) => {
+      const isSelf = u._id === requesterId;
       const userLeaves = (leaves as any[]).filter((l: any) => l.userId === u._id);
       const todayRecord = (todayAttendance as any[]).find((t: any) => t.userId === u._id);
 
@@ -130,6 +139,27 @@ export async function GET(req: NextRequest) {
         .filter((l: any) => l.startDate > now)
         .sort((a: any, b: any) => a.startDate.localeCompare(b.startDate))
         .slice(0, 3);
+
+      // SECURITY: For non-admin users, only return full data for themselves
+      if (!isAdmin && !isSupervisor && !isSelf) {
+        return {
+          id: u._id,
+          name: u.name,
+          department: u.department,
+          position: u.position,
+          role: u.role,
+          presenceStatus: u.presenceStatus ?? 'available',
+          // Limited info only — no email, phone, leave details
+          currentLeave: activeLeave
+            ? {
+                type: activeLeave.type,
+                startDate: activeLeave.startDate,
+                endDate: activeLeave.endDate,
+              }
+            : null,
+          todayStatus: todayRecord ? { status: todayRecord.status } : null,
+        };
+      }
 
       return {
         id: u._id,

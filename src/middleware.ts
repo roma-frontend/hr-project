@@ -38,23 +38,6 @@ const PUBLIC_PATHS = [
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/auth/face-login',
-  '/api/security/face-verify',
-  '/api/security/log-event',
-  '/api/chat',
-  '/api/chat/context',
-  '/api/chat/insights',
-  '/api/chat/full-context',
-  '/api/chat/conflict-check',
-  '/api/chat/smart-reply',
-  '/api/chat/create-task',
-  '/api/chat/book-driver',
-  '/api/chat/book-leave',
-  '/api/chat/edit-leave',
-  '/api/chat/delete-leave',
-  '/api/chat/weekly-digest',
-  '/api/chat/link-preview',
-  '/api/drivers/available',
-  '/api/events/scan-conflicts',
   '/_next',
 ];
 
@@ -120,9 +103,7 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 function hasAuthCookie(request: NextRequest): boolean {
-  return (
-    request.cookies.has('hr-auth-token') || request.cookies.has('oauth-session')
-  );
+  return request.cookies.has('hr-auth-token') || request.cookies.has('oauth-session');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -157,10 +138,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   );
 
   // HSTS — enforce HTTPS
-  response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=31536000; includeSubDomains; preload',
-  );
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
   // X-Content-Type-Options
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -205,7 +183,11 @@ export function middleware(request: NextRequest) {
     // If user is already authenticated and tries to access login/register, redirect to dashboard
     // BUT skip this redirect if maintenance mode is active (prevents infinite redirect loop)
     const isMaintenance = request.nextUrl.searchParams.get('maintenance') === 'true';
-    if (AUTH_PATHS.some((prefix) => pathname.startsWith(prefix)) && hasAuthCookie(request) && !isMaintenance) {
+    if (
+      AUTH_PATHS.some((prefix) => pathname.startsWith(prefix)) &&
+      hasAuthCookie(request) &&
+      !isMaintenance
+    ) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     const response = NextResponse.next();

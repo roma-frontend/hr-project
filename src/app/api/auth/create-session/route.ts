@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signJWT } from '@/lib/jwt';
+import { jwtVerify } from 'jose';
+
+/**
+ * SECURITY: Verify that the requester is already authenticated before
+ * creating a new session. This prevents unauthorized session creation.
+ */
+async function verifyExistingAuth(req: NextRequest): Promise<boolean> {
+  try {
+    const token = req.cookies.get('hr-auth-token') || req.cookies.get('oauth-session');
+    if (!token) return false;
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) return false;
+
+    const secret = new TextEncoder().encode(jwtSecret);
+    await jwtVerify(token.value, secret);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require existing authentication before creating a new session
+    if (!(await verifyExistingAuth(request))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { userId, name, email, role, department, position, employeeType, avatar } = body;
 
@@ -26,19 +52,19 @@ export async function POST(request: NextRequest) {
     // Create session token
     const sessionToken = crypto.randomUUID();
 
-    // Set cookies
+    // Set cookies with secure settings
     const cookieStore = await cookies();
     cookieStore.set('hr-auth-token', jwt, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
     });
     cookieStore.set('hr-session-token', sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
     });

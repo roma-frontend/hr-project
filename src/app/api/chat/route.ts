@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 const openrouter = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -17,27 +18,17 @@ const openrouter = new OpenAI({
   },
 });
 
-// In-memory cache for context data (5 min TTL)
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-}
-
-const contextCache = new Map<string, CacheEntry<any>>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-function getCached<T>(key: string): T | null {
-  const entry = contextCache.get(key);
-  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
-    return entry.data as T;
-  }
-  if (entry) contextCache.delete(key);
-  return null;
-}
-
-function setCache<T>(key: string, data: T): void {
-  contextCache.set(key, { data, timestamp: Date.now() });
-}
+// SECURITY: Input validation schema for chat requests
+const chatRequestSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string(),
+    }),
+  ),
+  userId: z.string().optional(),
+  lang: z.enum(['en', 'ru', 'hy']).optional(),
+});
 
 // Fetch with timeout
 async function fetchWithTimeout(
@@ -68,8 +59,18 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
   }
 
   try {
-    console.log('🤖 AI Chat request received');
-    const { messages, userId, lang } = await req.json();
+    const body = await req.json();
+
+    // SECURITY: Validate input
+    const validation = chatRequestSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: validation.error.errors },
+        { status: 400 },
+      );
+    }
+
+    const { messages, userId, lang } = validation.data;
 
     const langInstruction =
       lang === 'ru'
@@ -155,7 +156,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
             const endDate = new Date(year, month, day1 + 7).getTime();
             const requestType = /водитель|driver/i.test(lastUserMessage) ? 'driver' : 'leave';
             return fetchWithTimeout(
-              `${origin}/api/chat/conflict-check?userId=${userId}&organizationId=&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`,
+              `${origin}/api/chat/conflict-check?userId=${userId}&organizationId=${encodeURIComponent(userOrgId)}&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`,
               { headers: authHeaders },
               4000,
             );

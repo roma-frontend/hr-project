@@ -54,10 +54,13 @@ export async function checkRateLimit(
   const redis = getRedis();
 
   if (!redis) {
-    // Fallback: always allow if Redis not available
+    // Fail closed in production — deny request if Redis is unavailable.
+    // In development, allow the request to avoid blocking local work.
+    if (process.env.NODE_ENV === 'production') {
+      return { allowed: false, remaining: 0, resetAt: Date.now() + windowMs };
+    }
     return { allowed: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
   }
-
   try {
     const now = Date.now();
     const windowKey = `rate:${key}:${Math.floor(now / windowMs)}`;

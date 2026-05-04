@@ -17,8 +17,6 @@ function getStripe(): Stripe | null {
 }
 
 async function verifySuperadmin(req: NextRequest): Promise<boolean> {
-  if (isDev) return true;
-
   try {
     const cookieHeader = req.headers.get('cookie') || '';
     const jwtMatch = cookieHeader.match(/hr-auth-token=([^;]+)/);
@@ -29,10 +27,7 @@ async function verifySuperadmin(req: NextRequest): Promise<boolean> {
     const payload = await verifyJWT(jwt);
     if (!payload) return false;
 
-    const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
-    return (
-      payload.email?.toLowerCase() === SUPERADMIN_EMAIL || payload.role === 'superadmin'
-    );
+    return payload.role === 'superadmin';
   } catch (error) {
     console.error('[Stripe Auth] Error:', error);
     return false;
