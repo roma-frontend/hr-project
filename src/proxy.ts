@@ -63,6 +63,14 @@ const STATIC_EXTENSIONS = [
 // Auth route patterns (login/register)
 const AUTH_PATHS = ['/login', '/register', '/forgot-password', '/reset-password'];
 
+// AuthJS internal client fetch routes — exempt from rate limiting
+const AUTHJS_INTERNAL_PATHS = [
+  '/api/auth/session',
+  '/api/auth/csrf',
+  '/api/auth/providers',
+  '/api/auth/callback',
+];
+
 // Dashboard route patterns (require auth)
 const PROTECTED_PREFIXES = [
   '/dashboard',
@@ -89,6 +97,9 @@ const PROTECTED_PREFIXES = [
 function isPublicPath(pathname: string): boolean {
   // Exact match
   if (PUBLIC_PATHS.includes(pathname)) return true;
+
+  // AuthJS internal client fetch routes
+  if (AUTHJS_INTERNAL_PATHS.some((p) => pathname === p)) return true;
 
   // Static files
   if (STATIC_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return true;
@@ -157,6 +168,9 @@ async function applyRateLimit(
   request: NextRequest,
   pathname: string,
 ): Promise<NextResponse | null> {
+  // Skip AuthJS internal client fetches — they poll session state frequently
+  if (AUTHJS_INTERNAL_PATHS.some((p) => pathname === p)) return null;
+
   const rule = RATE_LIMIT_RULES.find((r) => r.pattern(pathname));
   if (!rule) return null;
 

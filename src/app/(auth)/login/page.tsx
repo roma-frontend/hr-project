@@ -243,6 +243,11 @@ export default function LoginPage() {
     }
     return false;
   });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update maintenance banner state when URL changes
   useEffect(() => {
@@ -558,7 +563,7 @@ export default function LoginPage() {
           {!isOAuthSyncing && (
             <OnboardingTour
               steps={loginTourSteps}
-              tourId={t('auth.loginTour')}
+              tourId={mounted ? t('auth.loginTour') : 'login-tour'}
               onComplete={() => {}}
               onSkip={() => {}}
             />
@@ -604,10 +609,10 @@ export default function LoginPage() {
                     <Building2 className="w-6 h-6 text-white" />
                   </div>
                   <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                    {t('auth.welcomeBack')}
+                    {mounted ? t('auth.welcomeBack') : 'Welcome Back'}
                   </h1>
                   <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    {t('auth.signInToHROffice')}
+                    {mounted ? t('auth.signInToHROffice') : 'Sign in to HR Office'}
                   </p>
                 </div>
 
@@ -741,7 +746,9 @@ export default function LoginPage() {
                         }}
                       >
                         <Mail className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">{t('auth.email')}</span>
+                        <span className="hidden sm:inline">
+                          {mounted ? t('auth.email') : 'Email'}
+                        </span>
                       </Button>
                       <Button
                         type="button"
@@ -755,7 +762,9 @@ export default function LoginPage() {
                         }}
                       >
                         <ScanFace className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">{t('auth.faceId')}</span>
+                        <span className="hidden sm:inline">
+                          {mounted ? t('auth.faceId') : 'Face ID'}
+                        </span>
                       </Button>
                       <Button
                         type="button"
@@ -803,7 +812,7 @@ export default function LoginPage() {
                             className="text-xs font-medium"
                             style={{ color: 'var(--text-muted)' }}
                           >
-                            {t('auth.orUseEmail')}
+                            {mounted ? t('auth.orUseEmail') : 'Or use email'}
                           </span>
                           <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
                         </div>
@@ -817,7 +826,7 @@ export default function LoginPage() {
                         <SmartEmailInput
                           value={formData.email}
                           onChange={(val) => setFormData((p) => ({ ...p, email: val }))}
-                          label={t('auth.emailAddress')}
+                          label={mounted ? t('auth.emailAddress') : 'Email address'}
                           placeholder="you@company.com"
                           autoFocus={true}
                         />
@@ -827,7 +836,7 @@ export default function LoginPage() {
                           <SmartPasswordInput
                             value={formData.password}
                             onChange={(val) => setFormData((p) => ({ ...p, password: val }))}
-                            label={t('auth.password')}
+                            label={mounted ? t('auth.password') : 'Password'}
                             placeholder="••••••••"
                             showStrength={false}
                             showGenerator={false}
@@ -837,7 +846,7 @@ export default function LoginPage() {
                                 className="text-xs hover:underline"
                                 style={{ color: '#2563eb' }}
                               >
-                                {t('auth.forgotPassword')}
+                                {mounted ? t('auth.forgotPassword') : 'Forgot password?'}
                               </Link>
                             }
                           />
@@ -857,10 +866,12 @@ export default function LoginPage() {
                           {isPending ? (
                             <>
                               <ShieldLoader size="xs" variant="inline" className="mr-2" />{' '}
-                              {t('auth.signingIn')}
+                              {mounted ? t('auth.signingIn') : 'Signing in...'}
                             </>
-                          ) : (
+                          ) : mounted ? (
                             t('auth.signIn')
+                          ) : (
+                            'Sign In'
                           )}
                         </Button>
                       </form>
@@ -871,13 +882,13 @@ export default function LoginPage() {
                 {/* Footer */}
                 <div className="text-center mt-4 space-y-2">
                   <p id="join-team-link" className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {t('auth.dontHaveAccount')}{' '}
+                    {mounted ? t('auth.dontHaveAccount') : "Don't have an account?"}{' '}
                     <Link
                       href="/register"
                       className="font-semibold hover:underline"
                       style={{ color: '#2563eb' }}
                     >
-                      {t('auth.joinExistingTeam')}
+                      {mounted ? t('auth.joinExistingTeam') : 'Join your team'}
                     </Link>
                   </p>
                   <div className="flex items-center gap-2">
@@ -898,7 +909,7 @@ export default function LoginPage() {
                       style={{ color: '#047857' }}
                       aria-label={t('auth.createNewOrganization', 'Create new organization')}
                     >
-                      🏢 {t('auth.createNewOrganization')}
+                      🏢 {mounted ? t('auth.createNewOrganization') : 'Create new organization'}
                     </Button>
                   </Link>
                 </div>
@@ -911,7 +922,7 @@ export default function LoginPage() {
                   className="text-xs hover:underline"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  ← {t('ui.backToHome')}
+                  ← {mounted ? t('ui.backToHome') : 'Back to home'}
                 </Link>
               </div>
             </motion.div>
