@@ -667,11 +667,13 @@ export default function AIChatPage() {
           width: sidebarOpen ? (isMobile ? '100vw' : 300) : 0,
           transform: isMobile ? `translateX(${sidebarOpen ? '0' : '-100%'})` : 'none',
           opacity: sidebarOpen ? 1 : 0,
-          willChange: 'width',
+          willChange: 'width, opacity',
           pointerEvents: sidebarOpen || !isMobile ? 'auto' : 'none',
           transition: isMobile
             ? 'transform 300ms ease-in-out, opacity 300ms ease-in-out'
-            : `width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 600ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+            : sidebarOpen
+              ? `width 600ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 600ms cubic-bezier(0.34, 1.56, 0.64, 1)`
+              : `width 600ms cubic-bezier(0.4, 0, 0.2, 1), opacity 600ms cubic-bezier(0.4, 0, 0.2, 1)`,
         }}
       >
         <div className="p-4 h-full flex flex-col" style={{ width: '100%' }}>

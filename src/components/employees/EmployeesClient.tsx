@@ -294,7 +294,7 @@ export function EmployeesClient() {
       <div
         className="space-y-6"
         style={{
-          transition: isMobile ? 'none' : 'padding-right 600ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: isMobile ? 'none' : 'padding-right 600ms cubic-bezier(0.4, 0, 0.2, 1)',
           willChange: isMobile ? 'auto' : 'padding-right',
           paddingRight: isMobile ? '0' : isPanelOpen ? '19rem' : '5rem',
         }}
