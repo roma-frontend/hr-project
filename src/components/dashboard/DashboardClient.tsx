@@ -3,36 +3,7 @@
 import React, { useMemo } from 'react';
 import { motion } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
-import {
-  Users,
-  Clock,
-  CheckCircle,
-  UserCheck,
-  Plus,
-  CalendarDays,
-  ArrowRight,
-  TrendingUp,
-  Building2,
-  CreditCard,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldOff,
-  Activity,
-  XCircle,
-} from 'lucide-react';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-} from '@/lib/dynamic-imports';
+import { Users, Clock, CheckCircle, UserCheck, Plus, CalendarDays, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { format, isSameMonth } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
@@ -44,37 +15,17 @@ import { useAuthUser, type User } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  LEAVE_TYPE_LABELS,
-  LEAVE_TYPE_COLORS,
-  type LeaveType,
-  type LeaveStatus,
-} from '@/lib/types';
+import { LEAVE_TYPE_LABELS, LEAVE_TYPE_COLORS, type LeaveType } from '@/lib/types';
 import { type LeaveEnriched, type Organization } from '@/lib/convex-types';
-import dynamic from 'next/dynamic';
-import { PlanGate } from '@/components/subscription/PlanGate';
 import { DashboardBanners } from '@/components/dashboard/DashboardBanners';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { SecurityWidget } from '@/components/dashboard/SecurityWidget';
+import { LeaveCharts } from '@/components/dashboard/LeaveCharts';
+import { RecentLeavesCard } from '@/components/dashboard/RecentLeavesCard';
+import { EnterpriseWidgets } from '@/components/dashboard/EnterpriseWidgets';
 import LeaveStats from '@/components/dashboard/LeaveStats';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-
-// Lazy load admin components — SSR отключен
-const HolidayCalendarSync = dynamic(() => import('@/components/admin/HolidayCalendarSync'), {
-  ssr: false,
-});
-const CostAnalysis = dynamic(() => import('@/components/admin/CostAnalysis'), { ssr: false });
-const ConflictDetection = dynamic(() => import('@/components/admin/ConflictDetection'), {
-  ssr: false,
-});
-const SmartSuggestions = dynamic(() => import('@/components/admin/SmartSuggestions'), {
-  ssr: false,
-});
-const ResponseTimeSLA = dynamic(() => import('@/components/admin/ResponseTimeSLA'), { ssr: false });
-const WeeklyDigestWidget = dynamic(() => import('@/components/ai/WeeklyDigestWidget'), {
-  ssr: false,
-});
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -85,77 +36,30 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-function StatusBadge({ status }: { status: LeaveStatus }) {
-  const variants: Record<LeaveStatus, 'warning' | 'success' | 'destructive'> = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'destructive',
-  };
-  return (
-    <Badge variant={variants[status]} className="capitalize">
-      {status}
-    </Badge>
-  );
+function getDateFnsLocale(lang?: string) {
+  switch (lang) {
+    case 'ru':
+      return ru;
+    case 'hy':
+      return hy;
+    default:
+      return enUS;
+  }
 }
-
-function formatDate(dateStr: string | undefined | null, fmt: string): string {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '—';
-  return format(d, fmt);
-}
-
-const LeaveTypeBadge = React.memo(({ type }: { type: LeaveType }) => {
-  const colorMap: Record<LeaveType, string> = {
-    paid: 'bg-[#2563eb]/20 text-[#2563eb] border-[#2563eb]/30',
-    unpaid: 'bg-[#f59e0b]/20 text-[#f59e0b] border-[#f59e0b]/30',
-    sick: 'bg-[#ef4444]/20 text-[#ef4444] border-[#ef4444]/30',
-    family: 'bg-[#10b981]/20 text-[#10b981] border-[#10b981]/30',
-    doctor: 'bg-[#06b6d4]/20 text-[#06b6d4] border-[#06b6d4]/30',
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${colorMap[type]}`}
-    >
-      {LEAVE_TYPE_LABELS[type]}
-    </span>
-  );
-});
-LeaveTypeBadge.displayName = 'LeaveTypeBadge';
-
-const StatusBadgeMemo = React.memo(({ status, label }: { status: LeaveStatus; label: string }) => {
-  const variants: Record<LeaveStatus, 'warning' | 'success' | 'destructive'> = {
-    pending: 'warning',
-    approved: 'success',
-    rejected: 'destructive',
-  };
-  return (
-    <Badge variant={variants[status]} className="capitalize">
-      {label}
-    </Badge>
-  );
-});
-StatusBadgeMemo.displayName = 'StatusBadgeMemo';
 
 export default function DashboardClient() {
   const { t, i18n } = useTranslation();
   const user = useAuthUser();
   const lang = i18n.language || 'en';
-  const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
+  const dateFnsLocale = getDateFnsLocale(lang);
 
-  // ═══════════════════════════════════════════════════════════════
-  // HOOKS MUST BE CALLED IN THE SAME ORDER EVERY RENDER
-  // ═══════════════════════════════════════════════════════════════
   const [mounted, setMounted] = React.useState(false);
 
-  // Get selected organization for superadmin
   const selectedOrgId = useSelectedOrganization();
   const shouldUseOrgQuery = selectedOrgId && user?.id;
 
-  // Convex useQuery arguments - properly typed
   const userId = user?.id as Id<'users'> | undefined;
 
-  // Get org name when selected
   const organizationsList = useQuery(
     api.organizations.getOrganizationsForPicker,
     userId ? { userId } : 'skip',
@@ -163,21 +67,18 @@ export default function DashboardClient() {
 
   const selectedOrganization = organizationsList?.find((o) => o._id === selectedOrgId);
 
-  // If no org selected, show all data (superadmin sees all); otherwise filter locally
   const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip');
 
   const usersFromConvex = useQuery(
     api.users.queries.getAllUsers,
     userId ? { requesterId: userId } : 'skip',
   );
-  // Convert Convex _id to id for User type compatibility
   const users = (usersFromConvex || []).map((u) => ({ ...u, id: u._id })) as unknown as User[];
   const organization = useQuery(
     api.organizations.getMyOrganization,
     userId ? { userId } : 'skip',
   ) as Organization | null;
 
-  // Security stats — only for superadmin (always call, condition is in arguments)
   const isSuperadmin = user?.role === 'superadmin';
   const securityStats = useQuery(
     api.security.getLoginStats,
@@ -188,17 +89,9 @@ export default function DashboardClient() {
     setMounted(true);
   }, []);
 
-  // ═══════════════════════════════════════════════════════════════
-  // Non-hook values (can be conditional)
-  // ═══════════════════════════════════════════════════════════════
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
 
-  // ═══════════════════════════════════════════════════════════════
-  // OPTIMIZED: Memoize all data transformations
-  // ═══════════════════════════════════════════════════════════════════════
-
-  // Filter data by selected org when superadmin has one selected
   const filteredUsers = useMemo(() => {
     if (!selectedOrgId) return users;
     return users?.filter((u) => u.organizationId === selectedOrgId) ?? [];
@@ -292,114 +185,15 @@ export default function DashboardClient() {
       animate="visible"
       className="space-y-4 sm:space-y-6"
     >
-      {/* Page title for accessibility — proper heading order h1 → h2 → h3 */}
       <h1 className="sr-only">{t('nav.dashboard', { defaultValue: 'Dashboard' })}</h1>
 
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-6 bg-(--background)/95 backdrop-blur supports-backdrop-filter:bg-(--background)/60 border-b border-(--border)">
-        <div className="flex flex-col sm:justify-between gap-3">
-          <div>
-            <h2
-              className="text-2xl sm:text-3xl font-bold tracking-tight mb-1"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {selectedOrganization?.name
-                ? `${t('nav.dashboard', { defaultValue: 'Dashboard' })} - ${selectedOrganization.name}`
-                : t('nav.dashboard', { defaultValue: 'Dashboard' })}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {format(today, 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
-            </p>
-          </div>
+      <DashboardHeader
+        selectedOrganization={selectedOrganization as Organization | undefined}
+        userRole={user?.role}
+      />
 
-          {/* Welcome header - now hidden since we have sticky header */}
-          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-            {user?.role === 'superadmin' && (
-              <>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="hover:text-(--text-primary) transition-colors"
-                >
-                  <Link href="/superadmin/organizations">
-                    <Building2 className="w-4 h-4" />
-                    {t('dashboard.manageOrgs')}
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  style={{
-                    color: 'var(--primary)',
-                  }}
-                >
-                  <Link href="/superadmin/create-org">
-                    <Building2 className="w-4 h-4" />
-                    {t('dashboard.createOrg')}
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  style={{
-                    borderColor: 'color-mix(in srgb, var(--success) 25%, transparent)',
-                    background: 'color-mix(in srgb, var(--success) 6%, transparent)',
-                    color: 'var(--success)',
-                  }}
-                >
-                  <Link href="/superadmin/stripe-dashboard">
-                    <CreditCard className="w-4 h-4" />
-                    {t('dashboard.stripeDashboard')}
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  style={{
-                    color: 'var(--primary)',
-                  }}
-                >
-                  <Link href="/superadmin/security">
-                    <ShieldCheck className="w-4 h-4" />
-                    {t('landingExtra.securityCenter')}
-                  </Link>
-                </Button>
-              </>
-            )}
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="hover:text-(--text-primary) transition-colors"
-            >
-              <Link href="/calendar">
-                <CalendarDays className="w-4 h-4" />
-                {t('nav.calendar')}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="default"
-              className="flex items-center gap-2 w-auto justify-center btn-gradient font-medium shadow-md hover:shadow-lg"
-            >
-              <Link href="/leaves">
-                <Plus className="w-4 h-4" />
-                {t('dashboard.newRequest')}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Smart Banners - only render if there are active banners */}
       <DashboardBanners />
 
-      {/* Stats */}
       <motion.div variants={itemVariants}>
         <div
           data-tour="quick-stats"
@@ -436,344 +230,32 @@ export default function DashboardClient() {
         </div>
       </motion.div>
 
-      {/* Security Widget — superadmin only */}
-      {user?.role === 'superadmin' && (
-        <motion.div variants={itemVariants}>
-          <Link href="/superadmin/security" className="block group">
-            <div
-              className="rounded-lg sm:rounded-2xl border p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all duration-200 group-hover:shadow-md"
-              style={{
-                background: 'var(--card)',
-                borderColor:
-                  (securityStats?.highRisk ?? 0) >= 10
-                    ? 'rgba(239,68,68,0.4)'
-                    : (securityStats?.highRisk ?? 0) >= 3
-                      ? 'rgba(245,158,11,0.4)'
-                      : 'var(--border)',
-              }}
-            >
-              {/* Icon */}
-              <div
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0"
-                style={{
-                  background:
-                    (securityStats?.highRisk ?? 0) >= 10
-                      ? 'rgba(239,68,68,0.12)'
-                      : (securityStats?.highRisk ?? 0) >= 3
-                        ? 'rgba(245,158,11,0.12)'
-                        : 'rgba(16,185,129,0.12)',
-                }}
-              >
-                {(securityStats?.highRisk ?? 0) >= 10 ? (
-                  <ShieldAlert
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                    style={{ color: 'var(--destructive)' }}
-                  />
-                ) : (securityStats?.highRisk ?? 0) >= 3 ? (
-                  <ShieldAlert
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                    style={{ color: 'var(--warning)' }}
-                  />
-                ) : (
-                  <ShieldCheck
-                    className="w-4 h-4 sm:w-5 sm:h-5"
-                    style={{ color: 'var(--success)' }}
-                  />
-                )}
-              </div>
+      {user?.role === 'superadmin' && <SecurityWidget securityStats={securityStats} />}
 
-              {/* Title + threat level */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-                  <span
-                    className="text-xs sm:text-sm font-semibold"
-                    style={{ color: 'var(--text-primary)' }}
-                  >
-                    {t('landingExtra.securityCenter')}
-                  </span>
-                  <span
-                    className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full"
-                    style={{
-                      background:
-                        (securityStats?.highRisk ?? 0) >= 10
-                          ? 'rgba(239,68,68,0.15)'
-                          : (securityStats?.highRisk ?? 0) >= 3
-                            ? 'rgba(245,158,11,0.15)'
-                            : 'rgba(16,185,129,0.15)',
-                      color:
-                        (securityStats?.highRisk ?? 0) >= 10
-                          ? 'var(--destructive)'
-                          : (securityStats?.highRisk ?? 0) >= 3
-                            ? 'var(--warning)'
-                            : 'var(--success)',
-                    }}
-                  >
-                    {(securityStats?.highRisk ?? 0) >= 10
-                      ? t('landingExtra.securityCritical')
-                      : (securityStats?.highRisk ?? 0) >= 3
-                        ? t('landingExtra.securityElevated')
-                        : (securityStats?.failed ?? 0) >= 20
-                          ? t('landingExtra.securityModerate')
-                          : t('landingExtra.securityNormal')}
-                  </span>
-                </div>
-                <div
-                  className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-[10px] sm:text-xs"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  <span className="flex items-center gap-1">
-                    <Activity className="w-3 h-3" />
-                    <span className="hidden sm:inline">
-                      {securityStats?.total ?? 0} {t('landingExtra.logins24h')}
-                    </span>
-                    <span className="sm:hidden">
-                      {securityStats?.total ?? 0} {t('landingExtra.loginsShort')}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <XCircle
-                      className="w-3 h-3"
-                      style={{
-                        color: securityStats?.failed ? 'var(--destructive)' : 'var(--text-muted)',
-                      }}
-                    />
-                    {securityStats?.failed ?? 0} {t('landingExtra.failedLogins')}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <ShieldAlert
-                      className="w-3 h-3"
-                      style={{
-                        color: securityStats?.highRisk ? 'var(--warning)' : 'var(--text-muted)',
-                      }}
-                    />
-                    {securityStats?.highRisk ?? 0} {t('landingExtra.highRiskAlerts')}
-                  </span>
-                </div>
-              </div>
+      <LeaveCharts monthlyTrend={monthlyTrend} pieData={pieData} />
 
-              {/* Arrow */}
-              <ArrowRight
-                className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1"
-                style={{ color: 'var(--text-muted)' }}
-              />
-            </div>
-          </Link>
-        </motion.div>
-      )}
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
-        <motion.div variants={itemVariants} className="lg:col-span-3">
-          <Card>
-            <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
-              <div className="flex items-center justify-between">
-                <CardTitle
-                  as="h2"
-                  className="text-xs sm:text-sm font-semibold text-(--text-muted) uppercase tracking-wider"
-                >
-                  {t('dashboard.monthlyLeaveTrend')}
-                </CardTitle>
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-(--text-muted)" />
-              </div>
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
-              <ResponsiveContainer width="100%" height={180} className="sm:!h-[220px]">
-                <BarChart data={monthlyTrend} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <RechartsTooltip
-                    contentStyle={{
-                      background: 'var(--card)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '8px',
-                      color: 'var(--text-primary)',
-                    }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                    labelStyle={{ color: 'var(--text-primary)' }}
-                    cursor={{ fill: 'rgba(99,102,241,0.05)' }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
-                  <Bar
-                    dataKey="approved"
-                    name={t('statuses.approved')}
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="pending"
-                    name={t('statuses.pending')}
-                    fill="#f59e0b"
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="rejected"
-                    name={t('statuses.rejected')}
-                    fill="#ef4444"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle
-                as="h2"
-                className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider"
-              >
-                {t('dashboard.leaveDistribution')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pieData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip
-                      contentStyle={{
-                        background: 'var(--card)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '8px',
-                        color: 'var(--text-primary)',
-                      }}
-                      itemStyle={{ color: 'var(--text-primary)' }}
-                      labelStyle={{ color: 'var(--text-primary)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <CalendarDays className="w-6 h-6 text-(--text-muted)" />
-                  <p className="text-sm text-(--text-muted)">{t('dashboard.noLeaveData')}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Recent Leaves & Admin Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-        <motion.div variants={itemVariants} className="lg:col-span-1">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-(--text-muted) uppercase tracking-wider">
-                  {t('dashboard.recentLeaves')}
-                </CardTitle>
-                <ArrowRight className="w-4 h-4 text-(--text-muted)" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {recentLeaves.length > 0 ? (
-                <ul className="space-y-3">
-                  {recentLeaves.map((leave) => (
-                    <li key={leave._id} className="flex items-center justify-between text-sm">
-                      <div>
-                        <p className="font-medium text-(--text-primary)">{leave.userName}</p>
-                        <p className="text-(--text-muted)">
-                          {formatDate(leave.startDate, 'MMM d')} -{' '}
-                          {formatDate(leave.endDate, 'MMM d')}
-                        </p>
-                      </div>
-                      <StatusBadgeMemo
-                        status={leave.status}
-                        label={
-                          leave.status === 'approved'
-                            ? t('titles.leaveStatus.approved')
-                            : leave.status === 'pending'
-                              ? t('titles.leaveStatus.pending')
-                              : t('titles.leaveStatus.rejected')
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2">
-                  <Clock className="w-6 h-6 text-(--text-muted)" />
-                  <p className="text-sm text-(--text-muted)">{t('dashboard.noRecentLeaves')}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+        <RecentLeavesCard
+          recentLeaves={
+            recentLeaves.map((l) => ({
+              ...l,
+              organizationId: l.organizationId ?? ('' as Id<'organizations'>),
+            })) as LeaveEnriched[]
+          }
+        />
         {user?.id && (
           <motion.div variants={itemVariants} data-tour="leave-balance">
             <LeaveStats userId={user.id as Id<'users'>} />
           </motion.div>
         )}
       </div>
-      {/* ═══════════════════════════════════════════════════════════════
-          PERSONAL LEAVE STATS — For all users
-          ═══════════════════════════════════════════════════════════════ */}
 
-      {/* Quick Actions */}
       <motion.div variants={itemVariants} data-tour="quick-actions" className="lg:col-span-2">
         <QuickActions />
       </motion.div>
 
-      {/* Recent Activity */}
       <motion.div variants={itemVariants} data-tour="recent-activity" className="lg:col-span-1">
-        {organization?.plan === 'enterprise' && (
-          <>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="slaSettings">
-                <ResponseTimeSLA />
-              </PlanGate>
-            </motion.div>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="advancedAnalytics">
-                <ConflictDetection />
-              </PlanGate>
-            </motion.div>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="analytics">
-                <CostAnalysis />
-              </PlanGate>
-            </motion.div>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="calendarSync">
-                <HolidayCalendarSync />
-              </PlanGate>
-            </motion.div>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="aiInsights">
-                <SmartSuggestions />
-              </PlanGate>
-            </motion.div>
-            <motion.div variants={itemVariants} className="lg:col-span-1">
-              <PlanGate feature="aiChat">
-                <WeeklyDigestWidget />
-              </PlanGate>
-            </motion.div>
-          </>
-        )}
+        {organization?.plan === 'enterprise' && <EnterpriseWidgets />}
       </motion.div>
     </motion.div>
   );
