@@ -8,6 +8,7 @@ import { jwtVerify } from 'jose';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { fetchAllContexts } from '@/lib/chat-context';
 
 const openrouter = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -29,22 +30,6 @@ const chatRequestSchema = z.object({
   userId: z.string().optional(),
   lang: z.enum(['en', 'ru', 'hy']).optional(),
 });
-
-// Fetch with timeout
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs = 8000,
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
 
 export const POST = withCsrfProtection(async (req: NextRequest) => {
   const startTime = Date.now();
@@ -83,14 +68,14 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
     const now = new Date();
     const dateContext = `CURRENT DATE & TIME: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
 
-    const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop()?.content || '';
+    const lastUserMessage = messages.filter((m) => m.role === 'user').pop()?.content || '';
 
     // Detect intent EARLY to fetch only relevant context
     const userRoleFromAuth = (auth.role as UserRole) || 'employee';
     const detectedIntent = detectIntent(lastUserMessage, userRoleFromAuth);
 
     // Determine what data we need based on intent
-    const needsFullContext = !detectedIntent || detectedIntent.action;
+    const needsFullContext = !detectedIntent || !!detectedIntent.action;
     const needsConflictCheck =
       /хочу отпуск|book leave|request vacation|отпуск с \d|sick leave|больничный|заказать водителя|book driver|водитель/i.test(
         lastUserMessage,
@@ -100,255 +85,21 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
     );
 
     // ═══════════════════════════════════════════════════════════════
-    // PARALLEL FETCH — Запускаем все запросы одновременно
+    // PARALLEL FETCH — All context data fetched simultaneously
     // ═══════════════════════════════════════════════════════════════
     const origin = req.headers.get('origin') || '';
     const cookieHeader = req.headers.get('cookie') || '';
-    const authHeaders = { cookie: cookieHeader };
 
-    const [contextResult, insightsResult, fullResult, conflictResult] = await Promise.allSettled([
-      // 1. User context (always needed)
-      fetchWithTimeout(`${origin}/api/chat/context`, { headers: authHeaders }, 5000),
-
-      // 2. AI insights (only if relevant)
-      needsInsights && userId
-        ? fetchWithTimeout(
-            `${origin}/api/chat/insights?userId=${userId}`,
-            { headers: authHeaders },
-            4000,
-          )
-        : Promise.resolve(null),
-
-      // 3. Full context (only if needed)
-      needsFullContext
-        ? fetchWithTimeout(
-            `${origin}/api/chat/full-context?requesterId=${userId}`,
-            { headers: authHeaders },
-            6000,
-          )
-        : Promise.resolve(null),
-
-      // 4. Conflict check (only for booking requests)
-      needsConflictCheck && userId
-        ? (async () => {
-            const dateMatch = lastUserMessage.match(
-              /с (\d{1,2})[\/\.-](\d{1,2})|from (\d{1,2})[\/\.-](\d{1,2})|(\d{1,2})[\/\.-](\d{1,2})/i,
-            );
-            if (!dateMatch) return null;
-            const dayStr = dateMatch[1] || dateMatch[3] || dateMatch[5];
-            const monthStr = dateMatch[2] || dateMatch[4] || dateMatch[6];
-            if (!dayStr || !monthStr) return null;
-            const day1 = parseInt(dayStr);
-            const monthMap: Record<string, number> = {
-              '1': 0,
-              '2': 1,
-              '3': 2,
-              '4': 3,
-              '5': 4,
-              '6': 5,
-              '7': 6,
-              '8': 7,
-              '9': 8,
-              '10': 9,
-              '11': 10,
-              '12': 11,
-            };
-            const month = monthMap[monthStr] ?? parseInt(monthStr) - 1;
-            const year = new Date().getFullYear();
-            const startDate = new Date(year, month, day1).getTime();
-            const endDate = new Date(year, month, day1 + 7).getTime();
-            const requestType = /водитель|driver/i.test(lastUserMessage) ? 'driver' : 'leave';
-            return fetchWithTimeout(
-              `${origin}/api/chat/conflict-check?userId=${userId}&organizationId=${encodeURIComponent(authOrgId)}&requestType=${requestType}&startDate=${startDate}&endDate=${endDate}`,
-              { headers: authHeaders },
-              4000,
-            );
-          })()
-        : Promise.resolve(null),
-    ]);
-
-    // Process user context
-    let userContext = '';
-    let userRole: UserRole = 'employee';
-    let userEmail = '';
-    let userName = '';
-    let userDepartment = '';
-    let userPosition = '';
-    let userOrgId = '';
-
-    if (contextResult.status === 'fulfilled' && contextResult.value?.ok) {
-      try {
-        const context = await contextResult.value.json();
-        userRole = context.user.role as UserRole;
-        userEmail = context.user.email;
-        userName = context.user.name;
-        userDepartment = context.user.department;
-        userPosition = context.user.position;
-        userOrgId = context.user.organizationId;
-
-        userContext = `
-USER: ${context.user.name} | Role: ${context.user.role} | Dept: ${context.user.department}
-Leave balances: Paid=${context.leaveBalances.paid}d, Sick=${context.leaveBalances.sick}d, Family=${context.leaveBalances.family}d
-Stats: Taken=${context.stats.totalDaysTaken}d, Pending=${context.stats.pendingDays}d
-Recent leaves: ${
-          context.recentLeaves
-            ?.slice(0, 3)
-            .map((l: any) => `${l.type} ${l.startDate}-${l.endDate} (${l.status})`)
-            .join(', ') || 'none'
-        }
-Team on leave: ${
-          context.teamAvailability
-            ?.slice(0, 5)
-            .map((l: any) => `${l.userName} (${l.startDate}-${l.endDate})`)
-            .join(', ') || 'none'
-        }
-`.trim();
-      } catch (e) {
-        console.error('Failed to parse context:', e);
-      }
-    }
-
-    // Process AI insights
-    let aiInsights = '';
-    if (insightsResult.status === 'fulfilled' && insightsResult.value?.ok) {
-      try {
-        const insights = await insightsResult.value.json();
-        if (insights) {
-          aiInsights = [
-            insights.balanceWarning && `⚠️ ${insights.balanceWarning}`,
-            insights.patterns?.length && `Patterns: ${insights.patterns.slice(0, 3).join(', ')}`,
-            insights.bestDates?.length &&
-              `Best dates: ${insights.bestDates.slice(0, 3).join(', ')}`,
-            insights.teamConflicts?.length &&
-              `Conflicts: ${insights.teamConflicts.slice(0, 3).join(', ')}`,
-          ]
-            .filter(Boolean)
-            .join('\n');
-        }
-      } catch (e) {
-        /* ignore */
-      }
-    }
-
-    // Process conflict check
-    let conflictCheckData = '';
-    if (conflictResult.status === 'fulfilled' && conflictResult.value?.ok) {
-      try {
-        const conflictData = await conflictResult.value.json();
-        if (conflictData.hasConflicts) {
-          conflictCheckData = `⚠️ CONFLICTS: ${conflictData.conflictCount} found. ${conflictData.aiMessage || ''}`;
-        } else {
-          conflictCheckData = '✅ No conflicts detected';
-        }
-      } catch (e) {
-        /* ignore */
-      }
-    }
-
-    // Process full context (compact version)
-    let fullContext = '';
-    let availableDriversInfo = '';
-
-    if (fullResult.status === 'fulfilled' && fullResult.value?.ok) {
-      try {
-        const data = await fullResult.value.json();
-
-        // Compact employees summary
-        const employeesSummary = (data.employees ?? [])
-          .slice(0, 15)
-          .map((e: any) => {
-            const status =
-              e.presenceStatus === 'available'
-                ? '🟢'
-                : e.presenceStatus === 'in_meeting'
-                  ? '📅'
-                  : e.presenceStatus === 'in_call'
-                    ? '📞'
-                    : e.presenceStatus === 'out_of_office'
-                      ? '🏠'
-                      : '⛔';
-            const leaveInfo = e.currentLeave
-              ? ` | ON LEAVE: ${e.currentLeave.type} (${e.currentLeave.startDate}-${e.currentLeave.endDate})`
-              : '';
-            const pendingInfo = e.pendingLeaves?.length
-              ? ` | Pending: ${e.pendingLeaves.length}`
-              : '';
-            return `${status} ${e.name} (${e.department})${leaveInfo}${pendingInfo}`;
-          })
-          .join('\n');
-
-        // Compact calendar
-        const calendarSummary = (data.calendarEvents ?? [])
-          .slice(0, 10)
-          .map((ev: any) => `📅 ${ev.employee}: ${ev.type} ${ev.startDate}-${ev.endDate}`)
-          .join('\n');
-
-        // Compact attendance
-        const attendanceSummary = (data.todayAttendance ?? [])
-          .slice(0, 10)
-          .map(
-            (t: any) =>
-              `${t.status === 'checked_in' ? '🟢' : '🔴'} ${t.name}: ${t.checkIn || '—'}${t.isLate ? ` (LATE ${t.lateMinutes}min)` : ''}`,
-          )
-          .join('\n');
-
-        // Compact tickets
-        const ticketsSummary = (data.tickets ?? [])
-          .slice(0, 5)
-          .map(
-            (t: any) => `🎫 ${t.ticketNumber}: ${t.title} [${t.status}] ${t.isOverdue ? '⚠️' : ''}`,
-          )
-          .join('\n');
-
-        // Compact drivers
-        const driversSummary = (data.availableDrivers ?? [])
-          .slice(0, 5)
-          .map(
-            (d: any) => `🚘 ${d.name}: ${d.vehicle || 'No vehicle'} [${d.status || 'Available'}]`,
-          )
-          .join('\n');
-
-        fullContext = `
-Company: ${data.totalEmployees ?? 0} employees, ${data.currentlyAtWork ?? 0} at work, ${data.onLeaveToday ?? 0} on leave
-
-Employees:
-${employeesSummary || 'No data'}
-
-Calendar:
-${calendarSummary || 'No upcoming leaves'}
-
-Attendance:
-${attendanceSummary || 'No data'}
-
-Tickets (${data.ticketStats?.total || 0} total):
-${ticketsSummary || 'No tickets'}
-
-Drivers:
-${driversSummary || 'No drivers'}
-`.trim();
-
-        // Fetch drivers separately if not in full context
-        if (!data.availableDrivers?.length && userOrgId) {
-          try {
-            const driversRes = await fetchWithTimeout(
-              `${origin}/api/drivers/available?organizationId=${userOrgId}`,
-              { headers: authHeaders },
-              3000,
-            );
-            if (driversRes.ok) {
-              const drivers = await driversRes.json();
-              if (drivers?.length) {
-                availableDriversInfo = `Available drivers: ${drivers.map((d: any) => `${d.userName} (${d.vehicleInfo.model})`).join(', ')}`;
-              }
-            }
-          } catch (e) {
-            /* ignore */
-          }
-        }
-      } catch (e) {
-        console.error('Failed to parse full context:', e);
-      }
-    }
+    const contexts = await fetchAllContexts({
+      origin,
+      cookieHeader,
+      userId,
+      authOrgId,
+      lastUserMessage,
+      needsInsights,
+      needsFullContext,
+      needsConflictCheck,
+    });
 
     const fetchTime = Date.now() - startTime;
     console.log(`⚡ Context fetch completed in ${fetchTime}ms`);
@@ -359,19 +110,19 @@ ${driversSummary || 'No drivers'}
     const roleBasedSystemPrompt = buildRoleBasedPrompt(
       {
         userId: userId || '',
-        name: userName,
-        email: userEmail,
-        role: userRole,
-        organizationId: userOrgId,
-        department: userDepartment,
-        position: userPosition,
+        name: contexts.userName,
+        email: contexts.userEmail,
+        role: contexts.userRole as UserRole,
+        organizationId: contexts.userOrgId,
+        department: contexts.userDepartment,
+        position: contexts.userPosition,
       },
       {
-        userContext,
-        fullContext,
-        aiInsights,
-        conflictCheckData,
-        availableDriversInfo,
+        userContext: contexts.userContext,
+        fullContext: contexts.fullContext,
+        aiInsights: contexts.aiInsights,
+        conflictCheckData: contexts.conflictCheckData,
+        availableDriversInfo: contexts.availableDriversInfo,
         dateContext,
       },
     );
@@ -406,10 +157,10 @@ ${driversSummary || 'No drivers'}
     const corePrompt = `${roleBasedSystemPrompt}
 
 LIVE DATA:
-${userContext}
-${fullContext ? '\n' + fullContext : ''}
-${aiInsights ? '\n' + aiInsights : ''}
-${conflictCheckData ? '\n' + conflictCheckData : ''}
+${contexts.userContext}
+${contexts.fullContext ? '\n' + contexts.fullContext : ''}
+${contexts.aiInsights ? '\n' + contexts.aiInsights : ''}
+${contexts.conflictCheckData ? '\n' + contexts.conflictCheckData : ''}
 ${navigationHint}
 
 ${langInstruction}
