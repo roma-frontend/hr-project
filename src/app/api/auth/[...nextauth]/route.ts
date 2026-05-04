@@ -68,10 +68,16 @@ export const authConfig: NextAuthConfig = {
               user.role = userData.role;
             }
             if (userData?.organizationId) {
-              (user as any).organizationId = userData.organizationId;
+              user.organizationId = userData.organizationId;
             }
             if (userData?.isApproved !== undefined) {
-              (user as any).isApproved = userData.isApproved;
+              user.isApproved = userData.isApproved;
+            }
+            if (userData?.organizationId) {
+              user.organizationId = userData.organizationId;
+            }
+            if (userData?.isApproved !== undefined) {
+              user.isApproved = userData.isApproved;
             }
           }
         } catch (error) {
@@ -87,9 +93,9 @@ export const authConfig: NextAuthConfig = {
         token.name = user.name || 'User';
         token.email = user.email;
         token.picture = user.image;
-        token.role = (user as any).role;
-        token.organizationId = (user as any).organizationId;
-        token.isApproved = (user as any).isApproved;
+        token.role = user.role;
+        token.organizationId = user.organizationId;
+        token.isApproved = user.isApproved;
       }
 
       // Refresh role data on explicit update trigger
@@ -132,9 +138,9 @@ export const authConfig: NextAuthConfig = {
       session.user.email = token.email as string;
       session.user.name = (token.name as string) || token.email?.split('@')[0] || 'User';
       session.user.image = token.picture as string | undefined;
-      (session.user as any).role = token.role;
-      (session.user as any).organizationId = token.organizationId;
-      (session.user as any).isApproved = token.isApproved;
+      session.user.role = token.role;
+      session.user.organizationId = token.organizationId;
+      session.user.isApproved = token.isApproved;
 
       return session;
     },

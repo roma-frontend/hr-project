@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/shallow';
-import React from 'react';
-import { validateToken, isTokenExpired } from '@/lib/jwt-utils';
+import { useMemo } from 'react';
 
 export interface User {
   id: string;
@@ -88,7 +87,7 @@ export function useAuthStoreShallow() {
   const isAuthenticated = useAuthStore(useShallow((state) => state.isAuthenticated));
   const needsOnboarding = useAuthStore(useShallow((state) => state.needsOnboarding));
 
-  return React.useMemo(
+  return useMemo(
     () => ({
       user,
       isAuthenticated,

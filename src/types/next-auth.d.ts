@@ -6,7 +6,7 @@ declare module 'next-auth' {
     name: string;
     email: string;
     image?: string;
-    role?: 'superadmin' | 'admin' | 'supervisor' | 'employee';
+    role?: 'superadmin' | 'admin' | 'supervisor' | 'employee' | 'driver';
     organizationId?: string;
     isApproved?: boolean;
     department?: string;
@@ -22,7 +22,7 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    role?: string;
+    role?: 'superadmin' | 'admin' | 'supervisor' | 'employee' | 'driver';
     organizationId?: string;
     isApproved?: boolean;
     department?: string;
