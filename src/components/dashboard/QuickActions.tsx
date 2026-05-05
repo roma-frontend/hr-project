@@ -16,117 +16,112 @@ import {
   Clock,
   MessageCircle,
   CheckSquare,
-  Calendar,
   FileText,
   User,
   Settings,
   Zap,
+  ArrowRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/useAuthStore';
-import { toast } from 'sonner';
+import { useAuthUser } from '@/store/useAuthStore';
 
 interface QuickAction {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
   href: string;
-  color: string;
   description?: string;
   role?: string[];
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
 export function QuickActions() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const user = useAuthUser();
 
-  // ═══════════════════════════════════════════════════════════════
-  // OPTIMIZED: Memoize actions array
-  // ═══════════════════════════════════════════════════════════════
   const actions = useMemo<QuickAction[]>(() => {
-    // Действия для всех ролей
     const commonActions: QuickAction[] = [
       {
         id: 'leave-request',
         label: t('quickActions.leaveRequest'),
-        icon: <Plus className="w-5 h-5" />,
+        icon: Plus,
         href: '/leaves',
-        color: 'bg-blue-500 hover:bg-blue-600',
         description: t('quickActions.leaveRequestDesc'),
       },
       {
         id: 'check-in',
         label: t('quickActions.checkIn'),
-        icon: <Clock className="w-5 h-5" />,
+        icon: Clock,
         href: '/attendance',
-        color: 'bg-green-500 hover:bg-green-600',
         description: t('quickActions.checkInDesc'),
       },
       {
         id: 'chat',
         label: t('quickActions.chat'),
-        icon: <MessageCircle className="w-5 h-5" />,
+        icon: MessageCircle,
         href: '/chat',
-        color: 'bg-purple-500 hover:bg-purple-600',
         description: t('quickActions.chatDesc'),
       },
       {
         id: 'tasks',
         label: t('quickActions.tasks'),
-        icon: <CheckSquare className="w-5 h-5" />,
+        icon: CheckSquare,
         href: '/tasks',
-        color: 'bg-orange-500 hover:bg-orange-600',
         description: t('quickActions.tasksDesc'),
       },
     ];
 
-    // Дополнительные действия для менеджеров
     const managerActions: QuickAction[] = [
       {
         id: 'approvals',
         label: t('quickActions.approvals'),
-        icon: <User className="w-5 h-5" />,
+        icon: User,
         href: '/approvals',
-        color: 'bg-indigo-500 hover:bg-indigo-600',
         description: t('quickActions.approvalsDesc'),
         role: ['admin', 'supervisor'],
       },
       {
         id: 'analytics',
         label: t('quickActions.analytics'),
-        icon: <FileText className="w-5 h-5" />,
+        icon: FileText,
         href: '/analytics',
-        color: 'bg-pink-500 hover:bg-pink-600',
         description: t('quickActions.analyticsDesc'),
         role: ['admin', 'supervisor'],
       },
     ];
 
-    // Действия для админов
     const adminActions: QuickAction[] = [
       {
         id: 'employees',
         label: t('quickActions.employees'),
-        icon: <User className="w-5 h-5" />,
+        icon: User,
         href: '/employees',
-        color: 'bg-teal-500 hover:bg-teal-600',
         description: t('quickActions.employeesDesc'),
         role: ['admin', 'superadmin'],
       },
       {
         id: 'settings',
         label: t('quickActions.settings'),
-        icon: <Settings className="w-5 h-5" />,
+        icon: Settings,
         href: '/settings',
-        color: 'bg-gray-500 hover:bg-gray-600',
         description: t('quickActions.settingsDesc'),
         role: ['admin', 'superadmin'],
       },
     ];
 
-    // Собрать все действия для текущей роли
     return [
       ...commonActions,
       ...(user?.role === 'admin' || user?.role === 'supervisor' ? managerActions : []),
@@ -134,84 +129,75 @@ export function QuickActions() {
     ];
   }, [user?.role, t]);
 
-  // ═══════════════════════════════════════════════════════════════
-  // OPTIMIZED: useCallback for handleAction
-  // ═══════════════════════════════════════════════════════════════
   const handleAction = useCallback(
-    (href: string, label: string) => {
+    (href: string) => {
       router.push(href);
-      toast.success(t('quickActions.toast.success'), {
-        description: label,
-      });
     },
-    [router, t],
+    [router],
   );
 
   return (
-    <Card
-      data-tour="quick-actions"
-      className="border-0 shadow-xl dark:to-gray-800 ring-1 ring-gray-900/5 dark:ring-white/10"
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-2.5 rounded-xl bg-linear-to-br from-yellow-400 to-orange-500 shadow-lg shadow-yellow-500/30">
-            <Zap className="w-5 h-5 text-white" />
+    <Card className="border-(--border)">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-(--primary)/10">
+              <Zap className="w-5 h-5 text-(--primary)" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{t('quickActions.title')}</CardTitle>
+              <p className="text-sm text-(--muted-foreground) mt-0.5">
+                {t('quickActions.subtitle') || 'Быстрый доступ к основным функциям'}
+              </p>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg font-bold">{t('quickActions.title')}</CardTitle>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              {t('quickActions.subtitle') || 'Быстрый доступ к основным функциям'}
-            </p>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-(--muted-foreground)">
+            <kbd className="px-2 py-1 rounded-md bg-(--muted) border border-(--border) font-mono">
+              Ctrl
+            </kbd>
+            <span>+</span>
+            <kbd className="px-2 py-1 rounded-md bg-(--muted) border border-(--border) font-mono">
+              K
+            </kbd>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {actions.map((action, index) => (
-            <motion.div
-              key={action.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: index * 0.04, duration: 0.2 }}
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                onClick={() => handleAction(action.href, action.label)}
-                className={`w-full h-28 flex flex-col items-center justify-center gap-2.5 text-wrap rounded-2xl transition-all duration-200 ${action.color} text-white shadow-md hover:shadow-xl hover:shadow-gray-900/10 dark:hover:shadow-black/30 border border-white/20 dark:border-white/10 whitespace-pre-wrap`}
-                variant="ghost"
-              >
-                <div className="p-2.5 rounded-full bg-white/25 backdrop-blur-sm shadow-inner">
-                  {action.icon}
-                </div>
-                <span className="text-xs font-semibold text-center leading-tight">
-                  {action.label}
-                </span>
-              </Button>
-              {action.description && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2 line-clamp-2">
-                  {action.description}
-                </p>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Keyboard shortcuts hint */}
-        <div className="mt-5 pt-4 border-t border-gray-200/60 dark:border-gray-700/60">
-          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span className="font-medium">{t('quickActions.shortcuts.hint')}</span>
-            <div className="flex items-center gap-1.5">
-              <kbd className="px-2.5 py-1.5 rounded-lg bg-gradient-to-b from-white to-gray-100 dark:from-gray-700 dark:to-gray-800 border border-gray-300 dark:border-gray-600 font-mono text-xs font-semibold text-gray-700 dark:text-gray-200 shadow-sm">
-                Ctrl
-              </kbd>
-              <span className="text-gray-400">+</span>
-              <kbd className="px-2.5 py-1.5 rounded-lg bg-gradient-to-b from-white to-gray-100 dark:from-gray-700 dark:to-gray-800 border border-gray-300 dark:border-gray-600 font-mono text-xs font-semibold text-gray-700 dark:text-gray-200 shadow-sm">
-                K
-              </kbd>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+        >
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <motion.div key={action.id} variants={itemVariants}>
+                <button
+                  onClick={() => handleAction(action.href)}
+                  className="w-full text-left p-4 rounded-xl border border-(--border) bg-(--card) hover:border-(--primary)/30 hover:bg-(--primary)/5 transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/50"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-(--muted) group-hover:bg-(--primary)/10 transition-colors duration-200">
+                      <Icon className="w-4 h-4 text-(--muted-foreground) group-hover:text-(--primary) transition-colors duration-200" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-(--text-primary) group-hover:text-(--primary) transition-colors duration-200">
+                        {action.label}
+                      </p>
+                      {action.description && (
+                        <p className="text-xs text-(--muted-foreground) mt-1 line-clamp-2">
+                          {action.description}
+                        </p>
+                      )}
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-(--muted-foreground) group-hover:text-(--primary) group-hover:translate-x-0.5 transition-all duration-200 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100" />
+                  </div>
+                </button>
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </CardContent>
     </Card>
   );

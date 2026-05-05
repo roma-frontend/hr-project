@@ -2,11 +2,12 @@
 
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
+import { formatDate } from '@/lib/date-format';
 
 export default function TermsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const currentDate = formatDate(new Date(), i18n.language, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

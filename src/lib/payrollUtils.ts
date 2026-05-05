@@ -7,16 +7,18 @@ export function formatCurrency(amount: number, currency = 'AMD'): string {
   }).format(amount);
 }
 
-export function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('en-US', {
+export function formatDate(timestamp: number, lang = 'en'): string {
+  const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : 'en-US';
+  return new Date(timestamp).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 }
 
-export function formatDateTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleString('en-US', {
+export function formatDateTime(timestamp: number, lang = 'en'): string {
+  const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : 'en-US';
+  return new Date(timestamp).toLocaleString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

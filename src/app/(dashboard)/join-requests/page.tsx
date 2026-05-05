@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDateTime } from '@/lib/date-format';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -32,7 +33,7 @@ type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
 // Status badges will be rendered with translation in component
 
 export default function JoinRequestsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuthStore();
   const [filter, setFilter] = useState<FilterStatus>('approved');
   const [search, setSearch] = useState('');
@@ -309,7 +310,7 @@ export default function JoinRequestsPage() {
                           </p>
                           <p className="text-xs text-(--text-muted) flex items-center gap-1 mt-0.5">
                             <Calendar className="w-3 h-3" />
-                            {new Date(req.requestedAt).toLocaleDateString('en-US', {
+                            {formatDateTime(req.requestedAt, i18n.language, {
                               year: 'numeric',
                               month: 'short',
                               day: 'numeric',

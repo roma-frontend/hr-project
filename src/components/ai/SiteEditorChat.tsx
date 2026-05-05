@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { formatDateTime } from '@/lib/date-format';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ function getEditTypeIcon(type?: string) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -528,7 +529,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                         <span className="font-mono text-xs truncate">{b.originalPath}</span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(b.timestamp).toLocaleString('ru-RU')} · {b.description}
+                        {formatDateTime(b.timestamp, i18n.language)} · {b.description}
                       </div>
                     </div>
                     <Button

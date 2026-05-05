@@ -50,8 +50,9 @@ interface AddEmployeeModalProps {
   onClose: () => void;
 }
 
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString('hy-AM') + ' ֏';
+function formatCurrency(amount: number, lang: string = 'en'): string {
+  const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : 'en-US';
+  return amount.toLocaleString(locale) + ' ֏';
 }
 
 // Bizier easing for smooth animations
@@ -60,7 +61,7 @@ const bizierEasing = [0.34, 1.56, 0.64, 1];
 const TOTAL_STEPS = 4;
 
 export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const createUser = useMutation(api.users.mutations.createUser as FunctionReference<'mutation'>);
   const currentUser = useAuthStore((s) => s.user);
   const isActualAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL;
@@ -564,7 +565,7 @@ export function AddEmployeeModal({ open, onClose }: AddEmployeeModalProps) {
                       </p>
                     </div>
                     <p className="text-xl font-bold text-(--text-primary)">
-                      {formatCurrency(allowance)}
+                      {formatCurrency(allowance, i18n.language)}
                     </p>
                   </motion.div>
                 </motion.div>

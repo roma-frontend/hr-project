@@ -6,8 +6,11 @@ import { api } from '../../convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { Wrench, Clock, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { formatDateTime } from '@/lib/date-format';
 
 export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }) {
+  const { i18n } = useTranslation();
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [countdownTime, setCountdownTime] = useState<string>('');
@@ -240,7 +243,7 @@ export function MaintenanceScreen({ forceShow = false }: { forceShow?: boolean }
                 </span>
               </div>
               <p style={{ fontWeight: 600, color: '#ffffff' }}>
-                {new Date(maintenance.startTime).toLocaleString('ru-RU', {
+                {formatDateTime(maintenance.startTime, i18n.language, {
                   month: 'short',
                   day: 'numeric',
                   hour: '2-digit',

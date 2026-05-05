@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/date-format';
 import {
   CreditCard,
   Zap,
@@ -69,7 +70,7 @@ function StatusBadge({
 }
 
 export function SubscriptionPlanCard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { subscription, loading } = useSubscription();
   const isLoading = loading;
   const plan = subscription.plan;
@@ -99,7 +100,7 @@ export function SubscriptionPlanCard() {
   ];
 
   const periodEndStr = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', {
+    ? formatDate(subscription.currentPeriodEnd, i18n.language, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '@/lib/date-format';
 import { api } from '../../../convex/_generated/api';
 import { TaskAttachments } from './TaskAttachments';
 import { Button } from '@/components/ui/button';
@@ -104,7 +105,7 @@ interface Props {
 }
 
 export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -389,7 +390,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                     className={`text-sm font-medium ${deadlinePassed ? 'text-rose-400' : 'text-(--text-primary)'}`}
                   >
                     {deadlinePassed ? '⏰ ' : '📅 '}
-                    {new Date(taskData.deadline).toLocaleDateString('en-GB', {
+                    {formatDate(taskData.deadline, i18n.language, {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -474,7 +475,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
                           {c.author?.name}
                         </span>
                         <span className="text-xs text-(--text-muted)">
-                          {new Date(c.createdAt).toLocaleDateString('en-GB', {
+                          {formatDate(c.createdAt, i18n.language, {
                             day: '2-digit',
                             month: 'short',
                             hour: '2-digit',

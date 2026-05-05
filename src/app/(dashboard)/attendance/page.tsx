@@ -13,6 +13,7 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { Clock, Users, Star, UserCheck, BarChart2, Search } from 'lucide-react';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
+import { formatTime } from '@/lib/date-format';
 import { format } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
 import i18n from 'i18next';
@@ -375,10 +376,10 @@ export default function AttendancePage() {
                                 </p>
                                 <p className="text-xs text-(--text-muted)">
                                   {record.status !== 'absent' && record.checkInTime > 0
-                                    ? `In: ${new Date(record.checkInTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                    ? `In: ${formatTime(record.checkInTime, lang, { hour: '2-digit', minute: '2-digit' })}`
                                     : ''}
                                   {record.checkOutTime
-                                    ? ` · Out: ${new Date(record.checkOutTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                                    ? ` · Out: ${formatTime(record.checkOutTime, lang, { hour: '2-digit', minute: '2-digit' })}`
                                     : ''}
                                   {record.totalWorkedMinutes
                                     ? ` · ${(record.totalWorkedMinutes / 60).toFixed(1)}h worked`

@@ -11,6 +11,7 @@ import { api } from '../../../convex/_generated/api';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Id } from '../../../convex/_generated/dataModel';
 import { Calendar, AlertTriangle, CheckCircle, TrendingUp, Award } from 'lucide-react';
+import { formatDate } from '@/lib/date-format';
 import { format } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
 import i18n from 'i18next';
@@ -162,7 +163,9 @@ export default React.memo(
                   </Badge>
                   <Badge variant="secondary">
                     {t('leaveStats.recommendLeave')}:{' '}
-                    {stats.nextAvailableDate.toLocaleDateString('ru-RU')}
+                    {stats.nextAvailableDate.toLocaleDateString(
+                      lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : 'en-US',
+                    )}
                   </Badge>
                 </div>
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">

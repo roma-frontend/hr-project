@@ -2,6 +2,7 @@
 import Image from 'next/image';
 
 import { useTranslation } from 'react-i18next';
+import { formatTime as formatTimeUtil } from '@/lib/date-format';
 import React from 'react';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import {
@@ -52,8 +53,8 @@ interface AttendanceDetailModalProps {
   onClose: () => void;
 }
 
-function formatTime(timestamp: number) {
-  return new Date(timestamp).toLocaleTimeString('en-GB', {
+function formatTime(timestamp: number, lang: string) {
+  return formatTimeUtil(timestamp, lang, {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -194,7 +195,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                       </span>
                     </div>
                     <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                      {record.checkInTime ? formatTime(record.checkInTime) : '—'}
+                      {record.checkInTime ? formatTime(record.checkInTime, i18n.language) : '—'}
                     </p>
                     {record.isLate && (
                       <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
@@ -222,7 +223,7 @@ export function AttendanceDetailModal({ record, open, onClose }: AttendanceDetai
                       </span>
                     </div>
                     <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                      {record.checkOutTime ? formatTime(record.checkOutTime) : '—'}
+                      {record.checkOutTime ? formatTime(record.checkOutTime, i18n.language) : '—'}
                     </p>
                     {record.isEarlyLeave && record.earlyLeaveMinutes && (
                       <p className="text-xs text-orange-500 mt-1 flex items-center gap-1">

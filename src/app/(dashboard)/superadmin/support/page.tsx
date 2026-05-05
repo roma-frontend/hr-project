@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { CreateSupportTicketWizard } from '@/components/superadmin/CreateSupportTicketWizard';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
+import { formatDate, formatDateTime } from '@/lib/date-format';
 import {
   Ticket,
   AlertCircle,
@@ -372,7 +373,7 @@ function TicketRow({
   getPriorityColor: (priority: string) => string;
   getStatusColor: (status: string) => string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const formatDate = (date: number) => {
     const now = new Date();
     const ticketDate = new Date(date);
@@ -381,7 +382,10 @@ function TicketRow({
     if (diffDays === 0) return t('superadmin.support.dateToday');
     if (diffDays === 1) return t('superadmin.support.dateYesterday');
     if (diffDays < 7) return t('superadmin.support.daysAgo', { count: diffDays });
-    return ticketDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    return ticketDate.toLocaleDateString(
+      i18n.language === 'ru' ? 'ru-RU' : i18n.language === 'hy' ? 'hy-AM' : 'en-US',
+      { day: 'numeric', month: 'short' },
+    );
   };
 
   return (
@@ -617,7 +621,7 @@ function TicketDetailDialog({
   onOpenChange: (open: boolean) => void;
   userId: Id<'users'>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const ticket = useQuery(
     api.tickets.getTicketById,
@@ -809,7 +813,7 @@ function TicketDetailDialog({
             )}
             <span>•</span>
             <span>
-              {new Date(ticket.createdAt).toLocaleDateString('ru-RU', {
+              {formatDate(ticket.createdAt, i18n.language, {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -910,7 +914,7 @@ function TicketDetailDialog({
                           className="text-xs transition-colors duration-200"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          {new Date(comment.createdAt).toLocaleString('ru-RU', {
+                          {formatDateTime(comment.createdAt, i18n.language, {
                             day: 'numeric',
                             month: 'short',
                             hour: '2-digit',
@@ -1042,7 +1046,7 @@ function TicketDetailDialog({
                           {t('superadmin.support.detail.created')}
                         </p>
                         <p className="text-sm font-medium transition-colors duration-200">
-                          {new Date(ticket.createdAt).toLocaleDateString('ru-RU')}
+                          {formatDate(ticket.createdAt, i18n.language)}
                         </p>
                       </div>
                     </div>

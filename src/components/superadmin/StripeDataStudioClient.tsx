@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from 'react-i18next';
+import { formatDate, formatDateTime, getLocaleString } from '@/lib/date-format';
 import { toast } from 'sonner';
 
 const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
@@ -58,7 +59,7 @@ interface StripeData {
 }
 
 export default function StripeDataStudioClient() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
@@ -122,7 +123,7 @@ export default function StripeDataStudioClient() {
 
       // Date format matching (DD.MM.YYYY)
       const date = new Date(tx.date);
-      const dateStr = date.toLocaleDateString('ru-RU');
+      const dateStr = date.toLocaleDateString(getLocaleString(i18n.language));
       const dateMatch = dateStr.includes(q);
 
       return emailMatch || amountMatch || cardMatch || idMatch || dateMatch;
@@ -144,7 +145,7 @@ export default function StripeDataStudioClient() {
           tx.customer,
           tx.amount,
           tx.status,
-          new Date(tx.date).toLocaleDateString('ru-RU'),
+          formatDate(tx.date, i18n.language),
           `${tx.cardBrand}..${tx.cardLast4}`,
           tx.description,
         ].join(','),
@@ -305,7 +306,7 @@ export default function StripeDataStudioClient() {
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground">
-                      {new Date(tx.date).toLocaleDateString('ru-RU')}
+                      {formatDate(tx.date, i18n.language)}
                     </td>
                     <td className="p-3 text-xs font-mono text-muted-foreground">
                       {tx.id.slice(-8)}
@@ -378,9 +379,7 @@ export default function StripeDataStudioClient() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Время</p>
-                    <p className="font-medium">
-                      {new Date(selectedTx.date).toLocaleString('ru-RU')}
-                    </p>
+                    <p className="font-medium">{formatDateTime(selectedTx.date, i18n.language)}</p>
                   </div>
                 </div>
 

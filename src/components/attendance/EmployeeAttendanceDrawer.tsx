@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
+import { formatTime as formatTimeUtil } from '@/lib/date-format';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
@@ -38,8 +39,8 @@ interface Props {
   onClose: () => void;
 }
 
-function formatTime(ts: number) {
-  return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+function formatTime(ts: number, lang: string) {
+  return formatTimeUtil(ts, lang, { hour: '2-digit', minute: '2-digit' });
 }
 function formatDuration(min: number) {
   return `${Math.floor(min / 60)}h ${min % 60}m`;
@@ -308,13 +309,15 @@ export function EmployeeAttendanceDrawer({ employee, onClose }: Props) {
                                 >
                                   <span className="flex items-center gap-1">
                                     <LogIn className="w-3 h-3 text-green-500" />
-                                    {record.checkInTime ? formatTime(record.checkInTime) : '—'}
+                                    {record.checkInTime
+                                      ? formatTime(record.checkInTime, i18n.language)
+                                      : '—'}
                                   </span>
                                   <span>→</span>
                                   <span className="flex items-center gap-1">
                                     <LogOut className="w-3 h-3 text-blue-500" />
                                     {record.checkOutTime ? (
-                                      formatTime(record.checkOutTime)
+                                      formatTime(record.checkOutTime, i18n.language)
                                     ) : (
                                       <span className="text-green-500">{t('statuses.active')}</span>
                                     )}

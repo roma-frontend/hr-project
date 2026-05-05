@@ -64,6 +64,7 @@ export function calculateDays(start: string, end: string): number {
   return Math.max(1, Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1);
 }
 
-export function formatCurrency(amount: number): string {
-  return amount.toLocaleString('hy-AM') + ' ֏';
+export function formatCurrency(amount: number, lang: string = 'en'): string {
+  const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : 'en-US';
+  return amount.toLocaleString(locale) + ' ֏';
 }

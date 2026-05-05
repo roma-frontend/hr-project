@@ -11,6 +11,7 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { formatDateTime } from '@/lib/date-format';
 import { format } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
 import i18n from 'i18next';
@@ -491,7 +492,7 @@ export default function CompanyEventsPage() {
                                 {new Date(event.startDate).getDate()}
                               </div>
                               <div className="text-[10px] uppercase text-muted-foreground">
-                                {new Date(event.startDate).toLocaleString('en-US', {
+                                {formatDateTime(event.startDate, i18n.language, {
                                   month: 'short',
                                 })}
                               </div>
@@ -639,14 +640,14 @@ export default function CompanyEventsPage() {
           className="max-w-2xl max-h-[90vh] overflow-y-auto"
           aria-describedby={undefined}
         >
-          <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Edit className="w-5 h-5" />
               {t('events.editEvent', 'Edit Event')}
             </DialogTitle>
           </DialogHeader>
           {selectedEvent && (
-            <div className="px-6 pb-6 space-y-5">
+            <div className="space-y-5">
               <div>
                 <Label className="text-sm font-medium mb-2 block">
                   {t('events.eventName', 'Event Name')} <span className="text-red-500">*</span>
