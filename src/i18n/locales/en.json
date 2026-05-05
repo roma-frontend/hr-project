@@ -8006,6 +8006,21 @@
     "createCourseDesc": "Course creation form will be implemented here",
     "not_started": "Not Started",
     "in_progress": "In Progress",
-    "noDescription": "No description available"
+    "noDescription": "No description available",
+    "lessonCompleted": "Lesson completed!",
+    "courseCompleted": "Course completed!",
+    "lessonCompleteError": "Failed to complete lesson",
+    "previousLesson": "Previous",
+    "nextLesson": "Next",
+    "completeLesson": "Complete & Continue",
+    "noContent": "No content available",
+    "quizComingSoon": "Quiz functionality coming soon",
+    "aboutLesson": "About this lesson",
+    "review": "Review",
+    "startCourse": "Start Course",
+    "continueCourse": "Continue",
+    "courseTitle": "Course title",
+    "tags": "Tags",
+    "createCourseDesc": "Course creation form will be implemented here"
   }
 }

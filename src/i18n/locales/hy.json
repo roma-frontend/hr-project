@@ -7675,6 +7675,21 @@
     "createCourseDesc": "Դասընթացի ստեղծման ձևը կիրականացվի այստեղ",
     "not_started": "Չսկսված",
     "in_progress": "Ընթացքի մեջ",
-    "noDescription": "Նկարագրությունը բացակայում է"
+    "noDescription": "Նկարագրությունը բացակայում է",
+    "lessonCompleted": "Դասն ավարտված է!",
+    "courseCompleted": "Դասընթացն ավարտված է!",
+    "lessonCompleteError": "Չհաջողվեց ավարտել դասը",
+    "previousLesson": "Նախորդը",
+    "nextLesson": "Հաջորդը",
+    "completeLesson": "Ավարտել և շարունակել",
+    "noContent": "Բովանդակությունը բացակայում է",
+    "quizComingSoon": "Թեստերի ֆունկցիոնալությունը շուտով կլինի",
+    "aboutLesson": "Այս դասի մասին",
+    "review": "Վերանայել",
+    "startCourse": "Սկսել դասընթացը",
+    "continueCourse": "Շարունակել",
+    "courseTitle": "Դասընթացի անվանում",
+    "tags": "Պիտակներ",
+    "createCourseDesc": "Դասընթացի ստեղծման ձևը կիրականացվի այստեղ"
   }
 }

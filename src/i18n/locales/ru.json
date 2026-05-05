@@ -8199,6 +8199,21 @@
     "createCourseDesc": "Форма создания курса будет реализована здесь",
     "not_started": "Не начато",
     "in_progress": "В процессе",
-    "noDescription": "Описание отсутствует"
+    "noDescription": "Описание отсутствует",
+    "lessonCompleted": "Урок завершен!",
+    "courseCompleted": "Курс завершен!",
+    "lessonCompleteError": "Не удалось завершить урок",
+    "previousLesson": "Предыдущий",
+    "nextLesson": "Следующий",
+    "completeLesson": "Завершить и продолжить",
+    "noContent": "Контент отсутствует",
+    "quizComingSoon": "Функционал тестов скоро будет доступен",
+    "aboutLesson": "Об этом уроке",
+    "review": "Повторить",
+    "startCourse": "Начать курс",
+    "continueCourse": "Продолжить",
+    "courseTitle": "Название курса",
+    "tags": "Теги",
+    "createCourseDesc": "Форма создания курса будет реализована здесь"
   }
 }

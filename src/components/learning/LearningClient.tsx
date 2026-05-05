@@ -42,7 +42,12 @@ import {
   TrendingUp,
   Filter,
   ChevronRight,
+  ChevronLeft,
   X,
+  FileText,
+  Video,
+  HelpCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
@@ -111,6 +116,13 @@ export default function LearningClient() {
     tags: '',
   });
 
+  // Lesson player state
+  const [showLessonPlayer, setShowLessonPlayer] = useState(false);
+  const [activeLessonIndex, setActiveLessonIndex] = useState(0);
+  const [courseLessons, setCourseLessons] = useState<any[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Record<string, boolean>>({});
+  const [startTime, setStartTime] = useState<number>(0);
+
   // Fetch data
   const courses = useQuery(
     api.learning.listCourses,
@@ -143,9 +155,22 @@ export default function LearningClient() {
       : 'skip',
   );
 
+  // Fetch lessons when course detail is open
+  const courseWithLessons = useQuery(
+    api.learning.getCourseWithLessons,
+    showCourseDetail && selectedCourse && effectiveOrgId && user?.id
+      ? {
+          organizationId: effectiveOrgId as Id<'organizations'>,
+          requesterId: user.id as Id<'users'>,
+          courseId: selectedCourse._id,
+        }
+      : 'skip',
+  );
+
   // Mutations
   const enrollMutation = useMutation(api.learning.enrollInCourse);
   const createCourseMutation = useMutation(api.learning.createCourse);
+  const updateLessonProgressMutation = useMutation(api.learning.updateLessonProgress);
 
   // Filter courses
   const filteredCourses = useMemo(() => {
@@ -241,6 +266,106 @@ export default function LearningClient() {
       });
     } catch {
       toast.error(t('learning.courseCreateError', 'Failed to create course'));
+    }
+  };
+
+  const openLessonPlayer = async (
+    course: CourseWithLessons,
+    lessons: any[],
+    lessonIndex: number = 0,
+  ) => {
+    if (!effectiveOrgId || !user?.id) return;
+
+    setCourseLessons(lessons);
+    setActiveLessonIndex(lessonIndex);
+    setShowLessonPlayer(true);
+    setStartTime(Date.now());
+
+    // Fetch lesson progress for this course
+    const progressMap: Record<string, boolean> = {};
+    for (const lesson of lessons) {
+      try {
+        const progress = await fetchLessonProgress(lesson._id);
+        progressMap[lesson._id] = progress?.isCompleted ?? false;
+      } catch {
+        progressMap[lesson._id] = false;
+      }
+    }
+    setLessonProgress(progressMap);
+  };
+
+  const fetchLessonProgress = async (lessonId: Id<'lessons'>) => {
+    if (!effectiveOrgId || !user?.id) return null;
+
+    try {
+      const response = await fetch('/api/learning/lesson-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId: effectiveOrgId,
+          requesterId: user.id,
+          lessonId,
+        }),
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch {
+      // Silently fail - progress is not critical
+    }
+    return null;
+  };
+
+  const handleCompleteLesson = async () => {
+    if (!effectiveOrgId || !user?.id || courseLessons.length === 0) return;
+
+    const currentLesson = courseLessons[activeLessonIndex];
+    if (!currentLesson) return;
+
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+    try {
+      await updateLessonProgressMutation({
+        organizationId: effectiveOrgId as Id<'organizations'>,
+        requesterId: user.id as Id<'users'>,
+        lessonId: currentLesson._id as Id<'lessons'>,
+        courseId: currentLesson.courseId as Id<'courses'>,
+        isCompleted: true,
+        timeSpentSeconds: timeSpent,
+        lastPosition: 0,
+      });
+
+      setLessonProgress((prev) => ({
+        ...prev,
+        [currentLesson._id]: true,
+      }));
+
+      toast.success(t('learning.lessonCompleted', 'Lesson completed!'));
+
+      // Auto-advance to next lesson
+      if (activeLessonIndex < courseLessons.length - 1) {
+        setActiveLessonIndex((prev) => prev + 1);
+        setStartTime(Date.now());
+      } else {
+        setShowLessonPlayer(false);
+        toast.success(t('learning.courseCompleted', 'Course completed!'));
+      }
+    } catch {
+      toast.error(t('learning.lessonCompleteError', 'Failed to complete lesson'));
+    }
+  };
+
+  const handleNextLesson = () => {
+    if (activeLessonIndex < courseLessons.length - 1) {
+      setActiveLessonIndex((prev) => prev + 1);
+      setStartTime(Date.now());
+    }
+  };
+
+  const handlePrevLesson = () => {
+    if (activeLessonIndex > 0) {
+      setActiveLessonIndex((prev) => prev - 1);
+      setStartTime(Date.now());
     }
   };
 
@@ -672,7 +797,7 @@ export default function LearningClient() {
 
       {/* Course Detail Dialog */}
       <Dialog open={showCourseDetail} onOpenChange={setShowCourseDetail}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedCourse?.title}</DialogTitle>
           </DialogHeader>
@@ -710,6 +835,44 @@ export default function LearningClient() {
                 )}
               </div>
 
+              {/* Lessons List */}
+              {courseWithLessons?.lessons && courseWithLessons.lessons.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">{t('lessons.title', 'Lessons')}</h3>
+                  {courseWithLessons.lessons.map((lesson: any, index: number) => (
+                    <div
+                      key={lesson._id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() =>
+                        openLessonPlayer(selectedCourse, courseWithLessons.lessons, index)
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{lesson.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {lesson.contentType === 'video' && <Video className="h-3 w-3" />}
+                            {lesson.contentType === 'text' && <FileText className="h-3 w-3" />}
+                            {lesson.contentType === 'quiz' && <HelpCircle className="h-3 w-3" />}
+                            <span>{lesson.contentType}</span>
+                            {lesson.durationMinutes && (
+                              <>
+                                <span>•</span>
+                                <span>{lesson.durationMinutes} min</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowCourseDetail(false)}>
                   {t('common.close', 'Close')}
@@ -721,6 +884,105 @@ export default function LearningClient() {
                   </Button>
                 )}
               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Lesson Player Dialog */}
+      <Dialog open={showLessonPlayer} onOpenChange={setShowLessonPlayer}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{courseLessons[activeLessonIndex]?.title}</span>
+              <Badge variant="outline">
+                {activeLessonIndex + 1} / {courseLessons.length}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          {courseLessons.length > 0 && (
+            <div className="space-y-6">
+              {/* Lesson Content */}
+              <div className="rounded-lg border overflow-hidden">
+                {courseLessons[activeLessonIndex].contentType === 'video' &&
+                courseLessons[activeLessonIndex].videoUrl ? (
+                  <div className="aspect-video bg-black flex items-center justify-center">
+                    <iframe
+                      src={courseLessons[activeLessonIndex].videoUrl}
+                      className="w-full h-full"
+                      allowFullScreen
+                      title={courseLessons[activeLessonIndex].title}
+                    />
+                  </div>
+                ) : courseLessons[activeLessonIndex].contentType === 'text' ? (
+                  <div className="p-6 prose prose-sm dark:prose-invert max-w-none">
+                    {courseLessons[activeLessonIndex].textContent ? (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: courseLessons[activeLessonIndex].textContent,
+                        }}
+                      />
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {t('learning.noContent', 'No content available')}
+                      </p>
+                    )}
+                  </div>
+                ) : courseLessons[activeLessonIndex].contentType === 'quiz' ? (
+                  <div className="p-6 text-center">
+                    <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      {t('learning.quizComingSoon', 'Quiz functionality coming soon')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-6 text-center">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      {t('learning.noContent', 'No content available')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Lesson Description */}
+              {courseLessons[activeLessonIndex].description && (
+                <div>
+                  <h3 className="font-medium mb-2">
+                    {t('learning.aboutLesson', 'About this lesson')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {courseLessons[activeLessonIndex].description}
+                  </p>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevLesson}
+                  disabled={activeLessonIndex === 0}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  {t('learning.previousLesson', 'Previous')}
+                </Button>
+
+                <Button onClick={handleCompleteLesson}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  {t('learning.completeLesson', 'Complete & Continue')}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={handleNextLesson}
+                  disabled={activeLessonIndex >= courseLessons.length - 1}
+                >
+                  {t('learning.nextLesson', 'Next')}
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
