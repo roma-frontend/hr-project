@@ -331,7 +331,9 @@ export default function JoinRequestsPage() {
                                 : 'secondary'
                           }
                         >
-                          {req.status}
+                          {t(
+                            `joinRequestsPage.status${req.status.charAt(0).toUpperCase() + req.status.slice(1)}`,
+                          )}
                         </Badge>
 
                         {req.status === 'pending' && (

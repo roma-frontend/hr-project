@@ -4679,7 +4679,10 @@
     "filterPending": "Pending",
     "filterApproved": "Approved",
     "filterRejected": "Rejected",
-    "filterAll": "All"
+    "filterAll": "All",
+    "statusApproved": "Approved",
+    "statusPending": "Pending",
+    "statusRejected": "Rejected"
   },
   "driver": {
     "driverBookings": "Driver Bookings",

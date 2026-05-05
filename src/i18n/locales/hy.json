@@ -4434,7 +4434,10 @@
     "filterPending": "Սպասվող",
     "filterApproved": "Հաստատված",
     "filterRejected": "Մերժված",
-    "filterAll": "Բոլորը"
+    "filterAll": "Բոլորը",
+    "statusApproved": "Հաստատված",
+    "statusPending": "Սպասվող",
+    "statusRejected": "Մերժված"
   },
   "driver": {
     "registered": "Գրանցված է որպես վարորդ:",

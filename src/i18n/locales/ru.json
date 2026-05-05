@@ -4717,7 +4717,10 @@
     "filterPending": "Ожидающие",
     "filterApproved": "Одобренные",
     "filterRejected": "Отклонённые",
-    "filterAll": "Все"
+    "filterAll": "Все",
+    "statusApproved": "Одобрено",
+    "statusPending": "Ожидает",
+    "statusRejected": "Отклонено"
   },
   "driver": {
     "registered": "Зарегистрирован как водитель!",
