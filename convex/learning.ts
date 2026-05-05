@@ -584,6 +584,58 @@ export const getQuiz = query({
   },
 });
 
+export const getQuizByLesson = query({
+  args: {
+    organizationId: v.id('organizations'),
+    requesterId: v.id('users'),
+    lessonId: v.id('lessons'),
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId, args.requesterId);
+
+    const quiz = await ctx.db
+      .query('quizzes')
+      .withIndex('by_lesson', (q) =>
+        q.eq('organizationId', args.organizationId).eq('lessonId', args.lessonId),
+      )
+      .first();
+
+    if (!quiz) return null;
+
+    const questions = await ctx.db
+      .query('quizQuestions')
+      .withIndex('by_quiz', (q) =>
+        q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
+      )
+      .order('asc')
+      .collect();
+
+    return { quiz, questions };
+  },
+});
+
+export const getQuizAttemptsForUser = query({
+  args: {
+    organizationId: v.id('organizations'),
+    requesterId: v.id('users'),
+    quizId: v.id('quizzes'),
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId, args.requesterId);
+
+    return await ctx.db
+      .query('quizAttempts')
+      .withIndex('by_user_quiz', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', args.requesterId)
+          .eq('quizId', args.quizId),
+      )
+      .order('desc')
+      .collect();
+  },
+});
+
 export const createQuiz = mutation({
   args: {
     organizationId: v.id('organizations'),
@@ -726,27 +778,6 @@ export const submitQuizAttempt = mutation({
     });
 
     return { success: true, score, passed, attemptNumber };
-  },
-});
-
-export const getQuizAttempts = query({
-  args: {
-    organizationId: v.id('organizations'),
-    requesterId: v.id('users'),
-    quizId: v.id('quizzes'),
-  },
-  handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId, args.requesterId);
-    return await ctx.db
-      .query('quizAttempts')
-      .withIndex('by_user_quiz', (q) =>
-        q
-          .eq('organizationId', args.organizationId)
-          .eq('userId', args.requesterId)
-          .eq('quizId', args.quizId),
-      )
-      .order('desc')
-      .collect();
   },
 });
 

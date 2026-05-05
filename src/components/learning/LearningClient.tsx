@@ -124,6 +124,15 @@ export default function LearningClient() {
   const [lessonProgress, setLessonProgress] = useState<Record<string, boolean>>({});
   const [startTime, setStartTime] = useState<number>(0);
 
+  // Quiz state
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizData, setQuizData] = useState<any>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizResult, setQuizResult] = useState<any>(null);
+  const [quizStartTime, setQuizStartTime] = useState<number>(0);
+
   // Lesson management state
   const [showCreateLesson, setShowCreateLesson] = useState(false);
   const [showEditLesson, setShowEditLesson] = useState(false);
@@ -202,6 +211,35 @@ export default function LearningClient() {
   const updateLessonMutation = useMutation(api.learning.updateLesson);
   const deleteLessonMutation = useMutation(api.learning.deleteLesson);
   const updateCourseMutation = useMutation(api.learning.updateCourse);
+  const submitQuizAttemptMutation = useMutation(api.learning.submitQuizAttempt);
+
+  // Fetch quiz data when viewing a quiz lesson
+  const currentLesson = courseLessons[activeLessonIndex];
+  const quizDataResult = useQuery(
+    api.learning.getQuizByLesson,
+    showLessonPlayer &&
+      currentLesson &&
+      currentLesson?.contentType === 'quiz' &&
+      effectiveOrgId &&
+      user?.id
+      ? {
+          organizationId: effectiveOrgId as Id<'organizations'>,
+          requesterId: user.id as Id<'users'>,
+          lessonId: currentLesson._id as Id<'lessons'>,
+        }
+      : 'skip',
+  );
+
+  // Fetch certificates
+  const myCertificates = useQuery(
+    api.learning.getMyCertificates,
+    effectiveOrgId && user?.id
+      ? {
+          organizationId: effectiveOrgId as Id<'organizations'>,
+          requesterId: user.id as Id<'users'>,
+        }
+      : 'skip',
+  );
 
   // Filter courses
   const filteredCourses = useMemo(() => {
@@ -498,6 +536,77 @@ export default function LearningClient() {
     setShowEditLesson(true);
   };
 
+  const handleStartQuiz = () => {
+    if (!quizDataResult) return;
+    setShowQuiz(true);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setQuizSubmitted(false);
+    setQuizResult(null);
+    setQuizStartTime(Date.now());
+  };
+
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    setUserAnswers((prev) => ({ ...prev, [questionId]: answer }));
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!quizDataResult || !effectiveOrgId || !user?.id) return;
+
+    const answers = quizDataResult.questions.map((q: any) => ({
+      questionId: q._id,
+      userAnswer: userAnswers[q._id] || '',
+    }));
+
+    try {
+      const result = await submitQuizAttemptMutation({
+        organizationId: effectiveOrgId as Id<'organizations'>,
+        requesterId: user.id as Id<'users'>,
+        quizId: quizDataResult.quiz._id,
+        answers,
+      });
+
+      setQuizSubmitted(true);
+      setQuizResult(result);
+
+      if (result.passed) {
+        toast.success(t('learning.quizPassed', 'Congratulations! You passed the quiz'));
+        // Auto-complete the lesson if passed
+        if (currentLesson) {
+          await updateLessonProgressMutation({
+            organizationId: effectiveOrgId as Id<'organizations'>,
+            requesterId: user.id as Id<'users'>,
+            lessonId: currentLesson._id as Id<'lessons'>,
+            courseId: currentLesson.courseId as Id<'courses'>,
+            isCompleted: true,
+            timeSpentSeconds: Math.floor((Date.now() - quizStartTime) / 1000),
+            lastPosition: 0,
+          });
+          setLessonProgress((prev) => ({
+            ...prev,
+            [currentLesson._id]: true,
+          }));
+        }
+      } else {
+        toast.info(t('learning.quizFailed', 'You did not pass the quiz. Try again.'));
+      }
+    } catch {
+      toast.error(t('learning.quizSubmitError', 'Failed to submit quiz'));
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (quizDataResult && currentQuestionIndex < quizDataResult.questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'beginner':
@@ -631,6 +740,10 @@ export default function LearningClient() {
           <TabsTrigger value="my-courses" className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
             {t('learning.myCourses', 'My Courses')}
+          </TabsTrigger>
+          <TabsTrigger value="certificates" className="flex items-center gap-2">
+            <Award className="h-4 w-4" />
+            {t('learning.certificates', 'Certificates')}
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="team" className="flex items-center gap-2">
@@ -922,6 +1035,84 @@ export default function LearningClient() {
             </Card>
           </TabsContent>
         )}
+
+        {/* Certificates Tab */}
+        <TabsContent value="certificates" className="space-y-6">
+          {!myCertificates || myCertificates.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Award className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  {t('learning.noCertificates', 'No certificates yet')}
+                </h3>
+                <p className="text-muted-foreground">
+                  {t(
+                    'learning.noCertificatesDesc',
+                    'Complete a course to earn your first certificate',
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {myCertificates.map((cert: any) => {
+                const isExpired = cert.expiresAt && cert.expiresAt < Date.now();
+                return (
+                  <Card key={cert._id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="pt-6">
+                      <div className="text-center space-y-4">
+                        <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Award className="h-8 w-8 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{cert.courseTitle}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {t('learning.certificateId', 'Certificate ID')}:{' '}
+                            <code className="text-xs">{cert.certificateId}</code>
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">
+                              {t('learning.issuedOn', 'Issued On')}
+                            </p>
+                            <p className="font-medium">
+                              {new Date(cert.issuedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          {cert.expiresAt && (
+                            <div>
+                              <p className="text-muted-foreground">
+                                {t('learning.expiresOn', 'Expires On')}
+                              </p>
+                              <p className={`font-medium ${isExpired ? 'text-destructive' : ''}`}>
+                                {new Date(cert.expiresAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <Badge
+                          variant={isExpired ? 'destructive' : 'default'}
+                          className="w-fit mx-auto"
+                        >
+                          {isExpired
+                            ? t('learning.expired', 'Expired')
+                            : t('learning.valid', 'Valid')}
+                        </Badge>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="outline" size="sm">
+                            {t('learning.viewCertificate', 'View Certificate')}
+                          </Button>
+                          <Button size="sm">{t('learning.downloadCertificate', 'Download')}</Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Course Detail Dialog */}
@@ -1108,11 +1299,208 @@ export default function LearningClient() {
                     )}
                   </div>
                 ) : courseLessons[activeLessonIndex].contentType === 'quiz' ? (
-                  <div className="p-6 text-center">
-                    <HelpCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      {t('learning.quizComingSoon', 'Quiz functionality coming soon')}
-                    </p>
+                  <div className="p-6">
+                    {!showQuiz ? (
+                      <div className="text-center space-y-4">
+                        <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+                        <h3 className="text-lg font-medium">
+                          {quizDataResult?.quiz?.title || t('learning.quiz', 'Quiz')}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {quizDataResult?.quiz?.description ||
+                            t('learning.quizDescription', 'Test your knowledge')}
+                        </p>
+                        {quizDataResult?.quiz && (
+                          <div className="flex items-center justify-center gap-4 text-sm">
+                            <span className="text-muted-foreground">
+                              {quizDataResult.questions?.length || 0}{' '}
+                              {t('learning.questions', 'Questions')}
+                            </span>
+                            {quizDataResult.quiz.passingScore && (
+                              <>
+                                <span>•</span>
+                                <span>
+                                  {t('learning.passingScore', 'Passing Score')}:{' '}
+                                  {quizDataResult.quiz.passingScore}%
+                                </span>
+                              </>
+                            )}
+                            {quizDataResult.quiz.timeLimitMinutes && (
+                              <>
+                                <span>•</span>
+                                <span>
+                                  {quizDataResult.quiz.timeLimitMinutes}{' '}
+                                  {t('learning.minutes', 'minutes')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        <Button onClick={handleStartQuiz} disabled={!quizDataResult}>
+                          <Play className="h-4 w-4 mr-2" />
+                          {t('learning.startQuiz', 'Start Quiz')}
+                        </Button>
+                      </div>
+                    ) : quizSubmitted && quizResult ? (
+                      <div className="text-center space-y-4">
+                        <div
+                          className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
+                            quizResult.passed
+                              ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
+                              : 'bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400'
+                          }`}
+                        >
+                          {quizResult.passed ? (
+                            <CheckCircle2 className="h-8 w-8" />
+                          ) : (
+                            <X className="h-8 w-8" />
+                          )}
+                        </div>
+                        <h3 className="text-lg font-medium">
+                          {quizResult.passed
+                            ? t('learning.quizPassed', 'Congratulations! You passed')
+                            : t('learning.quizFailed', 'You did not pass')}
+                        </h3>
+                        <p className="text-3xl font-bold">{quizResult.score}%</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('learning.attempt', 'Attempt')} #{quizResult.attemptNumber}
+                        </p>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowQuiz(false);
+                              setQuizSubmitted(false);
+                              setQuizResult(null);
+                            }}
+                          >
+                            {t('learning.backToLesson', 'Back to Lesson')}
+                          </Button>
+                          {!quizResult.passed && (
+                            <Button onClick={handleStartQuiz}>
+                              {t('learning.tryAgain', 'Try Again')}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Question Header */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">
+                            {t('learning.question', 'Question')} {currentQuestionIndex + 1}{' '}
+                            {t('common.of', 'of')} {quizDataResult?.questions?.length || 0}
+                          </span>
+                          <div className="flex gap-1">
+                            {quizDataResult?.questions?.map((_: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className={`w-2 h-2 rounded-full ${
+                                  idx === currentQuestionIndex
+                                    ? 'bg-primary'
+                                    : idx < currentQuestionIndex
+                                      ? 'bg-primary/50'
+                                      : 'bg-muted'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Question */}
+                        {quizDataResult?.questions?.[currentQuestionIndex] &&
+                          (() => {
+                            const question = quizDataResult.questions[currentQuestionIndex];
+                            return (
+                              <div className="space-y-4">
+                                <h3 className="text-lg font-medium">{question.questionText}</h3>
+
+                                {question.questionType === 'multiple_choice' &&
+                                  question.options?.map((option: string, optIdx: number) => (
+                                    <div
+                                      key={optIdx}
+                                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                                        userAnswers[question._id] === option
+                                          ? 'border-primary bg-primary/5'
+                                          : 'hover:bg-muted/50'
+                                      }`}
+                                      onClick={() => handleAnswerChange(question._id, option)}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div
+                                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                            userAnswers[question._id] === option
+                                              ? 'border-primary bg-primary'
+                                              : 'border-muted-foreground'
+                                          }`}
+                                        >
+                                          {userAnswers[question._id] === option && (
+                                            <div className="w-2 h-2 rounded-full bg-white" />
+                                          )}
+                                        </div>
+                                        <span>{option}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                {question.questionType === 'true_false' && (
+                                  <div className="grid grid-cols-2 gap-4">
+                                    {['True', 'False'].map((option) => (
+                                      <div
+                                        key={option}
+                                        className={`p-4 rounded-lg border cursor-pointer text-center transition-colors ${
+                                          userAnswers[question._id] === option
+                                            ? 'border-primary bg-primary/5'
+                                            : 'hover:bg-muted/50'
+                                        }`}
+                                        onClick={() => handleAnswerChange(question._id, option)}
+                                      >
+                                        {option}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {question.questionType === 'short_answer' && (
+                                  <Input
+                                    value={userAnswers[question._id] || ''}
+                                    onChange={(e) =>
+                                      handleAnswerChange(question._id, e.target.value)
+                                    }
+                                    placeholder={t('learning.enterAnswer', 'Enter your answer')}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                        {/* Question Navigation */}
+                        <div className="flex items-center justify-between">
+                          <Button
+                            variant="outline"
+                            onClick={handlePrevQuestion}
+                            disabled={currentQuestionIndex === 0}
+                          >
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            {t('learning.previous', 'Previous')}
+                          </Button>
+
+                          {currentQuestionIndex < (quizDataResult?.questions?.length || 0) - 1 ? (
+                            <Button onClick={handleNextQuestion}>
+                              {t('learning.next', 'Next')}
+                              <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={handleSubmitQuiz}
+                              disabled={Object.keys(userAnswers).length === 0}
+                            >
+                              {t('learning.submitQuiz', 'Submit Quiz')}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-6 text-center">
@@ -1185,7 +1573,7 @@ export default function LearningClient() {
         }}
       >
         <DialogContent className="max-w-lg">
-          <DialogHeader>
+          <DialogHeader className="px-0">
             <DialogTitle>{t('learning.createCourse', 'Create Course')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
