@@ -159,7 +159,7 @@ export default function StripeDashboardPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="mx-auto">
         <Card className="border-red-500/50">
           <CardHeader>
             <CardTitle className="text-red-500 flex items-center gap-2">

@@ -35,7 +35,7 @@ export default function HeroSection() {
 
   return (
     <div
-      className="relative flex flex-col items-center text-center pt-10 pb-20 px-6 min-h-screen justify-center overflow-hidden"
+      className="relative flex flex-col items-center text-center pt-24 pb-20 px-6 min-h-screen justify-center overflow-hidden"
       role="banner"
       aria-label="Hero section"
     >

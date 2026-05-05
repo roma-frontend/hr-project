@@ -102,7 +102,7 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`sticky top-0 z-[100] flex items-center justify-between px-4 md:px-8 lg:px-12 transition-all duration-500 ease-in-out border-b ${
+        className={`fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-4 md:px-8 lg:px-12 transition-all duration-500 ease-in-out border-b ${
           scrolled ? 'py-2 md:py-3 shadow-lg' : 'py-3 md:py-4'
         }`}
         role="navigation"

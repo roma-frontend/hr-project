@@ -2289,3 +2289,52 @@ html.dark .quick-action-slate:hover {
     animation: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   REACT FLOW — Dark Theme Overrides
+   ═══════════════════════════════════════════════════════════════ */
+.dark .react-flow {
+  background-color: var(--background);
+}
+
+.dark .react-flow__controls {
+  background-color: var(--card);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+.dark .react-flow__controls-button {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.dark .react-flow__controls-button:hover {
+  background-color: var(--card-hover);
+}
+
+.dark .react-flow__controls-button svg {
+  fill: var(--foreground);
+}
+
+.dark .react-flow__attribution {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.dark .react-flow__attribution a {
+  color: var(--text-muted);
+}
+
+.dark .react-flow__edge-path {
+  stroke: #64748b;
+}
+
+.dark .react-flow__handle {
+  background-color: var(--card-foreground);
+  border-color: var(--border);
+}
+
+.dark .react-flow__node {
+  color: var(--foreground);
+}

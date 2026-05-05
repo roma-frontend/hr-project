@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -81,33 +82,33 @@ function OrgNodeComponent({ data }: { data: OrgNodeData }) {
   const getNodeIcon = () => {
     switch (data.type) {
       case 'department':
-        return <Building2 className="h-4 w-4" />;
+        return <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
       case 'group':
-        return <Folder className="h-4 w-4" />;
+        return <Folder className="h-4 w-4 text-purple-600 dark:text-purple-400" />;
       default:
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4 text-green-600 dark:text-green-400" />;
     }
   };
 
   const getNodeColor = () => {
     switch (data.type) {
       case 'department':
-        return 'border-blue-500 bg-blue-50 dark:bg-blue-950/30';
+        return 'border-blue-500 bg-blue-50 text-gray-900 dark:bg-[#1a2744] dark:text-gray-50 dark:border-blue-400';
       case 'group':
-        return 'border-purple-500 bg-purple-50 dark:bg-purple-950/30';
+        return 'border-purple-500 bg-purple-50 text-gray-900 dark:bg-[#2a1a3e] dark:text-gray-50 dark:border-purple-400';
       default:
-        return 'border-green-500 bg-green-50 dark:bg-green-950/30';
+        return 'border-green-500 bg-green-50 text-gray-900 dark:bg-[#1a2e24] dark:text-gray-50 dark:border-green-400';
     }
   };
 
   const getBadgeColor = () => {
     switch (data.type) {
       case 'department':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-100';
       case 'group':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-100';
       default:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-100';
     }
   };
 
@@ -119,9 +120,13 @@ function OrgNodeComponent({ data }: { data: OrgNodeData }) {
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1">
           {getNodeIcon()}
-          <span className="font-semibold text-sm truncate max-w-32">{data.name}</span>
+          <span className="font-semibold text-sm truncate max-w-32 text-gray-900 dark:text-gray-100">
+            {data.name}
+          </span>
         </div>
-        {data.title && <p className="text-xs text-muted-foreground truncate">{data.title}</p>}
+        {data.title && (
+          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{data.title}</p>
+        )}
         <Badge className={`mt-2 text-xs ${getBadgeColor()}`}>{data.type}</Badge>
 
         {isExpanded && data.children && data.children.length > 0 && (
@@ -137,9 +142,7 @@ function OrgNodeComponent({ data }: { data: OrgNodeData }) {
             {data.user.email && (
               <p className="text-xs text-muted-foreground truncate">{data.user.email}</p>
             )}
-            {data.user.phone && (
-              <p className="text-xs text-muted-foreground">{data.user.phone}</p>
-            )}
+            {data.user.phone && <p className="text-xs text-muted-foreground">{data.user.phone}</p>}
             {data.user.department && (
               <p className="text-xs text-muted-foreground">{data.user.department}</p>
             )}
@@ -159,7 +162,10 @@ const nodeTypes = {
 export default function OrgChartClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+
+  const orgIdToQuery = selectedOrgId || (user?.role === 'admin' ? user?.organizationId : null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
@@ -178,9 +184,9 @@ export default function OrgChartClient() {
   // Fetch data
   const orgNodes = useQuery(
     api.orgchart.getOrgChart,
-    user?.organizationId && user?.id
+    orgIdToQuery && user?.id
       ? {
-          organizationId: user.organizationId as Id<'organizations'>,
+          organizationId: orgIdToQuery as Id<'organizations'>,
           requesterId: user.id as Id<'users'>,
         }
       : 'skip',
@@ -188,9 +194,9 @@ export default function OrgChartClient() {
 
   const orgTree = useQuery(
     api.orgchart.getOrgChartTree,
-    user?.organizationId && user?.id
+    orgIdToQuery && user?.id
       ? {
-          organizationId: user.organizationId as Id<'organizations'>,
+          organizationId: orgIdToQuery as Id<'organizations'>,
           requesterId: user.id as Id<'users'>,
         }
       : 'skip',
@@ -261,12 +267,7 @@ export default function OrgChartClient() {
         }
 
         if (node.children && node.children.length > 0) {
-          const childElements = buildFlowElementsRef.current(
-            node.children,
-            nodeId,
-            depth + 1,
-            idx,
-          );
+          const childElements = buildFlowElementsRef.current(node.children, nodeId, depth + 1, idx);
           newNodes.push(...childElements.nodes);
           newEdges.push(...childElements.edges);
         }
@@ -303,11 +304,11 @@ export default function OrgChartClient() {
 
   // Handlers
   const handleGenerateOrgChart = async () => {
-    if (!user?.organizationId || !user?.id) return;
+    if (!orgIdToQuery || !user?.id) return;
 
     try {
       const result = await generateOrgChart({
-        organizationId: user.organizationId as Id<'organizations'>,
+        organizationId: orgIdToQuery as Id<'organizations'>,
         requesterId: user.id as Id<'users'>,
       });
 
@@ -321,7 +322,7 @@ export default function OrgChartClient() {
   };
 
   const handleAddNode = async () => {
-    if (!user?.organizationId || !user?.id) return;
+    if (!orgIdToQuery || !user?.id) return;
     if (!nodeForm.name) {
       toast.error(t('errors.required', 'This field is required'));
       return;
@@ -329,14 +330,12 @@ export default function OrgChartClient() {
 
     try {
       await createNode({
-        organizationId: user.organizationId as Id<'organizations'>,
+        organizationId: orgIdToQuery as Id<'organizations'>,
         requesterId: user.id as Id<'users'>,
         name: nodeForm.name,
         type: nodeForm.type,
         title: nodeForm.title || undefined,
-        parentId: nodeForm.parentId
-          ? (nodeForm.parentId as Id<'orgChartNodes'>)
-          : undefined,
+        parentId: nodeForm.parentId ? (nodeForm.parentId as Id<'orgChartNodes'>) : undefined,
         userId: nodeForm.userId ? (nodeForm.userId as Id<'users'>) : undefined,
       });
 
@@ -361,9 +360,7 @@ export default function OrgChartClient() {
         requesterId: user.id as Id<'users'>,
         name: nodeForm.name,
         title: nodeForm.title || undefined,
-        parentId: nodeForm.parentId
-          ? (nodeForm.parentId as Id<'orgChartNodes'>)
-          : undefined,
+        parentId: nodeForm.parentId ? (nodeForm.parentId as Id<'orgChartNodes'>) : undefined,
         userId: nodeForm.userId ? (nodeForm.userId as Id<'users'>) : undefined,
       });
 
@@ -422,11 +419,11 @@ export default function OrgChartClient() {
   );
 
   const handleSaveLayout = async () => {
-    if (!user?.organizationId || !user?.id) return;
+    if (!orgIdToQuery || !user?.id) return;
 
     try {
       await saveLayout({
-        organizationId: user.organizationId as Id<'organizations'>,
+        organizationId: orgIdToQuery as Id<'organizations'>,
         requesterId: user.id as Id<'users'>,
         layoutData: { nodes, edges },
         isDefault: true,
@@ -452,7 +449,25 @@ export default function OrgChartClient() {
     }
   };
 
-  // Loading state
+  // No organization selected — show empty state
+  if (!orgIdToQuery) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-center p-8">
+        <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2 text-foreground">
+          {t('orgChart.noOrgSelected', 'No organization selected')}
+        </h3>
+        <p className="text-muted-foreground">
+          {t(
+            'orgChart.selectOrgToView',
+            'Please select an organization to view or create its org chart.',
+          )}
+        </p>
+      </div>
+    );
+  }
+
+  // Loading state — only when org is selected but data is still fetching
   if (orgNodes === undefined || orgTree === undefined) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -462,12 +477,11 @@ export default function OrgChartClient() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Network className="h-8 w-8" />
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
             {t('orgChart.title', 'Organization Chart')}
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -498,7 +512,7 @@ export default function OrgChartClient() {
       </div>
 
       {/* Search and Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 bg-card text-card-foreground">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
@@ -507,16 +521,16 @@ export default function OrgChartClient() {
                 placeholder={t('orgChart.searchOrgChart', 'Search org chart...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-background text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 text-foreground">
                 <Users className="h-3 w-3" />
                 {nodes.length} {t('common.nodes', 'nodes')}
               </Badge>
-              <Badge variant="outline" className="flex items-center gap-1">
+              <Badge variant="outline" className="flex items-center gap-1 text-foreground">
                 <Network className="h-3 w-3" />
                 {edges.length} {t('common.edges', 'edges')}
               </Badge>
@@ -526,12 +540,12 @@ export default function OrgChartClient() {
       </Card>
 
       {/* Org Chart Canvas */}
-      <Card className="h-[calc(100vh-16rem)]">
+      <Card className="h-[calc(100vh-16rem)] bg-card text-card-foreground">
         <CardContent className="p-0 h-full">
           {nodes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
               <Network className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">
+              <h3 className="text-lg font-medium mb-2 text-foreground">
                 {t('orgChart.noData', 'No organization chart data yet')}
               </h3>
               <p className="text-muted-foreground mb-4">
@@ -563,17 +577,18 @@ export default function OrgChartClient() {
               nodeTypes={nodeTypes}
               fitView
               attributionPosition="bottom-right"
+              className="bg-background"
             >
-              <Controls />
-              <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+              <Controls className="bg-card text-foreground border-border" />
+              <Background variant={BackgroundVariant.Dots} gap={12} size={1} color="#94a3b8" />
               <Panel
                 position="top-right"
-                className="bg-background/80 backdrop-blur-sm rounded-lg p-2"
+                className="bg-card/80 backdrop-blur-sm rounded-lg p-2 border border-border"
               >
                 <div className="flex items-center gap-2">
                   {isAdmin && (
                     <Button variant="ghost" size="icon" onClick={handleSaveLayout}>
-                      <Download className="h-4 w-4" />
+                      <Download className="h-4 w-4 text-foreground" />
                     </Button>
                   )}
                 </div>
@@ -591,9 +606,7 @@ export default function OrgChartClient() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeName', 'Name')} *
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeName', 'Name')} *</label>
               <Input
                 value={nodeForm.name}
                 onChange={(e) => setNodeForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -601,9 +614,7 @@ export default function OrgChartClient() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeTitle', 'Title')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeTitle', 'Title')}</label>
               <Input
                 value={nodeForm.title}
                 onChange={(e) => setNodeForm((prev) => ({ ...prev, title: e.target.value }))}
@@ -611,9 +622,7 @@ export default function OrgChartClient() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeType', 'Type')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeType', 'Type')}</label>
               <Select
                 value={nodeForm.type}
                 onValueChange={(value) =>
@@ -624,22 +633,16 @@ export default function OrgChartClient() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="person">
-                    {t('orgChart.person', 'Person')}
-                  </SelectItem>
+                  <SelectItem value="person">{t('orgChart.person', 'Person')}</SelectItem>
                   <SelectItem value="department">
                     {t('orgChart.department', 'Department')}
                   </SelectItem>
-                  <SelectItem value="group">
-                    {t('orgChart.group', 'Group')}
-                  </SelectItem>
+                  <SelectItem value="group">{t('orgChart.group', 'Group')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.parent', 'Parent')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.parent', 'Parent')}</label>
               <Select
                 value={nodeForm.parentId}
                 onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value }))}
@@ -662,9 +665,7 @@ export default function OrgChartClient() {
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleAddNode}>
-              {t('common.save', 'Save')}
-            </Button>
+            <Button onClick={handleAddNode}>{t('common.save', 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -677,9 +678,7 @@ export default function OrgChartClient() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeName', 'Name')} *
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeName', 'Name')} *</label>
               <Input
                 value={nodeForm.name}
                 onChange={(e) => setNodeForm((prev) => ({ ...prev, name: e.target.value }))}
@@ -687,9 +686,7 @@ export default function OrgChartClient() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeTitle', 'Title')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeTitle', 'Title')}</label>
               <Input
                 value={nodeForm.title}
                 onChange={(e) => setNodeForm((prev) => ({ ...prev, title: e.target.value }))}
@@ -697,9 +694,7 @@ export default function OrgChartClient() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.nodeType', 'Type')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.nodeType', 'Type')}</label>
               <Select
                 value={nodeForm.type}
                 onValueChange={(value) =>
@@ -710,22 +705,16 @@ export default function OrgChartClient() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="person">
-                    {t('orgChart.person', 'Person')}
-                  </SelectItem>
+                  <SelectItem value="person">{t('orgChart.person', 'Person')}</SelectItem>
                   <SelectItem value="department">
                     {t('orgChart.department', 'Department')}
                   </SelectItem>
-                  <SelectItem value="group">
-                    {t('orgChart.group', 'Group')}
-                  </SelectItem>
+                  <SelectItem value="group">{t('orgChart.group', 'Group')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">
-                {t('orgChart.parent', 'Parent')}
-              </label>
+              <label className="text-sm font-medium">{t('orgChart.parent', 'Parent')}</label>
               <Select
                 value={nodeForm.parentId}
                 onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value }))}
@@ -750,9 +739,7 @@ export default function OrgChartClient() {
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleUpdateNode}>
-              {t('common.save', 'Save')}
-            </Button>
+            <Button onClick={handleUpdateNode}>{t('common.save', 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

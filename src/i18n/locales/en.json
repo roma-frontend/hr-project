@@ -328,7 +328,8 @@
     "selectAll": "Select All",
     "deleted": "Deleted",
     "error": "Error",
-    "unknownUser": "Unknown"
+    "unknownUser": "Unknown",
+    "create": "Create"
   },
   "nav": {
     "home": "Home",
@@ -7997,6 +7998,14 @@
     "completeDate": "Completion Date",
     "timeSpent": "Time Spent",
     "minutes": "minutes",
-    "hours": "hours"
+    "hours": "hours",
+    "noEnrollments": "No enrolled courses",
+    "noEnrollmentsDesc": "Browse the course catalog to get started",
+    "browseCatalog": "Browse Catalog",
+    "teamProgressDesc": "Overview of team learning activity",
+    "createCourseDesc": "Course creation form will be implemented here",
+    "not_started": "Not Started",
+    "in_progress": "In Progress",
+    "noDescription": "No description available"
   }
 }

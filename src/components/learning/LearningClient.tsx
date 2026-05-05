@@ -45,6 +45,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 
 // ─── Types ────────────────────────────────────────────────────
 type CourseWithLessons = {
@@ -89,7 +90,9 @@ type EnrollmentWithCourse = {
 export default function LearningClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const selectedOrgId = useSelectedOrganization();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const effectiveOrgId = selectedOrgId ?? user?.organizationId;
 
   const [activeTab, setActiveTab] = useState('catalog');
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,13 +101,22 @@ export default function LearningClient() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithLessons | null>(null);
   const [showCourseDetail, setShowCourseDetail] = useState(false);
   const [showCreateCourse, setShowCreateCourse] = useState(false);
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    difficulty: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
+    estimatedHours: '',
+    isMandatory: false,
+    tags: '',
+  });
 
   // Fetch data
   const courses = useQuery(
     api.learning.listCourses,
-    user?.organizationId && user?.id
+    effectiveOrgId && user?.id
       ? {
-          organizationId: user.organizationId as Id<'organizations'>,
+          organizationId: effectiveOrgId as Id<'organizations'>,
           requesterId: user.id as Id<'users'>,
           includeUnpublished: isAdmin,
         }
@@ -113,9 +125,9 @@ export default function LearningClient() {
 
   const myEnrollments = useQuery(
     api.learning.getMyEnrollments,
-    user?.organizationId && user?.id
+    effectiveOrgId && user?.id
       ? {
-          organizationId: user.organizationId as Id<'organizations'>,
+          organizationId: effectiveOrgId as Id<'organizations'>,
           requesterId: user.id as Id<'users'>,
         }
       : 'skip',
@@ -123,9 +135,9 @@ export default function LearningClient() {
 
   const teamOverview = useQuery(
     api.learning.getTeamLearningOverview,
-    user?.organizationId && user?.id && isAdmin
+    effectiveOrgId && user?.id && isAdmin
       ? {
-          organizationId: user.organizationId as Id<'organizations'>,
+          organizationId: effectiveOrgId as Id<'organizations'>,
           requesterId: user.id as Id<'users'>,
         }
       : 'skip',
@@ -133,6 +145,7 @@ export default function LearningClient() {
 
   // Mutations
   const enrollMutation = useMutation(api.learning.enrollInCourse);
+  const createCourseMutation = useMutation(api.learning.createCourse);
 
   // Filter courses
   const filteredCourses = useMemo(() => {
@@ -165,11 +178,11 @@ export default function LearningClient() {
   }, [courses]);
 
   const handleEnroll = async (courseId: Id<'courses'>) => {
-    if (!user?.organizationId || !user?.id) return;
+    if (!effectiveOrgId || !user?.id) return;
 
     try {
       const result = await enrollMutation({
-        organizationId: user.organizationId as Id<'organizations'>,
+        organizationId: effectiveOrgId as Id<'organizations'>,
         requesterId: user.id as Id<'users'>,
         courseId,
       });
@@ -181,6 +194,53 @@ export default function LearningClient() {
       }
     } catch {
       toast.error(t('learning.enrollError', 'Failed to enroll in course'));
+    }
+  };
+
+  const handleCreateCourse = async () => {
+    if (!effectiveOrgId || !user?.id) return;
+    if (!courseForm.title.trim()) {
+      toast.error(t('errors.required', 'Title is required'));
+      return;
+    }
+    if (!courseForm.category.trim()) {
+      toast.error(t('errors.required', 'Category is required'));
+      return;
+    }
+
+    try {
+      await createCourseMutation({
+        organizationId: effectiveOrgId as Id<'organizations'>,
+        requesterId: user.id as Id<'users'>,
+        title: courseForm.title.trim(),
+        description: courseForm.description.trim() || undefined,
+        category: courseForm.category.trim(),
+        difficulty: courseForm.difficulty,
+        estimatedHours: courseForm.estimatedHours
+          ? parseInt(courseForm.estimatedHours, 10)
+          : undefined,
+        isMandatory: courseForm.isMandatory,
+        tags: courseForm.tags
+          ? courseForm.tags
+              .split(',')
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+          : undefined,
+      });
+
+      toast.success(t('learning.courseCreated', 'Course created successfully'));
+      setShowCreateCourse(false);
+      setCourseForm({
+        title: '',
+        description: '',
+        category: '',
+        difficulty: 'beginner',
+        estimatedHours: '',
+        isMandatory: false,
+        tags: '',
+      });
+    } catch {
+      toast.error(t('learning.courseCreateError', 'Failed to create course'));
     }
   };
 
@@ -667,22 +727,131 @@ export default function LearningClient() {
       </Dialog>
 
       {/* Create Course Dialog */}
-      <Dialog open={showCreateCourse} onOpenChange={setShowCreateCourse}>
-        <DialogContent>
+      <Dialog
+        open={showCreateCourse}
+        onOpenChange={(open) => {
+          setShowCreateCourse(open);
+          if (!open) {
+            setCourseForm({
+              title: '',
+              description: '',
+              category: '',
+              difficulty: 'beginner',
+              estimatedHours: '',
+              isMandatory: false,
+              tags: '',
+            });
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t('learning.createCourse', 'Create Course')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              {t('learning.createCourseDesc', 'Course creation form will be implemented here')}
-            </p>
+            <div>
+              <label className="text-sm font-medium">{t('orgChart.nodeName', 'Name')} *</label>
+              <Input
+                value={courseForm.title}
+                onChange={(e) => setCourseForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder={t('learning.courseTitle', 'Course title')}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">
+                {t('learning.courseDescription', 'Description')}
+              </label>
+              <Input
+                value={courseForm.description}
+                onChange={(e) =>
+                  setCourseForm((prev) => ({ ...prev, description: e.target.value }))
+                }
+                placeholder={t('placeholders.enterDescription', 'Enter course description')}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">
+                  {t('learning.category', 'Category')} *
+                </label>
+                <Input
+                  value={courseForm.category}
+                  onChange={(e) => setCourseForm((prev) => ({ ...prev, category: e.target.value }))}
+                  placeholder={t('placeholders.enterCategory', 'e.g. Compliance, Technical')}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  {t('learning.difficulty', 'Difficulty')}
+                </label>
+                <Select
+                  value={courseForm.difficulty}
+                  onValueChange={(value) =>
+                    setCourseForm((prev) => ({
+                      ...prev,
+                      difficulty: value as 'beginner' | 'intermediate' | 'advanced',
+                    }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">{t('learning.beginner', 'Beginner')}</SelectItem>
+                    <SelectItem value="intermediate">
+                      {t('learning.intermediate', 'Intermediate')}
+                    </SelectItem>
+                    <SelectItem value="advanced">{t('learning.advanced', 'Advanced')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">
+                  {t('learning.estimatedHours', 'Estimated Hours')}
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={courseForm.estimatedHours}
+                  onChange={(e) =>
+                    setCourseForm((prev) => ({ ...prev, estimatedHours: e.target.value }))
+                  }
+                  placeholder="e.g. 4"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t('learning.tags', 'Tags')}</label>
+                <Input
+                  value={courseForm.tags}
+                  onChange={(e) => setCourseForm((prev) => ({ ...prev, tags: e.target.value }))}
+                  placeholder={t('placeholders.commaSeparated', 'Comma separated')}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isMandatory"
+                checked={courseForm.isMandatory}
+                onChange={(e) =>
+                  setCourseForm((prev) => ({ ...prev, isMandatory: e.target.checked }))
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="isMandatory" className="text-sm font-medium">
+                {t('learning.mandatory', 'Mandatory')}
+              </label>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreateCourse(false)}>
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={() => setShowCreateCourse(false)}>
-              {t('common.create', 'Create')}
+            <Button onClick={handleCreateCourse}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('learning.createCourse', 'Create Course')}
             </Button>
           </DialogFooter>
         </DialogContent>

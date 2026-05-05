@@ -326,7 +326,8 @@
     "error": "Սխալ",
     "unknownUser": "Անհայտ",
     "nodes": "կետեր",
-    "edges": "կողմեր"
+    "edges": "կողմեր",
+    "create": "Ստեղծել"
   },
   "nav": {
     "home": "Գլխավոր",
@@ -7666,6 +7667,14 @@
     "completeDate": "Ավարտման ամսաթիվ",
     "timeSpent": "Ծախսված ժամանակ",
     "minutes": "րոպե",
-    "hours": "ժամ"
+    "hours": "ժամ",
+    "noEnrollments": "Գրանցված դասընթացներ չկան",
+    "noEnrollmentsDesc": "Դիտեք դասընթացների կատալոգը սկսելու համար",
+    "browseCatalog": "Դիտել կատալոգը",
+    "teamProgressDesc": "Թիմի ուսուցման ակտիվության ակնարկ",
+    "createCourseDesc": "Դասընթացի ստեղծման ձևը կիրականացվի այստեղ",
+    "not_started": "Չսկսված",
+    "in_progress": "Ընթացքի մեջ",
+    "noDescription": "Նկարագրությունը բացակայում է"
   }
 }
