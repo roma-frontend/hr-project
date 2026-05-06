@@ -389,8 +389,8 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 className={cn(
                   'border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer',
                   dragActive
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50 hover:bg-background-subtle',
+                    ? 'border-(--primary) bg-(--primary)/5'
+                    : 'border-(--border) hover:border-(--primary)/50 hover:bg-(--background-subtle)',
                 )}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -405,14 +405,14 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                   className="hidden"
                   onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
                 />
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium text-foreground mb-1">
+                <Upload className="w-12 h-12 mx-auto mb-4 text-(--muted-foreground)" />
+                <p className="text-lg font-medium text-(--text-primary) mb-1">
                   {t('documents.dragDrop', 'Drag & drop your file here')}
                 </p>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-(--muted-foreground) mb-4">
                   {t('documents.orClick', 'or click to browse')}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-(--muted-foreground)">
                   {t('documents.maxSize', 'Max file size: 10MB')}
                 </p>
               </div>
@@ -423,7 +423,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 {localFiles.map((file) => (
                   <div
                     key={file.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border border-border bg-background-subtle"
+                    className="flex items-center gap-4 p-4 rounded-lg border border-(--border) bg-(--background-subtle)"
                   >
                     {file.preview ? (
                       <Image
@@ -437,8 +437,10 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                       getFileIcon(file.file.type)
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">{file.file.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatSize(file.file.size)}</p>
+                      <p className="font-medium text-(--text-primary) truncate">{file.file.name}</p>
+                      <p className="text-xs text-(--muted-foreground)">
+                        {formatSize(file.file.size)}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
@@ -454,13 +456,13 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 ))}
                 {uploading && (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-(--muted-foreground)">
                       <ShieldLoader size="xs" variant="inline" />
                       <span>{t('documents.uploading', 'Uploading to Cloudinary...')}</span>
                     </div>
-                    <div className="h-2 bg-background-subtle rounded-full overflow-hidden">
+                    <div className="h-2 bg-(--background-subtle) rounded-full overflow-hidden">
                       <motion.div
-                        className="h-full bg-primary"
+                        className="h-full bg-(--primary)"
                         initial={{ width: '0%' }}
                         animate={{ width: `${uploadProgress}%` }}
                         transition={{ duration: 0.3 }}
@@ -485,8 +487,10 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                   getFileIcon(uploadedFile.type)
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{uploadedFile.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatSize(uploadedFile.size)}</p>
+                  <p className="font-medium text-(--text-primary) truncate">{uploadedFile.name}</p>
+                  <p className="text-xs text-(--muted-foreground)">
+                    {formatSize(uploadedFile.size)}
+                  </p>
                 </div>
                 <CheckCircle className="w-5 h-5 text-green-500" />
               </div>
@@ -506,7 +510,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('documents.titlePlaceholder', 'Enter document title')}
-                className="bg-input border-input-border text-foreground placeholder-muted-foreground"
+                className="bg-(--input) border-(--input-border) text-(--text-primary) placeholder-(--muted-foreground)"
               />
             </div>
 
@@ -517,7 +521,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={t('documents.descriptionPlaceholder', 'Enter document description')}
-                className="bg-input border-input-border text-foreground placeholder-muted-foreground resize-none"
+                className="bg-(--input) border-(--input-border) text-(--text-primary) placeholder-(--muted-foreground) resize-none"
                 rows={3}
               />
             </div>
@@ -525,7 +529,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
             <div className="space-y-2">
               <Label>{t('documents.category', 'Category')}</Label>
               <Select value={category} onValueChange={(v) => setCategory(v as DocumentCategory)}>
-                <SelectTrigger className="bg-input border-input-border text-foreground">
+                <SelectTrigger className="bg-(--input) border-(--input-border) text-(--text-primary)">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -548,7 +552,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
                 placeholder={t('documents.tagsPlaceholder', 'Comma-separated tags')}
-                className="bg-input border-input-border text-foreground placeholder-muted-foreground"
+                className="bg-(--input) border-(--input-border) text-(--text-primary) placeholder-(--muted-foreground)"
               />
               {tagsInput.trim() && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -580,7 +584,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 {t('documents.mandatory', 'Mandatory')}
               </Label>
             </div>
-            <p className="text-xs text-muted-foreground -mt-2 ml-6">
+            <p className="text-xs text-(--muted-foreground) -mt-2 ml-6">
               {t('documents.mandatoryDesc', 'Users must acknowledge this document')}
             </p>
 
@@ -594,7 +598,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 {t('documents.publishImmediately', 'Publish immediately')}
               </Label>
             </div>
-            <p className="text-xs text-muted-foreground -mt-2 ml-6">
+            <p className="text-xs text-(--muted-foreground) -mt-2 ml-6">
               {t('documents.publishDesc', 'Make this document visible to all users')}
             </p>
 
@@ -617,7 +621,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                     value={expiresAt}
                     onChange={(e) => setExpiresAt(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="bg-input border-input-border text-foreground"
+                    className="bg-(--input) border-(--input-border) text-(--text-primary)"
                   />
                 </div>
               )}
@@ -628,7 +632,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
       case 3:
         return (
           <div className="space-y-4">
-            <div className="p-4 rounded-lg border border-border bg-background-subtle space-y-3">
+            <div className="p-4 rounded-lg border border-(--border) bg-(--background-subtle) space-y-3">
               <div className="flex items-center gap-3">
                 {uploadedFile?.type.startsWith('image/') ? (
                   <Image
@@ -642,8 +646,8 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                   getFileIcon(uploadedFile?.type || 'application/octet-stream')
                 )}
                 <div className="min-w-0">
-                  <p className="font-medium text-foreground truncate">{uploadedFile?.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-medium text-(--text-primary) truncate">{uploadedFile?.name}</p>
+                  <p className="text-xs text-(--muted-foreground)">
                     {formatSize(uploadedFile?.size || 0)}
                   </p>
                 </div>
@@ -651,28 +655,32 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('documents.title', 'Title')}:</span>
-                  <span className="font-medium text-foreground">{title}</span>
+                  <span className="text-(--muted-foreground)">
+                    {t('documents.title', 'Title')}:
+                  </span>
+                  <span className="font-medium text-(--text-primary)">{title}</span>
                 </div>
                 {description && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
+                    <span className="text-(--muted-foreground)">
                       {t('documents.description', 'Description')}:
                     </span>
-                    <span className="font-medium text-foreground text-right max-w-[200px] truncate">
+                    <span className="font-medium text-(--text-primary) text-right max-w-[200px] truncate">
                       {description}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
+                  <span className="text-(--muted-foreground)">
                     {t('documents.category', 'Category')}:
                   </span>
-                  <span className="font-medium text-foreground capitalize">{category}</span>
+                  <span className="font-medium text-(--text-primary) capitalize">{category}</span>
                 </div>
                 {tagsInput.trim() && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('documents.tags', 'Tags')}:</span>
+                    <span className="text-(--muted-foreground)">
+                      {t('documents.tags', 'Tags')}:
+                    </span>
                     <div className="flex flex-wrap gap-1 justify-end">
                       {tagsInput
                         .split(',')
@@ -687,18 +695,18 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
+                  <span className="text-(--muted-foreground)">
                     {t('documents.mandatory', 'Mandatory')}:
                   </span>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-(--text-primary)">
                     {isMandatory ? t('common.yes', 'Yes') : t('common.no', 'No')}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">
+                  <span className="text-(--muted-foreground)">
                     {t('documents.publish', 'Publish')}:
                   </span>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-(--text-primary)">
                     {publishImmediately
                       ? t('documents.publishImmediately', 'Immediately')
                       : t('documents.draft', 'Draft')}
@@ -706,10 +714,10 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                 </div>
                 {enableExpiration && expiresAt && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
+                    <span className="text-(--muted-foreground)">
                       {t('documents.expires', 'Expires')}:
                     </span>
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-(--text-primary)">
                       {new Date(expiresAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -730,11 +738,11 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-background rounded-xl shadow-xl w-full max-w-lg h-[82vh] mx-4 overflow-y-auto"
+        className="bg-(--card) rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-(--border)">
+          <h2 className="text-xl font-bold text-(--text-primary)">
             {t('documents.uploadDocument', 'Upload Document')}
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -758,8 +766,8 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                         isCompleted
                           ? 'bg-blue-500 border-blue-500 text-white'
                           : isCurrent
-                            ? 'border-blue-500 bg-background text-blue-500'
-                            : 'border-border bg-background text-muted-foreground',
+                            ? 'border-(--primary) bg-(--card) text-(--primary)'
+                            : 'border-(--border) bg-(--card) text-(--muted-foreground)',
                       )}
                     >
                       {isCompleted ? (
@@ -771,18 +779,18 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
                     <p
                       className={cn(
                         'text-xs mt-1 font-medium',
-                        isCurrent ? 'text-primary' : 'text-muted-foreground',
+                        isCurrent ? 'text-(--primary)' : 'text-(--muted-foreground)',
                       )}
                     >
                       {step.title}
                     </p>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="flex-1 h-0.5 bg-border mx-2 mb-6">
+                    <div className="flex-1 h-0.5 bg-(--border) mx-2 mb-6">
                       <div
                         className={cn(
                           'h-full transition-colors',
-                          isCompleted ? 'bg-blue-500' : 'bg-border',
+                          isCompleted ? 'bg-(--primary)' : 'bg-(--border)',
                         )}
                       />
                     </div>
@@ -804,10 +812,10 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
               transition={{ duration: 0.2 }}
             >
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-(--text-primary)">
                   {steps[currentStep]!.title}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-(--muted-foreground)">
                   {currentStep === 0 &&
                     t('documents.fileUploadStep', 'Select the file you want to upload')}
                   {currentStep === 1 &&
@@ -823,12 +831,12 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between gap-3 p-6 pt-4 border-t border-border">
+        <div className="flex items-center justify-between gap-3 p-6 pt-4 border-t border-(--border)">
           <Button
             variant="outline"
             onClick={handleBack}
             disabled={currentStep === 0 || isSubmitting}
-            className="border-border bg-background hover:bg-background-subtle text-foreground"
+            className="border-(--border) bg-(--card) hover:bg-(--background-subtle) text-(--text-primary)"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             {t('wizard.back', 'Back')}
@@ -838,7 +846,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
             <Button
               onClick={handleNext}
               disabled={!canProceed() || uploading || isSubmitting}
-              className="bg-primary hover:bg-primary-hover text-white gap-2"
+              className="bg-(--primary) hover:bg-(--primary-hover) text-white gap-2"
             >
               {uploading ? (
                 <>
@@ -855,7 +863,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || !canProceed()}
-              className="bg-primary hover:bg-primary-hover text-white gap-2"
+              className="bg-(--primary) hover:bg-(--primary-hover) text-white gap-2"
             >
               {isSubmitting ? (
                 <>

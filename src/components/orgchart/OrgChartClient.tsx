@@ -38,6 +38,7 @@ import {
   MarkerType,
   Panel,
   BackgroundVariant,
+  Handle,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -117,6 +118,8 @@ function OrgNodeComponent({ data }: { data: OrgNodeData }) {
       className={`rounded-lg border-2 ${getNodeColor()} shadow-sm hover:shadow-md transition-shadow cursor-pointer min-w-48`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
+      <Handle type="target" position={Position.Top} id="top" />
+      <Handle type="source" position={Position.Bottom} id="bottom" />
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1">
           {getNodeIcon()}
@@ -253,6 +256,8 @@ export default function OrgChartClient() {
             id: `e-${parentId}-${nodeId}`,
             source: parentId,
             target: nodeId,
+            sourceHandle: 'bottom',
+            targetHandle: 'top',
             type: 'smoothstep',
             markerEnd: {
               type: MarkerType.ArrowClosed,

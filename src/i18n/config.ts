@@ -37,35 +37,37 @@ const getInitialLanguage = () => {
   return 'en';
 };
 
-i18n
-  .use(initReactI18next) // Pass i18n to react-i18next
-  .init({
-    resources,
-    defaultNS,
-    fallbackLng: 'en',
-    lng: getInitialLanguage(), // Use saved language or default to 'en'
-    supportedLngs: ['en', 'hy', 'ru'], // Explicitly define supported languages
-    nonExplicitSupportedLngs: false, // Only use exact matches
-    debug: process.env.NODE_ENV === 'development', // Enable debug mode only in development
+if (!i18n.isInitialized) {
+  i18n
+    .use(initReactI18next) // Pass i18n to react-i18next
+    .init({
+      resources,
+      defaultNS,
+      fallbackLng: 'en',
+      lng: getInitialLanguage(), // Use saved language or default to 'en'
+      supportedLngs: ['en', 'hy', 'ru'], // Explicitly define supported languages
+      nonExplicitSupportedLngs: false, // Only use exact matches
+      debug: process.env.NODE_ENV === 'development', // Enable debug mode only in development
 
-    interpolation: {
-      escapeValue: false, // React already escapes
-    },
+      interpolation: {
+        escapeValue: false, // React already escapes
+      },
 
-    // Client-side language detection
-    detection: {
-      order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
-      lookupCookie: 'i18nextLng',
-      lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage', 'cookie'],
-      // Custom detection function
-      lookupQuerystring: 'lng',
-    },
+      // Client-side language detection
+      detection: {
+        order: ['cookie', 'localStorage', 'navigator', 'htmlTag'],
+        lookupCookie: 'i18nextLng',
+        lookupLocalStorage: 'i18nextLng',
+        caches: ['localStorage', 'cookie'],
+        // Custom detection function
+        lookupQuerystring: 'lng',
+      },
 
-    // SSR support
-    react: {
-      useSuspense: false, // Disable Suspense for SSR compatibility
-    },
-  });
+      // SSR support
+      react: {
+        useSuspense: false, // Disable Suspense for SSR compatibility
+      },
+    });
+}
 
 export default i18n;

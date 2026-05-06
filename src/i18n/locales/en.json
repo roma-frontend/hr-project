@@ -328,7 +328,12 @@
     "error": "Error",
     "unknownUser": "Unknown",
     "create": "Create",
-    "edit": "Edit"
+    "edit": "Edit",
+    "yes": "Yes",
+    "no": "No",
+    "exportSVG": "Export SVG",
+    "nodes": "nodes",
+    "edges": "edges"
   },
   "lessons": {
     "title": "Lessons"
@@ -1862,7 +1867,9 @@
     "whatDoesWell": "What does the employee do well?",
     "whatFeaturesImportant": "What features are important to you?",
     "youAtCompany": "you@company.com",
-    "emailAddress": "you@company.com"
+    "emailAddress": "you@company.com",
+    "position": "Position",
+    "selectOrg": "Select organization"
   },
   "ariaLabels": {
     "changeAvatar": "Change avatar",
@@ -7920,9 +7927,5 @@
     "draft": "Draft",
     "fileDataMissing": "File data is missing",
     "exceedsLimit": "exceeds 10MB limit"
-  },
-  "common": {
-    "yes": "Yes",
-    "no": "No"
   }
 }

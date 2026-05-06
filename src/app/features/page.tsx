@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -116,6 +117,11 @@ export default function FeaturesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuthenticated, needsOnboarding } = useAuthStoreShallow();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleModuleClick = (mod: (typeof MODULES)[number]) => {
     if (isAuthenticated) {
@@ -126,6 +132,10 @@ export default function FeaturesPage() {
       router.push('/login');
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>

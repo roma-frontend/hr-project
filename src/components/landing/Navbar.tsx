@@ -444,7 +444,7 @@ export default function Navbar() {
                   color: 'var(--primary-foreground)',
                 }}
               >
-                {t('landingExtra.getStarted')}
+                {mounted ? t('landingExtra.getStarted') : 'Get Started'}
                 <svg
                   className="w-3.5 h-3.5"
                   viewBox="0 0 24 24"
