@@ -323,17 +323,28 @@ export default function DocumentsClient() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="all" className="flex items-center gap-2">
+        <TabsList
+          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-3' : 'grid grid-cols-2'}`}
+        >
+          <TabsTrigger
+            value="all"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
             <FileText className="h-4 w-4" />
             {t('documents.allDocuments', 'All Documents')}
           </TabsTrigger>
-          <TabsTrigger value="mandatory" className="flex items-center gap-2">
+          <TabsTrigger
+            value="mandatory"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
             <CheckCircle className="h-4 w-4" />
             {t('documents.mandatoryDocuments', 'Mandatory')}
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="unpublished" className="flex items-center gap-2">
+            <TabsTrigger
+              value="unpublished"
+              className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+            >
               <Clock className="h-4 w-4" />
               {t('documents.unpublishedDocuments', 'Unpublished')}
             </TabsTrigger>

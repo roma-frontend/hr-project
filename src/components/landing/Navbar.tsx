@@ -152,14 +152,14 @@ export default function Navbar() {
           {mounted &&
             [
               { name: t('landing.features'), href: '/features' },
-              { name: t('landing.pricing'), href: '#pricing' },
-              { name: t('landing.testimonials'), href: '#testimonials' },
-              { name: t('landing.faq'), href: '#faq' },
+              { name: t('landing.pricing'), href: '/#pricing' },
+              { name: t('landing.testimonials'), href: '/#testimonials' },
+              { name: t('landing.faq'), href: '/#faq' },
               { name: t('nav.recruitment', 'Careers'), href: '/careers' },
             ].map((item) => (
-              <a
+              <Link
                 key={item.name}
-                href={item.href.startsWith('#') && pathname !== '/' ? `/${item.href}` : item.href}
+                href={item.href}
                 className="text-sm transition-colors duration-200 font-medium focus:outline-none focus:underline underline-offset-4"
                 style={{ color: 'var(--landing-navbar-text)' }}
                 onMouseEnter={(e) =>
@@ -169,7 +169,7 @@ export default function Navbar() {
                 aria-label={`Navigate to ${item.name}`}
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
         </div>
 

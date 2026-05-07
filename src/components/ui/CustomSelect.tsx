@@ -114,6 +114,8 @@ export function CustomSelect({
               top: position.top,
               left: position.left,
               width: position.width,
+              background: 'var(--landing-modal-bg, #fff)',
+              border: '1px solid var(--landing-card-border, #e5e7eb)',
             }}
           >
             <div className="max-h-60 overflow-y-auto py-1">
@@ -129,11 +131,12 @@ export function CustomSelect({
                     className="w-full text-left px-3 py-2 text-sm truncate transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{
                       background: isSelected ? 'var(--primary)' : 'transparent',
-                      color: isSelected ? '#fff' : 'inherit',
+                      color: isSelected ? '#fff' : 'var(--landing-text-primary, #111827)',
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected && !isDisabled) {
-                        (e.target as HTMLElement).style.background = 'var(--muted)';
+                        (e.target as HTMLElement).style.background =
+                          'var(--landing-card-border, #e5e7eb)';
                       }
                     }}
                     onMouseLeave={(e) => {

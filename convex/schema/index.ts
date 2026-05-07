@@ -33,6 +33,7 @@ import { orgchart } from './orgchart';
 import { learning } from './learning';
 import { documents } from './documents';
 import { backups } from './backups';
+import { compensation } from './compensation';
 
 export default defineSchema({
   ...organizations,
@@ -69,6 +70,7 @@ export default defineSchema({
   ...learning,
   ...documents,
   ...backups,
+  ...compensation,
 });
 
 export {
@@ -106,4 +108,5 @@ export {
   learning,
   documents,
   backups,
+  compensation,
 };

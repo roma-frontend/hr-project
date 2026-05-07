@@ -8,6 +8,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import { CheckCircle2, Circle, Clock, AlertCircle } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export function TodayTasksPanel() {
   const { t, i18n } = useTranslation();
@@ -142,12 +143,12 @@ export function TodayTasksPanel() {
       </div>
 
       <div className="mt-3 px-2">
-        <a
+        <Link
           href="/tasks"
           className="block text-center text-xs text-(--primary) hover:underline font-medium"
         >
           View all tasks →
-        </a>
+        </Link>
       </div>
     </div>
   );

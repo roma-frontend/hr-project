@@ -29,6 +29,7 @@ import {
   HelpCircle,
   Cpu,
   Wallet,
+  DollarSign,
   Heart,
   ClipboardList,
   Target,
@@ -184,6 +185,12 @@ const navItems = [
     href: '/payroll',
     labelKey: 'nav.payroll',
     icon: Wallet,
+    roles: ['superadmin', 'admin', 'supervisor'],
+  },
+  {
+    href: '/compensation',
+    labelKey: 'nav.compensation',
+    icon: DollarSign,
     roles: ['superadmin', 'admin', 'supervisor'],
   },
   {

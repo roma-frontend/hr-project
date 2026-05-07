@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
     // Token validation is now handled server-side via httpOnly cookies
     // Client just checks if user data exists
-    if (!get().user) {
+    if (get().user) {
       get().logout();
     }
   },

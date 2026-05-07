@@ -645,21 +645,35 @@ export default function LearningClient() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="catalog" className="flex items-center gap-2">
+        <TabsList
+          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-4' : 'grid grid-cols-3'}`}
+        >
+          <TabsTrigger
+            value="catalog"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
             <BookOpen className="h-4 w-4" />
             {t('learning.courseCatalog', 'Course Catalog')}
           </TabsTrigger>
-          <TabsTrigger value="my-courses" className="flex items-center gap-2">
+          <TabsTrigger
+            value="my-courses"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
             <GraduationCap className="h-4 w-4" />
             {t('learning.myCourses', 'My Courses')}
           </TabsTrigger>
-          <TabsTrigger value="certificates" className="flex items-center gap-2">
+          <TabsTrigger
+            value="certificates"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
             <Award className="h-4 w-4" />
             {t('learning.certificates', 'Certificates')}
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="team" className="flex items-center gap-2">
+            <TabsTrigger
+              value="team"
+              className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+            >
               <BarChart3 className="h-4 w-4" />
               {t('learning.teamOverview', 'Team Overview')}
             </TabsTrigger>
