@@ -23,6 +23,7 @@ import {
   ThumbsDown,
   Hash,
   LucideIcon,
+  GripVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
@@ -38,6 +39,23 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,6 +85,57 @@ const STATUS_COLORS: Record<string, string> = {
   closed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
+// ── Sortable Question Component ──────────────────────────────────────────────
+
+function SortableQuestion({
+  question,
+  index,
+  onRemove,
+  t,
+}: {
+  question: QuestionDraft;
+  index: number;
+  onRemove: (idx: number) => void;
+  t: any;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `question-${index}`,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const TypeIcon = QUESTION_TYPE_CONFIG[question.type].icon;
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 rounded-md border bg-muted/30">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <TypeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+      <span className="text-sm flex-1 truncate">{question.text}</span>
+      <Badge variant="secondary" className="text-[10px]">
+        {t(QUESTION_TYPE_CONFIG[question.type].labelKey)}
+      </Badge>
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        className="text-destructive hover:text-destructive/80"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 // ── Create Survey Wizard ─────────────────────────────────────────────────────
 
 interface CreateSurveyWizardProps {
@@ -92,6 +161,33 @@ function CreateSurveyWizard({ open, onClose, organizationId, createdBy }: Create
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createSurveyMutation = useMutation(api.surveys.createSurvey);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setQuestions((items) => {
+        const oldIndex = items.findIndex((_, idx) => `question-${idx}` === active.id);
+        const newIndex = items.findIndex((_, idx) => `question-${idx}` === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          return arrayMove(items, oldIndex, newIndex);
+        }
+        return items;
+      });
+    }
+  };
 
   const steps = [
     {
@@ -288,30 +384,28 @@ function CreateSurveyWizard({ open, onClose, organizationId, createdBy }: Create
               <div className="space-y-4">
                 {/* Existing questions */}
                 {questions.length > 0 && (
-                  <div className="space-y-2">
-                    {questions.map((q, idx) => {
-                      const TypeIcon = QUESTION_TYPE_CONFIG[q.type].icon;
-                      return (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 p-2 rounded-md border bg-muted/30"
-                        >
-                          <TypeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm flex-1 truncate">{q.text}</span>
-                          <Badge variant="secondary" className="text-[10px]">
-                            {t(QUESTION_TYPE_CONFIG[q.type].labelKey)}
-                          </Badge>
-                          <button
-                            type="button"
-                            onClick={() => removeQuestion(idx)}
-                            className="text-destructive hover:text-destructive/80"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={questions.map((_, idx) => `question-${idx}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {questions.map((q, idx) => (
+                          <SortableQuestion
+                            key={`question-${idx}`}
+                            question={q}
+                            index={idx}
+                            onRemove={removeQuestion}
+                            t={t}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
 
                 {/* Add question form */}
@@ -759,93 +853,174 @@ function SurveyResultsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
             {results.survey.title} — {t('surveys.results')}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {results.totalResponses} {t('surveys.responses')}
-          </p>
+          <div className="flex items-center gap-3 mt-2">
+            <Badge variant="default">{results.totalResponses} {t('surveys.responses')}</Badge>
+            <Badge variant="secondary">{results.questionResults.length} {t('surveys.questions')}</Badge>
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {results.questionResults.map((qr: any, idx: number) => (
             <Card key={idx}>
-              <CardContent className="p-4 space-y-2">
-                <p className="text-sm font-medium">{qr.question.text}</p>
-
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-start gap-2">
+                  <span className="text-xs text-muted-foreground font-mono mt-0.5">{idx + 1}.</span>
+                  <span>{qr.question.text}</span>
+                </CardTitle>
+                {qr.question.description && (
+                  <p className="text-xs text-muted-foreground mt-1">{qr.question.description}</p>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-3">
                 {/* Rating / NPS average */}
                 {(qr.question.type === 'rating' || qr.question.type === 'nps') && (
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl font-bold text-primary">{qr.average?.toFixed(1)}</div>
-                    <div className="text-xs text-muted-foreground">
-                      / {qr.question.type === 'nps' ? '10' : '5'} avg
-                      <br />
-                      {qr.totalResponses} {t('surveys.responses')}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl font-bold text-primary">{qr.average?.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        / {qr.question.type === 'nps' ? '10' : '5'} avg
+                      </div>
                     </div>
+                    {/* Distribution bars */}
+                    {qr.distribution && (
+                      <div className="space-y-1">
+                        {Object.entries(qr.distribution)
+                          .sort(([a], [b]) => Number(a) - Number(b))
+                          .map(([val, count]) => {
+                            const pct = qr.totalResponses > 0 ? (Number(count) / qr.totalResponses) * 100 : 0;
+                            return (
+                              <div key={val} className="flex items-center gap-2">
+                                <span className="text-xs w-6 text-right font-mono">{val}</span>
+                                <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
+                                  <div
+                                    className="h-full bg-primary/70 rounded-full transition-all duration-300"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-muted-foreground w-10">
+                                  {String(count)} ({Math.round(pct)}%)
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Multiple choice bars */}
                 {qr.question.type === 'multiple_choice' && qr.optionCounts && (
-                  <div className="space-y-1">
-                    {Object.entries(qr.optionCounts).map(([opt, count]: [string, any]) => {
-                      const pct = qr.totalResponses > 0 ? (count / qr.totalResponses) * 100 : 0;
-                      return (
-                        <div key={opt} className="flex items-center gap-2">
-                          <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
-                            <div
-                              className="h-full bg-primary/70 rounded-full"
-                              style={{ width: `${pct}%` }}
-                            />
+                  <div className="space-y-2">
+                    {Object.entries(qr.optionCounts)
+                      .sort(([, a]: [string, any], [, b]: [string, any]) => b - a)
+                      .map(([opt, count]: [string, any]) => {
+                        const pct = qr.totalResponses > 0 ? (count / qr.totalResponses) * 100 : 0;
+                        return (
+                          <div key={opt} className="flex items-center gap-2">
+                            <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
+                              <div
+                                className="h-full bg-primary/70 rounded-full transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs w-24 text-right truncate">{opt}</span>
+                            <span className="text-xs text-muted-foreground w-12 text-right">
+                              {count} ({Math.round(pct)}%)
+                            </span>
                           </div>
-                          <span className="text-xs w-16 text-right">{opt}</span>
-                          <span className="text-xs text-muted-foreground w-8">
-                            {Math.round(pct)}%
-                          </span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 )}
 
                 {/* Yes/No */}
                 {qr.question.type === 'yes_no' && (
-                  <div className="flex gap-4 text-sm">
-                    <span className="text-green-600">
-                      👍 {qr.yesCount} (
-                      {qr.totalResponses > 0
-                        ? Math.round((qr.yesCount / qr.totalResponses) * 100)
-                        : 0}
-                      %)
-                    </span>
-                    <span className="text-red-600">
-                      👎 {qr.noCount} (
-                      {qr.totalResponses > 0
-                        ? Math.round((qr.noCount / qr.totalResponses) * 100)
-                        : 0}
-                      %)
-                    </span>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-green-600 flex items-center gap-1">
+                          <ThumbsUp className="h-4 w-4" />
+                          {t('surveys.yes')}
+                        </span>
+                        <span className="text-sm font-bold text-green-600">
+                          {qr.totalResponses > 0
+                            ? Math.round((qr.yesCount / qr.totalResponses) * 100)
+                            : 0}%
+                        </span>
+                      </div>
+                      <div className="bg-muted rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${
+                              qr.totalResponses > 0
+                                ? (qr.yesCount / qr.totalResponses) * 100
+                                : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{qr.yesCount} votes</p>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-red-600 flex items-center gap-1">
+                          <ThumbsDown className="h-4 w-4" />
+                          {t('surveys.no')}
+                        </span>
+                        <span className="text-sm font-bold text-red-600">
+                          {qr.totalResponses > 0
+                            ? Math.round((qr.noCount / qr.totalResponses) * 100)
+                            : 0}%
+                        </span>
+                      </div>
+                      <div className="bg-muted rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full bg-red-500 rounded-full transition-all duration-300"
+                          style={{
+                            width: `${
+                              qr.totalResponses > 0
+                                ? (qr.noCount / qr.totalResponses) * 100
+                                : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{qr.noCount} votes</p>
+                    </div>
                   </div>
                 )}
 
                 {/* Text responses */}
                 {qr.question.type === 'text' && qr.textResponses && (
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {qr.textResponses.slice(0, 5).map((text: string, i: number) => (
-                      <p key={i} className="text-xs bg-muted p-2 rounded">
-                        {text}
-                      </p>
-                    ))}
-                    {qr.textResponses.length > 5 && (
-                      <p className="text-xs text-muted-foreground">
-                        +{qr.textResponses.length - 5} more
-                      </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {qr.textResponses.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">No text responses yet</p>
+                    ) : (
+                      qr.textResponses.map((text: string, i: number) => (
+                        <div
+                          key={i}
+                          className="text-sm bg-muted/50 p-3 rounded-lg border border-border/50"
+                        >
+                          {text}
+                        </div>
+                      ))
                     )}
                   </div>
                 )}
+
+                {/* Response count */}
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground">
+                    {qr.totalResponses} {t('surveys.responses')}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ))}

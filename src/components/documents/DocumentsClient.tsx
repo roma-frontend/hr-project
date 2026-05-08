@@ -11,10 +11,40 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Upload, Eye, BarChart3, FolderOpen, CheckCircle, Clock } from 'lucide-react';
+import {
+  FileText,
+  Upload,
+  Eye,
+  BarChart3,
+  FolderOpen,
+  CheckCircle,
+  Clock,
+  Plus,
+  Trash2,
+  PenTool,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import DocumentUploadWizard from '@/components/documents/DocumentUploadWizard';
+import DocumentTemplateWizard from '@/components/documents/DocumentTemplateWizard';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type DocumentWithUploader = {
   _id: Id<'documents'>;
@@ -59,7 +89,9 @@ export default function DocumentsClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showUploadWizard, setShowUploadWizard] = useState(false);
+  const [showTemplateWizard, setShowTemplateWizard] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentWithUploader | null>(null);
+  const [createDocFromTemplate, setCreateDocFromTemplate] = useState<Id<'documentTemplates'> | null>(null);
 
   // Fetch data
   const documents = useQuery(
@@ -74,6 +106,13 @@ export default function DocumentsClient() {
         }
       : 'skip',
   );
+
+  const templates = useQuery(
+    api.signatures.listTemplates,
+    effectiveOrgId ? { organizationId: effectiveOrgId as Id<'organizations'> } : 'skip',
+  );
+
+  const deleteTemplateMutation = useMutation(api.signatures.deleteTemplate);
 
   const myViews = useQuery(
     api.documents.getMyDocumentViews,
@@ -208,6 +247,24 @@ export default function DocumentsClient() {
     );
   }
 
+  const handleTemplateSuccess = () => {
+    setShowTemplateWizard(false);
+  };
+
+  const handleDeleteTemplate = async (templateId: Id<'documentTemplates'>) => {
+    try {
+      await deleteTemplateMutation({ templateId });
+      toast.success(t('documents.templateDeleted', 'Template deleted successfully'));
+    } catch {
+      toast.error(t('documents.templateDeleteError', 'Failed to delete template'));
+    }
+  };
+
+  const handleCreateDocFromTemplate = (templateId: Id<'documentTemplates'>) => {
+    setCreateDocFromTemplate(templateId);
+    setShowUploadWizard(true);
+  };
+
   // Filter documents by tab
   const filteredDocuments = documents.filter((doc) => {
     if (activeTab === 'mandatory') return doc.isMandatory;
@@ -326,7 +383,7 @@ export default function DocumentsClient() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList
-          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-3' : 'grid grid-cols-2'}`}
+          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-4' : 'grid grid-cols-3'}`}
         >
           <TabsTrigger
             value="all"
@@ -351,11 +408,111 @@ export default function DocumentsClient() {
               {t('documents.unpublishedDocuments', 'Unpublished')}
             </TabsTrigger>
           )}
+          <TabsTrigger
+            value="templates"
+            className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center gap-2"
+          >
+            <FolderOpen className="h-4 w-4" />
+            {t('documents.templates', 'Templates')}
+          </TabsTrigger>
         </TabsList>
 
         {/* Documents List */}
-        <TabsContent value={activeTab} className="space-y-4">
-          {filteredDocuments.length === 0 ? (
+        <TabsContent value={activeTab === 'templates' ? 'templates' : activeTab} className="space-y-4">
+          {activeTab === 'templates' ? (
+            <div>
+              {/* Templates header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold">{t('documents.documentTemplates', 'Document Templates')}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t('documents.templatesDesc', 'Reusable templates for document signing')}
+                  </p>
+                </div>
+                {isAdmin && (
+                  <Button onClick={() => setShowTemplateWizard(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('documents.createTemplate', 'Create Template')}
+                  </Button>
+                )}
+              </div>
+
+              {/* Templates list */}
+              {templates === undefined ? (
+                <div className="flex items-center justify-center py-12">
+                  <ShieldLoader message={t('documents.loadingTemplates', 'Loading templates...')} />
+                </div>
+              ) : templates.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <FolderOpen className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                    <p className="text-muted-foreground">{t('documents.noTemplates', 'No templates available')}</p>
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        className="mt-3"
+                        onClick={() => setShowTemplateWizard(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        {t('documents.createFirstTemplate', 'Create your first template')}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map((template) => (
+                    <Card
+                      key={template._id}
+                      className="hover:shadow-md transition-shadow"
+                    >
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-3">
+                          <PenTool className="h-5 w-5 text-purple-500 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{template.title}</h3>
+                            {template.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {template.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {t(`documents.template${template.category.charAt(0).toUpperCase() + template.category.slice(1)}`, template.category)}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {template.fields.length} {t('documents.fields', 'fields')}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCreateDocFromTemplate(template._id)}
+                            className="flex-1"
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            {t('documents.useTemplate', 'Use Template')}
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteTemplate(template._id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : filteredDocuments.length === 0 ? (
             <Card>
               <CardContent className="pt-6 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -457,8 +614,21 @@ export default function DocumentsClient() {
       {/* Upload Wizard */}
       {showUploadWizard && (
         <DocumentUploadWizard
-          onClose={() => setShowUploadWizard(false)}
+          onClose={() => {
+            setShowUploadWizard(false);
+            setCreateDocFromTemplate(null);
+          }}
           onSuccess={handleWizardSuccess}
+          templateId={createDocFromTemplate || undefined}
+        />
+      )}
+
+      {/* Template Wizard */}
+      {showTemplateWizard && (
+        <DocumentTemplateWizard
+          open={showTemplateWizard}
+          onClose={() => setShowTemplateWizard(false)}
+          onSuccess={handleTemplateSuccess}
         />
       )}
     </div>

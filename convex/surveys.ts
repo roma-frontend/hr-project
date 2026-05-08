@@ -423,6 +423,109 @@ export const submitResponse = mutation({
   },
 });
 
+/**
+ * Reorder survey questions (drag-and-drop)
+ */
+export const reorderQuestions = mutation({
+  args: {
+    surveyId: v.id('surveys'),
+    organizationId: v.id('organizations'),
+    questionIds: v.array(v.id('surveyQuestions')),
+  },
+  handler: async (ctx, { surveyId, organizationId, questionIds }) => {
+    const survey = await ctx.db.get(surveyId);
+    if (!survey || survey.organizationId !== organizationId) {
+      throw new Error('Survey not found');
+    }
+
+    const questions = await ctx.db
+      .query('surveyQuestions')
+      .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
+      .collect();
+
+    const questionMap = new Map(questions.map((q) => [q._id, q]));
+
+    for (let i = 0; i < questionIds.length; i++) {
+      const questionId = questionIds[i]!;
+      const question = questionMap.get(questionId);
+      if (question && question.order !== i) {
+        await ctx.db.patch(questionId, { order: i });
+      }
+    }
+  },
+});
+
+/**
+ * Update an existing question's properties
+ */
+export const updateQuestion = mutation({
+  args: {
+    questionId: v.id('surveyQuestions'),
+    organizationId: v.id('organizations'),
+    text: v.optional(v.string()),
+    description: v.optional(v.string()),
+    isRequired: v.optional(v.boolean()),
+    options: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, { questionId, organizationId, ...updates }) => {
+    const question = await ctx.db.get(questionId);
+    if (!question || question.organizationId !== organizationId) {
+      throw new Error('Question not found');
+    }
+
+    const survey = await ctx.db.get(question.surveyId);
+    if (!survey || survey.status !== 'draft') {
+      throw new Error('Can only edit questions in draft surveys');
+    }
+
+    const patch: any = {};
+    if (updates.text !== undefined) patch.text = updates.text;
+    if (updates.description !== undefined) patch.description = updates.description;
+    if (updates.isRequired !== undefined) patch.isRequired = updates.isRequired;
+    if (updates.options !== undefined) patch.options = updates.options;
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(questionId, patch);
+    }
+  },
+});
+
+/**
+ * Delete a single question from a survey
+ */
+export const deleteQuestion = mutation({
+  args: {
+    questionId: v.id('surveyQuestions'),
+    organizationId: v.id('organizations'),
+  },
+  handler: async (ctx, { questionId, organizationId }) => {
+    const question = await ctx.db.get(questionId);
+    if (!question || question.organizationId !== organizationId) {
+      throw new Error('Question not found');
+    }
+
+    const survey = await ctx.db.get(question.surveyId);
+    if (!survey || survey.status !== 'draft') {
+      throw new Error('Can only delete questions from draft surveys');
+    }
+
+    // Reorder remaining questions
+    const remainingQuestions = await ctx.db
+      .query('surveyQuestions')
+      .withIndex('by_survey', (q) => q.eq('surveyId', question.surveyId))
+      .collect();
+
+    await ctx.db.delete(questionId);
+
+    for (let i = 0; i < remainingQuestions.length; i++) {
+      const q = remainingQuestions[i];
+      if (q && q._id !== questionId && q.order !== i) {
+        await ctx.db.patch(q._id, { order: i });
+      }
+    }
+  },
+});
+
 // ── Internal: Auto-activate surveys when startsAt is reached (cron) ─────────
 export const activateScheduledSurveys = internalMutation({
   args: {},

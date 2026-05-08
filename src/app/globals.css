@@ -16,6 +16,17 @@ body.scroll-locked {
   right: 0 !important;
 }
 
+/* Prevent layout shift when scrollbar appears/disappears */
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Override Radix UI scroll-lock compensation */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
 @import 'tailwindcss';
 @import '../styles/animations.css';
 

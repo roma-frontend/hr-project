@@ -144,9 +144,10 @@ function getSteps(t: (key: string, fallback: string) => string) {
 interface DocumentUploadWizardProps {
   onClose: () => void;
   onSuccess: () => void;
+  templateId?: Id<'documentTemplates'>;
 }
 
-export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUploadWizardProps) {
+export default function DocumentUploadWizard({ onClose, onSuccess, templateId }: DocumentUploadWizardProps) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
@@ -179,6 +180,21 @@ export default function DocumentUploadWizard({ onClose, onSuccess }: DocumentUpl
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<DocumentCategory>('other');
   const [tagsInput, setTagsInput] = useState('');
+
+  // Fetch template if provided
+  const templateData = useQuery(
+    api.signatures.getDocument,
+    templateId ? { documentId: templateId as any } : 'skip',
+  );
+
+  // Prefill from template
+  React.useEffect(() => {
+    if (templateData && !title) {
+      setTitle(templateData.title);
+      setDescription(templateData.description || '');
+      setCategory('template');
+    }
+  }, [templateData, title]);
 
   // Step 3: Settings
   const [isMandatory, setIsMandatory] = useState(false);

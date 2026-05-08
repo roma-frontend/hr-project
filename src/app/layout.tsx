@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
 import React, { Suspense } from 'react';
+import Script from 'next/script';
 import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
 import { AppProviders } from '@/components/AppProviders';
@@ -158,6 +159,38 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {/* Preconnect to Google for OAuth (user authentication) */}
         <link rel="preconnect" href="https://accounts.google.com" />
         <link rel="preconnect" href="https://oauth2.googleapis.com" />
+
+        {/* Block Radix UI from adding scroll-lock compensation styles to <body> */}
+        <Script
+          id="radix-scroll-lock-patch"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var locked = false;
+                var origSetProperty = CSSStyleDeclaration.prototype.setProperty;
+                var origRemoveProperty = CSSStyleDeclaration.prototype.removeProperty;
+
+                CSSStyleDeclaration.prototype.setProperty = function(p, v, pr) {
+                  if (p === 'data-scroll-locked' || p === '--removed-body-scroll-bar-size') {
+                    locked = (v !== '');
+                    return;
+                  }
+                  if (locked && this === document.body.style &&
+                      (p === 'margin-right' || p === 'padding-right' || p === 'position')) {
+                    return;
+                  }
+                  return origSetProperty.call(this, p, v, pr);
+                };
+
+                CSSStyleDeclaration.prototype.removeProperty = function(p) {
+                  if (p === 'data-scroll-locked') { locked = false; return; }
+                  return origRemoveProperty.call(this, p);
+                };
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         className={`${ibmPlexSans.variable} ${inter.variable} ${notoSansArmenian.variable} antialiased`}

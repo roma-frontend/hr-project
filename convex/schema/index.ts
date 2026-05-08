@@ -36,6 +36,7 @@ import { backups } from './backups';
 import { compensation } from './compensation';
 import { departments } from './departments';
 import { positions } from './positions';
+import { compliance } from './compliance';
 
 export default defineSchema({
   ...organizations,
@@ -75,6 +76,7 @@ export default defineSchema({
   ...compensation,
   ...departments,
   ...positions,
+  ...compliance,
 });
 
 export {
@@ -115,4 +117,5 @@ export {
   compensation,
   departments,
   positions,
+  compliance,
 };

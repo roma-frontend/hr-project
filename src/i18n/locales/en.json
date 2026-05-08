@@ -6313,7 +6313,10 @@
       }
     }
   },
-  "loading": "Loading...",
+  "loading": {
+    "default": "Loading...",
+    "workspace": "Loading your workspace..."
+  },
   "subscription": {
     "trial": "Trial",
     "active": "Active",

@@ -11,7 +11,7 @@ export default function Loading() {
       className="min-h-screen flex items-center justify-center"
       style={{ background: 'var(--background)' }}
     >
-      <ShieldLoader size="xl" message="Loading your workspace..." />
+      <ShieldLoader size="xl" message={t('loading.workspace', 'Loading your workspace...')} />
     </div>
   );
 }

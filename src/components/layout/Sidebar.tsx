@@ -42,6 +42,7 @@ import {
   GraduationCap,
   FileText,
   Database,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -197,7 +198,7 @@ const navItems: NavEntry[] = [
         labelKey: 'nav.events',
         icon: Calendar,
         roles: ['superadmin', 'admin'],
-      },
+    },
     ],
   },
 
@@ -207,7 +208,7 @@ const navItems: NavEntry[] = [
     href: '/drivers',
     labelKey: 'nav.people',
     icon: User,
-    roles: ['superadmin', 'admin', 'supervisor'],
+    roles: ['superadmin', 'admin', 'supervisor', 'driver'],
     children: [
       { href: '/drivers', labelKey: 'nav.drivers', icon: Car },
       {
@@ -287,6 +288,12 @@ const navItems: NavEntry[] = [
         roles: ['superadmin'],
       },
       {
+        href: '/compliance',
+        labelKey: 'nav.compliance',
+        icon: ClipboardCheck,
+        roles: ['superadmin', 'admin'],
+      },
+      {
         href: '/ai-site-editor',
         labelKey: 'nav.aiSiteEditor',
         icon: Sparkles,
@@ -305,6 +312,7 @@ export function Sidebar() {
   const [mounted, setMounted] = React.useState(false);
   const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
   const [activeSubNav, setActiveSubNav] = React.useState<NavItem | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => setMounted(true), []);
 
@@ -366,19 +374,55 @@ export function Sidebar() {
     document.title = count > 0 ? `(${count}) Shield HR` : 'Shield HR';
   }, [chatUnreadCount]);
 
-  if (!mounted) return null;
-
   // Get user role with fallback
   const userRole = user?.role ?? 'employee';
 
   const visibleItems = navItems.filter((item, index, arr) => {
     if (isSeparator(item)) {
-      // Only show separator if there's at least one visible nav item after it (before next separator or end)
-      const nextItems = arr.slice(index + 1);
-      return nextItems.some((n) => !isSeparator(n) && n.roles.includes(userRole));
+      if (userRole === 'driver' || userRole === 'employee') return false;
+      let hasVisibleItem = false;
+      for (let i = index + 1; i < arr.length; i++) {
+        const next = arr[i];
+        if (!next) break;
+        if (isSeparator(next)) break;
+        if (next.roles.includes(userRole)) {
+          hasVisibleItem = true;
+          break;
+        }
+      }
+      return hasVisibleItem;
     }
     return item.roles.includes(userRole);
   }) as NavEntry[];
+
+  // Filter items based on search query
+  const filteredItems = (() => {
+    if (!searchQuery.trim()) return visibleItems;
+    const query = searchQuery.toLowerCase();
+    const result: NavEntry[] = [];
+    for (const entry of visibleItems) {
+      if (isSeparator(entry)) {
+        const idx = visibleItems.indexOf(entry);
+        const next = visibleItems[idx + 1];
+        if (next && !isSeparator(next)) {
+          const label = t(next.labelKey).toLowerCase();
+          const childMatch = next.children?.some((c) => t(c.labelKey).toLowerCase().includes(query));
+          if (label.includes(query) || childMatch) {
+            result.push(entry);
+          }
+        }
+      } else {
+        const label = t(entry.labelKey).toLowerCase();
+        const childMatch = entry.children?.some((c) => t(c.labelKey).toLowerCase().includes(query));
+        if (label.includes(query) || childMatch) {
+          result.push(entry);
+        }
+      }
+    }
+    return result;
+  })();
+
+  if (!mounted) return null;
 
   return (
     <aside
@@ -475,6 +519,29 @@ export function Sidebar() {
         <OrganizationSelector collapsed={collapsed} />
       </div>
 
+      {/* Search Input */}
+      {!collapsed && (
+        <div className="px-2 py-2 border-b border-sidebar-border">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('sidebar.search', 'Search...')}
+              className="w-full px-3 py-2 rounded-lg text-sm bg-background border border-sidebar-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation Links */}
       <nav className="flex-1 overflow-hidden relative">
         <div className="relative h-full">
@@ -487,7 +554,7 @@ export function Sidebar() {
               pointerEvents: activeSubNav ? 'none' : 'auto',
             }}
           >
-            {visibleItems.map((entry, index) => {
+            {filteredItems.map((entry, index) => {
               if (isSeparator(entry)) {
                 return (
                   <div
@@ -911,6 +978,7 @@ export function MobileSidebar() {
   const [mounted, setMounted] = React.useState(false);
   const sidebarRef = React.useRef<HTMLDivElement>(null);
   const [activeSubNav, setActiveSubNav] = React.useState<NavItem | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => setMounted(true), []);
 
@@ -983,18 +1051,57 @@ export function MobileSidebar() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [mobileOpen, setMobileOpen]);
 
-  if (!mounted) return null;
-
   // Get user role with fallback
   const userRole = user?.role ?? 'employee';
 
   const visibleItems = navItems.filter((item, index, arr) => {
     if (isSeparator(item)) {
-      const nextItems = arr.slice(index + 1);
-      return nextItems.some((n) => !isSeparator(n) && n.roles.includes(userRole));
+      // Hide section headers for driver/employee roles
+      if (userRole === 'driver' || userRole === 'employee') return false;
+      // For other roles, only show separator if there's at least one visible nav item in this section
+      let hasVisibleItem = false;
+      for (let i = index + 1; i < arr.length; i++) {
+        const next = arr[i];
+        if (!next) break;
+        if (isSeparator(next)) break;
+        if (next.roles.includes(userRole)) {
+          hasVisibleItem = true;
+          break;
+        }
+      }
+      return hasVisibleItem;
     }
     return item.roles.includes(userRole);
   });
+
+  // Filter items based on search query
+  const mobileFilteredItems = (() => {
+    if (!searchQuery.trim()) return visibleItems;
+    const query = searchQuery.toLowerCase();
+    const result: NavEntry[] = [];
+    for (const entry of visibleItems) {
+      if (isSeparator(entry)) {
+        const idx = visibleItems.indexOf(entry);
+        const next = visibleItems[idx + 1];
+        if (next && !isSeparator(next)) {
+          const label = t(next.labelKey).toLowerCase();
+          const childMatch = next.children?.some((c) => t(c.labelKey).toLowerCase().includes(query));
+          if (label.includes(query) || childMatch) {
+            result.push(entry);
+          }
+        }
+      } else {
+        const label = t(entry.labelKey).toLowerCase();
+        const childMatch = entry.children?.some((c) => t(c.labelKey).toLowerCase().includes(query));
+        if (label.includes(query) || childMatch) {
+          result.push(entry);
+        }
+      }
+    }
+    return result;
+  })();
+
+  if (!mounted) return null;
 
   return (
     <>
@@ -1077,6 +1184,34 @@ export function MobileSidebar() {
           <OrganizationSelector collapsed={false} />
         </div>
 
+        {/* Search Input Mobile */}
+        <div
+          className="px-2 py-2 border-b"
+          style={{
+            borderColor: 'var(--sidebar-border)',
+            opacity: mobileOpen ? 1 : 0,
+            transition: 'opacity 0.25s ease 0.05s',
+          }}
+        >
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('sidebar.search', 'Search...')}
+              className="w-full px-3 py-2 rounded-lg text-sm bg-background border border-sidebar-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Navigation */}
         <nav className="flex-1 overflow-hidden relative">
           <div className="relative h-full">
@@ -1091,7 +1226,7 @@ export function MobileSidebar() {
                 pointerEvents: activeSubNav ? 'none' : 'auto',
               }}
             >
-              {visibleItems.map((entry, index) => {
+            {mobileFilteredItems.map((entry, index) => {
                 if (isSeparator(entry)) {
                   return (
                     <div

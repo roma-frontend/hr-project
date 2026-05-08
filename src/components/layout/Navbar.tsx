@@ -2,16 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTheme } from '@/components/ThemeProvider';
 import { useTranslation } from 'react-i18next';
 // framer-motion removed — replaced with CSS transitions to reduce main-thread work,
 // eliminate forced reflow from JS-driven animations, and defer the framer-motion bundle
 import {
   Menu,
   Bell,
-  Sun,
-  Moon,
-  Monitor,
   LogOut,
   User,
   Settings,
@@ -65,6 +61,7 @@ import { TeamPresence } from '@/components/productivity/TeamPresence';
 import { PomodoroTimer } from '@/components/productivity/PomodoroTimer';
 import { FocusMode } from '@/components/productivity/FocusMode';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { useStatusUpdate } from '@/context/StatusUpdateContext';
 
 function getInitials(name: string) {
@@ -79,7 +76,6 @@ function getInitials(name: string) {
 export function Navbar() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { theme, setTheme, resolvedTheme } = useTheme();
   const { setMobileOpen } = useSidebarStore();
   const user = useAuthStore(useShallow((state: { user: UserType | null }) => state.user));
   const logout = useAuthStore((state) => state.logout);
@@ -369,56 +365,8 @@ export function Navbar() {
           {/* Language Switcher */}
           <LanguageSwitcher />
 
-          {/* Theme selector dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-(--text-muted) hover:text-(--text-primary)"
-                title={t('settings.theme', { defaultValue: 'Theme' })}
-                aria-label={t('settings.theme', { defaultValue: 'Select theme' })}
-              >
-                {resolvedTheme === 'dark' ? (
-                  <Moon className="w-5 h-5" />
-                ) : (
-                  <Sun className="w-5 h-5" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => setTheme('light')}
-                className={theme === 'light' ? 'bg-[#01579b]/10' : ''}
-              >
-                <Sun className="w-4 h-4 mr-2" />
-                {t('settings.lightMode', { defaultValue: 'Light' })}
-                {theme === 'light' && <span className="ml-auto">✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTheme('dark')}
-                className={theme === 'dark' ? 'bg-[#0ea5e9]/10' : ''}
-              >
-                <Moon className="w-4 h-4 mr-2" />
-                {t('settings.darkMode', { defaultValue: 'Dark' })}
-                {theme === 'dark' && <span className="ml-auto">✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTheme('system')}
-                className={
-                  theme === 'system'
-                    ? resolvedTheme === 'dark'
-                      ? 'bg-[#0ea5e9]/10'
-                      : 'bg-[#01579b]/10'
-                    : ''
-                }
-              >
-                <Monitor className="w-4 h-4 mr-2" />
-                {t('settings.systemMode', { defaultValue: 'System' })}
-                {theme === 'system' && <span className="ml-auto">✓</span>}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Theme selector */}
+          <ThemeSwitcher />
 
           {/* User dropdown - only show when logged in */}
           {user ? (

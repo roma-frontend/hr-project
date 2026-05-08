@@ -12,6 +12,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from 'sonner';
 import { MaintenanceAutoLogout } from '@/components/MaintenanceAutoLogout';
 import { HtmlLangUpdater } from '@/components/HtmlLangUpdater';
+import { RadixScrollLockFix } from './RadixScrollLockFix';
 
 /**
  * Combined app provider to reduce nesting depth in layout.
@@ -35,6 +36,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     disableTransitionOnChange
                   >
                     {children}
+                    <RadixScrollLockFix />
                     <Toaster
                       position="top-right"
                       closeButton
