@@ -218,7 +218,7 @@ export default function DocumentsClient() {
   return (
     <div className="mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 py-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
             {t('documents.title', 'Document Management')}
@@ -309,7 +309,7 @@ export default function DocumentsClient() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full grid grid-cols-2 md:grid-cols-3 px-4 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="all">{t('documents.allCategories', 'All Categories')}</option>
             <option value="policy">{t('documents.categoryPolicy', 'Policy')}</option>

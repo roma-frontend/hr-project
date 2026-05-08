@@ -7078,6 +7078,16 @@
       "all": "All Time"
     },
     "category": "Category",
+    "categories": {
+      "teamwork": "Teamwork",
+      "innovation": "Innovation",
+      "leadership": "Leadership",
+      "dedication": "Dedication",
+      "customerFocus": "Customer Focus",
+      "mentorship": "Mentorship",
+      "excellence": "Excellence",
+      "aboveAndBeyond": "Above & Beyond"
+    },
     "form": {
       "recipient": "Recipient",
       "selectRecipient": "Select a colleague...",

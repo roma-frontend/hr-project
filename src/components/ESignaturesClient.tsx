@@ -1059,9 +1059,9 @@ export function ESignaturesClient() {
   };
 
   return (
-    <div className="p-0 md:p-6 space-y-4">
+    <div className="p-0 md:p-6 py-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
         <div>
           <h1 className="text-2xl font-bold">{t('signatures.title', 'E-Signatures')}</h1>
           <p className="text-sm text-muted-foreground">
@@ -1093,7 +1093,7 @@ export function ESignaturesClient() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-lg bg-yellow-100">

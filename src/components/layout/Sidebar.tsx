@@ -308,6 +308,11 @@ export function Sidebar() {
 
   React.useEffect(() => setMounted(true), []);
 
+  // Close sub-nav when sidebar collapses
+  React.useEffect(() => {
+    if (collapsed) setActiveSubNav(null);
+  }, [collapsed]);
+
   // Get user's organization
   const userOrg = useQuery(
     api.organizations.getMyOrganization,
@@ -470,14 +475,14 @@ export function Sidebar() {
                 return (
                   <div
                     key={`sep-${entry.labelKey || index}`}
-                    className="pt-4 pb-1 px-3"
+                    className={cn('pt-4 pb-1', collapsed ? 'px-1' : 'px-3')}
                     style={{
                       opacity: activeSubNav ? 0 : 1,
                       transform: activeSubNav ? 'translateX(-20px)' : 'translateX(0)',
                       transition: `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.02}s`,
                     }}
                   >
-                    {entry.labelKey && (
+                    {!collapsed && entry.labelKey && (
                       <p
                         className="text-[10px] font-semibold uppercase tracking-wider"
                         style={{ color: 'var(--text-muted)' }}
@@ -485,7 +490,7 @@ export function Sidebar() {
                         {t(entry.labelKey)}
                       </p>
                     )}
-                    {!entry.labelKey && (
+                    {(collapsed || !entry.labelKey) && (
                       <div className="h-px" style={{ backgroundColor: 'var(--sidebar-border)' }} />
                     )}
                   </div>
@@ -524,73 +529,140 @@ export function Sidebar() {
                   }}
                 >
                   {hasChildren ? (
-                    <button
-                      onClick={() => setActiveSubNav(item)}
-                      onMouseEnter={() => setHoveredItem(item.href)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                      className={cn(
-                        'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full',
-                        'focus:outline-none focus:ring-2 focus:ring-primary/30',
-                        isActive
-                          ? 'bg-sidebar-item-active shadow-sm text-sidebar-item-active-text'
-                          : cn(
-                              'text-sidebar-text',
-                              hoveredItem === item.href
-                                ? 'bg-sidebar-item-hover'
-                                : 'bg-transparent',
-                            ),
-                      )}
-                    >
-                      {isActive && (
-                        <div
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                          style={{
-                            background:
-                              'linear-gradient(180deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)',
-                            animation: 'slideIn 0.3s ease-out',
-                          }}
-                        />
-                      )}
-                      <div className="relative">
-                        <Icon
-                          className={cn(
-                            'w-5 h-5 transition-all duration-200',
-                            isActive ? 'scale-110' : '',
-                          )}
-                          style={{
-                            color: isActive
-                              ? 'var(--sidebar-item-active-text)'
-                              : 'var(--text-disabled)',
-                          }}
-                        />
-                        {showBadge && (
-                          <span
+                    collapsed ? (
+                      <Link
+                        href={item.href}
+                        onMouseEnter={() => setHoveredItem(item.href)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className={cn(
+                          'group relative flex items-center justify-center px-3 py-2.5 rounded-xl transition-all duration-200 w-full',
+                          'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                          isActive
+                            ? 'bg-sidebar-item-active shadow-sm text-sidebar-item-active-text'
+                            : cn(
+                                'text-sidebar-text',
+                                hoveredItem === item.href
+                                  ? 'bg-sidebar-item-hover'
+                                  : 'bg-transparent',
+                              ),
+                        )}
+                        title={t(item.labelKey)}
+                      >
+                        {isActive && (
+                          <div
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                            style={{
+                              background:
+                                'linear-gradient(180deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)',
+                              animation: 'slideIn 0.3s ease-out',
+                            }}
+                          />
+                        )}
+                        <div className="relative">
+                          <Icon
                             className={cn(
-                              'absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center shadow-lg',
-                              item.href === '/chat'
-                                ? 'bg-linear-to-r from-red-500 to-red-600 animate-chat-badge'
-                                : 'bg-linear-to-r from-red-500 to-red-600 animate-pulse',
+                              'w-5 h-5 transition-all duration-200',
+                              isActive ? 'scale-110' : '',
                             )}
-                          >
-                            {badgeCount > 9 ? '9+' : badgeCount}
-                          </span>
+                            style={{
+                              color: isActive
+                                ? 'var(--sidebar-item-active-text)'
+                                : 'var(--text-disabled)',
+                            }}
+                          />
+                          {showBadge && (
+                            <span
+                              className={cn(
+                                'absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center shadow-lg',
+                                item.href === '/chat'
+                                  ? 'bg-linear-to-r from-red-500 to-red-600 animate-chat-badge'
+                                  : 'bg-linear-to-r from-red-500 to-red-600 animate-pulse',
+                              )}
+                            >
+                              {badgeCount > 9 ? '9+' : badgeCount}
+                            </span>
+                          )}
+                          {item.badge === 'AI' && (
+                            <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-purple-500 to-pink-500 text-white text-[8px] font-bold shadow-lg">
+                              AI
+                            </span>
+                          )}
+                          {item.badge === 'SEC' && (
+                            <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-blue-600 to-cyan-500 text-white text-[8px] font-bold shadow-lg">
+                              🛡
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => setActiveSubNav(item)}
+                        onMouseEnter={() => setHoveredItem(item.href)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className={cn(
+                          'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 w-full',
+                          'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                          isActive
+                            ? 'bg-sidebar-item-active shadow-sm text-sidebar-item-active-text'
+                            : cn(
+                                'text-sidebar-text',
+                                hoveredItem === item.href
+                                  ? 'bg-sidebar-item-hover'
+                                  : 'bg-transparent',
+                              ),
                         )}
-                        {item.badge === 'AI' && (
-                          <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-purple-500 to-pink-500 text-white text-[8px] font-bold shadow-lg">
-                            AI
-                          </span>
+                      >
+                        {isActive && (
+                          <div
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                            style={{
+                              background:
+                                'linear-gradient(180deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)',
+                              animation: 'slideIn 0.3s ease-out',
+                            }}
+                          />
                         )}
-                        {item.badge === 'SEC' && (
-                          <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-blue-600 to-cyan-500 text-white text-[8px] font-bold shadow-lg">
-                            🛡
-                          </span>
-                        )}
-                      </div>
-                      <span className="flex-1 text-sm font-medium truncate text-left">
-                        {t(item.labelKey)}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-text-muted transition-transform duration-300 group-hover:translate-x-0.5" />
-                    </button>
+                        <div className="relative">
+                          <Icon
+                            className={cn(
+                              'w-5 h-5 transition-all duration-200',
+                              isActive ? 'scale-110' : '',
+                            )}
+                            style={{
+                              color: isActive
+                                ? 'var(--sidebar-item-active-text)'
+                                : 'var(--text-disabled)',
+                            }}
+                          />
+                          {showBadge && (
+                            <span
+                              className={cn(
+                                'absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center shadow-lg',
+                                item.href === '/chat'
+                                  ? 'bg-linear-to-r from-red-500 to-red-600 animate-chat-badge'
+                                  : 'bg-linear-to-r from-red-500 to-red-600 animate-pulse',
+                              )}
+                            >
+                              {badgeCount > 9 ? '9+' : badgeCount}
+                            </span>
+                          )}
+                          {item.badge === 'AI' && (
+                            <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-purple-500 to-pink-500 text-white text-[8px] font-bold shadow-lg">
+                              AI
+                            </span>
+                          )}
+                          {item.badge === 'SEC' && (
+                            <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded bg-linear-to-r from-blue-600 to-cyan-500 text-white text-[8px] font-bold shadow-lg">
+                              🛡
+                            </span>
+                          )}
+                        </div>
+                        <span className="flex-1 text-sm font-medium truncate text-left">
+                          {t(item.labelKey)}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-text-muted transition-transform duration-300 group-hover:translate-x-0.5" />
+                      </button>
+                    )
                   ) : (
                     <Link
                       href={item.href}
@@ -665,89 +737,95 @@ export function Sidebar() {
           </div>
 
           {/* Sub-navigation view */}
-          <div
-            className="space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] p-2"
-            style={{
-              transform: activeSubNav ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.95)',
-              opacity: activeSubNav ? 1 : 0,
-              pointerEvents: activeSubNav ? 'auto' : 'none',
-            }}
-          >
-            {/* Back button */}
-            <button
-              onClick={() => setActiveSubNav(null)}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2.5 rounded-xl text-text-muted hover:bg-sidebar-item-hover transition-all duration-300 w-full mb-2',
-                'group/back',
-              )}
+          {!collapsed && (
+            <div
+              className="space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] p-2"
               style={{
+                transform: activeSubNav ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.95)',
                 opacity: activeSubNav ? 1 : 0,
-                transform: activeSubNav ? 'translateX(0)' : 'translateX(20px)',
-                transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${activeSubNav ? '0.1s' : '0ms'}`,
+                pointerEvents: activeSubNav ? 'auto' : 'none',
               }}
             >
-              <ChevronLeft className="w-4 h-4 transition-transform duration-300 group-hover/back:-translate-x-0.5" />
-              <span className="text-sm font-medium">
-                {activeSubNav ? t(activeSubNav.labelKey) : ''}
-              </span>
-            </button>
+              {/* Back button */}
+              <button
+                onClick={() => setActiveSubNav(null)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2.5 rounded-xl text-text-muted hover:bg-sidebar-item-hover transition-all duration-300 w-full mb-2',
+                  'group/back',
+                )}
+                style={{
+                  opacity: activeSubNav ? 1 : 0,
+                  transform: activeSubNav ? 'translateX(0)' : 'translateX(20px)',
+                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${activeSubNav ? '0.1s' : '0ms'}`,
+                }}
+              >
+                <ChevronLeft className="w-4 h-4 transition-transform duration-300 group-hover/back:-translate-x-0.5" />
+                <span className="text-sm font-medium">
+                  {activeSubNav ? t(activeSubNav.labelKey) : ''}
+                </span>
+              </button>
 
-            {/* Sub-nav items */}
-            {activeSubNav?.children
-              ?.filter((child) => !child.roles || child.roles.includes(userRole))
-              .map((child, index) => {
-                const ChildIcon = (child.icon || activeSubNav.icon) as LucideIcon;
-                const isChildActive =
-                  pathname === child.href || pathname.startsWith(child.href + '/');
+              {/* Sub-nav items */}
+              {activeSubNav?.children
+                ?.filter((child) => !child.roles || child.roles.includes(userRole))
+                .map((child, index) => {
+                  const ChildIcon = (child.icon || activeSubNav.icon) as LucideIcon;
+                  const isChildActive =
+                    pathname === child.href || pathname.startsWith(child.href + '/');
 
-                return (
-                  <Link
-                    key={child.href}
-                    href={child.href}
-                    onMouseEnter={() => setHoveredItem(child.href)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    className={cn(
-                      'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-                      'focus:outline-none focus:ring-2 focus:ring-primary/30',
-                      isChildActive
-                        ? 'bg-sidebar-item-active shadow-sm text-sidebar-item-active-text'
-                        : cn(
-                            'text-sidebar-text',
-                            hoveredItem === child.href ? 'bg-sidebar-item-hover' : 'bg-transparent',
-                          ),
-                    )}
-                    style={{
-                      opacity: activeSubNav ? 1 : 0,
-                      transform: activeSubNav ? 'translateX(0)' : 'translateX(30px)',
-                      transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${activeSubNav ? 0.15 + index * 0.05 : 0}s`,
-                    }}
-                  >
-                    {isChildActive && (
-                      <div
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                        style={{
-                          background:
-                            'linear-gradient(180deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)',
-                          animation: 'slideIn 0.3s ease-out',
-                        }}
-                      />
-                    )}
-                    <ChildIcon
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onMouseEnter={() => setHoveredItem(child.href)}
+                      onMouseLeave={() => setHoveredItem(null)}
                       className={cn(
-                        'w-5 h-5 transition-all duration-200',
-                        isChildActive && 'scale-110',
+                        'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
+                        'focus:outline-none focus:ring-2 focus:ring-primary/30',
+                        isChildActive
+                          ? 'bg-sidebar-item-active shadow-sm text-sidebar-item-active-text'
+                          : cn(
+                              'text-sidebar-text',
+                              hoveredItem === child.href
+                                ? 'bg-sidebar-item-hover'
+                                : 'bg-transparent',
+                            ),
                       )}
                       style={{
-                        color: isChildActive
-                          ? 'var(--sidebar-item-active-text)'
-                          : 'var(--text-disabled)',
+                        opacity: activeSubNav ? 1 : 0,
+                        transform: activeSubNav ? 'translateX(0)' : 'translateX(30px)',
+                        transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${activeSubNav ? 0.15 + index * 0.05 : 0}s`,
                       }}
-                    />
-                    <span className="flex-1 text-sm font-medium truncate">{t(child.labelKey)}</span>
-                  </Link>
-                );
-              })}
-          </div>
+                    >
+                      {isChildActive && (
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                          style={{
+                            background:
+                              'linear-gradient(180deg, var(--primary) 0%, var(--primary-dark, var(--primary)) 100%)',
+                            animation: 'slideIn 0.3s ease-out',
+                          }}
+                        />
+                      )}
+                      <ChildIcon
+                        className={cn(
+                          'w-5 h-5 transition-all duration-200',
+                          isChildActive && 'scale-110',
+                        )}
+                        style={{
+                          color: isChildActive
+                            ? 'var(--sidebar-item-active-text)'
+                            : 'var(--text-disabled)',
+                        }}
+                      />
+                      <span className="flex-1 text-sm font-medium truncate">
+                        {t(child.labelKey)}
+                      </span>
+                    </Link>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </nav>
 
@@ -949,7 +1027,7 @@ export function MobileSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-hidden py-4 ps-3 relative">
+        <nav className="flex-1 overflow-hidden relative">
           <div className="relative h-full">
             {/* Main navigation view */}
             <div

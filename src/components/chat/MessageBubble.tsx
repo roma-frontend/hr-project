@@ -370,6 +370,7 @@ export const MessageBubble = React.memo(function MessageBubble({
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editFocused, setEditFocused] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -679,7 +680,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
         <div
           className={cn(
-            'flex flex-col max-w-[95%] xs:max-w-[90%] sm:max-w-[80%] md:max-w-[65%] min-w-0',
+            'flex flex-col max-w-[95%] xs:max-w-[90%] sm:max-w-[80%] md:max-w-[65%] w-full min-w-0',
             isOwn ? 'items-end' : 'items-start',
           )}
         >
@@ -720,13 +721,26 @@ export const MessageBubble = React.memo(function MessageBubble({
             }}
           >
             {editing ? (
-              <div className="flex items-end gap-2 min-w-45">
+              <div className="space-y-2">
+                {/* Edit header */}
+                <div className="flex items-center gap-1.5 text-[10px] font-medium opacity-60">
+                  <Edit2 className="w-3 h-3" />
+                  {L.edit}
+                </div>
+                {/* Edit textarea */}
                 <textarea
                   autoFocus
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
-                  className="flex-1 bg-transparent outline-none resize-none text-sm"
-                  style={{ color: isOwn ? 'white' : 'var(--text-primary)' }}
+                  onFocus={() => setEditFocused(true)}
+                  onBlur={() => setEditFocused(false)}
+                  className="w-full bg-transparent outline-none resize-none text-sm leading-relaxed min-h-[60px] max-h-[200px]"
+                  style={{
+                    color: isOwn ? 'white' : 'var(--text-primary)',
+                    borderColor: editFocused ? 'var(--primary)' : 'transparent',
+                    borderBottom: `1px solid ${editFocused ? 'var(--primary)' : 'var(--border)'}`,
+                    paddingBottom: '4px',
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -734,20 +748,31 @@ export const MessageBubble = React.memo(function MessageBubble({
                     }
                     if (e.key === 'Escape') setEditing(false);
                   }}
-                  rows={1}
                 />
-                <button
-                  onClick={handleEdit}
-                  className="text-xs opacity-80 hover:opacity-100 transition-opacity"
-                >
-                  ✓
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="text-xs opacity-80 hover:opacity-100 transition-opacity"
-                >
-                  ✕
-                </button>
+                {/* Action buttons */}
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-all duration-150 hover:opacity-80"
+                    style={{
+                      background: 'transparent',
+                      color: isOwn ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {L.cancel}
+                  </button>
+                  <button
+                    onClick={handleEdit}
+                    disabled={!editContent.trim()}
+                    className="px-3 py-1 rounded-lg text-xs font-medium transition-all duration-150 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      background: isOwn ? 'rgba(255,255,255,0.2)' : 'var(--primary)',
+                      color: isOwn ? 'white' : 'white',
+                    }}
+                  >
+                    {L.edit}
+                  </button>
+                </div>
               </div>
             ) : (
               message.content && (

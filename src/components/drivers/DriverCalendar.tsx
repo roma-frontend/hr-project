@@ -315,7 +315,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
   return (
     <div className="space-y-3 sm:space-y-4 p-2 sm:p-3 md:p-4 lg:p-6">
       {/* Calendar Header - Modern Design */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center bg-muted/50 rounded-xl p-1 gap-1">
             <Button

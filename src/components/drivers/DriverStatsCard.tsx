@@ -112,7 +112,7 @@ export function DriverStatsCard({ driverId, organizationId }: DriverStatsCardPro
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Period Selector & Export */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
         <div className="flex gap-2 w-full sm:w-auto">
           <Button
             variant={period === 'week' ? 'default' : 'outline'}
