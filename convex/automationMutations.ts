@@ -2,18 +2,18 @@
  * Automation - Mutation functions
  */
 
-import { mutation } from "./_generated/server";
-import { internalMutation } from "./_generated/server";
-import { v } from "convex/values";
+import { mutation } from './_generated/server';
+import { internalMutation } from './_generated/server';
+import { v } from 'convex/values';
 
 // Public mutation that triggers the action
 export const runAutomation = mutation({
   args: {},
   handler: async (ctx) => {
     // Just create the task, action will handle the rest
-    const taskId = await ctx.db.insert("automationTasks", {
-      name: "Manual automation run",
-      status: "running",
+    const taskId = await ctx.db.insert('automationTasks', {
+      name: 'Manual automation run',
+      status: 'running',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -26,9 +26,9 @@ export const runAutomation = mutation({
 export const createAutomationTask = internalMutation({
   args: { name: v.string() },
   handler: async (ctx, args) => {
-    const taskId = await ctx.db.insert("automationTasks", {
+    const taskId = await ctx.db.insert('automationTasks', {
       name: args.name,
-      status: "running",
+      status: 'running',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -37,10 +37,10 @@ export const createAutomationTask = internalMutation({
 });
 
 export const completeAutomationTask = internalMutation({
-  args: { taskId: v.id("automationTasks") },
+  args: { taskId: v.id('automationTasks') },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.taskId, {
-      status: "completed",
+      status: 'completed',
       updatedAt: Date.now(),
     });
     return { success: true };
@@ -48,11 +48,11 @@ export const completeAutomationTask = internalMutation({
 });
 
 export const toggleWorkflow = mutation({
-  args: { workflowId: v.id("automationWorkflows") },
+  args: { workflowId: v.id('automationWorkflows') },
   handler: async (ctx, args) => {
     const workflow = await ctx.db.get(args.workflowId);
     if (!workflow) {
-      throw new Error("Workflow not found");
+      throw new Error('Workflow not found');
     }
 
     await ctx.db.patch(args.workflowId, {
@@ -68,16 +68,12 @@ export const createWorkflow = mutation({
   args: {
     name: v.string(),
     description: v.optional(v.string()),
-    config: v.object({
-      steps: v.optional(v.array(v.string())),
-      trigger: v.optional(v.string()),
-      action: v.optional(v.string()),
-    }),
+    config: v.any(),
   },
   handler: async (ctx, args) => {
-    const workflowId = await ctx.db.insert("automationWorkflows", {
+    const workflowId = await ctx.db.insert('automationWorkflows', {
       name: args.name,
-      description: args.description || "",
+      description: args.description || '',
       config: args.config,
       isActive: true,
       createdAt: Date.now(),
@@ -89,7 +85,7 @@ export const createWorkflow = mutation({
 });
 
 export const deleteWorkflow = mutation({
-  args: { workflowId: v.id("automationWorkflows") },
+  args: { workflowId: v.id('automationWorkflows') },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.workflowId);
     return { success: true };
