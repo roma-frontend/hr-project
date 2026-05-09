@@ -36,11 +36,3 @@ export function initRadixScrollLockPatch() {
 if (typeof window !== 'undefined') {
   initRadixScrollLockPatch();
 }
-    return originalSetProperty.call(this, property, value, priority);
-  };
-}
-
-// Auto-initialize in browser
-if (typeof window !== 'undefined') {
-  initRadixScrollLockPatch();
-}

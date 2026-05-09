@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useLayoutEffect } from 'react';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
@@ -191,7 +191,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess, templateId }:
   React.useEffect(() => {
     if (templateData && !title) {
       setTitle(templateData.title);
-      setDescription(templateData.description || '');
+      setDescription((templateData as any).description || '');
       setCategory('template');
     }
   }, [templateData, title]);
