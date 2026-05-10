@@ -29,6 +29,9 @@ import {
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { formatDateTime } from '@/lib/date-format';
+import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +83,7 @@ function getEditTypeIcon(type?: string) {
 
 export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -177,7 +181,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
           toast.error(error.error, {
             action: {
               label: t('aiSiteEditor.upgradePlan'),
-              onClick: () => (window.location.href = '/settings?tab=billing'),
+              onClick: () => router.push('/settings?tab=billing'),
             },
           });
           setMessages((prev) => [
@@ -214,7 +218,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
         toast.success(`✅ Применено ${appliedFiles.length} изменений! Файлы обновлены.`, {
           duration: 5000,
         });
-        console.log('Applied files:', appliedFiles);
+        logger.log('Applied files:', appliedFiles);
       } else {
         toast.info('AI ответил, но файлы не были изменены', { duration: 3000 });
       }
@@ -298,6 +302,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
   // ─── JSX ───────────────────────────────────────────────────────────────────
 
   return (
+    <ErrorBoundary>
     <div className="flex flex-col h-full space-y-4">
       {/* Usage Stats — только для starter */}
       {!isProfessionalOrHigher && usage && (
@@ -338,7 +343,7 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
                 variant="outline"
                 size="sm"
                 className="mt-3 border-amber-300 dark:border-amber-700 md:border-amber-300/50 sm:min-w-[120px]"
-                onClick={() => (window.location.href = '/settings?tab=billing')}
+                onClick={() => router.push('/settings?tab=billing')}
               >
                 <Crown className="h-4 w-4 mr-2" />
                 {t('aiSiteEditor.upgradeForUnlimited')}
@@ -585,5 +590,6 @@ export function SiteEditorChat({ userId, organizationId }: SiteEditorChatProps) 
         </Card>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

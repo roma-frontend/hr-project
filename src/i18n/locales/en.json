@@ -486,7 +486,7 @@
       "title": "Subscriptions Management",
       "subtitle": "Manage organization subscriptions and plans",
       "accessDenied": "Access Denied",
-      "selectOrganization": "Select Organization *",
+      "selectOrganization": "Select Organization",
       "selectOrganizationPlaceholder": "Select an organization",
       "loadingOrganizations": "Loading organizations...",
       "noOrganizationsFound": "No organizations found",
@@ -592,7 +592,7 @@
       "industryLabel": "Industry",
       "creating": "Creating...",
       "createOrganization": "Create Organization",
-      "requiredNotice": "All fields marked with * are required",
+      "requiredNotice": "All fields marked with are required",
       "list": {
         "title": "All Organizations",
         "description": "Click on any organization to view details and manage",
@@ -655,11 +655,11 @@
       "create": {
         "title": "Create Support Ticket",
         "description": "Describe the issue in detail",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief description of the issue",
         "priorityLabel": "Priority",
         "categoryLabel": "Category",
-        "descriptionLabel": "Description *",
+        "descriptionLabel": "Description",
         "descriptionPlaceholder": "Detailed description of the issue...",
         "cancel": "Cancel",
         "submit": "Create Ticket"
@@ -758,12 +758,12 @@
       "create": {
         "title": "Create Incident",
         "description": "Fill in system incident information",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief description of incident",
         "severityLabel": "Severity",
         "affectedUsersLabel": "Affected Users",
         "affectedOrgsLabel": "Affected Organizations",
-        "descriptionLabel": "Description *",
+        "descriptionLabel": "Description",
         "descriptionPlaceholder": "Detailed description of incident...",
         "cancel": "Cancel",
         "submit": "Create Incident"
@@ -823,7 +823,7 @@
       "start": {
         "title": "Log in as User",
         "description": "You will get full access to the user's account",
-        "reasonLabel": "Reason (required) *",
+        "reasonLabel": "Reason (required)",
         "reasonPlaceholder": "e.g., debugging access issue...",
         "auditWarning": "⚠️ All actions will be logged in audit log",
         "importantTitle": "Important:",
@@ -873,7 +873,7 @@
       "reject": {
         "title": "Reject Requests",
         "description": "You are about to reject {count} requests",
-        "reasonLabel": "Rejection Reason *",
+        "reasonLabel": "Rejection Reason",
         "reasonPlaceholder": "Specify rejection reason...",
         "cancel": "Cancel",
         "submit": "Reject {count} Requests"
@@ -1042,7 +1042,7 @@
     "userWillReceiveNotification": "User will receive notification",
     "allActionsLogged": "All actions are recorded in audit log",
     "cannotChangePasswordOrEmail": "Cannot change password or email",
-    "reasonRequired": "Reason (required) *",
+    "reasonRequired": "Reason (required)",
     "leaveRequests": "Leave Requests",
     "noRequestsFound": "No requests found",
     "noTasksFound": "No tasks found",
@@ -1121,9 +1121,9 @@
       "step2": {
         "title": "Provide Details",
         "description": "Help us understand the issue better",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief summary of your issue",
-        "descriptionLabel": "Description *",
+        "descriptionLabel": "Description",
         "descriptionPlaceholder": "Provide detailed information about your issue..."
       },
       "step3": {
@@ -1165,11 +1165,11 @@
     "create": {
       "title": "Create Support Ticket",
       "description": "Describe your issue",
-      "titleLabel": "Subject *",
+      "titleLabel": "Subject",
       "titlePlaceholder": "Briefly describe the issue",
       "priorityLabel": "Priority",
       "categoryLabel": "Category",
-      "descriptionLabel": "Description *",
+      "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe in detail what happened...",
       "cancel": "Cancel",
       "submit": "Submit"
@@ -1563,7 +1563,7 @@
     "adminDesc": "Submit a leave request for an employee",
     "selfDesc": "Submit a leave request for yourself",
     "pickDate": "Pick a date",
-    "reasonRequired": "Reason *",
+    "reasonRequired": "Reason",
     "reasonPlaceholder": "Enter the reason for your leave request...",
     "additionalComments": "Additional Comments",
     "commentsPlaceholder": "Add any additional information...",
@@ -4349,11 +4349,11 @@
     "titleRequired": "Task title is required",
     "selectAssignee": "Please select an assignee",
     "failedToCreate": "Failed to create task",
-    "taskTitleRequired": "Task Title *",
+    "taskTitleRequired": "Task Title",
     "titlePlaceholder": "Enter task title",
     "description": "Description",
     "descriptionPlaceholder": "Enter task description",
-    "assignToRequired": "Assign To *",
+    "assignToRequired": "Assign To",
     "selectEmployee": "Select employee",
     "noEmployeesAssigned": "No employees assigned to you",
     "noEmployeesFound": "No employees found",
@@ -5799,8 +5799,8 @@
         "title": "Dates",
         "short": "Dates",
         "description": "Select start and end dates",
-        "startDateLabel": "Start Date *",
-        "endDateLabel": "End Date *",
+        "startDateLabel": "Start Date",
+        "endDateLabel": "End Date",
         "totalDays": "Total Days",
         "calculating": "Calculating..."
       },
@@ -5808,7 +5808,7 @@
         "title": "Details",
         "short": "Details",
         "description": "Provide additional information",
-        "reasonLabel": "Reason *",
+        "reasonLabel": "Reason",
         "reasonPlaceholder": "e.g., Annual vacation",
         "commentLabel": "Comment",
         "commentPlaceholder": "Additional information (optional)",
@@ -5852,7 +5852,7 @@
       "details": {
         "title": "Task Details",
         "description": "What needs to be done?",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief task description",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Detailed task description..."
@@ -5868,7 +5868,7 @@
       "assignee": {
         "title": "Assign To",
         "description": "Who should complete this task?",
-        "assigneeLabel": "Assignee *",
+        "assigneeLabel": "Assignee",
         "assigneePlaceholder": "Select employee"
       }
     },
@@ -5888,7 +5888,7 @@
       "details": {
         "title": "Event Details",
         "description": "Provide event information",
-        "titleLabel": "Event Name *",
+        "titleLabel": "Event Name",
         "titlePlaceholder": "e.g., Annual IT Conference 2025",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Brief description of the event..."
@@ -5896,8 +5896,8 @@
       "datetime": {
         "title": "Date & Location",
         "description": "When and where will it take place?",
-        "startLabel": "Start Date *",
-        "endLabel": "End Date *",
+        "startLabel": "Start Date",
+        "endLabel": "End Date",
         "locationLabel": "Location",
         "locationPlaceholder": "e.g., Conference Hall A"
       },
@@ -5909,7 +5909,7 @@
       "departments": {
         "title": "Target Departments",
         "description": "Who should attend this event?",
-        "departmentsLabel": "Required Departments *",
+        "departmentsLabel": "Required Departments",
         "notifyLabel": "Notify Days Before"
       }
     },
@@ -5930,9 +5930,9 @@
       "route": {
         "title": "Route",
         "description": "Where do you need to go?",
-        "fromLabel": "From *",
+        "fromLabel": "From",
         "fromPlaceholder": "Pickup location",
-        "toLabel": "To *",
+        "toLabel": "To",
         "toPlaceholder": "Destination",
         "purposeLabel": "Trip Purpose",
         "purposePlaceholder": "e.g., client meeting",
@@ -5941,8 +5941,8 @@
       "datetime": {
         "title": "Date & Time",
         "description": "When do you need the driver?",
-        "dateLabel": "Date *",
-        "timeLabel": "Time *",
+        "dateLabel": "Date",
+        "timeLabel": "Time",
         "notesLabel": "Additional Notes",
         "notesPlaceholder": "Any special instructions..."
       },
@@ -5986,9 +5986,9 @@
       "details": {
         "title": "Ticket Details",
         "description": "Describe the issue",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief summary",
-        "descriptionLabel": "Description *",
+        "descriptionLabel": "Description",
         "descriptionPlaceholder": "Detailed description..."
       },
       "priority": {
@@ -6026,9 +6026,9 @@
       "details": {
         "title": "Incident Details",
         "description": "Describe the incident",
-        "titleLabel": "Title *",
+        "titleLabel": "Title",
         "titlePlaceholder": "Brief summary",
-        "descriptionLabel": "Description *",
+        "descriptionLabel": "Description",
         "descriptionPlaceholder": "Detailed description..."
       },
       "impact": {
@@ -6060,7 +6060,7 @@
       "organization": {
         "title": "Organization",
         "description": "Which organization?",
-        "organizationLabel": "Organization *",
+        "organizationLabel": "Organization",
         "organizationPlaceholder": "Select organization"
       },
       "plan": {
@@ -6480,7 +6480,7 @@
     "loginAsUser": "Login as User",
     "fullAccessDesc": "You will get full access to the user's account",
     "role": "Role:",
-    "reasonRequired": "Reason (required) *",
+    "reasonRequired": "Reason (required)",
     "reasonPlaceholder": "e.g., Debugging access issue...",
     "auditLogWarning": "⚠️ All actions will be logged in audit log",
     "important": "Important:",
@@ -6876,9 +6876,11 @@
     "failedToStartCall": "Failed to start call",
     "noPhoneAvailable": "No phone number available"
   },
-  "payroll": {
+   "payroll": {
     "title": "Payroll",
     "subtitle": "Salary and payment management",
+    "salary": "Salary",
+    "salaryStepDesc": "Enter the employee's base salary amount",
     "dashboard": "Payroll Dashboard",
     "records": "Payroll Records",
     "runs": "Payroll Runs",

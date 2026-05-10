@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Zap, Clock, Target, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/lib/logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,7 @@ export function ProductivitySettings({ user, onSettingsChange }: ProductivitySet
       breakInterval: parseInt(breakInterval) || 120,
       dailyTaskGoal: parseInt(dailyGoal) || 5,
     };
-    console.log('ProductivitySettings updating:', settings);
+    logger.log('ProductivitySettings updating:', settings);
     onSettingsChange(settings);
   }, [
     focusMode,

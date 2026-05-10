@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,13 +69,20 @@ export default function StripeDataStudioClient() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
+  const fetchAbortRef = useRef<AbortController | null>(null);
+
   const fetchStripeData = async (isRefresh = false) => {
+    fetchAbortRef.current?.abort();
+    fetchAbortRef.current = new AbortController();
+
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/stripe/transactions');
+      const response = await fetch('/api/stripe/transactions', {
+        signal: fetchAbortRef.current.signal,
+      });
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.error || 'Failed to fetch');
@@ -94,6 +101,7 @@ export default function StripeDataStudioClient() {
         recentTransactions: txs,
       });
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       setError(err.message);
       toast.error('Ошибка загрузки данных');
     } finally {
@@ -108,6 +116,10 @@ export default function StripeDataStudioClient() {
     } else {
       setLoading(false);
     }
+
+    return () => {
+      fetchAbortRef.current?.abort();
+    };
   }, [user]);
 
   // Filtering Logic
@@ -393,7 +405,7 @@ export default function StripeDataStudioClient() {
                 {selectedTx.receiptUrl && (
                   <Button
                     className="w-full gap-2"
-                    onClick={() => window.open(selectedTx.receiptUrl!, '_blank')}
+                    onClick={() => window.open(selectedTx.receiptUrl!, '_blank', 'noopener,noreferrer')}
                   >
                     <Copy className="w-4 h-4" /> Открыть чек Stripe
                   </Button>

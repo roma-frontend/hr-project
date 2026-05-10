@@ -3,6 +3,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -10,7 +11,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
   try {
     const { userId, organizationId, driverId, startTime, endTime, tripInfo } = await req.json();
 
-    console.log('[book-driver] Received request:', {
+    logger.log('[book-driver] Received request:', {
       userId,
       organizationId,
       driverId,
@@ -86,7 +87,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       },
     });
 
-    console.log('[book-driver] Request created:', requestId);
+    logger.log('[book-driver] Request created:', requestId);
 
     return NextResponse.json({
       message: '✅ Driver request submitted successfully!',

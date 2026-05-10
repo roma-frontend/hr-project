@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { logger } from '@/lib/logger';
 import { Edit2, Trash2, MessageCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { enUS, ru, hy } from 'date-fns/locale';
@@ -52,7 +53,7 @@ export function ServiceBroadcastsManager({
 
     try {
       setIsDeleting(true);
-      console.log(
+      logger.log(
         `[ServiceBroadcastsManager] Deleting broadcast ${selectedBroadcastId} by user ${userId}`,
       );
       await deleteMessage({
@@ -60,7 +61,7 @@ export function ServiceBroadcastsManager({
         userId,
         deleteForEveryone: true,
       });
-      console.log(`[ServiceBroadcastsManager] ✓ Broadcast deleted successfully`);
+      logger.log(`[ServiceBroadcastsManager] ✓ Broadcast deleted successfully`);
       setDeleteDialogOpen(false);
       setSelectedBroadcastId(null);
     } catch (error) {

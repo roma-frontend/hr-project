@@ -6,6 +6,7 @@ import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import {
   AlertTriangle,
   Clock,
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CreateIncidentWizard } from '@/components/superadmin/CreateIncidentWizard';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 interface Ticket {
   _id: string;
@@ -69,6 +71,7 @@ interface SuspiciousIP {
 
 export default function EmergencyDashboardPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { user } = useAuthStore();
   const [createIncidentOpen, setCreateIncidentOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -142,6 +145,7 @@ export default function EmergencyDashboardPage() {
   };
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       <div className="mx-auto max-w-7xl">
         {/* Header */}
@@ -330,9 +334,7 @@ export default function EmergencyDashboardPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() =>
-                          (window.location.href = `/superadmin/support?ticket=${ticket._id}`)
-                        }
+                        onClick={() => router.push(`/superadmin/support?ticket=${ticket._id}`)}
                         className="border-(--border) bg-(--background) hover:bg-(--background-subtle) text-(--foreground) shrink-0 self-start"
                       >
                         {t('superadmin.emergency.actions.open')}
@@ -536,7 +538,7 @@ export default function EmergencyDashboardPage() {
 
       {/* Create Incident Wizard Dialog */}
       <Dialog open={createIncidentOpen} onOpenChange={setCreateIncidentOpen}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[95vh] flex flex-col">
           <DialogTitle className="sr-only">{t('superadmin.emergency.createIncident')}</DialogTitle>
           <DialogDescription className="sr-only">
             {t('superadmin.emergency.createIncidentDesc')}
@@ -551,6 +553,7 @@ export default function EmergencyDashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ErrorBoundary>
   );
 }
 

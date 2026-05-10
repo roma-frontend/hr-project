@@ -8,7 +8,13 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
-import { CustomSelect } from '@/components/ui/CustomSelect';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Calendar,
   Sun,
@@ -350,20 +356,19 @@ function EmployeeStep({
           {t('leaveWizard.selectEmployee', 'Select the employee for this leave request')}
         </p>
       </div>
-      <CustomSelect
-        value={value || ''}
-        onChange={onChange}
-        fullWidth
-        options={[
-          { value: '', label: t('placeholders.selectEmployee', 'Select employee...') },
-          ...(allUsers?.map((emp: any) => ({
-            value: emp._id,
-            label: `${emp.name}${emp.department ? ` · ${emp.department}` : ''}`,
-          })) || []),
-        ]}
-        triggerClassName="w-full px-3 py-2.5 rounded-lg border border-(--input-border) bg-(--input) text-(--text-primary) text-sm focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none"
-        dropdownClassName="bg-(--input) border border-(--input-border) text-(--text-primary)"
-      />
+      <Select value={value || ''} onValueChange={onChange}>
+        <SelectTrigger className="w-full px-3 py-2.5 rounded-lg border border-(--input-border) bg-(--input) text-(--text-primary) text-sm focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none">
+          <SelectValue placeholder={t('placeholders.selectEmployee', 'Select employee...')} />
+        </SelectTrigger>
+        <SelectContent className="bg-(--input) border border-(--input-border) text-(--text-primary)">
+          {allUsers?.map((emp: any) => (
+            <SelectItem key={emp._id} value={emp._id} className="text-(--text-primary)">
+              {emp.name}
+              {emp.department ? ` · ${emp.department}` : ''}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

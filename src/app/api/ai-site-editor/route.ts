@@ -3,6 +3,7 @@ import { generateText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -27,7 +28,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 5000): 
         error?.message?.includes('429');
       if (isRateLimit && i < retries - 1) {
         const wait = delayMs * (i + 1);
-        console.log(`[AI Site Editor] Rate limit hit, retrying in ${wait}ms...`);
+        logger.log(`[AI Site Editor] Rate limit hit, retrying in ${wait}ms...`);
         await sleep(wait);
         continue;
       }
@@ -90,7 +91,7 @@ function isPathAllowed(filePath: string): boolean {
 function readFileSecure(filePath: string): string | null {
   try {
     if (!isPathAllowed(filePath)) {
-      console.warn(`[readFileSecure] Запрещён доступ: ${filePath}`);
+      logger.warn(`[readFileSecure] Запрещён доступ: ${filePath}`);
       return null;
     }
 
@@ -113,7 +114,7 @@ function writeFileSecure(
   try {
     if (!isPathAllowed(filePath)) {
       const msg = `[writeFileSecure] Запрещён доступ: ${filePath}`;
-      console.warn(msg);
+      logger.warn(msg);
       return { success: false, error: msg };
     }
 
@@ -148,7 +149,7 @@ function writeFileSecure(
       const threshold = originalSize > 5000 ? 0.8 : 0.7;
       if (originalSize > 500 && newSize < originalSize * threshold) {
         const msg = `[writeFileSecure] Rejected: new content (${newSize}b) is less than ${threshold * 100}% of original (${originalSize}b) — likely truncated`;
-        console.warn(msg);
+        logger.warn(msg);
         return { success: false, error: msg };
       }
     }
@@ -158,7 +159,7 @@ function writeFileSecure(
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(fullPath, content, 'utf-8');
 
-    console.log(`[writeFileSecure] Записан ${filePath} (backup ts=${timestamp})`);
+    logger.log(`[writeFileSecure] Записан ${filePath} (backup ts=${timestamp})`);
     return { success: true, timestamp };
   } catch (error) {
     const msg = `[writeFileSecure] Ошибка записи ${filePath}: ${error}`;
@@ -442,7 +443,7 @@ function applyCSSPatch(
     // Apply patch — replace only the className string
     const newContent = content.replace(oldClass, newClass);
     fs.writeFileSync(fullPath, newContent, 'utf-8');
-    console.log(`[CSS Patch] Applied to ${filePath}: "${oldClass}" → "${newClass}"`);
+    logger.log(`[CSS Patch] Applied to ${filePath}: "${oldClass}" → "${newClass}"`);
     return { success: true, timestamp };
   } catch (error) {
     return { success: false, error: `Error patching ${filePath}: ${error}` };
@@ -486,9 +487,9 @@ USER REQUEST: ${message}`;
   );
 
   const aiText = result.text;
-  console.log('[CSS Patch] Full AI response:\n', aiText);
+  logger.log('[CSS Patch] Full AI response:\n', aiText);
   const patches = parseCSSPatches(aiText);
-  console.log('[CSS Patch] Parsed patches:', patches.length);
+  logger.log('[CSS Patch] Parsed patches:', patches.length);
   return { aiText, patches };
 }
 
@@ -658,12 +659,12 @@ IMPORTANT: Only output FILE blocks for files that need to change. Do NOT rewrite
   );
 
   const aiText = result.text;
-  console.log('[AI Site Editor] Raw AI response length:', aiText.length);
-  console.log('[AI Site Editor] Response preview:', aiText.substring(0, 300));
+  logger.log('[AI Site Editor] Raw AI response length:', aiText.length);
+  logger.log('[AI Site Editor] Response preview:', aiText.substring(0, 300));
 
   // Parse FILE blocks from response (pass filesToRead as fallback for bare code blocks)
   const changes = parseAIResponseForFileChanges(aiText, filesToRead);
-  console.log('[AI Site Editor] Parsed changes:', changes.length);
+  logger.log('[AI Site Editor] Parsed changes:', changes.length);
 
   return { aiText, changes };
 }
@@ -672,10 +673,10 @@ IMPORTANT: Only output FILE blocks for files that need to change. Do NOT rewrite
 
 export const POST = withCsrfProtection(async (req: NextRequest) => {
   try {
-    console.log('[AI Site Editor] Request received');
+    logger.log('[AI Site Editor] Request received');
 
     const body = await req.json();
-    console.log('[AI Site Editor] Body parsed:', {
+    logger.log('[AI Site Editor] Body parsed:', {
       message: body.message?.substring(0, 50),
       userId: body.userId,
       plan: body.plan,
@@ -692,18 +693,18 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    console.log('[AI Site Editor] Detecting edit type...');
+    logger.log('[AI Site Editor] Detecting edit type...');
     const editType = detectEditType(message);
-    console.log('[AI Site Editor] Edit type:', editType);
+    logger.log('[AI Site Editor] Edit type:', editType);
 
     // Проверяем лимиты плана
-    console.log('[AI Site Editor] Checking limits...');
+    logger.log('[AI Site Editor] Checking limits...');
     const canEdit = await fetchQuery(api.aiSiteEditor.canMakeEdit, {
       userId: userId as Id<'users'>,
       organizationId: organizationId as Id<'organizations'>,
       editType,
     });
-    console.log('[AI Site Editor] Can edit:', canEdit);
+    logger.log('[AI Site Editor] Can edit:', canEdit);
 
     if (!canEdit.allowed) {
       return NextResponse.json(
@@ -722,7 +723,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
 
     // Находим релевантные файлы для контекста
     const filesToRead = findRelevantFiles(message);
-    console.log('[AI Site Editor] Files to read:', filesToRead);
+    logger.log('[AI Site Editor] Files to read:', filesToRead);
 
     const appliedFiles: Array<{ file: string; type: string; description: string }> = [];
     let aiText = '';
@@ -735,10 +736,10 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
     if (editType === 'design' || forceCSSPatch) {
       // CSS patch mode — AI returns only class replacements, server applies them
       // This avoids rewriting large files and prevents truncation issues
-      console.log('[AI Site Editor] Using CSS patch mode for design change...');
+      logger.log('[AI Site Editor] Using CSS patch mode for design change...');
       const { aiText: patchAiText, patches } = await generateCSSPatches(message, filesToRead);
       aiText = patchAiText;
-      console.log('[AI Site Editor] CSS patches generated:', patches.length);
+      logger.log('[AI Site Editor] CSS patches generated:', patches.length);
 
       for (const patch of patches) {
         const result = applyCSSPatch(
@@ -754,20 +755,20 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
             description: `CSS patch: "${patch.oldClass}" → "${patch.newClass}"`,
           });
         } else {
-          console.warn('[AI Site Editor] CSS patch failed:', result.error);
+          logger.warn('[AI Site Editor] CSS patch failed:', result.error);
         }
       }
 
       // If no patches found, inform user — do NOT make a second API call
       if (patches.length === 0) {
-        console.log('[AI Site Editor] No CSS patches found in AI response.');
+        logger.log('[AI Site Editor] No CSS patches found in AI response.');
         aiText =
           aiText ||
           'AI не смог определить конкретные классы для изменения. Попробуйте уточнить запрос, например: "измени hover цвет кнопки manage orgs на синий".';
       }
     } else {
       // Full file mode for content/layout/logic/full_control changes
-      console.log('[AI Site Editor] Using full file mode...');
+      logger.log('[AI Site Editor] Using full file mode...');
       const { aiText: fullAiText, changes } = await generateFileChanges(message, plan, filesToRead);
       aiText = fullAiText;
       for (const change of changes) {
@@ -778,9 +779,9 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
             type: editType,
             description: change.description,
           });
-          console.log('[AI Site Editor] Applied:', change.filePath);
+          logger.log('[AI Site Editor] Applied:', change.filePath);
         } else {
-          console.warn('[AI Site Editor] Failed to apply:', change.filePath, result.error);
+          logger.warn('[AI Site Editor] Failed to apply:', change.filePath, result.error);
         }
       }
     }

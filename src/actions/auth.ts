@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { signJWT, verifyJWT } from '@/lib/jwt';
-import { log } from '@/lib/logger';
+import { logger as log } from '@/lib/logger';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -332,7 +332,7 @@ export async function loginAction(
       path: '/',
     });
 
-    log.user('User logged in successfully', {
+    log.info('User logged in successfully', {
       userId: result.userId,
       email: result.email,
       role: result.role,

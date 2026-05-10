@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    log.user('Face Login successful', { userId: result.userId, email });
+    log.info('Face Login successful', { userId: result.userId, email });
 
     // Return success with session data so client can populate auth store
     return NextResponse.json({

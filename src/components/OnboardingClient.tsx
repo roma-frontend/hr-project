@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
@@ -53,6 +54,7 @@ const ASSIGNEE_TYPES = ['new_hire', 'buddy', 'manager', 'hr', 'it'] as const;
 // ─── Main Component ──────────────────────────────────────────
 export default function OnboardingClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin' || user?.role === 'supervisor';
 
@@ -97,7 +99,7 @@ export default function OnboardingClient() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const mainEl = document.querySelector<HTMLElement>('main');
+                  const mainEl = mainRef.current;
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                   }
@@ -111,7 +113,7 @@ export default function OnboardingClient() {
               <Button
                 size="sm"
                 onClick={() => {
-                  const mainEl = document.querySelector<HTMLElement>('main');
+                  const mainEl = mainRef.current;
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                   }
@@ -481,7 +483,7 @@ function ProgramDetailDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {program?.employeeName ?? '...'} — {t('onboarding.title', 'Onboarding')}
@@ -641,7 +643,7 @@ function StartOnboardingWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[95vh]">
         {/* Stepper */}
         <div className="px-5 pt-5 pb-3">
           <DialogHeader>
@@ -854,7 +856,7 @@ function CreateTemplateWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[95vh]">
         {/* Stepper */}
         <div className="px-5 pt-5 pb-3">
           <DialogHeader>

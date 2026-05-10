@@ -44,6 +44,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 export default function SupportTicketsPage() {
   const router = useRouter();
@@ -109,6 +111,7 @@ export default function SupportTicketsPage() {
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       <div className="mx-auto max-w-7xl">
         {/* Header */}
@@ -292,7 +295,7 @@ export default function SupportTicketsPage() {
 
       {/* Create Ticket Dialog - Using Wizard */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[95vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-lg md:text-xl">
               {t('superadmin.support.createTicket')}
@@ -325,6 +328,7 @@ export default function SupportTicketsPage() {
         />
       )}
     </div>
+    </ErrorBoundary>
   );
 }
 
@@ -683,12 +687,12 @@ function TicketDetailDialog({
     if (!ticket) return;
     setCreatingChat(true);
     try {
-      console.log('[handleCreateChat] Creating chat for ticket:', ticketId);
+      logger.log('[handleCreateChat] Creating chat for ticket:', ticketId);
       const result = await createTicketChat({
         ticketId: ticketId as Id<'supportTickets'>,
         superadminId: userId,
       });
-      console.log('[handleCreateChat] Chat created successfully:', result);
+      logger.log('[handleCreateChat] Chat created successfully:', result);
       toast.success(t('superadmin.support.chatCreated', { chatName: result.chatName }));
       router.refresh();
     } catch (error: any) {
@@ -762,7 +766,7 @@ function TicketDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 animate-in fade-in zoom-in-95 duration-200">
+      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="border-b border-(--border) px-6 py-5 transition-all duration-200">
           <div className="flex items-start gap-3 mb-3">

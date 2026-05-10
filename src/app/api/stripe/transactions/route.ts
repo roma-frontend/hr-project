@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { verifyJWT } from '@/lib/jwt';
+import { logger } from '@/lib/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -8,7 +9,7 @@ const isDev = process.env.NODE_ENV === 'development';
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
-    console.warn('[Stripe] STRIPE_SECRET_KEY not configured');
+    logger.warn('[Stripe] STRIPE_SECRET_KEY not configured');
     return null;
   }
   return new Stripe(key, {

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { logger } from '@/lib/logger';
 
 interface Location {
   lat: number;
@@ -91,22 +92,22 @@ export function DriverMap({
   // Get user's current location
   useEffect(() => {
     if (!navigator.geolocation) {
-      console.log('[DriverMap] Geolocation not supported');
+      logger.log('[DriverMap] Geolocation not supported');
       return;
     }
 
-    console.log('[DriverMap] Requesting user location...');
+    logger.log('[DriverMap] Requesting user location...');
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const loc = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        console.log('[DriverMap] User location:', loc);
+        logger.log('[DriverMap] User location:', loc);
         setUserLocation(loc);
       },
       (error) => {
-        console.warn('[DriverMap] Location error:', error.code, error.message);
+        logger.warn('[DriverMap] Location error:', error.code, error.message);
         // Use default location on error
         setUserLocation(DEFAULT_CENTER);
       },
@@ -168,9 +169,9 @@ export function DriverMap({
     // Ensure container has dimensions
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
-      console.warn('[DriverMap] Container has no dimensions, waiting...');
+      logger.warn('[DriverMap] Container has no dimensions, waiting...');
       const timeout = setTimeout(() => {
-        console.log('[DriverMap] Retrying initialization...');
+        logger.log('[DriverMap] Retrying initialization...');
         // Force re-render by toggling ready
         setReady(false);
         setTimeout(() => setReady(true), 50);
@@ -180,7 +181,7 @@ export function DriverMap({
 
     const L = LRef.current;
 
-    console.log('[DriverMap] Initializing map...', { width: rect.width, height: rect.height });
+    logger.log('[DriverMap] Initializing map...', { width: rect.width, height: rect.height });
 
     // Fix marker icons
     delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -192,7 +193,7 @@ export function DriverMap({
 
     // Use user location if no coords provided
     const center = userLocation || driverCoords || pickupCoords || dropoffCoords || DEFAULT_CENTER;
-    console.log('[DriverMap] Center:', center);
+    logger.log('[DriverMap] Center:', center);
 
     const map = L.map(el, {
       center: [center.lat, center.lng],
@@ -244,7 +245,7 @@ export function DriverMap({
       setTimeout(() => {
         safeInvalidate();
         if (mapInstanceRef.current) {
-          console.log('[DriverMap] Invalidated size at', delay, 'ms');
+          logger.log('[DriverMap] Invalidated size at', delay, 'ms');
         }
       }, delay),
     );
@@ -266,7 +267,7 @@ export function DriverMap({
       });
     }
 
-    console.log('[DriverMap] Map initialized successfully');
+    logger.log('[DriverMap] Map initialized successfully');
 
     return () => {
       timeouts.forEach(clearTimeout);
@@ -275,7 +276,7 @@ export function DriverMap({
         try {
           mapInstanceRef.current.remove();
         } catch (e) {
-          console.warn('[DriverMap] Error removing map:', e);
+          logger.warn('[DriverMap] Error removing map:', e);
         }
         mapInstanceRef.current = null;
       }
@@ -292,7 +293,7 @@ export function DriverMap({
 
     // Check if map container still exists and is attached to DOM
     if (!map || !map._container || !map._container.parentNode) {
-      console.warn('[DriverMap] Map container not found or detached, skipping update');
+      logger.warn('[DriverMap] Map container not found or detached, skipping update');
       return;
     }
 
@@ -300,11 +301,11 @@ export function DriverMap({
     try {
       map.getCenter();
     } catch {
-      console.warn('[DriverMap] Map not ready yet, skipping marker update');
+      logger.warn('[DriverMap] Map not ready yet, skipping marker update');
       return;
     }
 
-    console.log('[DriverMap] Updating markers:', { pickupCoords, dropoffCoords, driverCoords });
+    logger.log('[DriverMap] Updating markers:', { pickupCoords, dropoffCoords, driverCoords });
 
     // Clear existing - guard against removed map
     markersRef.current.forEach((m) => {
@@ -371,18 +372,18 @@ export function DriverMap({
     // Center map on all markers — guard against detached map
     try {
       if (bounds.length >= 2) {
-        console.log('[DriverMap] Fitting bounds:', bounds);
+        logger.log('[DriverMap] Fitting bounds:', bounds);
         map.fitBounds(bounds, {
           padding: [50, 50],
           maxZoom: 16,
           minZoom: 10,
         });
       } else if (bounds.length === 1) {
-        console.log('[DriverMap] Setting view:', bounds[0]);
+        logger.log('[DriverMap] Setting view:', bounds[0]);
         map.setView(bounds[0], 14);
       }
     } catch (e) {
-      console.warn('[DriverMap] Error centering map:', e);
+      logger.warn('[DriverMap] Error centering map:', e);
     }
   }, [
     pickupCoords,
@@ -408,7 +409,7 @@ export function DriverMap({
       return;
     }
 
-    console.log('[DriverMap] Centering on user location:', userLocation);
+    logger.log('[DriverMap] Centering on user location:', userLocation);
     try {
       m.setView([userLocation.lat, userLocation.lng], 14);
     } catch {

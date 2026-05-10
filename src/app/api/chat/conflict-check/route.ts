@@ -14,6 +14,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -21,7 +22,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
   try {
     const { userId, organizationId, requestType, startDate, endDate, metadata } = await req.json();
 
-    console.log('[conflict-check] Request:', {
+    logger.log('[conflict-check] Request:', {
       userId,
       organizationId,
       requestType,
@@ -48,7 +49,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       metadata: metadata || {},
     });
 
-    console.log('[conflict-check] Result:', conflictResult);
+    logger.log('[conflict-check] Result:', conflictResult);
 
     // Форматируем для AI
     const aiFriendlyMessage = formatConflictsForAI(conflictResult.conflicts, requestType);

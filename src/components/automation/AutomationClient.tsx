@@ -52,12 +52,9 @@ interface Task {
 
 // cspell:disable
 // Isolate Convex API refs to avoid infinite type instantiation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getStatsApi: any = api.automation.getStats;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getRecentTasksApi: any = api.automation.getRecentTasks;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getActiveWorkflowsApi: any = api.automation.getActiveWorkflows;
+const getStatsApi = api.automation.getStats;
+const getRecentTasksApi = api.automation.getRecentTasks;
+const getActiveWorkflowsApi = api.automation.getActiveWorkflows;
 // cspell:enable
 
 export default function AutomationClient() {
@@ -68,7 +65,7 @@ export default function AutomationClient() {
 
   // Fetch automation stats (hooks must always be called unconditionally)
   const stats = useQuery(getStatsApi) as AutomationStats | undefined;
-  const recentTasks = useQuery(getRecentTasksApi, {}) as Task[] | undefined;
+  const recentTasks = useQuery(getRecentTasksApi, { limit: 50 }) as Task[] | undefined;
   const activeWorkflows = useQuery(getActiveWorkflowsApi) as Workflow[] | undefined;
 
   // Mutations

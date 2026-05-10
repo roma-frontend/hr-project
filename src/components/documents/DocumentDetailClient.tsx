@@ -98,7 +98,7 @@ export default function DocumentDetailClient() {
         requesterId: currentUser._id,
         documentId,
       });
-      window.open(document.fileUrl, '_blank');
+      window.open(document.fileUrl, '_blank', 'noopener,noreferrer');
     } catch {
       toast.error(t('documents.viewError'));
     } finally {

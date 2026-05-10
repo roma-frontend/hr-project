@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Building2, Search, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useRouter } from 'next/navigation';
 
 interface Organization {
   _id: Id<'organizations'>;
@@ -31,6 +32,7 @@ interface Organization {
 export default function SelectOrganizationPage() {
   const { t } = useTranslation();
   const { user, setUser } = useAuthStore();
+  const router = useRouter();
 
   // Get fresh user data from Convex (not just from auth store)
   const freshUserData = useQuery(
@@ -56,7 +58,7 @@ export default function SelectOrganizationPage() {
       const params = new URLSearchParams(window.location.search);
       const nextUrl = params.get('next');
       const redirectUrl = nextUrl || '/dashboard';
-      window.location.href = redirectUrl;
+      router.push(redirectUrl);
       return;
     }
 
@@ -66,7 +68,7 @@ export default function SelectOrganizationPage() {
       const params = new URLSearchParams(window.location.search);
       const nextUrl = params.get('next');
       const redirectUrl = nextUrl || '/dashboard';
-      window.location.href = redirectUrl;
+      router.push(redirectUrl);
     }
   }, [user, freshUserData, setUser]);
 
@@ -96,7 +98,7 @@ export default function SelectOrganizationPage() {
         organizationId,
       });
 
-      window.location.href = '/onboarding/pending';
+      router.push('/onboarding/pending');
     } catch (_error) {
     } finally {
       setIsRequesting(null);

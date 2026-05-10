@@ -26,6 +26,7 @@ import { useUpgradeModal } from '@/components/subscription/PlanGate';
 import { usePlanFeatures } from '@/hooks/usePlanFeatures';
 import { getRoleSuggestions, type UserRole } from '@/lib/aiAssistant';
 import { formatMessageContent } from '@/components/ai/MarkdownTable';
+import { logger } from '@/lib/logger';
 
 // SpeechRecognition type declarations
 interface SpeechRecognitionEvent extends Event {
@@ -290,9 +291,10 @@ export function ChatWidget() {
   // Auto-focus input when chat opens
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -328,16 +330,19 @@ export function ChatWidget() {
         setHintsShownCount((prev) => prev + 1);
 
         // Hide hint after 5 seconds
-        setTimeout(() => {
+        const hintTimer = setTimeout(() => {
           setShowHint(false);
           // Rotate to next hint
           setHintIndex((prev) => (prev + 1) % 3);
         }, 5000);
+        return () => clearTimeout(hintTimer);
       }
     };
 
     const interval = setInterval(checkInactivity, HINT_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [isOpen, lastActivityTime, showHint, hintsShownCount]);
 
   // Listen for user activity
@@ -399,12 +404,6 @@ export function ChatWidget() {
         pickVoice();
       };
     }
-  }, []);
-
-  // ── Wake word listener: "Hey HR" (DISABLED - only manual mic button) ─
-
-  useEffect(() => {
-    return;
   }, []);
 
   // ── Voice input: mic button ───────────────────────────────────────
@@ -583,8 +582,8 @@ export function ChatWidget() {
         };
       } else if (action.type === 'BOOK_DRIVER') {
         url = '/api/chat/book-driver';
-        console.log('[ChatWidget] BOOK_DRIVER action:', action);
-        console.log('[ChatWidget] User:', { id: user.id, organizationId: user.organizationId });
+        logger.log('[ChatWidget] BOOK_DRIVER action:', action);
+        logger.log('[ChatWidget] User:', { id: user.id, organizationId: user.organizationId });
 
         const startTime = new Date(action.startTime).getTime();
         const endTime = new Date(action.endTime).getTime();
@@ -666,7 +665,7 @@ export function ChatWidget() {
         };
       }
 
-      console.log('[ChatWidget] Sending request to:', url, body);
+      logger.log('[ChatWidget] Sending request to:', url, body);
 
       const res = await fetch(url, {
         method: 'POST',
@@ -771,7 +770,7 @@ export function ChatWidget() {
 
       if (isCreateRequest) {
         // НЕ перенаправлять, отправить AI для обработки
-        console.log('🚫 [handleNavigation] Create request detected, skipping navigation:', text);
+        logger.log('🚫 [handleNavigation] Create request detected, skipping navigation:', text);
         return false;
       }
 
@@ -934,7 +933,7 @@ export function ChatWidget() {
     setError(null);
 
     try {
-      console.log('🤖 [ChatWidget] Sending message to AI:', {
+      logger.log('🤖 [ChatWidget] Sending message to AI:', {
         userId: user?.id,
         organizationId: user?.organizationId,
         message: input,
@@ -955,7 +954,7 @@ export function ChatWidget() {
         throw new Error(errData.error || `Server error ${res.status}`);
       }
 
-      console.log('📡 Response status:', res.status, 'type:', res.headers.get('content-type'));
+      logger.log('📡 Response status:', res.status, 'type:', res.headers.get('content-type'));
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -980,16 +979,16 @@ export function ChatWidget() {
       const suggestions = getFollowUpSuggestions(cleanContent, user?.role || 'employee', t);
 
       // 🔍 DEBUG: Логируем полный ответ AI
-      console.log('🤖 [AI Response] Full content:', fullContent);
-      console.log('🤖 [AI Response] Clean content:', cleanContent);
-      console.log('🤖 [AI Response] Actions:', actions);
+      logger.log('🤖 [AI Response] Full content:', fullContent);
+      logger.log('🤖 [AI Response] Clean content:', cleanContent);
+      logger.log('🤖 [AI Response] Actions:', actions);
 
       // Check for navigation tags in response
       const navMatch = fullContent.match(/<NAVIGATE>(.*?)<\/NAVIGATE>/);
       if (navMatch && navMatch[1]) {
         const route = navMatch[1];
-        console.log('🎯 [AI Navigation] Route:', route);
-        console.log('🎯 [AI Navigation] Full match:', navMatch[0]);
+        logger.log('🎯 [AI Navigation] Route:', route);
+        logger.log('🎯 [AI Navigation] Full match:', navMatch[0]);
         // Navigate after a short delay to show the message
         setTimeout(() => {
           router.push(route);

@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { applyRateLimit, PASSWORD_RESET_RATE_LIMIT } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       const subject = isDomainVerified
         ? 'Reset your HR Office password'
         : `[For ${result.email}] Password Reset - HR Office`;
-      console.log('Sending email:', { from: fromEmail, to: toEmail, target: result.email });
+      logger.log('Sending email:', { from: fromEmail, to: toEmail, target: result.email });
       const sendResult = await resend.emails.send({
         from: fromEmail,
         to: toEmail,
@@ -117,7 +118,7 @@ export async function POST(req: NextRequest) {
           </html>
         `,
       });
-      console.log('Resend result:', JSON.stringify(sendResult));
+      logger.log('Resend result:', JSON.stringify(sendResult));
       if (sendResult.error) {
         console.error('Resend error:', sendResult.error);
         // Don't throw — token is still saved, user can try again or admin can resend

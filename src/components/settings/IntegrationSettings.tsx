@@ -13,12 +13,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { getGoogleCalendarAuthUrl } from '@/lib/calendar-sync';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useAuthStoreShallow } from '@/store/useAuthStore';
@@ -27,6 +28,7 @@ import { isRestrictedOrganization } from '@/lib/restricted-org';
 export function IntegrationSettings() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useAuthStoreShallow();
 
   const isRestrictedOrg = user?.organizationSlug
@@ -34,7 +36,7 @@ export function IntegrationSettings() {
     : false;
 
   // Debug logging
-  console.log('[IntegrationSettings] User data:', {
+  logger.log('[IntegrationSettings] User data:', {
     id: user?.id,
     name: user?.name,
     organizationId: user?.organizationId,
@@ -140,7 +142,7 @@ export function IntegrationSettings() {
   }, [searchParams, checkSharepointStatus]);
 
   const handleSharepointConnect = () => {
-    window.location.href = '/api/sharepoint/auth';
+    router.push('/api/sharepoint/auth');
   };
 
   const handleSharepointDisconnect = async () => {

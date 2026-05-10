@@ -345,7 +345,7 @@ function PricingCard({
         console.error('[Stripe checkout error]', data.error, data.message);
         alert(data.message || data.error);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('[Stripe checkout error]', e);
       alert('Failed to start checkout. Please try again.');
     } finally {

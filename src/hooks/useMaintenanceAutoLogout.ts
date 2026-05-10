@@ -3,9 +3,11 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 export function useMaintenanceAutoLogout() {
   const { user, logout } = useAuthStore();
+  const router = useRouter();
   const organizationId = user?.organizationId;
   const logoutAttemptedRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -52,11 +54,11 @@ export function useMaintenanceAutoLogout() {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 800));
-      window.location.href = maintenanceUrl;
+      router.push(maintenanceUrl);
     } catch (error) {
       logout();
       localStorage.removeItem('hr-auth-storage');
-      window.location.href = `/login?maintenance=true${organizationId ? `&org=${organizationId}` : ''}`;
+      router.push(`/login?maintenance=true${organizationId ? `&org=${organizationId}` : ''}`);
     }
   }, [organizationId, logout]);
 

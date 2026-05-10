@@ -9,9 +9,10 @@ import { withCsrfProtection } from '@/lib/csrf-middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fetchAllContexts } from '@/lib/chat-context';
+import { logger } from '@/lib/logger';
 
 const openrouter = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
+  baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
     'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
@@ -102,7 +103,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
     });
 
     const fetchTime = Date.now() - startTime;
-    console.log(`⚡ Context fetch completed in ${fetchTime}ms`);
+    logger.log(`⚡ Context fetch completed in ${fetchTime}ms`);
 
     // ═══════════════════════════════════════════════════════════════
     // BUILD PROMPT — Compact and focused
@@ -175,7 +176,7 @@ FORMAT RULES:
 `;
 
     try {
-      console.log('🚀 Using Groq (primary)...');
+      logger.log('🚀 Using Groq (primary)...');
       const result = await streamText({
         model: groq('llama-3.1-8b-instant'),
         maxRetries: 0,
@@ -183,11 +184,11 @@ FORMAT RULES:
         messages,
       });
 
-      console.log(`✅ Groq response streamed in ${Date.now() - startTime}ms`);
+      logger.log(`✅ Groq response streamed in ${Date.now() - startTime}ms`);
       return result.toTextStreamResponse();
     } catch (groqError) {
       const groqErrorMessage = groqError instanceof Error ? groqError.message : 'Groq failed';
-      console.log('⚠️ Groq failed, trying OpenRouter...', groqErrorMessage);
+      logger.log('⚠️ Groq failed, trying OpenRouter...', groqErrorMessage);
 
       try {
         const stream = await openrouter.chat.completions.create({
@@ -209,7 +210,7 @@ FORMAT RULES:
           },
         });
 
-        console.log(`✅ OpenRouter response streamed in ${Date.now() - startTime}ms`);
+        logger.log(`✅ OpenRouter response streamed in ${Date.now() - startTime}ms`);
         return new Response(readableStream, {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });

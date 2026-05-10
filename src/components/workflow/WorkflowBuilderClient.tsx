@@ -571,13 +571,13 @@ export default function WorkflowBuilderClient() {
       const newStep: WorkflowStep = {
         id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         type,
-        label: paletteItem?.label ? `automation.builder.stepTypes.${type}` : 'New Step',
+        label: t(`automation.builder.stepTypes.${type}`),
         config: paletteItem?.defaultConfig || {},
         position: steps.length,
       };
       setSteps((prev) => [...prev, newStep]);
     },
-    [steps.length],
+    [steps.length, t],
   );
 
   const handleRemoveStep = useCallback((id: string) => {

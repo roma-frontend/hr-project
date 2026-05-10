@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useTranslation } from 'react-i18next';
 import {
   Target,
@@ -167,7 +168,7 @@ function CreateCycleWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[95vh]">
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="flex items-center gap-2">
@@ -519,7 +520,7 @@ function FillReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Star className="h-5 w-5" />
@@ -758,7 +759,7 @@ function ResultsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
@@ -900,6 +901,7 @@ function ResultsDialog({
 
 export function PerformanceClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const { currentUser, organizationId: userOrgId } = useAuthStore(
     useShallow((s) => ({ currentUser: s.user, organizationId: s.user?.organizationId })),
   );
@@ -969,7 +971,7 @@ export function PerformanceClient() {
           {canManageCycles && (
             <Button
               onClick={() => {
-                const mainEl = document.querySelector<HTMLElement>('main');
+                const mainEl = mainRef.current;
                 if (mainEl) {
                   mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                 }

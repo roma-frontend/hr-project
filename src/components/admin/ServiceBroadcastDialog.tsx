@@ -634,7 +634,7 @@ export function ServiceBroadcastDialog({
         onOpenChange(val);
       }}
     >
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+      <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 gap-0">
         <DialogTitle className="sr-only">{t('broadcastDialog.serviceBroadcast')}</DialogTitle>
         {/* Progress Bar */}
         <div className="px-6 pt-6 pb-2">

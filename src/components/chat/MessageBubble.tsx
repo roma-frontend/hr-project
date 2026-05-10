@@ -580,7 +580,7 @@ export const MessageBubble = React.memo(function MessageBubble({
           <img
             src={lightboxSrc}
             alt={L.preview}
-            className="max-w-[90vw] max-h-[90vh] rounded-xl object-contain shadow-2xl transition-all duration-300 scale-100"
+            className="max-w-[90vw] max-h-[95vh] rounded-xl object-contain shadow-2xl transition-all duration-300 scale-100"
             onClick={(e) => e.stopPropagation()}
           />
         </div>
@@ -591,7 +591,7 @@ export const MessageBubble = React.memo(function MessageBubble({
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in overflow-auto">
             <div
-              className="rounded-2xl shadow-2xl border p-5 w-72 max-h-[90vh] overflow-auto flex flex-col gap-3 animate-slide-up my-4"
+              className="rounded-2xl shadow-2xl border p-5 w-72 max-h-[95vh] overflow-auto flex flex-col gap-3 animate-slide-up my-4"
               style={{ background: 'var(--background)', borderColor: 'var(--border)' }}
             >
               <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>

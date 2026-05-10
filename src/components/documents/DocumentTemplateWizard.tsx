@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -77,7 +78,7 @@ function SortableField({
   index: number;
   onUpdate: (idx: number, updates: Partial<TemplateField>) => void;
   onRemove: (idx: number) => void;
-  t: any;
+  t: TFunction;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `field-${index}`,
@@ -260,8 +261,8 @@ export default function DocumentTemplateWizard({
       toast.success(t('documents.templateCreated', 'Template created successfully'));
       onSuccess?.();
       onClose();
-    } catch (error: any) {
-      toast.error(error.message || t('documents.templateCreateError', 'Failed to create template'));
+    } catch (error: unknown) {
+      toast.error((error as Error).message || t('documents.templateCreateError', 'Failed to create template'));
     } finally {
       setIsSubmitting(false);
     }
@@ -287,7 +288,7 @@ export default function DocumentTemplateWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden max-h-[95vh]">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />

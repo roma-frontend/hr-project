@@ -7,6 +7,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -248,6 +249,7 @@ function TripCard({
 
 export function DriverCalendar({ driverId, organizationId, userId, role }: DriverCalendarProps) {
   const { t, i18n } = useTranslation();
+  const mainRef = useMainRef();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<ScheduleItem | null>(null);
@@ -358,7 +360,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
         {role === 'driver' && (
           <Button
             onClick={() => {
-              const mainEl = document.querySelector<HTMLElement>('main');
+              const mainEl = mainRef.current;
               if (mainEl) {
                 mainEl.scrollTo({ top: 0, behavior: 'smooth' });
               }
@@ -429,7 +431,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                           onUpdateStatus={handleUpdateTripStatus}
                           onOpenDetails={(item) => {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
-                            const mainEl = document.querySelector<HTMLElement>('main');
+                            const mainEl = mainRef.current;
                             if (mainEl) {
                               mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                             }
@@ -522,7 +524,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
                     item={s}
                     onUpdateStatus={handleUpdateTripStatus}
                     onOpenDetails={(item) => {
-                      const mainEl = document.querySelector<HTMLElement>('main');
+                      const mainEl = mainRef.current;
                       if (mainEl) {
                         mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                       } else {
@@ -601,7 +603,7 @@ export function DriverCalendar({ driverId, organizationId, userId, role }: Drive
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-(--card) rounded-xl sm:rounded-2xl border border-(--border) shadow-2xl pointer-events-auto"
+              className="w-full max-w-4xl max-h-[95vh] overflow-y-auto bg-(--card) rounded-xl sm:rounded-2xl border border-(--border) shadow-2xl pointer-events-auto"
             >
               <BlockTimeWizard
                 driverId={driverId}

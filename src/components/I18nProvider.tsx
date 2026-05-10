@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/lib/logger';
 import '../i18n/config';
 
 const VALID_LANGUAGES = ['en', 'hy', 'ru'] as const;
@@ -47,7 +48,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         }
         setLanguageCookie(langToSave);
       } else if (savedLang !== currentLang) {
-        console.warn('Invalid language in localStorage:', savedLang);
+        logger.warn('Invalid language in localStorage:', savedLang);
         if (typeof window !== 'undefined') {
           localStorage.setItem('i18nextLng', 'en');
         }

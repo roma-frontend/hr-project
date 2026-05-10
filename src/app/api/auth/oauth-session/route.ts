@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signJWT } from '@/lib/jwt';
+import { logger } from '@/lib/logger';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
@@ -40,13 +41,13 @@ export async function POST(req: NextRequest) {
     }
 
     const emailLower = email.toLowerCase().trim();
-    console.log('[oauth-session] Starting OAuth session creation for:', emailLower);
+    logger.log('[oauth-session] Starting OAuth session creation for:', emailLower);
 
     // 1. Find user by email directly via query
-    console.log('[oauth-session] Querying Convex for user...');
+    logger.log('[oauth-session] Querying Convex for user...');
     const userResult = await convexQuery('users:getUserByEmail', { email: emailLower });
 
-    console.log(
+    logger.log(
       '[oauth-session] Convex query result:',
       userResult
         ? {
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     const sessionToken = crypto.randomUUID();
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    console.log('[oauth-session] Creating login session...');
+    logger.log('[oauth-session] Creating login session...');
     const loginResult = await convexMutation('auth:login', {
       email: emailLower,
       password: '',
@@ -108,7 +109,7 @@ export async function POST(req: NextRequest) {
       avatar: result.avatarUrl ?? avatarUrl,
     });
 
-    console.log('[oauth-session] ✅ JWT created for user:', {
+    logger.log('[oauth-session] ✅ JWT created for user:', {
       userId: result._id,
       name: result.name,
       role: result.role,
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    console.log('[oauth-session] ✅ Returning success response:', {
+    logger.log('[oauth-session] ✅ Returning success response:', {
       userId: responseData.session.userId,
       name: responseData.session.name,
       email: responseData.session.email,

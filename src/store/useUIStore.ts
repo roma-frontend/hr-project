@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface Notification {
   id: string;
@@ -27,41 +28,48 @@ interface UIState {
   clearAllNotifications: () => void;
 }
 
-export const useUIStore = create<UIState>()((set) => ({
-  // Sidebar state
-  sidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      // Sidebar state
+      sidebarOpen: true,
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
 
-  // Selected date state
-  selectedDate: null,
-  setSelectedDate: (date: Date | null) => set({ selectedDate: date }),
+      // Selected date state
+      selectedDate: null,
+      setSelectedDate: (date: Date | null) => set({ selectedDate: date }),
 
-  // Notifications state
-  notifications: [],
+      // Notifications state
+      notifications: [],
 
-  addNotification: (notification) =>
-    set((state) => ({
-      notifications: [
-        {
-          ...notification,
-          id: crypto.randomUUID(),
-          read: false,
-          createdAt: new Date(),
-        },
-        ...state.notifications,
-      ],
-    })),
+      addNotification: (notification) =>
+        set((state) => ({
+          notifications: [
+            {
+              ...notification,
+              id: crypto.randomUUID(),
+              read: false,
+              createdAt: new Date(),
+            },
+            ...state.notifications,
+          ],
+        })),
 
-  removeNotification: (id: string) =>
-    set((state) => ({
-      notifications: state.notifications.filter((n) => n.id !== id),
-    })),
+      removeNotification: (id: string) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
 
-  markNotificationRead: (id: string) =>
-    set((state) => ({
-      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    })),
+      markNotificationRead: (id: string) =>
+        set((state) => ({
+          notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        })),
 
-  clearAllNotifications: () => set({ notifications: [] }),
-}));
+      clearAllNotifications: () => set({ notifications: [] }),
+    }),
+    {
+      name: 'ui-storage',
+    },
+  ),
+);

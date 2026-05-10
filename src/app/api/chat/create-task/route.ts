@@ -14,6 +14,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -31,7 +32,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       tags,
     } = await req.json();
 
-    console.log('[create-task] Request:', {
+    logger.log('[create-task] Request:', {
       userId,
       organizationId,
       title,
@@ -100,7 +101,7 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       tags: tags || [],
     });
 
-    console.log('[create-task] Task created:', taskId);
+    logger.log('[create-task] Task created:', taskId);
 
     // Формируем ответ с учётом предупреждений
     let message = `✅ Task "${title}" has been created and assigned.`;

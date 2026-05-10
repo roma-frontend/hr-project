@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '@/lib/date-format';
@@ -106,6 +107,7 @@ interface Props {
 
 export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Props) {
   const { t, i18n } = useTranslation();
+  const mainRef = useMainRef();
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -142,7 +144,7 @@ export function TaskDetailModal({ task, currentUserId, userRole, onClose }: Prop
     }
 
     // Scroll main element to top and disable its scroll
-    const mainElement = document.querySelector('main');
+    const mainElement = mainRef.current;
     const originalScrollTop = mainElement?.scrollTop ?? 0;
     const originalOverflow = mainElement?.style.overflow;
 

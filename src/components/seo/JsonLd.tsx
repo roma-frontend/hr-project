@@ -3,6 +3,8 @@
  * Includes: SoftwareApplication, Organization, FAQPage schemas
  */
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://hroffice.app';
+
 export function SoftwareApplicationJsonLd() {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -10,7 +12,7 @@ export function SoftwareApplicationJsonLd() {
     name: 'HR Office',
     description:
       'All-in-one HR management platform with real-time attendance tracking, leave management, task management, employee analytics, face recognition check-in, and AI assistant.',
-    url: 'https://hroffice.app',
+    url: APP_URL,
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     offers: {
@@ -29,7 +31,7 @@ export function SoftwareApplicationJsonLd() {
     author: {
       '@type': 'Organization',
       name: 'HR Office Team',
-      url: 'https://hroffice.app',
+      url: APP_URL,
     },
   };
 
@@ -46,7 +48,7 @@ export function OrganizationJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'HR Office',
-    url: 'https://hroffice.app',
+    url: APP_URL,
     logo: 'https://hroffice.app/favicon.svg',
     sameAs: [
       'https://twitter.com/hrofficeapp',

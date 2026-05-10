@@ -7,6 +7,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { logger } from '@/lib/logger';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import {
   Users,
@@ -59,7 +60,7 @@ export default function JoinRequestsPage() {
 
   // Debug logging
   if (requests) {
-    console.log(`[JOIN REQUESTS] Retrieved ${requests.length} requests for status="${filter}"`, {
+    logger.log(`[JOIN REQUESTS] Retrieved ${requests.length} requests for status="${filter}"`, {
       userId,
       userRole: user?.role,
       userOrg: user?.organizationId,

@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { Car, MapPin, Clock, Users, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { logger } from '@/lib/logger';
 import { DriverMap } from '@/components/drivers/DriverMap';
 import { PlaceAutocomplete } from '@/components/drivers/PlaceAutocomplete';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -111,12 +112,12 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
   const geocodeSearch = useCallback(
     async (query: string): Promise<{ lat: number; lng: number; display_name: string }[]> => {
       if (query.length < 3) {
-        console.log('[geocode] Query too short:', query);
+        logger.log('[geocode] Query too short:', query);
         return [];
       }
       try {
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-        console.log('[geocode] Searching:', url);
+        logger.log('[geocode] Searching:', url);
         const res = await fetch(url, {
           headers: { 'Accept-Language': 'en,ru' },
         });
@@ -125,9 +126,9 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
           return [];
         }
         const data = await res.json();
-        console.log('[geocode] Results:', data.length, data);
+        logger.log('[geocode] Results:', data.length, data);
         if (data.length === 0) {
-          console.log('[geocode] No results found');
+          logger.log('[geocode] No results found');
           return [];
         }
         return data.map((item: any) => ({
@@ -191,7 +192,7 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
   };
 
   const selectPickupResult = (result: { lat: number; lng: number; display_name: string }) => {
-    console.log('[selectPickupResult]', result);
+    logger.log('[selectPickupResult]', result);
     setPickupCoords({ lat: result.lat, lng: result.lng, address: result.display_name });
     setTripInfo((prev) => ({ ...prev, from: result.display_name }));
     setPickupQuery(result.display_name);
@@ -201,7 +202,7 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
   };
 
   const selectDropoffResult = (result: { lat: number; lng: number; display_name: string }) => {
-    console.log('[selectDropoffResult]', result);
+    logger.log('[selectDropoffResult]', result);
     setDropoffCoords({ lat: result.lat, lng: result.lng, address: result.display_name });
     setTripInfo((prev) => ({ ...prev, to: result.display_name }));
     setDropoffQuery(result.display_name);
@@ -362,7 +363,7 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="w-5 h-5" />

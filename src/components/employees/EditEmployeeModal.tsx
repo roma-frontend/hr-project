@@ -382,7 +382,7 @@ export function EditEmployeeModal({ employee, open, onClose }: EditEmployeeModal
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] p-0">
+      <DialogContent className="max-w-lg max-h-[95vh] p-0">
         {/* Header with progress */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 btn-gradient" />

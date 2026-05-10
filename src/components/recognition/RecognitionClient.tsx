@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
@@ -434,6 +435,7 @@ function SendKudosModal({ open, onClose, organizationId, senderId }: SendKudosMo
 export function RecognitionClient() {
   const { t } = useTranslation();
   const router = useRouter();
+  const mainRef = useMainRef();
   const user = useAuthStore(useShallow((s) => s.user));
   const selectedOrgId = useSelectedOrganization();
   const [showSendModal, setShowSendModal] = useState(false);
@@ -501,7 +503,7 @@ export function RecognitionClient() {
           </div>
           <Button
             onClick={() => {
-              const mainEl = document.querySelector<HTMLElement>('main');
+              const mainEl = mainRef.current;
               if (mainEl) {
                 mainEl.scrollTo({ top: 0, behavior: 'smooth' });
               }

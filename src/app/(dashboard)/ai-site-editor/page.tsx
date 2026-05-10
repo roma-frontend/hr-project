@@ -25,6 +25,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 export default function AISiteEditorPage() {
   const { t } = useTranslation();
@@ -83,6 +84,7 @@ export default function AISiteEditorPage() {
   const isProfessionalOrHigher = plan === 'professional' || plan === 'enterprise';
 
   return (
+    <ErrorBoundary>
     <PlanGate feature="aiSiteEditor">
       <div className="space-y-6">
         {/* Sticky Header */}
@@ -276,7 +278,7 @@ export default function AISiteEditorPage() {
                           <Badge variant="outline">{t('aiSiteEditor.proRequired')}</Badge>
                           <Button
                             size="sm"
-                            onClick={() => (window.location.href = '/settings?tab=billing')}
+                            onClick={() => router.push('/settings?tab=billing')}
                           >
                             <Crown className="h-4 w-4 mr-2" />
                             {t('aiSiteEditor.upgradePlan')}
@@ -365,5 +367,6 @@ export default function AISiteEditorPage() {
         </Tabs>
       </div>
     </PlanGate>
+    </ErrorBoundary>
   );
 }

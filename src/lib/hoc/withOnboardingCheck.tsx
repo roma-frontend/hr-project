@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useRouter } from 'next/navigation';
 
 interface WithOnboardingCheckProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface WithOnboardingCheckProps {
 export function withOnboardingCheck<P extends object>(WrappedComponent: React.ComponentType<P>) {
   return function WithOnboardingCheck(props: P) {
     const { user, needsOnboarding } = useAuthStore();
+    const router = useRouter();
     const isOnboardingPage =
       typeof window !== 'undefined' && window.location.pathname.startsWith('/onboarding');
 
@@ -19,7 +21,7 @@ export function withOnboardingCheck<P extends object>(WrappedComponent: React.Co
       // Redirect immediately
       if (typeof window !== 'undefined') {
         console.log('[withOnboardingCheck] 🚨 Redirecting to onboarding');
-        window.location.href = '/onboarding/select-organization';
+        router.push('/onboarding/select-organization');
       }
 
       // Show loader during redirect

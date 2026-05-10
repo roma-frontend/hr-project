@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
+import { logger } from '@/lib/logger';
 
 const languages = {
   en: { name: 'English', flag: '🇬🇧' },
@@ -22,22 +23,22 @@ export function LanguageSwitcher() {
   const currentLang = i18n.language || 'en';
 
   const changeLanguage = async (lng: string) => {
-    console.log('🔄 LanguageSwitcher: Changing language from', i18n.language, 'to', lng);
+    logger.log('🔄 LanguageSwitcher: Changing language from', i18n.language, 'to', lng);
 
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('i18nextLng', lng);
-        console.log('💾 Saved to localStorage FIRST:', lng);
+        logger.log('💾 Saved to localStorage FIRST:', lng);
 
         const saved = localStorage.getItem('i18nextLng');
-        console.log('✅ Verification - localStorage now has:', saved);
+        logger.log('✅ Verification - localStorage now has:', saved);
       } catch (error) {
         console.error('❌ Failed to save to localStorage:', error);
       }
     }
 
     await i18n.changeLanguage(lng);
-    console.log('✅ Language changed to:', i18n.language);
+    logger.log('✅ Language changed to:', i18n.language);
   };
 
   const availableLanguages = Object.entries(languages).filter(([code]) => code !== currentLang);

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from 'convex/react';
 import { useDebouncedCallback } from 'use-debounce';
@@ -80,6 +81,7 @@ const TYPE_CONFIG = {
 
 export function EmployeesClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const user = useAuthStore(useShallow((state: { user: UserType | null }) => state.user));
   const selectedOrgId = useSelectedOrganization();
   const router = useRouter();
@@ -275,7 +277,7 @@ export function EmployeesClient() {
           {canManage && (
             <Button
               onClick={() => {
-                const mainEl = document.querySelector<HTMLElement>('main');
+                const mainEl = mainRef.current;
                 if (mainEl) {
                   mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                 }
@@ -470,7 +472,7 @@ export function EmployeesClient() {
             {canManage && (
               <Button
                 onClick={() => {
-                  const mainEl = document.querySelector<HTMLElement>('main');
+                  const mainEl = mainRef.current;
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                   }

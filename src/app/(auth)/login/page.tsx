@@ -18,6 +18,7 @@ import { loginTourSteps } from '@/components/onboarding/loginTourSteps';
 import { useSession } from 'next-auth/react';
 import { useKeystrokeDynamics } from '@/hooks/useKeystrokeDynamics';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
+import { logger } from '@/lib/logger';
 import { SmartEmailInput } from '@/components/auth/SmartEmailInput';
 import { SmartPasswordInput } from '@/components/auth/SmartPasswordInput';
 import { SmartErrorMessage, parseAuthError } from '@/components/auth/SmartErrorMessage';
@@ -275,7 +276,7 @@ export default function LoginPage() {
           const data = await response.json();
           if (data.isActive) {
             // Redirect to maintenance mode URL
-            window.location.href = `/login?maintenance=true&org=${orgId}`;
+            router.push(`/login?maintenance=true&org=${orgId}`);
           }
         } catch (error) {
           console.error('Failed to check maintenance mode:', error);
@@ -333,7 +334,7 @@ export default function LoginPage() {
 
     startTransition(async () => {
       try {
-        console.log('🔐 Attempting login...');
+        logger.log('🔐 Attempting login...');
 
         // Collect keystroke sample and device fingerprint
         const keystrokeSample = getSample();
@@ -355,7 +356,7 @@ export default function LoginPage() {
           const errorData = (await response.json()) as { error?: string; organizationId?: string };
           // If maintenance mode is active, redirect to maintenance screen
           if (errorData.error === 'maintenance') {
-            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+            router.push(`/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`);
             return;
           }
           throw new Error(errorData.error || 'Login failed');
@@ -405,7 +406,7 @@ export default function LoginPage() {
           avatar: session.avatar,
         };
 
-        console.log('💾 Saving user to store:', userData);
+        logger.log('💾 Saving user to store:', userData);
         login(userData);
         reset(); // clear keystroke buffer after successful login
 
@@ -424,7 +425,7 @@ export default function LoginPage() {
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
         const redirectUrl = nextUrl || '/dashboard';
-        window.location.href = redirectUrl;
+        router.push(redirectUrl);
       } catch (err) {
         console.error('❌ Login failed:', err);
         setError(err instanceof Error ? err.message : 'Login failed');
@@ -527,7 +528,7 @@ export default function LoginPage() {
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
         const redirectUrl = nextUrl || '/dashboard';
-        window.location.href = redirectUrl;
+        router.push(redirectUrl);
       } catch (err) {
         setTwoFactorError(err instanceof Error ? err.message : 'Verification failed');
         setTotpCode('');

@@ -16,10 +16,12 @@ import { Button } from '@/components/ui/button';
 import { Clock, Mail, Building2, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function PendingApprovalPage() {
   const { t } = useTranslation();
   const { user, setUser } = useAuthStore();
+  const router = useRouter();
 
   // Get fresh user data from Convex to check if approved
   const freshUserData = useQuery(
@@ -53,9 +55,9 @@ export default function PendingApprovalPage() {
       const params = new URLSearchParams(window.location.search);
       const nextUrl = params.get('next');
       const redirectUrl = nextUrl || '/dashboard';
-      window.location.href = redirectUrl;
+      router.push(redirectUrl);
     }
-  }, [freshUserData, setUser]);
+  }, [freshUserData, setUser, router]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/login' });

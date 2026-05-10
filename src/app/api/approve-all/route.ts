@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 
@@ -36,7 +37,7 @@ async function verifySuperadmin(): Promise<{ userId: string; role: string } | nu
     const { payload } = await jwtVerify(sessionCookie.value, secret);
 
     if (payload.role !== 'superadmin') {
-      console.warn('[Approve-All] Non-superadmin access attempt:', payload.role);
+      logger.warn('[Approve-All] Non-superadmin access attempt:', payload.role);
       return null;
     }
 

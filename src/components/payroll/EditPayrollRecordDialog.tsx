@@ -254,7 +254,7 @@ export function EditPayrollRecordDialog({ open, onOpenChange, record }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden gap-0 max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden gap-0 max-h-[95vh] flex flex-col">
         <div className="px-5 py-4 md:px-6 md:py-5 border-b border-(--border)">
           <DialogTitle className="text-lg md:text-xl font-bold text-(--text-primary)">
             {t('payroll.editRecord')}

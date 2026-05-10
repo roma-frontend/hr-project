@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useLayoutEffect } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -152,9 +153,10 @@ export default function DocumentUploadWizard({ onClose, onSuccess, templateId }:
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
   const effectiveOrgId = selectedOrgId ?? user?.organizationId;
+  const mainRef = useMainRef();
 
   useLayoutEffect(() => {
-    const mainEl = document.querySelector('main');
+    const mainEl = mainRef.current;
     if (mainEl) {
       const original = mainEl.style.overflow;
       mainEl.style.overflow = 'hidden';

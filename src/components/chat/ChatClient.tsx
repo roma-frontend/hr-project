@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -14,6 +15,7 @@ import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useTranslation } from 'react-i18next';
 import { playChatMessageSound } from '@/lib/notificationSound';
+import { logger } from '@/lib/logger';
 
 interface Props {
   userId: string;
@@ -39,6 +41,7 @@ export default function ChatClient({
   userAvatar,
   userRole,
 }: Props) {
+  const mainRef = useMainRef();
   const [selectedConvId, setSelectedConvId] = useState<Id<'chatConversations'> | null>(null);
   const [showNewConv, setShowNewConv] = useState(false);
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
@@ -101,7 +104,7 @@ export default function ChatClient({
       participantIds: Id<'users'>[],
       remoteUserName?: string,
     ) => {
-      console.log('[ChatClient] Starting call', {
+      logger.log('[ChatClient] Starting call', {
         convId,
         initiator: uid,
         participants: participantIds,
@@ -249,7 +252,7 @@ export default function ChatClient({
             currentUserId={uid}
             onSelect={handleSelectConversation}
             onNewConversation={() => {
-              const mainEl = document.querySelector<HTMLElement>('main');
+              const mainEl = mainRef.current;
               if (mainEl) {
                 mainEl.scrollTo({ top: 0, behavior: 'smooth' });
               }

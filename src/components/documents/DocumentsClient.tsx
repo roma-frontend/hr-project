@@ -163,7 +163,7 @@ export default function DocumentsClient() {
         documentId: doc._id,
       });
       setSelectedDocument(doc);
-      window.open(doc.fileUrl, '_blank');
+      window.open(doc.fileUrl, '_blank', 'noopener,noreferrer');
     } catch {
       toast.error(t('documents.viewError', 'Failed to record document view'));
     }

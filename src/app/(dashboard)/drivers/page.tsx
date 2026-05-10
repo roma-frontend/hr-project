@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -83,6 +84,7 @@ interface _RecurringTrip {
 export default function DriversPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const mainRef = useMainRef();
   const { user, isAuthenticated } = useAuthStore();
   const { selectedOrgId: storeSelectedOrgId } = useOrgSelectorStore();
 
@@ -265,7 +267,7 @@ export default function DriversPage() {
   // 7. Effect for scroll blocking when wizard, calendar, or trip details are open
   useEffect(() => {
     if (showRequestWizard || showTripDetails || showCalendarDialog) {
-      const mainEl = document.querySelector<HTMLElement>('main');
+      const mainEl = mainRef.current;
       const scrollY = mainEl ? mainEl.scrollTop : window.scrollY;
 
       document.body.style.overflow = 'hidden';
@@ -289,7 +291,7 @@ export default function DriversPage() {
   const handleBook = useCallback((id: string) => {
     setSelectedDriverId(id);
     setShowRequestWizard(true);
-    const mainEl = document.querySelector<HTMLElement>('main');
+    const mainEl = mainRef.current;
     if (mainEl) {
       mainEl.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
@@ -300,7 +302,7 @@ export default function DriversPage() {
   const handleViewRequestDetails = useCallback((request: any) => {
     setSelectedRequest(request);
     setShowTripDetails(true);
-    const mainEl = document.querySelector<HTMLElement>('main');
+    const mainEl = mainRef.current;
     if (mainEl) {
       mainEl.scrollTo({ top: 0, behavior: 'smooth' });
     } else {

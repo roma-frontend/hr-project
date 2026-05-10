@@ -38,6 +38,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { Badge } from '@/components/ui/badge';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { logger } from '@/lib/logger';
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
@@ -80,7 +81,7 @@ export default function ProfilePage() {
       return;
     }
 
-    console.log('[Profile] Saving...', { user, name, email, phone, location });
+    logger.log('[Profile] Saving...', { user, name, email, phone, location });
 
     setSaving(true);
     try {
@@ -89,7 +90,7 @@ export default function ProfilePage() {
       const newPhone = phone.trim();
       const newLocation = location.trim();
 
-      console.log('[Profile] Calling updateOwnProfile...', {
+      logger.log('[Profile] Calling updateOwnProfile...', {
         userId: user.id,
         name: newName,
         email: newEmail,
@@ -106,10 +107,10 @@ export default function ProfilePage() {
         location: newLocation || undefined,
       });
 
-      console.log('[Profile] Convex update successful');
+      logger.log('[Profile] Convex update successful');
 
       // 2. Update JWT cookie via API route
-      console.log('[Profile] Calling /api/profile/update...');
+      logger.log('[Profile] Calling /api/profile/update...');
 
       const res = await fetch('/api/profile/update', {
         method: 'POST',
@@ -122,7 +123,7 @@ export default function ProfilePage() {
         credentials: 'include',
       });
 
-      console.log('[Profile] API response status:', res.status);
+      logger.log('[Profile] API response status:', res.status);
 
       if (!res.ok) {
         const error = await res.json();
@@ -130,11 +131,11 @@ export default function ProfilePage() {
         throw new Error(error.error || 'Failed to update session');
       }
 
-      console.log('[Profile] JWT cookie updated');
+      logger.log('[Profile] JWT cookie updated');
 
       // 3. Update Zustand store (localStorage)
       login({ ...user, name: newName, email: newEmail });
-      console.log('[Profile] Zustand store updated');
+      logger.log('[Profile] Zustand store updated');
 
       // 4. Update local state to reflect changes immediately
       setName(newName);

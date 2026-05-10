@@ -136,6 +136,10 @@ export default function CompanyEventsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editStartDate, setEditStartDate] = useState('');
+  const [editEndDate, setEditEndDate] = useState('');
 
   const { user: authUser } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
@@ -611,7 +615,7 @@ export default function CompanyEventsPage() {
       {/* Create Event Dialog */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent
-          className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col"
+          className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[95vh] flex flex-col"
           aria-describedby={undefined}
         >
           <DialogHeader>
@@ -638,11 +642,24 @@ export default function CompanyEventsPage() {
         open={showEditModal}
         onOpenChange={(open) => {
           setShowEditModal(open);
-          if (!open) setSelectedEvent(null);
+          if (!open) {
+            setSelectedEvent(null);
+          } else if (selectedEvent) {
+            setEditName(selectedEvent.name);
+            setEditDescription(selectedEvent.description || '');
+            if (selectedEvent.startDate) {
+              const startDateStr = new Date(selectedEvent.startDate).toISOString().split('T')[0];
+              if (startDateStr) setEditStartDate(startDateStr);
+            }
+            if (selectedEvent.endDate) {
+              const endDateStr = new Date(selectedEvent.endDate).toISOString().split('T')[0];
+              if (endDateStr) setEditEndDate(endDateStr);
+            }
+          }
         }}
       >
         <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          className="max-w-2xl max-h-[95vh] overflow-y-auto"
           aria-describedby={undefined}
         >
           <DialogHeader>
@@ -658,8 +675,8 @@ export default function CompanyEventsPage() {
                   {t('events.eventName', 'Event Name')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  defaultValue={selectedEvent.name}
-                  id="edit-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                   placeholder={t('events.eventNamePlaceholder', 'Event name...')}
                 />
               </div>
@@ -668,8 +685,8 @@ export default function CompanyEventsPage() {
                   {t('events.description', 'Description')}
                 </Label>
                 <Textarea
-                  defaultValue={selectedEvent.description || ''}
-                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
                   placeholder={t('events.briefDescriptionPlaceholder', 'Brief description...')}
                 />
@@ -681,8 +698,8 @@ export default function CompanyEventsPage() {
                   </Label>
                   <Input
                     type="date"
-                    defaultValue={new Date(selectedEvent.startDate).toISOString().split('T')[0]}
-                    id="edit-start"
+                    value={editStartDate}
+                    onChange={(e) => setEditStartDate(e.target.value)}
                   />
                 </div>
                 <div>
@@ -691,8 +708,8 @@ export default function CompanyEventsPage() {
                   </Label>
                   <Input
                     type="date"
-                    defaultValue={new Date(selectedEvent.endDate).toISOString().split('T')[0]}
-                    id="edit-end"
+                    value={editEndDate}
+                    onChange={(e) => setEditEndDate(e.target.value)}
                   />
                 </div>
               </div>
@@ -738,16 +755,10 @@ export default function CompanyEventsPage() {
                       await updateEvent({
                         eventId: selectedEvent._id,
                         userId: userId!,
-                        name: (document.getElementById('edit-name') as HTMLInputElement).value,
-                        description: (
-                          document.getElementById('edit-description') as HTMLTextAreaElement
-                        ).value,
-                        startDate: new Date(
-                          (document.getElementById('edit-start') as HTMLInputElement).value,
-                        ).getTime(),
-                        endDate: new Date(
-                          (document.getElementById('edit-end') as HTMLInputElement).value,
-                        ).getTime(),
+                        name: editName,
+                        description: editDescription,
+                        startDate: new Date(editStartDate).getTime(),
+                        endDate: new Date(editEndDate).getTime(),
                         priority: (selectedEvent.priority || 'medium') as 'high' | 'medium' | 'low',
                       });
                       setShowEditModal(false);

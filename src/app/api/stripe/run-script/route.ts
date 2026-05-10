@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { withCsrfProtection } from '@/lib/csrf-middleware';
+import { logger } from '@/lib/logger';
 
 const ALLOWED_SCRIPTS = [
   'stripe:view',
@@ -38,7 +39,7 @@ async function verifySuperadmin(): Promise<{ userId: string; role: string } | nu
     const { payload } = await jwtVerify(sessionCookie.value, secret);
 
     if (payload.role !== 'superadmin') {
-      console.warn('[Stripe Run-Script] Non-superadmin access attempt:', payload.role);
+      logger.warn('[Stripe Run-Script] Non-superadmin access attempt:', payload.role);
       return null;
     }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { X, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useMutation, useQuery } from 'convex/react';
@@ -291,7 +292,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
       try {
         await markTourAsSeenMutation({ tourId, sessionToken });
       } catch (err) {
-        console.log('Failed to save to database, using localStorage', err);
+        logger.log('Failed to save to database, using localStorage', err);
       }
     }
 
@@ -311,7 +312,7 @@ export function OnboardingTour({ steps, tourId, onComplete, onSkip }: Onboarding
       try {
         await markTourAsSeenMutation({ tourId, sessionToken });
       } catch (err) {
-        console.log('Failed to save to database, using localStorage', err);
+        logger.log('Failed to save to database, using localStorage', err);
       }
     }
 

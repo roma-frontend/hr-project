@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { detectFace, loadFaceApiModels, createCanvasFromVideo, canvasToBlob } from '@/lib/faceApi';
 import { uploadAvatarToCloudinary } from '@/actions/cloudinary';
 import { Id } from '../../../convex/_generated/dataModel';
+import { logger } from '@/lib/logger';
 
 interface FaceRegistrationProps {
   userId: Id<'users'>;
@@ -45,7 +46,7 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter((d) => d.kind === 'videoinput');
-        console.log('Available cameras:', videoDevices);
+        logger.log('Available cameras:', videoDevices);
         setCameras(videoDevices);
         if (videoDevices.length > 0) {
           setSelectedCamera(videoDevices[0]!.deviceId);
@@ -77,8 +78,8 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
         return;
       }
 
-      console.log('🎥 Requesting camera access...');
-      console.log('Selected camera:', selectedCamera);
+      logger.log('🎥 Requesting camera access...');
+      logger.log('Selected camera:', selectedCamera);
 
       const constraints: MediaStreamConstraints = {
         video: selectedCamera
@@ -96,7 +97,7 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      console.log('✅ Camera access granted');
+      logger.log('✅ Camera access granted');
 
       // Set state to trigger video element rendering
       setStream(mediaStream);
@@ -109,10 +110,10 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
       const waitForVideoElement = async (maxAttempts = 20) => {
         for (let i = 0; i < maxAttempts; i++) {
           if (videoRef.current) {
-            console.log('📹 Video element found on attempt', i + 1);
+            logger.log('📹 Video element found on attempt', i + 1);
             return true;
           }
-          console.log(`⏳ Waiting for video element... attempt ${i + 1}`);
+          logger.log(`⏳ Waiting for video element... attempt ${i + 1}`);
           await new Promise((resolve) => setTimeout(resolve, 50));
         }
         return false;
@@ -132,10 +133,10 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
         return;
       }
 
-      console.log('📹 Setting up video element...');
+      logger.log('📹 Setting up video element...');
       videoRef.current.srcObject = mediaStream;
 
-      console.log('⏳ Waiting for metadata to load...');
+      logger.log('⏳ Waiting for metadata to load...');
 
       // Ensure video plays
       const playVideo = async () => {
@@ -145,14 +146,14 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
         }
 
         try {
-          console.log('🎬 Attempting to play video...');
-          console.log('Video element state:', {
+          logger.log('🎬 Attempting to play video...');
+          logger.log('Video element state:', {
             readyState: videoRef.current.readyState,
             paused: videoRef.current.paused,
             srcObject: !!videoRef.current.srcObject,
           });
           await videoRef.current.play();
-          console.log('✅ Video playing successfully');
+          logger.log('✅ Video playing successfully');
           detectFaceLoop(true); // Force start with true flag
         } catch (err) {
           console.error('❌ Failed to play video:', err);
@@ -162,14 +163,14 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
 
       // Wait for metadata and play
       videoRef.current.onloadedmetadata = () => {
-        console.log('✅ Video metadata loaded');
+        logger.log('✅ Video metadata loaded');
         playVideo();
       };
 
       // Fallback: try to play after a short delay if metadata event doesn't fire
       setTimeout(() => {
         if (videoRef.current && isWebcamActive) {
-          console.log("⚠️ Metadata event didn't fire, trying to play anyway...");
+          logger.log("⚠️ Metadata event didn't fire, trying to play anyway...");
           playVideo();
         }
       }, 1000);
@@ -218,8 +219,8 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
   };
 
   const detectFaceLoop = (forceStart = false) => {
-    console.log('🔄 Starting face detection loop...');
-    console.log(
+    logger.log('🔄 Starting face detection loop...');
+    logger.log(
       'forceStart:',
       forceStart,
       'videoRef.current:',
@@ -229,18 +230,18 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
     );
 
     if (!videoRef.current) {
-      console.warn('⚠️ Cannot start detection loop - videoRef is null');
+      logger.warn('⚠️ Cannot start detection loop - videoRef is null');
       return;
     }
 
     if (!forceStart && !isWebcamActive) {
-      console.warn('⚠️ Cannot start detection loop - isWebcamActive is false');
+      logger.warn('⚠️ Cannot start detection loop - isWebcamActive is false');
       return;
     }
 
     const interval = setInterval(async () => {
       if (!videoRef.current) {
-        console.log('🛑 Stopping face detection loop - videoRef is null');
+        logger.log('🛑 Stopping face detection loop - videoRef is null');
         clearInterval(interval);
         return;
       }
@@ -248,7 +249,7 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
       try {
         // Check if video is actually playing and has valid dimensions
         if (videoRef.current.readyState < 2) {
-          console.log('⏳ Video not ready yet, readyState:', videoRef.current.readyState);
+          logger.log('⏳ Video not ready yet, readyState:', videoRef.current.readyState);
           return;
         }
 
@@ -257,7 +258,7 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
 
         // Only log when face detection status changes
         if (faceFound !== faceDetected) {
-          console.log(faceFound ? '✅ Face detected!' : '❌ No face detected');
+          logger.log(faceFound ? '✅ Face detected!' : '❌ No face detected');
         }
 
         setFaceDetected(faceFound);

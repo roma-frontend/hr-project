@@ -36,6 +36,7 @@ import { playChatMessageSound } from '@/lib/notificationSound';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { getInitials, formatFileSize } from '@/lib/stringUtils';
+import { logger } from '@/lib/logger';
 import { useOptimisticSendMessage } from '@/hooks/useOptimisticActions';
 
 interface Props {
@@ -127,7 +128,7 @@ export const ChatWindow = React.memo(function ChatWindow({
   const sendMessage = useMutation(api.chat.mutations.sendMessage); // Keep for non-optimistic uses
 
   if (messages && messages.length > 0 && !messages[0]?.sender) {
-    console.warn('[ChatWindow] Message without sender:', messages[0]);
+    logger.warn('[ChatWindow] Message without sender:', messages[0]);
   }
   const members = useQuery(api.chat.queries.getConversationMembers, { conversationId });
   const typingUsers = useQuery(api.chat.queries.getTypingUsers, { conversationId, currentUserId });

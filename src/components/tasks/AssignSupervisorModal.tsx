@@ -6,6 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
+import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/useAuthStore';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 
@@ -54,11 +55,11 @@ export function AssignSupervisorModal({ onClose }: Props) {
   );
 
   // Debug: log to check if data is loading
-  console.log('AssignSupervisorModal - user:', user);
-  console.log('AssignSupervisorModal - user.id:', user?.id);
-  console.log('AssignSupervisorModal - user.organizationId:', user?.organizationId);
-  console.log('AssignSupervisorModal - employees:', employees);
-  console.log('AssignSupervisorModal - supervisors:', supervisors);
+  logger.log('AssignSupervisorModal - user:', user);
+  logger.log('AssignSupervisorModal - user.id:', user?.id);
+  logger.log('AssignSupervisorModal - user.organizationId:', user?.organizationId);
+  logger.log('AssignSupervisorModal - employees:', employees);
+  logger.log('AssignSupervisorModal - supervisors:', supervisors);
 
   const assignSupervisor = useMutation(api.tasks.assignSupervisor);
 

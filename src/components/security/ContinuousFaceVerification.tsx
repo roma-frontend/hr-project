@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 
 interface Props {
@@ -108,7 +109,7 @@ export default function ContinuousFaceVerification({
       }
     } catch (err) {
       // Camera not available or permission denied — skip silently
-      console.warn('Continuous face verification skipped:', err);
+      logger.warn('Continuous face verification skipped:', err);
       stopCamera();
       setStatus('idle');
     }

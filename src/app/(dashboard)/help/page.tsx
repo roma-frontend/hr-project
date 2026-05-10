@@ -156,7 +156,7 @@ export default function HelpSupportPage() {
                     <span className="sm:hidden">{t('help.createTicket')}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[90vh] flex flex-col">
+                <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-3xl max-h-[95vh] flex flex-col">
                   <DialogHeader>
                     <DialogTitle className="text-lg md:text-xl">
                       {t('help.createTicket')}

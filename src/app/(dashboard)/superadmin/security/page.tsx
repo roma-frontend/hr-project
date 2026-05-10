@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -24,6 +25,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 
 // ── Feature metadata ──────────────────────────────────────────────────────────
 const FEATURES = [
@@ -205,6 +207,7 @@ function RiskBadge({ score }: { score: number }) {
 
 export default function SecurityDashboard() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { user } = useAuthStore();
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<'settings' | 'logs' | 'attempts' | 'blocked'>(
@@ -289,6 +292,7 @@ export default function SecurityDashboard() {
           : t('superadmin.security.normal');
 
   return (
+    <ErrorBoundary>
     <div style={{ color: 'var(--text-primary)' }}>
       {/* ── Header ── */}
       <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
@@ -589,9 +593,7 @@ export default function SecurityDashboard() {
                     key={user._id}
                     className="rounded-lg sm:rounded-xl p-3 sm:p-5 border hover:shadow-md transition-all cursor-pointer"
                     style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-                    onClick={() =>
-                      (window.location.href = `/superadmin/security/alert/${user._id}`)
-                    }
+                    onClick={() => router.push(`/superadmin/security/alert/${user._id}`)}
                   >
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                       <div className="flex items-start gap-4 flex-1">
@@ -662,7 +664,7 @@ export default function SecurityDashboard() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.location.href = `/superadmin/security/alert/${user._id}`;
+                          router.push(`/superadmin/security/alert/${user._id}`);
                         }}
                         className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-colors flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center"
                         style={{
@@ -827,5 +829,6 @@ export default function SecurityDashboard() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

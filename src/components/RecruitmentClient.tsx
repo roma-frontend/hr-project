@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useTranslation } from 'react-i18next';
 import {
   Briefcase,
@@ -130,7 +131,7 @@ function CreateVacancyWizard({
   };
 
   return (
-    <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[90vh]">
+    <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden max-h-[95vh]">
       <DialogHeader className="px-5 pt-5 pb-0">
         <DialogTitle>{t('recruitment.wizard.title', 'Create Vacancy')}</DialogTitle>
       </DialogHeader>
@@ -585,7 +586,7 @@ function CandidateDetailDialog({
   };
 
   return (
-    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="sm:max-w-2xl max-h-[95vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
@@ -855,6 +856,7 @@ function PipelineView({
 
 export default function RecruitmentClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const user = useAuthUser();
   const organizationId = user?.organizationId as Id<'organizations'> | undefined;
   const userId = user?.id as Id<'users'> | undefined;
@@ -924,7 +926,7 @@ export default function RecruitmentClient() {
           {isAdmin && (
             <Button
               onClick={() => {
-                const mainEl = document.querySelector<HTMLElement>('main');
+                const mainEl = mainRef.current;
                 if (mainEl) {
                   mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                 }
@@ -1041,7 +1043,7 @@ export default function RecruitmentClient() {
                   <Button
                     className="mt-4"
                     onClick={() => {
-                      const mainEl = document.querySelector<HTMLElement>('main');
+                      const mainEl = mainRef.current;
                       if (mainEl) {
                         mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                       }
@@ -1404,7 +1406,7 @@ function EditVacancyDialog({
     );
 
   return (
-    <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+    <DialogContent className="sm:max-w-lg max-h-[95vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{t('recruitment.editVacancy', 'Edit Vacancy')}</DialogTitle>
       </DialogHeader>

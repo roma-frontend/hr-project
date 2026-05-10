@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useMemo, useRef, useCallback, useTransition, useEffect } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { useTranslation } from 'react-i18next';
@@ -463,6 +464,7 @@ interface TasksClientProps {
 export const TasksClient = memo(function TasksClient({ userId, userRole }: TasksClientProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const mainRef = useMainRef();
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [showCreate, setShowCreate] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
@@ -474,7 +476,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const mainEl = document.querySelector<HTMLElement>('main');
+    const mainEl = mainRef.current;
     const handleScroll = () => {
       if (mainEl) {
         setIsScrolled(mainEl.scrollTop > 10);
@@ -603,7 +605,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
             {userRole === 'admin' && (
               <button
                 onClick={() => {
-                  const mainEl = document.querySelector<HTMLElement>('main');
+                  const mainEl = mainRef.current;
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                   }
@@ -618,7 +620,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
             {canManage && (
               <button
                 onClick={() => {
-                  const mainEl = document.querySelector<HTMLElement>('main');
+                  const mainEl = mainRef.current;
                   if (mainEl) {
                     mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                   }
@@ -847,7 +849,7 @@ export const TasksClient = memo(function TasksClient({ userId, userRole }: Tasks
       {/* Modals */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent
-          className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[90vh] flex flex-col"
+          className="w-[95vw] sm:w-[90vw] md:w-[85vw] max-w-2xl max-h-[95vh] flex flex-col"
           aria-describedby={undefined}
         >
           <DialogHeader>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Coffee } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import {
   subscribeToPushNotifications,
   sendLocalPushNotification,
@@ -151,7 +152,7 @@ export default function BreakReminderService({
         if (permission === 'granted') {
           // Subscribe to push notifications for mobile
           await subscribeToPushNotifications();
-          console.log('✅ Push notifications enabled for mobile!');
+          logger.log('✅ Push notifications enabled for mobile!');
         }
       }
     };

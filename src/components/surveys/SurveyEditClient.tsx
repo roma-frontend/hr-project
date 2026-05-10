@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useShallow } from 'zustand/shallow';
 import { useState, useEffect, Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   ClipboardList,
   Plus,
@@ -78,7 +79,7 @@ function SortableQuestion({
   question: QuestionDraft;
   index: number;
   onRemove: (idx: number) => void;
-  t: any;
+  t: TFunction;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: `question-${index}`,
@@ -284,8 +285,8 @@ export default function SurveyEditClient() {
 
       toast.success(t('surveys.updated'));
       router.push(`/surveys/${surveyId}`);
-    } catch (error: any) {
-      toast.error(error.message || t('surveys.errors.updateFailed'));
+    } catch (error: unknown) {
+      toast.error((error as Error).message || t('surveys.errors.updateFailed'));
     } finally {
       setIsSubmitting(false);
     }

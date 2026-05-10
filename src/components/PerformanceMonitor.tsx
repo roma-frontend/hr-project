@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { reportWebVitals, logBundleSize, calculatePerformanceScore } from '@/lib/performance';
 
 /**
@@ -16,7 +17,7 @@ export default function PerformanceMonitor() {
         setTimeout(() => {
           logBundleSize();
           const score = calculatePerformanceScore();
-          console.log('🎯 Performance Score:', score, '/100');
+          logger.log('🎯 Performance Score:', score, '/100');
         }, 1000);
       });
     }
@@ -103,7 +104,7 @@ export default function PerformanceMonitor() {
         });
         clsObserver.observe({ entryTypes: ['layout-shift'] });
       } catch (e) {
-        console.warn('Performance monitoring failed:', e);
+        logger.warn('Performance monitoring failed:', e);
       }
     }
   }, []);

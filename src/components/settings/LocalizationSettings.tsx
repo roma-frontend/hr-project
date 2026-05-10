@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -77,7 +78,7 @@ export function LocalizationSettings({
 
       // Change language if it was changed
       if (language !== i18n.language) {
-        console.log('[LocalizationSettings] Changing language from', i18n.language, 'to', language);
+        logger.log('[LocalizationSettings] Changing language from', i18n.language, 'to', language);
 
         // Save to localStorage (I18nProvider will detect and apply it)
         localStorage.setItem('i18nextLng', language);

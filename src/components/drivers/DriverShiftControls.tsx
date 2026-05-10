@@ -257,7 +257,7 @@ export function DriverShiftControls({
 
       {/* End Shift Modal */}
       <Dialog open={showEndShiftModal} onOpenChange={setShowEndShiftModal}>
-        <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md p-0 overflow-hidden max-h-[95vh] overflow-y-auto">
           {/* Header */}
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-(--border)">
             <div className="flex items-start gap-3">

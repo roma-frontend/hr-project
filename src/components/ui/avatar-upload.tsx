@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useAuthStore } from '@/store/useAuthStore';
-import { log } from '@/lib/logger';
+import { logger as log } from '@/lib/logger';
 
 interface AvatarUploadProps {
   userId: string;

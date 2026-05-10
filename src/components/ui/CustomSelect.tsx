@@ -37,19 +37,30 @@ export function CustomSelect({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   const selectedLabel = options.find((o) => o.value === value)?.label || placeholder || '';
 
   const updatePosition = useCallback(() => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const dropdownH = 240;
+
+    const style: React.CSSProperties = {
+      position: 'fixed',
+      left: rect.left,
+      width: rect.width,
+    };
+
+    if (spaceBelow >= dropdownH) {
+      style.top = rect.bottom + 4;
+    } else {
+      style.bottom = viewportHeight - rect.top + 4;
     }
+
+    setDropdownStyle(style);
   }, []);
 
   useEffect(() => {
@@ -63,6 +74,18 @@ export function CustomSelect({
       };
     }
   }, [open, updatePosition]);
+
+  // Stop pointerdown in capture phase BEFORE Radix Dialog sees it
+  useEffect(() => {
+    if (!open) return;
+    const stopPointerDown = (e: PointerEvent) => {
+      if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('pointerdown', stopPointerDown, true);
+    return () => document.removeEventListener('pointerdown', stopPointerDown, true);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -108,17 +131,17 @@ export function CustomSelect({
         createPortal(
           <div
             ref={dropdownRef}
-            className={cn('z-[9999] rounded-lg overflow-hidden shadow-xl', dropdownClassName)}
+            className={cn('rounded-lg overflow-hidden shadow-xl', dropdownClassName)}
             style={{
-              position: 'fixed',
-              top: position.top,
-              left: position.left,
-              width: position.width,
+              ...dropdownStyle,
+              zIndex: 999999,
+              maxHeight: 240,
+              overflowY: 'auto',
               background: 'var(--landing-modal-bg, #fff)',
               border: '1px solid var(--landing-card-border, #e5e7eb)',
             }}
           >
-            <div className="max-h-60 overflow-y-auto py-1">
+            <div className="py-1">
               {options.map((opt) => {
                 const isSelected = opt.value === value;
                 const isDisabled = opt.disabled;

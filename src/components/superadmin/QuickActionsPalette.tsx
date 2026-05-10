@@ -265,11 +265,11 @@ export function QuickActionsPalette() {
       icon: <Search className="w-4 h-4" />,
       shortcut: '⌘F',
       category: 'action',
-      action: () => {
-        setIsOpen(false);
-        // Focus global search if on superadmin page
-        document.getElementById('global-search-input')?.focus();
-      },
+        action: () => {
+          setIsOpen(false);
+          // Focus global search if on superadmin page
+          document.querySelector<HTMLInputElement>('#global-search-input')?.focus();
+        },
     },
     {
       id: 'create-ticket',

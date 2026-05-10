@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { resolvePlanFromPriceId } from '@/lib/stripe-config';
 import * as Sentry from '@sentry/nextjs';
+import { logger } from '@/lib/logger';
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -96,7 +97,7 @@ async function notifyManager({
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   if (!stripe) {
-    console.warn('[Stripe Webhook] Not configured, skipping');
+    logger.warn('[Stripe Webhook] Not configured, skipping');
     return NextResponse.json({ received: true, skipped: true });
   }
 
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature') ?? '';
 
   if (!webhookSecret) {
-    console.warn('[Stripe Webhook] STRIPE_WEBHOOK_SECRET not set');
+    logger.warn('[Stripe Webhook] STRIPE_WEBHOOK_SECRET not set');
     return NextResponse.json({ received: true, skipped: true });
   }
 
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (isEventProcessed(event.id)) {
-    console.log('[Stripe Webhook] ⏭️ Duplicate skipped:', event.id);
+    logger.log('[Stripe Webhook] ⏭️ Duplicate skipped:', event.id);
     return NextResponse.json({ received: true, dedup: true });
   }
   markEventProcessed(event.id);
@@ -127,7 +128,7 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('[Stripe] ✅ checkout.session.completed:', session.id);
+        logger.log('[Stripe] ✅ checkout.session.completed:', session.id);
 
         if (session.mode === 'subscription' && session.subscription) {
           const subId =
@@ -161,7 +162,7 @@ export async function POST(req: NextRequest) {
             trialEnd: sub.trial_end ? (sub.trial_end as number) * 1000 : undefined,
           });
 
-          console.log('[Stripe] ✅ Subscription saved:', sub.id, plan);
+          logger.log('[Stripe] ✅ Subscription saved:', sub.id, plan);
 
           const customerEmail = session.customer_email ?? (session.customer_details as any)?.email;
           if (customerEmail) {

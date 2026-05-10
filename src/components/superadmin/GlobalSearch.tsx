@@ -86,6 +86,7 @@ export function GlobalSearch({ placeholder, autoFocus = false, onSelect }: Globa
   const [isOpen, setIsOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const results = useQuery(
     api.superadmin.globalSearch,
@@ -110,13 +111,13 @@ export function GlobalSearch({ placeholder, autoFocus = false, onSelect }: Globa
       // Cmd/Ctrl + K to focus
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        document.getElementById('global-search-input')?.focus();
+        inputRef.current?.focus();
         setIsOpen(true);
       }
       // Escape to close
       if (e.key === 'Escape') {
         setIsOpen(false);
-        (document.getElementById('global-search-input') as HTMLInputElement)?.blur();
+        inputRef.current?.blur();
       }
     };
 
@@ -281,6 +282,7 @@ export function GlobalSearch({ placeholder, autoFocus = false, onSelect }: Globa
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
+          ref={inputRef}
           id="global-search-input"
           type="text"
           placeholder={placeholder}

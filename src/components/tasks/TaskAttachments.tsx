@@ -247,7 +247,7 @@ export function TaskAttachments({ taskId, attachments, currentUserId, canUpload 
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-(--card) border border-(--border) rounded-2xl overflow-hidden max-w-3xl w-full max-h-[90vh] flex flex-col"
+              className="bg-(--card) border border-(--border) rounded-2xl overflow-hidden max-w-3xl w-full max-h-[95vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Preview header */}

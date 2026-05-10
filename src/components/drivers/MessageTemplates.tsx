@@ -204,7 +204,7 @@ export function MessageTemplates({
         console.error('Failed to initiate call:', error);
         // Fallback to tel: link
         if (passengerPhone) {
-          window.open(`tel:${passengerPhone}`);
+          window.open(`tel:${passengerPhone}`, '_blank', 'noopener,noreferrer');
         } else {
           toast.error(t('messageTemplates.failedToStartCall', 'Failed to start call'));
         }
@@ -216,7 +216,7 @@ export function MessageTemplates({
 
     // Fallback: tel: protocol
     if (passengerPhone) {
-      window.open(`tel:${passengerPhone}`);
+      window.open(`tel:${passengerPhone}`, '_blank', 'noopener,noreferrer');
     } else {
       toast.error(t('messageTemplates.noPhoneAvailable', 'No phone number available'));
     }

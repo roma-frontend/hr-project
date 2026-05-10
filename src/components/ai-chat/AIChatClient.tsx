@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { MarkdownMessage } from '@/components/MarkdownMessage';
+import { logger } from '@/lib/logger';
 
 type CsrfPair = { token: string; signature: string };
 
@@ -160,8 +161,7 @@ export default function AIChatPage() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
-  const [_deletingConversationId, _setDeletingConversationId] = useState<string | null>(null);
-  const [_isListening, _setIsListening] = useState(false);
+  const _isListening = false;
 
   // Update sidebar state when screen size changes
   useEffect(() => {
@@ -259,9 +259,10 @@ export default function AIChatPage() {
   // Auto-focus input
   useEffect(() => {
     if (textareaRef.current) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         textareaRef.current?.focus();
       }, 300);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -323,10 +324,6 @@ export default function AIChatPage() {
     e.stopPropagation();
 
     try {
-      _setDeletingConversationId(conversationId);
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
       await deleteConversation({ conversationId: conversationId as Id<'aiConversations'> });
 
       setConversations((prev) => prev.filter((c) => c._id !== conversationId));
@@ -336,11 +333,9 @@ export default function AIChatPage() {
         setActiveConversationId(null);
       }
 
-      _setDeletingConversationId(null);
       toast.success(t('aiChat.chatDeleted') || 'Chat deleted');
     } catch (error) {
       console.error('[Delete conversation error]:', error);
-      _setDeletingConversationId(null);
       toast.error(t('aiChat.deleteError') || 'Failed to delete chat');
     }
   };
@@ -446,7 +441,7 @@ export default function AIChatPage() {
     }
 
     try {
-      console.log('🤖 [AI Chat Page] Sending message to AI:', {
+      logger.log('🤖 [AI Chat Page] Sending message to AI:', {
         userId,
         message: userMessageContent,
       });

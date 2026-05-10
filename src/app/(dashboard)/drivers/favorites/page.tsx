@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -37,6 +38,7 @@ interface DriverData {
 export default function FavoritesPage() {
   const { t } = useTranslation();
   const _router = useRouter();
+  const mainRef = useMainRef();
   const { user, isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [showTripDetails, setShowTripDetails] = useState(false);
@@ -94,7 +96,7 @@ export default function FavoritesPage() {
     (driverId: string) => {
       const driver = drivers.find((d) => d._id === driverId);
       if (!driver) return;
-      const mainEl = document.querySelector<HTMLElement>('main');
+      const mainEl = mainRef.current;
       if (mainEl) {
         mainEl.scrollTo({ top: 0, behavior: 'smooth' });
       } else {

@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { useTranslation } from 'react-i18next';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { logger } from '@/lib/logger';
 import { SUPERADMIN_EMAIL } from '../../../convex/lib/auth';
 
 interface Props {
@@ -173,7 +174,7 @@ export function NewConversationModal({
           if (orgIds.length === 1) {
             groupOrgId = orgIds[0]!;
           } else if (orgIds.length > 1) {
-            console.warn(
+            logger.warn(
               "[NewConversationModal] Cross-organization groups are not fully supported yet; using first organization's ID for the group.",
             );
             groupOrgId = orgIds[0]!;
@@ -419,7 +420,7 @@ export function NewConversationModal({
         <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
           <button
             onClick={() => {
-              console.log(
+              logger.log(
                 '[NewConversationModal] Create button clicked, canCreate:',
                 canCreate,
                 'loading:',

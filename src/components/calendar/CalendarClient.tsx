@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { motion, AnimatePresence } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +51,7 @@ import { LeaveRequestModal } from '@/components/leaves/LeaveRequestModal';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { DriverRequestModal } from './DriverRequestModal';
 import { getInitials } from '@/lib/stringUtils';
+import { logger } from '@/lib/logger';
 
 type LeaveRequest = {
   _id: string;
@@ -291,6 +293,7 @@ function DayCell({
 // --- Main Component ------------------------------------------------------------
 export const CalendarClient = React.memo(function CalendarClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
   const [mounted, setMounted] = useState(false);
@@ -334,13 +337,10 @@ export const CalendarClient = React.memo(function CalendarClient() {
   }, []);
 
   useEffect(() => {
-    if (mounted) fetchGoogleEvents(currentMonth);
-  }, [mounted, currentMonth, fetchGoogleEvents]);
-
-  useEffect(() => {
     setMounted(true);
-    console.log('📅 CalendarClient mounted');
-  }, []);
+    logger.log('📅 CalendarClient mounted');
+    fetchGoogleEvents(currentMonth);
+  }, [currentMonth, fetchGoogleEvents]);
 
   // Block main scroll when any modal is open and scroll to top
   useEffect(() => {
@@ -350,7 +350,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
       selectedGoogleEvent ||
       showLeaveModal ||
       showDriverModal;
-    const mainEl = document.querySelector<HTMLElement>('main');
+    const mainEl = mainRef.current;
     const scrollY = mainEl ? mainEl.scrollTop : window.scrollY;
 
     if (anyModalOpen) {
@@ -374,7 +374,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
   // Debug: Log whenever selectedOrgId changes
   useEffect(() => {
     if (mounted) {
-      console.log('📅 selectedOrgId changed to:', selectedOrgId);
+      logger.log('📅 selectedOrgId changed to:', selectedOrgId);
     }
   }, [selectedOrgId, mounted]);
 
@@ -396,7 +396,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
   // Debug: Log data load
   useEffect(() => {
     if (mounted) {
-      console.log('📅 Leaves loaded:', {
+      logger.log('📅 Leaves loaded:', {
         selectedOrgId,
         count: leaves.length,
         usingOrgQuery: shouldUseOrgQuery,
@@ -749,7 +749,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         onClick={() => {
                           setSelectedLeave(leave);
                           setTimeout(() => {
-                            const mainEl = document.querySelector<HTMLElement>('main');
+                            const mainEl = mainRef.current;
                             if (mainEl) {
                               mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                             }
@@ -808,7 +808,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         onClick={() => {
                           setSelectedGoogleEvent(evt);
                           setTimeout(() => {
-                            const mainEl = document.querySelector<HTMLElement>('main');
+                            const mainEl = mainRef.current;
                             if (mainEl) {
                               mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                             }
@@ -882,7 +882,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                         onClick={() => {
                           setSelectedDriverEvent(evt);
                           setTimeout(() => {
-                            const mainEl = document.querySelector<HTMLElement>('main');
+                            const mainEl = mainRef.current;
                             if (mainEl) {
                               mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                             }
@@ -1048,7 +1048,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Hero Header */}

@@ -43,8 +43,6 @@ export function CreateManualSubscriptionWizard({
       icon: <Building className="w-5 h-5" />,
       content: (
         <SelectStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="organizationId"
           label={t('subscriptionWizard.steps.organization.organizationLabel')}
           options={allOrganizations.map((org: any) => ({
@@ -64,8 +62,6 @@ export function CreateManualSubscriptionWizard({
       icon: <Crown className="w-5 h-5" />,
       content: (
         <CardSelectionStep
-          stepData={{}}
-          updateStepData={() => {}}
           field="plan"
           label={t('subscriptionWizard.steps.plan.planLabel')}
           options={[
@@ -104,8 +100,6 @@ export function CreateManualSubscriptionWizard({
       content: (
         <div className="space-y-4">
           <TextInputStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="customPrice"
             label={t('subscriptionWizard.steps.pricing.priceLabel')}
             type="number"
@@ -113,8 +107,6 @@ export function CreateManualSubscriptionWizard({
             description={t('subscriptionWizard.steps.pricing.priceDescription')}
           />
           <TextareaStep
-            stepData={{}}
-            updateStepData={() => {}}
             field="notes"
             label={t('subscriptionWizard.steps.pricing.notesLabel')}
             placeholder={t('subscriptionWizard.steps.pricing.notesPlaceholder')}

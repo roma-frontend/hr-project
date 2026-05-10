@@ -18,6 +18,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type { ActiveCall } from './ChatClient';
 
 export type { ActiveCall };
@@ -107,7 +108,7 @@ export function CallModal({
     const fetchIceServers = async () => {
       try {
         const response = await fetch(
-          'https://hr-project.metered.live/api/v1/turn/credentials?apiKey=7191ce6de881f9924fda86a5d47a8ee5adc1',
+          `${process.env.NEXT_PUBLIC_METERED_URL || 'https://hr-project.metered.live'}/api/v1/turn/credentials?apiKey=${process.env.NEXT_PUBLIC_METERED_API_KEY}`,
         );
         const servers = await response.json();
         if (Array.isArray(servers) && servers.length > 0) {
@@ -130,19 +131,19 @@ export function CallModal({
   };
 
   const cleanup = useCallback(() => {
-    console.log('[CallModal] Cleaning up media resources...');
+    logger.log('[CallModal] Cleaning up media resources...');
 
     // Stop ALL tracks — browser immediately releases camera/mic indicator
     if (localStreamRef.current) {
       const tracks = localStreamRef.current.getTracks();
-      console.log('[CallModal] Stopping', tracks.length, 'local tracks');
+      logger.log('[CallModal] Stopping', tracks.length, 'local tracks');
 
       tracks.forEach((t) => {
         try {
           t.stop();
-          console.log('[CallModal] Stopped track:', t.kind);
+          logger.log('[CallModal] Stopped track:', t.kind);
         } catch (e) {
-          console.warn('Error stopping track:', e);
+          logger.warn('Error stopping track:', e);
         }
       });
       // Clear all references to ensure garbage collection
@@ -166,22 +167,22 @@ export function CallModal({
         peerConnectionRef.current.ontrack = null;
         // Remove all transceiver tracks
         const senders = peerConnectionRef.current.getSenders();
-        console.log('[CallModal] Stopping', senders.length, 'peer connection senders');
+        logger.log('[CallModal] Stopping', senders.length, 'peer connection senders');
 
         senders.forEach((sender) => {
           try {
             if (sender.track) {
               sender.track.stop();
-              console.log('[CallModal] Stopped sender track:', sender.track.kind);
+              logger.log('[CallModal] Stopped sender track:', sender.track.kind);
             }
           } catch (e) {
-            console.warn('Error stopping sender track:', e);
+            logger.warn('Error stopping sender track:', e);
           }
         });
         peerConnectionRef.current.close();
-        console.log('[CallModal] Closed peer connection');
+        logger.log('[CallModal] Closed peer connection');
       } catch (e) {
-        console.warn('Error closing peer connection:', e);
+        logger.warn('Error closing peer connection:', e);
       }
       peerConnectionRef.current = null;
     }
@@ -194,14 +195,14 @@ export function CallModal({
       retryTimerRef.current = null;
     }
 
-    console.log('[CallModal] Cleanup complete');
+    logger.log('[CallModal] Cleanup complete');
   }, []);
 
   // Initialize media and WebRTC
   const initMedia = useCallback(async () => {
     try {
       setMediaError(null);
-      console.log('[CallModal] Requesting media with constraints:', {
+      logger.log('[CallModal] Requesting media with constraints:', {
         audio: true,
         video: call.type === 'video',
       });
@@ -211,7 +212,7 @@ export function CallModal({
         video: call.type === 'video',
       });
 
-      console.log('[CallModal] Got media stream:', {
+      logger.log('[CallModal] Got media stream:', {
         videoTracks: stream.getVideoTracks().length,
         audioTracks: stream.getAudioTracks().length,
       });
@@ -303,10 +304,10 @@ export function CallModal({
           // Longer delays to ensure device is fully released
           const delays = [2000, 4000, 8000]; // 2s, 4s, 8s
           const delay = retryCount < delays.length ? delays[retryCount] : 10000;
-          console.log(`[CallModal] Scheduling retry in ${delay}ms (attempt ${retryCount + 2})...`);
+          logger.log(`[CallModal] Scheduling retry in ${delay}ms (attempt ${retryCount + 2})...`);
 
           retryTimerRef.current = setTimeout(() => {
-            console.log(`[CallModal] Retrying media initialization (attempt ${retryCount + 2})`);
+            logger.log(`[CallModal] Retrying media initialization (attempt ${retryCount + 2})`);
             setRetryCount((c) => c + 1);
             initMedia();
           }, delay);
@@ -341,7 +342,7 @@ export function CallModal({
       callEndedByRemoteRef.current = true; // We've seen the call exist
     }
     if (callData === null && callEndedByRemoteRef.current && callStatus !== 'ended') {
-      console.log('[CallModal] Remote side ended the call (callData became null), cleaning up...');
+      logger.log('[CallModal] Remote side ended the call (callData became null), cleaning up...');
       cleanup();
       setMicOn(false);
       setCamOn(false);
@@ -359,7 +360,7 @@ export function CallModal({
       // === Receiver side: read the initiator's SDP offer from p.offer ===
       if (!call.isInitiator && p.userId !== currentUserId && p.offer && !pc.remoteDescription) {
         try {
-          console.log('[CallModal] Receiver: setting remote description from initiator offer');
+          logger.log('[CallModal] Receiver: setting remote description from initiator offer');
           const offerSDP = JSON.parse(p.offer);
           await pc.setRemoteDescription(new RTCSessionDescription(offerSDP));
           const answer = await pc.createAnswer();
@@ -378,7 +379,7 @@ export function CallModal({
       // === Initiator side: read the receiver's SDP answer from p.answer ===
       if (call.isInitiator && p.userId !== currentUserId && p.answer && !pc.remoteDescription) {
         try {
-          console.log('[CallModal] Initiator: setting remote description from receiver answer');
+          logger.log('[CallModal] Initiator: setting remote description from receiver answer');
           const answerSDP = JSON.parse(p.answer);
           await pc.setRemoteDescription(new RTCSessionDescription(answerSDP));
         } catch (e) {
@@ -405,7 +406,7 @@ export function CallModal({
   }, [callData]);
 
   const handleEnd = async () => {
-    console.log('[CallModal] Ending call and turning off media devices...');
+    logger.log('[CallModal] Ending call and turning off media devices...');
 
     // Stop all media tracks and cleanup peer connection
     cleanup();
@@ -425,7 +426,7 @@ export function CallModal({
 
     // Give a moment for cleanup to complete before closing
     setTimeout(() => {
-      console.log('[CallModal] Call ended, closing modal');
+      logger.log('[CallModal] Call ended, closing modal');
       onEnd();
     }, 100);
   };

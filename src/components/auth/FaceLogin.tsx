@@ -10,6 +10,7 @@ import { Camera, CheckCircle, XCircle, ScanFace } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { detectFace, loadFaceApiModels, findBestMatch, isFaceMatch } from '@/lib/faceApi';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
@@ -103,8 +104,8 @@ export function FaceLogin() {
 
   useEffect(() => {
     if (allFaceDescriptors !== undefined) {
-      console.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
-      if (allFaceDescriptors.length === 0) console.warn('⚠️ No registered faces in the database');
+      logger.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
+      if (allFaceDescriptors.length === 0) logger.warn('⚠️ No registered faces in the database');
     }
   }, [allFaceDescriptors]);
 
@@ -185,7 +186,7 @@ export function FaceLogin() {
       }
 
       if (isWebcamActive || streamRef.current) {
-        console.warn('⚠️ Webcam already active, ignoring startWebcam');
+        logger.warn('⚠️ Webcam already active, ignoring startWebcam');
         return;
       }
 
@@ -382,7 +383,7 @@ export function FaceLogin() {
           setAutoLoginTriggered(true);
           setLastAttemptTime(now);
 
-          console.log('🚀 Auto-triggering attemptFaceLogin()');
+          logger.log('🚀 Auto-triggering attemptFaceLogin()');
           attemptFaceLogin();
         }
       } catch (e) {
@@ -508,7 +509,7 @@ export function FaceLogin() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData?.error === 'maintenance') {
-          window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+          router.push(`/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`);
           return;
         }
         throw new Error(errorData?.error || 'Login failed');
@@ -538,7 +539,7 @@ export function FaceLogin() {
 
       const params = new URLSearchParams(window.location.search);
       const nextUrl = params.get('next');
-      window.location.href = nextUrl || '/dashboard';
+      router.push(nextUrl || '/dashboard');
     } catch (error: any) {
       console.error('❌ Error during face login:', error);
 

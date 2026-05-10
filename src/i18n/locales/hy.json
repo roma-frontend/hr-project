@@ -486,7 +486,7 @@
       "title": "Բաժանորդագրությունների կառավարում",
       "subtitle": "Կազմակերպությունների բաժանորդագրությունների և պլանների կառավարում",
       "accessDenied": "Մուտքը արգելված է",
-      "selectOrganization": "Ընտրեք կազմակերպություն *",
+      "selectOrganization": "Ընտրեք կազմակերպություն",
       "selectOrganizationPlaceholder": "Ընտրեք կազմակերպություն",
       "loadingOrganizations": "Կազմակերպությունների բեռնում...",
       "noOrganizationsFound": "Կազմակերպություններ չեն գտնվել",
@@ -655,11 +655,11 @@
       "create": {
         "title": "Ստեղծել աջակցության տոմս",
         "description": "Մանրամասն նկարագրեք խնդիրը",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Խնդրի համառոտ նկարագրություն",
         "priorityLabel": "Առաջնահերթություն",
         "categoryLabel": "Կատեգորիա",
-        "descriptionLabel": "Նկարագրություն *",
+        "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Խնդրի մանրամասն նկարագրություն...",
         "cancel": "Չեղարկել",
         "submit": "Ստեղծել տոմս"
@@ -757,12 +757,12 @@
       "create": {
         "title": "Ստեղծել միջադեպ",
         "description": "Լրացրեք համակարգի միջադեպի մասին տեղեկատվություն",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Միջադեպի համառոտ նկարագրություն",
         "severityLabel": "Լրջություն",
         "affectedUsersLabel": "Ազդված օգտատերեր",
         "affectedOrgsLabel": "Ազդված կազմակերպություններ",
-        "descriptionLabel": "Նկարագրություն *",
+        "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Միջադեպի մանրամասն նկարագրություն...",
         "cancel": "Չեղարկել",
         "submit": "Ստեղծել միջադեպ"
@@ -823,7 +823,7 @@
       "start": {
         "title": "Մուտք գործել որպես օգտատեր",
         "description": "Դուք կստանաք օգտատիրոջ հաշվի լիարժեք հասանելիություն",
-        "reasonLabel": "Պատճառ (պարտադիր) *",
+        "reasonLabel": "Պատճառ (պարտադիր)",
         "reasonPlaceholder": "Օրինակ՝ մուտքի խնդրի կարգավորում...",
         "auditWarning": "⚠️ Բոլոր գործողությունները գրանցվում են audit log-ում",
         "importantTitle": "Կարևոր:",
@@ -873,7 +873,7 @@
       "reject": {
         "title": "Մերժել հայտեր",
         "description": "Դուք պատրաստվում եք մերժել {count} հայտ",
-        "reasonLabel": "Մերժման պատճառ *",
+        "reasonLabel": "Մերժման պատճառ",
         "reasonPlaceholder": "Նշեք մերժման պատճառը...",
         "cancel": "Չեղարկել",
         "submit": "Մերժել {count} հայտ"
@@ -1042,7 +1042,7 @@
     "userWillReceiveNotification": "Օգտատերը կստանա ծանուցում",
     "allActionsLogged": "Բոլոր գործողությունները գրանցվում են audit log-ում",
     "cannotChangePasswordOrEmail": "Հնարավոր չէ փոխել գաղտնաբառը կամ էլ. փոստը",
-    "reasonRequired": "Պատճառ (պարտադիր) *",
+    "reasonRequired": "Պատճառ (պարտադիր)",
     "leaveRequests": "Արձակուրդի հայտեր",
     "noRequestsFound": "Հայտեր չեն գտնվել",
     "noTasksFound": "Խնդիրներ չեն գտնվել",
@@ -1121,9 +1121,9 @@
       "step2": {
         "title": "Նշեք մանրամասները",
         "description": "Օգնեք մեզ ավելի լավ հասկանալ խնդիրը",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Խնդրի համառոտ նկարագրություն",
-        "descriptionLabel": "Նկարագրություն *",
+        "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Մանրամասն նկարագրեք ձեր խնդիրը..."
       },
       "step3": {
@@ -1165,11 +1165,11 @@
     "create": {
       "title": "Ստեղծել աջակցության տիկետ",
       "description": "Նկարագրեք ձեր խնդիրը",
-      "titleLabel": "Թեմա *",
+      "titleLabel": "Թեմա",
       "titlePlaceholder": "Համառոտ նկարագրեք խնդիրը",
       "priorityLabel": "Առաջնահերթություն",
       "categoryLabel": "Կատեգորիա",
-      "descriptionLabel": "Նկարագրություն *",
+      "descriptionLabel": "Նկարագրություն",
       "descriptionPlaceholder": "Մանրամասն նկարագրեք ինչ է պատահել...",
       "cancel": "Չեղարկել",
       "submit": "Ուղարկել"
@@ -1556,7 +1556,7 @@
     "adminDesc": "Ներկայացրեք արձակուրդի հայտ աշխատակցի համար",
     "selfDesc": "Ներկայացրեք արձակուրդի հայտ ինքներդ ձեզ համար",
     "pickDate": "Ընտրեք ամսաթիվ",
-    "reasonRequired": "Պատճառ *",
+    "reasonRequired": "Պատճառ",
     "reasonPlaceholder": "Մուտքագրեք արձակուրդի պատճառը...",
     "additionalComments": "Լրացուցիչ մեկնաբանություններ",
     "commentsPlaceholder": "Ավելացնել մեկնաբանություններ",
@@ -1670,7 +1670,7 @@
       "details": {
         "title": "Պաշտոնի տվյալներ",
         "description": "Մուտքագրեք պաշտոնի հիմնական տեղեկությունները",
-        "titleLabel": "Պաշտոնի անվանում *",
+        "titleLabel": "Պաշտոնի անվանում",
         "titlePlaceholder": "օրինակ՝ Ավագ ծրագրավորող, Մթերքի մենեջեր",
         "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Պարտականությունների և պահանջների համառոտ նկարագրություն"
@@ -4242,11 +4242,11 @@
     "titleRequired": "Առաջադրանքի անվանումը պարտադիր է",
     "selectAssignee": "Խնդրում ենք ընտրել կատարողին",
     "failedToCreate": "Առաջադրանքի ստեղծում ձախողվել է",
-    "taskTitleRequired": "Առաջադրանքի անվանում *",
+    "taskTitleRequired": "Առաջադրանքի անվանում",
     "titlePlaceholder": "Մուտքագրեք առաջադրանքի անվանումը",
     "description": "Նկարագրություն",
     "descriptionPlaceholder": "Մուտքագրեք առաջադրանքի նկարագրությունը",
-    "assignToRequired": "Նշանակել *",
+    "assignToRequired": "Նշանակել",
     "selectEmployee": "Ընտրեք հաստիք",
     "noEmployeesAssigned": "Ձեզ հաստիք չեն նշանակվել",
     "noEmployeesFound": "Հաստիք չեն գտնվել",
@@ -5596,8 +5596,8 @@
         "title": "Ամսաթվեր",
         "short": "Ամսաթվեր",
         "description": "Ընտրեք սկսման և ավարտման ամսաթվերը",
-        "startDateLabel": "Սկսման ամսաթիվ *",
-        "endDateLabel": "Ավարտման ամսաթիվ *",
+        "startDateLabel": "Սկսման ամսաթիվ",
+        "endDateLabel": "Ավարտման ամսաթիվ",
         "totalDays": "Ընդամենը օրեր",
         "calculating": "Հաշվարկվում է..."
       },
@@ -5605,7 +5605,7 @@
         "title": "Հայտի մանրամասներ",
         "short": "Մանրամասներ",
         "description": "Տրամադրեք լրացուցիչ տեղեկատվություն",
-        "reasonLabel": "Պատճառ *",
+        "reasonLabel": "Պատճառ",
         "reasonPlaceholder": "օրինակ՝ Տարեկան արձակուրդ",
         "commentLabel": "Մեկնաբանություն",
         "commentPlaceholder": "Լրացուցիչ տեղեկատվություն (ընտրովի)",
@@ -6009,7 +6009,7 @@
     "loginAsUser": "Մուտք որպես օգտատեր",
     "fullAccessDesc": "Դուք կստանաք օգտատիրոջ հաշվի լիարժեք մուտք",
     "role": "Դեր՝",
-    "reasonRequired": "Պատճառ (պարտադիր) *",
+    "reasonRequired": "Պատճառ (պարտադիր)",
     "reasonPlaceholder": "Օր․՝ Մուտքի խնդրի կարգավորում...",
     "auditLogWarning": "⚠️ Բոլոր գործողությունները կգրանցվեն audit log-ում",
     "important": "Կարևոր՝",
@@ -6177,7 +6177,7 @@
       "details": {
         "title": "Խնդրի մանրամասներ",
         "description": "Ի՞նչ պետք է արվի:",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Խնդրի համառոտ նկարագրություն",
         "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Խնդրի մանրամասն նկարագրություն..."
@@ -6193,7 +6193,7 @@
       "assignee": {
         "title": "Հանձնարարել",
         "description": "Ով պետք է կատարի այս խնդիրը:",
-        "assigneeLabel": "Հանձնարարող *",
+        "assigneeLabel": "Հանձնարարող",
         "assigneePlaceholder": "Ընտրել աշխատակից"
       }
     },
@@ -6213,7 +6213,7 @@
       "details": {
         "title": "Միջոցառման մանրամասներ",
         "description": "Ներկայացրեք տեղեկություն միջոցառման մասին",
-        "titleLabel": "Անվանում *",
+        "titleLabel": "Անվանում",
         "titlePlaceholder": "օր․՝ Տարեկան IT կոնֆերանս 2025",
         "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Միջոցառման համառոտ նկարագրություն..."
@@ -6221,8 +6221,8 @@
       "datetime": {
         "title": "Ամսաթիվ և վայր",
         "description": "Ե՞րբ և որտե՞ղ այն կկայանա:",
-        "startLabel": "Սկզբի ամսաթիվ *",
-        "endLabel": "Ավարտի ամսաթիվ *",
+        "startLabel": "Սկզբի ամսաթիվ",
+        "endLabel": "Ավարտի ամսաթիվ",
         "locationLabel": "Վայր",
         "locationPlaceholder": "օր․՝ Կոնֆերանսների դահլիճ A"
       },
@@ -6234,7 +6234,7 @@
       "departments": {
         "title": "Թիրախային բաժիններ",
         "description": "Ո՞վքեր պետք է մասնակցեն:",
-        "departmentsLabel": "Պահանջվող բաժիններ *",
+        "departmentsLabel": "Պահանջվող բաժիններ",
         "notifyLabel": "Ծանուցել օր առաջ"
       }
     },
@@ -6255,13 +6255,13 @@
       "route": {
         "title": "Մարշրուտ",
         "description": "Ո՞ւր պետք է գնաք",
-        "fromLabel": "Որտեղից *",
+        "fromLabel": "Որտեղից",
         "fromPlaceholder": "Մեկնման վայր",
-        "toLabel": "Ո՞ւր *",
+        "toLabel": "Ո՞ւր",
         "toPlaceholder": "Ժամանման վայր",
-        "purposeLabel": "Ուղևորության նպատակ *",
+        "purposeLabel": "Ուղևորության նպատակ",
         "purposePlaceholder": "Օրինակ՝ հանդիպում հաճախորդի հետ",
-        "passengerCountLabel": "Ուղևորների քանակ *"
+        "passengerCountLabel": "Ուղևորների քանակ"
       },
       "driver": {
         "title": "Վարորդի ընտրություն",
@@ -6272,8 +6272,8 @@
       "datetime": {
         "title": "Ամսաթիվ և ժամանակ",
         "description": "Ե՞րբ է ձեզ անհրաժեշտ վարորդ",
-        "dateLabel": "Ամսաթիվ *",
-        "timeLabel": "Ժամանակ *",
+        "dateLabel": "Ամսաթիվ",
+        "timeLabel": "Ժամանակ",
         "notesLabel": "Լրացուցիչ նշումներ",
         "notesPlaceholder": "Ցանկացած հատուկ հրահանգներ..."
       }
@@ -6311,9 +6311,9 @@
       "details": {
         "title": "Տոմսի մանրամասներ",
         "description": "Նկարագրեք խնդիրը",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Համառոտ նկարագրություն",
-        "descriptionLabel": "Նկարագրություն *",
+        "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Մանրամասն նկարագրություն..."
       },
       "priority": {
@@ -6351,9 +6351,9 @@
       "details": {
         "title": "Միջադեպի մանրամասներ",
         "description": "Նկարագրեք միջադեպը",
-        "titleLabel": "Վերնագիր *",
+        "titleLabel": "Վերնագիր",
         "titlePlaceholder": "Համառոտ նկարագրություն",
-        "descriptionLabel": "Նկարագրություն *",
+        "descriptionLabel": "Նկարագրություն",
         "descriptionPlaceholder": "Մանրամասն նկարագրություն..."
       },
       "impact": {
@@ -6385,7 +6385,7 @@
       "organization": {
         "title": "Կազմակերպություն",
         "description": "Որ կազմակերպությունն է:",
-        "organizationLabel": "Կազմակերպություն *",
+        "organizationLabel": "Կազմակերպություն",
         "organizationPlaceholder": "Ընտրել կազմակերպություն"
       },
       "plan": {
@@ -6673,9 +6673,11 @@
     "failedToStartCall": "Չհաջողվեց սկսել զանգը",
     "noPhoneAvailable": "Հեռախոսահամարը հասանելի չէ"
   },
-  "payroll": {
+   "payroll": {
     "title": "Աշխատավարձ",
     "subtitle": "Աշխատավարձի և վճարումների կառավարում",
+    "salary": "Աշխատավարձ",
+    "salaryStepDesc": "Մուտքագրեք աշխատակցի բազային աշխատավարձը",
     "dashboard": "Աշխատավարձի վահանակ",
     "records": "Աշխատավարձի գրառումներ",
     "runs": "Աշխատավարձի հաշվարկներ",

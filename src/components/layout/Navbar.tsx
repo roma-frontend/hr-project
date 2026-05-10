@@ -31,6 +31,16 @@ const PRESENCE_CONFIG: Record<PresenceStatus, { labelKey: string; dot: string; i
   busy: { labelKey: 'presence.busy', dot: 'bg-orange-500', icon: '⛔' },
 };
 
+interface NotificationItem {
+  _id: Id<'notifications'>;
+  title: string;
+  message: string;
+  isRead: boolean;
+  type: string;
+  relatedId?: string;
+  _creationTime: number;
+}
+
 // Accessibility: emoji icon component with aria-hidden
 function PresenceEmoji({ emoji }: { emoji: string }) {
   return <span aria-hidden="true">{emoji}</span>;
@@ -63,6 +73,7 @@ import { FocusMode } from '@/components/productivity/FocusMode';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { useStatusUpdate } from '@/context/StatusUpdateContext';
+import { logger } from '@/lib/logger';
 
 function getInitials(name: string) {
   return name
@@ -107,7 +118,7 @@ export function Navbar() {
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
   );
 
-  const currentPresence = ((currentUserData as any)?.presenceStatus ??
+  const currentPresence = ((currentUserData as { presenceStatus?: PresenceStatus } | null)?.presenceStatus ??
     'available') as PresenceStatus;
   const presenceCfg = PRESENCE_CONFIG[currentPresence];
   const presenceLabel = t(presenceCfg.labelKey);
@@ -120,7 +131,7 @@ export function Navbar() {
 
     // Skip very first load to avoid sound on page refresh
     if (isFirstLoad.current) {
-      notifications.forEach((n: any) => prevNotifIds.current.add(n._id));
+      notifications.forEach((n: NotificationItem) => prevNotifIds.current.add(n._id));
       prevUnreadCount.current = unreadCount;
       isFirstLoad.current = false;
       return;
@@ -128,31 +139,28 @@ export function Navbar() {
 
     // Find truly new notifications (not seen before)
     const newNotifs = notifications.filter(
-      (n: any) => !n.isRead && !prevNotifIds.current.has(n._id),
+      (n: NotificationItem) => !n.isRead && !prevNotifIds.current.has(n._id),
     );
 
     if (newNotifs.length > 0) {
       // Check for join_approved notification — auto-redirect user to dashboard
-      const joinApprovedNotif = newNotifs.find((n: any) => n.type === 'join_approved');
+      const joinApprovedNotif = newNotifs.find((n: NotificationItem) => n.type === 'join_approved');
       if (joinApprovedNotif && user?.id) {
-        console.log('[Navbar] Join request approved! Updating user state...');
+        logger.log('[Navbar] Join request approved! Updating user state...');
         // Update user's isApproved status in useAuthStore
         const { setUser } = useAuthStore.getState();
         setUser({
           ...user,
           isApproved: true,
         });
-        // Redirect to dashboard after a short delay - TEMP DISABLED
-        // setTimeout(() => {
-        //   window.location.href = "/dashboard";
-        // }, 2000);
+
       }
       // Sound + banner are handled by NotificationBanner — just track seen IDs here
-      newNotifs.forEach((n: any) => prevNotifIds.current.add(n._id));
+      newNotifs.forEach((n: NotificationItem) => prevNotifIds.current.add(n._id));
     }
 
     // Also track all IDs
-    notifications.forEach((n: any) => prevNotifIds.current.add(n._id));
+    notifications.forEach((n: NotificationItem) => prevNotifIds.current.add(n._id));
     prevUnreadCount.current = unreadCount;
   }, [notifications, unreadCount, user]);
 

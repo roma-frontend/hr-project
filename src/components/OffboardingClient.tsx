@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
@@ -47,6 +48,7 @@ const REASONS = [
 // ─── Main Component ──────────────────────────────────────────
 export default function OffboardingClient() {
   const { t } = useTranslation();
+  const mainRef = useMainRef();
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin' || user?.role === 'supervisor';
 
@@ -80,7 +82,7 @@ export default function OffboardingClient() {
             <Button
               size="sm"
               onClick={() => {
-                const mainEl = document.querySelector<HTMLElement>('main');
+                const mainEl = mainRef.current;
                 if (mainEl) {
                   mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                 }
@@ -364,7 +366,7 @@ function ProgramDetailDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {program?.employeeName ?? '...'} — {t('offboarding.title', 'Offboarding')}
@@ -635,7 +637,7 @@ function StartOffboardingWizard({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[90vh]">
+      <DialogContent className="p-0 gap-0 overflow-hidden max-h-[95vh]">
         {/* Stepper */}
         <div className="px-5 pt-5 pb-3">
           <DialogHeader>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ const PLAN_LABELS: Record<string, string> = {
 export default function SuccessClient() {
   const { t } = useTranslation();
   const params = useSearchParams();
+  const router = useRouter();
   const plan = params.get('plan') ?? 'starter';
   const sessionId = params.get('session_id');
   const [count, setCount] = useState(5);
@@ -41,7 +42,7 @@ export default function SuccessClient() {
 
   useEffect(() => {
     if (count === 0) {
-      window.location.href = '/register';
+      router.push('/register');
       return;
     }
     const timer = setTimeout(() => setCount((c) => c - 1), 1000);

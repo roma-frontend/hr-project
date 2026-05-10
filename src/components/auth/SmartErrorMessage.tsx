@@ -146,7 +146,7 @@ export function parseAuthError(error: string): SmartError {
       suggestion: 'Проверьте правильность ввода. Caps Lock включен?',
       action: {
         label: 'Забыли пароль?',
-        onClick: () => (window.location.href = '/forgot-password'),
+        onClick: () => window.location.assign('/forgot-password'),
       },
     };
   }
@@ -163,7 +163,7 @@ export function parseAuthError(error: string): SmartError {
       suggestion: 'Возможно, вы еще не зарегистрированы в системе',
       action: {
         label: 'Создать аккаунт',
-        onClick: () => (window.location.href = '/register'),
+        onClick: () => window.location.assign('/register'),
       },
     };
   }
@@ -180,7 +180,7 @@ export function parseAuthError(error: string): SmartError {
       suggestion: 'Попробуйте войти или восстановите пароль',
       action: {
         label: 'Перейти к входу',
-        onClick: () => (window.location.href = '/login'),
+        onClick: () => window.location.assign('/login'),
       },
     };
   }

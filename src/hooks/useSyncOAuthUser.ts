@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { logger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -16,7 +17,7 @@ export function useSyncOAuthUser() {
 
   useEffect(() => {
     const syncUser = async () => {
-      console.log(
+      logger.log(
         '[useSyncOAuthUser] Status:',
         status,
         'IsAuthenticated:',
@@ -27,7 +28,7 @@ export function useSyncOAuthUser() {
 
       // Already syncing or already authenticated — skip
       if (syncingRef.current || isAuthenticated) {
-        console.log(
+        logger.log(
           '[useSyncOAuthUser] ⏭️  Skipping (syncing=' +
             syncingRef.current +
             ' or authenticated=' +
@@ -39,7 +40,7 @@ export function useSyncOAuthUser() {
 
       // Only run when Google OAuth session is ready
       if (status !== 'authenticated' || !session?.user?.email) {
-        console.log(
+        logger.log(
           '[useSyncOAuthUser] ⏳ Waiting for auth (status=' +
             status +
             ', email=' +
@@ -49,8 +50,8 @@ export function useSyncOAuthUser() {
         return;
       }
 
-      console.log('[useSyncOAuthUser] 🔄 Starting OAuth user sync...');
-      console.log('[useSyncOAuthUser]   Session user:', {
+      logger.log('[useSyncOAuthUser] 🔄 Starting OAuth user sync...');
+      logger.log('[useSyncOAuthUser]   Session user:', {
         email: session.user.email,
         name: session.user.name,
         image: session.user.image,
@@ -59,7 +60,7 @@ export function useSyncOAuthUser() {
       syncingRef.current = true;
       try {
         // 1. Ensure user exists in Convex (create or update)
-        console.log('[useSyncOAuthUser] 📝 Calling createOAuthUser mutation...');
+        logger.log('[useSyncOAuthUser] 📝 Calling createOAuthUser mutation...');
         // Ensure name ALWAYS has a value
         const finalName = session.user.name?.trim() || session.user.email.split('@')[0] || 'User';
         await createOAuthUser({
@@ -67,10 +68,10 @@ export function useSyncOAuthUser() {
           name: finalName,
           avatarUrl: session.user.image ?? undefined,
         });
-        console.log('[useSyncOAuthUser] ✅ User synced to Convex with name:', finalName);
+        logger.log('[useSyncOAuthUser] ✅ User synced to Convex with name:', finalName);
 
         // 2. Create JWT session via our API endpoint
-        console.log('[useSyncOAuthUser] 📡 Calling /api/auth/oauth-session...');
+        logger.log('[useSyncOAuthUser] 📡 Calling /api/auth/oauth-session...');
         const res = await fetch('/api/auth/oauth-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -84,14 +85,14 @@ export function useSyncOAuthUser() {
         if (!res.ok && res.status === 503) {
           const errorData = await res.json();
           if (errorData.error === 'maintenance') {
-            window.location.href = `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`;
+            router.push(`/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`);
             return;
           }
         }
 
         if (res.ok) {
           const data = await res.json();
-          console.log('[useSyncOAuthUser] ✅ OAuth session created:', {
+          logger.log('[useSyncOAuthUser] ✅ OAuth session created:', {
             userId: data.session?.userId,
             name: data.session?.name,
             email: data.session?.email,
@@ -100,7 +101,7 @@ export function useSyncOAuthUser() {
 
           if (data.session) {
             // 3. Save to auth store — no reload needed!
-            console.log('[useSyncOAuthUser] 💾 Logging into Zustand store...');
+            logger.log('[useSyncOAuthUser] 💾 Logging into Zustand store...');
             login({
               id: data.session.userId,
               name: data.session.name,
@@ -114,7 +115,7 @@ export function useSyncOAuthUser() {
               employeeType: data.session.employeeType,
               avatar: data.session.avatar,
             });
-            console.log('[useSyncOAuthUser] ✅ User logged into Zustand:', {
+            logger.log('[useSyncOAuthUser] ✅ User logged into Zustand:', {
               name: data.session.name,
               email: data.session.email,
               role: data.session.role,
@@ -124,8 +125,8 @@ export function useSyncOAuthUser() {
             const params = new URLSearchParams(window.location.search);
             const nextUrl = params.get('next');
             const redirectUrl = nextUrl || '/dashboard';
-            console.log('[useSyncOAuthUser] 🎯 Redirecting to', redirectUrl);
-            window.location.href = redirectUrl;
+            logger.log('[useSyncOAuthUser] 🎯 Redirecting to', redirectUrl);
+            router.push(redirectUrl);
             return;
           }
         }
@@ -139,7 +140,7 @@ export function useSyncOAuthUser() {
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
         const redirectUrl = nextUrl || '/dashboard';
-        window.location.href = redirectUrl;
+        router.push(redirectUrl);
       } catch (error) {
         console.error('[useSyncOAuthUser] ❌ Error syncing OAuth user:', error);
         syncingRef.current = false;

@@ -488,7 +488,7 @@
       "title": "Управление подписками",
       "subtitle": "Управление подписками и планами организаций",
       "accessDenied": "Доступ запрещен",
-      "selectOrganization": "Выберите организацию *",
+      "selectOrganization": "Выберите организацию",
       "selectOrganizationPlaceholder": "Выберите организацию",
       "loadingOrganizations": "",
       "noOrganizationsFound": "Организации не найдены",
@@ -594,7 +594,7 @@
       "industryLabel": "Отрасль",
       "creating": "Создание...",
       "createOrganization": "Создать организацию",
-      "requiredNotice": "Все поля, отмеченные *, обязательны для заполнения",
+      "requiredNotice": "Все поля, отмеченные, обязательны для заполнения",
       "list": {
         "title": "Все организации",
         "description": "Нажмите на любую организацию, чтобы просмотреть детали и управлять",
@@ -657,11 +657,11 @@
       "create": {
         "title": "Создать тикет поддержки",
         "description": "Опишите проблему максимально подробно",
-        "titleLabel": "Заголовок *",
+        "titleLabel": "Заголовок",
         "titlePlaceholder": "Краткое описание проблемы",
         "priorityLabel": "Приоритет",
         "categoryLabel": "Категория",
-        "descriptionLabel": "Описание *",
+        "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробное описание проблемы...",
         "cancel": "Отмена",
         "submit": "Создать тикет"
@@ -773,12 +773,12 @@
       "create": {
         "title": "Создать инцидент",
         "description": "Заполните информацию о системном инциденте",
-        "titleLabel": "Заголовок *",
+        "titleLabel": "Заголовок",
         "titlePlaceholder": "Краткое описание инцидента",
         "severityLabel": "Серьезность",
         "affectedUsersLabel": "Затронуто пользователей",
         "affectedOrgsLabel": "Затронуто организаций",
-        "descriptionLabel": "Описание *",
+        "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробное описание инцидента...",
         "cancel": "Отмена",
         "submit": "Создать инцидент"
@@ -827,7 +827,7 @@
       "start": {
         "title": "Войти как пользователь",
         "description": "Вы получите полный доступ к аккаунту пользователя",
-        "reasonLabel": "Причина (обязательно) *",
+        "reasonLabel": "Причина (обязательно)",
         "reasonPlaceholder": "Например: отладка проблемы с доступом...",
         "auditWarning": "⚠️ Все действия будут залогированы в audit log",
         "importantTitle": "Важно:",
@@ -876,7 +876,7 @@
       "reject": {
         "title": "Отклонить заявки",
         "description": "Вы собираетесь отклонить {count} заявок",
-        "reasonLabel": "Причина отклонения *",
+        "reasonLabel": "Причина отклонения",
         "reasonPlaceholder": "Укажите причину отклонения...",
         "cancel": "Отмена",
         "submit": "Отклонить {count} заявок"
@@ -1047,7 +1047,7 @@
     "userWillReceiveNotification": "Пользователь получит уведомление",
     "allActionsLogged": "Все действия записываются в audit log",
     "cannotChangePasswordOrEmail": "Нельзя изменить пароль или email",
-    "reasonRequired": "Причина (обязательно) *",
+    "reasonRequired": "Причина (обязательно)",
     "leaveRequests": "Заявки на отпуск",
     "noRequestsFound": "Заявок не найдено",
     "noTasksFound": "Задач не найдено",
@@ -1129,9 +1129,9 @@
       "step2": {
         "title": "Предоставьте детали",
         "description": "Помогите нам лучше понять проблему",
-        "titleLabel": "Заголовок *",
+        "titleLabel": "Заголовок",
         "titlePlaceholder": "Краткое описание проблемы",
-        "descriptionLabel": "Описание *",
+        "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробно опишите вашу проблему..."
       },
       "step3": {
@@ -1173,11 +1173,11 @@
     "create": {
       "title": "Создать тикет в поддержку",
       "description": "Опишите вашу проблему",
-      "titleLabel": "Тема *",
+      "titleLabel": "Тема",
       "titlePlaceholder": "Кратко опишите проблему",
       "priorityLabel": "Приоритет",
       "categoryLabel": "Категория",
-      "descriptionLabel": "Описание *",
+      "descriptionLabel": "Описание",
       "descriptionPlaceholder": "Подробно опишите что случилось...",
       "cancel": "Отмена",
       "submit": "Отправить"
@@ -4381,11 +4381,11 @@
     "titleRequired": "Название задачи обязательно",
     "selectAssignee": "Пожалуйста, выберите исполнителя",
     "failedToCreate": "Ошибка при создании задачи",
-    "taskTitleRequired": "Название задачи *",
+    "taskTitleRequired": "Название задачи",
     "titlePlaceholder": "Введите название задачи",
     "description": "Описание",
     "descriptionPlaceholder": "Введите описание задачи",
-    "assignToRequired": "Назначить *",
+    "assignToRequired": "Назначить",
     "selectEmployee": "Выберите сотрудника",
     "noEmployeesAssigned": "Вам не назначены сотрудники",
     "noEmployeesFound": "Сотрудники не найдены",
@@ -5845,8 +5845,8 @@
         "title": "Выберите даты отпуска",
         "short": "Даты",
         "description": "Выберите даты начала и окончания",
-        "startDateLabel": "Дата начала *",
-        "endDateLabel": "Дата окончания *",
+        "startDateLabel": "Дата начала",
+        "endDateLabel": "Дата окончания",
         "totalDays": "Всего дней",
         "calculating": "Вычисление..."
       },
@@ -5854,7 +5854,7 @@
         "title": "Детали заявки",
         "short": "Детали",
         "description": "Укажите дополнительную информацию",
-        "reasonLabel": "Причина *",
+        "reasonLabel": "Причина",
         "reasonPlaceholder": "например, Ежегодный отпуск",
         "commentLabel": "Комментарий",
         "commentPlaceholder": "Дополнительная информация (необязательно)",
@@ -5897,7 +5897,7 @@
       "details": {
         "title": "Детали задачи",
         "description": "Что нужно сделать?",
-        "titleLabel": "Название *",
+        "titleLabel": "Название",
         "titlePlaceholder": "Краткое описание задачи",
         "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробное описание задачи..."
@@ -5913,7 +5913,7 @@
       "assignee": {
         "title": "Назначить",
         "description": "Кто должен выполнить эту задачу?",
-        "assigneeLabel": "Исполнитель *",
+        "assigneeLabel": "Исполнитель",
         "assigneePlaceholder": "Выберите сотрудника"
       }
     },
@@ -5933,7 +5933,7 @@
       "details": {
         "title": "Детали мероприятия",
         "description": "Предоставьте информацию о мероприятии",
-        "titleLabel": "Название *",
+        "titleLabel": "Название",
         "titlePlaceholder": "например, Ежегодная IT конференция 2025",
         "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Краткое описание мероприятия..."
@@ -5941,8 +5941,8 @@
       "datetime": {
         "title": "Дата и место",
         "description": "Когда и где оно состоится?",
-        "startLabel": "Дата начала *",
-        "endLabel": "Дата окончания *",
+        "startLabel": "Дата начала",
+        "endLabel": "Дата окончания",
         "locationLabel": "Место проведения",
         "locationPlaceholder": "например, Конференц-зал А"
       },
@@ -5954,7 +5954,7 @@
       "departments": {
         "title": "Целевые отделы",
         "description": "Кто должен присутствовать?",
-        "departmentsLabel": "Требуемые отделы *",
+        "departmentsLabel": "Требуемые отделы",
         "notifyLabel": "Уведомить за дней до"
       }
     },
@@ -6031,9 +6031,9 @@
       "details": {
         "title": "Детали тикета",
         "description": "Опишите проблему",
-        "titleLabel": "Заголовок *",
+        "titleLabel": "Заголовок",
         "titlePlaceholder": "Краткое описание",
-        "descriptionLabel": "Описание *",
+        "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробное описание..."
       },
       "priority": {
@@ -6071,9 +6071,9 @@
       "details": {
         "title": "Детали инцидента",
         "description": "Опишите инцидент",
-        "titleLabel": "Заголовок *",
+        "titleLabel": "Заголовок",
         "titlePlaceholder": "Краткое описание",
-        "descriptionLabel": "Описание *",
+        "descriptionLabel": "Описание",
         "descriptionPlaceholder": "Подробное описание..."
       },
       "impact": {
@@ -6105,7 +6105,7 @@
       "organization": {
         "title": "Организация",
         "description": "Какая организация?",
-        "organizationLabel": "Организация *",
+        "organizationLabel": "Организация",
         "organizationPlaceholder": "Выберите организацию"
       },
       "plan": {
@@ -6525,7 +6525,7 @@
     "loginAsUser": "Войти как пользователь",
     "fullAccessDesc": "Вы получите полный доступ к аккаунту пользователя",
     "role": "Роль:",
-    "reasonRequired": "Причина (обязательно) *",
+    "reasonRequired": "Причина (обязательно)",
     "reasonPlaceholder": "Например: отладка проблемы с доступом...",
     "auditLogWarning": "⚠️ Все действия будут залогированы в audit log",
     "important": "Важно:",
@@ -6917,9 +6917,11 @@
     "failedToStartCall": "Не удалось начать звонок",
     "noPhoneAvailable": "Номер телефона недоступен"
   },
-  "payroll": {
+   "payroll": {
     "title": "Зарплата",
     "subtitle": "Управляйте расчётами зарплаты, записями и настройками",
+    "salary": "Зарплата",
+    "salaryStepDesc": "Введите базовую зарплату сотрудника",
     "dashboard": "Панель управления зарплатой",
     "records": "Записи зарплаты",
     "runs": "Расчёты зарплаты",
