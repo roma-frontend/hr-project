@@ -903,7 +903,9 @@ export default function LoginPage() {
                       variant="link"
                       className="text-xs font-semibold hover:underline"
                       style={{ color: '#047857' }}
-                      aria-label={t('auth.createNewOrganization', 'Create new organization')}
+                      aria-label={
+                        mounted ? t('auth.createNewOrganization') : 'Create new organization'
+                      }
                     >
                       🏢 {mounted ? t('auth.createNewOrganization') : 'Create new organization'}
                     </Button>

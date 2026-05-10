@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/shallow';
 import { useMemo } from 'react';
 
@@ -31,49 +32,57 @@ interface AuthState {
   validateAndCleanup: () => void;
 }
 
-export const useAuthStore = create<AuthState>()((set, get) => ({
-  user: null,
-  isAuthenticated: false,
-  needsOnboarding: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isAuthenticated: false,
+      needsOnboarding: false,
 
-  setUser: (user: User) => {
-    const needsOnboarding = !user.organizationId || !user.isApproved;
-    set({ user, isAuthenticated: true, needsOnboarding });
-  },
+      setUser: (user: User) => {
+        const needsOnboarding = !user.organizationId || !user.isApproved;
+        set({ user, isAuthenticated: true, needsOnboarding });
+      },
 
-  login: (user: User) => {
-    const needsOnboarding = !user.organizationId || !user.isApproved;
-    set({ user, isAuthenticated: true, needsOnboarding });
-  },
+      login: (user: User) => {
+        const needsOnboarding = !user.organizationId || !user.isApproved;
+        set({ user, isAuthenticated: true, needsOnboarding });
+      },
 
-  checkOnboarding: () => {
-    const { user } = get();
-    const needsOnboarding = !user?.organizationId || !user?.isApproved;
-    set({ needsOnboarding });
-  },
+      checkOnboarding: () => {
+        const { user } = get();
+        const needsOnboarding = !user?.organizationId || !user?.isApproved;
+        set({ needsOnboarding });
+      },
 
-  validateAndCleanup: () => {
-    const { isAuthenticated } = get();
+      validateAndCleanup: () => {
+        const { isAuthenticated } = get();
 
-    // If not authenticated, nothing to validate
-    if (!isAuthenticated) return;
+        // If not authenticated, nothing to validate
+        if (!isAuthenticated) return;
 
-    // Token validation is now handled server-side via httpOnly cookies
-    // Client just checks if user data exists
-    if (get().user) {
-      get().logout();
-    }
-  },
+        // Token validation is now handled server-side via httpOnly cookies
+        // Client just checks if user data exists
+        if (get().user) {
+          get().logout();
+        }
+      },
 
-  logout: () => {
-    // Clear Zustand state
-    set({ user: null, isAuthenticated: false, needsOnboarding: false });
-    // Clear httpOnly cookies via API call
-    if (typeof window !== 'undefined') {
-      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    }
-  },
-}));
+      logout: () => {
+        // Clear Zustand state
+        set({ user: null, isAuthenticated: false, needsOnboarding: false });
+        // Clear httpOnly cookies via API call
+        if (typeof window !== 'undefined') {
+          fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+        }
+      },
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+    },
+  ),
+);
 
 /**
  * Оптимизированный хук для использования auth store с shallow comparison

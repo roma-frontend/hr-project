@@ -340,7 +340,7 @@ function PricingCard({
       });
       const data = await res.json();
       if (data.url) {
-        router.push(data.url);
+        window.location.href = data.url;
       } else if (data.error) {
         console.error('[Stripe checkout error]', data.error, data.message);
         alert(data.message || data.error);
