@@ -356,7 +356,9 @@ export default function LoginPage() {
           const errorData = (await response.json()) as { error?: string; organizationId?: string };
           // If maintenance mode is active, redirect to maintenance screen
           if (errorData.error === 'maintenance') {
-            router.push(`/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`);
+            router.push(
+              `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`,
+            );
             return;
           }
           throw new Error(errorData.error || 'Login failed');
@@ -564,7 +566,7 @@ export default function LoginPage() {
           {!isOAuthSyncing && status !== 'authenticated' && (
             <OnboardingTour
               steps={loginTourSteps}
-              tourId={mounted ? t('auth.loginTour') : 'login-tour'}
+              tourId="login-tour"
               onComplete={() => {}}
               onSkip={() => {}}
             />
