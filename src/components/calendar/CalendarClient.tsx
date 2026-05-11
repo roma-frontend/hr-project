@@ -582,7 +582,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                     key={format(currentMonth, 'yyyy-MM')}
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-lg font-bold text-(--text-primary) min-w-40 text-center"
+                    className="text-lg font-bold text-(--text-primary) min-w-40 text-center capitalize"
                   >
                     {format(currentMonth, 'MMMM yyyy', { locale: dateFnsLocale })}
                   </motion.h3>
@@ -1257,7 +1257,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 30 }}
               transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] mt-16"
+              className="relative z-10 w-full max-w-lg bg-(--card) rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Hero Header */}

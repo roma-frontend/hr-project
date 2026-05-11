@@ -91,7 +91,8 @@ export default function DocumentsClient() {
   const [showUploadWizard, setShowUploadWizard] = useState(false);
   const [showTemplateWizard, setShowTemplateWizard] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentWithUploader | null>(null);
-  const [createDocFromTemplate, setCreateDocFromTemplate] = useState<Id<'documentTemplates'> | null>(null);
+  const [createDocFromTemplate, setCreateDocFromTemplate] =
+    useState<Id<'documentTemplates'> | null>(null);
 
   // Fetch data
   const documents = useQuery(
@@ -383,7 +384,7 @@ export default function DocumentsClient() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList
-          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-4' : 'grid grid-cols-3'}`}
+          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-2 md:grid-cols-4' : 'grid grid-cols-2 md:grid-cols-3'}`}
         >
           <TabsTrigger
             value="all"
@@ -418,13 +419,18 @@ export default function DocumentsClient() {
         </TabsList>
 
         {/* Documents List */}
-        <TabsContent value={activeTab === 'templates' ? 'templates' : activeTab} className="space-y-4">
+        <TabsContent
+          value={activeTab === 'templates' ? 'templates' : activeTab}
+          className="space-y-4"
+        >
           {activeTab === 'templates' ? (
             <div>
               {/* Templates header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-semibold">{t('documents.documentTemplates', 'Document Templates')}</h2>
+                  <h2 className="text-xl font-semibold">
+                    {t('documents.documentTemplates', 'Document Templates')}
+                  </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     {t('documents.templatesDesc', 'Reusable templates for document signing')}
                   </p>
@@ -446,7 +452,9 @@ export default function DocumentsClient() {
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <FolderOpen className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                    <p className="text-muted-foreground">{t('documents.noTemplates', 'No templates available')}</p>
+                    <p className="text-muted-foreground">
+                      {t('documents.noTemplates', 'No templates available')}
+                    </p>
                     {isAdmin && (
                       <Button
                         variant="outline"
@@ -462,10 +470,7 @@ export default function DocumentsClient() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {templates.map((template) => (
-                    <Card
-                      key={template._id}
-                      className="hover:shadow-md transition-shadow"
-                    >
+                    <Card key={template._id} className="hover:shadow-md transition-shadow">
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
                           <PenTool className="h-5 w-5 text-purple-500 shrink-0" />
@@ -478,7 +483,10 @@ export default function DocumentsClient() {
                             )}
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="secondary" className="text-xs">
-                                {t(`documents.template${template.category.charAt(0).toUpperCase() + template.category.slice(1)}`, template.category)}
+                                {t(
+                                  `documents.template${template.category.charAt(0).toUpperCase() + template.category.slice(1)}`,
+                                  template.category,
+                                )}
                               </Badge>
                               <Badge variant="outline" className="text-xs">
                                 {template.fields.length} {t('documents.fields', 'fields')}

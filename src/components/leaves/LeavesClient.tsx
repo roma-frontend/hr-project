@@ -370,7 +370,7 @@ export function LeavesClient() {
                             className="px-4 py-3 hidden md:table-cell cursor-pointer"
                             onClick={() => router.push(`/leaves/${req._id}`)}
                           >
-                            <p className="text-xs text-(--text-secondary)">
+                            <p className="text-xs text-(--text-secondary) capitalize">
                               {safeFormat(req.startDate, 'MMM d')} –{' '}
                               {safeFormat(req.endDate, 'MMM d, yyyy')}
                             </p>

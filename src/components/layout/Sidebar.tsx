@@ -243,7 +243,7 @@ const navItems: NavEntry[] = [
     children: [
       { href: '/profile', labelKey: 'nav.profile', icon: User },
       { href: '/settings', labelKey: 'nav.settings', icon: Settings },
-      { href: '/admin', labelKey: 'nav.admin', icon: ShieldCheck, roles: ['superadmin', 'admin'] },
+      { href: '/admin', labelKey: 'nav.admin', icon: ShieldCheck, roles: ['superadmin'] },
       {
         href: '/superadmin/automation',
         labelKey: 'nav.automation',
