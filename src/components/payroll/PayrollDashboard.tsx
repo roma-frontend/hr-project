@@ -57,41 +57,6 @@ const itemVariants = {
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-function CustomTooltip({ active, payload, label }: any) {
-  if (active && payload && payload.length) {
-    return (
-      <div
-        style={{
-          backgroundColor: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: '0.5rem',
-          padding: '0.75rem',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-        }}
-      >
-        <p
-          style={{
-            color: 'var(--text-primary)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            marginBottom: '0.25rem',
-          }}
-        >
-          {label}
-        </p>
-        <p style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
-          <span style={{ color: 'var(--text-muted)' }}>value: </span>
-          {payload[0].value?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </p>
-      </div>
-    );
-  }
-  return null;
-}
-
 function formatCurrency(amount: number, currency = 'AMD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -289,7 +254,15 @@ export default function PayrollDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.15)" />
                     <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
                     <YAxis tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
-                    <CustomTooltip />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.5rem',
+                        color: 'var(--text-primary)',
+                      }}
+                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 500 }}
+                    />
                     <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -309,7 +282,10 @@ export default function PayrollDashboard() {
                       data={departmentData}
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
+                      labelLine={true}
+                      label={(entry: any) =>
+                        `${entry.name}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -318,7 +294,15 @@ export default function PayrollDashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <CustomTooltip />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '0.5rem',
+                        color: 'var(--text-primary)',
+                      }}
+                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 500 }}
+                    />
                     <Legend
                       wrapperStyle={{ color: 'var(--text-muted)', fontSize: '12px' }}
                       formatter={(value: string) => (
