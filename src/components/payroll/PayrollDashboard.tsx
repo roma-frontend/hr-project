@@ -60,10 +60,27 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border border-(--border) bg-(--card) p-3 shadow-lg">
-        <p className="text-sm font-medium text-(--text-primary) mb-1">{label}</p>
-        <p className="text-sm text-(--text-primary)">
-          <span className="text-(--text-muted)">value: </span>
+      <div
+        style={{
+          backgroundColor: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: '0.5rem',
+          padding: '0.75rem',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <p
+          style={{
+            color: 'var(--text-primary)',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            marginBottom: '0.25rem',
+          }}
+        >
+          {label}
+        </p>
+        <p style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>
+          <span style={{ color: 'var(--text-muted)' }}>value: </span>
           {payload[0].value?.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -269,11 +286,11 @@ export default function PayrollDashboard() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={departmentData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.15)" />
+                    <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
+                    <YAxis tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
                     <CustomTooltip />
-                    <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -293,18 +310,6 @@ export default function PayrollDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(entry: any) => (
-                        <text
-                          x={entry.x}
-                          y={entry.y}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="var(--text-primary)"
-                          fontSize="12"
-                        >
-                          {entry.name ?? ''}: {((entry.percent ?? 0) * 100).toFixed(0)}%
-                        </text>
-                      )}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -314,7 +319,12 @@ export default function PayrollDashboard() {
                       ))}
                     </Pie>
                     <CustomTooltip />
-                    <Legend />
+                    <Legend
+                      wrapperStyle={{ color: 'var(--text-muted)', fontSize: '12px' }}
+                      formatter={(value: string) => (
+                        <span style={{ color: 'var(--text-primary)' }}>{value}</span>
+                      )}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
