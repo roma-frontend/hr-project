@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -388,6 +388,23 @@ export const MessageBubble = React.memo(function MessageBubble({
     message._id,
     currentUserId,
   );
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        menuBtnRef.current &&
+        !menuBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   // Extract URL from content for link preview
   const urlInContent = message.content ? extractUrl(message.content) : null;
@@ -1150,6 +1167,8 @@ export const MessageBubble = React.memo(function MessageBubble({
               setShowActions(true);
             }}
             onMouseLeave={() => {
+              // Don't hide if menu is open — let the menu's own handlers control visibility
+              if (showMenu) return;
               hoverTimeoutRef.current = setTimeout(() => {
                 setShowActions(false);
               }, 100);
@@ -1211,9 +1230,6 @@ export const MessageBubble = React.memo(function MessageBubble({
           if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
           setShowActions(true);
         }}
-        onMouseLeave={() => {
-          setShowMenu(false);
-        }}
       >
         <div ref={menuRef}>
           <MenuItem icon={<Copy className="w-3.5 h-3.5" />} label={L.copy} onClick={handleCopy} />
@@ -1272,7 +1288,7 @@ function MessageMenuPortal({
   openDown: boolean;
   children: React.ReactNode;
   onMouseEnter: () => void;
-  onMouseLeave: () => void;
+  onMouseLeave?: () => void;
 }) {
   if (!open || !position || typeof document === 'undefined') return null;
   return createPortal(
