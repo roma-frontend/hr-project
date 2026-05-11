@@ -57,6 +57,24 @@ const itemVariants = {
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
+function CustomTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-(--border) bg-(--card) p-3 shadow-lg">
+        <p className="text-sm font-medium text-(--text-primary) mb-1">{label}</p>
+        <p className="text-sm text-(--text-primary)">
+          <span className="text-(--text-muted)">value: </span>
+          {payload[0].value?.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 function formatCurrency(amount: number, currency = 'AMD'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -254,7 +272,7 @@ export default function PayrollDashboard() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <RechartsTooltip />
+                    <CustomTooltip />
                     <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -275,9 +293,18 @@ export default function PayrollDashboard() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={(entry: any) =>
-                        `${entry.name ?? ''}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
-                      }
+                      label={(entry: any) => (
+                        <text
+                          x={entry.x}
+                          y={entry.y}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fill="var(--text-primary)"
+                          fontSize="12"
+                        >
+                          {entry.name ?? ''}: {((entry.percent ?? 0) * 100).toFixed(0)}%
+                        </text>
+                      )}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
@@ -286,7 +313,7 @@ export default function PayrollDashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip />
+                    <CustomTooltip />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
