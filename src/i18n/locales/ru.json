@@ -5350,6 +5350,7 @@
       "approved": "Одобрено",
       "rejected": "Отклонено",
       "inProgress": "В процессе",
+      "in_progress": "В процессе",
       "completed": "Завершено",
       "cancelled": "Отменено"
     },
@@ -6917,7 +6918,7 @@
     "failedToStartCall": "Не удалось начать звонок",
     "noPhoneAvailable": "Номер телефона недоступен"
   },
-   "payroll": {
+  "payroll": {
     "title": "Зарплата",
     "subtitle": "Управляйте расчётами зарплаты, записями и настройками",
     "salary": "Зарплата",

@@ -5090,9 +5090,10 @@
       "pending": "Սպասում է",
       "approved": "Հաստատված",
       "rejected": "Մերժված",
+      "inProgress": "Ընթացքի մեջ",
+      "in_progress": "Ընթացքի մեջ",
       "completed": "Ավարտված",
-      "cancelled": "Չեղարկված",
-      "inProgress": "Ընթացքի մեջ"
+      "cancelled": "Չեղարկված"
     },
     "active": "Ակտիվ",
     "history": "Պատմություն",
@@ -6673,7 +6674,7 @@
     "failedToStartCall": "Չհաջողվեց սկսել զանգը",
     "noPhoneAvailable": "Հեռախոսահամարը հասանելի չէ"
   },
-   "payroll": {
+  "payroll": {
     "title": "Աշխատավարձ",
     "subtitle": "Աշխատավարձի և վճարումների կառավարում",
     "salary": "Աշխատավարձ",

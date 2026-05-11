@@ -5307,6 +5307,7 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "inProgress": "In Progress",
+      "in_progress": "In Progress",
       "completed": "Completed",
       "cancelled": "Cancelled"
     },
@@ -6876,7 +6877,7 @@
     "failedToStartCall": "Failed to start call",
     "noPhoneAvailable": "No phone number available"
   },
-   "payroll": {
+  "payroll": {
     "title": "Payroll",
     "subtitle": "Salary and payment management",
     "salary": "Salary",
