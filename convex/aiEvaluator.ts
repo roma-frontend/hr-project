@@ -1,68 +1,73 @@
-import { v } from "convex/values";
-import { query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import { query } from './_generated/server';
+import type { Id } from './_generated/dataModel';
 
 // ── Calculate Employee Score ──────────────────────────────────────────────
 export const calculateEmployeeScore = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return null;
 
     // Get performance metrics
     const metrics = await ctx.db
-      .query("performanceMetrics")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .order("desc")
+      .query('performanceMetrics')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .order('desc')
       .first();
 
     // Get leave history
     const leaves = await ctx.db
-      .query("leaveRequests")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .query('leaveRequests')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
       .collect();
 
     // Get manager notes
     const notes = await ctx.db
-      .query("employeeNotes")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.userId))
+      .query('employeeNotes')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.userId))
       .collect();
 
     // Get real time tracking data (last 60 days)
     const timeRecords = await ctx.db
-      .query("timeTracking")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .order("desc")
+      .query('timeTracking')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .order('desc')
       .take(60);
 
     // Get supervisor rating for additional score
     const latestRating = await ctx.db
-      .query("supervisorRatings")
-      .withIndex("by_employee", (q) => q.eq("employeeId", args.userId))
-      .order("desc")
+      .query('supervisorRatings')
+      .withIndex('by_employee', (q) => q.eq('employeeId', args.userId))
+      .order('desc')
       .first();
 
     // Calculate scores — attendance now uses REAL time tracking data
-    const performanceScore = metrics ? calculatePerformanceScore(metrics) : (latestRating ? Math.round(latestRating.overallRating * 20) : 50);
+    const performanceScore = metrics
+      ? calculatePerformanceScore(metrics)
+      : latestRating
+        ? Math.round(latestRating.overallRating * 20)
+        : 50;
     const attendanceScore = calculateAttendanceScore(metrics, leaves, timeRecords);
     const behaviorScore = calculateBehaviorScore(notes);
     const leaveHistoryScore = calculateLeaveHistoryScore(leaves, user);
     const supervisorScore = latestRating ? Math.round(latestRating.overallRating * 20) : null;
 
     // If supervisor has rated — include it in score (replaces behavior weight)
-    const overallScore = supervisorScore !== null
-      ? Math.round(
-          performanceScore * 0.30 +
-          attendanceScore * 0.30 +
-          supervisorScore * 0.25 +
-          leaveHistoryScore * 0.15
-        )
-      : Math.round(
-          performanceScore * 0.35 +
-          attendanceScore * 0.25 +
-          behaviorScore * 0.25 +
-          leaveHistoryScore * 0.15
-        );
+    const overallScore =
+      supervisorScore !== null
+        ? Math.round(
+            performanceScore * 0.3 +
+              attendanceScore * 0.3 +
+              supervisorScore * 0.25 +
+              leaveHistoryScore * 0.15,
+          )
+        : Math.round(
+            performanceScore * 0.35 +
+              attendanceScore * 0.25 +
+              behaviorScore * 0.25 +
+              leaveHistoryScore * 0.15,
+          );
 
     return {
       overallScore,
@@ -79,8 +84,8 @@ export const calculateEmployeeScore = query({
 
 // ── Evaluate Leave Request ──────────────────────────────────────────────
 export const evaluateLeaveRequest = query({
-  args: { 
-    leaveRequestId: v.id("leaveRequests"),
+  args: {
+    leaveRequestId: v.id('leaveRequests'),
   },
   handler: async (ctx, args) => {
     const leave = await ctx.db.get(args.leaveRequestId);
@@ -91,34 +96,31 @@ export const evaluateLeaveRequest = query({
 
     // Get employee data
     const metrics = await ctx.db
-      .query("performanceMetrics")
-      .withIndex("by_user", (q) => q.eq("userId", leave.userId))
-      .order("desc")
+      .query('performanceMetrics')
+      .withIndex('by_user', (q) => q.eq('userId', leave.userId))
+      .order('desc')
       .first();
 
     const allLeaves = await ctx.db
-      .query("leaveRequests")
-      .withIndex("by_user", (q) => q.eq("userId", leave.userId))
+      .query('leaveRequests')
+      .withIndex('by_user', (q) => q.eq('userId', leave.userId))
       .collect();
 
     const notes = await ctx.db
-      .query("employeeNotes")
-      .withIndex("by_employee", (q) => q.eq("employeeId", leave.userId))
+      .query('employeeNotes')
+      .withIndex('by_employee', (q) => q.eq('employeeId', leave.userId))
       .collect();
 
     // Check team coverage
     const teamLeaves = await ctx.db
-      .query("leaveRequests")
-      .filter((q) => 
-        q.and(
-          q.eq(q.field("status"), "approved"),
-          q.neq(q.field("userId"), leave.userId)
-        )
+      .query('leaveRequests')
+      .filter((q) =>
+        q.and(q.eq(q.field('status'), 'approved'), q.neq(q.field('userId'), leave.userId)),
       )
       .collect();
 
-    const overlappingLeaves = teamLeaves.filter(tl => 
-      (tl.startDate <= leave.endDate && tl.endDate >= leave.startDate)
+    const overlappingLeaves = teamLeaves.filter(
+      (tl) => tl.startDate <= leave.endDate && tl.endDate >= leave.startDate,
     );
 
     // Calculate scores
@@ -129,29 +131,29 @@ export const evaluateLeaveRequest = query({
     const workloadScore = calculateWorkloadScore(overlappingLeaves);
 
     const eligibilityScore = Math.round(
-      performanceScore * 0.30 +
-      attendanceScore * 0.20 +
-      behaviorScore * 0.20 +
-      leaveHistoryScore * 0.15 +
-      workloadScore * 0.15
+      performanceScore * 0.3 +
+        attendanceScore * 0.2 +
+        behaviorScore * 0.2 +
+        leaveHistoryScore * 0.15 +
+        workloadScore * 0.15,
     );
 
     // Determine recommendation
-    let recommendation: "APPROVE" | "REVIEW" | "REJECT" = "APPROVE";
-    let confidence: "HIGH" | "MEDIUM" | "LOW" = "HIGH";
+    let recommendation: 'APPROVE' | 'REVIEW' | 'REJECT' = 'APPROVE';
+    let confidence: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
 
     if (eligibilityScore >= 80) {
-      recommendation = "APPROVE";
-      confidence = "HIGH";
+      recommendation = 'APPROVE';
+      confidence = 'HIGH';
     } else if (eligibilityScore >= 60) {
-      recommendation = "APPROVE";
-      confidence = "MEDIUM";
+      recommendation = 'APPROVE';
+      confidence = 'MEDIUM';
     } else if (eligibilityScore >= 40) {
-      recommendation = "REVIEW";
-      confidence = "MEDIUM";
+      recommendation = 'REVIEW';
+      confidence = 'MEDIUM';
     } else {
-      recommendation = "REJECT";
-      confidence = "LOW";
+      recommendation = 'REJECT';
+      confidence = 'LOW';
     }
 
     // Generate factors
@@ -165,7 +167,7 @@ export const evaluateLeaveRequest = query({
       notes,
       allLeaves,
       overlappingLeaves,
-      user
+      user,
     );
 
     return {
@@ -197,8 +199,8 @@ interface PerformanceMetrics {
 }
 
 interface LeaveRequest {
-  _id: Id<"leaveRequests">;
-  userId: Id<"users">;
+  _id: Id<'leaveRequests'>;
+  userId: Id<'users'>;
   status: string;
   startDate: string;
   endDate: string;
@@ -229,7 +231,11 @@ function calculatePerformanceScore(metrics: PerformanceMetrics): number {
   return Math.round((kpi + completion + deadline) / 3);
 }
 
-function calculateAttendanceScore(metrics: PerformanceMetrics | null, _leaves: LeaveRequest[], timeRecords?: TimeRecord[]): number {
+function calculateAttendanceScore(
+  metrics: PerformanceMetrics | null,
+  _leaves: LeaveRequest[],
+  timeRecords?: TimeRecord[],
+): number {
   // If we have real time tracking data, use it
   if (timeRecords && timeRecords.length > 0) {
     const totalDays = timeRecords.length;
@@ -242,9 +248,13 @@ function calculateAttendanceScore(metrics: PerformanceMetrics | null, _leaves: L
 
     // Weighted: 60% punctuality, 30% attendance, 10% early leave
     const earlyLeaveDeduction = (earlyLeaveDays / totalDays) * 10;
-    return Math.max(0, Math.min(100, Math.round(
-      punctualityRate * 0.6 + attendanceRate * 0.3 - earlyLeaveDeduction * 10
-    )));
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(punctualityRate * 0.6 + attendanceRate * 0.3 - earlyLeaveDeduction * 10),
+      ),
+    );
   }
 
   if (!metrics) return 70;
@@ -256,24 +266,24 @@ function calculateAttendanceScore(metrics: PerformanceMetrics | null, _leaves: L
 
 function calculateBehaviorScore(notes: EmployeeNote[]): number {
   if (notes.length === 0) return 75;
-  
-  const positive = notes.filter(n => n.sentiment === "positive").length;
-  const negative = notes.filter(n => n.sentiment === "negative").length;
-  const neutral = notes.filter(n => n.sentiment === "neutral").length;
-  
-  const score = ((positive * 100) + (neutral * 75) - (negative * 50)) / notes.length;
+
+  const positive = notes.filter((n) => n.sentiment === 'positive').length;
+  const negative = notes.filter((n) => n.sentiment === 'negative').length;
+  const neutral = notes.filter((n) => n.sentiment === 'neutral').length;
+
+  const score = (positive * 100 + neutral * 75 - negative * 50) / notes.length;
   return Math.max(0, Math.min(100, score));
 }
 
 function calculateLeaveHistoryScore(leaves: LeaveRequest[], user: User): number {
   const thisYear = new Date().getFullYear();
-  const thisYearLeaves = leaves.filter(l => {
+  const thisYearLeaves = leaves.filter((l) => {
     const year = new Date(l.startDate).getFullYear();
     return year === thisYear;
   });
 
   const usedDays = thisYearLeaves
-    .filter(l => l.status === "approved")
+    .filter((l) => l.status === 'approved')
     .reduce((sum, l) => sum + l.days, 0);
 
   const totalBalance = (user.paidLeaveBalance ?? 24) + (user.sickLeaveBalance ?? 10);
@@ -303,36 +313,40 @@ function generateFactors(
   notes: EmployeeNote[],
   leaves: LeaveRequest[],
   overlapping: LeaveRequest[],
-  user: User
+  user: User,
 ) {
-  const positive = notes.filter(n => n.sentiment === "positive").length;
-  const negative = notes.filter(n => n.sentiment === "negative").length;
+  const positive = notes.filter((n) => n.sentiment === 'positive').length;
+  const negative = notes.filter((n) => n.sentiment === 'negative').length;
 
   return {
     performance: [
-      perfScore >= 90 ? "✅ Excellent KPI performance" : perfScore >= 70 ? "✅ Good KPI performance" : "⚠️ Below target KPIs",
-      (metrics?.projectCompletion ?? 0) >= 95 ? "✅ High project completion rate" : "⚠️ Some projects incomplete",
-      (metrics?.deadlineAdherence ?? 0) >= 90 ? "✅ Consistently meets deadlines" : "⚠️ Occasional deadline misses",
+      perfScore >= 90 ? 'excellentKpi' : perfScore >= 70 ? 'goodKpi' : 'belowTargetKpi',
+      (metrics?.projectCompletion ?? 0) >= 95 ? 'highProjectCompletion' : 'someProjectsIncomplete',
+      (metrics?.deadlineAdherence ?? 0) >= 90 ? 'meetsDeadlines' : 'occasionalDeadlineMisses',
     ],
     attendance: [
-      attScore >= 90 ? "✅ Excellent attendance record" : "⚠️ Some attendance concerns",
-      (metrics?.lateArrivals ?? 0) <= 2 ? "✅ Punctual" : `⚠️ ${metrics?.lateArrivals ?? 0} late arrivals`,
-      (metrics?.absenceRate ?? 0) <= 3 ? "✅ Low absence rate" : "⚠️ Higher than average absences",
+      attScore >= 90 ? 'excellentAttendance' : 'attendanceConcerns',
+      (metrics?.lateArrivals ?? 0) <= 2 ? 'punctual' : 'lateArrivals',
+      (metrics?.absenceRate ?? 0) <= 3 ? 'lowAbsenceRate' : 'highAbsenceRate',
     ],
     behavior: [
-      positive > 5 ? "✅ Strong positive manager feedback" : positive > 0 ? "✅ Positive manager feedback" : "⚠️ Limited feedback",
-      negative === 0 ? "✅ No disciplinary issues" : `❌ ${negative} concern(s) noted`,
-      (metrics?.teamworkRating ?? 0) >= 4.5 ? "✅ Excellent team collaboration" : "⚠️ Team collaboration could improve",
+      positive > 5
+        ? 'strongPositiveFeedback'
+        : positive > 0
+          ? 'positiveFeedback'
+          : 'limitedFeedback',
+      negative === 0 ? 'noDisciplinaryIssues' : 'disciplinaryConcerns',
+      (metrics?.teamworkRating ?? 0) >= 4.5 ? 'excellentTeamwork' : 'teamworkCouldImprove',
     ],
     leaveHistory: [
-      leaves.length > 0 ? `✅ Used ${leaves.filter(l => l.status === "approved").reduce((s, l) => s + l.days, 0)} days this year` : "⚠️ No leave taken yet",
-      (user.paidLeaveBalance ?? 0) >= 12 ? "✅ Good leave balance remaining" : "⚠️ Low leave balance",
-      "✅ No unusual leave patterns detected",
+      leaves.length > 0 ? 'usedDaysThisYear' : 'noLeaveTaken',
+      (user.paidLeaveBalance ?? 0) >= 12 ? 'goodLeaveBalance' : 'lowLeaveBalance',
+      'noUnusualPatterns',
     ],
     workload: [
-      overlapping.length === 0 ? "✅ No team coverage issues" : `⚠️ ${overlapping.length} team member(s) also on leave`,
-      "✅ No critical deadlines in period",
-      overlapping.length >= 2 ? "❌ Team may be understaffed" : "✅ Adequate team coverage",
+      overlapping.length === 0 ? 'noCoverageIssues' : 'teamMemberOnLeave',
+      'noCriticalDeadlines',
+      overlapping.length >= 2 ? 'understaffed' : 'adequateCoverage',
     ],
   };
 }
@@ -345,14 +359,18 @@ interface FactorsResult {
   workload: string[];
 }
 
-function generateReasoning(score: number, _recommendation: string, _factors: FactorsResult): string {
+function generateReasoning(
+  score: number,
+  _recommendation: string,
+  _factors: FactorsResult,
+): string {
   if (score >= 80) {
-    return "Employee demonstrates strong performance, good attendance, and positive behavior. Leave request aligns with company policies and team capacity permits absence.";
+    return 'strong';
   } else if (score >= 60) {
-    return "Employee shows satisfactory performance overall. Some minor concerns exist but do not significantly impact leave eligibility. Recommend approval with standard monitoring.";
+    return 'satisfactory';
   } else if (score >= 40) {
-    return "Mixed performance indicators. Recommend managerial review before final decision. Consider discussing expectations and support needs with employee.";
+    return 'mixed';
   } else {
-    return "Multiple performance or attendance concerns identified. Recommend detailed review and potentially scheduling discussion with employee before approving extended leave.";
+    return 'concerns';
   }
 }

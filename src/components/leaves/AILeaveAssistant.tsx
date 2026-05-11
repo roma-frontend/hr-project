@@ -254,37 +254,51 @@ export default function AILeaveAssistant({
             <Brain className="w-4 h-4" />
             {t('aiFeatures.aiAnalysis')}
           </h4>
-          <p className="text-sm text-(--text-muted) leading-relaxed">{reasoning}</p>
+          <p className="text-sm text-(--text-muted) leading-relaxed">
+            {t(`aiLeave.reasoning.${reasoning}`, reasoning)}
+          </p>
         </div>
 
         {/* Key Factors */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium">{t('aiLeave.keyFactors', 'Key Factors')}</h4>
           <div className="space-y-1.5">
-            {breakdown.performance.factors.slice(0, 2).map((factor: any, i: any) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                {factor.startsWith('✅') ? (
-                  <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 shrink-0" />
-                ) : factor.startsWith('⚠️') ? (
-                  <AlertCircle className="w-3 h-3 text-yellow-600 mt-0.5 shrink-0" />
-                ) : (
-                  <Minus className="w-3 h-3 text-red-600 mt-0.5 shrink-0" />
-                )}
-                <span className="text-(--text-muted)">{factor.substring(2)}</span>
-              </div>
-            ))}
-            {breakdown.workload.factors.slice(0, 1).map((factor: any, i: any) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
-                {factor.startsWith('✅') ? (
-                  <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 shrink-0" />
-                ) : factor.startsWith('⚠️') ? (
-                  <AlertCircle className="w-3 h-3 text-yellow-600 mt-0.5 shrink-0" />
-                ) : (
-                  <Minus className="w-3 h-3 text-red-600 mt-0.5 shrink-0" />
-                )}
-                <span className="text-(--text-muted)">{factor.substring(2)}</span>
-              </div>
-            ))}
+            {(() => {
+              const allFactors = [
+                ...breakdown.performance.factors.slice(0, 2),
+                ...breakdown.workload.factors.slice(0, 1),
+              ];
+              const negativeKeys = ['understaffed', 'disciplinaryConcerns'];
+              const warningKeys = [
+                'below',
+                'some',
+                'occasional',
+                'attendanceConcerns',
+                'lateArrivals',
+                'highAbsence',
+                'limited',
+                'teamworkCould',
+                'noLeave',
+                'lowLeave',
+                'teamMember',
+              ];
+              return allFactors.map((factor: string, i: number) => {
+                let icon = <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 shrink-0" />;
+                if (negativeKeys.includes(factor)) {
+                  icon = <Minus className="w-3 h-3 text-red-600 mt-0.5 shrink-0" />;
+                } else if (warningKeys.some((k) => factor.includes(k))) {
+                  icon = <AlertCircle className="w-3 h-3 text-yellow-600 mt-0.5 shrink-0" />;
+                }
+                return (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    {icon}
+                    <span className="text-(--text-muted)">
+                      {t(`aiLeave.factors.${factor}`, factor)}
+                    </span>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </CardContent>
