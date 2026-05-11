@@ -153,7 +153,7 @@ export function LeaveRequestWizard({
         comment: stepData.comment || undefined,
       });
 
-      toast.success(t('toasts.leaveRequestSubmitted', 'Leave request submitted!'), {
+      toast.success(t('leaveWizard.toast.success', 'Leave request submitted!'), {
         description: t('leaveWizard.toast.waitingApproval', 'Waiting for manager approval'),
       });
       onComplete?.();
