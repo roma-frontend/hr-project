@@ -67,7 +67,7 @@ interface EditEmployeeModalProps {
   onClose: () => void;
 }
 
-const ADMIN_EMAIL = 'romangulanyan@gmail.com';
+const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 const ALL_ROLES_CONFIG = [
   { value: 'admin', icon: '👑', labelKey: 'roles.admin', descKey: 'editEmployee.fullAccess' },

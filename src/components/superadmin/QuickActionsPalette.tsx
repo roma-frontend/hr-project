@@ -62,8 +62,7 @@ export function QuickActionsPalette() {
   const listRef = useRef<HTMLDivElement>(null);
 
   // Check if user is superadmin
-  const isSuperadmin =
-    user?.role === 'superadmin' || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin = user?.role === 'superadmin';
 
   // Check if user is admin or supervisor
   const isAdmin = user?.role === 'admin';
@@ -265,11 +264,11 @@ export function QuickActionsPalette() {
       icon: <Search className="w-4 h-4" />,
       shortcut: '⌘F',
       category: 'action',
-        action: () => {
-          setIsOpen(false);
-          // Focus global search if on superadmin page
-          document.querySelector<HTMLInputElement>('#global-search-input')?.focus();
-        },
+      action: () => {
+        setIsOpen(false);
+        // Focus global search if on superadmin page
+        document.querySelector<HTMLInputElement>('#global-search-input')?.focus();
+      },
     },
     {
       id: 'create-ticket',

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 /**
  * Helper to batch load users and enrich task data
@@ -63,8 +64,6 @@ async function enrichTasksWithUserData(ctx: any, tasks: any[]) {
     };
   });
 }
-
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
 
 // ── Create Task ────────────────────────────────────────────────────────────
 export const createTask = mutation({

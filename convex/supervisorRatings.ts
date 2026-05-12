@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Id } from './_generated/dataModel';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // ── Create/Update Supervisor Rating ──────────────────────────────────────
 export const createRating = mutation({
@@ -316,7 +317,6 @@ export const getEmployeesNeedingRating = query({
     const supervisor = await ctx.db.get(args.supervisorId);
     if (!supervisor) throw new Error('Supervisor not found');
 
-    const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
     const isSuperadmin = supervisor.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     const currentPeriod = new Date().toISOString().slice(0, 7);

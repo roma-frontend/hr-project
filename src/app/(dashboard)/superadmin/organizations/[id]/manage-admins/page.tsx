@@ -51,8 +51,7 @@ export default function ManageAdminsPage() {
   const params = useParams();
   const { user } = useAuthStore();
   const orgId = params.id as string;
-  const isSuperadmin =
-    user?.role === 'superadmin' || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin = user?.role === 'superadmin';
 
   // Check if admin is trying to access their own organization
   const isOwnOrganization = user?.organizationId === orgId;

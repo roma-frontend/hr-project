@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import { detectFace, loadFaceApiModels, findBestMatch, isFaceMatch } from '@/lib/faceApi';
+import { detectFace, loadFaceApiModels } from '@/lib/faceApi';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 
@@ -62,6 +62,17 @@ export function FaceLogin() {
   const [autoLoginTriggered, setAutoLoginTriggered] = useState(false);
   const [lastAttemptTime, setLastAttemptTime] = useState(0);
 
+  // SECURITY: server-side face matching requires the user to identify themselves
+  // by email BEFORE capturing the face. We no longer broadcast all descriptors
+  // to the browser (that was a GDPR-grade biometric leak + auth bypass).
+  const [emailInput, setEmailInput] = useState('');
+  useEffect(() => {
+    // Pre-fill from query string if provided (e.g. /login?email=x@y)
+    const params = new URLSearchParams(window.location.search);
+    const qEmail = params.get('email');
+    if (qEmail) setEmailInput(qEmail);
+  }, []);
+
   // sync a few refs (безопасно, но триггер используем ref’ы)
   useEffect(() => {
     processingRef.current = isProcessing;
@@ -74,8 +85,9 @@ export function FaceLogin() {
   }, [autoLoginTriggered]);
 
   // ===== Data =====
-  const allFaceDescriptors = useQuery(api.faceRecognition.getAllFaceDescriptors);
+  // Face matching is now server-side; we no longer need to download descriptors.
   const recordFaceIdAttempt = useMutation(api.users.auth.recordFaceIdAttempt);
+  void recordFaceIdAttempt; // kept for potential server-side fallback calls
 
   // ===== Init once: models + camera list =====
   useEffect(() => {
@@ -103,11 +115,8 @@ export function FaceLogin() {
   }, []);
 
   useEffect(() => {
-    if (allFaceDescriptors !== undefined) {
-      logger.log(`📊 Face descriptors loaded: ${allFaceDescriptors.length} registered faces`);
-      if (allFaceDescriptors.length === 0) logger.warn('⚠️ No registered faces in the database');
-    }
-  }, [allFaceDescriptors]);
+    // no-op: face descriptors are never loaded client-side anymore
+  }, []);
 
   // ===== Helpers =====
   const stopStreamTracks = () => {
@@ -365,9 +374,10 @@ export function FaceLogin() {
           now - lastAttemptRef.current >= 5000;
 
         if (shouldTrigger) {
-          if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
-            toast.error('No registered faces found. Please register your face first.', {
-              id: 'no-faces',
+          // Server-side matching: we only need the user's email to be entered.
+          if (!emailInput.trim()) {
+            toast.error(t('faceLogin.emailRequired', 'Enter your email before face login'), {
+              id: 'no-email',
             });
 
             progressRef.current = 0;
@@ -403,19 +413,20 @@ export function FaceLogin() {
     // hard-guard
     if (processingRef.current) return;
 
+    const email = emailInput.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error(t('faceLogin.emailRequired', 'Enter your email before face login'));
+      autoTriggeredRef.current = false;
+      setAutoLoginTriggered(false);
+      return;
+    }
+
     processingRef.current = true;
     setIsProcessing(true);
     setMatchStatus('searching');
 
     try {
-      if (!allFaceDescriptors || allFaceDescriptors.length === 0) {
-        toast.error('No registered faces found in the system. Please register your face first.');
-        autoTriggeredRef.current = false;
-        setAutoLoginTriggered(false);
-        return;
-      }
-
-      // prefer cached descriptor
+      // Use cached descriptor if we have one, otherwise do a fresh detect
       let descriptor = lastDescriptorRef.current;
       if (!descriptor) {
         const det = await detectFace(video);
@@ -430,92 +441,62 @@ export function FaceLogin() {
         descriptor = det.descriptor;
       }
 
-      const knownFaces = allFaceDescriptors.map((user: any) => ({
-        userId: user.userId,
-        name: user.name,
-        descriptor: user.faceDescriptor,
-        email: user.email,
-      }));
+      // Convert Float32Array to plain number[] for JSON
+      const descriptorArray = Array.from(descriptor);
 
-      const bestMatch = await findBestMatch(
-        descriptor,
-        knownFaces.map(({ userId, name, descriptor }) => ({ userId, name, descriptor })),
-      );
-
-      if (!bestMatch) {
-        setMatchStatus('not_found');
-        toast.error('No matching face found.');
-        autoTriggeredRef.current = false;
-        setAutoLoginTriggered(false);
-        return;
-      }
-
-      if (!isFaceMatch(bestMatch.distance, 0.6)) {
-        // record failed attempt (best-effort)
-        try {
-          const result = await recordFaceIdAttempt({
-            userId: bestMatch.userId as any,
-            success: false,
-          });
-          setFailedAttempts(result.attempts);
-
-          if (result.blocked) {
-            setIsBlocked(true);
-            toast.error(
-              'Too many failed attempts. Face ID is now blocked. Please use email/password login.',
-            );
-            stopWebcam();
-            return;
-          }
-
-          toast.error(`Face not recognized. Attempt ${result.attempts} of 3.`);
-        } catch {
-          const newAttempts = failedAttempts + 1;
-          setFailedAttempts(newAttempts);
-          toast.error(`Face not recognized. Attempt ${newAttempts} of 3.`);
-
-          if (newAttempts >= 3) {
-            setIsBlocked(true);
-            toast.error('Too many failed attempts. Face ID is now blocked.');
-            stopWebcam();
-            return;
-          }
-        }
-
-        setMatchStatus('not_found');
-        autoTriggeredRef.current = false;
-        setAutoLoginTriggered(false);
-        return;
-      }
-
-      // success
-      try {
-        await recordFaceIdAttempt({ userId: bestMatch.userId as any, success: true });
-      } catch {}
-
-      setFailedAttempts(0);
-      setMatchedUser(bestMatch.name);
-      setMatchStatus('found');
-
-      const matchedUserData = allFaceDescriptors.find((u: any) => u.userId === bestMatch.userId);
-      if (!matchedUserData) throw new Error('User data not found');
-
+      // Send email + descriptor to the server. The server does the matching
+      // against the stored descriptor for this email. Descriptors of OTHER
+      // users are never exposed to the browser.
       const response = await fetch('/api/auth/face-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: matchedUserData.email, isFaceLogin: true }),
+        body: JSON.stringify({ email, faceDescriptor: descriptorArray }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          organizationId?: string;
+        };
+
         if (errorData?.error === 'maintenance') {
-          router.push(`/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`);
+          router.push(
+            `/login?maintenance=true${errorData.organizationId ? `&org=${errorData.organizationId}` : ''}`,
+          );
           return;
         }
+
+        // Treat any 401/403 as face mismatch
+        if (response.status === 401 || response.status === 403) {
+          setMatchStatus('not_found');
+          const newAttempts = failedAttempts + 1;
+          setFailedAttempts(newAttempts);
+          toast.error(
+            t('faceLogin.notRecognized', 'Face not recognized. Attempt {{n}} of 3').replace(
+              '{{n}}',
+              String(newAttempts),
+            ),
+          );
+          if (newAttempts >= 3) {
+            setIsBlocked(true);
+            toast.error(
+              t('faceLogin.blockedTooMany', 'Too many failed attempts. Face ID is now blocked.'),
+            );
+            stopWebcam();
+          }
+          autoTriggeredRef.current = false;
+          setAutoLoginTriggered(false);
+          return;
+        }
+
         throw new Error(errorData?.error || 'Login failed');
       }
 
       const data = await response.json();
+
+      setFailedAttempts(0);
+      setMatchedUser(data?.session?.name ?? email);
+      setMatchStatus('found');
 
       if (data?.session) {
         const { login } = useAuthStore.getState();
@@ -534,7 +515,6 @@ export function FaceLogin() {
         });
       }
 
-      // stop before redirect
       stopWebcam();
 
       const params = new URLSearchParams(window.location.search);
@@ -563,7 +543,7 @@ export function FaceLogin() {
       processingRef.current = false;
       setIsProcessing(false);
     }
-  }, [isBlocked, allFaceDescriptors, recordFaceIdAttempt, failedAttempts, t]);
+  }, [isBlocked, emailInput, failedAttempts, t, router]);
 
   return (
     <Card className="p-6 bg-[var(--surface-base)] border-[var(--border-primary)]">
@@ -692,6 +672,33 @@ export function FaceLogin() {
           )}
         </div>
 
+        {/* Email input — required for server-side identity claim */}
+        {!isWebcamActive && !isBlocked && (
+          <div className="space-y-2">
+            <label
+              htmlFor="face-login-email"
+              className="text-sm font-medium text-(--text-secondary)"
+            >
+              {t('faceLogin.emailLabel', 'Your email')}
+            </label>
+            <input
+              id="face-login-email"
+              type="email"
+              autoComplete="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-base)] text-(--text-primary) text-sm"
+            />
+            <p className="text-xs text-(--text-tertiary)">
+              {t(
+                'faceLogin.emailHelper',
+                'Your face is verified against this account only. Descriptors of other users are never sent to your browser.',
+              )}
+            </p>
+          </div>
+        )}
+
         {/* Camera Selection */}
         {!isWebcamActive && cameras.length > 1 && (
           <div className="space-y-2">
@@ -772,36 +779,12 @@ export function FaceLogin() {
           )}
         </div>
 
-        {/* No faces registered warning */}
-        {allFaceDescriptors !== undefined && allFaceDescriptors.length === 0 && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-            <p className="text-sm text-orange-600 dark:text-orange-400 text-center font-medium">
-              {t('faceLogin.noRegisteredFacesTitle', '⚠️ No Registered Faces')}
-            </p>
-            <p className="text-xs text-orange-600/80 dark:text-orange-400/80 text-center mt-1">
-              {t('faceLogin.noUsersRegistered', 'No users have registered their face yet')}.{' '}
-              {t(
-                'faceLogin.registerFaceFirst',
-                'Please register your face in your profile settings first',
-              )}
-              .
-            </p>
-          </div>
-        )}
-
         {/* Info */}
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
           <p className="text-xs text-(--text-secondary)">
             {t(
               'faceLogin.autoLoginInfo',
-              '🚀 Automatic Login: Position your face in the camera frame. The system will automatically authenticate you when your face is detected and scanned (100%).',
-            )}
-            {allFaceDescriptors !== undefined && (
-              <span className="block mt-1 text-[var(--text-tertiary)]">
-                📊 {allFaceDescriptors.length} {t('faceLogin.registeredFace', 'registered face')}
-                {allFaceDescriptors.length !== 1 ? 's' : ''}{' '}
-                {t('faceLogin.inSystem', 'in the system')}
-              </span>
+              '🚀 Automatic Login: Enter your email, then position your face in the camera. The server will verify your identity when the scan completes (100%).',
             )}
           </p>
         </div>

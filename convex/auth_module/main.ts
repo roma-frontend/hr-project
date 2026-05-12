@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import bcrypt from 'bcryptjs';
+import { SUPERADMIN_EMAIL, isSuperadminEmail } from '../lib/auth';
 
 // ── Password Hashing Helpers ─────────────────────────────────────────────────
 const BCRYPT_ROUNDS = 12;
@@ -56,12 +57,12 @@ function wrapConvexError<T>(fn: () => T, operation: string): T {
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+// SUPERADMIN_EMAIL is re-exported from lib/auth (env-driven).
 
 /**
  * Check if a user is a superadmin.
  * Primary check: user.role === "superadmin"
- * Fallback: email match (for legacy compatibility)
+ * Fallback: env-pinned bootstrap email (register flow only)
  */
 export function isSuperadmin(
   user:
@@ -73,7 +74,7 @@ export function isSuperadmin(
     | undefined,
 ): boolean {
   if (!user) return false;
-  return user.role === 'superadmin' || user.email?.toLowerCase() === SUPERADMIN_EMAIL;
+  return user.role === 'superadmin' || isSuperadminEmail(user.email);
 }
 
 /**
@@ -321,7 +322,15 @@ export const register = mutation({
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOGIN — validates credentials + organizationId scoping
-// Password verification is done in Next.js API route to avoid bcrypt setTimeout issue
+//
+// SECURITY MODEL:
+//   - Password login (isFaceLogin=false): REQUIRES bcrypt.compare(password, passwordHash)
+//     server-side. No bypass path.
+//   - Face login (isFaceLogin=true): requires `faceVerificationToken` signed by
+//     convex:faceRecognition.loginWithFace. Plain `isFaceLogin: true` WITHOUT a
+//     valid token is rejected. This closes the auth-bypass reported in audit.
+//
+// Note: bcryptjs works in Convex mutations (see register / changePassword).
 // ─────────────────────────────────────────────────────────────────────────────
 export const login = mutation({
   args: {
@@ -330,10 +339,15 @@ export const login = mutation({
     sessionToken: v.string(),
     sessionExpiry: v.number(),
     isFaceLogin: v.optional(v.boolean()),
+    /**
+     * Short-lived verification token (5min) issued by faceRecognition.loginWithFace
+     * when `isFaceLogin` is true. Must match user._id + recent timestamp.
+     */
+    faceVerificationToken: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { email, password: _passwordHash, sessionToken, sessionExpiry, isFaceLogin },
+    { email, password, sessionToken, sessionExpiry, isFaceLogin, faceVerificationToken },
   ) => {
     return wrapConvexError(async () => {
       const user = await ctx.db
@@ -341,6 +355,7 @@ export const login = mutation({
         .withIndex('by_email', (q) => q.eq('email', email.toLowerCase().trim()))
         .unique();
 
+      // Use generic error to avoid email enumeration
       if (!user) throw new Error('Invalid email or password');
       if (!user.isActive)
         throw new Error('Your account has been deactivated. Contact your administrator.');
@@ -350,8 +365,58 @@ export const login = mutation({
         );
       }
 
-      // Password check is done in Next.js API route (bcrypt uses setTimeout which Convex forbids)
-      // isFaceLogin flag indicates caller has already verified credentials
+      // ═══════════════════════════════════════════════════════════════
+      // CREDENTIAL VERIFICATION — the core auth gate
+      // ═══════════════════════════════════════════════════════════════
+      if (isFaceLogin) {
+        // Face-login path: require server-verified token
+        if (!faceVerificationToken) {
+          throw new Error('Face verification token is required for Face ID login');
+        }
+
+        const token = await ctx.db
+          .query('faceLoginTokens')
+          .withIndex('by_token', (q) => q.eq('token', faceVerificationToken))
+          .unique();
+
+        if (!token) throw new Error('Invalid or expired Face ID verification');
+        if (token.userId !== user._id) {
+          throw new Error('Face ID verification does not match this account');
+        }
+        if (token.consumedAt) throw new Error('Face ID verification has already been used');
+        if (token.expiresAt < Date.now()) {
+          throw new Error('Face ID verification has expired. Please try again.');
+        }
+
+        // One-time use — consume the token atomically
+        await ctx.db.patch(token._id, { consumedAt: Date.now() });
+      } else {
+        // Password path: bcrypt.compare against stored hash
+        if (!password) throw new Error('Invalid email or password');
+        if (!user.passwordHash) {
+          // OAuth-only user trying password login
+          throw new Error('This account uses Google sign-in. Please sign in with Google.');
+        }
+
+        const passwordOk = await verifyPassword(password, user.passwordHash);
+        if (!passwordOk) {
+          // Audit failed attempt
+          await ctx.db.insert('auditLogs', {
+            organizationId: user.organizationId,
+            userId: user._id,
+            action: 'login_failed',
+            details: 'Invalid password',
+            createdAt: Date.now(),
+          });
+          throw new Error('Invalid email or password');
+        }
+
+        // Upgrade legacy hashes to modern bcrypt transparently
+        if (!user.passwordHash.startsWith('$2')) {
+          const upgraded = await hashPassword(password);
+          await ctx.db.patch(user._id, { passwordHash: upgraded });
+        }
+      }
 
       // Verify org is still active
       if (!user.organizationId) throw new Error('User has no organization');

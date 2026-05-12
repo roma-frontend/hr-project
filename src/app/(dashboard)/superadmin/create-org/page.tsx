@@ -34,8 +34,7 @@ export default function SuperadminCreateOrgPage() {
     );
   }
 
-  const isSuperadmin =
-    user?.role === 'superadmin' || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin = user?.role === 'superadmin';
 
   if (!isSuperadmin) {
     return (

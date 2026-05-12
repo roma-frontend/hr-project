@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
       // Resend requires verified domain to send to arbitrary emails.
       // Until adb.org DNS records are verified, send to test email (account owner).
       const isDomainVerified = process.env.RESEND_DOMAIN_VERIFIED === 'true';
-      const testEmail = process.env.RESEND_TEST_EMAIL || 'romangulanyan@gmail.com';
+      const testEmail =
+        process.env.RESEND_TEST_EMAIL || process.env.BOOTSTRAP_SUPERADMIN_EMAIL || '';
       const toEmail = isDomainVerified ? result.email : testEmail;
       const fromEmail = isDomainVerified
         ? 'HR Office <hr@adb.org>'

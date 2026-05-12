@@ -73,11 +73,8 @@ export default function EmployeeProfileDetail({ employeeId }: EmployeeProfileDet
   const deleteUser = useMutation(api.users.mutations.deleteUser);
 
   const isAdminOrSupervisor = currentUser?.role === 'admin' || currentUser?.role === 'supervisor';
-  const isSuperadmin =
-    currentUser?.role === 'superadmin' ||
-    currentUser?.email?.toLowerCase() === 'romangulanyan@gmail.com';
-  const isTargetSuperadmin =
-    employee?.role === 'superadmin' || employee?.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin = currentUser?.role === 'superadmin';
+  const isTargetSuperadmin = employee?.role === 'superadmin';
   const canEdit = isAdminOrSupervisor || isSuperadmin;
   const canDelete = canEdit && !isTargetSuperadmin && employeeId !== currentUser?.id;
 

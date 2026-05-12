@@ -257,8 +257,7 @@ export default function SecurityDashboard() {
   }
 
   // STEP 2: Check authorization - only after user is definitely loaded
-  const isSuperAdmin =
-    user.role === 'superadmin' || user.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperAdmin = user.role === 'superadmin';
   if (!isSuperAdmin) {
     return (
       <div className="flex items-center justify-center h-96" style={{ color: 'var(--text-muted)' }}>

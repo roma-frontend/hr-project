@@ -43,6 +43,7 @@ import {
   FileText,
   Database,
   ClipboardCheck,
+  Receipt,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -167,6 +168,12 @@ const navItems: NavEntry[] = [
     children: [
       { href: '/payroll', labelKey: 'nav.payroll', icon: Wallet },
       { href: '/compensation', labelKey: 'nav.compensation', icon: DollarSign },
+      {
+        href: '/expenses',
+        labelKey: 'nav.expenses',
+        icon: Receipt,
+        roles: ['superadmin', 'admin', 'supervisor'],
+      },
     ],
   },
 

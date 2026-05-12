@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+const SUPERADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 export default function BackupsManagementPage() {
   const { t, i18n } = useTranslation();

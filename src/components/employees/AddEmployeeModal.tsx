@@ -43,7 +43,7 @@ import {
   Shield,
 } from 'lucide-react';
 
-const ADMIN_EMAIL = 'romangulanyan@gmail.com';
+const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 interface AddEmployeeModalProps {
   open: boolean;

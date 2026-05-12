@@ -79,8 +79,7 @@ export default function OrganizationsPage() {
     return matchesSearch && matchesPlan && matchesStatus;
   });
 
-  const isSuperadmin =
-    user?.role === 'superadmin' || user?.email?.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin = user?.role === 'superadmin';
 
   // Debug logging
   useEffect(() => {

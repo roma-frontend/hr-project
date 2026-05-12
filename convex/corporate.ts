@@ -11,8 +11,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
-
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGER APPROVAL WORKFLOW

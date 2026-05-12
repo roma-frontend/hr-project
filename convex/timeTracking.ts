@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Id } from './_generated/dataModel';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // Armenia timezone offset: UTC+4
 const ARMENIA_OFFSET_MS = 4 * 60 * 60 * 1000;
@@ -118,9 +119,7 @@ export const checkIn = mutation({
       if (!existingPointsToday) {
         const userPointsRecord = await ctx.db
           .query('userPoints')
-          .withIndex('by_org_user', (q) =>
-            q.eq('organizationId', orgId).eq('userId', args.userId),
-          )
+          .withIndex('by_org_user', (q) => q.eq('organizationId', orgId).eq('userId', args.userId))
           .first();
 
         if (userPointsRecord) {
@@ -269,7 +268,7 @@ export const getCurrentlyAtWork = query({
       !admin ||
       (admin.role !== 'admin' &&
         admin.role !== 'supervisor' &&
-        admin.email?.toLowerCase() !== 'romangulanyan@gmail.com')
+        admin.email?.toLowerCase() !== SUPERADMIN_EMAIL)
     ) {
       throw new Error('Only admins/supervisors can view attendance');
     }
@@ -283,7 +282,7 @@ export const getCurrentlyAtWork = query({
     const atWork = records.filter((r) => r.status === 'checked_in');
 
     // Filter by organization if admin (not superadmin)
-    const isSuperadmin = admin.email?.toLowerCase() === 'romangulanyan@gmail.com';
+    const isSuperadmin = admin.email?.toLowerCase() === SUPERADMIN_EMAIL;
     const orgToFilter = isSuperadmin ? null : admin.organizationId;
 
     const withUsers = await Promise.all(
@@ -334,7 +333,7 @@ export const getTodayAllAttendance = query({
       !admin ||
       (admin.role !== 'admin' &&
         admin.role !== 'supervisor' &&
-        admin.email?.toLowerCase() !== 'romangulanyan@gmail.com')
+        admin.email?.toLowerCase() !== SUPERADMIN_EMAIL)
     ) {
       throw new Error('Only admins/supervisors can view attendance');
     }
@@ -346,7 +345,7 @@ export const getTodayAllAttendance = query({
       .collect();
 
     // Filter by organization if admin (not superadmin)
-    const isSuperadmin = admin.email?.toLowerCase() === 'romangulanyan@gmail.com';
+    const isSuperadmin = admin.email?.toLowerCase() === SUPERADMIN_EMAIL;
     const orgToFilter = isSuperadmin ? null : admin.organizationId;
 
     const withUsers = await Promise.all(
@@ -388,7 +387,7 @@ export const getTodayAttendanceSummary = query({
       !admin ||
       (admin.role !== 'admin' &&
         admin.role !== 'supervisor' &&
-        admin.email?.toLowerCase() !== 'romangulanyan@gmail.com')
+        admin.email?.toLowerCase() !== SUPERADMIN_EMAIL)
     ) {
       throw new Error('Only admins/supervisors can view attendance');
     }
@@ -400,7 +399,7 @@ export const getTodayAttendanceSummary = query({
       .collect();
 
     // Filter by organization if admin (not superadmin)
-    const isSuperadmin = admin.email?.toLowerCase() === 'romangulanyan@gmail.com';
+    const isSuperadmin = admin.email?.toLowerCase() === SUPERADMIN_EMAIL;
     const orgToFilter = isSuperadmin ? null : admin.organizationId;
 
     const totalEmployees = await ctx.db.query('users').collect();
@@ -489,12 +488,12 @@ export const getAllEmployeesAttendanceOverview = query({
       !admin ||
       (admin.role !== 'admin' &&
         admin.role !== 'supervisor' &&
-        admin.email?.toLowerCase() !== 'romangulanyan@gmail.com')
+        admin.email?.toLowerCase() !== SUPERADMIN_EMAIL)
     ) {
       throw new Error('Only admins/supervisors can view attendance');
     }
 
-    const isSuperadmin = admin.email?.toLowerCase() === 'romangulanyan@gmail.com';
+    const isSuperadmin = admin.email?.toLowerCase() === SUPERADMIN_EMAIL;
     const orgToFilter = isSuperadmin ? null : admin.organizationId;
 
     const users = await ctx.db.query('users').collect();

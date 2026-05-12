@@ -56,8 +56,7 @@ export default function SecurityAlertDetailClient() {
     );
   }
 
-  const isSuperadmin =
-    user.email?.toLowerCase() === 'romangulanyan@gmail.com' || user.role === 'superadmin';
+  const isSuperadmin = user.role === 'superadmin';
 
   if (!isSuperadmin) {
     return (

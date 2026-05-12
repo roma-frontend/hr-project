@@ -25,7 +25,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+const SUPERADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 interface StripeMetrics {
   totalSubscriptions: number;

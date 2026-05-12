@@ -1,33 +1,32 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
-
-const SUPERADMIN_EMAIL = "romangulanyan@gmail.com";
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // ── Upsert subscription after checkout.session.completed ─────────────────────
 export const upsertSubscription = mutation({
   args: {
-    stripeCustomerId:     v.string(),
+    stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    stripeSessionId:      v.optional(v.string()),
-    plan:                 v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
-    status:               v.union(
+    stripeSessionId: v.optional(v.string()),
+    plan: v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
+    status: v.union(
       v.literal('trialing'),
       v.literal('active'),
       v.literal('past_due'),
       v.literal('canceled'),
       v.literal('incomplete'),
     ),
-    email:               v.optional(v.string()),
-    currentPeriodStart:  v.optional(v.number()),
-    currentPeriodEnd:    v.optional(v.number()),
-    cancelAtPeriodEnd:   v.boolean(),
-    trialEnd:            v.optional(v.number()),
+    email: v.optional(v.string()),
+    currentPeriodStart: v.optional(v.number()),
+    currentPeriodEnd: v.optional(v.number()),
+    cancelAtPeriodEnd: v.boolean(),
+    trialEnd: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query('subscriptions')
-      .withIndex('by_stripe_subscription', q =>
-        q.eq('stripeSubscriptionId', args.stripeSubscriptionId)
+      .withIndex('by_stripe_subscription', (q) =>
+        q.eq('stripeSubscriptionId', args.stripeSubscriptionId),
       )
       .first();
 
@@ -60,26 +59,26 @@ export const updateSubscriptionStatus = mutation({
       v.literal('canceled'),
       v.literal('incomplete'),
     ),
-    cancelAtPeriodEnd:  v.boolean(),
+    cancelAtPeriodEnd: v.boolean(),
     currentPeriodStart: v.optional(v.number()),
-    currentPeriodEnd:   v.optional(v.number()),
+    currentPeriodEnd: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query('subscriptions')
-      .withIndex('by_stripe_subscription', q =>
-        q.eq('stripeSubscriptionId', args.stripeSubscriptionId)
+      .withIndex('by_stripe_subscription', (q) =>
+        q.eq('stripeSubscriptionId', args.stripeSubscriptionId),
       )
       .first();
 
     if (!existing) return null;
 
     await ctx.db.patch(existing._id, {
-      status:             args.status,
-      cancelAtPeriodEnd:  args.cancelAtPeriodEnd,
+      status: args.status,
+      cancelAtPeriodEnd: args.cancelAtPeriodEnd,
       currentPeriodStart: args.currentPeriodStart,
-      currentPeriodEnd:   args.currentPeriodEnd,
-      updatedAt:          Date.now(),
+      currentPeriodEnd: args.currentPeriodEnd,
+      updatedAt: Date.now(),
     });
 
     return existing._id;
@@ -92,7 +91,7 @@ export const getByCustomer = query({
   handler: async (ctx, { stripeCustomerId }) => {
     return ctx.db
       .query('subscriptions')
-      .withIndex('by_stripe_customer', q => q.eq('stripeCustomerId', stripeCustomerId))
+      .withIndex('by_stripe_customer', (q) => q.eq('stripeCustomerId', stripeCustomerId))
       .first();
   },
 });
@@ -100,12 +99,12 @@ export const getByCustomer = query({
 // ── Save contact inquiry (Enterprise) ────────────────────────────────────────
 export const saveContactInquiry = mutation({
   args: {
-    name:     v.string(),
-    email:    v.string(),
-    company:  v.optional(v.string()),
+    name: v.string(),
+    email: v.string(),
+    company: v.optional(v.string()),
     teamSize: v.optional(v.string()),
-    message:  v.string(),
-    plan:     v.optional(v.string()),
+    message: v.string(),
+    plan: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('contactInquiries', {
@@ -119,11 +118,7 @@ export const saveContactInquiry = mutation({
 export const listInquiries = query({
   args: {},
   handler: async (ctx) => {
-    return ctx.db
-      .query('contactInquiries')
-      .withIndex('by_created')
-      .order('desc')
-      .take(100);
+    return ctx.db.query('contactInquiries').withIndex('by_created').order('desc').take(100);
   },
 });
 
@@ -182,18 +177,16 @@ export const listAll = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    
+
     const currentUser = await ctx.db
-      .query("users")
-      .withIndex("by_email", (q) => q.eq("email", identity.email!))
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', identity.email!))
       .first();
-    
+
     const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-    
+
     if (!currentUser || !isSuperAdmin) return [];
-    
-    return ctx.db
-      .query('subscriptions')
-      .collect();
+
+    return ctx.db.query('subscriptions').collect();
   },
 });

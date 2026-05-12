@@ -59,7 +59,28 @@ export const security = {
     createdAt: v.number(),
   })
     .index('by_org', ['organizationId'])
-    .index('by_user', ['userId']),
+    .index('by_user', ['userId'])
+    .index('by_org_created', ['organizationId', 'createdAt'])
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_action', ['action']),
+
+  /**
+   * Short-lived server-issued tokens that prove a Face ID descriptor was
+   * verified server-side. Consumed one-time by auth:login when
+   * `isFaceLogin: true` is supplied.
+   */
+  faceLoginTokens: defineTable({
+    userId: v.id('users'),
+    token: v.string(),
+    issuedAt: v.number(),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+  })
+    .index('by_token', ['token'])
+    .index('by_user', ['userId'])
+    .index('by_expires', ['expiresAt']),
 
   securitySettings: defineTable({
     key: v.string(),

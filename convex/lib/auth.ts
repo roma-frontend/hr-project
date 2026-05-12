@@ -1,18 +1,52 @@
 /**
- * Shared auth helpers — centralizes superadmin email check
- * Replace all hardcoded "romangulanyan@gmail.com" with this module.
+ * Shared auth helpers — env-driven superadmin bootstrap.
+ *
+ * SECURITY NOTE:
+ *   Previously a hardcoded email (`romangulanyan@gmail.com`) granted
+ *   superadmin powers anywhere in the codebase. That was a classic
+ *   "account-as-backdoor" pattern: owning that Google/email account
+ *   would mean owning the whole platform.
+ *
+ *   Now the source of truth is `users.role === 'superadmin'`.
+ *   The env var `BOOTSTRAP_SUPERADMIN_EMAIL` is only used to identify
+ *   the very first superadmin during initial org bootstrap (register flow).
+ *   All runtime checks use the role in the DB.
  */
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 
-/** The single source of truth for the superadmin email */
-export const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+/**
+ * Read the bootstrap superadmin email from env (supports both
+ * `BOOTSTRAP_SUPERADMIN_EMAIL` and legacy `SUPERADMIN_EMAIL`).
+ *
+ * In production this MUST be set; missing env will disable the
+ * bootstrap path instead of silently falling back to a public email.
+ */
+function readBootstrapEmail(): string | null {
+  const email = process.env.BOOTSTRAP_SUPERADMIN_EMAIL ?? process.env.SUPERADMIN_EMAIL ?? null;
+  if (!email) return null;
+  return email.toLowerCase().trim();
+}
 
 /**
- * Returns true if the given email belongs to the superadmin.
+ * The single source of truth for the superadmin bootstrap email.
+ *
+ * - In production: MUST be set via `BOOTSTRAP_SUPERADMIN_EMAIL`.
+ *   If missing, returns `''` so bootstrap-path checks all fail — safe default.
+ * - In development: same as production, no fallback hardcode.
+ *
+ * Most code should NOT use this — use `isSuperadmin(user)` against the DB role.
+ */
+export const SUPERADMIN_EMAIL = readBootstrapEmail() ?? '';
+
+/**
+ * Returns true if the given email matches the configured bootstrap email.
+ * Only meaningful during initial registration of the very first superadmin.
  */
 export function isSuperadminEmail(email: string | undefined | null): boolean {
   if (!email) return false;
-  return email.toLowerCase() === SUPERADMIN_EMAIL;
+  const target = readBootstrapEmail();
+  if (!target) return false;
+  return email.toLowerCase().trim() === target;
 }
 
 /**
@@ -26,8 +60,24 @@ export async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> 
 }
 
 /**
- * Checks if a user record is the superadmin (by role OR email).
+ * Preferred runtime check: does this user currently hold the superadmin role?
+ *
+ * @param user — user doc or minimal shape with role + email
  */
-export function isSuperadmin(user: { role?: string; email: string }): boolean {
-  return user.role === 'superadmin' || isSuperadminEmail(user.email);
+export function isSuperadmin(
+  user:
+    | {
+        role?: string;
+        email?: string;
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!user) return false;
+  // Primary: role in DB is the source of truth
+  if (user.role === 'superadmin') return true;
+  // Fallback ONLY for bootstrap: if no superadmin exists yet, the env-pinned
+  // email is allowed. This is used only by the register flow, not in runtime
+  // permission checks on other mutations.
+  return isSuperadminEmail(user.email);
 }

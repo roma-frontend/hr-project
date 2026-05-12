@@ -32,7 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { formatDate, formatDateTime, getLocaleString } from '@/lib/date-format';
 import { toast } from 'sonner';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+const SUPERADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 interface Transaction {
   id: string;
@@ -405,7 +405,9 @@ export default function StripeDataStudioClient() {
                 {selectedTx.receiptUrl && (
                   <Button
                     className="w-full gap-2"
-                    onClick={() => window.open(selectedTx.receiptUrl!, '_blank', 'noopener,noreferrer')}
+                    onClick={() =>
+                      window.open(selectedTx.receiptUrl!, '_blank', 'noopener,noreferrer')
+                    }
                   >
                     <Copy className="w-4 h-4" /> Открыть чек Stripe
                   </Button>

@@ -35,8 +35,7 @@ export default function AdminPage() {
   const [isAssigning, setIsAssigning] = useState(false);
 
   // Check if user is superadmin BEFORE calling conditional hooks
-  const isSuperadmin =
-    user && (user.role === 'superadmin' || user.email?.toLowerCase() === 'romangulanyan@gmail.com');
+  const isSuperadmin = user && user.role === 'superadmin';
 
   // Call hooks unconditionally (but they will use "skip" if not superadmin)
   const organizations = useQuery(api.organizations.listAll, isSuperadmin ? {} : 'skip');

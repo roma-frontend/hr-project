@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PUBLIC: Create a self-service Starter organization (instant)

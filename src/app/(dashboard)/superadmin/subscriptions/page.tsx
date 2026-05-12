@@ -28,7 +28,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useAuthStore } from '@/store/useAuthStore';
 import { CreateManualSubscriptionWizard } from '@/components/superadmin/CreateManualSubscriptionWizard';
 
-const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
+const SUPERADMIN_EMAIL = (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase();
 
 export default function SubscriptionsManagementPage() {
   const { t, i18n } = useTranslation();

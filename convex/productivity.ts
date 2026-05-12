@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
+import { SUPERADMIN_EMAIL } from './lib/auth';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET TODAY'S STATS FOR USER
@@ -128,7 +129,6 @@ export const getTeamPresence = query({
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Requester not found');
 
-    const SUPERADMIN_EMAIL = 'romangulanyan@gmail.com';
     const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     let users = await ctx.db.query('users').collect();

@@ -203,7 +203,7 @@ export function EmployeesClient() {
 
     return usersToFilter.filter((u) => {
       // Filter out superadmins
-      if (u.role === 'superadmin' || u.email?.toLowerCase() === 'romangulanyan@gmail.com') {
+      if (u.role === 'superadmin') {
         return false;
       }
       const matchSearch =

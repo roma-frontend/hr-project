@@ -4,6 +4,10 @@ import { signJWT } from '@/lib/jwt';
 import { log } from '@/lib/logger';
 import { applyRateLimit, FACE_LOGIN_RATE_LIMIT } from '@/lib/rate-limit';
 
+// SECURITY: Face descriptor matching is CPU-bound and uses bcrypt-adjacent
+// primitives; keep on Node runtime, not Edge.
+export const runtime = 'nodejs';
+
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 if (!CONVEX_URL) {
@@ -15,6 +19,7 @@ async function convexMutation(name: string, args: Record<string, unknown>) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: name, args }),
+    cache: 'no-store',
   });
   const data = await res.json();
   if (data.status === 'error') throw new Error(data.errorMessage ?? 'Convex error');
@@ -26,42 +31,84 @@ async function convexQuery(name: string, args: Record<string, unknown>) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: name, args }),
+    cache: 'no-store',
   });
   const data = await res.json();
   if (data.status === 'error') return null;
   return data.value;
 }
 
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    'unknown'
+  );
+}
+
 export async function POST(request: NextRequest) {
-  // Rate limiting: 10 attempts per 15 minutes
+  // Rate limit: 10 attempts per 15 min per IP
   const rateLimitResponse = await applyRateLimit(request, FACE_LOGIN_RATE_LIMIT, 'face-login');
   if (rateLimitResponse) return rateLimitResponse;
 
   try {
-    const body = await request.json();
-    const { email, isFaceLogin } = body;
+    const body = (await request.json()) as {
+      email?: string;
+      faceDescriptor?: number[];
+    };
+    const { email, faceDescriptor } = body;
+    const ip = getClientIp(request);
+    const userAgent = request.headers.get('user-agent') ?? undefined;
 
-    log.info('Face Login API called', { email, isFaceLogin });
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email required' }, { status: 400 });
+    if (!email || typeof email !== 'string') {
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    if (!Array.isArray(faceDescriptor) || faceDescriptor.length !== 128) {
+      return NextResponse.json(
+        { error: 'Valid face descriptor (128 floats) is required' },
+        { status: 400 },
+      );
+    }
+
+    // Reject obviously malformed descriptors (all zeros, non-finite, etc)
+    if (
+      !faceDescriptor.every((n) => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) < 10)
+    ) {
+      return NextResponse.json({ error: 'Malformed face descriptor' }, { status: 400 });
+    }
+
+    // Step 1 — server-side face matching → issues short-lived verification token
+    let verification;
+    try {
+      verification = await convexMutation('faceRecognition:loginWithFace', {
+        email,
+        faceDescriptor,
+        ip,
+        userAgent,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Face verification failed';
+      log.warn('Face verification failed', { email, ip });
+      return NextResponse.json({ error: msg }, { status: 401 });
+    }
+
+    const faceVerificationToken: string = verification.faceVerificationToken;
+
+    // Step 2 — exchange token for session
     const sessionToken = crypto.randomUUID();
     const sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
 
-    // Call Convex login mutation
     const result = await convexMutation('auth:login', {
       email,
-      password: '', // Empty password for Face ID login
+      password: '', // Not used when faceVerificationToken is valid
       sessionToken,
       sessionExpiry,
       isFaceLogin: true,
+      faceVerificationToken,
     });
 
-    log.debug('Convex login successful', { userId: result.userId });
-
-    // Check maintenance mode — block non-superadmin login
+    // Maintenance mode check — block non-superadmin login
     if (result.role !== 'superadmin' && result.organizationId) {
       const maintenanceData = await convexQuery('admin:getMaintenanceMode', {
         organizationId: result.organizationId,
@@ -74,31 +121,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create JWT
+    // Issue app JWT
     const jwt = await signJWT({
       userId: result.userId,
       name: result.name,
       email: result.email,
       role: result.role,
       organizationId: result.organizationId,
+      organizationSlug: result.organizationSlug,
+      organizationName: result.organizationName,
+      isApproved: result.isApproved,
       department: result.department,
       position: result.position,
       employeeType: result.employeeType,
       avatar: result.avatarUrl,
     });
 
-    // Set cookies
     const cookieStore = await cookies();
+    const secure = process.env.NODE_ENV === 'production';
     cookieStore.set('hr-auth-token', jwt, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
     });
     cookieStore.set('hr-session-token', sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure,
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
@@ -106,7 +156,6 @@ export async function POST(request: NextRequest) {
 
     log.info('Face Login successful', { userId: result.userId, email });
 
-    // Return success with session data so client can populate auth store
     return NextResponse.json({
       success: true,
       session: {
@@ -121,8 +170,9 @@ export async function POST(request: NextRequest) {
         avatar: result.avatarUrl,
       },
     });
-  } catch (error: any) {
-    log.error('Face Login API error', error);
-    return NextResponse.json({ error: error.message || 'Login failed' }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Login failed';
+    log.error('Face Login API error', error as Error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

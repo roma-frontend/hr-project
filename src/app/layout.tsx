@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
 import React, { Suspense } from 'react';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
 import { AppProviders } from '@/components/AppProviders';
@@ -144,7 +145,8 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
@@ -152,11 +154,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="mask-icon" href="/favicon.svg?v=3" color="#2563eb" />
 
         {/* ── Resource hints: preconnect to critical origins ── */}
-        {/* Preconnect to Sentry for error monitoring (critical for error tracking) */}
         <link rel="preconnect" href="https://o4505283179249664.ingest.us.sentry.io" />
-        {/* Preconnect to Cloudinary for images (LCP optimization) */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
-        {/* Preconnect to Google for OAuth (user authentication) */}
         <link rel="preconnect" href="https://accounts.google.com" />
         <link rel="preconnect" href="https://oauth2.googleapis.com" />
 
@@ -164,6 +163,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Script
           id="radix-scroll-lock-patch"
           strategy="beforeInteractive"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

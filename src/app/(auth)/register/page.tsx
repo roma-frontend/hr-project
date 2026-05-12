@@ -320,7 +320,9 @@ function RegisterPageContent() {
     });
   };
 
-  const isSuperadmin = formData.email.toLowerCase() === 'romangulanyan@gmail.com';
+  const isSuperadmin =
+    (process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL ?? '').toLowerCase() ===
+      formData.email.toLowerCase().trim() && !!process.env.NEXT_PUBLIC_BOOTSTRAP_SUPERADMIN_EMAIL;
 
   return (
     <I18nProvider>
