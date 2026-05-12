@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from '@/lib/cssMotion';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 import { TrendingUp, CalendarDays } from 'lucide-react';
 import {
   PieChart,
@@ -25,6 +26,16 @@ interface LeaveChartsProps {
 
 export function LeaveCharts({ monthlyTrend, pieData }: LeaveChartsProps) {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const axisTickFill = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -44,30 +55,31 @@ export function LeaveCharts({ monthlyTrend, pieData }: LeaveChartsProps) {
           <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             <ResponsiveContainer width="100%" height={180} className="sm:!h-[220px]">
               <BarChart data={monthlyTrend} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+                  tick={{ fill: axisTickFill, fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+                  tick={{ fill: axisTickFill, fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <RechartsTooltip
                   contentStyle={{
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
+                    background: tooltipBg,
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: '8px',
-                    color: 'var(--text-primary)',
+                    color: tooltipColor,
+                    boxShadow: tooltipShadow,
                   }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-primary)' }}
+                  itemStyle={{ color: tooltipColor }}
+                  labelStyle={{ color: tooltipColor }}
                   cursor={{ fill: 'rgba(99,102,241,0.05)' }}
                 />
-                <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
+                <Legend wrapperStyle={{ fontSize: '12px', color: textColor }} />
                 <Bar
                   dataKey="approved"
                   name={t('statuses.approved')}
@@ -120,13 +132,14 @@ export function LeaveCharts({ monthlyTrend, pieData }: LeaveChartsProps) {
                   </Pie>
                   <RechartsTooltip
                     contentStyle={{
-                      background: 'var(--card)',
-                      border: '1px solid var(--border)',
+                      background: tooltipBg,
+                      border: `1px solid ${tooltipBorder}`,
                       borderRadius: '8px',
-                      color: 'var(--text-primary)',
+                      color: tooltipColor,
+                      boxShadow: tooltipShadow,
                     }}
-                    itemStyle={{ color: 'var(--text-primary)' }}
-                    labelStyle={{ color: 'var(--text-primary)' }}
+                    itemStyle={{ color: tooltipColor }}
+                    labelStyle={{ color: tooltipColor }}
                   />
                 </PieChart>
               </ResponsiveContainer>

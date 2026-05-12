@@ -154,9 +154,7 @@ export const getCompensationSummary = query({
   handler: async (ctx, { organizationId }) => {
     const records = await ctx.db
       .query('compensationRecords')
-      .withIndex('by_org_status', (q) =>
-        q.eq('organizationId', organizationId).eq('status', 'active'),
-      )
+      .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
       .collect();
 
     const baseRecords = records.filter((r) => r.type === 'base');

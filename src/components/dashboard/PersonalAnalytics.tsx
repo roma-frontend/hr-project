@@ -2,6 +2,7 @@
 
 import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from '@/lib/dynamic-imports';
@@ -15,7 +16,14 @@ const COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'];
 
 export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
   const { t, i18n } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const analytics = useQuery(api.analytics.getUserAnalytics, { userId });
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
 
   if (!analytics) {
     return (
@@ -101,13 +109,14 @@ export default function PersonalAnalytics({ userId }: PersonalAnalyticsProps) {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
+                    background: tooltipBg,
+                    border: `1px solid ${tooltipBorder}`,
                     borderRadius: '8px',
-                    color: 'var(--text-primary)',
+                    color: tooltipColor,
+                    boxShadow: tooltipShadow,
                   }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-primary)' }}
+                  itemStyle={{ color: tooltipColor }}
+                  labelStyle={{ color: tooltipColor }}
                 />
               </PieChart>
             </ResponsiveContainer>

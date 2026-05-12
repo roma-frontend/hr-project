@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 import { motion } from '@/lib/cssMotion';
 import {
   DollarSign,
@@ -84,6 +85,17 @@ function getStatusBadge(status: string, t: (key: string) => string) {
 
 export default function PayrollDashboard() {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const axisTickFill = isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)';
+
   const selectedOrgId = useSelectedOrganization();
   const { user } = useAuthStore();
   const orgId = (selectedOrgId ?? user?.organizationId ?? undefined) as
@@ -251,17 +263,19 @@ export default function PayrollDashboard() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={departmentData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.15)" />
-                    <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
-                    <YAxis tick={{ fill: 'rgba(255,255,255,0.8)', fontSize: 13 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                    <XAxis dataKey="name" tick={{ fill: axisTickFill, fontSize: 13 }} />
+                    <YAxis tick={{ fill: axisTickFill, fontSize: 13 }} />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: 'var(--card)',
-                        border: '1px solid var(--border)',
+                        backgroundColor: tooltipBg,
+                        border: `1px solid ${tooltipBorder}`,
                         borderRadius: '0.5rem',
-                        color: 'var(--text-primary)',
+                        color: tooltipColor,
+                        boxShadow: tooltipShadow,
                       }}
-                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 500 }}
+                      labelStyle={{ color: tooltipColor, fontWeight: 500 }}
+                      formatter={(value: any, _name: any) => [value, '']}
                     />
                     <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -296,17 +310,18 @@ export default function PayrollDashboard() {
                     </Pie>
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: 'var(--card)',
-                        border: '1px solid var(--border)',
+                        backgroundColor: tooltipBg,
+                        border: `1px solid ${tooltipBorder}`,
                         borderRadius: '0.5rem',
-                        color: 'var(--text-primary)',
+                        color: tooltipColor,
+                        boxShadow: tooltipShadow,
                       }}
-                      labelStyle={{ color: 'var(--text-primary)', fontWeight: 500 }}
+                      labelStyle={{ color: tooltipColor, fontWeight: 500 }}
                     />
                     <Legend
-                      wrapperStyle={{ color: 'var(--text-muted)', fontSize: '12px' }}
+                      wrapperStyle={{ color: textColor, fontSize: '12px' }}
                       formatter={(value: string) => (
-                        <span style={{ color: 'var(--text-primary)' }}>{value}</span>
+                        <span style={{ color: tooltipColor }}>{value}</span>
                       )}
                     />
                   </PieChart>

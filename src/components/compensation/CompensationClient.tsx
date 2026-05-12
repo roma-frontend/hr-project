@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 import { motion } from '@/lib/cssMotion';
 import {
   DollarSign,
@@ -124,6 +125,15 @@ function formatDate(timestamp: number): string {
 
 export default function CompensationClient() {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+
   const selectedOrgId = useSelectedOrganization();
   const { user } = useAuthStore();
   const orgId = (selectedOrgId ?? user?.organizationId ?? undefined) as
@@ -207,7 +217,7 @@ export default function CompensationClient() {
       { name: t('compensation.approved'), value: compensationSummary.byStatus?.approved || 0 },
       { name: t('compensation.active'), value: compensationSummary.byStatus?.active || 0 },
       { name: t('compensation.rejected'), value: compensationSummary.byStatus?.rejected || 0 },
-    ];
+    ].filter((entry) => entry.value > 0);
   }, [compensationSummary, t]);
 
   const isAdmin =
@@ -622,11 +632,24 @@ export default function CompensationClient() {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <RechartsTooltip />
-                        <Bar dataKey="value" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'}
+                        />
+                        <XAxis dataKey="name" tick={{ fill: textColor, fontSize: 13 }} />
+                        <YAxis tick={{ fill: textColor, fontSize: 13 }} />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: tooltipBg,
+                            border: `1px solid ${tooltipBorder}`,
+                            borderRadius: '0.5rem',
+                            color: tooltipColor,
+                            boxShadow: tooltipShadow,
+                          }}
+                          labelStyle={{ color: tooltipColor, fontWeight: 500 }}
+                          formatter={(value: any, _name: any) => [value, '']}
+                        />
+                        <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -647,7 +670,9 @@ export default function CompensationClient() {
                           cy="50%"
                           labelLine={false}
                           label={(entry: any) =>
-                            `${entry.name ?? ''}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
+                            (entry.value ?? 0) > 0
+                              ? `${entry.name ?? ''}: ${((entry.percent ?? 0) * 100).toFixed(0)}%`
+                              : ''
                           }
                           outerRadius={80}
                           fill="#8884d8"
@@ -657,8 +682,23 @@ export default function CompensationClient() {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <RechartsTooltip />
-                        <Legend />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: tooltipBg,
+                            border: `1px solid ${tooltipBorder}`,
+                            borderRadius: '0.5rem',
+                            color: tooltipColor,
+                            boxShadow: tooltipShadow,
+                          }}
+                          labelStyle={{ color: tooltipColor, fontWeight: 500 }}
+                          formatter={(value: any, _name: any) => [value, '']}
+                        />
+                        <Legend
+                          wrapperStyle={{ color: textColor, fontSize: '12px' }}
+                          formatter={(value: string) => (
+                            <span style={{ color: tooltipColor }}>{value}</span>
+                          )}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>

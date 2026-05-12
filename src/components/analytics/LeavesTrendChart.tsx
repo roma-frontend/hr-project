@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 import {
   LineChart,
   Line,
@@ -25,6 +26,17 @@ interface LeavesTrendChartProps {
 
 export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
   const { t, i18n } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const axisTickFill = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
+
   const dfLocale = i18n.language === 'ru' ? ru : i18n.language === 'hy' ? hy : enUS;
   // Generate last 6 months
   const now = new Date();
@@ -68,24 +80,26 @@ export function LeavesTrendChart({ leaves }: LeavesTrendChartProps) {
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)]" opacity={0.3} />
-          <XAxis
-            dataKey="month"
-            className="fill-[var(--text-muted)]"
-            style={{ fontSize: '12px' }}
-          />
-          <YAxis className="fill-[var(--text-muted)]" style={{ fontSize: '12px' }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} opacity={0.3} />
+          <XAxis dataKey="month" tick={{ fill: axisTickFill, fontSize: 12 }} />
+          <YAxis tick={{ fill: axisTickFill, fontSize: 12 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--background-elevated)',
-              border: '1px solid var(--border)',
+              backgroundColor: tooltipBg,
+              border: `1px solid ${tooltipBorder}`,
               borderRadius: '8px',
-              color: 'var(--text-primary)',
+              color: tooltipColor,
+              boxShadow: tooltipShadow,
             }}
-            itemStyle={{ color: 'var(--text-primary)' }}
-            labelStyle={{ color: 'var(--text-primary)' }}
+            itemStyle={{ color: tooltipColor, fontWeight: 500 }}
+            labelStyle={{ color: tooltipColor, fontWeight: 700, fontSize: '14px' }}
           />
-          <Legend wrapperStyle={{ color: 'var(--text-primary)' }} />
+          <Legend
+            wrapperStyle={{ color: textColor, fontSize: '13px' }}
+            formatter={(value: string) => (
+              <span style={{ color: textColor, fontWeight: 500 }}>{value}</span>
+            )}
+          />
           <Line
             type="monotone"
             dataKey="approved"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/components/ThemeProvider';
 
 import {
   BarChart,
@@ -34,6 +35,16 @@ interface DepartmentStatsData {
 
 export function DepartmentStats({ users }: DepartmentStatsProps) {
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipBg = isDark ? '#0f172a' : '#ffffff';
+  const tooltipBorder = isDark ? 'rgba(148, 163, 184, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+  const tooltipColor = isDark ? '#ffffff' : '#0f172a';
+  const tooltipShadow = isDark ? '0 4px 12px rgba(0, 0, 0, 0.5)' : '0 4px 12px rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#ffffff' : '#0f172a';
+  const gridStroke = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const axisTickFill = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
   // Default balances (what employees start with)
   const DEFAULT_PAID = 24;
   const DEFAULT_SICK = 10;
@@ -77,24 +88,26 @@ export function DepartmentStats({ users }: DepartmentStatsProps) {
       </h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-[var(--border)]" opacity={0.3} />
-          <XAxis
-            dataKey="department"
-            className="fill-[var(--text-muted)]"
-            style={{ fontSize: '12px' }}
-          />
-          <YAxis className="fill-[var(--text-muted)]" style={{ fontSize: '12px' }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} opacity={0.3} />
+          <XAxis dataKey="department" tick={{ fill: axisTickFill, fontSize: 12 }} />
+          <YAxis tick={{ fill: axisTickFill, fontSize: 12 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--background-elevated)',
-              border: '1px solid var(--border)',
+              backgroundColor: tooltipBg,
+              border: `1px solid ${tooltipBorder}`,
               borderRadius: '8px',
-              color: 'var(--text-primary)',
+              color: tooltipColor,
+              boxShadow: tooltipShadow,
             }}
-            itemStyle={{ color: 'var(--text-primary)' }}
-            labelStyle={{ color: 'var(--text-primary)' }}
+            itemStyle={{ color: tooltipColor, fontWeight: 500 }}
+            labelStyle={{ color: tooltipColor, fontWeight: 700, fontSize: '14px' }}
           />
-          <Legend wrapperStyle={{ color: 'var(--text-primary)' }} />
+          <Legend
+            wrapperStyle={{ color: textColor, fontSize: '13px' }}
+            formatter={(value: string) => (
+              <span style={{ color: textColor, fontWeight: 500 }}>{value}</span>
+            )}
+          />
           <Bar dataKey="avgPaid" fill="#2563eb" name={t('departmentStats.paidLeave')} />
           <Bar dataKey="avgSick" fill="#0ea5e9" name={t('departmentStats.sickLeave')} />
           <Bar dataKey="avgFamily" fill="#EC4899" name={t('departmentStats.familyLeave')} />
