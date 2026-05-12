@@ -622,7 +622,7 @@ export function Sidebar() {
                   style={{
                     opacity: activeSubNav ? 0 : 1,
                     transform: activeSubNav ? 'translateX(-20px)' : 'translateX(0)',
-                    transition: `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.02}s`,
+                    transition: `all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.02}s`,
                   }}
                 >
                   {hasChildren ? (

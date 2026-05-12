@@ -67,6 +67,7 @@ import type * as leaves_mutations from "../leaves/mutations.js";
 import type * as leaves_queries from "../leaves/queries.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_date from "../lib/date.js";
+import type * as lib_limits from "../lib/limits.js";
 import type * as lib_payrollCalculator from "../lib/payrollCalculator.js";
 import type * as lib_rbac from "../lib/rbac.js";
 import type * as messenger_calls from "../messenger/calls.js";
@@ -235,6 +236,7 @@ declare const fullApi: ApiFromModules<{
   "leaves/queries": typeof leaves_queries;
   "lib/auth": typeof lib_auth;
   "lib/date": typeof lib_date;
+  "lib/limits": typeof lib_limits;
   "lib/payrollCalculator": typeof lib_payrollCalculator;
   "lib/rbac": typeof lib_rbac;
   "messenger/calls": typeof messenger_calls;

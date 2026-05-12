@@ -4776,7 +4776,8 @@
     "noLeavesThisDay": "No leaves on this day",
     "noLeavesThisMonth": "No leaves this month",
     "everyoneInToday": "Everyone is in today",
-    "visualOverview": "Visual overview of team leaves - click any day to see details"
+    "visualOverview": "Visual overview of team leaves - click any day to see details",
+    "away": "Away"
   },
   "profileExtended": {
     "accountInformation": "Account Information",

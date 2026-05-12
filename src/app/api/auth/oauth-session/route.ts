@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       password: '',
       sessionToken,
       sessionExpiry,
-      isFaceLogin: true, // skip password check
+      isOAuthLogin: true, // Google already verified identity
     });
 
     const result = userResult;

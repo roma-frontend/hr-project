@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, Inter, Noto_Sans_Armenian } from 'next/font/google';
 import React, { Suspense } from 'react';
-import Script from 'next/script';
 import { headers } from 'next/headers';
 import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
@@ -159,11 +158,16 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="preconnect" href="https://accounts.google.com" />
         <link rel="preconnect" href="https://oauth2.googleapis.com" />
 
-        {/* Block Radix UI from adding scroll-lock compensation styles to <body> */}
-        <Script
+        {/* Block Radix UI from adding scroll-lock compensation styles to <body>.
+            suppressHydrationWarning is required on nonce'd inline scripts:
+            per HTML spec, browsers strip the `nonce` attribute from the DOM
+            after applying CSP (the value stays on the element.nonce IDL slot).
+            That triggers a benign hydration attribute mismatch that React
+            cannot reconcile but which does not affect script execution. */}
+        <script
           id="radix-scroll-lock-patch"
-          strategy="beforeInteractive"
           nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

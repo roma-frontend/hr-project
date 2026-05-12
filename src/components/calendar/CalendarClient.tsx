@@ -1014,7 +1014,7 @@ export const CalendarClient = React.memo(function CalendarClient() {
                       </p>
                     </div>
                     <Badge className="ml-auto text-[9px] h-4 px-1.5 shrink-0" variant="success">
-                      away
+                      {t('calendarExtended.away')}
                     </Badge>
                   </div>
                 ))
