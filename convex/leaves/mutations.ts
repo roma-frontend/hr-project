@@ -1,8 +1,10 @@
 import { v } from 'convex/values';
 import { mutation } from '../_generated/server';
+import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { SUPERADMIN_EMAIL } from './helpers';
 import { isSuperadminEmail } from '../lib/auth';
+import { withAuth } from '../lib/withAuth';
 import { MAX_PAGE_SIZE } from '../pagination';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -854,4 +856,108 @@ export const bulkRejectLeaves = mutation({
 
     return { rejected, errors };
   },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURED: APPROVE LEAVE — uses ctx.auth identity verification
+// ─────────────────────────────────────────────────────────────────────────────
+export const secureApproveLeave = mutation({
+  args: { leaveId: v.id('leaveRequests'), comment: v.optional(v.string()) },
+  handler: withAuth<
+    MutationCtx,
+    { leaveId: Id<'leaveRequests'>; comment?: string },
+    Id<'leaveRequests'>
+  >({ minimumRole: 'supervisor' }, async (ctx, { leaveId, comment }, caller) => {
+    const leave = await ctx.db.get(leaveId);
+    if (!leave) throw new Error('Leave request not found');
+    if (leave.status !== 'pending') throw new Error('Leave is not pending');
+
+    if (caller.role !== 'superadmin' && caller.organizationId !== leave.organizationId) {
+      throw new Error('Access denied: cross-organization operation');
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(leaveId, {
+      status: 'approved',
+      reviewedBy: caller._id,
+      reviewComment: comment,
+      reviewedAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert('notifications', {
+      organizationId: leave.organizationId,
+      userId: leave.userId,
+      type: 'leave_approved',
+      title: '✅ Leave Approved!',
+      message: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) has been approved by ${caller.name}.`,
+      isRead: false,
+      relatedId: leaveId,
+      route: '/leaves',
+      createdAt: now,
+    });
+
+    await ctx.db.insert('auditLogs', {
+      organizationId: leave.organizationId,
+      userId: caller._id,
+      action: 'leave_approved',
+      target: leaveId,
+      details: JSON.stringify({ type: leave.type, days: leave.days, comment }),
+      createdAt: now,
+    });
+
+    return leaveId;
+  }),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURED: REJECT LEAVE — uses ctx.auth identity verification
+// ─────────────────────────────────────────────────────────────────────────────
+export const secureRejectLeave = mutation({
+  args: { leaveId: v.id('leaveRequests'), comment: v.optional(v.string()) },
+  handler: withAuth<
+    MutationCtx,
+    { leaveId: Id<'leaveRequests'>; comment?: string },
+    Id<'leaveRequests'>
+  >({ minimumRole: 'supervisor' }, async (ctx, { leaveId, comment }, caller) => {
+    const leave = await ctx.db.get(leaveId);
+    if (!leave) throw new Error('Leave request not found');
+    if (leave.status !== 'pending') throw new Error('Leave is not pending');
+
+    if (caller.role !== 'superadmin' && caller.organizationId !== leave.organizationId) {
+      throw new Error('Access denied: cross-organization operation');
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(leaveId, {
+      status: 'rejected',
+      reviewedBy: caller._id,
+      reviewComment: comment,
+      reviewedAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert('notifications', {
+      organizationId: leave.organizationId,
+      userId: leave.userId,
+      type: 'leave_rejected',
+      title: '❌ Leave Rejected',
+      message: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) was rejected by ${caller.name}.${comment ? ` Reason: ${comment}` : ''}`,
+      isRead: false,
+      relatedId: leaveId,
+      route: '/leaves',
+      createdAt: now,
+    });
+
+    await ctx.db.insert('auditLogs', {
+      organizationId: leave.organizationId,
+      userId: caller._id,
+      action: 'leave_rejected',
+      target: leaveId,
+      details: JSON.stringify({ type: leave.type, days: leave.days, comment }),
+      createdAt: now,
+    });
+
+    return leaveId;
+  }),
 });

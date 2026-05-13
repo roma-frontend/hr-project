@@ -1,7 +1,9 @@
 import { v } from 'convex/values';
 import { mutation } from '../_generated/server';
+import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { requireRole, requireOrgAdmin, requireUser } from '../lib/rbac';
+import { withAuth } from '../lib/withAuth';
 import { isSuperadminEmail } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from '../lib/limits';
@@ -602,4 +604,47 @@ export const resetFromCallStatus = mutation({
 
     return { success: true };
   },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURED: DELETE USER — uses ctx.auth identity verification (no client userId trust)
+// ─────────────────────────────────────────────────────────────────────────────
+export const secureDeleteUser = mutation({
+  args: { userId: v.id('users') },
+  handler: withAuth<MutationCtx, { userId: Id<'users'> }, Id<'users'>>(
+    { minimumRole: 'admin' },
+    async (ctx, { userId }, caller) => {
+      const user = await ctx.db.get(userId);
+      if (!user) throw new Error('User not found');
+
+      // Cross-org protection
+      if (caller.role !== 'superadmin' && caller.organizationId !== user.organizationId) {
+        throw new Error('Access denied: cross-organization operation');
+      }
+
+      // Protect superadmin/admin accounts
+      if (user.role === 'superadmin' && caller.role !== 'superadmin') {
+        throw new Error('Only superadmin can deactivate superadmin');
+      }
+      if (user.role === 'admin' && caller.role === 'admin') {
+        throw new Error('Only superadmin can deactivate admin accounts');
+      }
+      if (user._id === caller._id) {
+        throw new Error('Cannot delete your own account');
+      }
+
+      await ctx.db.patch(userId, { isActive: false });
+
+      await ctx.db.insert('auditLogs', {
+        organizationId: caller.organizationId,
+        userId: caller._id,
+        action: 'user_deleted',
+        target: userId,
+        details: JSON.stringify({ name: user.name, email: user.email, role: user.role }),
+        createdAt: Date.now(),
+      });
+
+      return userId;
+    },
+  ),
 });

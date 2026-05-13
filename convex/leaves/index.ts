@@ -21,4 +21,6 @@ export {
   markAllLeavesAsRead,
   bulkApproveLeaves,
   bulkRejectLeaves,
+  secureApproveLeave,
+  secureRejectLeave,
 } from './mutations';
