@@ -4,7 +4,7 @@ import { paginationOptsValidator } from 'convex/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-import { SUPERADMIN_EMAIL } from '../lib/auth';
+import { isSuperadmin } from '../lib/auth';
 
 // ── Helper: Get user ID from email or userId ────────────────────────────────
 async function getUserIdIdentityOrEmail(
@@ -55,7 +55,7 @@ export const getAllUsers = query({
     if (!requester) throw new Error('Requester not found');
 
     // Superadmin sees all users across all orgs (with org info)
-    if (requester.email.toLowerCase() === SUPERADMIN_EMAIL) {
+    if (isSuperadmin(requester)) {
       let query = ctx.db.query('users').order('desc');
       if (cursor) {
         query = (query as any).startAfter(cursor);
@@ -95,7 +95,7 @@ export const listUsersPaginated = query({
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Requester not found');
 
-    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
+    const isSuperadminUser = isSuperadmin(requester);
 
     if (organizationId) {
       return await ctx.db
@@ -103,7 +103,7 @@ export const listUsersPaginated = query({
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
         .order('desc')
         .paginate(paginationOpts);
-    } else if (isSuperadmin) {
+    } else if (isSuperadminUser) {
       return await ctx.db.query('users').order('desc').paginate(paginationOpts);
     } else if (requester.organizationId) {
       return await ctx.db
@@ -135,8 +135,7 @@ export const getUsersByOrganizationId = query({
     if (!requester) throw new Error('Requester not found');
 
     // Superadmin can query any org; regular users can only query their own
-    const isSuperadmin = requester.email.toLowerCase() === SUPERADMIN_EMAIL;
-    if (!isSuperadmin && requester.organizationId !== organizationId) {
+    if (!isSuperadmin(requester) && requester.organizationId !== organizationId) {
       throw new Error('Access denied: cross-organization access is not allowed');
     }
 
@@ -223,7 +222,7 @@ export const getUserByEmail = query({
       if (
         requester &&
         requester.organizationId !== user.organizationId &&
-        requester.email.toLowerCase() !== SUPERADMIN_EMAIL
+        !isSuperadmin(requester)
       ) {
         return null;
       }
@@ -247,7 +246,7 @@ export const getUserById = query({
       if (
         requester &&
         requester.organizationId !== user.organizationId &&
-        requester.email.toLowerCase() !== SUPERADMIN_EMAIL
+        !isSuperadmin(requester)
       ) {
         throw new Error('Access denied: cross-organization access is not allowed');
       }
@@ -339,12 +338,12 @@ export const getPendingApprovalUsers = query({
   args: { adminId: v.id('users') },
   handler: async (ctx, { adminId }) => {
     const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can view pending users');
     }
 
     // Superadmin sees all pending users across all orgs
-    if (admin.email.toLowerCase() === SUPERADMIN_EMAIL) {
+    if (isSuperadmin(admin)) {
       const allUsers = await ctx.db.query('users').order('desc').take(MAX_PAGE_SIZE);
       return allUsers.filter((u) => !u.isApproved);
     }
@@ -367,7 +366,7 @@ export const getAuditLogs = query({
   args: { adminId: v.id('users') },
   handler: async (ctx, { adminId }) => {
     const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can view audit logs');
     }
 
@@ -480,7 +479,7 @@ export const listAll = query({
     if (!currentUser) return [];
 
     // Superadmin sees all users across all organizations
-    if (currentUser.email.toLowerCase() === SUPERADMIN_EMAIL) {
+    if (isSuperadmin(currentUser)) {
       const allUsers = await ctx.db.query('users').take(MAX_PAGE_SIZE);
       return allUsers.filter((u) => u.role !== 'superadmin');
     }
@@ -517,7 +516,7 @@ export const getUsersByDepartment = query({
     if (!currentUser) return [];
 
     // Superadmin and admin can see all users in department
-    if (currentUser.email.toLowerCase() === SUPERADMIN_EMAIL || currentUser.role === 'admin') {
+    if (isSuperadmin(currentUser) || currentUser.role === 'admin') {
       const users = await ctx.db
         .query('users')
         .filter((q) => q.eq(q.field('departmentId'), departmentId))

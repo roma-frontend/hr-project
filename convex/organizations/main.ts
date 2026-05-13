@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-import { SUPERADMIN_EMAIL } from '../lib/auth';
+import { isSuperadmin } from '../lib/auth';
 
 // ── Employee limits by plan ──────────────────────────────────────────────────
 const PLAN_EMPLOYEE_LIMITS: Record<string, number> = {
@@ -26,7 +26,7 @@ export const createOrganization = mutation({
   handler: async (ctx, args) => {
     // Verify caller is superadmin
     const caller = await ctx.db.get(args.superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can create organizations');
     }
 
@@ -94,9 +94,7 @@ export const listAll = query({
       .first();
 
     // Only superadmin can access payment/subscription features
-    const isSuperAdmin = currentUser?.email.toLowerCase() === SUPERADMIN_EMAIL;
-
-    if (!currentUser || !isSuperAdmin) {
+    if (!currentUser || !isSuperadmin(currentUser)) {
       return [];
     }
 
@@ -131,7 +129,7 @@ export const getAllOrganizations = query({
     // If userId provided, verify it's a superadmin
     if (args.superadminUserId) {
       const caller = await ctx.db.get(args.superadminUserId);
-      if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+      if (!caller || !isSuperadmin(caller)) {
         throw new Error('Superadmin only');
       }
     }
@@ -181,7 +179,7 @@ export const updateOrganization = mutation({
   },
   handler: async (ctx, { superadminUserId, organizationId, ...updates }) => {
     const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can update organizations');
     }
 
@@ -217,7 +215,7 @@ export const assignOrgAdmin = mutation({
   },
   handler: async (ctx, { superadminUserId, userId, organizationId }) => {
     const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can assign org admins');
     }
 
@@ -266,10 +264,10 @@ export const getOrganizationById = query({
     }
 
     // Check access
-    const isSuperadmin = caller.email.toLowerCase() === SUPERADMIN_EMAIL;
+    const callerIsSuperadmin = isSuperadmin(caller);
     const isOwnOrg = caller.organizationId === organizationId && caller.role === 'admin';
 
-    if (!isSuperadmin && !isOwnOrg) {
+    if (!callerIsSuperadmin && !isOwnOrg) {
       throw new Error("You don't have access to this organization");
     }
 
@@ -305,7 +303,7 @@ export const getOrgMembers = query({
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
 
     const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can view org members');
     }
 
@@ -323,9 +321,7 @@ export const getOrgMembers = query({
     const members = await query.take(effectiveLimit + 1);
 
     // Filter out superadmins (should never be in org, but just in case)
-    const filteredMembers = members.filter(
-      (m) => m.role !== 'superadmin' && m.email.toLowerCase() !== SUPERADMIN_EMAIL,
-    );
+    const filteredMembers = members.filter((m) => !isSuperadmin(m));
 
     return filteredMembers.map((m) => ({
       _id: m._id,
@@ -359,7 +355,7 @@ export const removeOrgAdmin = mutation({
   },
   handler: async (ctx, { superadminUserId, userId }) => {
     const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can remove org admins');
     }
 
@@ -549,11 +545,9 @@ export const getJoinRequests = query({
   },
   handler: async (ctx, { adminId, status }) => {
     const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can view join requests');
     }
-
-    const isSuperadmin = admin.email.toLowerCase() === SUPERADMIN_EMAIL;
 
     // For admin: must have organizationId
     // For superadmin: can view all if no organizationId is set
@@ -610,7 +604,7 @@ export const approveJoinRequest = mutation({
   },
   handler: async (ctx, args) => {
     const admin = await ctx.db.get(args.adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can approve join requests');
     }
 
@@ -752,7 +746,7 @@ export const rejectJoinRequest = mutation({
   },
   handler: async (ctx, args) => {
     const admin = await ctx.db.get(args.adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can reject join requests');
     }
 
@@ -804,7 +798,7 @@ export const generateInviteToken = mutation({
   },
   handler: async (ctx, args) => {
     const admin = await ctx.db.get(args.adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can generate invite links');
     }
 
@@ -897,7 +891,7 @@ export const getPendingJoinRequestCount = query({
   args: { adminId: v.id('users') },
   handler: async (ctx, { adminId }) => {
     const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && admin.email.toLowerCase() !== SUPERADMIN_EMAIL)) {
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       return 0;
     }
     if (!admin.organizationId) {
@@ -926,7 +920,7 @@ export const removeMemberFromOrganization = mutation({
   },
   handler: async (ctx, { superadminUserId, userId }) => {
     const caller = await ctx.db.get(superadminUserId);
-    if (!caller || caller.email.toLowerCase() !== SUPERADMIN_EMAIL) {
+    if (!caller || !isSuperadmin(caller)) {
       throw new Error('Only the superadmin can remove members from organizations');
     }
 
@@ -934,7 +928,7 @@ export const removeMemberFromOrganization = mutation({
     if (!user) throw new Error('User not found');
 
     // Protection: cannot remove superadmin themselves
-    if (user.email.toLowerCase() === SUPERADMIN_EMAIL || user.role === 'superadmin') {
+    if (isSuperadmin(user)) {
       throw new Error('Cannot remove the superadmin from any organization');
     }
 
@@ -973,7 +967,7 @@ export const getOrganizationsForPicker = query({
     const user = await ctx.db.get(userId);
     if (!user) throw new Error('User not found');
 
-    if (user.email.toLowerCase() === SUPERADMIN_EMAIL) {
+    if (isSuperadmin(user)) {
       const orgs = await ctx.db
         .query('organizations')
         .withIndex('by_active', (q) => q.eq('isActive', true))
