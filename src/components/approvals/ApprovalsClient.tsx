@@ -28,7 +28,7 @@ export default function ApprovalsClient() {
   const lang = i18n.language || 'en';
   const dateFnsLocale = lang === 'ru' ? ru : lang === 'hy' ? hy : enUS;
 
-  const pendingUsers = useQuery(api.users.queries.getPendingApprovalUsers, user?.id ? {} : 'skip');
+  const pendingUsers = useQuery(api.users.queries.getPendingApprovalUsers, user?.id ? { adminId: user.id as any } : 'skip');
   const approveUser = useMutation(api.users.mutations.approveUser);
   const rejectUser = useMutation(api.users.mutations.rejectUser);
 

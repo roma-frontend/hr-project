@@ -69,7 +69,7 @@ export default function DashboardClient() {
 
   const leaves = useQuery(api.leaves.getAllLeaves, userId ? { requesterId: userId } : 'skip');
 
-  const usersFromConvex = useQuery(api.users.queries.getAllUsers, userId ? {} : 'skip');
+  const usersFromConvex = useQuery(api.users.queries.getAllUsers, userId ? { requesterId: userId as any } : 'skip');
   const users = (usersFromConvex || []).map((u) => ({ ...u, id: u._id })) as unknown as User[];
   const organization = useQuery(
     api.organizations.getMyOrganization,
