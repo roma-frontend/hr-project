@@ -1,7 +1,9 @@
 'use client';
 
-import { ConvexProvider, ConvexReactClient } from 'convex/react';
-import { ReactNode } from 'react';
+import { ConvexProviderWithAuth, ConvexReactClient } from 'convex/react';
+import { useSession } from 'next-auth/react';
+import { ReactNode, useMemo } from 'react';
+import type { Session } from 'next-auth';
 
 // Singleton — only created when actually needed
 let convexInstance: ConvexReactClient | null = null;
@@ -15,10 +17,34 @@ function getConvexClient() {
   return convexInstance;
 }
 
+function useAuth() {
+  const { data: session, update } = useSession();
+
+  return useMemo(
+    () => ({
+      isLoading: false,
+      isAuthenticated: session !== null,
+      fetchAccessToken: async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+        if (forceRefreshToken) {
+          const refreshed = await update();
+          return (refreshed as Session | null)?.convexToken ?? null;
+        }
+        return session?.convexToken ?? null;
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(session?.user)],
+  );
+}
+
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const client = getConvexClient();
 
-  return <ConvexProvider client={client}>{children}</ConvexProvider>;
+  return (
+    <ConvexProviderWithAuth client={client} useAuth={useAuth}>
+      {children}
+    </ConvexProviderWithAuth>
+  );
 }
 
 /**

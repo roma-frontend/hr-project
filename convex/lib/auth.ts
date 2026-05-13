@@ -60,6 +60,22 @@ export async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> 
 }
 
 /**
+ * Resolves the authenticated user from ctx.auth (unforgeable JWT).
+ * Returns the full user doc from the DB. Throws if not authenticated or user not found.
+ *
+ * Use this instead of accepting userId/adminId as a client-supplied arg.
+ */
+export async function requireAuthUser(ctx: QueryCtx | MutationCtx) {
+  const email = await requireAuth(ctx);
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_email', (q) => q.eq('email', email))
+    .unique();
+  if (!user) throw new Error('User not found');
+  return user;
+}
+
+/**
  * Preferred runtime check: does this user currently hold the superadmin role?
  *
  * @param user — user doc or minimal shape with role + email

@@ -126,11 +126,19 @@ export const listAll = query({
 export const getAllOrganizations = query({
   args: { superadminUserId: v.optional(v.id('users')) },
   handler: async (ctx, args) => {
-    if (args.superadminUserId) {
-      const caller = await ctx.db.get(args.superadminUserId);
-      if (!caller || !isSuperadmin(caller)) {
-        throw new Error('Superadmin only');
-      }
+    // Prefer ctx.auth (secure, unforgeable JWT); fall back to arg during migration
+    let caller;
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity?.email) {
+      caller = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', identity.email!.toLowerCase()))
+        .unique();
+    } else if (args.superadminUserId) {
+      caller = await ctx.db.get(args.superadminUserId);
+    }
+    if (!caller || !isSuperadmin(caller)) {
+      throw new Error('Superadmin only');
     }
 
     const orgs = await ctx.db.query('organizations').order('desc').take(MAX_PAGE_SIZE);

@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import type { NextAuthConfig } from 'next-auth';
+import { importPKCS8, SignJWT } from 'jose';
 
 // ═══════════════════════════════════════════════════════════════
 // VALIDATE ENVIRONMENT — fail fast, not silently
@@ -15,6 +16,8 @@ if (missingVars.length > 0) {
     throw new Error(`[Auth.js] Missing required env vars: ${missingVars.join(', ')}`);
   }
 }
+
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL!.replace(/\.cloud\/api$/, '.site');
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -198,6 +201,19 @@ export const authConfig: NextAuthConfig = {
         | undefined;
       session.user.organizationId = token.organizationId as string | undefined;
       session.user.isApproved = token.isApproved as boolean | undefined;
+
+      // Sign a JWT for Convex auth
+      if (process.env.CONVEX_AUTH_PRIVATE_KEY && token.email) {
+        const privateKey = await importPKCS8(process.env.CONVEX_AUTH_PRIVATE_KEY, 'RS256');
+        session.convexToken = await new SignJWT({ email: token.email })
+          .setProtectedHeader({ alg: 'RS256' })
+          .setIssuedAt()
+          .setIssuer(CONVEX_SITE_URL)
+          .setAudience('convex')
+          .setSubject(token.email as string)
+          .setExpirationTime('1h')
+          .sign(privateKey);
+      }
 
       return session;
     },
