@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-import { isSuperadmin, requireAuthUser } from '../lib/auth';
+import { isSuperadmin, requireAuthUser, getAuthUser } from '../lib/auth';
 
 // ── Employee limits by plan ──────────────────────────────────────────────────
 const PLAN_EMPLOYEE_LIMITS: Record<string, number> = {
@@ -125,7 +125,8 @@ export const listAll = query({
 export const getAllOrganizations = query({
   args: {},
   handler: async (ctx) => {
-    const caller = await requireAuthUser(ctx);
+    const caller = await getAuthUser(ctx);
+    if (!caller) return [];
 
     // Non-superadmin: return only their own organization
     if (!isSuperadmin(caller)) {

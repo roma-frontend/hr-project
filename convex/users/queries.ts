@@ -4,7 +4,7 @@ import { paginationOptsValidator } from 'convex/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
-import { isSuperadmin, requireAuthUser } from '../lib/auth';
+import { isSuperadmin, requireAuthUser, getAuthUser } from '../lib/auth';
 
 // ── Helper: Get user ID from email or userId ────────────────────────────────
 async function getUserIdIdentityOrEmail(
@@ -50,7 +50,8 @@ export const getAllUsers = query({
     const MAX_LIMIT = 100;
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
 
-    const requester = await requireAuthUser(ctx);
+    const requester = await getAuthUser(ctx);
+    if (!requester) return [];
 
     // Superadmin sees all users across all orgs (with org info)
     if (isSuperadmin(requester)) {
@@ -89,7 +90,8 @@ export const listUsersPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { organizationId, paginationOpts }) => {
-    const requester = await requireAuthUser(ctx);
+    const requester = await getAuthUser(ctx);
+    if (!requester) return { page: [], isDone: true, continueCursor: '' };
 
     const isSuperadminUser = isSuperadmin(requester);
 
@@ -126,7 +128,8 @@ export const getUsersByOrganizationId = query({
     const MAX_LIMIT = 100;
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
 
-    const requester = await requireAuthUser(ctx);
+    const requester = await getAuthUser(ctx);
+    if (!requester) return [];
 
     // Superadmin can query any org; regular users can only query their own
     if (!isSuperadmin(requester) && requester.organizationId !== organizationId) {
@@ -267,7 +270,8 @@ export const getSupervisors = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, { organizationId }) => {
-    const requester = await requireAuthUser(ctx);
+    const requester = await getAuthUser(ctx);
+    if (!requester) return [];
 
     // Determine target org: explicit param > requester's own org
     const targetOrgId = organizationId ?? requester.organizationId;
@@ -338,8 +342,8 @@ export const getUsersByRole = query({
 export const getPendingApprovalUsers = query({
   args: {},
   handler: async (ctx) => {
-    const admin = await requireAuthUser(ctx);
-    if (admin.role !== 'admin' && !isSuperadmin(admin)) {
+    const admin = await getAuthUser(ctx);
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can view pending users');
     }
 
@@ -366,8 +370,8 @@ export const getPendingApprovalUsers = query({
 export const getAuditLogs = query({
   args: {},
   handler: async (ctx) => {
-    const admin = await requireAuthUser(ctx);
-    if (admin.role !== 'admin' && !isSuperadmin(admin)) {
+    const admin = await getAuthUser(ctx);
+    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
       throw new Error('Only org admins can view audit logs');
     }
 

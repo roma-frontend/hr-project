@@ -18,13 +18,15 @@ function getConvexClient() {
 }
 
 function useAuth() {
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
+  const hasToken = !!session?.convexToken;
 
   return useMemo(
     () => ({
-      isLoading: false,
-      isAuthenticated: session !== null,
+      isLoading: status === 'loading',
+      isAuthenticated: hasToken,
       fetchAccessToken: async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+        if (!hasToken) return null;
         if (forceRefreshToken) {
           const refreshed = await update();
           return (refreshed as Session | null)?.convexToken ?? null;
@@ -33,7 +35,7 @@ function useAuth() {
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(session?.user)],
+    [status, hasToken],
   );
 }
 

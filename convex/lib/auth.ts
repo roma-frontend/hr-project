@@ -76,6 +76,19 @@ export async function requireAuthUser(ctx: QueryCtx | MutationCtx) {
 }
 
 /**
+ * Soft version: returns the authenticated user or null if not authenticated.
+ * Use in queries that should gracefully handle unauthenticated state.
+ */
+export async function getAuthUser(ctx: QueryCtx | MutationCtx) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity?.email) return null;
+  return await ctx.db
+    .query('users')
+    .withIndex('by_email', (q) => q.eq('email', identity.email!.toLowerCase()))
+    .unique();
+}
+
+/**
  * Preferred runtime check: does this user currently hold the superadmin role?
  *
  * @param user — user doc or minimal shape with role + email
