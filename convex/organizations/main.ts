@@ -126,8 +126,27 @@ export const getAllOrganizations = query({
   args: {},
   handler: async (ctx) => {
     const caller = await requireAuthUser(ctx);
+
+    // Non-superadmin: return only their own organization
     if (!isSuperadmin(caller)) {
-      throw new Error('Superadmin only');
+      if (!caller.organizationId) return [];
+      const org = await ctx.db.get(caller.organizationId);
+      if (!org) return [];
+      const employees = await ctx.db
+        .query('users')
+        .withIndex('by_org', (q) => q.eq('organizationId', org._id))
+        .take(MAX_PAGE_SIZE);
+      const filteredEmployees = employees.filter((e) => e.role !== 'superadmin');
+      const activeCount = filteredEmployees.filter((u) => u.isActive && u.isApproved).length;
+      return [
+        {
+          ...org,
+          totalEmployees: filteredEmployees.length,
+          activeEmployees: activeCount,
+          adminNames: filteredEmployees.filter((u) => u.role === 'admin').map((a) => a.name),
+          memberCount: filteredEmployees.length,
+        },
+      ];
     }
 
     const orgs = await ctx.db.query('organizations').order('desc').take(MAX_PAGE_SIZE);
