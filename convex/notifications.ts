@@ -1,9 +1,22 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { paginationOptsValidator } from 'convex/server';
 import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP } from './lib/limits';
 
-// ── Get notifications for a user ───────────────────────────────────────────
+// ── Get notifications for a user (paginated) ───────────────────────────────
+export const listPaginated = query({
+  args: { userId: v.id('users'), paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { userId, paginationOpts }) => {
+    return await ctx.db
+      .query('notifications')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .order('desc')
+      .paginate(paginationOpts);
+  },
+});
+
+// ── Get notifications for a user (legacy, kept for badge counts) ────────────
 export const getUserNotifications = query({
   args: { userId: v.id('users') },
   handler: async (ctx, { userId }) => {

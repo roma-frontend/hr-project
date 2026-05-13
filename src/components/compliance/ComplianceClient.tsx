@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -124,10 +124,13 @@ export default function ComplianceClient() {
   const adminId = user?.id as Id<'users'> | undefined;
 
   const stats = useQuery(api.compliance.getComplianceStats, adminId ? { adminId } : 'skip');
-  const auditLogs = useQuery(
-    api.security.getRecentAuditLogs,
-    adminId ? { adminId, limit: 100 } : 'skip',
-  );
+  const {
+    results: auditLogs,
+    status: auditStatus,
+    loadMore: loadMoreAudit,
+  } = usePaginatedQuery(api.security.listAuditLogsPaginated, adminId ? { adminId } : 'skip', {
+    initialNumItems: 50,
+  });
   const gdprRequests = useQuery(
     api.compliance.getGdprRequests,
     adminId ? { adminId, limit: 100 } : 'skip',
@@ -504,6 +507,15 @@ export default function ComplianceClient() {
                 </div>
               ))}
             </div>
+          )}
+          {auditStatus === 'CanLoadMore' && (
+            <button
+              onClick={() => loadMoreAudit(50)}
+              className="w-full mt-3 py-2 text-sm text-[#2563eb] hover:underline rounded-lg border"
+              style={{ borderColor: 'var(--border)' }}
+            >
+              {t('compliance.loadMore', { defaultValue: 'Load more logs' })}
+            </button>
           )}
         </div>
       )}

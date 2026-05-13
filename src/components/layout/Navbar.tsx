@@ -45,7 +45,7 @@ interface NotificationItem {
 function PresenceEmoji({ emoji }: { emoji: string }) {
   return <span aria-hidden="true">{emoji}</span>;
 }
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -103,12 +103,16 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  // Convex notifications
-  const notifications =
-    useQuery(
-      api.notifications.getUserNotifications,
-      user?.id ? { userId: user.id as Id<'users'> } : 'skip',
-    ) ?? [];
+  // Convex notifications (paginated)
+  const {
+    results: notifications,
+    status: notifStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.notifications.listPaginated,
+    user?.id ? { userId: user.id as Id<'users'> } : 'skip',
+    { initialNumItems: 20 },
+  );
   const markRead = useMutation(api.notifications.markAsRead);
   const markAllRead = useMutation(api.notifications.markAllAsRead);
   const updatePresence = useMutation(api.users.mutations.updatePresenceStatus);
@@ -118,8 +122,8 @@ export function Navbar() {
     user?.id ? { userId: user.id as Id<'users'> } : 'skip',
   );
 
-  const currentPresence = ((currentUserData as { presenceStatus?: PresenceStatus } | null)?.presenceStatus ??
-    'available') as PresenceStatus;
+  const currentPresence = ((currentUserData as { presenceStatus?: PresenceStatus } | null)
+    ?.presenceStatus ?? 'available') as PresenceStatus;
   const presenceCfg = PRESENCE_CONFIG[currentPresence];
   const presenceLabel = t(presenceCfg.labelKey);
 
@@ -153,7 +157,6 @@ export function Navbar() {
           ...user,
           isApproved: true,
         });
-
       }
       // Sound + banner are handled by NotificationBanner — just track seen IDs here
       newNotifs.forEach((n: NotificationItem) => prevNotifIds.current.add(n._id));
@@ -365,6 +368,14 @@ export function Navbar() {
                       )
                     )}
                   </div>
+                  {notifStatus === 'CanLoadMore' && (
+                    <button
+                      onClick={() => loadMore(20)}
+                      className="w-full py-2 text-xs text-[#2563eb] hover:bg-(--background-subtle) border-t border-(--border)"
+                    >
+                      {t('notifications.loadMore', { defaultValue: 'Load more' })}
+                    </button>
+                  )}
                 </div>
               </>
             )}

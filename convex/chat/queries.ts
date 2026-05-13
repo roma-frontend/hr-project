@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
+import { paginationOptsValidator } from 'convex/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { SUPERADMIN_EMAIL } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
@@ -288,6 +289,55 @@ export const getMessages = query({
     );
 
     return enriched.filter(Boolean).reverse() as typeof enriched;
+  },
+});
+
+/** Paginated messages for infinite scroll */
+export const listMessagesPaginated = query({
+  args: {
+    conversationId: v.id('chatConversations'),
+    userId: v.id('users'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { conversationId, userId, paginationOpts }) => {
+    const membership = await ctx.db
+      .query('chatMembers')
+      .withIndex('by_conversation_user', (q) =>
+        q.eq('conversationId', conversationId).eq('userId', userId),
+      )
+      .first();
+    if (!membership) {
+      return { page: [], isDone: true, continueCursor: '' };
+    }
+
+    const result = await ctx.db
+      .query('chatMessages')
+      .withIndex('by_conversation_created', (q) => q.eq('conversationId', conversationId))
+      .order('desc')
+      .paginate(paginationOpts);
+
+    // Enrich page with sender info
+    const enrichedPage = await Promise.all(
+      result.page.map(async (msg) => {
+        const deletedForUsers: Id<'users'>[] =
+          (msg.deletedForUsers as Id<'users'>[] | undefined) ?? [];
+        if (deletedForUsers.includes(userId)) return null;
+
+        const sender = await ctx.db.get(msg.senderId);
+        return {
+          ...msg,
+          readBy: (msg.readBy as Array<{ userId: Id<'users'>; readAt: number }> | undefined) ?? [],
+          sender: sender
+            ? { _id: sender._id, name: sender.name, avatarUrl: sender.avatarUrl }
+            : null,
+        };
+      }),
+    );
+
+    return {
+      ...result,
+      page: enrichedPage.filter(Boolean),
+    };
   },
 });
 

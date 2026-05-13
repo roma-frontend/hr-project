@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -103,11 +103,21 @@ export const ChatWindow = React.memo(function ChatWindow({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const messages = (useQuery as any)((api.chat.queries as any).getMessages, {
-    conversationId,
-    userId: currentUserId,
-    limit: 200,
-  }) as any;
+  const {
+    results: paginatedMessages,
+    status: msgStatus,
+    loadMore: loadMoreMessages,
+  } = usePaginatedQuery(
+    api.chat.queries.listMessagesPaginated,
+    { conversationId, userId: currentUserId },
+    { initialNumItems: 50 },
+  );
+
+  // Reverse for chronological display (query is desc)
+  const messages: any[] | null = React.useMemo(
+    () => (paginatedMessages ? [...paginatedMessages].reverse() : null),
+    [paginatedMessages],
+  );
 
   // Deduplicate messages to prevent duplicate key warnings
   const dedupedMessages = React.useMemo(() => {
@@ -834,69 +844,81 @@ export const ChatWindow = React.memo(function ChatWindow({
               </p>
             </div>
           ) : (
-            <div
-              role="log"
-              aria-label={t('chat.chatMessages', 'Chat messages')}
-              aria-live="polite"
-              aria-relevant="additions"
-              style={{
-                height: `${virtualizer.getTotalSize()}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {virtualizer.getVirtualItems().map((virtualRow: any) => {
-                const msg = allMessages[virtualRow.index];
-                if (!msg) return null;
+            <>
+              {msgStatus === 'CanLoadMore' && (
+                <button
+                  onClick={() => loadMoreMessages(30)}
+                  className="w-full py-2 text-xs text-[#2563eb] hover:underline"
+                >
+                  {t('chat.loadOlderMessages', { defaultValue: '↑ Load older messages' })}
+                </button>
+              )}
+              <div
+                role="log"
+                aria-label={t('chat.chatMessages', 'Chat messages')}
+                aria-live="polite"
+                aria-relevant="additions"
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow: any) => {
+                  const msg = allMessages[virtualRow.index];
+                  if (!msg) return null;
 
-                const isOwn = msg.senderId === currentUserId;
-                const prevMsg = dedupedMessages[virtualRow.index - 1];
-                const isFirstOfStreak =
-                  virtualRow.index === 0 || prevMsg?.senderId !== msg.senderId;
-                const isSystemAnnouncements = (conv as any)?.name === 'System Announcements';
-                const showAvatar = isFirstOfStreak && !isSystemAnnouncements;
-                const showName = isSystemAnnouncements
-                  ? false
-                  : isFirstOfStreak && !isOwn && conv?.type === 'group';
+                  const isOwn = msg.senderId === currentUserId;
+                  const prevMsg = dedupedMessages?.[virtualRow.index - 1];
+                  const isFirstOfStreak =
+                    virtualRow.index === 0 || prevMsg?.senderId !== msg.senderId;
+                  const isSystemAnnouncements = (conv as any)?.name === 'System Announcements';
+                  const showAvatar = isFirstOfStreak && !isSystemAnnouncements;
+                  const showName = isSystemAnnouncements
+                    ? false
+                    : isFirstOfStreak && !isOwn && conv?.type === 'group';
 
-                return (
-                  <div
-                    key={msg._id}
-                    data-index={virtualRow.index}
-                    ref={virtualizer.measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    <MessageBubble
-                      message={msg}
-                      isOwn={isOwn}
-                      showAvatar={showAvatar}
-                      showName={!!showName}
-                      currentUserId={currentUserId}
-                      currentUserAvatar={currentUserAvatar}
-                      currentUserName={currentUserName}
-                      onReply={(id, content, senderName) => setReplyTo({ id, content, senderName })}
-                      onOpenThread={(id, content) => setThread({ id, content })}
-                      onSendMessage={async (text) => {
-                        await sendMessage({
-                          conversationId,
-                          senderId: currentUserId,
-                          organizationId,
-                          type: 'text',
-                          content: text,
-                        });
+                  return (
+                    <div
+                      key={msg._id}
+                      data-index={virtualRow.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
                       }}
-                      lang={i18n.language || 'en'}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                    >
+                      <MessageBubble
+                        message={msg}
+                        isOwn={isOwn}
+                        showAvatar={showAvatar}
+                        showName={!!showName}
+                        currentUserId={currentUserId}
+                        currentUserAvatar={currentUserAvatar}
+                        currentUserName={currentUserName}
+                        onReply={(id, content, senderName) =>
+                          setReplyTo({ id, content, senderName })
+                        }
+                        onOpenThread={(id, content) => setThread({ id, content })}
+                        onSendMessage={async (text) => {
+                          await sendMessage({
+                            conversationId,
+                            senderId: currentUserId,
+                            organizationId,
+                            type: 'text',
+                            content: text,
+                          });
+                        }}
+                        lang={i18n.language || 'en'}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           <div ref={messagesEndRef} />

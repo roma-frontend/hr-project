@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { paginationOptsValidator } from 'convex/server';
 import type { Id } from './_generated/dataModel';
 import { isSuperadmin, SUPERADMIN_EMAIL } from './lib/auth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
@@ -407,6 +408,40 @@ export const getRecentAuditLogs = query({
       };
     });
     return enriched;
+  },
+});
+
+/** Paginated audit logs for compliance page */
+export const listAuditLogsPaginated = query({
+  args: {
+    adminId: v.id('users'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { adminId, paginationOpts }) => {
+    const { orgId } = await requireAdmin(ctx, adminId);
+
+    const result = orgId
+      ? await ctx.db
+          .query('auditLogs')
+          .withIndex('by_org', (q) => q.eq('organizationId', orgId))
+          .order('desc')
+          .paginate(paginationOpts)
+      : await ctx.db.query('auditLogs').order('desc').paginate(paginationOpts);
+
+    // Enrich page with user names
+    const uniqueUserIds = [...new Set(result.page.map((log) => log.userId).filter(Boolean))];
+    const usersBatch = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+    const userMap = new Map(
+      usersBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
+    );
+
+    return {
+      ...result,
+      page: result.page.map((log) => {
+        const user = userMap.get(log.userId);
+        return { ...log, userName: user?.name ?? 'Unknown', userEmail: user?.email ?? '' };
+      }),
+    };
   },
 });
 
