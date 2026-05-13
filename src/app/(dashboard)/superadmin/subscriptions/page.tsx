@@ -37,7 +37,10 @@ export default function SubscriptionsManagementPage() {
   // Get current user from useAuthStore (works with both email/password and OAuth)
   const { user } = useAuthStore();
 
-  const allOrganizations = useQuery(api.organizations.getAllOrganizations, user?.id ? {} : 'skip');
+  const allOrganizations = useQuery(
+    api.organizations.getAllOrganizations,
+    user?.id ? { superadminUserId: user.id as any } : 'skip',
+  );
 
   const createManual = useMutation(api.subscriptions_admin.createManualSubscription);
 

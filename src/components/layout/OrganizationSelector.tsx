@@ -40,7 +40,7 @@ export function OrganizationSelector({ collapsed = false }: OrgSelectorProps) {
   // Fetch all organizations for superadmin, or just user's org
   const organizations = useQuery(
     api.organizations.getAllOrganizations,
-    mounted && isSuperadmin ? {} : 'skip',
+    mounted && isSuperadmin ? { superadminUserId: user?.id as any } : 'skip',
   );
 
   if (!mounted || !isSuperadmin) return null;

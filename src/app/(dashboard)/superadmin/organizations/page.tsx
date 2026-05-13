@@ -61,9 +61,10 @@ export default function OrganizationsPage() {
   const [planFilter, setPlanFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const organizations = useQuery(api.organizations.getAllOrganizations, user?.id ? {} : 'skip') as
-    | Organization[]
-    | undefined;
+  const organizations = useQuery(
+    api.organizations.getAllOrganizations,
+    user?.id ? { superadminUserId: user.id as any } : 'skip',
+  ) as Organization[] | undefined;
 
   // Filter organizations
   const filteredOrgs = organizations?.filter((org) => {

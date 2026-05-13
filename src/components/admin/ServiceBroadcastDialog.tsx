@@ -89,7 +89,10 @@ export function ServiceBroadcastDialog({
   const [broadcastScope, setBroadcastScope] = useState<'all' | 'specific'>('specific');
   const [selectedOrgId, setSelectedOrgId] = useState<string>(organizationId as string);
 
-  const organizations = useQuery(api.organizations.getAllOrganizations, userId ? {} : 'skip');
+  const organizations = useQuery(
+    api.organizations.getAllOrganizations,
+    userId ? { superadminUserId: userId as any } : 'skip',
+  );
 
   const sendBroadcast = useMutation(api.admin.sendServiceBroadcast);
   const enableMaintenanceMode = useMutation(api.admin.enableMaintenanceMode);

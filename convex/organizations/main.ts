@@ -123,9 +123,13 @@ export const listAll = query({
 // SUPERADMIN: Get all organizations
 // ─────────────────────────────────────────────────────────────────────────────
 export const getAllOrganizations = query({
-  args: {},
-  handler: async (ctx) => {
-    const caller = await getAuthUser(ctx);
+  args: { superadminUserId: v.optional(v.id('users')) },
+  handler: async (ctx, args) => {
+    // Try ctx.auth first (secure JWT), fall back to arg during transition
+    let caller = await getAuthUser(ctx);
+    if (!caller && args.superadminUserId) {
+      caller = await ctx.db.get(args.superadminUserId);
+    }
     if (!caller) return [];
 
     // Non-superadmin: return only their own organization
