@@ -1,11 +1,9 @@
-'use client';
-
-import dynamic from 'next/dynamic';
-import { useAuthStore } from '@/store/useAuthStore';
+import nextDynamic from 'next/dynamic';
+import { getServerUser } from '@/lib/server-auth';
+import { redirect } from 'next/navigation';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
-const ChatClient = dynamic(() => import('@/components/chat/ChatClient'), {
-  ssr: false,
+const ChatClient = nextDynamic(() => import('@/components/chat/ChatClient'), {
   loading: () => (
     <div
       className="flex h-full items-center justify-center"
@@ -16,16 +14,18 @@ const ChatClient = dynamic(() => import('@/components/chat/ChatClient'), {
   ),
 });
 
-export default function ChatPage() {
-  const { user } = useAuthStore();
+export default async function ChatPage() {
+  const user = await getServerUser();
+  if (!user) redirect('/login');
+
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden w-full">
       <ChatClient
-        userId={user?.id ?? ''}
-        organizationId={user?.organizationId ?? ''}
-        userName={user?.name ?? ''}
-        userAvatar={user?.avatar}
-        userRole={user?.role ?? 'employee'}
+        userId={user.userId}
+        organizationId={user.organizationId ?? ''}
+        userName={user.name}
+        userAvatar={user.avatar}
+        userRole={user.role}
       />
     </div>
   );

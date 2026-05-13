@@ -1,41 +1,7 @@
-'use client';
-
-import dynamic from 'next/dynamic';
-import { useAuthStore } from '@/store/useAuthStore';
+import nextDynamic from 'next/dynamic';
+import { getServerUser } from '@/lib/server-auth';
+import { redirect } from 'next/navigation';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
-
-// Dynamically import heavy dashboard components — they are large bundles
-// with recharts, framer-motion etc. Loading them on demand saves ~120KB on
-// the initial JS payload for pages that don't need them yet.
-const DashboardClient = dynamic(
-  () =>
-    import('@/components/dashboard/DashboardClient').then((m) => ({
-      default: (props: any) => (
-        <WidgetErrorBoundary name="DashboardClient">
-          <m.default {...props} />
-        </WidgetErrorBoundary>
-      ),
-    })),
-  {
-    ssr: false,
-    loading: () => <DashboardSkeleton />,
-  },
-);
-
-const EmployeeDashboard = dynamic(
-  () =>
-    import('@/components/dashboard/EmployeeDashboard').then((m) => ({
-      default: (props: any) => (
-        <WidgetErrorBoundary name="EmployeeDashboard">
-          <m.default {...props} />
-        </WidgetErrorBoundary>
-      ),
-    })),
-  {
-    ssr: false,
-    loading: () => <DashboardSkeleton />,
-  },
-);
 
 function DashboardSkeleton() {
   return (
@@ -54,19 +20,37 @@ function DashboardSkeleton() {
   );
 }
 
-export default function DashboardPage() {
-  const { user } = useAuthStore();
+const DashboardClient = nextDynamic(
+  () =>
+    import('@/components/dashboard/DashboardClient').then((m) => ({
+      default: (props: any) => (
+        <WidgetErrorBoundary name="DashboardClient">
+          <m.default {...props} />
+        </WidgetErrorBoundary>
+      ),
+    })),
+  { loading: () => <DashboardSkeleton /> },
+);
 
-  // Block rendering if user has no organization (needs onboarding)
-  // NOTE: Providers.tsx already handles this check globally, so we just return the component
-  // The global ShieldLoader in Providers will show during loading/onboarding
-  if (user && !user.organizationId) {
-    return null; // Providers.tsx will show ShieldLoader
-  }
+const EmployeeDashboard = nextDynamic(
+  () =>
+    import('@/components/dashboard/EmployeeDashboard').then((m) => ({
+      default: (props: any) => (
+        <WidgetErrorBoundary name="EmployeeDashboard">
+          <m.default {...props} />
+        </WidgetErrorBoundary>
+      ),
+    })),
+  { loading: () => <DashboardSkeleton /> },
+);
 
-  if (user?.role === 'employee') {
+export default async function DashboardPage() {
+  const user = await getServerUser();
+  if (!user) redirect('/login');
+  if (!user.organizationId) return null;
+
+  if (user.role === 'employee') {
     return <EmployeeDashboard />;
   }
-
   return <DashboardClient />;
 }
