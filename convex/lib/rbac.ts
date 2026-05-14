@@ -9,7 +9,7 @@
 
 import type { QueryCtx, MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
-import { isSuperadminEmail } from './auth';
+import { isSuperadminEmail, isSuperadmin as isSuperadminRole } from './auth';
 
 /** Valid role hierarchy (lower index = higher privilege) */
 export const ROLE_HIERARCHY = ['superadmin', 'admin', 'supervisor', 'driver', 'employee'] as const;
@@ -70,7 +70,7 @@ export async function requireRole(
 ): Promise<{ _id: Id<'users'>; role: Role; email: string; organizationId?: Id<'organizations'> }> {
   const user = await requireUser(ctx, userId);
 
-  if (user.role !== requiredRole && !isSuperadminEmail(user.email)) {
+  if (user.role !== requiredRole && !isSuperadminRole(user)) {
     throw new Error(`Insufficient permissions. Required role: ${requiredRole}`);
   }
 
@@ -89,7 +89,7 @@ export async function requireRoleAtLeast(
   const user = await requireUser(ctx, userId);
 
   // Superadmin always has access
-  if (isSuperadminEmail(user.email)) {
+  if (isSuperadminRole(user)) {
     return user;
   }
 
@@ -112,7 +112,7 @@ export async function requireOrgAdmin(
   const user = await requireUser(ctx, userId);
 
   // Superadmin has access to all orgs
-  if (isSuperadminEmail(user.email)) {
+  if (isSuperadminRole(user)) {
     return { ...user, organizationId };
   }
 
@@ -135,7 +135,7 @@ export async function requireOrgSupervisor(
   const user = await requireUser(ctx, userId);
 
   // Superadmin has access
-  if (isSuperadminEmail(user.email)) {
+  if (isSuperadminRole(user)) {
     return { ...user, organizationId };
   }
 
@@ -169,20 +169,20 @@ export async function canAccessUser(
   if (requesterId === targetUserId) return true;
 
   // Superadmin can access all
-  if (isSuperadminEmail(requester.email)) return true;
+  if (isSuperadminRole(requester)) return true;
 
   const target = await getUserWithRole(ctx, targetUserId);
   if (!target) return false;
 
   // Admin can access users in same org (except superadmins)
   if (requester.role === 'admin') {
-    if (isSuperadminEmail(target.email)) return false;
+    if (isSuperadminRole(target)) return false;
     return requester.organizationId === target.organizationId;
   }
 
   // Supervisor can access users in same org (except admins/superadmins)
   if (requester.role === 'supervisor') {
-    if (isSuperadminEmail(target.email) || target.role === 'admin') return false;
+    if (isSuperadminRole(target) || target.role === 'admin') return false;
     return requester.organizationId === target.organizationId;
   }
 
