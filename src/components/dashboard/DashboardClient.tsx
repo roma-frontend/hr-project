@@ -50,12 +50,16 @@ export default function DashboardClient() {
   // Lightweight aggregated queries instead of loading all leaves/users
   const dashboardStats = useQuery(
     api.analytics.getDashboardStats,
-    userId ? { requesterId: userId } : 'skip',
+    userId
+      ? { requesterId: userId, organizationId: selectedOrgId as Id<'organizations'> | undefined }
+      : 'skip',
   );
 
   const recentLeavesData = useQuery(
     api.analytics.getRecentLeaves,
-    userId ? { requesterId: userId } : 'skip',
+    userId
+      ? { requesterId: userId, organizationId: selectedOrgId as Id<'organizations'> | undefined }
+      : 'skip',
   );
 
   const organization = useQuery(

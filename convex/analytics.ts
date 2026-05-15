@@ -283,13 +283,13 @@ export const getTeamCalendar = query({
 
 // ── Dashboard Stats (aggregated counts — no full data transfer) ────────────
 export const getDashboardStats = query({
-  args: { requesterId: v.id('users') },
-  handler: async (ctx, { requesterId }) => {
+  args: { requesterId: v.id('users'), organizationId: v.optional(v.id('organizations')) },
+  handler: async (ctx, { requesterId, organizationId }) => {
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('User not found');
 
     const isSuperadminUser = requester.role === 'superadmin';
-    const orgId = requester.organizationId;
+    const orgId = organizationId ?? requester.organizationId;
 
     if (!isSuperadminUser && !orgId) {
       return {
@@ -303,23 +303,25 @@ export const getDashboardStats = query({
     }
 
     // Count employees
-    const users = isSuperadminUser
-      ? await ctx.db.query('users').take(XLARGE_LIST_CAP)
-      : await ctx.db
-          .query('users')
-          .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
-          .take(DEFAULT_LIST_CAP);
+    const users =
+      isSuperadminUser && !orgId
+        ? await ctx.db.query('users').take(XLARGE_LIST_CAP)
+        : await ctx.db
+            .query('users')
+            .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
+            .take(DEFAULT_LIST_CAP);
     const totalEmployees = users.filter(
       (u) => u.role !== 'superadmin' && u.isActive !== false,
     ).length;
 
     // Get leaves scoped by org
-    const leaves = isSuperadminUser
-      ? await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP)
-      : await ctx.db
-          .query('leaveRequests')
-          .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
-          .take(DEFAULT_LIST_CAP);
+    const leaves =
+      isSuperadminUser && !orgId
+        ? await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP)
+        : await ctx.db
+            .query('leaveRequests')
+            .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
+            .take(DEFAULT_LIST_CAP);
 
     const today = new Date().toISOString().slice(0, 10);
     const now = new Date();
@@ -368,23 +370,24 @@ export const getDashboardStats = query({
 
 // ── Recent Leaves (last 6, lightweight) ────────────────────────────────────
 export const getRecentLeaves = query({
-  args: { requesterId: v.id('users') },
-  handler: async (ctx, { requesterId }) => {
+  args: { requesterId: v.id('users'), organizationId: v.optional(v.id('organizations')) },
+  handler: async (ctx, { requesterId, organizationId }) => {
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('User not found');
 
     const isSuperadminUser = requester.role === 'superadmin';
-    const orgId = requester.organizationId;
+    const orgId = organizationId ?? requester.organizationId;
 
     if (!isSuperadminUser && !orgId) return [];
 
-    const leaves = isSuperadminUser
-      ? await ctx.db.query('leaveRequests').order('desc').take(6)
-      : await ctx.db
-          .query('leaveRequests')
-          .withIndex('by_org_created', (q) => q.eq('organizationId', orgId!))
-          .order('desc')
-          .take(6);
+    const leaves =
+      isSuperadminUser && !orgId
+        ? await ctx.db.query('leaveRequests').order('desc').take(6)
+        : await ctx.db
+            .query('leaveRequests')
+            .withIndex('by_org_created', (q) => q.eq('organizationId', orgId!))
+            .order('desc')
+            .take(6);
 
     // Batch enrich with user name/email only
     const userIds = [...new Set(leaves.map((l) => l.userId))];
