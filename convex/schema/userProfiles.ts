@@ -1,0 +1,39 @@
+import { defineTable } from 'convex/server';
+import { v } from 'convex/values';
+
+export const userProfiles = {
+  userProfiles: defineTable({
+    userId: v.id('users'),
+    // Employment
+    employeeType: v.optional(v.union(v.literal('staff'), v.literal('contractor'))),
+    department: v.optional(v.string()),
+    departmentId: v.optional(v.id('departments')),
+    position: v.optional(v.string()),
+    positionId: v.optional(v.id('positions')),
+    supervisorId: v.optional(v.id('users')),
+    // Personal
+    phone: v.optional(v.string()),
+    location: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    // Status
+    presenceStatus: v.optional(
+      v.union(
+        v.literal('available'),
+        v.literal('in_meeting'),
+        v.literal('in_call'),
+        v.literal('out_of_office'),
+        v.literal('busy'),
+      ),
+    ),
+    // Balances
+    travelAllowance: v.optional(v.number()),
+    paidLeaveBalance: v.optional(v.number()),
+    sickLeaveBalance: v.optional(v.number()),
+    familyLeaveBalance: v.optional(v.number()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_department', ['departmentId'])
+    .index('by_supervisor', ['supervisorId'])
+    .index('by_position', ['positionId']),
+};

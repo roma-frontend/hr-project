@@ -1,33 +1,67 @@
 /**
  * User Settings Management
- * Save and load user preferences (language, timezone, date format, etc.)
+ * Reads/writes from dedicated userSettings table (split from users).
+ * Falls back to users table fields for backward compatibility during migration.
  */
 
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import type { Id } from './_generated/dataModel';
+
+// Helper: get or create userSettings doc for a user
+async function getOrCreateSettings(ctx: any, userId: any) {
+  const existing = await ctx.db
+    .query('userSettings')
+    .withIndex('by_user', (q: any) => q.eq('userId', userId))
+    .first();
+  if (existing) return existing;
+
+  // Fallback: read from users table (pre-migration) and create settings doc
+  const user = await ctx.db.get(userId);
+  if (!user) throw new Error('User not found');
+
+  const settingsId = await ctx.db.insert('userSettings', {
+    userId,
+    language: user.language,
+    timezone: user.timezone,
+    dateFormat: user.dateFormat,
+    timeFormat: user.timeFormat,
+    firstDayOfWeek: user.firstDayOfWeek,
+    theme: user.theme,
+    compactMode: user.compactMode,
+    defaultView: user.defaultView,
+    dataRefreshRate: user.dataRefreshRate,
+    dashboardWidgets: user.dashboardWidgets,
+    notificationsEnabled: user.notificationsEnabled,
+    emailNotifications: user.emailNotifications,
+    pushNotifications: user.pushNotifications,
+    focusModeEnabled: user.focusModeEnabled,
+    workHoursStart: user.workHoursStart,
+    workHoursEnd: user.workHoursEnd,
+    breakRemindersEnabled: user.breakRemindersEnabled,
+    breakInterval: user.breakInterval,
+    dailyTaskGoal: user.dailyTaskGoal,
+  });
+
+  return await ctx.db.get(settingsId);
+}
 
 /**
  * Get user settings
  */
 export const getUserSettings = query({
-  args: {
-    userId: v.id('users'),
-  },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
+  args: { userId: v.id('users') },
+  handler: async (ctx, { userId }) => {
+    const settings = await getOrCreateSettings(ctx, userId);
     return {
-      language: user.language ?? 'en',
-      timezone: user.timezone ?? 'UTC',
-      dateFormat: user.dateFormat ?? 'DD/MM/YYYY',
-      timeFormat: user.timeFormat ?? '24h',
-      firstDayOfWeek: user.firstDayOfWeek ?? 'monday',
-      theme: user.theme ?? 'system',
-      notificationsEnabled: user.notificationsEnabled ?? true,
-      emailNotifications: user.emailNotifications ?? true,
-      pushNotifications: user.pushNotifications ?? false,
+      language: settings.language ?? 'en',
+      timezone: settings.timezone ?? 'UTC',
+      dateFormat: settings.dateFormat ?? 'DD/MM/YYYY',
+      timeFormat: settings.timeFormat ?? '24h',
+      firstDayOfWeek: settings.firstDayOfWeek ?? 'monday',
+      theme: settings.theme ?? 'system',
+      notificationsEnabled: settings.notificationsEnabled ?? true,
+      emailNotifications: settings.emailNotifications ?? true,
+      pushNotifications: settings.pushNotifications ?? false,
     };
   },
 });
@@ -49,30 +83,21 @@ export const updateUserSettings = mutation({
     pushNotifications: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
-    const patch: any = { updatedAt: Date.now() };
-
-    if (args.language !== undefined) patch.language = args.language;
-    if (args.timezone !== undefined) patch.timezone = args.timezone;
-    if (args.dateFormat !== undefined) patch.dateFormat = args.dateFormat;
-    if (args.timeFormat !== undefined) patch.timeFormat = args.timeFormat;
-    if (args.firstDayOfWeek !== undefined) patch.firstDayOfWeek = args.firstDayOfWeek;
-    if (args.theme !== undefined) patch.theme = args.theme;
-    if (args.notificationsEnabled !== undefined)
-      patch.notificationsEnabled = args.notificationsEnabled;
-    if (args.emailNotifications !== undefined) patch.emailNotifications = args.emailNotifications;
-    if (args.pushNotifications !== undefined) patch.pushNotifications = args.pushNotifications;
-
-    await ctx.db.patch(args.userId, patch);
-
+    const settings = await getOrCreateSettings(ctx, args.userId);
+    const { userId, ...updates } = args;
+    const patch: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(updates)) {
+      if (val !== undefined) patch[k] = val;
+    }
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(settings._id, patch);
+    }
     return { success: true };
   },
 });
 
 /**
- * Update localization settings (language, timezone, date format)
+ * Update localization settings
  */
 export const updateLocalizationSettings = mutation({
   args: {
@@ -84,18 +109,14 @@ export const updateLocalizationSettings = mutation({
     firstDayOfWeek: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
-    await ctx.db.patch(args.userId, {
+    const settings = await getOrCreateSettings(ctx, args.userId);
+    await ctx.db.patch(settings._id, {
       language: args.language,
       timezone: args.timezone,
       dateFormat: args.dateFormat,
       timeFormat: args.timeFormat,
       firstDayOfWeek: args.firstDayOfWeek,
-      updatedAt: Date.now(),
     });
-
     return { success: true };
   },
 });
@@ -111,16 +132,12 @@ export const updateNotificationSettings = mutation({
     pushNotifications: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
-    await ctx.db.patch(args.userId, {
+    const settings = await getOrCreateSettings(ctx, args.userId);
+    await ctx.db.patch(settings._id, {
       notificationsEnabled: args.notificationsEnabled,
       emailNotifications: args.emailNotifications,
       pushNotifications: args.pushNotifications,
-      updatedAt: Date.now(),
     });
-
     return { success: true };
   },
 });
@@ -134,14 +151,8 @@ export const updateThemeSettings = mutation({
     theme: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
-    await ctx.db.patch(args.userId, {
-      theme: args.theme,
-      updatedAt: Date.now(),
-    });
-
+    const settings = await getOrCreateSettings(ctx, args.userId);
+    await ctx.db.patch(settings._id, { theme: args.theme });
     return { success: true };
   },
 });
@@ -155,20 +166,17 @@ export const updateSessionProfile = mutation({
     profile: v.any(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) throw new Error('User not found');
-
-    const patch: any = { updatedAt: Date.now() };
-
+    const settings = await getOrCreateSettings(ctx, args.userId);
+    const patch: Record<string, unknown> = {};
     if (args.profile.language !== undefined) patch.language = args.profile.language;
     if (args.profile.timezone !== undefined) patch.timezone = args.profile.timezone;
     if (args.profile.dateFormat !== undefined) patch.dateFormat = args.profile.dateFormat;
     if (args.profile.timeFormat !== undefined) patch.timeFormat = args.profile.timeFormat;
     if (args.profile.firstDayOfWeek !== undefined)
       patch.firstDayOfWeek = args.profile.firstDayOfWeek;
-
-    await ctx.db.patch(args.userId, patch);
-
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(settings._id, patch);
+    }
     return { success: true };
   },
 });
@@ -177,13 +185,10 @@ export const updateSessionProfile = mutation({
  * Get organization settings (for payroll tax configuration)
  */
 export const getOrganizationSettings = query({
-  args: {
-    organizationId: v.id('organizations'),
-  },
+  args: { organizationId: v.id('organizations') },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
     if (!org) throw new Error('Organization not found');
-
     return {
       organizationId: org._id,
       taxCountry: org.taxCountry ?? 'armenia',

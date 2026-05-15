@@ -3,7 +3,7 @@
  */
 
 import { v } from 'convex/values';
-import { mutation } from './_generated/server';
+import { mutation, internalMutation } from './_generated/server';
 import { XLARGE_LIST_CAP } from './lib/limits';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,5 +54,100 @@ export const fixDuplicateUsers = mutation({
     }
 
     return { fixed: fixedCount };
+  },
+});
+
+// ── Migration: copy preferences from users to userSettings ─────────────────
+export const migratePreferencesToUserSettings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query('users').take(XLARGE_LIST_CAP);
+    let migrated = 0;
+
+    for (const user of users) {
+      // Skip if already migrated
+      const existing = await ctx.db
+        .query('userSettings')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .first();
+      if (existing) continue;
+
+      // Only create if user has any preference set
+      const hasPrefs =
+        user.language ||
+        user.timezone ||
+        user.theme ||
+        user.dateFormat ||
+        user.timeFormat ||
+        user.firstDayOfWeek ||
+        user.notificationsEnabled !== undefined ||
+        user.focusModeEnabled !== undefined;
+      if (!hasPrefs) continue;
+
+      await ctx.db.insert('userSettings', {
+        userId: user._id,
+        language: user.language,
+        timezone: user.timezone,
+        dateFormat: user.dateFormat,
+        timeFormat: user.timeFormat,
+        firstDayOfWeek: user.firstDayOfWeek,
+        theme: user.theme,
+        compactMode: user.compactMode,
+        defaultView: user.defaultView,
+        dataRefreshRate: user.dataRefreshRate,
+        dashboardWidgets: user.dashboardWidgets,
+        notificationsEnabled: user.notificationsEnabled,
+        emailNotifications: user.emailNotifications,
+        pushNotifications: user.pushNotifications,
+        focusModeEnabled: user.focusModeEnabled,
+        workHoursStart: user.workHoursStart,
+        workHoursEnd: user.workHoursEnd,
+        breakRemindersEnabled: user.breakRemindersEnabled,
+        breakInterval: user.breakInterval,
+        dailyTaskGoal: user.dailyTaskGoal,
+      });
+      migrated++;
+    }
+
+    return { migrated, total: users.length };
+  },
+});
+
+// ── Migration: copy profile fields from users to userProfiles ──────────────
+export const migrateProfilesToUserProfiles = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query('users').take(XLARGE_LIST_CAP);
+    let migrated = 0;
+
+    for (const user of users) {
+      const existing = await ctx.db
+        .query('userProfiles')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .first();
+      if (existing) continue;
+
+      await ctx.db.insert('userProfiles', {
+        userId: user._id,
+        employeeType: user.employeeType,
+        department: user.department,
+        departmentId: user.departmentId,
+        position: user.position,
+        positionId: user.positionId,
+        supervisorId: user.supervisorId,
+        phone: user.phone,
+        location: user.location,
+        avatarUrl: user.avatarUrl,
+        dateOfBirth: user.dateOfBirth,
+        presenceStatus: user.presenceStatus,
+        travelAllowance: user.travelAllowance,
+        paidLeaveBalance: user.paidLeaveBalance,
+        sickLeaveBalance: user.sickLeaveBalance,
+        familyLeaveBalance: user.familyLeaveBalance,
+      });
+      migrated++;
+    }
+
+    return { migrated, total: users.length };
   },
 });

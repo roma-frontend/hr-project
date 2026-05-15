@@ -38,6 +38,8 @@ import { departments } from './departments';
 import { positions } from './positions';
 import { compliance } from './compliance';
 import { expenses } from './expenses';
+import { userSettings } from './userSettings';
+import { userProfiles } from './userProfiles';
 
 export default defineSchema({
   ...organizations,
@@ -79,6 +81,8 @@ export default defineSchema({
   ...positions,
   ...compliance,
   ...expenses,
+  ...userSettings,
+  ...userProfiles,
 });
 
 export {
@@ -121,4 +125,6 @@ export {
   positions,
   compliance,
   expenses,
+  userSettings,
+  userProfiles,
 };

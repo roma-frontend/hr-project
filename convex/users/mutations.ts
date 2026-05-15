@@ -7,6 +7,7 @@ import { withAuth } from '../lib/withAuth';
 import { isSuperadminEmail } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from '../lib/limits';
+import { patchProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE USER (admin only) — auto-scoped to admin's org
@@ -184,7 +185,30 @@ export const updateUser = mutation({
     const employeeType = updates.employeeType ?? user.employeeType;
     const travelAllowance = employeeType === 'contractor' ? 12000 : 20000;
 
+    // Dual-write: patch users table (backward compat) + sync profile fields to userProfiles
     await ctx.db.patch(userId, { ...updates, travelAllowance });
+    const profileFields: Record<string, unknown> = {};
+    if (updates.employeeType !== undefined) profileFields.employeeType = updates.employeeType;
+    if (updates.department !== undefined) profileFields.department = updates.department;
+    if (updates.position !== undefined) profileFields.position = updates.position;
+    if (updates.phone !== undefined) profileFields.phone = updates.phone;
+    if (updates.location !== undefined) profileFields.location = updates.location;
+    if (updates.avatarUrl !== undefined) profileFields.avatarUrl = updates.avatarUrl;
+    if (updates.supervisorId !== undefined) profileFields.supervisorId = updates.supervisorId;
+    if (updates.paidLeaveBalance !== undefined)
+      profileFields.paidLeaveBalance = updates.paidLeaveBalance;
+    if (updates.sickLeaveBalance !== undefined)
+      profileFields.sickLeaveBalance = updates.sickLeaveBalance;
+    if (updates.familyLeaveBalance !== undefined)
+      profileFields.familyLeaveBalance = updates.familyLeaveBalance;
+    profileFields.travelAllowance = travelAllowance;
+    if (Object.keys(profileFields).length > 0) {
+      const profile = await ctx.db
+        .query('userProfiles')
+        .withIndex('by_user', (q) => q.eq('userId', userId))
+        .first();
+      if (profile) await ctx.db.patch(profile._id, profileFields);
+    }
 
     // Audit log: user updated
     await ctx.db.insert('auditLogs', {
@@ -487,7 +511,7 @@ export const updateAvatar = mutation({
     await requireUser(ctx, userId);
 
     const userForAvatar = await ctx.db.get(userId);
-    await ctx.db.patch(userId, { avatarUrl });
+    await patchProfile(ctx, userId, { avatarUrl });
 
     // Audit log: avatar updated
     await ctx.db.insert('auditLogs', {

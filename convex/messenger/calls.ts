@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
 import type { Id } from '../_generated/dataModel';
+import { patchProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CALLS - Audio/Video calling using WebRTC (similar to web version)
@@ -37,7 +38,7 @@ export const startCall = mutation({
     });
 
     // Set initiator status to "in_call"
-    await ctx.db.patch(initiatorId, { presenceStatus: 'in_call' });
+    await patchProfile(ctx, initiatorId, { presenceStatus: 'in_call' });
 
     return { callId, conversationId };
   },
@@ -62,7 +63,7 @@ export const answerCall = mutation({
     });
 
     // Set user status to "in_call"
-    await ctx.db.patch(userId, { presenceStatus: 'in_call' });
+    await patchProfile(ctx, userId, { presenceStatus: 'in_call' });
 
     return callMessageId;
   },
@@ -90,7 +91,7 @@ export const endCall = mutation({
     await ctx.db.patch(callMessageId, patch);
 
     // Reset user status to "available"
-    await ctx.db.patch(userId, { presenceStatus: 'available' });
+    await patchProfile(ctx, userId, { presenceStatus: 'available' });
 
     return callMessageId;
   },
@@ -114,7 +115,7 @@ export const declineCall = mutation({
     });
 
     // Reset initiator status
-    await ctx.db.patch(call.senderId, { presenceStatus: 'available' });
+    await patchProfile(ctx, call.senderId, { presenceStatus: 'available' });
 
     return callMessageId;
   },

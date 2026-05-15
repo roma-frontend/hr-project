@@ -5,6 +5,7 @@ import type { Id } from '../_generated/dataModel';
 import { isSuperadmin, isSuperadminEmail } from '../lib/auth';
 import { withAuth } from '../lib/withAuth';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { patchProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE LEAVE REQUEST
@@ -190,15 +191,15 @@ export const approveLeave = mutation({
     const user = await ctx.db.get(leave.userId);
     if (user) {
       if (leave.type === 'paid') {
-        await ctx.db.patch(leave.userId, {
+        await patchProfile(ctx, leave.userId, {
           paidLeaveBalance: Math.max(0, (user.paidLeaveBalance ?? 24) - leave.days),
         });
       } else if (leave.type === 'sick') {
-        await ctx.db.patch(leave.userId, {
+        await patchProfile(ctx, leave.userId, {
           sickLeaveBalance: Math.max(0, (user.sickLeaveBalance ?? 10) - leave.days),
         });
       } else if (leave.type === 'family') {
-        await ctx.db.patch(leave.userId, {
+        await patchProfile(ctx, leave.userId, {
           familyLeaveBalance: Math.max(0, (user.familyLeaveBalance ?? 5) - leave.days),
         });
       }
@@ -445,15 +446,15 @@ export const deleteLeave = mutation({
       const user = await ctx.db.get(leave.userId);
       if (user) {
         if (leave.type === 'paid')
-          await ctx.db.patch(leave.userId, {
+          await patchProfile(ctx, leave.userId, {
             paidLeaveBalance: (user.paidLeaveBalance ?? 0) + leave.days,
           });
         else if (leave.type === 'sick')
-          await ctx.db.patch(leave.userId, {
+          await patchProfile(ctx, leave.userId, {
             sickLeaveBalance: (user.sickLeaveBalance ?? 0) + leave.days,
           });
         else if (leave.type === 'family')
-          await ctx.db.patch(leave.userId, {
+          await patchProfile(ctx, leave.userId, {
             familyLeaveBalance: (user.familyLeaveBalance ?? 0) + leave.days,
           });
       }
@@ -685,15 +686,15 @@ export const bulkApproveLeaves = mutation({
         const user = userMap.get(leave.userId);
         if (user) {
           if (leave.type === 'paid') {
-            await ctx.db.patch(leave.userId, {
+            await patchProfile(ctx, leave.userId, {
               paidLeaveBalance: Math.max(0, (user.paidLeaveBalance ?? 24) - leave.days),
             });
           } else if (leave.type === 'sick') {
-            await ctx.db.patch(leave.userId, {
+            await patchProfile(ctx, leave.userId, {
               sickLeaveBalance: Math.max(0, (user.sickLeaveBalance ?? 10) - leave.days),
             });
           } else if (leave.type === 'family') {
-            await ctx.db.patch(leave.userId, {
+            await patchProfile(ctx, leave.userId, {
               familyLeaveBalance: Math.max(0, (user.familyLeaveBalance ?? 5) - leave.days),
             });
           }
