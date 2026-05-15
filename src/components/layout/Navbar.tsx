@@ -74,6 +74,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { useStatusUpdate } from '@/context/StatusUpdateContext';
 import { logger } from '@/lib/logger';
+import Link from 'next/link';
 
 function getInitials(name: string) {
   return name
@@ -603,23 +604,43 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             /* Not logged in — show login/signup buttons */
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-(--text-muted) hover:text-(--text-primary)"
-                onClick={() => router.push('/login')}
+            <>
+              <Link
+                href="/login"
+                className="hidden lg:inline-flex text-sm transition-colors font-medium px-3 lg:px-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                style={{ color: 'var(--landing-navbar-text)', backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--landing-navbar-text-hover)';
+                  e.currentTarget.style.backgroundColor = 'var(--landing-card-bg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--landing-navbar-text)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
-                {t('auth.signIn') || 'Sign In'}
-              </Button>
-              <Button
-                size="sm"
-                className="btn-gradient text-white"
-                onClick={() => router.push('/register')}
+                {mounted ? t('landingExtra.signIn') : 'Sign In'}
+              </Link>
+              <Link
+                href="/register"
+                className="hidden lg:inline-flex items-center gap-2 text-sm font-semibold px-4 lg:px-5 py-2.5 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb, #93c5fd)',
+                  color: 'var(--primary-foreground)',
+                }}
               >
-                {t('auth.signUp') || 'Sign Up'}
-              </Button>
-            </div>
+                {mounted ? t('landingExtra.getStarted') : 'Get Started'}
+                <svg
+                  className="w-3.5 h-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </Link>
+            </>
           )}
         </div>
       </header>
