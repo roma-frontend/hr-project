@@ -1,44 +1,87 @@
-# Plan: устранение unbounded `.collect()` в Convex
+# Plan: HR Office — техдолг и оптимизация
 
-**Статус:** ✅ ЗАВЕРШЁН (paginate миграция). Следующий этап — RBAC через ctx.auth.
-**Baseline на момент составления:** `npx tsc --noEmit` = 0 ошибок, clean.
+**Статус:** Активный. Paginate + RBAC mutations завершены. Следующий этап — производительность.
+**Baseline:** `npx tsc --noEmit` = 0 ошибок, clean.
 **Ветка:** main.
-**Дата:** 2026-05-12 → обновлено 2026-05-13.
+**Дата:** 2026-05-12 → обновлено 2026-05-15.
 
 ---
 
-## ТЕКУЩИЙ СТАТУС (13 мая 2026)
+## ТЕКУЩИЙ СТАТУС (15 мая 2026)
 
-### Завершено:
-1. ✅ **Paginate миграция** — все 375 `.collect()` обработаны (`.take(N)` cap / refactor / paginate)
-2. ✅ **isSuperadmin() миграция** — все runtime-проверки `SUPERADMIN_EMAIL` заменены на `isSuperadmin(user)` (проверяет role в БД). 25 файлов.
-3. ✅ **Convex Auth инфраструктура установлена:**
-   - `convex/auth.config.ts` — OIDC provider (self-issued)
-   - `convex/http.ts` — `/.well-known/openid-configuration` + `/.well-known/jwks.json`
-   - `src/app/api/auth/[...nextauth]/route.ts` — JWT signing в session callback (RS256)
-   - `src/lib/convex.tsx` — `ConvexProviderWithAuth` с `fetchAccessToken`
-   - `convex/lib/auth.ts` — `requireAuthUser()` и `getAuthUser()` helpers
-   - JWKS настроен в Convex dashboard
-   - Private key в `.env.local`
+### ✅ Завершено:
+1. **Paginate миграция** — все 375 `.collect()` обработаны
+2. **isSuperadmin() миграция** — все runtime-проверки через role в БД
+3. **RBAC mutations** — 39 mutations используют `requireAuthUser(ctx)` (ctx.auth JWT)
+4. **Convex Auth инфраструктура:**
+   - `convex/auth.config.ts`, `convex/http.ts` (OIDC endpoints)
+   - JWT signing в NextAuth session callback (RS256)
+   - `convex/lib/auth.ts` — `requireAuthUser()`, `getAuthUser()`
+   - JWKS в Convex dashboard, private key в `.env.local`
+5. **rbac.ts** — `isSuperadminEmail` → `isSuperadmin(role)` 
+6. **backups.ts** — `identity.subject` → email lookup
+7. **bcrypt** — async → sync (Convex runtime совместимость)
+8. **Vercel deployment** — env vars настроены, auth работает
+9. **566 unused imports/variables** удалены
+10. **Navbar** — logout fix, avatar initials only
 
-### НЕ завершено (отложено):
-4. ❌ **Миграция endpoints на ctx.auth** — попытка 13 мая провалилась:
-   - JWT не доходил до Convex (пользователь не перелогинился → session без convexToken)
-   - Все queries падали с "Not authenticated"
-   - Откатили к рабочему состоянию с `superadminUserId`/`requesterId` args
+### ⚠️ Известные ограничения:
+- **Queries НЕ мигрированы на ctx.auth** — используют `requesterId` arg (клиент может подменить)
+- **ConvexProviderWithAuth** вызывает infinite session refresh loop — откатили на plain `ConvexProvider`
+- **Решение для queries:** нужен другой подход (server-side middleware или кэширование token)
 
-### Следующие шаги (при возобновлении):
-1. **Проверить JWT:** перезапустить dev server, перелогиниться, проверить в DevTools что session содержит `convexToken`
-2. **Тест:** вызвать `ctx.auth.getUserIdentity()` в одном тестовом query и убедиться что возвращает email
-3. **Мигрировать по одному endpoint** с fallback-паттерном (ctx.auth → arg)
-4. **Только после подтверждения** что JWT работает — массовая миграция 497 endpoints
+---
 
-### Техдолг (вне скоупа paginate):
-- [ ] RSC-миграция 62 страниц
-- [ ] i18n dynamic namespaces
-- [ ] Split `users` таблицы
-- [ ] RBAC через `ctx.auth.getUserIdentity()` (инфраструктура готова, endpoints нет)
-- [ ] Типизация `chatMessages.reactions`
+## СЛЕДУЮЩИЕ ЗАДАЧИ (по приоритету)
+
+### 🔴 Производительность (высокий приоритет)
+
+#### 1. Lazy i18n namespaces (~1-2ч)
+**Проблема:** Все 12 EN namespaces (~333KB) бандлятся в JS и грузятся на каждой странице.
+**Решение:** Загружать только `common` сразу, остальные лениво по route.
+**Файл:** `src/i18n/config.ts`
+**Рецепт:**
+- Оставить в `resources` только `common` namespace
+- Остальные грузить через `HttpBackend` (уже настроен для RU/HY)
+- В компонентах использовать `useTranslation('dashboard')` — загрузит namespace по требованию
+
+#### 2. Dashboard aggregated queries (~2-3ч)
+**Проблема:** `getAllUsers`, `getAllLeaves` загружают до 2000 записей на dashboard.
+**Решение:** Создать специальные queries для dashboard: `getDashboardStats` (counts), `getRecentLeaves` (last 5).
+**Файлы:** `convex/analytics.ts`, `src/components/dashboard/DashboardClient.tsx`
+
+#### 3. RSC для статических страниц (~2-3ч)
+**Проблема:** Privacy, Terms, Features, Careers, Contact — рендерятся на клиенте.
+**Решение:** Убрать `'use client'`, использовать серверный i18n или статические тексты.
+**Файлы:** `src/app/privacy/page.tsx`, `src/app/terms/page.tsx`, `src/app/contact/page.tsx`, `src/app/features/page.tsx`, `src/app/careers/page.tsx`
+
+### 🟡 Безопасность (средний приоритет)
+
+#### 4. Account lockout после brute force (~1ч)
+**Проблема:** `auth:login` не имеет лимита попыток на уровне Convex.
+**Решение:** Добавить counter в user doc, блокировать после 5 неудачных попыток на 15 мин.
+**Файл:** `convex/auth_module/main.ts`
+
+#### 5. Queries RBAC (отложено — нужен другой подход)
+**Проблема:** `ConvexProviderWithAuth` вызывает infinite loop.
+**Варианты решения:**
+- A) Кэшировать token в localStorage, передавать через custom header
+- B) Использовать Convex Auth library (labs.convex.dev/auth) вместо ручной интеграции
+- C) Оставить как есть — queries защищены на уровне org membership (не критично)
+
+### 🟢 Качество (низкий приоритет)
+
+#### 6. Error boundaries per route (~1ч)
+**Решение:** Добавить `error.tsx` в `app/(dashboard)/`, `app/(auth)/`
+
+#### 7. Optimistic updates для chat/tasks (~2ч)
+**Решение:** Использовать Convex optimistic updates для `sendMessage`, `createTask`
+
+#### 8. Split `users` таблицы (большой рефакторинг)
+**Решение:** Разделить на `users` (auth), `profiles` (data), `preferences` (settings)
+
+#### 9. Типизация `chatMessages.reactions`
+**Решение:** Добавить proper type вместо `any`
 
 ---
 
