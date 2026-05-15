@@ -251,14 +251,6 @@ export default function Navbar() {
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="text-left max-w-[100px] md:max-w-none">
-                    <p className="text-xs font-semibold text-(--text-primary) leading-tight truncate">
-                      {getInitials(user.name)}
-                    </p>
-                    <p className="text-[10px] text-(--text-muted) capitalize hidden md:block">
-                      {user.role}
-                    </p>
-                  </div>
                   <svg
                     className="w-3 h-3 text-(--text-muted) shrink-0"
                     viewBox="0 0 24 24"
