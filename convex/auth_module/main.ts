@@ -12,7 +12,7 @@ const BCRYPT_ROUNDS = 12;
  * The client sends plaintext (or client-hash), we re-hash with bcrypt.
  */
 async function hashPassword(plaintext: string): Promise<string> {
-  return bcrypt.hash(plaintext, BCRYPT_ROUNDS);
+  return bcrypt.hashSync(plaintext, BCRYPT_ROUNDS);
 }
 
 /**
@@ -22,10 +22,10 @@ async function hashPassword(plaintext: string): Promise<string> {
 async function verifyPassword(plaintext: string, hash: string): Promise<boolean> {
   // Try bcrypt first (new passwords)
   try {
-    const match = await bcrypt.compare(plaintext, hash);
+    const match = bcrypt.compareSync(plaintext, hash);
     if (match) return true;
   } catch {
-    // bcrypt.compare throws if hash is not a valid bcrypt hash (legacy users)
+    // bcrypt.compareSync throws if hash is not a valid bcrypt hash (legacy users)
   }
 
   // Fallback: direct comparison for legacy passwords (client-side SHA-256 hashes)
