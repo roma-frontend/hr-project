@@ -53,6 +53,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -82,8 +83,9 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logoutAction();
-    window.location.href = '/';
+    router.push('/');
   };
 
   const getInitials = (name: string) => {
@@ -240,7 +242,7 @@ export default function Navbar() {
             </button>
           )}
 
-          {user ? (
+          {user || isLoggingOut ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 rounded-xl px-2 py-1.5 md:px-3 md:py-2 transition-all outline-none focus-visible:outline-none focus:outline-none hover:bg-(--background-subtle)">
