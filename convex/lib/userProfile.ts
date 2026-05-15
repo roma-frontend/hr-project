@@ -46,8 +46,7 @@ export const PROFILE_FIELDS = [
 
 /**
  * Get user profile from userProfiles table.
- * If not found, lazily migrates from users table.
- * For use in queries (read-only context) — returns profile or null.
+ * If not found, falls back to reading from users table (no write in query context).
  */
 export async function getProfile(ctx: any, userId: Id<'users'>): Promise<UserProfile | null> {
   const existing = await ctx.db
@@ -56,11 +55,12 @@ export async function getProfile(ctx: any, userId: Id<'users'>): Promise<UserPro
     .first();
   if (existing) return existing;
 
-  // Lazy migration: copy from users table
+  // Fallback: read from users table (profile not yet migrated)
   const user = await ctx.db.get(userId);
   if (!user) return null;
 
-  const profileId = await ctx.db.insert('userProfiles', {
+  return {
+    _id: '' as any,
     userId,
     employeeType: user.employeeType,
     department: user.department,
@@ -77,9 +77,7 @@ export async function getProfile(ctx: any, userId: Id<'users'>): Promise<UserPro
     paidLeaveBalance: user.paidLeaveBalance,
     sickLeaveBalance: user.sickLeaveBalance,
     familyLeaveBalance: user.familyLeaveBalance,
-  });
-
-  return await ctx.db.get(profileId);
+  };
 }
 
 /**
