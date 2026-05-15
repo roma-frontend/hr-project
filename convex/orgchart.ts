@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import type { Id, Doc } from './_generated/dataModel';
 import { MAX_PAGE_SIZE } from './pagination';
 import { isSuperadmin } from './lib/auth';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET ORG CHART — full tree for an organization
@@ -36,9 +37,14 @@ export const getOrgChart = query({
 
     const userMap = new Map(users.map((u) => [u._id, u]));
 
+    // Load profiles in parallel
+    const profiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const profileMap = new Map(users.map((u, i) => [u._id, profiles[i]]));
+
     // Enrich nodes with user data
     const enrichedNodes = nodes.map((node) => {
       const userData = node.userId ? userMap.get(node.userId) : null;
+      const userProfile = node.userId ? profileMap.get(node.userId) : null;
       return {
         ...node,
         user: userData
@@ -46,11 +52,11 @@ export const getOrgChart = query({
               _id: userData._id,
               name: userData.name,
               email: userData.email,
-              position: userData.position,
-              department: userData.department,
-              avatarUrl: userData.avatarUrl,
-              phone: userData.phone,
-              supervisorId: userData.supervisorId,
+              position: userProfile?.position ?? userData.position,
+              department: userProfile?.department ?? userData.department,
+              avatarUrl: userProfile?.avatarUrl ?? userData.avatarUrl,
+              phone: userProfile?.phone ?? userData.phone,
+              supervisorId: userProfile?.supervisorId ?? userData.supervisorId,
             }
           : null,
       };

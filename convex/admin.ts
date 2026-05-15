@@ -6,6 +6,7 @@ import { requireRole } from './lib/rbac';
 import { withAuth } from './lib/withAuth';
 import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 /**
  * Get cost analysis data for admin dashboard
@@ -53,6 +54,10 @@ export const getCostAnalysis = query({
     );
     const userMap = new Map(users.map((u) => [u._id, u]));
 
+    // Load profiles in parallel
+    const profiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const profileMap = new Map(users.map((u, i) => [u._id, profiles[i]]));
+
     // Calculate costs by department
     const departmentCosts = new Map<string, number>();
     const typeCosts = new Map<string, number>();
@@ -61,16 +66,18 @@ export const getCostAnalysis = query({
     for (const leave of leaves) {
       const user = userMap.get(leave.userId);
       if (!user) continue;
+      const profile = profileMap.get(leave.userId);
 
       // Simplified cost calculation: assume average daily cost
       // In reality, you'd want to store salary information
-      const dailyCost = user.employeeType === 'contractor' ? 150 : 200; // USD per day
+      const employeeType = profile?.employeeType ?? user.employeeType;
+      const dailyCost = employeeType === 'contractor' ? 150 : 200; // USD per day
       const cost = leave.days * dailyCost;
 
       totalCost += cost;
 
       // By department
-      const dept = user.department || 'Unknown';
+      const dept = profile?.department ?? user.department ?? 'Unknown';
       departmentCosts.set(dept, (departmentCosts.get(dept) || 0) + cost);
 
       // By type
@@ -122,12 +129,17 @@ export const detectConflicts = query({
     );
     const userMap = new Map(users.map((u) => [u._id, u]));
 
+    // Load profiles in parallel
+    const dcProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const dcProfileMap = new Map(users.map((u, i) => [u._id, dcProfiles[i]]));
+
     // Group leaves by department
     const deptLeaves = new Map<string, typeof leaves>();
     for (const leave of leaves) {
       const user = userMap.get(leave.userId);
       if (!user) continue;
-      const dept = user.department || 'Unknown';
+      const profile = dcProfileMap.get(leave.userId);
+      const dept = profile?.department ?? user.department ?? 'Unknown';
       if (!deptLeaves.has(dept)) deptLeaves.set(dept, []);
       deptLeaves.get(dept)!.push(leave);
     }
@@ -144,7 +156,10 @@ export const detectConflicts = query({
 
     // OPTIMIZED: Use interval-based approach for each department
     for (const [dept, deptLeaveList] of deptLeaves.entries()) {
-      const deptUsers = users.filter((u) => (u.department || 'Unknown') === dept);
+      const deptUsers = users.filter((u) => {
+        const p = dcProfileMap.get(u._id);
+        return (p?.department ?? u.department ?? 'Unknown') === dept;
+      });
       const deptSize = deptUsers.length;
       if (deptSize === 0) continue;
 
@@ -258,9 +273,17 @@ export const getSmartSuggestions = query({
       leaves = leaves.filter((l) => l.organizationId === organizationId);
     }
 
+    // Load profiles in parallel
+    const ssProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const ssProfileMap = new Map(users.map((u, i) => [u._id, ssProfiles[i]]));
+
     // Suggestion 1: Users with high leave balances
     const highBalanceUsers = users.filter((u) => {
-      const totalBalance = u.paidLeaveBalance + u.sickLeaveBalance + u.familyLeaveBalance;
+      const p = ssProfileMap.get(u._id);
+      const totalBalance =
+        (p?.paidLeaveBalance ?? u.paidLeaveBalance) +
+        (p?.sickLeaveBalance ?? u.sickLeaveBalance) +
+        (p?.familyLeaveBalance ?? u.familyLeaveBalance);
       return totalBalance > 30; // More than 30 days total
     });
 
@@ -277,7 +300,11 @@ export const getSmartSuggestions = query({
 
     // Suggestion 2: Users with low balances
     const lowBalanceUsers = users.filter((u) => {
-      const totalBalance = u.paidLeaveBalance + u.sickLeaveBalance + u.familyLeaveBalance;
+      const p = ssProfileMap.get(u._id);
+      const totalBalance =
+        (p?.paidLeaveBalance ?? u.paidLeaveBalance) +
+        (p?.sickLeaveBalance ?? u.sickLeaveBalance) +
+        (p?.familyLeaveBalance ?? u.familyLeaveBalance);
       return totalBalance < 5; // Less than 5 days total
     });
 
@@ -298,12 +325,18 @@ export const getSmartSuggestions = query({
     for (const leave of leaves) {
       const user = userMap.get(leave.userId);
       if (user) {
-        const dept = user.department || 'Unknown';
+        const p = ssProfileMap.get(user._id);
+        const dept = p?.department ?? user.department ?? 'Unknown';
         deptLeaves.set(dept, (deptLeaves.get(dept) || 0) + 1);
       }
     }
 
-    const allDepts = new Set(users.map((u) => u.department || 'Unknown'));
+    const allDepts = new Set(
+      users.map((u) => {
+        const p = ssProfileMap.get(u._id);
+        return p?.department ?? u.department ?? 'Unknown';
+      }),
+    );
     const deptsWithoutLeaves = Array.from(allDepts).filter((d) => !deptLeaves.has(d));
 
     if (deptsWithoutLeaves.length > 0) {
@@ -320,7 +353,9 @@ export const getSmartSuggestions = query({
     // Suggestion 4: Cost optimization
     const contractorLeaves = leaves.filter((l) => {
       const user = users.find((u) => u._id === l.userId);
-      return user?.employeeType === 'contractor';
+      if (!user) return false;
+      const p = ssProfileMap.get(user._id);
+      return (p?.employeeType ?? user?.employeeType) === 'contractor';
     });
 
     if (contractorLeaves.length > 0) {
@@ -373,6 +408,10 @@ export const getCalendarExportData = query({
     );
     const userMap = new Map(users.map((u) => [u._id, u]));
 
+    // Load profiles in parallel
+    const ceProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const ceProfileMap = new Map(users.map((u, i) => [u._id, ceProfiles[i]]));
+
     // Filter by date range if provided
     let filteredLeaves = leaves;
     if (args.startDate || args.endDate) {
@@ -386,6 +425,7 @@ export const getCalendarExportData = query({
     // Format for calendar export
     return filteredLeaves.map((leave) => {
       const user = userMap.get(leave.userId);
+      const profile = ceProfileMap.get(leave.userId);
       return {
         id: leave._id,
         title: `${user?.name || 'Unknown'} - ${leave.type} leave`,
@@ -393,7 +433,7 @@ export const getCalendarExportData = query({
         endDate: leave.endDate,
         description: leave.reason,
         userName: user?.name || 'Unknown',
-        department: user?.department || 'Unknown',
+        department: profile?.department ?? user?.department ?? 'Unknown',
         type: leave.type,
       };
     });

@@ -9,6 +9,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUERIES
@@ -81,17 +82,20 @@ export const getOrgJoinRequests = query({
       ),
     ];
     const usersBatch = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+    const profilesBatch = await Promise.all(uniqueUserIds.map((id) => getProfile(ctx, id)));
     const userMap = new Map(
       usersBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
     );
+    const profileMap = new Map(uniqueUserIds.map((id, i) => [id, profilesBatch[i]]));
 
     const enriched = requests.map((req) => {
       const requester = req.userId ? userMap.get(req.userId) : null;
+      const profile = req.userId ? profileMap.get(req.userId) : null;
       return {
         ...req,
         requesterName: (requester as any)?.name || req.requestedByName,
         requesterEmail: (requester as any)?.email || req.requestedByEmail,
-        requesterAvatar: (requester as any)?.avatarUrl,
+        requesterAvatar: profile?.avatarUrl ?? (requester as any)?.avatarUrl,
       };
     });
 

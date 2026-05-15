@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import { Id } from './_generated/dataModel';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // Armenia timezone offset: UTC+4
 const ARMENIA_OFFSET_MS = 4 * 60 * 60 * 1000;
@@ -292,9 +293,10 @@ export const getCurrentlyAtWork = query({
         // Skip superadmins - they should not appear in employee attendance lists
         if (user.role === 'superadmin') return null;
 
+        const profile = await getProfile(ctx, record.userId);
         const userWithAvatar = {
           ...user,
-          avatarUrl: user.avatarUrl ?? user.faceImageUrl,
+          avatarUrl: profile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
         };
         return { ...record, user: userWithAvatar };
       }),
@@ -350,9 +352,10 @@ export const getTodayAllAttendance = query({
         // Skip superadmins - they should not appear in employee attendance lists
         if (user.role === 'superadmin') return null;
 
+        const profile = await getProfile(ctx, record.userId);
         const userWithAvatar = {
           ...user,
-          avatarUrl: user.avatarUrl ?? user.faceImageUrl,
+          avatarUrl: profile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
         };
         return { ...record, user: userWithAvatar };
       }),
@@ -515,8 +518,11 @@ export const getAllEmployeesAttendanceOverview = query({
         const punctualityRate =
           totalDays > 0 ? (((totalDays - lateDays) / totalDays) * 100).toFixed(0) : '100';
 
+        const profile = await getProfile(ctx, user._id);
+
         // Get supervisor
-        const supervisor = user.supervisorId ? await ctx.db.get(user.supervisorId) : null;
+        const supervisorId = profile?.supervisorId ?? user.supervisorId;
+        const supervisor = supervisorId ? await ctx.db.get(supervisorId) : null;
 
         // Last check in
         const lastRecord = records.sort((a, b) => b.checkInTime - a.checkInTime)[0];
@@ -525,10 +531,10 @@ export const getAllEmployeesAttendanceOverview = query({
           user: {
             _id: user._id,
             name: user.name,
-            position: user.position,
-            department: user.department,
-            avatarUrl: user.avatarUrl ?? user.faceImageUrl,
-            supervisorId: user.supervisorId,
+            position: profile?.position ?? user.position,
+            department: profile?.department ?? user.department,
+            avatarUrl: profile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
+            supervisorId,
           },
           supervisor: supervisor ? { _id: supervisor._id, name: supervisor.name } : null,
           stats: {

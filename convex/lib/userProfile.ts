@@ -25,6 +25,25 @@ export interface UserProfile {
   familyLeaveBalance?: number;
 }
 
+/** Profile field names for filtering */
+export const PROFILE_FIELDS = [
+  'employeeType',
+  'department',
+  'departmentId',
+  'position',
+  'positionId',
+  'supervisorId',
+  'phone',
+  'location',
+  'avatarUrl',
+  'dateOfBirth',
+  'presenceStatus',
+  'travelAllowance',
+  'paidLeaveBalance',
+  'sickLeaveBalance',
+  'familyLeaveBalance',
+] as const;
+
 /**
  * Get user profile from userProfiles table.
  * If not found, lazily migrates from users table.

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ============ QUERIES ============
 
@@ -33,12 +34,13 @@ export const listExpenses = query({
     const enriched = await Promise.all(
       expenses.map(async (expense) => {
         const user = await ctx.db.get(expense.userId);
+        const userProfile = await getProfile(ctx, expense.userId);
         const reviewedBy = expense.reviewedBy ? await ctx.db.get(expense.reviewedBy) : null;
         const createdBy = await ctx.db.get(expense.createdBy);
         return {
           ...expense,
           userName: user?.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
+          userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
           reviewedByName: reviewedBy?.name,
           createdByName: createdBy?.name ?? 'Unknown',
         };
@@ -73,13 +75,14 @@ export const getExpenseDetails = query({
     if (!expense) return null;
 
     const user = await ctx.db.get(expense.userId);
+    const userProfile = await getProfile(ctx, expense.userId);
     const reviewedBy = expense.reviewedBy ? await ctx.db.get(expense.reviewedBy) : null;
     const createdBy = await ctx.db.get(expense.createdBy);
 
     return {
       ...expense,
       userName: user?.name ?? 'Unknown',
-      userAvatar: user?.avatarUrl,
+      userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
       reviewedByName: reviewedBy?.name,
       createdByName: createdBy?.name ?? 'Unknown',
     };
@@ -152,11 +155,12 @@ export const listExpenseReports = query({
     const enriched = await Promise.all(
       reports.map(async (report) => {
         const user = await ctx.db.get(report.userId);
+        const userProfile = await getProfile(ctx, report.userId);
         const reviewedBy = report.reviewedBy ? await ctx.db.get(report.reviewedBy) : null;
         return {
           ...report,
           userName: user?.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
+          userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
           reviewedByName: reviewedBy?.name,
         };
       }),
@@ -187,12 +191,13 @@ export const getExpenseReportDetails = query({
     );
 
     const user = await ctx.db.get(report.userId);
+    const userProfile = await getProfile(ctx, report.userId);
     const reviewedBy = report.reviewedBy ? await ctx.db.get(report.reviewedBy) : null;
 
     return {
       ...report,
       userName: user?.name ?? 'Unknown',
-      userAvatar: user?.avatarUrl,
+      userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
       reviewedByName: reviewedBy?.name,
       expenses: expenses.filter(Boolean),
     };

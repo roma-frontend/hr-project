@@ -8,6 +8,7 @@ import { query, mutation } from './_generated/server';
 import { Id } from './_generated/dataModel';
 import { getTranslation, getUserLocale } from './translations';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─── CREATE TICKET ───────────────────────────────────────────────────────────
 export const createTicket = mutation({
@@ -189,6 +190,8 @@ export const getAllTickets = query({
         const creator = await ctx.db.get(ticket.createdBy);
         const assignee = ticket.assignedTo ? await ctx.db.get(ticket.assignedTo) : null;
         const org = ticket.organizationId ? await ctx.db.get(ticket.organizationId) : null;
+        const creatorProfile = await getProfile(ctx, ticket.createdBy);
+        const assigneeProfile = ticket.assignedTo ? await getProfile(ctx, ticket.assignedTo) : null;
 
         // Count comments
         const comments = await ctx.db
@@ -200,9 +203,9 @@ export const getAllTickets = query({
           ...ticket,
           creatorName: creator?.name || 'Unknown',
           creatorEmail: creator?.email || '',
-          creatorAvatar: creator?.avatarUrl,
+          creatorAvatar: creatorProfile?.avatarUrl ?? creator?.avatarUrl,
           assigneeName: assignee?.name || null,
-          assigneeAvatar: assignee?.avatarUrl,
+          assigneeAvatar: assigneeProfile?.avatarUrl ?? assignee?.avatarUrl,
           organizationName: org?.name || null,
           commentCount: comments.length,
           isOverdue:
@@ -225,6 +228,8 @@ export const getTicketById = query({
     const creator = await ctx.db.get(ticket.createdBy);
     const assignee = ticket.assignedTo ? await ctx.db.get(ticket.assignedTo) : null;
     const org = ticket.organizationId ? await ctx.db.get(ticket.organizationId) : null;
+    const creatorProfile = await getProfile(ctx, ticket.createdBy);
+    const assigneeProfile = ticket.assignedTo ? await getProfile(ctx, ticket.assignedTo) : null;
     const comments = await ctx.db
       .query('ticketComments')
       .withIndex('by_ticket', (q) => q.eq('ticketId', ticket._id))
@@ -233,10 +238,11 @@ export const getTicketById = query({
     const enrichedComments = await Promise.all(
       comments.map(async (comment) => {
         const author = await ctx.db.get(comment.authorId);
+        const authorProfile = await getProfile(ctx, comment.authorId);
         return {
           ...comment,
           authorName: author?.name || 'Unknown',
-          authorAvatar: author?.avatarUrl,
+          authorAvatar: authorProfile?.avatarUrl ?? author?.avatarUrl,
           authorRole: author?.role,
         };
       }),
@@ -246,9 +252,9 @@ export const getTicketById = query({
       ...ticket,
       creatorName: creator?.name || 'Unknown',
       creatorEmail: creator?.email || '',
-      creatorAvatar: creator?.avatarUrl,
+      creatorAvatar: creatorProfile?.avatarUrl ?? creator?.avatarUrl,
       assigneeName: assignee?.name || null,
-      assigneeAvatar: assignee?.avatarUrl,
+      assigneeAvatar: assigneeProfile?.avatarUrl ?? assignee?.avatarUrl,
       organizationName: org?.name || null,
       comments: enrichedComments.sort((a, b) => a.createdAt - b.createdAt),
     };

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET TODAY'S STATS FOR USER
@@ -155,8 +156,9 @@ export const getTeamPresence = query({
       users
         .filter((u) => u.isActive && u.presenceStatus && u.role !== 'superadmin')
         .map(async (u) => {
+          const profile = await getProfile(ctx, u._id);
           // Check if user has an approved leave today
-          let effectivePresenceStatus = u.presenceStatus!;
+          let effectivePresenceStatus = profile?.presenceStatus ?? u.presenceStatus!;
 
           const approvedLeaves = await ctx.db
             .query('leaveRequests')
@@ -175,9 +177,9 @@ export const getTeamPresence = query({
           return {
             _id: u._id,
             name: u.name,
-            avatarUrl: u.avatarUrl,
+            avatarUrl: profile?.avatarUrl ?? u.avatarUrl,
             presenceStatus: effectivePresenceStatus,
-            department: u.department,
+            department: profile?.department ?? u.department,
             role: u.role,
           };
         }),

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import { DEFAULT_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ============ QUERIES ============
 
@@ -25,12 +26,13 @@ export const listCompensationRecords = query({
     const enriched = await Promise.all(
       records.map(async (record) => {
         const user = await ctx.db.get(record.userId);
+        const userProfile = await getProfile(ctx, record.userId);
         const approvedBy = record.approvedBy ? await ctx.db.get(record.approvedBy) : null;
         const createdBy = await ctx.db.get(record.createdBy);
         return {
           ...record,
           userName: user?.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
+          userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
           approvedByName: approvedBy?.name,
           createdByName: createdBy?.name ?? 'Unknown',
         };
@@ -127,11 +129,12 @@ export const getReviewCycleDetails = query({
     const enrichedEntries = await Promise.all(
       entries.map(async (entry) => {
         const user = await ctx.db.get(entry.userId);
+        const userProfile = await getProfile(ctx, entry.userId);
         const reviewer = entry.reviewedBy ? await ctx.db.get(entry.reviewedBy) : null;
         return {
           ...entry,
           userName: user?.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
+          userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
           reviewerName: reviewer?.name,
         };
       }),

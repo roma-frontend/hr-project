@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 interface LeaveQuery {
   order: (direction: 'asc' | 'desc') => { take: (n: number) => Promise<Doc<'leaveRequests'>[]> };
@@ -52,13 +53,17 @@ export async function getUsersWithLeaveStatus(
 
   // Calculate effective presence status
   const result = new Map<Id<'users'>, { presenceStatus: string; hasActiveLeave: boolean }>();
+  const profileResults = await Promise.all(userIds.map((id) => getProfile(ctx as any, id)));
+  const profileMap = new Map(userIds.map((id, i) => [id, profileResults[i]]));
+
   userIds.forEach((id) => {
     const user = userMap.get(id);
+    const profile = profileMap.get(id);
     const leaves = userLeavesMap.get(id) || [];
     const hasActiveLeave = leaves.length > 0;
     const effectivePresenceStatus = hasActiveLeave
       ? 'out_of_office'
-      : (user?.presenceStatus ?? 'available');
+      : (profile?.presenceStatus ?? user?.presenceStatus ?? 'available');
 
     result.set(id, { presenceStatus: effectivePresenceStatus, hasActiveLeave });
   });
@@ -75,8 +80,10 @@ export const getUserPresenceStatus = query({
     const user = await ctx.db.get(args.userId);
     if (!user) return null;
 
+    const profile = await getProfile(ctx, args.userId);
+
     const today = new Date().toISOString().split('T')[0] || '';
-    let effectivePresenceStatus = user.presenceStatus ?? 'available';
+    let effectivePresenceStatus = profile?.presenceStatus ?? user.presenceStatus ?? 'available';
     let hasActiveLeave = false;
 
     if (today) {
@@ -98,11 +105,11 @@ export const getUserPresenceStatus = query({
     return {
       _id: user._id,
       name: user.name,
-      avatarUrl: user.avatarUrl,
+      avatarUrl: profile?.avatarUrl ?? user.avatarUrl,
       presenceStatus: effectivePresenceStatus,
       hasActiveLeave,
-      department: user.department,
-      position: user.position,
+      department: profile?.department ?? user.department,
+      position: profile?.position ?? user.position,
     };
   },
 });

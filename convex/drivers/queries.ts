@@ -8,6 +8,7 @@ import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 /** Get all available drivers - optionally scoped to organization */
 export const getAvailableDrivers = query({
@@ -38,11 +39,12 @@ export const getAvailableDrivers = query({
         // Only show if user has role 'driver'
         if (!user || user.role !== 'driver') return null;
 
+        const profile = await getProfile(ctx, driver.userId);
         return {
           ...driver,
           userName: user.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
-          userPosition: user?.position,
+          userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
+          userPosition: profile?.position ?? user?.position,
         };
       }),
     );
@@ -61,12 +63,13 @@ export const getDriverById = query({
     if (!driver) return null;
 
     const user = await ctx.db.get(driver.userId);
+    const profile = await getProfile(ctx, driver.userId);
     return {
       ...driver,
       userName: user?.name ?? 'Unknown',
-      userAvatar: user?.avatarUrl,
-      userPosition: user?.position,
-      userPhone: user?.phone,
+      userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
+      userPosition: profile?.position ?? user?.position,
+      userPhone: profile?.phone ?? user?.phone,
     };
   },
 });
@@ -85,12 +88,13 @@ export const getDriverByUserId = query({
     if (!driver) return null;
 
     const user = await ctx.db.get(driver.userId);
+    const profile = await getProfile(ctx, driver.userId);
     return {
       ...driver,
       userName: user?.name ?? 'Unknown',
-      userAvatar: user?.avatarUrl,
-      userPosition: user?.position,
-      userPhone: user?.phone,
+      userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
+      userPosition: profile?.position ?? user?.position,
+      userPhone: profile?.phone ?? user?.phone,
     };
   },
 });
@@ -115,10 +119,11 @@ export const getDriverSchedule = query({
     const enriched = await Promise.all(
       schedules.map(async (schedule) => {
         const user = schedule.userId ? await ctx.db.get(schedule.userId) : null;
+        const profile = schedule.userId ? await getProfile(ctx, schedule.userId) : null;
         return {
           ...schedule,
           userName: user?.name,
-          userAvatar: user?.avatarUrl,
+          userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
         };
       }),
     );
@@ -342,12 +347,13 @@ export const getAlternativeDrivers = query({
           return null; // Skip already booked drivers
         }
 
+        const profile = await getProfile(ctx, driver.userId);
         return {
           ...driver,
           userName: user.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
-          userPosition: user?.position,
-          userPhone: user?.phone,
+          userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
+          userPosition: profile?.position ?? user?.position,
+          userPhone: profile?.phone ?? user?.phone,
         };
       }),
     );
@@ -468,11 +474,12 @@ export const getFilteredDrivers = query({
           if (overlap) isTimeSlotFree = false;
         }
 
+        const profile = await getProfile(ctx, driver.userId);
         return {
           ...driver,
           userName: user.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
-          userPosition: user?.position,
+          userAvatar: profile?.avatarUrl ?? user?.avatarUrl,
+          userPosition: profile?.position ?? user?.position,
           withinWorkingHours,
           isTimeSlotFree,
         };

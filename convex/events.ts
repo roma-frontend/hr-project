@@ -10,6 +10,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPANY EVENTS MANAGEMENT
@@ -256,8 +257,9 @@ export const checkLeaveConflictsManual = mutation({
     const user = await ctx.db.get(userId);
     if (!user) throw new Error('User not found');
 
-    // Get department from user (not from leave request)
-    const userDepartment = user.department || '';
+    // Get department from user profile
+    const profile = await getProfile(ctx, userId);
+    const userDepartment = profile?.department ?? user.department ?? '';
 
     console.log(`[Conflict Check] User: ${user.name}, Department: ${userDepartment}`);
 
@@ -327,7 +329,8 @@ export const checkLeaveConflicts = mutation({
     const user = await ctx.db.get(userId);
     if (!user) throw new Error('User not found');
 
-    const userDepartment = user.department || '';
+    const profile = await getProfile(ctx, userId);
+    const userDepartment = profile?.department ?? user.department ?? '';
 
     // Find overlapping company events
     const events = await ctx.db

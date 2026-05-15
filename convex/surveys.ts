@@ -3,6 +3,7 @@ import { mutation, query, internalMutation } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUERIES
@@ -39,13 +40,17 @@ export const listSurveys = query({
     const creatorIds = [...new Set(surveys.map((s) => s.createdBy))];
     const creators = await Promise.all(creatorIds.map((id) => ctx.db.get(id)));
     const creatorMap = new Map(creators.filter(Boolean).map((u) => [u!._id, u!]));
+    const creatorProfiles = await Promise.all(creatorIds.map((id) => getProfile(ctx, id)));
+    const creatorProfileMap = new Map(creatorIds.map((id, i) => [id, creatorProfiles[i]]));
 
     return surveys.map((survey) => ({
       ...survey,
       creator: creatorMap.get(survey.createdBy)
         ? {
             name: creatorMap.get(survey.createdBy)!.name,
-            avatarUrl: (creatorMap.get(survey.createdBy) as any)?.avatarUrl,
+            avatarUrl:
+              creatorProfileMap.get(survey.createdBy)?.avatarUrl ??
+              (creatorMap.get(survey.createdBy) as any)?.avatarUrl,
           }
         : null,
     }));
@@ -69,11 +74,17 @@ export const getSurveyWithQuestions = query({
       .collect();
 
     const creator = await ctx.db.get(survey.createdBy);
+    const creatorProfile = await getProfile(ctx, survey.createdBy);
 
     return {
       ...survey,
       questions,
-      creator: creator ? { name: creator.name, avatarUrl: (creator as any)?.avatarUrl } : null,
+      creator: creator
+        ? {
+            name: creator.name,
+            avatarUrl: creatorProfile?.avatarUrl ?? (creator as any)?.avatarUrl,
+          }
+        : null,
     };
   },
 });
@@ -748,10 +759,14 @@ export const getSurveyResultsByDepartment = query({
       .filter((id): id is Id<'users'> => id !== undefined);
 
     const users = await Promise.all(respondentIds.map((id) => ctx.db.get(id)));
+    const profiles = await Promise.all(respondentIds.map((id) => getProfile(ctx, id)));
     const userDepartmentMap = new Map<string, string>();
-    users.forEach((user) => {
-      if (user && user.department) {
-        userDepartmentMap.set(user._id, user.department);
+    users.forEach((user, i) => {
+      if (user) {
+        const dept = profiles[i]?.department ?? user.department;
+        if (dept) {
+          userDepartmentMap.set(user._id, dept);
+        }
       }
     });
 
@@ -877,6 +892,7 @@ export const getSurveyResponses = query({
     const responseDetails = await Promise.all(
       responses.map(async (resp) => {
         const user = resp.respondentId ? await ctx.db.get(resp.respondentId) : null;
+        const profile = resp.respondentId ? await getProfile(ctx, resp.respondentId) : null;
         const answers = await ctx.db
           .query('surveyAnswers')
           .withIndex('by_response', (q) => q.eq('responseId', resp._id))
@@ -885,7 +901,11 @@ export const getSurveyResponses = query({
         return {
           responseId: resp._id,
           respondent: user
-            ? { name: user.name, email: user.email, department: user.department }
+            ? {
+                name: user.name,
+                email: user.email,
+                department: profile?.department ?? user.department,
+              }
             : null,
           submittedAt: resp.submittedAt,
           answers,
@@ -926,6 +946,7 @@ export const getSurveyExportData = query({
     const exportData = await Promise.all(
       responses.map(async (resp) => {
         const user = resp.respondentId ? await ctx.db.get(resp.respondentId) : null;
+        const profile = resp.respondentId ? await getProfile(ctx, resp.respondentId) : null;
         const answers = await ctx.db
           .query('surveyAnswers')
           .withIndex('by_response', (q) => q.eq('responseId', resp._id))
@@ -946,7 +967,7 @@ export const getSurveyExportData = query({
 
         return {
           respondent: survey.isAnonymous ? 'Anonymous' : (user?.name ?? 'Unknown'),
-          department: user?.department ?? 'Unknown',
+          department: profile?.department ?? user?.department ?? 'Unknown',
           submittedAt: new Date(resp.submittedAt).toISOString(),
           ...answerMap,
         };

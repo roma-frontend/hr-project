@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEARCH MESSAGES
@@ -33,10 +34,11 @@ export const searchMessages = query({
     return Promise.all(
       matches.map(async (m) => {
         const sender = await ctx.db.get(m.senderId);
+        const senderProfile = await getProfile(ctx, m.senderId);
         return {
           ...m,
           senderName: sender?.name ?? 'Unknown',
-          senderAvatarUrl: sender?.avatarUrl,
+          senderAvatarUrl: senderProfile?.avatarUrl ?? sender?.avatarUrl,
         };
       }),
     );

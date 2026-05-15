@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { MAX_PAGE_SIZE } from './pagination';
+import { getProfile } from './lib/userProfile';
 
 /**
  * Get user statistics - UNIFIED VERSION matching mobile
@@ -13,6 +14,8 @@ export const getUserStats = query({
       // User not found - return null instead of throwing
       return null;
     }
+
+    const profile = await getProfile(ctx, userId);
 
     // Get user's leaves
     const userLeaves = await ctx.db
@@ -60,9 +63,9 @@ export const getUserStats = query({
 
     // Calculate leave balances
     const leaveBalances = {
-      paid: (user as any).paidLeaveBalance ?? 20,
-      sick: (user as any).sickLeaveBalance ?? 10,
-      family: (user as any).familyLeaveBalance ?? 5,
+      paid: profile?.paidLeaveBalance ?? (user as any).paidLeaveBalance ?? 20,
+      sick: profile?.sickLeaveBalance ?? (user as any).sickLeaveBalance ?? 10,
+      family: profile?.familyLeaveBalance ?? (user as any).familyLeaveBalance ?? 5,
     };
 
     // Count projects from tasks
@@ -73,9 +76,9 @@ export const getUserStats = query({
     return {
       userId: user._id,
       userName: user.name,
-      department: user.department,
-      position: (user as any).position ?? 'N/A',
-      avatar: user.avatarUrl,
+      department: profile?.department ?? user.department,
+      position: profile?.position ?? (user as any).position ?? 'N/A',
+      avatar: profile?.avatarUrl ?? user.avatarUrl,
       joinDate: (user as any).createdAt,
 
       leaveStats: {

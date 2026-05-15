@@ -4,6 +4,7 @@ import { paginationOptsValidator } from 'convex/server';
 import type { Id, Doc } from '../_generated/dataModel';
 import { isSuperadmin } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─── CONVERSATIONS ────────────────────────────────────────────────────────────
 
@@ -125,7 +126,13 @@ export const getMyConversations = query({
       Array.from(groupMemberUserIds).map((id, i) => [id, groupMemberUsers[i]]),
     );
 
-    // Step 9: Build result
+    // Step 9: Load profiles for all users
+    const allProfileUserIds = new Set<Id<'users'>>([...allUserIds, ...groupMemberUserIds]);
+    const allProfileUsers = Array.from(allProfileUserIds);
+    const profiles = await Promise.all(allProfileUsers.map((id) => getProfile(ctx, id)));
+    const profileMap = new Map(allProfileUsers.map((id, i) => [id, profiles[i]]));
+
+    // Step 10: Build result
     const conversationsWithDetails = filteredConvs.map((conv, idx) => {
       const membership = dedupedMemberships[idx];
 
@@ -135,11 +142,13 @@ export const getMyConversations = query({
         const otherMember = allMembers.find((m) => m.userId !== args.userId);
         if (otherMember) {
           const otherUserData = userMap.get(otherMember.userId);
+          const otherProfile = profileMap.get(otherMember.userId);
           otherUser = {
             _id: otherMember.userId,
             name: otherUserData?.name || 'Unknown',
-            avatarUrl: otherUserData?.avatarUrl,
-            presenceStatus: otherUserData?.presenceStatus || 'available',
+            avatarUrl: otherProfile?.avatarUrl ?? otherUserData?.avatarUrl,
+            presenceStatus:
+              otherProfile?.presenceStatus ?? otherUserData?.presenceStatus ?? 'available',
           };
         }
       }
@@ -152,12 +161,13 @@ export const getMyConversations = query({
         const groupMembers = groupMembersMap.get(conv._id) || [];
         members = groupMembers.map((m) => {
           const userData = groupMemberUserMap.get(m.userId);
+          const memberProfile = profileMap.get(m.userId);
           return {
             userId: m.userId,
             user: userData
               ? {
                   name: userData.name,
-                  avatarUrl: userData.avatarUrl,
+                  avatarUrl: memberProfile?.avatarUrl ?? userData.avatarUrl,
                 }
               : null,
           };
@@ -199,7 +209,9 @@ export const getConversationMembers = query({
     return Promise.all(
       members.map(async (m) => {
         const user = await ctx.db.get(m.userId);
-        let effectivePresenceStatus = user?.presenceStatus ?? 'available';
+        const profile = await getProfile(ctx, m.userId);
+        let effectivePresenceStatus =
+          profile?.presenceStatus ?? user?.presenceStatus ?? 'available';
 
         // Check if user has an approved leave today
         if (user && today) {
@@ -224,10 +236,10 @@ export const getConversationMembers = query({
             ? {
                 _id: user._id,
                 name: user.name,
-                avatarUrl: user.avatarUrl,
+                avatarUrl: profile?.avatarUrl ?? user.avatarUrl,
                 presenceStatus: effectivePresenceStatus,
-                department: user.department,
-                position: user.position,
+                department: profile?.department ?? user.department,
+                position: profile?.position ?? user.position,
               }
             : null,
         };
@@ -272,6 +284,7 @@ export const getMessages = query({
         if (deletedForUsers.includes(args.userId)) return null;
 
         const sender = await ctx.db.get(msg.senderId);
+        const senderProfile = await getProfile(ctx, msg.senderId);
         return {
           ...msg,
           readBy: (msg.readBy as Array<{ userId: Id<'users'>; readAt: number }> | undefined) ?? [],
@@ -279,7 +292,7 @@ export const getMessages = query({
             ? {
                 _id: sender._id,
                 name: sender.name,
-                avatarUrl: sender.avatarUrl,
+                avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl,
               }
             : null,
         };
@@ -322,11 +335,16 @@ export const listMessagesPaginated = query({
         if (deletedForUsers.includes(userId)) return null;
 
         const sender = await ctx.db.get(msg.senderId);
+        const senderProfile = await getProfile(ctx, msg.senderId);
         return {
           ...msg,
           readBy: (msg.readBy as Array<{ userId: Id<'users'>; readAt: number }> | undefined) ?? [],
           sender: sender
-            ? { _id: sender._id, name: sender.name, avatarUrl: sender.avatarUrl }
+            ? {
+                _id: sender._id,
+                name: sender.name,
+                avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl,
+              }
             : null,
         };
       }),
@@ -425,9 +443,12 @@ export const getPinnedMessages = query({
     return Promise.all(
       messages.map(async (msg) => {
         const sender = await ctx.db.get(msg.senderId);
+        const senderProfile = await getProfile(ctx, msg.senderId);
         return {
           ...msg,
-          sender: sender ? { name: sender.name, avatarUrl: sender.avatarUrl } : null,
+          sender: sender
+            ? { name: sender.name, avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl }
+            : null,
         };
       }),
     );
@@ -446,10 +467,15 @@ export const getThreadReplies = query({
     return Promise.all(
       replies.map(async (r) => {
         const sender = await ctx.db.get(r.senderId);
+        const senderProfile = await getProfile(ctx, r.senderId);
         return {
           ...r,
           sender: sender
-            ? { _id: sender._id, name: sender.name, avatarUrl: sender.avatarUrl }
+            ? {
+                _id: sender._id,
+                name: sender.name,
+                avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl,
+              }
             : null,
         };
       }),
@@ -616,8 +642,9 @@ export const getOrgUsers = query({
             u.role !== 'superadmin',
         )
         .map(async (u) => {
+          const profile = await getProfile(ctx, u._id);
           // Check if user has an approved leave today
-          let effectivePresenceStatus = u.presenceStatus ?? 'available';
+          let effectivePresenceStatus = profile?.presenceStatus ?? u.presenceStatus ?? 'available';
 
           const approvedLeaves = await ctx.db
             .query('leaveRequests')
@@ -636,9 +663,9 @@ export const getOrgUsers = query({
           return {
             _id: u._id,
             name: u.name,
-            avatarUrl: u.avatarUrl,
-            department: u.department,
-            position: u.position,
+            avatarUrl: profile?.avatarUrl ?? u.avatarUrl,
+            department: profile?.department ?? u.department,
+            position: profile?.position ?? u.position,
             presenceStatus: effectivePresenceStatus,
             organizationId: u.organizationId,
           };

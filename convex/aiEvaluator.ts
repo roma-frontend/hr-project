@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ── Calculate Employee Score ──────────────────────────────────────────────
 export const calculateEmployeeScore = query({
@@ -9,6 +10,8 @@ export const calculateEmployeeScore = query({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) return null;
+
+    const profile = await getProfile(ctx, args.userId);
 
     // Get performance metrics
     const metrics = await ctx.db
@@ -51,7 +54,12 @@ export const calculateEmployeeScore = query({
         : 50;
     const attendanceScore = calculateAttendanceScore(metrics, leaves, timeRecords);
     const behaviorScore = calculateBehaviorScore(notes);
-    const leaveHistoryScore = calculateLeaveHistoryScore(leaves, user);
+    const leaveHistoryScore = calculateLeaveHistoryScore(leaves, {
+      ...user,
+      paidLeaveBalance: profile?.paidLeaveBalance ?? user.paidLeaveBalance,
+      sickLeaveBalance: profile?.sickLeaveBalance ?? user.sickLeaveBalance,
+      familyLeaveBalance: profile?.familyLeaveBalance ?? user.familyLeaveBalance,
+    });
     const supervisorScore = latestRating ? Math.round(latestRating.overallRating * 20) : null;
 
     // If supervisor has rated — include it in score (replaces behavior weight)
@@ -95,6 +103,8 @@ export const evaluateLeaveRequest = query({
     const user = await ctx.db.get(leave.userId);
     if (!user) return null;
 
+    const profile = await getProfile(ctx, leave.userId);
+
     // Get employee data
     const metrics = await ctx.db
       .query('performanceMetrics')
@@ -127,7 +137,11 @@ export const evaluateLeaveRequest = query({
     const performanceScore = metrics ? calculatePerformanceScore(metrics) : 50;
     const attendanceScore = calculateAttendanceScore(metrics, allLeaves);
     const behaviorScore = calculateBehaviorScore(notes);
-    const leaveHistoryScore = calculateLeaveHistoryScore(allLeaves, user);
+    const leaveHistoryScore = calculateLeaveHistoryScore(allLeaves, {
+      ...user,
+      paidLeaveBalance: profile?.paidLeaveBalance ?? user.paidLeaveBalance,
+      sickLeaveBalance: profile?.sickLeaveBalance ?? user.sickLeaveBalance,
+    });
     const workloadScore = calculateWorkloadScore(overlappingLeaves);
 
     const eligibilityScore = Math.round(

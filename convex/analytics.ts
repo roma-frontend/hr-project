@@ -2,6 +2,7 @@ import { query } from './_generated/server';
 import { v } from 'convex/values';
 import { isSuperadminEmail } from './lib/auth';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ── Get analytics overview ─────────────────────────────────────────────────
 export const getAnalyticsOverview = query({
@@ -48,9 +49,13 @@ export const getAnalyticsOverview = query({
         : 0;
 
     // Department breakdown (excluding superadmin)
+    const aoProfiles = await Promise.all(filteredUsers.map((u) => getProfile(ctx, u._id)));
+    const aoProfileMap = new Map(filteredUsers.map((u, i) => [u._id, aoProfiles[i]]));
+
     const departments = filteredUsers.reduce(
       (acc, user) => {
-        const dept = user.department || 'Unassigned';
+        const p = aoProfileMap.get(user._id);
+        const dept = p?.department ?? user.department ?? 'Unassigned';
         acc[dept] = (acc[dept] || 0) + 1;
         return acc;
       },
@@ -96,9 +101,14 @@ export const getDepartmentStats = query({
     // Exclude superadmin from employee count
     users = users.filter((u) => u.role !== 'superadmin');
 
+    // Load profiles in parallel
+    const dsProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
+    const dsProfileMap = new Map(users.map((u, i) => [u._id, dsProfiles[i]]));
+
     const stats = users.reduce(
       (acc, user) => {
-        const dept = user.department || 'Unassigned';
+        const p = dsProfileMap.get(user._id);
+        const dept = p?.department ?? user.department ?? 'Unassigned';
         if (!acc[dept]) {
           acc[dept] = {
             department: dept,
@@ -112,9 +122,9 @@ export const getDepartmentStats = query({
           };
         }
         acc[dept]!.employees += 1;
-        acc[dept]!.totalPaidLeave += user.paidLeaveBalance;
-        acc[dept]!.totalSickLeave += user.sickLeaveBalance;
-        acc[dept]!.totalFamilyLeave += user.familyLeaveBalance;
+        acc[dept]!.totalPaidLeave += p?.paidLeaveBalance ?? user.paidLeaveBalance;
+        acc[dept]!.totalSickLeave += p?.sickLeaveBalance ?? user.sickLeaveBalance;
+        acc[dept]!.totalFamilyLeave += p?.familyLeaveBalance ?? user.familyLeaveBalance;
         return acc;
       },
       {} as Record<
@@ -258,10 +268,11 @@ export const getTeamCalendar = query({
     const enrichedLeaves = await Promise.all(
       upcomingLeaves.map(async (leave) => {
         const user = await ctx.db.get(leave.userId);
+        const profile = await getProfile(ctx, leave.userId);
         return {
           ...leave,
           userName: user?.name || 'Unknown',
-          userDepartment: user?.department,
+          userDepartment: profile?.department ?? user?.department,
         };
       }),
     );
@@ -380,8 +391,13 @@ export const getRecentLeaves = query({
     const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
     const userMap = new Map(users.map((u) => [u?._id, u]));
 
+    // Load profiles in parallel
+    const rlProfiles = await Promise.all(userIds.map((id) => getProfile(ctx, id)));
+    const rlProfileMap = new Map(userIds.map((id, i) => [id, rlProfiles[i]]));
+
     return leaves.map((l) => {
       const user = userMap.get(l.userId);
+      const profile = rlProfileMap.get(l.userId);
       return {
         _id: l._id,
         _creationTime: l._creationTime,
@@ -397,7 +413,7 @@ export const getRecentLeaves = query({
         organizationId: l.organizationId,
         userName: user?.name ?? 'Unknown',
         userEmail: user?.email ?? '',
-        userDepartment: user?.department ?? '',
+        userDepartment: profile?.department ?? user?.department ?? '',
       };
     });
   },

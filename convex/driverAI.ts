@@ -12,6 +12,7 @@ import { query } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
 import type { Id, Doc } from './_generated/dataModel';
 import type { QueryCtx } from './_generated/server';
+import { getProfile } from './lib/userProfile';
 
 // Types for AI responses
 interface DriverAvailability {
@@ -79,6 +80,7 @@ export const queryDriverAvailability = query({
     const enrichedDrivers = await Promise.all(
       drivers.map(async (driver) => {
         const user = await ctx.db.get(driver.userId);
+        const userProfile = await getProfile(ctx, driver.userId);
 
         // Check availability for the requested time range
         const timeRange = intent.timeRange || { start: now, end: now + 24 * 60 * 60 * 1000 };
@@ -93,9 +95,9 @@ export const queryDriverAvailability = query({
         return {
           ...driver,
           userName: user?.name ?? 'Unknown',
-          userAvatar: user?.avatarUrl,
-          userPhone: user?.phone,
-          userPosition: user?.position,
+          userAvatar: userProfile?.avatarUrl ?? user?.avatarUrl,
+          userPhone: userProfile?.phone ?? user?.phone,
+          userPosition: userProfile?.position ?? user?.position,
           availability,
         };
       }),

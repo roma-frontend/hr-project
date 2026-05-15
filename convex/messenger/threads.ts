@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEND THREAD REPLY
@@ -65,10 +66,11 @@ export const getThreadReplies = query({
         .filter((r) => !r.isDeleted)
         .map(async (r) => {
           const sender = await ctx.db.get(r.senderId);
+          const senderProfile = await getProfile(ctx, r.senderId);
           return {
             ...r,
             senderName: sender?.name ?? 'Unknown',
-            senderAvatarUrl: sender?.avatarUrl,
+            senderAvatarUrl: senderProfile?.avatarUrl ?? sender?.avatarUrl,
           };
         }),
     );
@@ -111,10 +113,11 @@ export const getPinnedMessages = query({
         .filter((m) => !m.isDeleted)
         .map(async (msg) => {
           const sender = await ctx.db.get(msg.senderId);
+          const senderProfile = await getProfile(ctx, msg.senderId);
           return {
             ...msg,
             senderName: sender?.name ?? 'Unknown',
-            senderAvatarUrl: sender?.avatarUrl,
+            senderAvatarUrl: senderProfile?.avatarUrl ?? sender?.avatarUrl,
           };
         }),
     );

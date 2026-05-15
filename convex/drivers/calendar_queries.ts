@@ -7,6 +7,7 @@
 import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 /** Check calendar access permission */
 export const checkCalendarAccess = query({
@@ -53,11 +54,12 @@ export const getCalendarAccessList = query({
     const enriched = await Promise.all(
       accesses.map(async (access) => {
         const viewer = await ctx.db.get(access.viewerId);
+        const viewerProfile = await getProfile(ctx, access.viewerId);
         return {
           ...access,
           viewerName: viewer?.name,
-          viewerAvatar: viewer?.avatarUrl,
-          viewerPosition: viewer?.position,
+          viewerAvatar: viewerProfile?.avatarUrl ?? viewer?.avatarUrl,
+          viewerPosition: viewerProfile?.position ?? viewer?.position,
         };
       }),
     );

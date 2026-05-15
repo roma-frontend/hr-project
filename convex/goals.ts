@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { query, mutation, internalMutation } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // Helper: compute KR completion percentage respecting direction
 function computeKRProgress(
@@ -73,6 +74,7 @@ export const listObjectives = query({
     const enriched = await Promise.all(
       objectives.map(async (obj) => {
         const owner = await ctx.db.get(obj.ownerId);
+        const ownerProfile = await getProfile(ctx, obj.ownerId);
         const krs = await ctx.db
           .query('keyResults')
           .withIndex('by_objective', (q) => q.eq('objectiveId', obj._id))
@@ -80,7 +82,7 @@ export const listObjectives = query({
         return {
           ...obj,
           ownerName: owner?.name ?? 'Unknown',
-          ownerAvatar: owner?.avatarUrl,
+          ownerAvatar: ownerProfile?.avatarUrl ?? owner?.avatarUrl,
           keyResultsCount: krs.length,
           keyResults: krs,
         };
@@ -98,6 +100,7 @@ export const getObjective = query({
     if (!obj) return null;
 
     const owner = await ctx.db.get(obj.ownerId);
+    const ownerProfile = await getProfile(ctx, obj.ownerId);
     const krs = await ctx.db
       .query('keyResults')
       .withIndex('by_objective_order', (q) => q.eq('objectiveId', objectiveId))
@@ -134,7 +137,7 @@ export const getObjective = query({
     return {
       ...obj,
       ownerName: owner?.name ?? 'Unknown',
-      ownerAvatar: owner?.avatarUrl,
+      ownerAvatar: ownerProfile?.avatarUrl ?? owner?.avatarUrl,
       keyResults: krsWithCheckins,
       children,
     };

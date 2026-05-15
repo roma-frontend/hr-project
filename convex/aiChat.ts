@@ -7,6 +7,7 @@ import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 export const getConversations = query({
   args: { userId: v.id('users') },
@@ -75,6 +76,8 @@ export const getFullContext = query({
     const user = await ctx.db.get(args.userId);
     if (!user) throw new Error('User not found');
 
+    const profile = await getProfile(ctx, args.userId);
+
     // Get organization
     const org = user.organizationId ? await ctx.db.get(user.organizationId) : null;
 
@@ -111,7 +114,7 @@ export const getFullContext = query({
         name: user.name,
         email: user.email,
         role: user.role,
-        department: user.department,
+        department: profile?.department ?? user.department,
       },
       organization: org
         ? {

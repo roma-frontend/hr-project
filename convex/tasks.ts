@@ -6,6 +6,7 @@ import type { MutationCtx } from './_generated/server';
 import { isSuperadmin } from './lib/auth';
 import { withAuth } from './lib/withAuth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 /**
  * Helper to batch load users and enrich task data
@@ -46,24 +47,36 @@ async function enrichTasksWithUserData(ctx: any, tasks: any[]) {
   );
   const commentAuthorMap = new Map(commentAuthors.map((a: any) => [a?._id, a]));
 
+  // Batch load profiles for all users
+  const profiles = await Promise.all(allUserIds.map((id: Id<'users'>) => getProfile(ctx, id)));
+  const profileMap = new Map(profiles.filter(Boolean).map((p) => [p!.userId, p!]));
+
   // Enrich tasks
   return tasks.map((task) => {
     const assignedTo = userMap.get(task.assignedTo);
     const assignedBy = userMap.get(task.assignedBy);
     const taskComments = commentsByTask.get(task._id) || [];
+    const assignedToProfile = assignedTo ? profileMap.get(assignedTo._id) : undefined;
+    const assignedByProfile = assignedBy ? profileMap.get(assignedBy._id) : undefined;
 
     return {
       ...task,
       assignedToUser: assignedTo
         ? {
             ...assignedTo,
-            avatarUrl: assignedTo.avatarUrl ?? assignedTo.faceImageUrl,
+            department: assignedToProfile?.department ?? assignedTo.department,
+            position: assignedToProfile?.position ?? assignedTo.position,
+            avatarUrl:
+              assignedToProfile?.avatarUrl ?? assignedTo.avatarUrl ?? assignedTo.faceImageUrl,
           }
         : null,
       assignedByUser: assignedBy
         ? {
             ...assignedBy,
-            avatarUrl: assignedBy.avatarUrl ?? assignedBy.faceImageUrl,
+            department: assignedByProfile?.department ?? assignedBy.department,
+            position: assignedByProfile?.position ?? assignedBy.position,
+            avatarUrl:
+              assignedByProfile?.avatarUrl ?? assignedBy.avatarUrl ?? assignedBy.faceImageUrl,
           }
         : null,
       comments: taskComments.map((c) => ({
@@ -462,10 +475,14 @@ export const getMyEmployees = query({
       .query('users')
       .withIndex('by_supervisor', (q) => q.eq('supervisorId', args.supervisorId))
       .collect();
-    return employees.map((e) => ({
-      ...e,
-      avatarUrl: e.avatarUrl ?? e.faceImageUrl,
-    }));
+    const empProfiles = await Promise.all(employees.map((e) => getProfile(ctx, e._id)));
+    return employees.map((e, i) => {
+      const profile = empProfiles[i];
+      return {
+        ...e,
+        avatarUrl: profile?.avatarUrl ?? e.avatarUrl ?? e.faceImageUrl,
+      };
+    });
   },
 });
 
@@ -494,25 +511,30 @@ export const getUsersForAssignment = query({
 
     // Return all active users (employees, supervisors, admins, AND drivers)
     // Anyone in the organization can be assigned a task
-    return users
-      .filter(
-        (u) =>
-          u.isActive !== false &&
-          u.isApproved !== false &&
-          (u.role === 'employee' ||
-            u.role === 'supervisor' ||
-            u.role === 'admin' ||
-            u.role === 'driver'),
-      )
-      .map((u) => ({
+    const activeUsers = users.filter(
+      (u) =>
+        u.isActive !== false &&
+        u.isApproved !== false &&
+        (u.role === 'employee' ||
+          u.role === 'supervisor' ||
+          u.role === 'admin' ||
+          u.role === 'driver'),
+    );
+
+    const userProfiles = await Promise.all(activeUsers.map((u) => getProfile(ctx, u._id)));
+
+    return activeUsers.map((u, i) => {
+      const profile = userProfiles[i];
+      return {
         _id: u._id,
         name: u.name,
-        position: u.position,
-        department: u.department,
-        avatarUrl: u.avatarUrl ?? u.faceImageUrl,
+        position: profile?.position ?? u.position,
+        department: profile?.department ?? u.department,
+        avatarUrl: profile?.avatarUrl ?? u.avatarUrl ?? u.faceImageUrl,
         supervisorId: u.supervisorId,
         role: u.role,
-      }));
+      };
+    });
   },
 });
 
@@ -550,16 +572,21 @@ export const getSupervisors = query({
       admins.length,
     );
 
-    return [...supervisors, ...admins]
-      .filter((u) => u.isActive && u.isApproved)
-      .map((u) => ({
+    const activeSupervisors = [...supervisors, ...admins].filter((u) => u.isActive && u.isApproved);
+
+    const supProfiles = await Promise.all(activeSupervisors.map((u) => getProfile(ctx, u._id)));
+
+    return activeSupervisors.map((u, i) => {
+      const profile = supProfiles[i];
+      return {
         _id: u._id,
         name: u.name,
         role: u.role,
-        position: u.position,
-        department: u.department,
-        avatarUrl: u.avatarUrl ?? u.faceImageUrl,
-      }));
+        position: profile?.position ?? u.position,
+        department: profile?.department ?? u.department,
+        avatarUrl: profile?.avatarUrl ?? u.avatarUrl ?? u.faceImageUrl,
+      };
+    });
   },
 });
 
@@ -705,6 +732,10 @@ export const getTask = query({
     const assignedTo = await ctx.db.get(task.assignedTo);
     const assignedBy = await ctx.db.get(task.assignedBy);
 
+    // Load profiles
+    const assignedToProfile = assignedTo ? await getProfile(ctx, assignedTo._id) : null;
+    const assignedByProfile = assignedBy ? await getProfile(ctx, assignedBy._id) : null;
+
     // Load comments
     const comments = await ctx.db
       .query('taskComments')
@@ -720,13 +751,19 @@ export const getTask = query({
       assignedToUser: assignedTo
         ? {
             ...assignedTo,
-            avatarUrl: assignedTo.avatarUrl ?? assignedTo.faceImageUrl,
+            department: assignedToProfile?.department ?? assignedTo.department,
+            position: assignedToProfile?.position ?? assignedTo.position,
+            avatarUrl:
+              assignedToProfile?.avatarUrl ?? assignedTo.avatarUrl ?? assignedTo.faceImageUrl,
           }
         : null,
       assignedByUser: assignedBy
         ? {
             ...assignedBy,
-            avatarUrl: assignedBy.avatarUrl ?? assignedBy.faceImageUrl,
+            department: assignedByProfile?.department ?? assignedBy.department,
+            position: assignedByProfile?.position ?? assignedBy.position,
+            avatarUrl:
+              assignedByProfile?.avatarUrl ?? assignedBy.avatarUrl ?? assignedBy.faceImageUrl,
           }
         : null,
       comments: comments.map((c) => ({

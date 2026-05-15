@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QUERIES
@@ -32,27 +33,37 @@ export const getKudosFeed = query({
     const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
     const userMap = new Map(users.filter(Boolean).map((u) => [u!._id, u!]));
 
-    return kudos.map((kudo) => ({
-      ...kudo,
-      sender: userMap.get(kudo.senderId)
-        ? {
-            _id: userMap.get(kudo.senderId)!._id,
-            name: userMap.get(kudo.senderId)!.name,
-            avatarUrl: userMap.get(kudo.senderId)!.avatarUrl,
-            position: userMap.get(kudo.senderId)!.position,
-            department: userMap.get(kudo.senderId)!.department,
-          }
-        : null,
-      receiver: userMap.get(kudo.receiverId)
-        ? {
-            _id: userMap.get(kudo.receiverId)!._id,
-            name: userMap.get(kudo.receiverId)!.name,
-            avatarUrl: userMap.get(kudo.receiverId)!.avatarUrl,
-            position: userMap.get(kudo.receiverId)!.position,
-            department: userMap.get(kudo.receiverId)!.department,
-          }
-        : null,
-    }));
+    // Batch load profiles
+    const userProfiles = await Promise.all(userIds.map((id) => getProfile(ctx, id)));
+    const profileMap = new Map(userProfiles.filter(Boolean).map((p) => [p!.userId, p!]));
+
+    return kudos.map((kudo) => {
+      const sender = userMap.get(kudo.senderId);
+      const senderProfile = profileMap.get(kudo.senderId);
+      const receiver = userMap.get(kudo.receiverId);
+      const receiverProfile = profileMap.get(kudo.receiverId);
+      return {
+        ...kudo,
+        sender: sender
+          ? {
+              _id: sender._id,
+              name: sender.name,
+              avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl,
+              position: senderProfile?.position ?? sender.position,
+              department: senderProfile?.department ?? sender.department,
+            }
+          : null,
+        receiver: receiver
+          ? {
+              _id: receiver._id,
+              name: receiver.name,
+              avatarUrl: receiverProfile?.avatarUrl ?? receiver.avatarUrl,
+              position: receiverProfile?.position ?? receiver.position,
+              department: receiverProfile?.department ?? receiver.department,
+            }
+          : null,
+      };
+    });
   },
 });
 
@@ -178,16 +189,18 @@ export const getLeaderboard = query({
 
     // Batch load users
     const users = await Promise.all(sorted.map(([id]) => ctx.db.get(id)));
+    const leaderProfiles = await Promise.all(sorted.map(([id]) => getProfile(ctx, id)));
 
     return sorted.map(([userId, count], index) => {
       const user = users[index];
+      const profile = leaderProfiles[index];
       return {
         userId,
         count,
         name: user?.name ?? 'Unknown',
-        avatarUrl: user?.avatarUrl,
-        position: user?.position,
-        department: user?.department,
+        avatarUrl: profile?.avatarUrl ?? user?.avatarUrl,
+        position: profile?.position ?? user?.position,
+        department: profile?.department ?? user?.department,
       };
     });
   },
@@ -771,6 +784,8 @@ export const getKudoById = query({
 
     const sender = await ctx.db.get(kudo.senderId);
     const receiver = await ctx.db.get(kudo.receiverId);
+    const senderProfile = sender ? await getProfile(ctx, sender._id) : null;
+    const receiverProfile = receiver ? await getProfile(ctx, receiver._id) : null;
 
     return {
       ...kudo,
@@ -778,18 +793,18 @@ export const getKudoById = query({
         ? {
             _id: sender._id,
             name: sender.name,
-            avatarUrl: sender.avatarUrl ?? sender.faceImageUrl,
-            position: sender.position,
-            department: sender.department,
+            avatarUrl: senderProfile?.avatarUrl ?? sender.avatarUrl ?? sender.faceImageUrl,
+            position: senderProfile?.position ?? sender.position,
+            department: senderProfile?.department ?? sender.department,
           }
         : null,
       receiver: receiver
         ? {
             _id: receiver._id,
             name: receiver.name,
-            avatarUrl: receiver.avatarUrl ?? receiver.faceImageUrl,
-            position: receiver.position,
-            department: receiver.department,
+            avatarUrl: receiverProfile?.avatarUrl ?? receiver.avatarUrl ?? receiver.faceImageUrl,
+            position: receiverProfile?.position ?? receiver.position,
+            department: receiverProfile?.department ?? receiver.department,
           }
         : null,
     };

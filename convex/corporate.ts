@@ -13,6 +13,7 @@ import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MANAGER APPROVAL WORKFLOW
@@ -189,11 +190,12 @@ export const getPendingApprovals = query({
     const enriched = await Promise.all(
       requests.map(async (request) => {
         const requester = await ctx.db.get(request.requesterId);
+        const requesterProfile = await getProfile(ctx, request.requesterId);
         return {
           ...request,
           requesterName: requester?.name,
           requesterEmail: requester?.email,
-          requesterDepartment: requester?.department,
+          requesterDepartment: requesterProfile?.department ?? requester?.department,
         };
       }),
     );
@@ -397,7 +399,9 @@ export const autoAssignDriver = mutation({
       status: 'scheduled',
       tripInfo: {
         ...request.tripInfo,
-        passengerPhone: (await ctx.db.get(request.requesterId))?.phone,
+        passengerPhone:
+          (await getProfile(ctx, request.requesterId))?.phone ??
+          (await ctx.db.get(request.requesterId))?.phone,
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),

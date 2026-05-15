@@ -3,6 +3,7 @@ import { query } from '../_generated/server';
 import { requireOrgAdmin, requireOrgSupervisor, requireUser } from '../lib/rbac';
 import { isSuperadminEmail } from '../lib/auth';
 import { DEFAULT_LIST_CAP } from '../lib/limits';
+import { getProfile } from '../lib/userProfile';
 
 export const getDashboardStats = query({
   args: {
@@ -104,6 +105,7 @@ export const getPayrollRecords = query({
     const enriched = await Promise.all(
       records.map(async (record) => {
         const user = await ctx.db.get(record.userId);
+        const userProfile = await getProfile(ctx, record.userId);
         const run = record.payrollRunId ? await ctx.db.get(record.payrollRunId) : null;
 
         return {
@@ -112,7 +114,7 @@ export const getPayrollRecords = query({
             ? {
                 name: user.name,
                 email: user.email,
-                avatarUrl: user.avatarUrl ?? user.faceImageUrl,
+                avatarUrl: userProfile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
               }
             : null,
           run: run
@@ -202,13 +204,14 @@ export const getPayrollRunById = query({
     const enrichedRecords = await Promise.all(
       records.map(async (record) => {
         const user = await ctx.db.get(record.userId);
+        const userProfile = await getProfile(ctx, record.userId);
         return {
           ...record,
           user: user
             ? {
                 name: user.name,
                 email: user.email,
-                avatarUrl: user.avatarUrl ?? user.faceImageUrl,
+                avatarUrl: userProfile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
               }
             : null,
         };
@@ -332,6 +335,7 @@ export const getPayrollRecordById = query({
     }
 
     const user = await ctx.db.get(record.userId);
+    const userProfile = await getProfile(ctx, record.userId);
     const run = record.payrollRunId ? await ctx.db.get(record.payrollRunId) : null;
 
     const payslip = await ctx.db
@@ -345,7 +349,7 @@ export const getPayrollRecordById = query({
         ? {
             name: user.name,
             email: user.email,
-            avatarUrl: user.avatarUrl ?? user.faceImageUrl,
+            avatarUrl: userProfile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
           }
         : null,
       run,

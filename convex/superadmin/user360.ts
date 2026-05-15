@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query } from '../_generated/server';
 import { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─── USER 360 PROFILE ────────────────────────────────────────────────────────
 /**
@@ -110,10 +111,11 @@ export const getUser360 = query({
       driverRequests.map(async (req) => {
         const driver = await ctx.db.get(req.driverId);
         const driverUser = driver ? await ctx.db.get(driver.userId) : null;
+        const driverProfile = driver ? await getProfile(ctx, driver.userId) : null;
         return {
           ...req,
           driverName: driverUser?.name || null,
-          driverPhone: driverUser?.phone || null,
+          driverPhone: (driverProfile?.phone ?? driverUser?.phone) || null,
         };
       }),
     );

@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ── Helper: Calculate response time in hours ──────────────────────────────
 function calculateResponseTime(
@@ -332,9 +333,11 @@ export const getPendingWithSLA = query({
     // Batch-load all unique user IDs upfront to avoid N+1 queries
     const uniqueUserIds = [...new Set(pendingLeaves.map((l) => l.userId))];
     const usersBatch = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+    const profilesBatch = await Promise.all(uniqueUserIds.map((id) => getProfile(ctx, id)));
     const userMap = new Map(
       usersBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
     );
+    const profileMap = new Map(uniqueUserIds.map((id, i) => [id, profilesBatch[i]]));
 
     // Batch-load all SLA metrics for the pending leaves
     const allMetrics = await ctx.db.query('slaMetrics').take(XLARGE_LIST_CAP);
@@ -342,6 +345,7 @@ export const getPendingWithSLA = query({
 
     return pendingLeaves.map((leave) => {
       const user = userMap.get(leave.userId);
+      const profile = profileMap.get(leave.userId);
       const metric = metricsByLeave.get(leave._id);
 
       const elapsedHours = (now - leave.createdAt) / (1000 * 60 * 60);
@@ -364,8 +368,8 @@ export const getPendingWithSLA = query({
         ...leave,
         userName: user?.name ?? 'Unknown',
         userEmail: user?.email ?? '',
-        userDepartment: user?.department ?? '',
-        userAvatarUrl: user?.avatarUrl,
+        userDepartment: profile?.department ?? user?.department ?? '',
+        userAvatarUrl: profile?.avatarUrl ?? user?.avatarUrl,
         sla: {
           elapsedHours: Math.round(elapsedHours * 10) / 10,
           remainingHours: Math.round(remainingHours * 10) / 10,

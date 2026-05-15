@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { isSuperadmin, requireAuthUser } from '../lib/auth';
+import { getProfile } from '../lib/userProfile';
 
 // ── Employee limits by plan ──────────────────────────────────────────────────
 const PLAN_EMPLOYEE_LIMITS: Record<string, number> = {
@@ -322,25 +323,32 @@ export const getOrgMembers = query({
     // Filter out superadmins (should never be in org, but just in case)
     const filteredMembers = members.filter((m) => !isSuperadmin(m));
 
-    return filteredMembers.map((m) => ({
-      _id: m._id,
-      name: m.name,
-      email: m.email,
-      role: m.role,
-      isActive: m.isActive,
-      isApproved: m.isApproved,
-      department: m.department,
-      position: m.position,
-      avatarUrl: m.avatarUrl,
-      createdAt: m.createdAt,
-      supervisorId: m.supervisorId,
-      employeeType: m.employeeType,
-      phone: m.phone,
-      travelAllowance: m.travelAllowance,
-      paidLeaveBalance: m.paidLeaveBalance,
-      sickLeaveBalance: m.sickLeaveBalance,
-      familyLeaveBalance: m.familyLeaveBalance,
-    }));
+    // Load profiles in parallel for O(1) lookup
+    const profiles = await Promise.all(filteredMembers.map((m) => getProfile(ctx, m._id)));
+    const profileMap = new Map(filteredMembers.map((m, i) => [m._id, profiles[i]]));
+
+    return filteredMembers.map((m) => {
+      const profile = profileMap.get(m._id);
+      return {
+        _id: m._id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        isActive: m.isActive,
+        isApproved: m.isApproved,
+        department: profile?.department ?? m.department,
+        position: profile?.position ?? m.position,
+        avatarUrl: profile?.avatarUrl ?? m.avatarUrl,
+        createdAt: m.createdAt,
+        supervisorId: profile?.supervisorId ?? m.supervisorId,
+        employeeType: profile?.employeeType ?? m.employeeType,
+        phone: profile?.phone ?? m.phone,
+        travelAllowance: profile?.travelAllowance ?? m.travelAllowance,
+        paidLeaveBalance: profile?.paidLeaveBalance ?? m.paidLeaveBalance,
+        sickLeaveBalance: profile?.sickLeaveBalance ?? m.sickLeaveBalance,
+        familyLeaveBalance: profile?.familyLeaveBalance ?? m.familyLeaveBalance,
+      };
+    });
   },
 });
 

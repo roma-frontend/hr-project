@@ -17,6 +17,7 @@ import { v } from 'convex/values';
 import { mutation, query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -146,7 +147,8 @@ export const checkConflictsForRequest = query({
       const user = await ctx.db.get(args.userId);
       if (!user) return { conflicts: [], hasCritical: false };
 
-      const userDepartment = user.department || '';
+      const profile = await getProfile(ctx, args.userId);
+      const userDepartment = (profile?.department ?? user.department) || '';
 
       // 1. Проверка мероприятий
       const events = await ctx.db
@@ -306,6 +308,10 @@ async function detectLeaveEventConflicts(
   const uniqueUserIds = [...new Set(approvedLeaves.map((l: any) => l.userId))];
   const usersForLeaves = await Promise.all(uniqueUserIds.map((id: any) => ctx.db.get(id)));
   const userMap = new Map(usersForLeaves.filter(Boolean).map((u: any) => [u._id, u]));
+  const profilesForLeaves = await Promise.all(uniqueUserIds.map((id: any) => getProfile(ctx, id)));
+  const profileMapForLeaves = new Map(
+    uniqueUserIds.map((id: any, i: number) => [id, profilesForLeaves[i]]),
+  );
 
   for (const event of events) {
     for (const leave of approvedLeaves) {
@@ -318,7 +324,8 @@ async function detectLeaveEventConflicts(
       const user = userMap.get(leave.userId);
       if (!user) continue;
 
-      const userDepartment = user.department || '';
+      const profile = profileMapForLeaves.get(leave.userId);
+      const userDepartment = (profile?.department ?? user.department) || '';
       const isRequiredDept = event.requiredDepartments.some(
         (dept: string) => dept.toLowerCase() === userDepartment.toLowerCase(),
       );
@@ -374,6 +381,12 @@ async function detectDepartmentConflicts(
       .take(MAX_PAGE_SIZE)
   ).filter((u: any) => u.role !== 'superadmin');
 
+  // Load profiles in parallel for department field
+  const profiles = await Promise.all(users.map((u: any) => getProfile(ctx, u._id)));
+  const profileMap = new Map<string, Awaited<ReturnType<typeof getProfile>>>(
+    users.map((u: any, i: number) => [u._id as string, profiles[i]!]),
+  );
+
   // Get all approved leaves
   const leaves = await ctx.db
     .query('leaveRequests')
@@ -386,7 +399,8 @@ async function detectDepartmentConflicts(
   const deptUserCounts = new Map<string, number>();
   const deptUserIds = new Map<string, Id<'users'>[]>();
   for (const user of users) {
-    const dept = user.department || 'Unknown';
+    const p = profileMap.get(user._id);
+    const dept = (p?.department ?? (user as any).department) || 'Unknown';
     deptUserCounts.set(dept, (deptUserCounts.get(dept) || 0) + 1);
     if (!deptUserIds.has(dept)) deptUserIds.set(dept, []);
     deptUserIds.get(dept)!.push(user._id);
@@ -405,7 +419,8 @@ async function detectDepartmentConflicts(
     const leaveEnd = new Date(leave.endDate).getTime();
     const user = userMap.get(leave.userId) as UserDoc | undefined;
     if (!user) continue;
-    const dept = user.department || 'Unknown';
+    const p = profileMap.get(leave.userId);
+    const dept = (p?.department ?? (user as any).department) || 'Unknown';
 
     events.push({ date: leaveStart, type: 'start', dept, userId: leave.userId });
     events.push({ date: leaveEnd + 86400000, type: 'end', dept, userId: leave.userId }); // +1 day to make end inclusive
@@ -452,7 +467,9 @@ async function detectDepartmentConflicts(
       // If specific userId is provided, only check their department
       if (args.userId) {
         const currentUser = userMap.get(args.userId);
-        if (currentUser?.department !== dept) continue;
+        const currentProfile = profileMap.get(args.userId);
+        if (((currentProfile?.department ?? currentUser?.department) || 'Unknown') !== dept)
+          continue;
       }
 
       // Only generate conflict if threshold is met

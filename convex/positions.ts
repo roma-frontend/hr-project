@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { query, mutation } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 export const list = query({
   args: {
@@ -34,10 +35,16 @@ export const list = query({
           .take(DEFAULT_LIST_CAP)
       : await ctx.db.query('users').take(XLARGE_LIST_CAP);
 
+    // Load profiles for positionId lookup
+    const profiles = await Promise.all(users.map((u: any) => getProfile(ctx, u._id)));
+    const profileMap = new Map(users.map((u: any, i: number) => [u._id, profiles[i]]));
+
     return positions.map((pos: any) => {
-      const employeeCount = users.filter(
-        (u: any) => u.positionId === pos._id && (orgId ? u.organizationId === orgId : true),
-      ).length;
+      const employeeCount = users.filter((u: any) => {
+        const p = profileMap.get(u._id);
+        const posId = p?.positionId ?? u.positionId;
+        return posId === pos._id && (orgId ? u.organizationId === orgId : true);
+      }).length;
 
       return {
         ...pos,

@@ -4,6 +4,7 @@ import type { MutationCtx } from './_generated/server';
 import { Id } from './_generated/dataModel';
 import { withAuth } from './lib/withAuth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -122,13 +123,15 @@ export const getMyAssignments = query({
       filtered.map(async (a) => {
         const cycle = await ctx.db.get(a.cycleId);
         const reviewee = await ctx.db.get(a.revieweeId);
+        const revieweeProfile = await getProfile(ctx, a.revieweeId);
         return {
           ...a,
           cycleName: cycle?.title || '',
           cycleStatus: cycle?.status || 'draft',
           competencies: cycle?.competencies || [],
           revieweeName: reviewee?.name || '',
-          revieweeAvatar: reviewee?.avatarUrl || reviewee?.faceImageUrl || '',
+          revieweeAvatar:
+            (revieweeProfile?.avatarUrl ?? reviewee?.avatarUrl) || reviewee?.faceImageUrl || '',
         };
       }),
     );
@@ -269,13 +272,16 @@ export const getCycleSummary = query({
     const revieweeMap = new Map(
       revieweesBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
     );
+    const profilesBatch = await Promise.all(uniqueRevieweeIds.map((id) => getProfile(ctx, id)));
+    const profileMap = new Map(uniqueRevieweeIds.map((id, i) => [id, profilesBatch[i]]));
 
     const summaries = Object.entries(byReviewee).map(([revieweeId, data]) => {
       const user = revieweeMap.get(revieweeId as Id<'users'>);
+      const profile = profileMap.get(revieweeId as Id<'users'>);
       return {
         revieweeId,
         name: user?.name || 'Unknown',
-        avatar: user?.avatarUrl || user?.faceImageUrl || '',
+        avatar: (profile?.avatarUrl ?? user?.avatarUrl) || user?.faceImageUrl || '',
         averageScore:
           Math.round((data.scores.reduce((s, v) => s + v, 0) / data.scores.length) * 10) / 10,
         reviewCount: data.scores.length,
@@ -455,11 +461,13 @@ export const launchCycle = mutation({
     if (cycle.includesManager) {
       for (const userId of args.participants) {
         const user = await ctx.db.get(userId);
-        if (user?.supervisorId) {
+        const profile = await getProfile(ctx, userId);
+        const supervisorId = profile?.supervisorId ?? user?.supervisorId;
+        if (supervisorId) {
           await ctx.db.insert('reviewAssignments', {
             organizationId: cycle.organizationId,
             cycleId: args.cycleId,
-            reviewerId: user.supervisorId,
+            reviewerId: supervisorId,
             revieweeId: userId,
             type: 'manager',
             status: 'pending',
@@ -702,17 +710,20 @@ export const getEligibleParticipants = query({
       .query('users')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
       .take(DEFAULT_LIST_CAP);
-    return users
-      .filter((u) => u.isActive && u.role !== 'superadmin')
-      .map((u) => ({
+    const filtered = users.filter((u) => u.isActive && u.role !== 'superadmin');
+    const profiles = await Promise.all(filtered.map((u) => getProfile(ctx, u._id)));
+    return filtered.map((u, i) => {
+      const p = profiles[i];
+      return {
         _id: u._id,
         name: u.name,
         role: u.role,
-        position: u.position,
-        department: u.department,
-        avatarUrl: u.avatarUrl || u.faceImageUrl,
-        supervisorId: u.supervisorId,
-      }));
+        position: p?.position ?? u.position,
+        department: p?.department ?? u.department,
+        avatarUrl: (p?.avatarUrl ?? u.avatarUrl) || u.faceImageUrl,
+        supervisorId: p?.supervisorId ?? u.supervisorId,
+      };
+    });
   },
 });
 

@@ -9,6 +9,7 @@ import { query } from '../_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { DEFAULT_LIST_CAP } from '../lib/limits';
+import { getProfile } from '../lib/userProfile';
 
 /** Get pending driver requests for a driver */
 export const getDriverRequests = query({
@@ -43,12 +44,13 @@ export const getDriverRequests = query({
     const enriched = await Promise.all(
       requests.map(async (request) => {
         const requester = await ctx.db.get(request.requesterId);
+        const requesterProfile = await getProfile(ctx, request.requesterId);
         return {
           ...request,
           requesterName: requester?.name,
-          requesterAvatar: requester?.avatarUrl,
-          requesterPosition: requester?.position,
-          requesterPhone: requester?.phone,
+          requesterAvatar: requesterProfile?.avatarUrl ?? requester?.avatarUrl,
+          requesterPosition: requesterProfile?.position ?? requester?.position,
+          requesterPhone: requesterProfile?.phone ?? requester?.phone,
         };
       }),
     );
@@ -74,6 +76,7 @@ export const getMyRequests = query({
       requests.map(async (request) => {
         const driver = await ctx.db.get(request.driverId);
         const driverUser = driver ? await ctx.db.get(driver.userId) : null;
+        const driverProfile = driver ? await getProfile(ctx, driver.userId) : null;
 
         // Check if there's a completed schedule for this request
         const schedule = await ctx.db
@@ -90,9 +93,9 @@ export const getMyRequests = query({
         return {
           ...request,
           driverName: driverUser?.name,
-          driverAvatar: driverUser?.avatarUrl,
+          driverAvatar: driverProfile?.avatarUrl ?? driverUser?.avatarUrl,
           driverUserId: driver?.userId,
-          driverPhone: driverUser?.phone,
+          driverPhone: driverProfile?.phone ?? driverUser?.phone,
           driverVehicle: driver?.vehicleInfo,
           scheduleStatus: schedule?.status,
           scheduleId: schedule?._id,
@@ -118,10 +121,11 @@ export const listMyRequestsPaginated = query({
       result.page.map(async (request) => {
         const driver = await ctx.db.get(request.driverId);
         const driverUser = driver ? await ctx.db.get(driver.userId) : null;
+        const driverProfile = driver ? await getProfile(ctx, driver.userId) : null;
         return {
           ...request,
           driverName: driverUser?.name,
-          driverAvatar: driverUser?.avatarUrl,
+          driverAvatar: driverProfile?.avatarUrl ?? driverUser?.avatarUrl,
           driverVehicle: driver?.vehicleInfo,
         };
       }),
@@ -189,6 +193,14 @@ export const getCompletedTrips = query({
       driverUsersBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
     );
 
+    // Batch-load profiles for driver users
+    const driverUserProfiles = await Promise.all(
+      uniqueDriverUserIds.map((id) => getProfile(ctx, id)),
+    );
+    const driverUserProfileMap = new Map(
+      uniqueDriverUserIds.map((id, i) => [id, driverUserProfiles[i]]),
+    );
+
     // Load ratings by passenger (indexed) instead of full table scan
     const allRatings = await ctx.db
       .query('passengerRatings')
@@ -209,6 +221,7 @@ export const getCompletedTrips = query({
       if (schedule) {
         const driver = driverMap.get(request.driverId);
         const driverUser = driver ? driverUserMap.get(driver.userId) : null;
+        const driverProfile = driver ? driverUserProfileMap.get(driver.userId) : null;
         const rating = ratingMap.get(schedule._id);
 
         completedRequests.push({
@@ -216,7 +229,7 @@ export const getCompletedTrips = query({
           scheduleId: schedule._id,
           completedAt: schedule.updatedAt,
           driverName: driverUser?.name,
-          driverAvatar: driverUser?.avatarUrl,
+          driverAvatar: driverProfile?.avatarUrl ?? driverUser?.avatarUrl,
           driverVehicle: driver?.vehicleInfo,
           driverNotes: schedule.driverNotes,
           waitTimeMinutes: schedule.waitTimeMinutes,
@@ -337,17 +350,26 @@ export const getFavoriteDrivers = query({
         .map((u: any) => [u._id, u]),
     );
 
+    // Batch-load profiles for driver users
+    const favDriverProfiles = await Promise.all(
+      uniqueDriverUserIds.map((id) => getProfile(ctx, id)),
+    );
+    const favDriverProfileMap = new Map(
+      uniqueDriverUserIds.map((id, i) => [id, favDriverProfiles[i]]),
+    );
+
     // Enrich with driver info using pre-loaded maps
     const enriched = favorites.map((fav) => {
       const driver = driverMap.get(fav.driverId);
       if (!driver) return null;
 
       const driverUser = driverUserMap.get(driver.userId);
+      const driverProfile = favDriverProfileMap.get(driver.userId);
       return {
         ...driver,
         userName: driverUser?.name ?? 'Unknown',
-        userAvatar: driverUser?.avatarUrl,
-        userPosition: driverUser?.position,
+        userAvatar: driverProfile?.avatarUrl ?? driverUser?.avatarUrl,
+        userPosition: driverProfile?.position ?? driverUser?.position,
         favoritedAt: fav.createdAt,
       };
     });

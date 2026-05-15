@@ -3,6 +3,7 @@ import { mutation, query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { markConversationRead } from './conversations';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET CONVERSATION MESSAGES — uses chatMessages
@@ -35,10 +36,11 @@ export const getConversationMessages = query({
         if (deletedForUsers.includes(userId)) return null;
 
         const sender = await ctx.db.get(m.senderId);
+        const senderProfile = await getProfile(ctx, m.senderId);
         return {
           ...m,
           senderName: sender?.name ?? 'Unknown',
-          senderAvatarUrl: sender?.avatarUrl,
+          senderAvatarUrl: senderProfile?.avatarUrl ?? sender?.avatarUrl,
           readBy: (m.readBy as Array<{ userId: string; readAt: number }> | undefined) ?? [],
         };
       }),

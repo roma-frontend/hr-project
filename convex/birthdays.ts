@@ -5,6 +5,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { DEFAULT_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ... остальной код
 
@@ -222,8 +223,14 @@ export const getBirthdaysForMonth = query({
     const today = new Date();
     const currentYear = today.getFullYear();
 
-    return birthdayUsers.map((user) => {
-      const birthDate = new Date(user.dateOfBirth!);
+    const birthdayProfiles = await Promise.all(
+      birthdayUsers.map((user) => getProfile(ctx, user._id)),
+    );
+
+    return birthdayUsers.map((user, i) => {
+      const profile = birthdayProfiles[i];
+      const dob = profile?.dateOfBirth ?? user.dateOfBirth;
+      const birthDate = new Date(dob!);
       const age = currentYear - birthDate.getFullYear();
       const day = birthDate.getDate();
       const isToday = day === today.getDate() && targetMonth === today.getMonth() + 1;
@@ -233,14 +240,14 @@ export const getBirthdaysForMonth = query({
         id: user._id,
         name: user.name,
         email: user.email,
-        department: user.department,
-        position: user.position,
-        dateOfBirth: user.dateOfBirth,
+        department: profile?.department ?? user.department,
+        position: profile?.position ?? user.position,
+        dateOfBirth: dob,
         birthdayDate: `${day} ${getMonthName(targetMonth)}`,
         age,
         isToday,
         isPast,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: profile?.avatarUrl ?? user.avatarUrl,
       };
     });
   },

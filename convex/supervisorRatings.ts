@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import { Id } from './_generated/dataModel';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { getProfile } from './lib/userProfile';
 
 // ── Create/Update Supervisor Rating ──────────────────────────────────────
 export const createRating = mutation({
@@ -352,10 +353,11 @@ export const getEmployeesNeedingRating = query({
 
         const needsRatingThisMonth = !rating || rating.ratingPeriod !== currentPeriod;
 
+        const profile = await getProfile(ctx, employee._id);
         return {
           employee: {
             ...employee,
-            avatarUrl: employee.avatarUrl ?? employee.faceImageUrl,
+            avatarUrl: profile?.avatarUrl ?? employee.avatarUrl ?? employee.faceImageUrl,
           },
           lastRated: rating?.ratingPeriod || 'Never',
           needsRating: needsRatingThisMonth,

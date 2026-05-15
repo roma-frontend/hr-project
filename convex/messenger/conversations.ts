@@ -3,6 +3,7 @@ import { mutation, query } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
+import { getProfile } from '../lib/userProfile';
 
 async function getUserOrgId(ctx: QueryCtx, userId: Id<'users'>): Promise<Id<'organizations'>> {
   const user = await ctx.db.get(userId);
@@ -51,11 +52,12 @@ export const getMyConversations = query({
             if (otherMember) {
               const u = await ctx.db.get(otherMember.userId);
               if (u) {
+                const uProfile = await getProfile(ctx, u._id);
                 otherUser = {
                   _id: u._id,
                   name: u.name,
-                  avatarUrl: u.avatarUrl,
-                  presenceStatus: u.presenceStatus,
+                  avatarUrl: uProfile?.avatarUrl ?? u.avatarUrl,
+                  presenceStatus: uProfile?.presenceStatus ?? u.presenceStatus,
                 };
               }
             }
@@ -113,15 +115,16 @@ export const getConversationInfo = query({
     const enrichedParticipants = await Promise.all(
       members.map(async (m) => {
         const user = await ctx.db.get(m.userId);
+        const userProfile = await getProfile(ctx, m.userId);
         return {
           ...m,
           // Map to expected shape
           userId: m.userId,
           userName: user?.name ?? 'Unknown',
-          userAvatarUrl: user?.avatarUrl,
+          userAvatarUrl: userProfile?.avatarUrl ?? user?.avatarUrl,
           userEmail: user?.email,
           userRole: user?.role,
-          userDepartment: user?.department,
+          userDepartment: userProfile?.department ?? user?.department,
         };
       }),
     );

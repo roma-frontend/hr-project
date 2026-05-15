@@ -11,6 +11,7 @@ import {
 } from '../pagination';
 import { enrichLeavesWithUserData } from './helpers';
 import { isSuperadmin } from '../lib/auth';
+import { getProfile } from '../lib/userProfile';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET ALL LEAVES — scoped to caller's organization
@@ -298,10 +299,11 @@ export const getLeaveById = query({
     if (!leave) return null;
 
     const user = await ctx.db.get(leave.userId);
+    const profile = leave.userId ? await getProfile(ctx, leave.userId) : null;
     return {
       ...leave,
       userName: user?.name ?? 'Unknown',
-      userDepartment: user?.department ?? '',
+      userDepartment: profile?.department ?? user?.department ?? '',
     };
   },
 });
