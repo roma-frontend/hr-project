@@ -79,8 +79,17 @@ export default function SelectOrganizationPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRequesting, setIsRequesting] = useState<Id<'organizations'> | null>(null);
 
+  // Dev-only preview escape: visit ?preview=1 in development to bypass the redirect
+  // and view the page even when authenticated. No effect in production.
+  const isPreview =
+    process.env.NODE_ENV !== 'production' &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('preview') === '1';
+
   // Redirect if user already has an approved organization
   useEffect(() => {
+    if (isPreview) return;
+
     if (freshUserData?.organizationId && freshUserData?.isApproved) {
       setUser({
         id: freshUserData._id,
@@ -101,7 +110,7 @@ export default function SelectOrganizationPage() {
       const nextUrl = params.get('next');
       router.push(nextUrl || '/dashboard');
     }
-  }, [user, freshUserData, setUser, router]);
+  }, [user, freshUserData, setUser, router, isPreview]);
 
   const pendingOrgIds = useMemo(
     () =>
