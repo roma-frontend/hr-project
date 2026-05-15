@@ -1,9 +1,9 @@
 # Plan: HR Office — техдолг и оптимизация
 
-**Статус:** Активный. Все задачи из «СЛЕДУЮЩИЕ ЗАДАЧИ» завершены кроме Queries RBAC (отложено).
-**Baseline:** `npx tsc --noEmit` = 0 ошибок, clean.
+**Статус:** ✅ Завершён. Все задачи выполнены. Остаётся только Queries RBAC (требует архитектурного решения).
+**Baseline:** `npx tsc --noEmit` = 0 ошибок, `npm run build` = clean.
 **Ветка:** main.
-**Дата:** 2026-05-12 → обновлено 2026-05-15.
+**Дата:** 2026-05-12 → завершено 2026-05-15.
 
 ---
 
@@ -26,28 +26,79 @@
 9. **566 unused imports/variables** удалены
 10. **Navbar** — logout fix, avatar initials only
 11. **Lazy i18n namespaces** — ~305KB убрано из JS bundle (только common бандлен, остальные через HttpBackend)
-12. **Dashboard aggregated queries** — getDashboardStats + getRecentLeaves вместо загрузки 100 записей
+12. **Dashboard aggregated queries** — getDashboardStats + getRecentLeaves с поддержкой org picker
 13. **RSC для статических страниц** — privacy/terms полный RSC, contact/features/careers через RSC wrapper + dynamic client
 14. **Account lockout** — 5 неудачных попыток → блокировка на 15 мин
 15. **Error boundaries** — уже были на месте (dashboard, auth, root, analytics)
 16. **Optimistic updates** — chat sendMessage (уже был), добавлен useOptimisticCreateTask
-17. **Split users таблицы:**
-    - `userSettings` — preferences вынесены, settings.ts переписан с lazy migration
-    - `userProfiles` — schema + patchProfile dual-write helper + bulk migration
-    - Key mutations обновлены: leaves/mutations, users/mutations, messenger/calls
-    - 50+ read-only файлов работают через backward compat (поля остаются в users)
+17. **Split users таблицы (полностью):**
+    - `userSettings` — preferences вынесены, settings.ts переписан
+    - `userProfiles` — schema + patchProfile dual-write + getProfile helper
+    - 35+ файлов мигрированы на getProfile reads с fallback
+    - Key mutations dual-write: leaves/mutations, users/mutations, messenger/calls
+    - Migrations запущены в prod (9 users → userProfiles, 2 → userSettings)
 18. **Типизация reactions** — chatMessages.reactions уже типизирован в schema, fix `any` в recognition
 
-### ⚠️ Известные ограничения:
+### ⚠️ Единственное ограничение (отложено):
 
-- **Queries НЕ мигрированы на ctx.auth** — используют `requesterId` arg (клиент может подменить)
-- **ConvexProviderWithAuth** вызывает infinite session refresh loop — откатили на plain `ConvexProvider`
-- **Решение для queries:** нужен другой подход (server-side middleware или кэширование token)
-- **userProfiles reads** — 50+ файлов всё ещё читают profile поля из users (backward compat, мигрировать постепенно)
+- **Queries RBAC через ctx.auth** — queries используют `requesterId` arg (клиент может подменить)
+- **ConvexProviderWithAuth** вызывает infinite session refresh loop
+- **Варианты решения:**
+  - A) Convex Auth library (labs.convex.dev/auth) вместо ручной интеграции
+  - B) Кэшировать token в localStorage, передавать через custom header
+  - C) Оставить как есть — queries защищены на уровне org membership (не критично для MVP)
 
 ---
 
-## СЛЕДУЮЩИЕ ЗАДАЧИ (по приоритету)
+## ЧТО ДАЛЬШЕ (новые задачи, по приоритету)
+
+### 🔴 Высокий приоритет
+
+#### 1. Mobile app (React Native)
+
+- Roadmap item из README
+- Переиспользовать Convex queries/mutations
+- Shared types из convex/\_generated
+
+#### 2. Performance reviews module
+
+- Roadmap item из README
+- Schema `performance.ts` уже есть, нужен UI
+
+#### 3. E2E тесты (Playwright)
+
+- TEST_PLAN.md описывает 82 test cases
+- Критические пути: login, leave request, task CRUD, chat
+
+### 🟡 Средний приоритет
+
+#### 4. Payroll module UI
+
+- Backend `convex/payroll/` уже есть
+- Нужен фронтенд: payroll runs, records, settings
+
+#### 5. E-signatures & PDF export
+
+- Roadmap item
+- `convex/signatures.ts` уже есть
+
+#### 6. Queries RBAC (когда решится infinite loop)
+
+- Мигрировать queries на ctx.auth.getUserIdentity()
+- Убрать requesterId arg
+
+### 🟢 Низкий приоритет
+
+#### 7. Удалить дублирующие поля из users schema
+
+- После 2-4 недель стабильной работы split users
+- Убрать profile/preferences поля из users table
+- Убрать fallback `?? user.field` из getProfile reads
+
+#### 8. Chat типизация
+
+- 41 `any` в chat компонентах (ChatWindow, ChatMessages, etc.)
+- Создать proper interfaces для messages, conversations, members
 
 ### 🔴 Производительность (высокий приоритет)
 
