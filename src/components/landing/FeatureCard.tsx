@@ -151,7 +151,7 @@ export default function FeatureCard({
             </h3>
             <p
               className="text-sm leading-relaxed transition-colors"
-              style={{ color: 'var(--landing-text-secondary)', opacity: 0.8 }}
+              style={{ color: 'var(--landing-text-secondary)' }}
             >
               {description}
             </p>
