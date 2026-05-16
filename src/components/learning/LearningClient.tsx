@@ -646,7 +646,7 @@ export default function LearningClient() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList
-          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-4' : 'grid grid-cols-3'}`}
+          className={`w-full mb-4 gap-2 bg-transparent p-0 h-auto ${isAdmin ? 'grid grid-cols-2 md:grid-cols-4' : 'grid grid-cols-2 md:grid-cols-3'}`}
         >
           <TabsTrigger
             value="catalog"
