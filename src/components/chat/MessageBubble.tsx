@@ -1161,6 +1161,7 @@ export const MessageBubble = React.memo(function MessageBubble({
               isOwn ? 'right-10' : 'left-10',
               showActions ? 'flex' : 'hidden',
             )}
+            onTouchStart={(e) => e.stopPropagation()}
             onMouseEnter={() => {
               if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
               setShowActions(true);
