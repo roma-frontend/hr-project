@@ -8,6 +8,7 @@ import { withAuth } from './lib/withAuth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
 import { requireRequester } from './lib/requireRequester';
+import { sanitizeTitle, sanitizeText } from './lib/sanitize';
 
 /**
  * Helper to batch load users and enrich task data
@@ -111,8 +112,8 @@ export const createTask = mutation({
 
     const now = Date.now();
     const taskId = await ctx.db.insert('tasks', {
-      title: args.title,
-      description: args.description,
+      title: sanitizeTitle(args.title),
+      description: args.description ? sanitizeText(args.description) : undefined,
       assignedTo: args.assignedTo,
       assignedBy: args.assignedBy,
       organizationId,

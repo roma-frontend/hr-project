@@ -19,6 +19,10 @@ export const allNamespaces = [
   'drivers',
   'settings',
   'modules',
+  'payroll',
+  'compensation',
+  'learning',
+  'expenses',
 ] as const;
 
 export type AppNamespace = (typeof allNamespaces)[number];

@@ -3,6 +3,7 @@ import { mutation } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { DEFAULT_LIST_CAP } from '../lib/limits';
+import { sanitizeText } from '../lib/sanitize';
 
 /**
  * Convert emoji to ASCII-safe key format using Unicode code points
@@ -382,7 +383,7 @@ export const sendMessage = mutation({
       organizationId: args.organizationId,
       senderId: args.senderId,
       type: args.type,
-      content: args.content,
+      content: sanitizeText(args.content),
       attachments: args.attachments,
       replyToId: args.replyToId,
       replyToContent,

@@ -651,7 +651,7 @@ export const MessageBubble = React.memo(function MessageBubble({
       {/* Message row */}
       <div
         className={cn(
-          'flex items-end gap-2 my-0.5 group animate-msg-in',
+          'relative flex items-end gap-2 my-0.5 group animate-msg-in',
           isOwn ? 'flex-row-reverse' : 'flex-row',
         )}
         onMouseEnter={() => {
@@ -699,12 +699,7 @@ export const MessageBubble = React.memo(function MessageBubble({
           )}
         </div>
 
-        <div
-          className={cn(
-            'flex flex-col max-w-[88%] sm:max-w-[78%] md:max-w-[65%]',
-            isOwn ? 'items-end' : 'items-start',
-          )}
-        >
+        <div className="flex flex-col max-w-[88%] sm:max-w-[78%] md:max-w-[65%]">
           {showName && (
             <span
               className="text-[11px] font-medium mb-0.5 px-1"
@@ -1162,8 +1157,9 @@ export const MessageBubble = React.memo(function MessageBubble({
           <div
             ref={actionBarRef}
             className={cn(
-              'flex items-center gap-0.5 shrink-0 transition-all duration-200 relative',
-              showActions ? 'opacity-100 scale-100 z-40' : 'opacity-0 scale-95 pointer-events-none',
+              'absolute bottom-0 translate-y-full pt-1 items-center gap-0.5 z-40',
+              isOwn ? 'right-10' : 'left-10',
+              showActions ? 'flex' : 'hidden',
             )}
             onMouseEnter={() => {
               if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);

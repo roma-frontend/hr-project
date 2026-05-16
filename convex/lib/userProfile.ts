@@ -46,38 +46,13 @@ export const PROFILE_FIELDS = [
 
 /**
  * Get user profile from userProfiles table.
- * If not found, falls back to reading from users table (no write in query context).
+ * Returns null if profile doesn't exist (run migration first).
  */
 export async function getProfile(ctx: any, userId: Id<'users'>): Promise<UserProfile | null> {
-  const existing = await ctx.db
+  return await ctx.db
     .query('userProfiles')
     .withIndex('by_user', (q: any) => q.eq('userId', userId))
     .first();
-  if (existing) return existing;
-
-  // Fallback: read from users table (profile not yet migrated)
-  const user = await ctx.db.get(userId);
-  if (!user) return null;
-
-  return {
-    _id: '' as any,
-    userId,
-    employeeType: user.employeeType,
-    department: user.department,
-    departmentId: user.departmentId,
-    position: user.position,
-    positionId: user.positionId,
-    supervisorId: user.supervisorId,
-    phone: user.phone,
-    location: user.location,
-    avatarUrl: user.avatarUrl,
-    dateOfBirth: user.dateOfBirth,
-    presenceStatus: user.presenceStatus,
-    travelAllowance: user.travelAllowance,
-    paidLeaveBalance: user.paidLeaveBalance,
-    sickLeaveBalance: user.sickLeaveBalance,
-    familyLeaveBalance: user.familyLeaveBalance,
-  };
 }
 
 /**
