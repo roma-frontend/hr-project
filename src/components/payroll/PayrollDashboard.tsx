@@ -216,40 +216,65 @@ export default function PayrollDashboard() {
 
       {/* Stats Cards */}
       {orgId && hasAnyData && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 my-4">
-          <motion.div variants={itemVariants}>
-            <StatsCard
-              title={t('payroll.totalPayroll')}
-              value={formatCurrency(safeStats.totalGross)}
-              icon={<DollarSign className="w-5 h-5" />}
-              color="blue"
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <StatsCard
-              title={t('payroll.totalNet')}
-              value={formatCurrency(safeStats.totalNet)}
-              icon={<TrendingUp className="w-5 h-5" />}
-              color="green"
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <StatsCard
-              title={t('payroll.pendingAmount')}
-              value={safeStats.pendingRuns}
-              icon={<Clock className="w-5 h-5" />}
-              color="yellow"
-            />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <StatsCard
-              title={t('payroll.paidAmount')}
-              value={safeStats.paidRuns}
-              icon={<CheckCircle className="w-5 h-5" />}
-              color="purple"
-            />
-          </motion.div>
-        </div>
+        <>
+          {/* Sticky Header */}
+          <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-primary)">
+                  {t('payroll.title', { defaultValue: 'Payroll' })}
+                </h2>
+                <p className="text-(--text-muted) text-sm mt-1">
+                  {t('payroll.subtitle', { defaultValue: 'Manage payroll runs and compensation' })}
+                </p>
+              </div>
+              {canManage && (
+                <Button
+                  onClick={() => setNewRunOpen(true)}
+                  className="w-full sm:w-auto btn-gradient text-white font-medium shadow-md hover:shadow-lg"
+                >
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  {t('payroll.newRun', { defaultValue: 'New Payroll Run' })}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 my-4">
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title={t('payroll.totalPayroll')}
+                value={formatCurrency(safeStats.totalGross)}
+                icon={<DollarSign className="w-5 h-5" />}
+                color="blue"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title={t('payroll.totalNet')}
+                value={formatCurrency(safeStats.totalNet)}
+                icon={<TrendingUp className="w-5 h-5" />}
+                color="green"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title={t('payroll.pendingAmount')}
+                value={safeStats.pendingRuns}
+                icon={<Clock className="w-5 h-5" />}
+                color="yellow"
+              />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <StatsCard
+                title={t('payroll.paidAmount')}
+                value={safeStats.paidRuns}
+                icon={<CheckCircle className="w-5 h-5" />}
+                color="purple"
+              />
+            </motion.div>
+          </div>
+        </>
       )}
 
       {/* Charts */}
