@@ -53,7 +53,10 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:perf": "k6 run tests/performance/load-test.js",
-    "test:all": "npm run lint && npm run type-check && npm run test:coverage && npm run test:e2e"
+    "test:all": "npm run lint && npm run type-check && npm run test:coverage && npm run test:e2e",
+    "changelog": "node scripts/generate-changelog.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.34",

@@ -51,5 +51,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "scripts", "src/__tests__", "tests"]
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "src/__tests__",
+    "tests",
+    "**/*.stories.tsx"
+  ]
 }

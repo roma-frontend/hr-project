@@ -24,6 +24,9 @@ const eslintConfig = defineConfig([
     // Ignore tests
     "src/__tests__/**",
     "tests/**",
+    // Ignore storybook
+    ".storybook/**",
+    "**/*.stories.tsx",
     // Ignore coverage
     "coverage/**",
     // Ignore public
