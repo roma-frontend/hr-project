@@ -243,6 +243,40 @@ const getInitialSuggestions = (
   return getRoleSuggestions(role as UserRole, t);
 };
 
+/** Pulsing hint that appears every 15s when widget is docked */
+function DockedPulse({ dockedSide, dockedY }: { dockedSide: 'left' | 'right'; dockedY: number }) {
+  const { t } = useTranslation();
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShow(true);
+      setTimeout(() => setShow(false), 3000);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!show) return null;
+
+  const isRight = dockedSide === 'right';
+  return (
+    <div
+      className="fixed z-50 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg animate-pulse"
+      style={{
+        top: `${dockedY}%`,
+        background: 'var(--primary)',
+        color: 'white',
+        ...(isRight
+          ? { right: 36 }
+          : { left: (typeof window !== 'undefined' && window.innerWidth >= 1024 ? 240 : 0) + 36 }),
+      }}
+    >
+      <Sparkles className="w-3 h-3" />
+      {t('chatWidget.imHere', { defaultValue: "I'm here to help!" })}
+    </div>
+  );
+}
+
 export function ChatWidget() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -1145,6 +1179,7 @@ export function ChatWidget() {
       {pathname !== '/ai-chat' && (
         <>
           {/* Docked indicator — small tab on screen edge, draggable */}
+          {docked && !isOpen && <DockedPulse dockedSide={dockedSide} dockedY={dockedY} />}
           {docked && !isOpen && (
             <button
               onClick={() => {
