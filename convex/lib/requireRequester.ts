@@ -30,7 +30,7 @@ export async function requireRequester(
   if (!user) throw new Error('User not found');
   if (!user.isActive) throw new Error('Account deactivated');
   if (!user.sessionToken || !user.sessionExpiry || user.sessionExpiry < Date.now()) {
-    throw new Error('Session expired. Please log in again.');
+    throw new Error('Session expired');
   }
   return user;
 }

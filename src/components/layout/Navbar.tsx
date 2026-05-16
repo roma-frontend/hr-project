@@ -170,17 +170,15 @@ export function Navbar() {
 
   const handleLogout = async () => {
     try {
-      // Logout from server session
+      // Clear client state FIRST to stop queries from firing with stale userId
+      logout();
+      document.cookie = 'hr-auth-token=; path=/; max-age=0';
+
+      // Then logout from server session
       await logoutAction();
 
       // Logout from NextAuth (OAuth)
       await signOut({ redirect: false });
-
-      // Logout from useAuthStore
-      logout();
-
-      // Clear auth cookie
-      document.cookie = 'hr-auth-token=; path=/; max-age=0';
 
       // Redirect to home
       router.push('/');
