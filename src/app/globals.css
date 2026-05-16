@@ -38,6 +38,18 @@ body.scroll-locked {
   }
 }
 
+/* Chat widget appear animation */
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Override Radix UI scroll-lock compensation */
 body[data-scroll-locked] {
   margin-right: 0 !important;

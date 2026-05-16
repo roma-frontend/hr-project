@@ -78,6 +78,7 @@ export function ChatWidgetButton({
   const dragStart = useRef({ x: 0, y: 0 });
   const hasDragged = useRef(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [returning, setReturning] = useState(false);
   const [undocking, setUndocking] = useState(false);
 
   // AI button hint system
@@ -166,24 +167,38 @@ export function ChatWidgetButton({
     }
   }, []);
 
-  const handleBtnTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!dragging.current) return;
-    dragging.current = false;
-    const t = e.changedTouches[0]!;
-    setDragPos(null);
-    if (!hasDragged.current) return;
-    e.preventDefault();
-    const sidebarEdge = window.innerWidth >= 1024 ? 240 : 0;
-    if (t.clientX > window.innerWidth * 0.75) {
-      setDocked(true);
-      setDockedSide('right');
-      setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
-    } else if (t.clientX < sidebarEdge + 60) {
-      setDocked(true);
-      setDockedSide('left');
-      setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
-    }
-  }, [setDocked, setDockedSide, setDockedY]);
+  const handleBtnTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      const t = e.changedTouches[0]!;
+      if (!hasDragged.current) {
+        setDragPos(null);
+        return;
+      }
+      e.preventDefault();
+      const sidebarEdge = window.innerWidth >= 1024 ? 240 : 0;
+      if (t.clientX > window.innerWidth * 0.75) {
+        setDragPos(null);
+        setDocked(true);
+        setDockedSide('right');
+        setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
+      } else if (t.clientX < sidebarEdge + 60) {
+        setDragPos(null);
+        setDocked(true);
+        setDockedSide('left');
+        setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
+      } else {
+        // Animate back: keep dragPos, enable transition, then clear
+        setReturning(true);
+        setTimeout(() => {
+          setDragPos(null);
+          setReturning(false);
+        }, 400);
+      }
+    },
+    [setDocked, setDockedSide, setDockedY],
+  );
 
   // Mouse drag
   const handleMouseDown = useCallback(
@@ -205,17 +220,27 @@ export function ChatWidgetButton({
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         dragging.current = false;
-        setDragPos(null);
-        if (!hasDragged.current) return;
+        if (!hasDragged.current) {
+          setDragPos(null);
+          return;
+        }
         const sidebarEdge = window.innerWidth >= 1024 ? 240 : 0;
         if (ev.clientX > window.innerWidth * 0.75) {
+          setDragPos(null);
           setDocked(true);
           setDockedSide('right');
           setDockedY(Math.min(80, Math.max(20, (ev.clientY / window.innerHeight) * 100)));
         } else if (ev.clientX < sidebarEdge + 60) {
+          setDragPos(null);
           setDocked(true);
           setDockedSide('left');
           setDockedY(Math.min(80, Math.max(20, (ev.clientY / window.innerHeight) * 100)));
+        } else {
+          setReturning(true);
+          setTimeout(() => {
+            setDragPos(null);
+            setReturning(false);
+          }, 400);
         }
       };
       document.addEventListener('mousemove', onMove);
@@ -274,19 +299,24 @@ export function ChatWidgetButton({
             if (!dragging.current) return;
             dragging.current = false;
             const t = e.changedTouches[0]!;
-            setDragPos(null);
-            if (!hasDragged.current) return;
+            if (!hasDragged.current) {
+              setDragPos(null);
+              return;
+            }
             e.preventDefault();
             const sidebarEdge = window.innerWidth >= 1024 ? 240 : 0;
             if (t.clientX > window.innerWidth * 0.75) {
+              setDragPos(null);
               setDockedSide('right');
               setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
             } else if (t.clientX < sidebarEdge + 60) {
+              setDragPos(null);
               setDockedSide('left');
               setDockedY(Math.min(80, Math.max(20, (t.clientY / window.innerHeight) * 100)));
             } else {
               setUndocking(true);
               setTimeout(() => {
+                setDragPos(null);
                 setDocked(false);
                 setUndocking(false);
               }, 400);
@@ -310,18 +340,23 @@ export function ChatWidgetButton({
               document.removeEventListener('mousemove', onMove);
               document.removeEventListener('mouseup', onUp);
               dragging.current = false;
-              setDragPos(null);
-              if (!hasDragged.current) return;
+              if (!hasDragged.current) {
+                setDragPos(null);
+                return;
+              }
               const sidebarEdge = window.innerWidth >= 1024 ? 240 : 0;
               if (ev.clientX > window.innerWidth * 0.75) {
+                setDragPos(null);
                 setDockedSide('right');
                 setDockedY(Math.min(80, Math.max(20, (ev.clientY / window.innerHeight) * 100)));
               } else if (ev.clientX < sidebarEdge + 60) {
+                setDragPos(null);
                 setDockedSide('left');
                 setDockedY(Math.min(80, Math.max(20, (ev.clientY / window.innerHeight) * 100)));
               } else {
                 setUndocking(true);
                 setTimeout(() => {
+                  setDragPos(null);
                   setDocked(false);
                   setUndocking(false);
                 }, 400);
@@ -332,25 +367,24 @@ export function ChatWidgetButton({
           }}
           className="fixed z-50 flex items-center justify-center w-8 h-12 shadow-lg btn-gradient text-white cursor-grab active:cursor-grabbing transition-all duration-300"
           style={{
-            ...(dragPos
+            ...(undocking
               ? {
-                  left: dragPos.x - 16,
-                  top: dragPos.y - 24,
-                  right: 'auto',
-                  borderRadius: '0.5rem',
-                  transition: 'none',
+                  bottom: typeof window !== 'undefined' && window.innerWidth >= 1024 ? 24 : 96,
+                  right: 24,
+                  top: 'auto',
+                  left: 'auto',
+                  borderRadius: '9999px',
+                  width: typeof window !== 'undefined' && window.innerWidth >= 640 ? 56 : 40,
+                  height: typeof window !== 'undefined' && window.innerWidth >= 640 ? 56 : 40,
+                  transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)',
                 }
-              : undocking
+              : dragPos
                 ? {
-                    bottom:
-                      typeof window !== 'undefined' && window.innerWidth >= 1024 ? 24 : 80,
-                    right: 24,
-                    top: 'auto',
-                    left: 'auto',
-                    borderRadius: '9999px',
-                    width: typeof window !== 'undefined' && window.innerWidth >= 640 ? 56 : 40,
-                    height: typeof window !== 'undefined' && window.innerWidth >= 640 ? 56 : 40,
-                    transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+                    left: dragPos.x - 16,
+                    top: dragPos.y - 24,
+                    right: 'auto',
+                    borderRadius: '0.5rem',
+                    transition: 'none',
                   }
                 : {
                     top: `${dockedY}%`,
@@ -364,9 +398,7 @@ export function ChatWidgetButton({
                         }
                       : {
                           left:
-                            typeof window !== 'undefined' && window.innerWidth >= 1024
-                              ? 240
-                              : 0,
+                            typeof window !== 'undefined' && window.innerWidth >= 1024 ? 240 : 0,
                           borderTopRightRadius: '0.5rem',
                           borderBottomRightRadius: '0.5rem',
                           borderTopLeftRadius: 0,
@@ -383,7 +415,7 @@ export function ChatWidgetButton({
       {/* Pulsing animation background */}
       {!docked && (
         <motion.div
-          className="fixed bottom-20 lg:bottom-6 right-6 z-50 w-10 sm:w-14 h-10 sm:h-14 rounded-full bg-primary/20"
+          className="fixed bottom-24 lg:bottom-6 right-6 z-50 w-10 sm:w-14 h-10 sm:h-14 rounded-full bg-primary/20"
           animate={{
             scale: [1, 1.2, 1] as any,
             opacity: [0.7, 0, 0.7] as any,
@@ -433,18 +465,20 @@ export function ChatWidgetButton({
             setIsOpen((o: boolean) => !o);
             setLastActivityTime(Date.now());
           }}
-          className="fixed bottom-20 lg:bottom-6 right-6 z-50 w-10 sm:w-14 h-10 sm:h-14 rounded-full flex items-center gap-2 justify-center btn-gradient text-white font-medium shadow-md hover:shadow-lg"
+          className="fixed bottom-24 lg:bottom-6 right-6 z-50 w-10 sm:w-14 h-10 sm:h-14 rounded-full flex items-center gap-2 justify-center btn-gradient text-white font-medium shadow-md hover:shadow-lg"
           style={
-            dragPos
+            dragPos && !returning
               ? {
-                  position: 'fixed',
+                  position: 'fixed' as const,
                   left: dragPos.x - 28,
                   top: dragPos.y - 28,
                   right: 'auto',
                   bottom: 'auto',
                   transition: 'none',
                 }
-              : undefined
+              : returning
+                ? { transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)' }
+                : undefined
           }
           whileTap={{ scale: 0.95 }}
           onTouchStart={handleBtnTouchStart}

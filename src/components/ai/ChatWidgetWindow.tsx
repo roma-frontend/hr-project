@@ -114,7 +114,7 @@ export function ChatWidgetWindow({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed bottom-32 lg:bottom-24 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-[380px] max-h-[calc(100vh-10rem)] lg:max-h-[calc(100vh-8rem)] flex flex-col rounded-2xl border border-(--border) shadow-2xl overflow-hidden"
+            className="fixed bottom-36 lg:bottom-24 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-[380px] max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-8rem)] flex flex-col rounded-2xl border border-(--border) shadow-2xl overflow-hidden"
             style={{ background: 'var(--card)' }}
           >
             {/* Header */}
@@ -294,8 +294,7 @@ export function ChatWidgetWindow({
                                         {(action as BookDriverAction).to}
                                       </p>
                                       <p>
-                                        👥 {(action as BookDriverAction).passengerCount}{' '}
-                                        passengers
+                                        👥 {(action as BookDriverAction).passengerCount} passengers
                                       </p>
                                       {(action as BookDriverAction).purpose && (
                                         <p>💼 {(action as BookDriverAction).purpose}</p>
@@ -489,9 +488,7 @@ export function ChatWidgetWindow({
                     isListening ? t('chatWidget.listening') : t('chatWidget.placeholder')
                   }
                   className={`w-full px-4 py-2.5 pr-20 bg-(--input) border rounded-xl text-(--text-primary) placeholder:text-(--text-muted) focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm transition-colors ${
-                    isListening
-                      ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30'
-                      : 'border-(--border)'
+                    isListening ? 'border-[#2563eb] ring-2 ring-[#2563eb]/30' : 'border-(--border)'
                   }`}
                   disabled={isLoading}
                   onKeyDown={(e) => {
@@ -506,9 +503,7 @@ export function ChatWidgetWindow({
                     type="button"
                     onClick={startVoiceInput}
                     disabled={isLoading}
-                    title={
-                      isListening ? t('chatWidget.stopListening') : t('chatWidget.voiceInput')
-                    }
+                    title={isListening ? t('chatWidget.stopListening') : t('chatWidget.voiceInput')}
                     className={`p-1.5 rounded-lg transition-colors disabled:opacity-50 ${
                       isListening
                         ? 'text-[#2563eb] animate-pulse'
