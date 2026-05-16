@@ -665,6 +665,9 @@ export const MessageBubble = React.memo(function MessageBubble({
             setShowActions(false);
           }, 100);
         }}
+        onTouchStart={() => {
+          setShowActions((prev) => !prev);
+        }}
       >
         {/* Avatar */}
         <div className="w-8 shrink-0 mb-1">
@@ -698,7 +701,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
         <div
           className={cn(
-            'flex flex-col max-w-[75%] xs:max-w-[75%] sm:max-w-[70%] md:max-w-[65%]',
+            'flex flex-col max-w-[88%] sm:max-w-[78%] md:max-w-[65%]',
             isOwn ? 'items-end' : 'items-start',
           )}
         >
@@ -730,7 +733,7 @@ export const MessageBubble = React.memo(function MessageBubble({
 
           {/* Bubble */}
           <div
-            className="relative rounded-2xl px-3 py-2 text-sm wrap-break-words transition-all duration-200 hover:brightness-105 max-w-full md:max-w-90 md:min-w-45"
+            className="relative rounded-2xl px-3 py-2 text-sm wrap-break-words transition-all duration-200 hover:brightness-105"
             style={{
               background: isOwn ? 'var(--primary)' : 'var(--secondary)',
               color: isOwn ? 'white' : 'var(--text-primary)',

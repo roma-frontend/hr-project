@@ -3,6 +3,7 @@ import { query, mutation } from './_generated/server';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
+import { requireRequester } from './lib/requireRequester';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET TODAY'S STATS FOR USER
@@ -126,8 +127,7 @@ export const getTodayTasks = query({
 export const getTeamPresence = query({
   args: { requesterId: v.id('users') },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
 

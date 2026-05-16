@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query, internalQuery } from './_generated/server';
 import type { Id } from './_generated/dataModel';
+import { requireRequester } from './lib/requireRequester';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -97,8 +98,7 @@ export const getFaceDescriptor = query({
     requesterId: v.id('users'),
   },
   handler: async (ctx, { userId, requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) return null;
+    const requester = await requireRequester(ctx, requesterId);
 
     // Only self or superadmin can read face data
     const isSelf = requesterId === userId;

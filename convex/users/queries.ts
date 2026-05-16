@@ -5,6 +5,7 @@ import type { Id, Doc } from '../_generated/dataModel';
 import type { QueryCtx } from '../_generated/server';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { isSuperadmin } from '../lib/auth';
+import { requireRequester } from '../lib/requireRequester';
 
 // ── Helper: Get user ID from email or userId ────────────────────────────────
 async function getUserIdIdentityOrEmail(
@@ -51,8 +52,7 @@ export const getAllUsers = query({
     const MAX_LIMIT = 100;
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
 
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin sees all users across all orgs (with org info)
     if (isSuperadmin(requester)) {
@@ -92,8 +92,7 @@ export const listUsersPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { requesterId, organizationId, paginationOpts }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const isSuperadminUser = isSuperadmin(requester);
 
@@ -131,8 +130,7 @@ export const getUsersByOrganizationId = query({
     const MAX_LIMIT = 100;
     const effectiveLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
 
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin can query any org; regular users can only query their own
     if (!isSuperadmin(requester) && requester.organizationId !== organizationId) {
@@ -265,8 +263,7 @@ export const getSupervisors = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, { requesterId, organizationId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Determine target org: explicit param > requester's own org
     const targetOrgId = organizationId ?? requester.organizationId;
@@ -337,8 +334,8 @@ export const getUsersByRole = query({
 export const getPendingApprovalUsers = query({
   args: { adminId: v.id('users') },
   handler: async (ctx, { adminId }) => {
-    const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
+    const admin = await requireRequester(ctx, adminId);
+    if (admin.role !== 'admin' && !isSuperadmin(admin)) {
       throw new Error('Only org admins can view pending users');
     }
 
@@ -365,8 +362,8 @@ export const getPendingApprovalUsers = query({
 export const getAuditLogs = query({
   args: { adminId: v.id('users') },
   handler: async (ctx, { adminId }) => {
-    const admin = await ctx.db.get(adminId);
-    if (!admin || (admin.role !== 'admin' && !isSuperadmin(admin))) {
+    const admin = await requireRequester(ctx, adminId);
+    if (admin.role !== 'admin' && !isSuperadmin(admin)) {
       throw new Error('Only org admins can view audit logs');
     }
 

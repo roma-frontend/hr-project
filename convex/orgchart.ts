@@ -4,6 +4,7 @@ import type { Id, Doc } from './_generated/dataModel';
 import { MAX_PAGE_SIZE } from './pagination';
 import { isSuperadmin } from './lib/auth';
 import { getProfile } from './lib/userProfile';
+import { requireRequester } from './lib/requireRequester';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET ORG CHART — full tree for an organization
@@ -14,8 +15,7 @@ export const getOrgChart = query({
     requesterId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, args.requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
     if (!userIsSuperadmin && requester.organizationId !== args.organizationId) {
@@ -75,8 +75,7 @@ export const getOrgChartTree = query({
     requesterId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, args.requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
     if (!userIsSuperadmin && requester.organizationId !== args.organizationId) {
@@ -619,8 +618,7 @@ export const debugOrgChart = query({
     requesterId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, args.requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
     const isAdmin = requester.role === 'admin';
@@ -691,8 +689,7 @@ export const getLayouts = query({
     requesterId: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, args.requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
     if (!userIsSuperadmin && requester.organizationId !== args.organizationId) {

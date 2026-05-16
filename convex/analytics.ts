@@ -3,6 +3,7 @@ import { v } from 'convex/values';
 import { isSuperadminEmail } from './lib/auth';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
+import { requireRequester } from './lib/requireRequester';
 
 // ── Get analytics overview ─────────────────────────────────────────────────
 export const getAnalyticsOverview = query({
@@ -83,8 +84,7 @@ export const getDepartmentStats = query({
     let users = await ctx.db.query('users').take(XLARGE_LIST_CAP);
 
     if (requesterId) {
-      const requester = await ctx.db.get(requesterId);
-      if (!requester) throw new Error('Requester not found');
+      const requester = await requireRequester(ctx, requesterId);
 
       if (!isSuperadminEmail(requester.email)) {
         if (!requester.organizationId) {
@@ -161,8 +161,7 @@ export const getLeaveTrends = query({
     let leaves: any[];
 
     if (requesterId) {
-      const requester = await ctx.db.get(requesterId);
-      if (!requester) throw new Error('Requester not found');
+      const requester = await requireRequester(ctx, requesterId);
 
       if (!isSuperadminEmail(requester.email)) {
         if (!requester.organizationId) {
@@ -244,8 +243,7 @@ export const getTeamCalendar = query({
       .take(XLARGE_LIST_CAP);
 
     if (requesterId) {
-      const requester = await ctx.db.get(requesterId);
-      if (!requester) throw new Error('Requester not found');
+      const requester = await requireRequester(ctx, requesterId);
 
       if (!isSuperadminEmail(requester.email)) {
         if (!requester.organizationId) {
@@ -285,8 +283,7 @@ export const getTeamCalendar = query({
 export const getDashboardStats = query({
   args: { requesterId: v.id('users'), organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, { requesterId, organizationId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('User not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const isSuperadminUser = requester.role === 'superadmin';
     const orgId = isSuperadminUser ? organizationId : (organizationId ?? requester.organizationId);
@@ -372,8 +369,7 @@ export const getDashboardStats = query({
 export const getRecentLeaves = query({
   args: { requesterId: v.id('users'), organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, { requesterId, organizationId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('User not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const isSuperadminUser = requester.role === 'superadmin';
     const orgId = isSuperadminUser ? organizationId : (organizationId ?? requester.organizationId);

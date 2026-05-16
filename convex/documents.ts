@@ -3,6 +3,7 @@ import { query, mutation } from './_generated/server';
 import { MAX_PAGE_SIZE } from './pagination';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { requireRequester } from './lib/requireRequester';
 
 // ─── Helper: Check permissions ───────────────────────────────────────────────
 async function checkAccess(ctx: any, organizationId: any, requesterId: any) {
@@ -339,8 +340,7 @@ export const getTeamDocumentOverview = query({
     // that case we return `null` so the UI (which already guards on
     // `teamOverview` being truthy) degrades gracefully instead of crashing
     // the whole page render.
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) return null;
+    const requester = await requireRequester(ctx, args.requesterId);
 
     const isPlatformSuperadmin = isSuperadmin(requester);
 

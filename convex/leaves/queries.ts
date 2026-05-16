@@ -12,6 +12,7 @@ import {
 import { enrichLeavesWithUserData } from './helpers';
 import { isSuperadmin } from '../lib/auth';
 import { getProfile } from '../lib/userProfile';
+import { requireRequester } from '../lib/requireRequester';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET ALL LEAVES — scoped to caller's organization
@@ -37,8 +38,7 @@ export const getAllLeaves = query({
     // Otherwise use requesterId
     if (!requesterId) return [];
 
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin sees all leaves across all organizations
     let leaves;
@@ -68,8 +68,7 @@ export const listLeavesPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, { requesterId, organizationId, paginationOpts }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const userIsSuperadmin = isSuperadmin(requester);
 
@@ -135,8 +134,7 @@ export const getUserLeaves = query({
 export const getPendingLeaves = query({
   args: { requesterId: v.id('users') },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin sees all pending leaves — use status filter
     let leaves;
@@ -166,8 +164,7 @@ export const getPendingLeaves = query({
 export const getLeaveStats = query({
   args: { requesterId: v.id('users') },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin sees stats across all organizations
     let all;
@@ -199,8 +196,7 @@ export const getLeaveStats = query({
 export const getUnreadCount = query({
   args: { requesterId: v.id('users') },
   handler: async (ctx, { requesterId }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     // Superadmin sees all unread across all organizations
     let unread: number;
@@ -235,8 +231,7 @@ export const getLeavesPagederated = query({
     ...paginationArgs,
   },
   handler: async (ctx, { requesterId, pageSize, cursor }) => {
-    const requester = await ctx.db.get(requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, requesterId);
 
     const normalizedPageSize = normalizePageSize(pageSize);
 

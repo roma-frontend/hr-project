@@ -7,6 +7,7 @@ import { isSuperadmin } from './lib/auth';
 import { withAuth } from './lib/withAuth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
+import { requireRequester } from './lib/requireRequester';
 
 /**
  * Helper to batch load users and enrich task data
@@ -404,8 +405,7 @@ export const getTasksAssignedBy = query({
 export const getAllTasks = query({
   args: { requesterId: v.id('users'), selectedOrganizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, args) => {
-    const requester = await ctx.db.get(args.requesterId);
-    if (!requester) throw new Error('Requester not found');
+    const requester = await requireRequester(ctx, args.requesterId);
 
     // Only admin/superadmin can get all tasks
     if (requester.role !== 'admin' && requester.role !== 'superadmin') {
@@ -495,7 +495,7 @@ export const getUsersForAssignment = query({
     // only when requester has no org (superadmin) or no requester was given.
     let users: any[] = [];
     if (args.requesterId) {
-      const requester = await ctx.db.get(args.requesterId);
+      const requester = await requireRequester(ctx, args.requesterId);
       if (requester?.organizationId) {
         users = await ctx.db
           .query('users')
@@ -557,7 +557,7 @@ export const getSupervisors = query({
 
     // Filter by organization if requesterId provided
     if (args.requesterId) {
-      const requester = await ctx.db.get(args.requesterId);
+      const requester = await requireRequester(ctx, args.requesterId);
       console.log('[getSupervisors] requester:', requester);
       if (requester && requester.organizationId) {
         supervisors = supervisors.filter((u) => u.organizationId === requester.organizationId);
