@@ -2,20 +2,23 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const cardVariants = cva('rounded-xl border shadow-sm transition-all duration-200', {
-  variants: {
-    variant: {
-      default: 'bg-(--card-default) text-[var(--card-foreground)] border-(--card-border-default)',
-      elevated:
-        'bg-(--card-elevated) text-[var(--card-foreground)] border-(--card-border-elevated) shadow-md hover:shadow-lg',
-      subtle: 'bg-(--card-subtle) text-[var(--card-foreground)] border-(--card-border-default)',
-      outline: 'bg-transparent text-[var(--card-foreground)] border-(--card-border-default)',
+const cardVariants = cva(
+  'rounded-xl border shadow-sm transition-all duration-200 card-hover depth-card',
+  {
+    variants: {
+      variant: {
+        default: 'bg-(--card-default) text-[var(--card-foreground)] border-(--card-border-default)',
+        elevated:
+          'bg-(--card-elevated) text-[var(--card-foreground)] border-(--card-border-elevated) shadow-md hover:shadow-lg',
+        subtle: 'bg-(--card-subtle) text-[var(--card-foreground)] border-(--card-border-default)',
+        outline: 'bg-transparent text-[var(--card-foreground)] border-(--card-border-default)',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
     },
   },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
+);
 
 const Card = React.forwardRef<
   HTMLDivElement,

@@ -68,6 +68,132 @@ body.lang-switching #main-content {
   opacity: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   MODERN DESIGN UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1. Glassmorphism card */
+.glass-card {
+  background: color-mix(in srgb, var(--card) 75%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
+/* 2. Gradient border on hover */
+.gradient-border {
+  position: relative;
+  border: 1px solid var(--border);
+  transition: border-color 0.3s;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9, #8b5cf6);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.gradient-border:hover::before {
+  opacity: 1;
+}
+.gradient-border:hover {
+  border-color: transparent;
+}
+
+/* 3. Subtle glow */
+.glow-sm {
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.1);
+}
+.glow-md {
+  box-shadow: 0 0 25px rgba(37, 99, 235, 0.15);
+}
+.glow-active {
+  box-shadow:
+    0 0 20px rgba(37, 99, 235, 0.2),
+    0 0 40px rgba(37, 99, 235, 0.05);
+}
+
+/* 4. Micro-interactions */
+.card-hover {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+.card-hover:active {
+  transform: translateY(0);
+}
+
+/* 5. Shimmer skeleton */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--background-subtle) 25%,
+    color-mix(in srgb, var(--background-subtle) 50%, var(--border)) 50%,
+    var(--background-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 6. Animated counter (used with JS) */
+.counter-animate {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.counter-animate.counting {
+  transform: scale(1.1);
+}
+
+/* 7. Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-purple {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 8. Dark mode depth — subtle noise + layered shadows */
+@media (prefers-color-scheme: dark) {
+  .depth-card {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 4px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+}
+[data-theme='dark'] .depth-card,
+.dark .depth-card {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 /* Override Radix UI scroll-lock compensation */
 body[data-scroll-locked] {
   margin-right: 0 !important;

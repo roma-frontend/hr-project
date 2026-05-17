@@ -106,7 +106,7 @@ export const StatsCard = memo(
         transition={{ duration: 0.4, delay: index * 0.1, ease: 'easeOut' }}
         whileHover={{ y: -2, transition: { duration: 0.2 } }}
         className={cn(
-          'relative overflow-hidden rounded-lg sm:rounded-xl border p-3 sm:p-5 shadow-sm transition-colors duration-300',
+          'relative overflow-hidden rounded-lg sm:rounded-xl border p-3 sm:p-5 shadow-sm transition-all duration-300 gradient-border glow-sm',
           'bg-(--card)',
           colors.border,
         )}

@@ -24,7 +24,7 @@ export function Skeleton({
     rounded: 'rounded-md',
   };
 
-  const animationClass = animation === 'pulse' ? 'animate-pulse' : '';
+  const animationClass = animation === 'pulse' ? 'shimmer' : '';
 
   const style: React.CSSProperties = {
     width: width ? (typeof width === 'number' ? `${width}px` : width) : '100%',
