@@ -16,6 +16,7 @@ const languages = {
   en: { name: 'English', flag: '🇬🇧' },
   hy: { name: 'Հայերեն', flag: '🇦🇲' },
   ru: { name: 'Русский', flag: '🇷🇺' },
+  deu: { name: 'Deutsch', flag: '🇩🇪' },
 };
 
 export function LanguageSwitcher() {
@@ -23,22 +24,17 @@ export function LanguageSwitcher() {
   const currentLang = i18n.language || 'en';
 
   const changeLanguage = async (lng: string) => {
-    logger.log('🔄 LanguageSwitcher: Changing language from', i18n.language, 'to', lng);
+    document.body.classList.add('lang-switching');
+    await new Promise((r) => setTimeout(r, 200));
 
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('i18nextLng', lng);
-        logger.log('💾 Saved to localStorage FIRST:', lng);
-
-        const saved = localStorage.getItem('i18nextLng');
-        logger.log('✅ Verification - localStorage now has:', saved);
-      } catch (error) {
-        console.error('❌ Failed to save to localStorage:', error);
-      }
+      } catch {}
     }
 
     await i18n.changeLanguage(lng);
-    logger.log('✅ Language changed to:', i18n.language);
+    document.body.classList.remove('lang-switching');
   };
 
   const availableLanguages = Object.entries(languages).filter(([code]) => code !== currentLang);

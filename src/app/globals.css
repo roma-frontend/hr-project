@@ -60,6 +60,14 @@ body.scroll-locked {
   }
 }
 
+/* Language switch fade transition */
+body {
+  transition: opacity 0.2s ease;
+}
+body.lang-switching {
+  opacity: 0;
+}
+
 /* Override Radix UI scroll-lock compensation */
 body[data-scroll-locked] {
   margin-right: 0 !important;

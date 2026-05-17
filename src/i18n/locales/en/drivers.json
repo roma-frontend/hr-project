@@ -328,7 +328,8 @@
     "timeValidation": {
       "en": "🇬🇧 Start time must be earlier than end time",
       "ru": "🇷🇺 Время начала должно быть раньше времени окончания",
-      "hy": "🇦🇲 Սկսման ժամանակը պետք է ավելի վաղ լինի, քան ավարտը"
+      "hy": "🇦🇲 Սկիզբի ժամանակը պետք է ավելի վաղ լինի, քան ավարտի ժամանակը",
+      "de": "🇩🇪 Startzeit muss vor Endzeit liegen"
     },
     "pleaseSelectDriver": "Please select a driver",
     "pleaseSelectStartEnd": "Please select start and end time",
