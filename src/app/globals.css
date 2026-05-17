@@ -61,10 +61,10 @@ body.scroll-locked {
 }
 
 /* Language switch fade transition */
-body {
-  transition: opacity 0.2s ease;
+#main-content {
+  transition: opacity 0.25s ease;
 }
-body.lang-switching {
+body.lang-switching #main-content {
   opacity: 0;
 }
 
