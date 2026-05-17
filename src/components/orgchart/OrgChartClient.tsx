@@ -536,40 +536,42 @@ export default function OrgChartClient() {
   return (
     <div className="mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2 py-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-            {t('orgChart.title', 'Organization Chart')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t('orgChart.subtitle', 'Visual hierarchy of your team')}
-          </p>
-        </div>
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-primary)">
+              {t('orgChart.title', 'Organization Chart')}
+            </h2>
+            <p className="text-(--text-muted) text-sm mt-1">
+              {t('orgChart.subtitle', 'Visual hierarchy of your team')}
+            </p>
+          </div>
 
-        <div className="flex items-center flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportSVG}>
-            <Download className="h-4 w-4 mr-2" />
-            {t('common.exportSVG', 'Export SVG')}
-          </Button>
+          <div className="flex items-center flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportSVG}>
+              <Download className="h-4 w-4 mr-2" />
+              {t('common.exportSVG', 'Export SVG')}
+            </Button>
 
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setShowAddDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('orgChart.addNode', 'Add Node')}
-              </Button>
+            {isAdmin && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowAddDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('orgChart.addNode', 'Add Node')}
+                </Button>
 
-              <Button variant="outline" size="sm" onClick={handleFixDepartments}>
-                <Users className="h-4 w-4 mr-2" />
-                {t('orgChart.fixDepartments', 'Fix Departments')}
-              </Button>
+                <Button variant="outline" size="sm" onClick={handleFixDepartments}>
+                  <Users className="h-4 w-4 mr-2" />
+                  {t('orgChart.fixDepartments', 'Fix Departments')}
+                </Button>
 
-              <Button variant="outline" size="sm" onClick={handleGenerateOrgChart}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t('orgChart.generateFromUsers', 'Generate from Employee Data')}
-              </Button>
-            </>
-          )}
+                <Button variant="outline" size="sm" onClick={handleGenerateOrgChart}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {t('orgChart.generateFromUsers', 'Generate from Employee Data')}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

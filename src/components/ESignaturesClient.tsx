@@ -1110,34 +1110,38 @@ export function ESignaturesClient() {
   return (
     <div className="p-0 md:p-6 py-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t('signatures.title', 'E-Signatures')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('signatures.subtitle', 'Create, send, and sign documents electronically')}
-          </p>
-        </div>
-        {isAdmin && (
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTemplatesOpen(true)}
-              className="flex-1 sm:flex-initial"
-            >
-              <FileText className="w-4 h-4 mr-1" />
-              {t('signatures.templates', 'Templates')}
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setWizardOpen(true)}
-              className="flex-1 sm:flex-initial"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {t('signatures.createDocument', 'New Document')}
-            </Button>
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-primary)">
+              {t('signatures.title', 'E-Signatures')}
+            </h2>
+            <p className="text-(--text-muted) text-sm mt-1">
+              {t('signatures.subtitle', 'Create, send, and sign documents electronically')}
+            </p>
           </div>
-        )}
+          {isAdmin && (
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTemplatesOpen(true)}
+                className="flex-1 sm:flex-initial"
+              >
+                <FileText className="w-4 h-4 mr-1" />
+                {t('signatures.templates', 'Templates')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setWizardOpen(true)}
+                className="flex-1 sm:flex-initial"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                {t('signatures.createDocument', 'New Document')}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats */}

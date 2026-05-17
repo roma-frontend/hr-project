@@ -276,22 +276,23 @@ export default function DocumentsClient() {
   return (
     <div className="mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-6 py-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-            {t('documents.title', 'Document Management')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t('documents.subtitle', 'Manage and organize your organization documents')}
-          </p>
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-primary)">
+              {t('documents.title', 'Document Management')}
+            </h2>
+            <p className="text-(--text-muted) text-sm mt-1">
+              {t('documents.subtitle', 'Manage and organize your organization documents')}
+            </p>
+          </div>
+          {isAdmin && (
+            <Button onClick={() => setShowUploadWizard(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              {t('documents.uploadDocument', 'Upload Document')}
+            </Button>
+          )}
         </div>
-
-        {isAdmin && (
-          <Button onClick={() => setShowUploadWizard(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            {t('documents.uploadDocument', 'Upload Document')}
-          </Button>
-        )}
       </div>
 
       {/* Stats Cards */}

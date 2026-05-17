@@ -567,22 +567,23 @@ export default function LearningClient() {
   return (
     <div className="mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 justify-between mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-            {t('learning.title', 'Learning Center')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t('learning.subtitle', 'Develop your skills and grow your career')}
-          </p>
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 mb-4 bg-(--background)/95 backdrop-blur supports-[backdrop-filter]:bg-(--background)/60 border-b border-(--border)">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-(--text-primary)">
+              {t('learning.title', 'Learning Center')}
+            </h2>
+            <p className="text-(--text-muted) text-sm mt-1">
+              {t('learning.subtitle', 'Develop your skills and grow your career')}
+            </p>
+          </div>
+          {isAdmin && (
+            <Button onClick={() => setShowCreateCourse(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('learning.createCourse', 'Create Course')}
+            </Button>
+          )}
         </div>
-
-        {isAdmin && (
-          <Button onClick={() => setShowCreateCourse(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('learning.createCourse', 'Create Course')}
-          </Button>
-        )}
       </div>
 
       {/* Stats Cards */}
