@@ -241,7 +241,7 @@ export default function PayrollRecordsTable() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/payroll/${record._id}`}>
+                              <Link href={`/payroll/${record.payrollRunId || record._id}`}>
                                 <Eye className="w-4 h-4 mr-2" />
                                 {t('payroll.viewDetails')}
                               </Link>
