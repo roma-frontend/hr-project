@@ -40,6 +40,7 @@ import { compliance } from './compliance';
 import { expenses } from './expenses';
 import { userSettings } from './userSettings';
 import { userProfiles } from './userProfiles';
+import { newsletter } from './newsletter';
 
 export default defineSchema({
   ...organizations,
@@ -83,6 +84,7 @@ export default defineSchema({
   ...expenses,
   ...userSettings,
   ...userProfiles,
+  ...newsletter,
 });
 
 export {
@@ -127,4 +129,5 @@ export {
   expenses,
   userSettings,
   userProfiles,
+  newsletter,
 };

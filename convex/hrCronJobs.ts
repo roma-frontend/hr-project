@@ -45,4 +45,11 @@ crons.daily(
   internal.onboarding.sendOnboardingOverdueReminders,
 );
 
+// Weekly newsletter (Monday at 9 AM UTC)
+crons.weekly(
+  'weekly-newsletter',
+  { dayOfWeek: 'monday', hourUTC: 9, minuteUTC: 0 },
+  internal.newsletter.sendWeeklyDigest,
+);
+
 export default crons;

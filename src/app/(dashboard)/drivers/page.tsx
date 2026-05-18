@@ -304,7 +304,7 @@ export default function DriversPage() {
   );
 
   const handleViewRequestDetails = useCallback(
-    (request: TripRequest) => {
+    (request: any) => {
       setSelectedRequest(request);
       setShowTripDetails(true);
       const mainEl = mainRef.current;

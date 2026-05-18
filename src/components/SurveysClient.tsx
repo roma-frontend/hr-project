@@ -112,7 +112,11 @@ function SortableQuestion({
   const TypeIcon = QUESTION_TYPE_CONFIG[question.type].icon;
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-2 rounded-md border bg-muted/30">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-2 rounded-md border bg-muted/30"
+    >
       <button
         type="button"
         {...attributes}
@@ -861,8 +865,12 @@ function SurveyResultsDialog({
             {results.survey.title} — {t('surveys.results')}
           </DialogTitle>
           <div className="flex items-center gap-3 mt-2">
-            <Badge variant="default">{results.totalResponses} {t('surveys.responses')}</Badge>
-            <Badge variant="secondary">{results.questionResults.length} {t('surveys.questions')}</Badge>
+            <Badge variant="default">
+              {results.totalResponses} {t('surveys.responses')}
+            </Badge>
+            <Badge variant="secondary">
+              {results.questionResults.length} {t('surveys.questions')}
+            </Badge>
           </div>
         </DialogHeader>
 
@@ -883,7 +891,9 @@ function SurveyResultsDialog({
                 {(qr.question.type === 'rating' || qr.question.type === 'nps') && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl font-bold text-primary">{qr.average?.toFixed(1)}</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {qr.average?.toFixed(1)}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         / {qr.question.type === 'nps' ? '10' : '5'} avg
                       </div>
@@ -894,7 +904,8 @@ function SurveyResultsDialog({
                         {Object.entries(qr.distribution)
                           .sort(([a], [b]) => Number(a) - Number(b))
                           .map(([val, count]) => {
-                            const pct = qr.totalResponses > 0 ? (Number(count) / qr.totalResponses) * 100 : 0;
+                            const pct =
+                              qr.totalResponses > 0 ? (Number(count) / qr.totalResponses) * 100 : 0;
                             return (
                               <div key={val} className="flex items-center gap-2">
                                 <span className="text-xs w-6 text-right font-mono">{val}</span>
@@ -952,7 +963,8 @@ function SurveyResultsDialog({
                         <span className="text-sm font-bold text-green-600">
                           {qr.totalResponses > 0
                             ? Math.round((qr.yesCount / qr.totalResponses) * 100)
-                            : 0}%
+                            : 0}
+                          %
                         </span>
                       </div>
                       <div className="bg-muted rounded-full h-3 overflow-hidden">
@@ -960,9 +972,7 @@ function SurveyResultsDialog({
                           className="h-full bg-green-500 rounded-full transition-all duration-300"
                           style={{
                             width: `${
-                              qr.totalResponses > 0
-                                ? (qr.yesCount / qr.totalResponses) * 100
-                                : 0
+                              qr.totalResponses > 0 ? (qr.yesCount / qr.totalResponses) * 100 : 0
                             }%`,
                           }}
                         />
@@ -978,7 +988,8 @@ function SurveyResultsDialog({
                         <span className="text-sm font-bold text-red-600">
                           {qr.totalResponses > 0
                             ? Math.round((qr.noCount / qr.totalResponses) * 100)
-                            : 0}%
+                            : 0}
+                          %
                         </span>
                       </div>
                       <div className="bg-muted rounded-full h-3 overflow-hidden">
@@ -986,9 +997,7 @@ function SurveyResultsDialog({
                           className="h-full bg-red-500 rounded-full transition-all duration-300"
                           style={{
                             width: `${
-                              qr.totalResponses > 0
-                                ? (qr.noCount / qr.totalResponses) * 100
-                                : 0
+                              qr.totalResponses > 0 ? (qr.noCount / qr.totalResponses) * 100 : 0
                             }%`,
                           }}
                         />
@@ -1133,7 +1142,7 @@ export function SurveysClient() {
 
       {/* Status filter tabs */}
       <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-        <TabsList className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-2 md:grid-cols-3">
+        <TabsList className="w-full mb-4 gap-2 bg-transparent p-0 h-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <TabsTrigger
             className="w-full px-4 py-2.5 rounded-xl data-[state=active]:bg-[#3b82f6] data-[state=active]:text-white data-[state=inactive]:bg-[var(--background-subtle)] shadow-sm font-medium flex items-center justify-center"
             value="all"
