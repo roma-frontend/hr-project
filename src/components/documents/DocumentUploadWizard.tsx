@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useMainRef } from '@/hooks/useMainRef';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
@@ -36,7 +37,6 @@ import {
   Image as ImageIcon,
   Video,
   Music,
-  Loader2,
   Settings,
   Info,
   Eye,
@@ -148,7 +148,11 @@ interface DocumentUploadWizardProps {
   templateId?: Id<'documentTemplates'>;
 }
 
-export default function DocumentUploadWizard({ onClose, onSuccess, templateId }: DocumentUploadWizardProps) {
+export default function DocumentUploadWizard({
+  onClose,
+  onSuccess,
+  templateId,
+}: DocumentUploadWizardProps) {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const selectedOrgId = useSelectedOrganization();
@@ -750,8 +754,8 @@ export default function DocumentUploadWizard({ onClose, onSuccess, templateId }:
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -897,6 +901,7 @@ export default function DocumentUploadWizard({ onClose, onSuccess, templateId }:
           )}
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body,
   );
 }

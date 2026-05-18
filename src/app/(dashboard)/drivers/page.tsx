@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useMainRef } from '@/hooks/useMainRef';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -288,27 +289,33 @@ export default function DriversPage() {
   }, [showRequestWizard, showTripDetails, showCalendarDialog]);
 
   // 8. Callback hooks (MUST be before early returns!)
-  const handleBook = useCallback((id: string) => {
-    setSelectedDriverId(id);
-    setShowRequestWizard(true);
-    const mainEl = mainRef.current;
-    if (mainEl) {
-      mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, []);
+  const handleBook = useCallback(
+    (id: string) => {
+      setSelectedDriverId(id);
+      setShowRequestWizard(true);
+      const mainEl = mainRef.current;
+      if (mainEl) {
+        mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [mainRef],
+  );
 
-  const handleViewRequestDetails = useCallback((request: any) => {
-    setSelectedRequest(request);
-    setShowTripDetails(true);
-    const mainEl = mainRef.current;
-    if (mainEl) {
-      mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, []);
+  const handleViewRequestDetails = useCallback(
+    (request: TripRequest) => {
+      setSelectedRequest(request);
+      setShowTripDetails(true);
+      const mainEl = mainRef.current;
+      if (mainEl) {
+        mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [mainRef],
+  );
 
   const handleToggleFavorite = useCallback(
     async (id: string) => {
@@ -495,22 +502,24 @@ export default function DriversPage() {
         canRegisterDrivers={user?.role === 'admin'}
       />
 
-      {showRequestWizard && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl">
-            <div className="p-6 border-b border-(--border) flex items-center justify-between">
-              <h2 className="text-xl font-bold">{t('driver.requestDriver', 'Request Driver')}</h2>
-              <button
-                onClick={closeModal}
-                className="p-2 rounded-lg hover:bg-(--background-subtle) transition-colors"
-              >
-                ✕
-              </button>
+      {showRequestWizard &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl">
+              <div className="p-6 border-b border-(--border) flex items-center justify-between">
+                <h2 className="text-xl font-bold">{t('driver.requestDriver', 'Request Driver')}</h2>
+                <button
+                  onClick={closeModal}
+                  className="p-2 rounded-lg hover:bg-(--background-subtle) transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <RequestDriverWizard userId={userId!} onComplete={closeModal} onCancel={closeModal} />
             </div>
-            <RequestDriverWizard userId={userId!} onComplete={closeModal} onCancel={closeModal} />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
       {showSelectDriverModal && (
         <SelectDriverModal
