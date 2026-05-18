@@ -712,14 +712,14 @@ export default function OrgChartClient() {
             <div>
               <label className="text-sm font-medium">{t('orgChart.parent', 'Parent')}</label>
               <Select
-                value={nodeForm.parentId}
-                onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value }))}
+                value={nodeForm.parentId || '__none__'}
+                onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value === '__none__' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t('placeholders.selectOrg', 'Select organization')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('common.none', 'None')}</SelectItem>
+                  <SelectItem value="__none__">{t('common.none', 'None')}</SelectItem>
                   {orgNodes?.map((node) => (
                     <SelectItem key={node._id} value={node._id}>
                       {node.name}
@@ -784,14 +784,14 @@ export default function OrgChartClient() {
             <div>
               <label className="text-sm font-medium">{t('orgChart.parent', 'Parent')}</label>
               <Select
-                value={nodeForm.parentId}
-                onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value }))}
+                value={nodeForm.parentId || '__none__'}
+                onValueChange={(value) => setNodeForm((prev) => ({ ...prev, parentId: value === '__none__' ? '' : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t('placeholders.selectOrg', 'Select organization')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('common.none', 'None')}</SelectItem>
+                  <SelectItem value="__none__">{t('common.none', 'None')}</SelectItem>
                   {orgNodes
                     ?.filter((node) => node._id !== selectedNode)
                     .map((node) => (
