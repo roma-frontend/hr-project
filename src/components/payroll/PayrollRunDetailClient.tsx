@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import '@/i18n/config';
 import { useMutation, useQuery } from 'convex/react';
 import type { FunctionReturnType } from 'convex/server';
 import { api } from '@/convex/_generated/api';
@@ -24,6 +25,7 @@ import {
   Send,
   Pencil,
   Ban,
+  Landmark,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -31,13 +33,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/useAuthStore';
 import { EditPayrollRecordDialog } from '@/components/payroll/EditPayrollRecordDialog';
+import type { SrcEmployeeIdentity } from '@/lib/payroll/srcExport';
 
 type PayrollRunDetail = NonNullable<
   FunctionReturnType<typeof api.payroll.queries.getPayrollRunById>
 >;
-type PayrollRecordItem = PayrollRunDetail['records'][number];
+type PayrollRecordItem = PayrollRunDetail['records'][number] & {
+  /** ՀՎՀՀ from the employee profile — present when the org collected it. */
+  taxId?: string | null;
+  /** ՀԾՀ from the user row — present when the org collected it. */
+  nationalId?: string | null;
+};
 
 function formatCurrency(amount: number, currency = 'AMD'): string {
   return new Intl.NumberFormat('en-US', {
@@ -71,7 +80,7 @@ function getStatusBadge(status: string, t: (key: string) => string) {
 }
 
 export default function PayrollRunDetailClient({ params }: { params: Promise<{ id: string }> }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const resolvedParams = React.use(params);
   const rawRunId = resolvedParams.id;
   // Defensive: stale links may carry a period like "2026-08" instead of a
@@ -96,6 +105,7 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
 
   const [editingRecord, setEditingRecord] = useState<PayrollRecordItem | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [srcExporting, setSrcExporting] = useState(false);
 
   const runAction = async (fn: () => Promise<unknown>, successKey: string) => {
     if (!user?.id) {
@@ -141,6 +151,72 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
       </div>
     );
   }
+
+  // ── SRC filing export (Armenian Tax Service) ──────────────────────────
+  // Sends the run's records + employee identity data to the export API and
+  // downloads the styled workbook. The API is a dumb formatter — all RBAC
+  // happened already (this page is supervisor+ only, run came from Convex).
+  const exportSrcFiling = async () => {
+    if (!run.records || run.records.length === 0) return;
+    setSrcExporting(true);
+    try {
+      const identities: Record<string, SrcEmployeeIdentity> = {};
+      for (const record of run.records) {
+        identities[record.userId] = {
+          userId: record.userId,
+          name: record.user?.name ?? record.userId,
+          taxId: record.taxId ?? null,
+          nationalId: record.nationalId ?? null,
+          position: record.user?.position ?? null,
+          department: record.user?.department ?? null,
+        };
+      }
+      const csrfRes = await fetch('/api/csrf-token', { method: 'GET' });
+      const csrfData = csrfRes.ok
+        ? ((await csrfRes.json()) as { token?: string; signature?: string })
+        : {};
+      const res = await fetch('/api/payroll/src-export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfData.token ?? '',
+          'X-CSRF-Token-Signature': csrfData.signature ?? '',
+        },
+        body: JSON.stringify({
+          records: run.records.map((record) => ({
+            userId: record.userId,
+            period: record.period,
+            baseSalary: record.baseSalary,
+            grossSalary: record.grossSalary,
+            netSalary: record.netSalary,
+            bonuses: record.bonuses,
+            overtimePay: record.overtimePay,
+            deductions: record.deductions,
+            status: record.status,
+            taxCountry: record.taxCountry,
+            currency: record.currency ?? 'AMD',
+          })),
+          identities,
+          currency: run.records[0]?.currency ?? 'AMD',
+          lang: i18n.language,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `src-filing-${run.period}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t('payroll.srcExported', 'SRC filing exported'));
+    } catch (e) {
+      logger.error('[SRC export]', e);
+      toast.error(t('payroll.srcExportFailed', 'SRC export failed'));
+    } finally {
+      setSrcExporting(false);
+    }
+  };
 
   return (
     <motion.div
@@ -221,6 +297,18 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
             >
               <Send className="w-4 h-4 mr-2" />
               {t('payroll.markPaid') || 'Mark as paid'}
+            </Button>
+          )}
+          {isAdmin && run.status !== 'cancelled' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={exportSrcFiling}
+              disabled={actionLoading || srcExporting || !run.records?.length}
+              title={t('payroll.srcExportHint', '')}
+            >
+              <Landmark className="w-4 h-4 mr-2" />
+              {srcExporting ? t('common.loading', '…') : t('payroll.srcExport', 'SRC Filing')}
             </Button>
           )}
           {isAdmin && run.status !== 'paid' && run.status !== 'cancelled' && (

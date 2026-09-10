@@ -214,6 +214,15 @@ export const getPayrollRunById = query({
       records.map(async (record) => {
         const user = await ctx.db.get(record.userId);
         const userProfile = await getProfile(ctx, record.userId);
+        // SRC filing (Armenian Tax Service export) needs the statutory
+        // identifiers. The ՀՎՀՀ is stored in `employeeProfiles.socialCardNumber`
+        // (the field PassportFields verifies against the SRC), the ՀԾՀ on the
+        // user row. Absent identifiers flow through as null — the export flags
+        // those rows instead of failing.
+        const employeeProfile = await ctx.db
+          .query('employeeProfiles')
+          .withIndex('by_user', (q) => q.eq('userId', record.userId))
+          .first();
         return {
           ...record,
           user: user
@@ -221,8 +230,12 @@ export const getPayrollRunById = query({
                 name: user.name,
                 email: user.email,
                 avatarUrl: userProfile?.avatarUrl ?? user.avatarUrl ?? user.faceImageUrl,
+                position: userProfile?.position ?? user.position ?? null,
+                department: userProfile?.department ?? user.department ?? null,
               }
             : null,
+          taxId: employeeProfile?.socialCardNumber ?? null,
+          nationalId: user?.nationalId ?? null,
         };
       }),
     );
