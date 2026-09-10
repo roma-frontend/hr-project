@@ -71,8 +71,8 @@ export function useSubscription(): { subscription: SubscriptionData; loading: bo
       isTrial: raw.status === 'trialing',
       isPastDue: raw.status === 'past_due',
       isCanceled: raw.status === 'canceled',
-      stripeCustomerId: raw.stripeCustomerId,
-      stripeSubscriptionId: raw.stripeSubscriptionId,
+      stripeCustomerId: raw.stripeCustomerId ?? null,
+      stripeSubscriptionId: raw.stripeSubscriptionId ?? null,
     },
   };
 }

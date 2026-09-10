@@ -4,8 +4,28 @@ import { v } from 'convex/values';
 export const settings = {
   subscriptions: defineTable({
     organizationId: v.optional(v.id('organizations')),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
+    /**
+     * PSP that owns this subscription. Absent = Stripe (legacy rows).
+     * Stripe is card-only and cannot charge ArCa/local Armenian cards, so
+     * local providers (Idram, Ameriabank/ArCa) activate subscriptions through
+     * their own webhooks — `stripeCustomerId`/`stripeSubscriptionId` stay
+     * empty for them and `providerRef` carries the PSP-side reference.
+     */
+    paymentProvider: v.optional(
+      v.union(
+        v.literal('stripe'),
+        v.literal('idram'),
+        v.literal('ameriabank'),
+        v.literal('ardshinbank'),
+        v.literal('fastbank'),
+      ),
+    ),
+    /** PSP-side payment/subscription reference for non-Stripe providers. */
+    providerRef: v.optional(v.string()),
+    /** Currency the subscription is billed in (AMD for local providers). */
+    billingCurrency: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
     stripeSessionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
     plan: v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
@@ -120,4 +140,67 @@ export const settings = {
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index('by_org', ['organizationId']),
+
+  /**
+   * Local payment-provider credentials (Idram, ArCa acquiring banks).
+   * One row per provider. `secretKey` is write-only — queries strip it before
+   * returning, the same convention integrations.ts uses for imidAccessToken.
+   */
+  paymentProviderConfigs: defineTable({
+    provider: v.union(
+      v.literal('idram'),
+      v.literal('ameriabank'),
+      v.literal('ardshinbank'),
+      v.literal('fastbank'),
+    ),
+    isEnabled: v.boolean(),
+    /** Merchant/shop identifier assigned by the PSP. */
+    merchantId: v.optional(v.string()),
+    /** HMAC secret for PSP webhook verification (server-only). */
+    secretKey: v.optional(v.string()),
+    /** Endpoint override for sandbox/testing. */
+    apiUrl: v.optional(v.string()),
+    /** Success/failure landing paths on the app (defaults when absent). */
+    successPath: v.optional(v.string()),
+    failPath: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_provider', ['provider']),
+
+  /**
+   * One row per local checkout. The PSP webhook flips `pending` → `paid`
+   * (idempotent by `orderId`), and activation copies the plan onto the
+   * subscription + organization exactly like the Stripe path does.
+   */
+  localPayments: defineTable({
+    organizationId: v.optional(v.id('organizations')),
+    provider: v.union(
+      v.literal('idram'),
+      v.literal('ameriabank'),
+      v.literal('ardshinbank'),
+      v.literal('fastbank'),
+    ),
+    /** PSP-agnostic short order id — unique, traceable in both systems. */
+    orderId: v.string(),
+    plan: v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
+    /** Months purchased up front (local PSPs rarely do true subscriptions). */
+    months: v.optional(v.number()),
+    amountUsd: v.number(),
+    /** Amount converted to AMD by the client at the displayed FX rate. */
+    amountAmd: v.optional(v.number()),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('paid'),
+      v.literal('failed'),
+      v.literal('cancelled'),
+    ),
+    providerRef: v.optional(v.string()),
+    paidAt: v.optional(v.number()),
+    createdBy: v.id('users'),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_order', ['orderId'])
+    .index('by_org', ['organizationId'])
+    .index('by_status', ['status']),
 };

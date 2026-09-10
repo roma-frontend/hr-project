@@ -9,8 +9,21 @@ import { resolveBillingPlanLink } from './billing/plans';
 export const upsertSubscription = mutation({
   args: {
     organizationId: v.optional(v.id('organizations')),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
+    // Optional now: local PSPs (Idram, ArCa banks) activate subscriptions
+    // without Stripe ids — they pass paymentProvider + providerRef instead.
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    paymentProvider: v.optional(
+      v.union(
+        v.literal('stripe'),
+        v.literal('idram'),
+        v.literal('ameriabank'),
+        v.literal('ardshinbank'),
+        v.literal('fastbank'),
+      ),
+    ),
+    providerRef: v.optional(v.string()),
+    billingCurrency: v.optional(v.string()),
     stripeSessionId: v.optional(v.string()),
     plan: v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
     status: v.union(
@@ -27,12 +40,15 @@ export const upsertSubscription = mutation({
     trialEnd: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('subscriptions')
-      .withIndex('by_stripe_subscription', (q) =>
-        q.eq('stripeSubscriptionId', args.stripeSubscriptionId),
-      )
-      .first();
+    // Identity of a subscription row: the Stripe subscription id when present,
+    // otherwise the PSP-side reference (Idram/ArCa bank payments carry one).
+    const dedupeKey = args.stripeSubscriptionId ?? args.providerRef ?? '';
+    const existing = dedupeKey
+      ? await ctx.db
+          .query('subscriptions')
+          .withIndex('by_stripe_subscription', (q) => q.eq('stripeSubscriptionId', dedupeKey))
+          .first()
+      : null;
 
     const now = Date.now();
 
@@ -94,7 +110,6 @@ export const updateSubscriptionStatus = mutation({
         q.eq('stripeSubscriptionId', args.stripeSubscriptionId),
       )
       .first();
-
     if (!existing) return null;
 
     await ctx.db.patch(existing._id, {
