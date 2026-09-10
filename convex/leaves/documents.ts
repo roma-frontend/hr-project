@@ -36,27 +36,141 @@ async function findOrgHrUsers(
   );
 }
 
-/** Locale of the secondary language for a leave document (Armenian + org lang). */
-function secondaryLocale(employee: Doc<'users'>): 'hy' | 'ru' | 'en' | 'de' {
-  // Armenian is always primary; secondary comes from employee preference or org default
-  return (employee.language as 'hy' | 'ru' | 'en' | 'de') ?? 'ru';
-}
+/** Locales a leave document can be issued in: Armenian + one employee language. */
+type LeaveDocLocale = 'hy' | 'ru' | 'en' | 'de';
 
-/** Translate leave type key to display labels per locale. */
-const LEAVE_TYPE_LABELS: Record<string, Record<string, string>> = {
-  paid: { en: 'paid', ru: 'оплачиваемый', hy: 'վճարվող', de: 'bezahlter' },
-  unpaid: { en: 'unpaid', ru: 'неоплачиваемый', hy: 'անվճար', de: 'unbezahlter' },
-  sick: { en: 'sick', ru: 'больничный', hy: 'հիվանդության', de: 'Krankheits' },
-  family: { en: 'family', ru: 'семейный', hy: 'ընտանեկան', de: 'Familien' },
-  maternity: { en: 'maternity', ru: 'декретный', hy: 'մայրության', de: 'Mutterschafts' },
-  paternity: { en: 'paternity', ru: 'отцовский', hy: 'հայրության', de: 'Vaterschafts' },
-  study: { en: 'study', ru: 'учебный', hy: 'ուսումնական', de: 'Studien' },
-  doctor: { en: 'doctor visit', ru: 'визит к врачу', hy: 'բժշկի այց', de: 'Arztbesuch' },
-  day_off: { en: 'day off', ru: 'выходной', hy: 'հանգստյան օր', de: 'freier Tag' },
+/** Native language names printed as the captions above the two columns. */
+const LOCALE_CAPTIONS: Record<LeaveDocLocale, string> = {
+  hy: 'ՀԱՅԵՐԵՆ',
+  ru: 'РУССКИЙ',
+  en: 'ENGLISH',
+  de: 'DEUTSCH',
 };
 
-function leaveTypeLabel(type: string, locale: string): string {
+/** Static labels of the signature grid, in the employee's language. */
+const GRID_LABELS: Record<
+  LeaveDocLocale,
+  { signature: string; name: string; date: string; position: string }
+> = {
+  hy: { signature: 'Ստորագրություն', name: 'Անուն', date: 'Ամսաթիվ', position: 'Պաշտոն' },
+  ru: { signature: 'Подпись', name: 'Имя', date: 'Дата', position: 'Должность' },
+  en: { signature: 'Signature', name: 'Name', date: 'Date', position: 'Position' },
+  de: { signature: 'Unterschrift', name: 'Name', date: 'Datum', position: 'Position' },
+};
+
+/**
+ * Leave type key → a self-contained noun phrase per locale. Both documents read
+ * "… is granted <label>", so the label has to carry the word for "leave" itself
+ * ("paid leave", "оплачиваемый отпуск", "վճարովի արձակուրդ", "bezahlten Urlaub")
+ * — a bare adjective breaks the sentence for maternity/paternity.
+ */
+const LEAVE_TYPE_LABELS: Record<string, Record<LeaveDocLocale, string>> = {
+  paid: {
+    en: 'paid leave',
+    ru: 'оплачиваемый отпуск',
+    hy: 'վճարովի արձակուրդ',
+    de: 'bezahlten Urlaub',
+  },
+  unpaid: {
+    en: 'unpaid leave',
+    ru: 'отпуск без сохранения заработной платы',
+    hy: 'անվճար արձակուրդ',
+    de: 'unbezahlten Urlaub',
+  },
+  sick: {
+    en: 'sick leave',
+    ru: 'больничный отпуск',
+    hy: 'հիվանդության արձակուրդ',
+    de: 'Krankheitsurlaub',
+  },
+  family: {
+    en: 'family leave',
+    ru: 'семейный отпуск',
+    hy: 'ընտանեկան արձակուրդ',
+    de: 'Familienurlaub',
+  },
+  maternity: {
+    en: 'maternity leave',
+    ru: 'отпуск по беременности и родам',
+    hy: 'մայրության արձակուրդ',
+    de: 'Mutterschaftsurlaub',
+  },
+  paternity: {
+    en: 'paternity leave',
+    ru: 'отпуск по уходу за ребёнком',
+    hy: 'հայրության արձակուրդ',
+    de: 'Vaterschaftsurlaub',
+  },
+  study: {
+    en: 'study leave',
+    ru: 'учебный отпуск',
+    hy: 'ուսումնական արձակուրդ',
+    de: 'Studienurlaub',
+  },
+  doctor: {
+    en: 'leave for a doctor visit',
+    ru: 'отпуск для визита к врачу',
+    hy: 'բժշկի այցի արձակուրդ',
+    de: 'Arztbesuchsurlaub',
+  },
+  day_off: {
+    en: 'day off',
+    ru: 'отпуск без сохранения заработной платы (отгул)',
+    hy: 'հատուկ արձակուրդ',
+    de: 'Sonderurlaub',
+  },
+};
+
+function leaveTypeLabel(type: string, locale: LeaveDocLocale): string {
   return LEAVE_TYPE_LABELS[type]?.[locale] ?? type;
+}
+
+/** `1` → `день`, `2` → `дня`, `5` → `дней` — Russian counts noun forms. */
+function daysWordRu(days: number): string {
+  const mod10 = days % 10;
+  const mod100 = days % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'день';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'дня';
+  return 'дней';
+}
+
+/** `2026-09-07` → `7 сентября 2026 г.` (ru) / `07 September 2026` (en) / … */
+function formatDate(dateStr: string, locale: LeaveDocLocale): string {
+  const date = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return dateStr;
+  try {
+    return date.toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+/** One row of text in both languages — the unit of column alignment. */
+interface BilingualRow {
+  primary: string;
+  secondary: string;
+}
+
+/** Pair the rows into the frozen bilingual block list, captions included. */
+function toBilingualBlocks(rows: BilingualRow[], secondary: LeaveDocLocale) {
+  return rows.map((row) => ({
+    type: 'bilingual' as const,
+    left: [{ type: 'paragraph' as const, text: row.primary }],
+    right: [{ type: 'paragraph' as const, text: row.secondary }],
+    leftLabel: LOCALE_CAPTIONS.hy,
+    rightLabel: LOCALE_CAPTIONS[secondary],
+  }));
+}
+
+/** Locale of the secondary column for a leave document (Armenian + employee language). */
+function secondaryLocale(employee: Doc<'users'>): LeaveDocLocale {
+  // Armenian is always primary; secondary comes from employee preference or org default
+  return (employee.language as LeaveDocLocale) ?? 'ru';
 }
 
 // ─── Build bilingual leave request content ─────────────────────────────────
@@ -75,69 +189,61 @@ function buildLeaveRequestContent(args: {
   endDate: string;
   days: number;
   reason: string;
-  primaryLocale: string;
-  secondaryLocale: string;
-  signatoryName?: string;
-  signatoryPosition?: string;
+  secondaryLocale: LeaveDocLocale;
   today: string;
 }): string {
-  const typeLabelPrimary = leaveTypeLabel(args.leaveType, args.primaryLocale);
-  const typeLabelSecondary = leaveTypeLabel(args.leaveType, args.secondaryLocale);
-  const dayWordHy = args.days === 1 ? 'օր' : 'օր';
+  const secondary = args.secondaryLocale;
+  const range = (locale: LeaveDocLocale) =>
+    `(${formatDate(args.startDate, locale)} – ${formatDate(args.endDate, locale)})`;
+  const typeHy = leaveTypeLabel(args.leaveType, 'hy');
+  const typeSecondary = leaveTypeLabel(args.leaveType, secondary);
 
-  // Left column: Armenian (primaryLocale)
-  // Right column: secondaryLocale (RU or EN depending on user's language)
-  const leftBlocks: Array<{ text: string }> = [
-    { text: `${args.orgName} — ԴԻՄՈՒՄ ԱՐՁԱԿՈՒՐԴԻ ՀԱՄԱՐ` },
-    {
-      text: `Ես՝ ${args.employeeName}, ${args.employeeDepartment} բաժնի ${args.employeePosition},`,
-    },
-    {
-      text: `սույնով խնդրում եմ տրամադրել ${typeLabelPrimary} արձակուրդ՝ ${args.days} ${dayWordHy} ժամկետով (${args.startDate} – ${args.endDate})։`,
-    },
-    { text: `Պատճառ՝ ${args.reason}` },
-    { text: `Ամսաթիվ՝ ${args.today}` },
+  // Left column: Armenian (legally binding), a fixed set of rows.
+  const primaryRows: string[] = [
+    `${args.orgName} — ԴԻՄՈՒՄ ԱՐՁԱԿՈՒՐԴԻ ՀԱՄԱՐ`,
+    `Ես՝ ${args.employeeName}, ${args.employeeDepartment} բաժնի ${args.employeePosition},`,
+    `սույնով խնդրում եմ տրամադրել ${typeHy}՝ ${args.days} օր ժամկետով ${range('hy')}։`,
+    'Արձակուրդը հավանության արժանանալուց հետո սույն դիմումը ստորագրում է նաև աշխատողը։',
+    `Պատճառ՝ ${args.reason}`,
+    `Ամսաթիվ՝ ${formatDate(args.today, 'hy')}`,
   ];
 
-  // Build secondary language blocks based on the user's secondary locale
-  const rightBlocks: Array<{ text: string }> = [];
-  if (args.secondaryLocale === 'ru') {
-    rightBlocks.push(
-      { text: `${args.orgName} — ЗАЯВЛЕНИЕ НА ОТПУСК` },
-      {
-        text: `Я, ${args.employeeName}, ${args.employeePosition} ${args.employeeDepartment} отдела,`,
-      },
-      {
-        text: `прошу предоставить ${typeLabelSecondary} отпуск на ${args.days} ${args.days === 1 ? 'день' : args.days < 5 ? 'дня' : 'дней'} (${args.startDate} – ${args.endDate}).`,
-      },
-      { text: `Причина: ${args.reason}` },
-      { text: `Дата: ${args.today}` },
-    );
-  } else {
-    // Fallback: English
-    rightBlocks.push(
-      { text: `${args.orgName} — LEAVE REQUEST` },
-      {
-        text: `I, ${args.employeeName}, ${args.employeePosition} of the ${args.employeeDepartment} department,`,
-      },
-      {
-        text: `hereby request ${typeLabelSecondary} leave for ${args.days} ${args.days === 1 ? 'day' : 'days'} (${args.startDate} – ${args.endDate}).`,
-      },
-      { text: `Reason: ${args.reason}` },
-      { text: `Date: ${args.today}` },
-    );
-  }
+  // Right column: the employee's language, same rows in the same order.
+  const secondaryRows: string[] =
+    secondary === 'ru'
+      ? [
+          `${args.orgName} — ЗАЯВЛЕНИЕ НА ОТПУСК`,
+          `Я, ${args.employeeName}, ${args.employeePosition} отдела ${args.employeeDepartment},`,
+          `прошу предоставить ${typeSecondary} продолжительностью ${args.days} ${daysWordRu(args.days)} ${range('ru')}.`,
+          'После одобрения отпуска ответственным лицом настоящее заявление также подписывает работник.',
+          `Причина: ${args.reason}`,
+          `Дата: ${formatDate(args.today, 'ru')}`,
+        ]
+      : secondary === 'de'
+        ? [
+            `${args.orgName} — URLAUBSANTRAG`,
+            `Hiermit beantrage ich, ${args.employeeName} (${args.employeePosition}, Abteilung ${args.employeeDepartment}),`,
+            `${typeSecondary} für ${args.days} ${args.days === 1 ? 'Tag' : 'Tage'} ${range('de')}.`,
+            'Nach der Genehmigung des Urlaubs unterschreibt auch der Arbeitnehmer diesen Antrag.',
+            `Grund: ${args.reason}`,
+            `Datum: ${formatDate(args.today, 'de')}`,
+          ]
+        : [
+            `${args.orgName} — LEAVE REQUEST`,
+            `I, ${args.employeeName}, ${args.employeePosition} of the ${args.employeeDepartment} department,`,
+            `hereby request ${typeSecondary} for ${args.days} ${args.days === 1 ? 'day' : 'days'} ${range('en')}.`,
+            'Once the leave is approved, the employee countersigns this request.',
+            `Reason: ${args.reason}`,
+            `Date: ${formatDate(args.today, 'en')}`,
+          ];
 
-  const leftLabel = args.primaryLocale === 'hy' ? 'ՀԱՅԵՐԵՆ' : args.primaryLocale.toUpperCase();
-  const rightLabel = args.secondaryLocale === 'hy' ? 'ՀԱՅԵՐԵՆ' : args.secondaryLocale.toUpperCase();
-
-  const blocks = leftBlocks.map((b, i) => ({
-    type: 'bilingual' as const,
-    left: [{ type: 'paragraph' as const, text: b.text }],
-    right: [{ type: 'paragraph' as const, text: rightBlocks[i]?.text ?? '' }],
-    leftLabel,
-    rightLabel,
+  // Pair row by row so the two columns always compare like with like.
+  const rows: BilingualRow[] = primaryRows.map((primary, index) => ({
+    primary,
+    secondary: secondaryRows[index] ?? '',
   }));
+
+  const blocks = toBilingualBlocks(rows, secondary);
 
   return (
     '__DOC__' +
@@ -145,18 +251,14 @@ function buildLeaveRequestContent(args: {
       version: 2,
       source: 'catalog' as const,
       templateId: 'leave-request',
-      title: 'Leave Request / \u0534\u056b\u0574\u0578\u0582\u0574',
+      // Armenian first — the binding language, mirroring the left column.
+      title: '\u0534\u056b\u0574\u0578\u0582\u0574 / Leave Request',
       blocks,
       accent: 'emerald' as const,
       orgName: args.orgName,
-      primaryLocale: args.primaryLocale,
+      primaryLocale: 'hy',
       secondaryLocale: args.secondaryLocale,
-      labels: {
-        signature: args.primaryLocale === 'hy' ? 'Ստորագրություն' : 'Signature',
-        name: args.primaryLocale === 'hy' ? 'Անուն' : 'Name',
-        date: args.primaryLocale === 'hy' ? 'Ամսաթիվ' : 'Date',
-        position: args.primaryLocale === 'hy' ? 'Պաշտոն' : 'Position',
-      },
+      labels: GRID_LABELS[args.secondaryLocale],
     })
   );
 }
@@ -177,55 +279,57 @@ function buildLeaveOrderContent(args: {
   reason: string;
   supervisorName: string;
   supervisorPosition: string;
-  primaryLocale: string;
-  secondaryLocale: string;
+  secondaryLocale: LeaveDocLocale;
   today: string;
 }): string {
-  const typeLabelPrimary = leaveTypeLabel(args.leaveType, args.primaryLocale);
-  const typeLabelSecondary = leaveTypeLabel(args.leaveType, args.secondaryLocale);
+  const secondary = args.secondaryLocale;
+  const range = (locale: LeaveDocLocale) =>
+    `(${formatDate(args.startDate, locale)} – ${formatDate(args.endDate, locale)})`;
+  const typeHy = leaveTypeLabel(args.leaveType, 'hy');
+  const typeSecondary = leaveTypeLabel(args.leaveType, secondary);
 
-  // Left column: Armenian (primaryLocale)
-  // Right column: secondaryLocale (RU or EN)
-  const leftBlocks: Array<{ text: string }> = [
-    { text: `${args.orgName} — ՀՐԱՄԱՆ ԱՐՁԱԿՈՒՐԴԻ ՄԱՍԻՆ` },
-    {
-      text: `${args.supervisorName}-ի՝ ${args.supervisorPosition} հրամանով, ${args.employeeDepartment} բաժնի ${args.employeePosition} ${args.employeeName}-ին տրամադրվում է ${typeLabelPrimary} արձակուրդ՝ ${args.days} օրով (${args.startDate} – ${args.endDate})։`,
-    },
-    { text: `Պատճառ՝ ${args.reason}` },
-    { text: `Ամսաթիվ՝ ${args.today}` },
+  // Left column: Armenian (legally binding).
+  const primaryRows: string[] = [
+    `${args.orgName} — ՀՐԱՄԱՆ ԱՐՁԱԿՈՒՐԴԻ ՄԱՍԻՆ`,
+    `${args.orgName}-ի ${args.employeeDepartment} բաժնի ${args.employeePosition} ${args.employeeName}-ին տրամադրվում է ${typeHy}՝ ${args.days} օր ժամկետով ${range('hy')}։`,
+    `Հիմք՝ ${args.supervisorName}-ի (${args.supervisorPosition}) հավանությունը։`,
+    `Պատճառ՝ ${args.reason}`,
+    `Ամսաթիվ՝ ${formatDate(args.today, 'hy')}`,
   ];
 
-  const rightBlocks: Array<{ text: string }> = [];
-  if (args.secondaryLocale === 'ru') {
-    rightBlocks.push(
-      { text: `${args.orgName} — ПРИКАЗ ОБ ОТПУСКЕ` },
-      {
-        text: `По приказу ${args.supervisorName}, ${args.supervisorPosition}, ${args.employeeName}, ${args.employeePosition} ${args.employeeDepartment} отдела, предоставляется ${typeLabelSecondary} отпуск на ${args.days} ${args.days === 1 ? 'день' : args.days < 5 ? 'дня' : 'дней'} (${args.startDate} – ${args.endDate}).`,
-      },
-      { text: `Причина: ${args.reason}` },
-      { text: `Дата: ${args.today}` },
-    );
-  } else {
-    rightBlocks.push(
-      { text: `${args.orgName} — LEAVE ORDER` },
-      {
-        text: `By order of ${args.supervisorName}, ${args.supervisorPosition}, ${args.employeeName}, ${args.employeePosition} of the ${args.employeeDepartment} department, is granted ${typeLabelSecondary} leave for ${args.days} ${args.days === 1 ? 'day' : 'days'} (${args.startDate} – ${args.endDate}).`,
-      },
-      { text: `Reason: ${args.reason}` },
-      { text: `Date: ${args.today}` },
-    );
-  }
+  // Right column: the employee's language, same rows in the same order.
+  const secondaryRows: string[] =
+    secondary === 'ru'
+      ? [
+          `${args.orgName} — ПРИКАЗ О ПРЕДОСТАВЛЕНИИ ОТПУСКА`,
+          `Предоставить ${args.employeeName}, ${args.employeePosition} отдела ${args.employeeDepartment} организации ${args.orgName}, ${typeSecondary} продолжительностью ${args.days} ${daysWordRu(args.days)} ${range('ru')}.`,
+          `Основание: одобрение ${args.supervisorName} (${args.supervisorPosition}).`,
+          `Причина: ${args.reason}`,
+          `Дата: ${formatDate(args.today, 'ru')}`,
+        ]
+      : secondary === 'de'
+        ? [
+            `${args.orgName} — URLAUBSANORDNUNG`,
+            `${args.employeeName} (${args.employeePosition}, Abteilung ${args.employeeDepartment}) von ${args.orgName} erhält ${typeSecondary} für ${args.days} ${args.days === 1 ? 'Tag' : 'Tage'} ${range('de')}.`,
+            `Grundlage: Genehmigung durch ${args.supervisorName} (${args.supervisorPosition}).`,
+            `Grund: ${args.reason}`,
+            `Datum: ${formatDate(args.today, 'de')}`,
+          ]
+        : [
+            `${args.orgName} — LEAVE ORDER`,
+            `${args.employeeName}, ${args.employeePosition} of the ${args.employeeDepartment} department of ${args.orgName}, is granted ${typeSecondary} for ${args.days} ${args.days === 1 ? 'day' : 'days'} ${range('en')}.`,
+            `Basis: approval by ${args.supervisorName} (${args.supervisorPosition}).`,
+            `Reason: ${args.reason}`,
+            `Date: ${formatDate(args.today, 'en')}`,
+          ];
 
-  const leftLabel = args.primaryLocale === 'hy' ? 'ՀԱՅԵՐԵՆ' : args.primaryLocale.toUpperCase();
-  const rightLabel = args.secondaryLocale === 'hy' ? 'ՀԱՅԵՐԵՆ' : args.secondaryLocale.toUpperCase();
-
-  const blocks = leftBlocks.map((b, i) => ({
-    type: 'bilingual' as const,
-    left: [{ type: 'paragraph' as const, text: b.text }],
-    right: [{ type: 'paragraph' as const, text: rightBlocks[i]?.text ?? '' }],
-    leftLabel,
-    rightLabel,
+  // Pair row by row so the two columns always compare like with like.
+  const rows: BilingualRow[] = primaryRows.map((primary, index) => ({
+    primary,
+    secondary: secondaryRows[index] ?? '',
   }));
+
+  const blocks = toBilingualBlocks(rows, secondary);
 
   return (
     '__DOC__' +
@@ -233,18 +337,13 @@ function buildLeaveOrderContent(args: {
       version: 2,
       source: 'catalog' as const,
       templateId: 'leave-order',
-      title: 'Leave Order / \u0540\u0580\u0561\u0574\u0561\u0576',
+      title: '\u0540\u0580\u0561\u0574\u0561\u0576 / Leave Order',
       blocks,
       accent: 'emerald' as const,
       orgName: args.orgName,
-      primaryLocale: args.primaryLocale,
+      primaryLocale: 'hy',
       secondaryLocale: args.secondaryLocale,
-      labels: {
-        signature: args.primaryLocale === 'hy' ? 'Ստորագրություն' : 'Signature',
-        name: args.primaryLocale === 'hy' ? 'Անուն' : 'Name',
-        date: args.primaryLocale === 'hy' ? 'Ամսաթիվ' : 'Date',
-        position: args.primaryLocale === 'hy' ? 'Պաշտոն' : 'Position',
-      },
+      labels: GRID_LABELS[args.secondaryLocale],
     })
   );
 }
@@ -294,9 +393,8 @@ export const generateLeaveRequestDocument = internalMutation({
       endDate: leave.endDate,
       days: leave.days,
       reason: leave.reason,
-      primaryLocale: 'hy',
       secondaryLocale: secLocale,
-      today: new Date(now).toLocaleDateString('en-GB'),
+      today: new Date(now).toISOString().slice(0, 10),
     });
 
     // The supervisor (reviewer) signs first, then the employee.
@@ -439,9 +537,8 @@ export const generateLeaveOrderDocument = internalMutation({
       reason: leave.reason,
       supervisorName: supervisor?.name ?? 'Supervisor',
       supervisorPosition: supervisor?.position ?? 'Supervisor',
-      primaryLocale: 'hy',
       secondaryLocale: secLocale,
-      today: new Date(now).toLocaleDateString('en-GB'),
+      today: new Date(now).toISOString().slice(0, 10),
     });
 
     if (approverHrUsers.length === 0) {
