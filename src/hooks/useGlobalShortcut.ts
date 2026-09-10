@@ -62,6 +62,10 @@ export function useGlobalShortcut(
     if (!enabled) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
+      // Not every 'keydown' listener receives a real KeyboardEvent: code elsewhere
+      // (and some browser extensions) dispatches a bare `new Event('keydown')`,
+      // which has no `key` property. Ignore those instead of crashing on it.
+      if (typeof event.key !== 'string') return;
       if (event.key.toLowerCase() !== key.toLowerCase()) return;
 
       // Accept either modifier so the same binding works on macOS and Windows

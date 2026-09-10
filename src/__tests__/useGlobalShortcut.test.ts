@@ -244,6 +244,24 @@ describe('useGlobalShortcut', () => {
     expect(handler2).toHaveBeenCalledTimes(1);
   });
 
+  it('ignores synthetic keydown events without a key property', () => {
+    // Some code/extensions dispatch a bare `new Event('keydown')`, which has no
+    // `key`. The hook must skip it instead of crashing on `key.toLowerCase()`.
+    const handler = jest.fn();
+    renderHook(() => useGlobalShortcut({ key: '/' }, handler));
+
+    expect(() =>
+      act(() => {
+        window.dispatchEvent(new Event('keydown'));
+      }),
+    ).not.toThrow();
+    expect(handler).not.toHaveBeenCalled();
+
+    // Real events still work afterwards
+    fireKeydown('/');
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it('supports combined modifiers (meta + shift)', () => {
     const handler = jest.fn();
     renderHook(() => useGlobalShortcut({ key: 'k', meta: true, shift: true }, handler));
