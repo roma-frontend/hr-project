@@ -70,11 +70,20 @@ module.exports = {
     // Lowered 0.2pp on 2026-08-20 for video conference platform selector,
     // pre-meeting reminders, platform analytics, and EmployeeHoverCard.
     // Lowered 0.1pp on 2026-08-21 — coverage fluctuates near the floor.
+    // Ratcheted on 2026-09-10 after the task-grid / task-config / CSRF /
+    // AI-provider / payslip test wave (full suite: lines 68.36, functions
+    // 60.03, statements 67.09, branches 57.85), then again after the
+    // convex/tasks, convex/http, convex/users/mutations deep-coverage wave
+    // (lines 68.96, functions 60.20, statements 67.72, branches 58.53), then
+    // after the convex/orgchart, candidatePortal and calendarEvents-access wave
+    // (lines 69.32, functions 60.69, statements 68.08, branches 58.92), then
+    // after the convex/meetings, recurringTasks and timeTracking wave
+    // (lines 69.46, functions 60.74, statements 68.29, branches 59.11).
     global: {
-      branches: 56.0,
-      functions: 58.0,
-      lines: 66.1,
-      statements: 64.7,
+      branches: 58.0,
+      functions: 59.0,
+      lines: 68.0,
+      statements: 67.0,
     },
   },
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
