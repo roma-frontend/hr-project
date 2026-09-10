@@ -203,6 +203,16 @@ export const BILLING_MODULES: BillingModuleDef[] = [
     isCore: false,
     sortOrder: 26,
   },
+  {
+    key: 'shiftScheduling',
+    name: 'Shift scheduling',
+    icon: 'CalendarClock',
+    category: 'time',
+    status: 'active',
+    isCore: false,
+    settingsSchema: { shifts: { type: 'number', unit: 'shifts/mo', min: 0 } },
+    sortOrder: 27,
+  },
 
   // ── Performance ──────────────────────────────────────────────────────────
   {

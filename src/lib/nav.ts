@@ -20,6 +20,7 @@ import {
   Briefcase,
   Building2,
   Calendar,
+  CalendarClock,
   CalendarDays,
   Car,
   CheckSquare,
@@ -135,6 +136,12 @@ export const navItems: NavEntry[] = [
     href: '/overtime',
     labelKey: 'nav.overtime',
     icon: Zap,
+    roles: ['superadmin', 'admin', 'supervisor', 'employee', 'driver'],
+  },
+  {
+    href: '/shifts',
+    labelKey: 'nav.shifts',
+    icon: CalendarClock,
     roles: ['superadmin', 'admin', 'supervisor', 'employee', 'driver'],
   },
   {

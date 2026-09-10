@@ -68,6 +68,10 @@ export const NOTIFICATION_TYPES = [
   'probation_extended',
   'probation_passed',
   'probation_failed',
+  'shift_published',
+  'shift_swap_requested',
+  'shift_swap_accepted',
+  'shift_swap_decided',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
