@@ -2349,6 +2349,15 @@ input[type='date']:focus {
   animation: fade-in 0.4s ease-out forwards;
 }
 
+/* Skeleton blocks arrive top-to-bottom with a small stagger (set via
+   `--stagger` on the element), so a loading page reads as "content is on
+   its way" rather than a static grey wall. `both` keeps a block invisible
+   until its own delay has elapsed. */
+.skeleton-block {
+  animation: fade-in 0.45s ease-out both;
+  animation-delay: var(--stagger, 0ms);
+}
+
 /* ── Modal appearance ───────────────────────────────────────────
    Centred dialogs must not travel vertically on open: the shared
    `fade-in` keyframe lifts content by 10px, which reads as a jump

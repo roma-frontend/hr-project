@@ -22,6 +22,7 @@ import LeaveStats from '@/components/dashboard/LeaveStats';
 import { CheckInOutWidget } from '@/components/attendance/CheckInOutWidget';
 import { TasksFocusWidget } from '@/components/dashboard/TasksFocusWidget';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { WidgetErrorBoundary } from '@/components/error/WidgetErrorBoundary';
 
 const containerVariants = {
@@ -145,7 +146,9 @@ export default function DashboardClient() {
     return Math.round(((current - previous) / previous) * 100);
   }, [stats.monthlyTrend]);
 
-  if (!mounted) return null;
+  // Keep the same skeleton the chunk loader showed: returning null here blanked
+  // the page for a frame between "chunk loaded" and "first effect ran".
+  if (!mounted) return <DashboardSkeleton />;
 
   const isLoading = dashboardStats === undefined || recentLeavesData === undefined;
   const isError = dashboardStats === null || recentLeavesData === null;
