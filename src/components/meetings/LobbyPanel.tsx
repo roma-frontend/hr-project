@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Copy, Loader2, UserPlus, X } from 'lucide-react';
+import { Copy, UserPlus, X } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -124,7 +125,7 @@ export function LobbyPanel({ roomName }: { roomName: string }) {
                     className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-300 transition hover:bg-emerald-500/30 disabled:opacity-50"
                   >
                     {isBusy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                     ) : (
                       <UserPlus className="h-3.5 w-3.5" />
                     )}

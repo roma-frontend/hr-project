@@ -24,7 +24,6 @@ import {
   FileSpreadsheet,
   Globe,
   KeyRound,
-  Loader2,
   LogOut,
   Monitor,
   ScrollText,
@@ -776,7 +775,7 @@ export function ControlCenterClient() {
                       className="gap-1.5"
                       onClick={() => usersPage.loadMore(50)}
                     >
-                      <Loader2 className="h-3.5 w-3.5" />
+                      <ShieldLoader size="xs" variant="inline" />
                       {t('superadmin.controlCenter.loadMore', 'Load more')}
                     </Button>
                   )}

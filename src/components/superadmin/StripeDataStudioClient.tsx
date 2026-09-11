@@ -219,7 +219,11 @@ export default function StripeDataStudioClient() {
             <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
           </Button>
           <Button onClick={() => fetchStripeData(true)} disabled={refreshing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? (
+              <ShieldLoader size="xs" variant="inline" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
             Обновить
           </Button>
         </div>

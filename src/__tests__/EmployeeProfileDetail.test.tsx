@@ -161,7 +161,7 @@ jest.mock('lucide-react', () => {
     IdCard: MockIcon,
     Calculator: MockIcon,
     Download: MockIcon,
-    Loader2: MockIcon,
+
     Wallet: MockIcon,
     CalendarDays: MockIcon,
     LayoutGrid: MockIcon,

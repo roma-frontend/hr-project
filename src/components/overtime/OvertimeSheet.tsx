@@ -12,6 +12,7 @@ import i18n from 'i18next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { X, CheckCircle, XCircle, Clock, Calendar, User, MessageSquare } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useAuthStore, type User as UserType } from '@/store/useAuthStore';
@@ -246,9 +247,7 @@ export function OvertimeSheet({ requestId, userName, onClose }: OvertimeSheetPro
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center p-8">
-              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-            </div>
+            <ShieldLoader size="sm" />
           )}
         </div>
 

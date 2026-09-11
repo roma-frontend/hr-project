@@ -10,7 +10,8 @@
 import { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
-import { Check, FileText, FileSignature, Loader2 } from 'lucide-react';
+import { Check, FileText, FileSignature } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -70,7 +71,7 @@ export default function MyIssuedDocuments() {
   if (rows === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ShieldLoader size="xs" variant="inline" />
       </div>
     );
   }
@@ -132,7 +133,7 @@ export default function MyIssuedDocuments() {
                 onClick={() => void handlePreview(row)}
               >
                 {busyId === row._id ? (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  <ShieldLoader size="xs" variant="inline" />
                 ) : (
                   <FileText className="h-4 w-4 mr-1" />
                 )}

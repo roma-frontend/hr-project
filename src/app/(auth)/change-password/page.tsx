@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Eye, EyeOff, Lock, AlertCircle, Building2, CheckCircle2, KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -229,7 +230,7 @@ export default function ChangePasswordPage() {
               <Button type="submit" disabled={busy} className="w-full gap-2">
                 {busy ? (
                   <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <ShieldLoader size="xs" variant="inline" />
                     {t('auth.changePassword.saving')}
                   </>
                 ) : (

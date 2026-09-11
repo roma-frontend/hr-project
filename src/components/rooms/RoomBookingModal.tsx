@@ -9,13 +9,13 @@ import {
   AlertTriangle,
   CalendarClock,
   Check,
-  Loader2,
   Search,
   Sparkles,
   Users,
   Video,
   X,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -427,7 +427,7 @@ export function RoomBookingModal({
             </Button>
             <Button size="sm" onClick={handleSubmit} disabled={submitting || !!blockingReason}>
               {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
               ) : (
                 <Check className="h-4 w-4" />
               )}
@@ -546,7 +546,7 @@ export function RoomBookingModal({
           >
             {availability === undefined ? (
               <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
                 {t('rooms.booking.checkingAvailability')}
               </span>
             ) : availability.available ? (

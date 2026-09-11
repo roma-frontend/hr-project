@@ -13,7 +13,6 @@ import {
   RotateCcw,
   Upload,
   Building2,
-  Loader2,
   AlertTriangle,
   X,
   LayoutDashboard,
@@ -29,6 +28,7 @@ import {
   Check,
   AlertCircle,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -320,7 +320,7 @@ export default function BrandingSettingsPage() {
               className="gap-1.5"
             >
               {saving ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
@@ -376,7 +376,7 @@ export default function BrandingSettingsPage() {
             className="gap-1.5"
           >
             {saving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}

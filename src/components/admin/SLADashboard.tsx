@@ -18,6 +18,7 @@ import type { Id } from '@/../convex/_generated/dataModel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Clock,
   CheckCircle2,
@@ -110,12 +111,7 @@ function SLADashboard({ organizationId }: SLADashboardProps) {
   // Target response time from config
   const targetHours = slaConfig?.targetResponseTimeHours || 24;
 
-  if (slaMetricsRaw === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (slaMetricsRaw === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

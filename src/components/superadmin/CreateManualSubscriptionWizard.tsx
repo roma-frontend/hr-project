@@ -14,6 +14,7 @@ import {
   SelectStep,
   CardSelectionStep,
 } from '@/components/ui/wizard-step-components';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { CreditCard, Building, Crown, DollarSign, Settings2 } from 'lucide-react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -153,12 +154,7 @@ export function CreateManualSubscriptionWizard({
     }
   };
 
-  if (allOrganizations === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (allOrganizations === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <Wizard

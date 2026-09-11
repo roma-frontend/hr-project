@@ -25,11 +25,11 @@ import {
   Clock,
   Lightbulb,
   Inbox,
-  Loader2,
   X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useOrgBranding } from '@/hooks/useOrgBranding';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 interface Organization {
   _id: Id<'organizations'>;
@@ -246,7 +246,7 @@ export default function SelectOrganizationPage() {
           >
             <Building2 className="h-7 w-7 text-white" />
           </div>
-          <Loader2 className="h-6 w-6 animate-spin text-(--text-muted)" />
+          <ShieldLoader size="xs" variant="inline" />
           <p className="text-sm text-(--text-secondary)">
             {prefilledOrg
               ? `${t('auth.joining', 'Joining')} ${prefilledOrg.name}…`
@@ -510,7 +510,7 @@ function OrgCard({
             >
               {isRequesting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <ShieldLoader size="xs" variant="inline" />
                   <span className="hidden sm:inline">{t('auth.joinOrg.joining')}</span>
                 </>
               ) : (

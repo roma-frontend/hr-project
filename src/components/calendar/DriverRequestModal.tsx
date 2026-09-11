@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Car, MapPin, Clock, Users, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { logger } from '@/lib/logger';
@@ -396,9 +397,7 @@ export function DriverRequestModal({ open, onOpenChange, selectedDate }: DriverR
           label={t('driver.requestDriver', 'Request Driver')}
           closeLabel={t('common.close', 'Close')}
         >
-          <div className="flex flex-1 items-center justify-center py-12">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-(--brand) border-t-transparent" />
-          </div>
+          <ShieldLoader size="sm" />
         </SheetContent>
       </Sheet>
     );

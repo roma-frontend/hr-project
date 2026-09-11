@@ -24,7 +24,6 @@ import { toast } from 'sonner';
 import {
   Check,
   Languages,
-  Loader2,
   Scissors,
   Sparkles,
   SpellCheck,
@@ -32,6 +31,7 @@ import {
   Undo2,
   Wand2,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -198,7 +198,7 @@ export function AiTextActions({
             )}
           >
             {isPending ? (
-              <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : isApplied ? (
               <Check className="size-3" aria-hidden="true" />
             ) : (

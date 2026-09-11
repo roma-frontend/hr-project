@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Shield,
   ShieldCheck,
@@ -133,11 +134,7 @@ export default function ComplianceClient() {
   const policies = useQuery(api.compliance.getPolicies, isAdmin ? {} : 'skip');
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
-      </div>
-    );
+    return <ShieldLoader size="md" />;
   }
 
   const filteredGdprRequests = gdprRequests?.filter((r) => {

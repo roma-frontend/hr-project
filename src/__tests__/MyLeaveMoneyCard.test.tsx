@@ -13,6 +13,10 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 const queryResults: Record<string, unknown> = {};
 const mockLang: { language: string } = { language: 'en' };
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('@/convex/_generated/api', () => ({
   api: {
     leaveAccrual: {
@@ -69,7 +73,6 @@ jest.mock('@/components/ui/button', () => ({
 jest.mock('lucide-react', () => ({
   Wallet: () => <span>wallet</span>,
   Download: () => <span>download</span>,
-  Loader2: () => <span>spinner</span>,
 }));
 
 import { MyLeaveMoneyCard } from '@/components/dashboard/MyLeaveMoneyCard';
@@ -276,12 +279,12 @@ describe('MyLeaveMoneyCard', () => {
     );
     render(<MyLeaveMoneyCard userId={'user_1' as Id<'users'>} />);
     fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByText('spinner')).toBeInTheDocument();
+    expect(screen.getByTestId('shield-loader')).toBeInTheDocument();
     await act(async () => {
       resolveFetch({ ok: true, blob: async () => new Blob(['x']) } as unknown as Response);
     });
     await waitFor(() => {
-      expect(screen.queryByText('spinner')).toBeNull();
+      expect(screen.queryByTestId('shield-loader')).toBeNull();
     });
   });
 });

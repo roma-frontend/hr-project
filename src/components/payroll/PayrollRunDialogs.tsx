@@ -26,7 +26,6 @@ import {
 import { Wizard, useWizardContext, type WizardStep } from '@/components/ui/wizard';
 import { toast } from 'sonner';
 import {
-  Loader2,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -34,6 +33,7 @@ import {
   FileText,
   ClipboardCheck,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -294,7 +294,7 @@ export function CreatePayrollRunDialog({
           {submitting ? (
             <div className="flex-1 flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-3 text-(--text-muted)">
-                <Loader2 className="w-8 h-8 animate-spin text-(--primary)" />
+                <ShieldLoader size="xs" variant="inline" />
                 <p className="text-sm">{t('payroll.creating')}</p>
               </div>
             </div>
@@ -370,7 +370,7 @@ export function ConfirmPayrollDialog({
                   : ''
             }
           >
-            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {loading && <ShieldLoader size="xs" variant="inline" />}
             {t('payroll.confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>

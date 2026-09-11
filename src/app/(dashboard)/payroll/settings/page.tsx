@@ -19,7 +19,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Loader2, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Settings } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -138,12 +139,7 @@ export default function PayrollSettingsPage() {
     );
   }
 
-  if (settings === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (settings === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <div className="p-0 md:p-6 space-y-6">
@@ -411,11 +407,7 @@ export default function PayrollSettingsPage() {
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving || !orgId}>
-          {saving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
+          {saving ? <ShieldLoader size="xs" variant="inline" /> : <Save className="w-4 h-4 mr-2" />}
           {t('common.save') || 'Save'}
         </Button>
       </div>

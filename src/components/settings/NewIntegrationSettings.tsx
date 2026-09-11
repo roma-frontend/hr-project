@@ -511,7 +511,7 @@ export default function NewIntegrationSettings() {
                 <div className="flex items-center justify-between p-3 rounded-lg bg-(--background-subtle)">
                   <div className="flex items-center gap-2">
                     {isSyncing ? (
-                      <RefreshCw className="w-4 h-4 text-(--brand-text) animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                     ) : syncStatus === 'success' ? (
                       <Check className="w-4 h-4 text-(--success-text)" />
                     ) : syncStatus === 'error' ? (
@@ -712,7 +712,7 @@ export default function NewIntegrationSettings() {
                             {rotatingSecret ? (
                               <ShieldLoader size="xs" variant="inline" />
                             ) : (
-                              <KeyRound className="w-3 h-3 mr-1" />
+                              <KeyRound className="w-3 h-3" />
                             )}
                             {config?.hasWebhookSecret
                               ? t('admin.integrations.rotateSecret', 'Rotate')

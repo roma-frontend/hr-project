@@ -14,6 +14,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useOrgBranding } from '@/hooks/useOrgBranding';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Clock, Mail, Building2, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { signOut } from 'next-auth/react';
@@ -70,12 +71,7 @@ export default function PendingApprovalPage() {
     signOut({ callbackUrl: '/login' });
   };
 
-  if (freshUserData === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (freshUserData === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <div

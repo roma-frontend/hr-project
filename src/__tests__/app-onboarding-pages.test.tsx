@@ -10,6 +10,10 @@ import React from 'react';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallbackOrOpts?: string | Record<string, unknown>) =>
@@ -41,7 +45,7 @@ jest.mock('lucide-react', () => {
     Hash: Icon,
     Lightbulb: Icon,
     Inbox: Icon,
-    Loader2: Icon,
+
     X: Icon,
     Check: Icon,
     Zap: Icon,
@@ -156,7 +160,7 @@ describe('onboarding/pending page', () => {
   it('shows a spinner while user data is loading', () => {
     queryResults.getCurrentUser = undefined;
     const { container } = render(<PendingApprovalPage />);
-    expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="shield-loader"]')).toBeInTheDocument();
   });
 
   it('shows the pending request card', () => {

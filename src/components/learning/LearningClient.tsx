@@ -998,9 +998,7 @@ export default function LearningClient() {
             {/* Table */}
             <div className="flex-1 overflow-auto p-5">
               {!enrollmentDetails ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-(--brand)" />
-                </div>
+                <ShieldLoader size="md" />
               ) : enrollmentDetails.length === 0 ? (
                 <div className="text-center py-12 text-(--text-muted)">
                   {t('learning.noData', 'No data available')}

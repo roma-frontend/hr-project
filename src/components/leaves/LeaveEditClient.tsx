@@ -16,6 +16,7 @@ export interface LeaveEditSheetProps {
 import { useWizardDraft } from '@/hooks/useWizardDraft';
 import { WizardDraftNotice } from '@/components/ui/WizardDraftNotice';
 import { useTranslation } from 'react-i18next';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   ArrowLeft,
   Calendar,
@@ -389,7 +390,7 @@ export default function LeaveEditClient({
                 <>
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                      <ShieldLoader size="xs" variant="inline" />
                       {t('common.saving')}
                     </>
                   ) : (

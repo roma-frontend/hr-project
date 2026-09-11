@@ -23,13 +23,13 @@ import {
   FileSignature,
   FileText,
   Languages,
-  Loader2,
   Pencil,
   Plus,
   Send,
   Sparkles,
   Trash2,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -270,7 +270,7 @@ export default function DocumentBuilderTab({
       {blueprints === undefined ? (
         <Card>
           <CardContent className="p-8 text-center text-sm text-(--text-muted)">
-            <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+            <ShieldLoader size="xs" variant="inline" />
             {t('docBuilder.loading', 'Loading templates…')}
           </CardContent>
         </Card>
@@ -663,7 +663,7 @@ function IssueDialog({
             disabled={!recipientId || requiredMissing || submitting}
           >
             {submitting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}

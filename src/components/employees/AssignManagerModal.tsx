@@ -20,7 +20,6 @@ import {
   ChevronRight,
   Building2,
   CheckCircle2,
-  Loader2,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -555,7 +554,7 @@ export function AssignManagerModal({
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-1">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                       {t('common.saving', 'Saving...')}
                     </span>
                   ) : (

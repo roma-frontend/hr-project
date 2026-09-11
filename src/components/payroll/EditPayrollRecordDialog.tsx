@@ -20,7 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Wizard, useWizardContext, type WizardStep } from '@/components/ui/wizard';
-import { Loader2, DollarSign, TrendingUp, ClipboardCheck, AlertCircle } from 'lucide-react';
+import { DollarSign, TrendingUp, ClipboardCheck, AlertCircle } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 interface PayrollRecord {
@@ -167,7 +168,7 @@ function ReviewStep({ onDelete, deleting }: ReviewStepProps) {
           disabled={deleting}
           className="w-full sm:w-auto"
         >
-          {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {deleting && <ShieldLoader size="xs" variant="inline" />}
           {t('common.delete')}
         </Button>
       </div>

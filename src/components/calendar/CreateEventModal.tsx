@@ -41,7 +41,6 @@ import {
   FileText,
   Users,
   AlertTriangle,
-  Loader2,
   ChevronRight,
   ChevronLeft,
   CheckCircle,
@@ -50,6 +49,7 @@ import {
   Copy,
   ExternalLink,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -1644,7 +1644,7 @@ export function CreateEventModal({
           >
             {uploading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
                 {t('createMeeting.uploading')}
               </>
             ) : stepIndex === STEPS.length - 1 ? (

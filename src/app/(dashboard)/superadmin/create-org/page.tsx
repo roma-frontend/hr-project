@@ -19,7 +19,6 @@ import {
   Hash,
   Sparkles,
   ShieldAlert,
-  Loader2,
   Crown,
   Rocket,
   Zap,
@@ -461,7 +460,7 @@ export default function SuperadminCreateOrgPage() {
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                       {t('superadmin.organizations.submitting')}
                     </>
                   ) : (

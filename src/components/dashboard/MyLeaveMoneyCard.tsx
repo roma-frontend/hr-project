@@ -3,7 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { Wallet, Download, Loader2 } from 'lucide-react';
+import { Wallet, Download } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
@@ -99,7 +100,7 @@ export function MyLeaveMoneyCard({ userId }: { userId: Id<'users'> }) {
             disabled={exporting || moneyRows.length === 0}
           >
             {exporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : (
               <Download className="w-4 h-4" />
             )}

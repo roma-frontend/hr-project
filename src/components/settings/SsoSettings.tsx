@@ -16,8 +16,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { KeyRound, Plus, Trash2, Copy, History, Loader2 } from 'lucide-react';
+import { KeyRound, Plus, Trash2, Copy, History } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 /**
  * Org-admin management for enterprise SSO (OIDC) connections.
@@ -120,7 +121,7 @@ export function SsoSettings() {
   if (connections === undefined) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="w-6 h-6 animate-spin text-(--text-muted)" />
+        <ShieldLoader size="xs" variant="inline" />
       </div>
     );
   }
@@ -347,7 +348,7 @@ export function SsoSettings() {
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t('common.save', 'Save')}
+              {saving ? <ShieldLoader size="xs" variant="inline" /> : t('common.save', 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -9,6 +9,7 @@ import { useShallow } from 'zustand/shallow';
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   ClipboardList,
   Plus,
@@ -657,7 +658,7 @@ export default function SurveyEditClient({
                 <>
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                      <ShieldLoader size="xs" variant="inline" />
                       {t('common.saving')}
                     </>
                   ) : (

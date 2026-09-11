@@ -891,7 +891,11 @@ export const ChatWindow = React.memo(function ChatWindow({
                   }}
                   title={t('chat.refreshHrAssistantDigest', 'Refresh attendance digest')}
                 >
-                  <RefreshCw className={cn('w-4 h-4', refreshingDigest && 'animate-spin')} />
+                  {refreshingDigest ? (
+                    <ShieldLoader size="xs" variant="inline" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
                 </button>
               )}
             <button

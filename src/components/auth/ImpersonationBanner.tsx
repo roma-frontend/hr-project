@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { AlertTriangle, LogOut, ShieldAlert, Undo2 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 import { useAuthStore, type User } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -147,11 +148,7 @@ export function ImpersonationBanner() {
           disabled={ending || expired}
           onClick={() => void endImpersonation(false)}
         >
-          {ending ? (
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-(--warning-outline) border-t-transparent" />
-          ) : (
-            <Undo2 className="h-3.5 w-3.5" />
-          )}
+          {ending ? <ShieldLoader size="xs" variant="inline" /> : <Undo2 className="h-3.5 w-3.5" />}
           <span className="hidden sm:inline">
             {t('superadmin.impersonate.exitMode', 'Exit impersonation')}
           </span>

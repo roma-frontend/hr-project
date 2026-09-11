@@ -8,6 +8,10 @@ import { BackgroundPicker } from '@/components/meetings/BackgroundPicker';
 import { DeviceSettings, MicMeter } from '@/components/meetings/DeviceSettings';
 import { VIDEO_EFFECT_IMAGES } from '@/components/meetings/useVideoEffects';
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
@@ -87,7 +91,7 @@ describe('BackgroundPicker', () => {
     );
 
     expect(screen.getByText('meetings.effects.applying')).toBeInTheDocument();
-    expect(container.querySelectorAll('.animate-spin')).toHaveLength(1);
+    expect(container.querySelector('[data-testid="shield-loader"]')).toBeInTheDocument();
   });
 });
 

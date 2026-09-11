@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'convex/react';
 import { toast } from 'sonner';
-import { Building2, Check, Loader2 } from 'lucide-react';
+import { Building2, Check } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -175,11 +176,7 @@ export function RoomFormModal({ open, onClose, organizationId, room }: RoomFormM
               {t('buttons.cancel')}
             </Button>
             <Button size="sm" onClick={handleSubmit} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
+              {saving ? <ShieldLoader size="xs" variant="inline" /> : <Check className="h-4 w-4" />}
               {room ? t('buttons.save') : t('rooms.form.create')}
             </Button>
           </div>

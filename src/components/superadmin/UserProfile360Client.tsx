@@ -34,7 +34,6 @@ import {
   ExternalLink,
   PowerOff,
   Send,
-  Loader2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -381,7 +380,7 @@ export default function UserProfile360Page() {
                     disabled={startingChat}
                   >
                     {startingChat ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ShieldLoader size="xs" variant="inline" />
                     ) : (
                       <MessageSquare className="w-4 h-4" />
                     )}
@@ -493,7 +492,7 @@ export default function UserProfile360Page() {
                         className="cursor-pointer"
                       >
                         {revoking ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <ShieldLoader size="xs" variant="inline" />
                         ) : (
                           <LogIn className="mr-2 h-4 w-4" />
                         )}
@@ -1236,7 +1235,7 @@ export default function UserProfile360Page() {
                 }}
                 className="bg-(--danger) text-white hover:bg-(--danger)/90"
               >
-                {blocking && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                {blocking && <ShieldLoader size="xs" variant="inline" />}
                 {t('superadmin.users.blockConfirmAction', 'Block user')}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -1275,7 +1274,7 @@ export default function UserProfile360Page() {
                 }}
                 className="bg-(--success) text-white hover:bg-(--success)/90"
               >
-                {unblocking && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                {unblocking && <ShieldLoader size="xs" variant="inline" />}
                 {t('superadmin.users.unblockConfirmAction', 'Unblock user')}
               </AlertDialogAction>
             </AlertDialogFooter>

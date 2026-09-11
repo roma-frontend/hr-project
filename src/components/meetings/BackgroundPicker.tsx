@@ -12,7 +12,8 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ban, Loader2 } from 'lucide-react';
+import { Ban } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { cn } from '@/lib/utils';
 import { VIDEO_EFFECT_IMAGES, type VideoEffectId } from './useVideoEffects';
 
@@ -71,7 +72,7 @@ function Tile({
       {children}
       {busy && (
         <span className="absolute inset-0 grid place-items-center bg-black/45">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+          <ShieldLoader size="xs" variant="inline" />
         </span>
       )}
     </button>

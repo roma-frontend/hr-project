@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { BookOpen, Globe, Copy, Check, Code, Eye, ImageIcon, Loader2 } from 'lucide-react';
+import { BookOpen, Globe, Copy, Check, Code, Eye, ImageIcon } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import type { WebSearchResult, MessageArtifact } from './chatWidgetTypes';
 
 async function getCsrfPair(): Promise<{ token: string; signature: string } | null> {
@@ -69,7 +70,7 @@ export function GeneratedImageCard({ prompt }: { prompt: string }) {
   if (!imageUrl) {
     return (
       <div className="mt-2 rounded-xl border border-(--border) bg-(--background-subtle) p-4 flex items-center gap-2 text-xs text-(--text-muted)">
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <ShieldLoader size="xs" variant="inline" />
         <ImageIcon className="w-4 h-4" />
         Generating image…
       </div>
@@ -122,7 +123,7 @@ export function WebSearchCard({ query }: { query: string }) {
       </div>
       {results === null ? (
         <div className="flex items-center gap-2 text-xs text-(--text-muted)">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching…
+          <ShieldLoader size="xs" variant="inline" /> Searching…
         </div>
       ) : results.length === 0 ? (
         <p className="text-xs text-(--text-muted)">No results found.</p>

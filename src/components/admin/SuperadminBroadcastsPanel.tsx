@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ServiceBroadcastDialog } from './ServiceBroadcastDialog';
 import { ServiceBroadcastsManager } from './ServiceBroadcastsManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { AlertCircle, MessageSquare } from 'lucide-react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useDraftResume } from '@/hooks/useDraftResume';
@@ -40,12 +41,7 @@ export function SuperadminBroadcastsPanel({
     return null;
   }
 
-  if (currentUser === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (currentUser === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <div className="space-y-6">

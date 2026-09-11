@@ -672,7 +672,11 @@ export function DataBrowserClient() {
                   onClick={handleRefresh}
                   aria-label={t('superadmin.database.refresh', 'Refresh')}
                 >
-                  <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
+                  {refreshing ? (
+                    <ShieldLoader size="xs" variant="inline" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
                 </Button>
 
                 <Button

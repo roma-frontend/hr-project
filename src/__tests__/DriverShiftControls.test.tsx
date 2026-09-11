@@ -106,6 +106,11 @@ jest.mock('lucide-react', () => ({
   Pause: () => <span>pause</span>,
   Coffee: () => <span>coffee</span>,
   MessageSquare: () => <span>message</span>,
+  Shield: () => <span>shield</span>,
+}));
+
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
 }));
 
 import { DriverShiftControls } from '@/components/drivers/DriverShiftControls';
@@ -161,7 +166,7 @@ describe('DriverShiftControls', () => {
   it('shows a spinner while the current shift is loading', () => {
     setDriver(DRIVER);
     const { container } = render(<DriverShiftControls {...PROPS} />);
-    expect(container.querySelector('.animate-spin')).not.toBeNull();
+    expect(container.querySelector('[data-testid="shield-loader"]')).toBeInTheDocument();
   });
 
   it('shows the off-shift state with a start button when no shift exists', () => {

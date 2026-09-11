@@ -8,6 +8,10 @@ import React from 'react';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen } from '@testing-library/react';
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string | Record<string, unknown>) => {
@@ -122,7 +126,7 @@ describe('SLADashboard', () => {
   it('shows a spinner while metrics are loading', () => {
     queryResults = {};
     const { container } = render(<SLADashboard organizationId="org-1" />);
-    expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="shield-loader"]')).toBeInTheDocument();
   });
 
   it('renders the average response time', () => {

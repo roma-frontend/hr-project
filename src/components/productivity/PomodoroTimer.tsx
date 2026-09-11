@@ -6,6 +6,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { Id } from '../../../convex/_generated/dataModel';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Play, Pause, RotateCcw, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -174,12 +175,7 @@ export function PomodoroTimer() {
 
   const progress = ((DURATIONS[mode] - timeLeft) / DURATIONS[mode]) * 100;
 
-  if (activeSession === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (activeSession === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <div className="px-2 py-4">

@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { toast } from 'sonner';
-import { Download, Loader2, Calculator, CalendarDays, Wallet } from 'lucide-react';
+import { Download, Calculator, CalendarDays, Wallet } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import {
@@ -306,7 +306,7 @@ export function SettlementPreviewDialog({
           </Button>
           <Button onClick={handleExport} disabled={!exportRow || exporting}>
             {exporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : (
               <Download className="w-4 h-4" />
             )}

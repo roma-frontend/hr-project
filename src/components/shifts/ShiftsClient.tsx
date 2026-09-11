@@ -194,10 +194,6 @@ export default function ShiftsClient() {
     }
   };
 
-  const myShiftThisWeek = (roster?.shifts ?? []).find(
-    (s) => s.userId === user?.id && s.status === 'published',
-  );
-
   const handleSwapRequest = async (shiftId: string) => {
     try {
       await requestSwap({ fromShiftId: shiftId as Id<'shifts'> });
@@ -295,23 +291,6 @@ export default function ShiftsClient() {
             }
           }}
           templates={templates as ShiftTemplate[]}
-          onApplyTemplate={async (args) => {
-            try {
-              const res = await applyTemplateWeek({
-                templateId: args.templateId as Id<'shiftTemplates'>,
-                userId: args.userId as Id<'users'>,
-                fromDate: from,
-                days: 7,
-                publish: true,
-              });
-              toast.success(
-                t('shifts.templateApplied', '{{count}} shifts scheduled', { count: res.created }),
-              );
-            } catch (e) {
-              toast.error(e instanceof Error ? e.message : 'Failed to apply template');
-            }
-          }}
-          users={rowUsers}
         />
       )}
 
@@ -632,7 +611,7 @@ function ShiftDialog({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label>{t('payroll.period', 'Date')}</Label>
+            <Label>{t('shifts.date', 'Date')}</Label>
             <select
               className="w-full h-10 rounded-lg border border-(--border) bg-(--card) px-3 text-sm"
               value={date}
@@ -829,8 +808,6 @@ function ApplyTemplateDialog({
 function CreateTemplateInline({
   onCreate,
   templates,
-  onApplyTemplate,
-  users,
 }: {
   onCreate: (args: {
     name: string;
@@ -839,8 +816,6 @@ function CreateTemplateInline({
     breakMinutes?: number;
   }) => Promise<void>;
   templates: ShiftTemplate[];
-  onApplyTemplate: (args: { templateId: string; userId: string }) => Promise<void>;
-  users: Array<{ userId: string; name: string }>;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -860,7 +835,7 @@ function CreateTemplateInline({
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-40"
-              placeholder="Morning"
+              placeholder={t('shifts.templateNamePlaceholder', 'e.g. Morning')}
             />
           </div>
           <div className="space-y-1.5">

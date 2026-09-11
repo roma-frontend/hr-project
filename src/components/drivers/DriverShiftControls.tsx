@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Clock, Play, Square, Pause, Coffee, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -125,12 +126,7 @@ export function DriverShiftControls({ driverId, organizationId }: DriverShiftCon
 
   if (!driver) return null;
 
-  if (currentShift === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (currentShift === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <>

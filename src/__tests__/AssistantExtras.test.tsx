@@ -11,6 +11,10 @@ import React from 'react';
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('lucide-react', () => ({
   BookOpen: () => <span>book</span>,
   Globe: () => <span>globe</span>,
@@ -19,7 +23,6 @@ jest.mock('lucide-react', () => ({
   Code: () => <span>code-icon</span>,
   Eye: () => <span>eye-icon</span>,
   ImageIcon: () => <span>image-icon</span>,
-  Loader2: () => <span>loader-icon</span>,
 }));
 
 import {
@@ -81,7 +84,7 @@ describe('GeneratedImageCard', () => {
     });
     render(<GeneratedImageCard prompt="a cat" />);
     expect(screen.getByText('Generating image…')).toBeInTheDocument();
-    expect(screen.getByText('loader-icon')).toBeInTheDocument();
+    expect(screen.getByTestId('shield-loader')).toBeInTheDocument();
     // Settle the dangling fetch promise to avoid open-handle warnings.
     await act(async () => {
       resolveImage({ ok: true, json: async () => ({ imageUrl: 'x' }) });

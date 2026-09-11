@@ -13,7 +13,8 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'convex/react';
 import { isPast } from 'date-fns';
-import { ListChecks, Plus, Check, AlertTriangle, Loader2, ChevronRight } from 'lucide-react';
+import { ListChecks, Plus, Check, AlertTriangle, ChevronRight } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { api } from '../../../convex/_generated/api';
 import { useAuthUser } from '@/store/useAuthStore';
 import { Card } from '@/components/ui/card';
@@ -144,10 +145,7 @@ export function TasksFocusWidget() {
                   )}
                 >
                   {busy ? (
-                    <Loader2
-                      className="size-3 animate-spin text-(--text-muted)"
-                      aria-hidden="true"
-                    />
+                    <ShieldLoader size="xs" variant="inline" />
                   ) : (
                     <Check className="size-3" aria-hidden="true" />
                   )}

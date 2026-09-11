@@ -20,6 +20,10 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // ── i18n ─────────────────────────────────────────────────────────────────────
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : key),

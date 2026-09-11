@@ -6,6 +6,7 @@ import './globals.css';
 import { validateEnvironment } from '@/lib/env-validation';
 import { AppProviders } from '@/components/AppProviders';
 import PerformanceMonitor from '@/components/PerformanceMonitor';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Analytics } from '@vercel/analytics/next';
 import { getServerTranslation } from '@/lib/i18n/server-translation';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -283,13 +284,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         >
           Skip to main content
         </a>
-        <Suspense
-          fallback={
-            <div className="flex h-screen items-center justify-center bg-(--background)">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--primary)" />
-            </div>
-          }
-        >
+        <Suspense fallback={<ShieldLoader />}>
           <AppProviders>
             <main id="main-content">{children}</main>
             {/* Defer Analytics loading to reduce main thread work */}

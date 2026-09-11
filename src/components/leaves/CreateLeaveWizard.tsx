@@ -13,6 +13,7 @@ import {
   TextInputStep,
   TextareaStep,
 } from '@/components/ui/wizard-step-components';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Calendar,
   Sun,
@@ -322,12 +323,7 @@ export function CreateLeaveWizard({ userId, onComplete, onCancel }: CreateLeaveW
     return Math.max(1, count);
   };
 
-  if (user === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (user === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <Wizard

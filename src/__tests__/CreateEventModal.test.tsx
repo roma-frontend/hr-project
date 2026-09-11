@@ -42,6 +42,10 @@ const playNotificationSound = jest.fn();
 const sendBrowserNotification = jest.fn();
 
 // ── i18n (key or fallback, like the other widgets) ───────────────────────────
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: unknown) => {
@@ -252,7 +256,7 @@ jest.mock('lucide-react', () => {
     'FileText',
     'Users',
     'AlertTriangle',
-    'Loader2',
+
     'ChevronRight',
     'ChevronLeft',
     'CheckCircle',

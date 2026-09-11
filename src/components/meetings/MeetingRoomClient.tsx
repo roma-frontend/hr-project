@@ -31,16 +31,8 @@ import { BackgroundPicker } from './BackgroundPicker';
 import { useMeetingDevices, useMicLevel, type MeetingDeviceKind } from './useMeetingDevices';
 import { useVideoEffects } from './useVideoEffects';
 import type { LocalUserChoices } from '@livekit/components-core';
-import {
-  Loader2,
-  Monitor,
-  Video,
-  VideoOff,
-  Mic,
-  MicOff,
-  ShieldCheck,
-  ArrowLeft,
-} from 'lucide-react';
+import { Monitor, Video, VideoOff, Mic, MicOff, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 import { motion } from '@/lib/cssMotion';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -637,7 +629,7 @@ export function MeetingRoomClient() {
                   className="btn-gradient flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                 >
                   {joining ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <ShieldLoader size="xs" variant="inline" />
                   ) : (
                     <Video className="h-4 w-4" />
                   )}

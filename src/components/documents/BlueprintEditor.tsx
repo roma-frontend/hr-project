@@ -27,7 +27,6 @@ import {
   FileText,
   Languages,
   List,
-  Loader2,
   Plus,
   Quote,
   Save,
@@ -36,6 +35,7 @@ import {
   Type,
   Upload,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -601,16 +601,12 @@ export default function BlueprintEditor({
           {t('docBuilder.close', 'Close')}
         </Button>
         <Button variant="outline" onClick={() => void handleSave()} disabled={saving || publishing}>
-          {saving ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 h-4 w-4" />
-          )}
+          {saving ? <ShieldLoader size="xs" variant="inline" /> : <Save className="mr-2 h-4 w-4" />}
           {t('docBuilder.save', 'Save draft')}
         </Button>
         <Button onClick={() => void handlePublish()} disabled={saving || publishing}>
           {publishing ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <ShieldLoader size="xs" variant="inline" />
           ) : (
             <Upload className="mr-2 h-4 w-4" />
           )}

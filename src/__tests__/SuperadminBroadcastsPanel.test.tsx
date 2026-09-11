@@ -9,6 +9,10 @@ import React from 'react';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { render, screen, fireEvent } from '@testing-library/react';
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, fallback?: string) => fallback || key,
@@ -84,7 +88,7 @@ describe('SuperadminBroadcastsPanel', () => {
     const { container } = render(
       <SuperadminBroadcastsPanel organizationId={'org-x' as any} userId={'user-x' as any} />,
     );
-    expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="shield-loader"]')).toBeInTheDocument();
   });
 
   it('uses passed ids over the current user', () => {

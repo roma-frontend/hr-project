@@ -26,12 +26,12 @@ import {
   Eye,
   FileText,
   FileType,
-  Loader2,
   RotateCcw,
   Send,
   Upload,
   XCircle,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -696,7 +696,7 @@ export default function HiringPacketPanel({ userId, canManage, elevated }: Hirin
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="w-5 h-5 animate-spin text-(--text-muted)" />
+          <ShieldLoader size="xs" variant="inline" />
         </CardContent>
       </Card>
     );
@@ -744,7 +744,7 @@ export default function HiringPacketPanel({ userId, canManage, elevated }: Hirin
             </Select>
             <Button onClick={() => void handleGenerate()} disabled={generating}>
               {generating ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
               ) : (
                 <FileText className="w-4 h-4 mr-2" />
               )}
@@ -853,7 +853,7 @@ export default function HiringPacketPanel({ userId, canManage, elevated }: Hirin
               {pending.length > 0 && (
                 <Button onClick={handleSendAll} disabled={sendingAll}>
                   {sendingAll ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <ShieldLoader size="xs" variant="inline" />
                   ) : (
                     <Send className="w-4 h-4 mr-2" />
                   )}
@@ -922,7 +922,7 @@ export default function HiringPacketPanel({ userId, canManage, elevated }: Hirin
                       title={t('hiringPacket.downloadPdf', 'Download PDF')}
                     >
                       {busy ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <ShieldLoader size="xs" variant="inline" />
                       ) : (
                         <Download className="w-4 h-4" />
                       )}
@@ -1022,7 +1022,7 @@ export default function HiringPacketPanel({ userId, canManage, elevated }: Hirin
                         ) : signer.status === 'declined' ? (
                           <XCircle className="w-3 h-3 text-(--danger-text)" />
                         ) : (
-                          <Loader2 className="w-3 h-3" />
+                          <ShieldLoader size="xs" variant="inline" />
                         )}
                         {signer.signerName}
                       </span>

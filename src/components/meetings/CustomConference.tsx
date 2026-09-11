@@ -80,10 +80,10 @@ import {
   Captions,
   CaptionsOff,
   Circle,
-  Loader2,
   Square,
   Waves,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { cn } from '@/lib/utils';
 import { AnimatedEmoji } from './AnimatedEmoji';
 import { DeviceSettings } from './DeviceSettings';
@@ -532,7 +532,7 @@ function SwitchRow({
       )}
     >
       <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-white/60">
-        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
+        {pending ? <ShieldLoader size="xs" variant="inline" /> : icon}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[11px] font-medium text-white/85">{label}</span>
@@ -2168,7 +2168,7 @@ export function CustomConference(props: ConferenceProps) {
               )}
             >
               {recordingBusy ? (
-                <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                <ShieldLoader size="xs" variant="inline" />
               ) : cloudRecording ? (
                 <Square className="h-4 w-4 fill-current" />
               ) : (
@@ -2275,7 +2275,7 @@ export function CustomConference(props: ConferenceProps) {
                 void handleAssignAndLeave();
               }}
             >
-              {leaveDialog?.busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {leaveDialog?.busy && <ShieldLoader size="xs" variant="inline" />}
               {t('meetings.leaveHostAssign', {
                 defaultValue: 'Make co-host and leave',
               })}
@@ -2323,7 +2323,7 @@ export function CustomConference(props: ConferenceProps) {
                 void handleReclaim();
               }}
             >
-              {reclaimDialog?.busy && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {reclaimDialog?.busy && <ShieldLoader size="xs" variant="inline" />}
               {t('meetings.reclaimHostAction', {
                 defaultValue: 'Take back host',
               })}

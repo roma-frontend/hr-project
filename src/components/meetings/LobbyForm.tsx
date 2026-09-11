@@ -16,7 +16,8 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, Video, ArrowLeft, Loader2, CheckCircle2, Clock } from 'lucide-react';
+import { ShieldCheck, Video, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { motion } from '@/lib/cssMotion';
 import { cn } from '@/lib/utils';
 
@@ -317,7 +318,7 @@ export function LobbyForm({
 
           <Button type="submit" disabled={busy} className="btn-gradient mt-6 w-full">
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <ShieldLoader size="xs" variant="inline" />
             ) : (
               <CheckCircle2 className="h-4 w-4" />
             )}

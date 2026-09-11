@@ -13,6 +13,7 @@ import {
   TextareaStep,
   CardSelectionStep,
 } from '@/components/ui/wizard-step-components';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { Car, MapPin, Clock, Calendar, Users } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -280,12 +281,7 @@ export function RequestDriverWizard({ userId, onComplete, onCancel }: RequestDri
     }
   };
 
-  if (drivers === undefined)
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (drivers === undefined) return <ShieldLoader size="sm" />;
 
   return (
     <Wizard

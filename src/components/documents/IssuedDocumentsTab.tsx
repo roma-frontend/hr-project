@@ -22,13 +22,13 @@ import {
   Eye,
   FileType,
   Filter,
-  Loader2,
   RotateCcw,
   Search,
   Send,
   Trash2,
   Upload,
 } from 'lucide-react';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { toast } from 'sonner';
 
 import { api } from '../../../convex/_generated/api';
@@ -381,7 +381,7 @@ export default function IssuedDocumentsTab({
       {rows === undefined ? (
         <Card>
           <CardContent className="p-8 text-center text-sm text-(--text-muted)">
-            <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
+            <ShieldLoader size="xs" variant="inline" />
             {t('issued.loading', 'Loading documents…')}
           </CardContent>
         </Card>
@@ -432,7 +432,7 @@ export default function IssuedDocumentsTab({
                       title={t('issued.preview', 'Preview')}
                     >
                       {busy ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <ShieldLoader size="xs" variant="inline" />
                       ) : (
                         <Eye className="h-4 w-4" />
                       )}

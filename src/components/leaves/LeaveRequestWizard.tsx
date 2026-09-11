@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Calendar,
   Sun,
@@ -227,12 +228,7 @@ export function LeaveRequestWizard({
     },
   };
 
-  if (allUsers === undefined)
-    return (
-      <div className="flex flex-1 items-center justify-center p-8">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  if (allUsers === undefined) return <ShieldLoader size="sm" />;
 
   const stepperSteps = stepIds.map((id) => ({ id, title: stepConfig[id]?.title ?? id }));
 
