@@ -61,6 +61,7 @@ import { overtime } from './overtime';
 import { attendance } from './attendance';
 import { sso } from './sso';
 import { shifts } from './shifts';
+import { webhooks } from './webhooks';
 
 export default defineSchema({
   ...organizations,
@@ -125,6 +126,7 @@ export default defineSchema({
   ...attendance,
   ...sso,
   ...shifts,
+  ...webhooks,
 });
 
 export {
@@ -189,4 +191,5 @@ export {
   billing,
   sso,
   shifts,
+  webhooks,
 };

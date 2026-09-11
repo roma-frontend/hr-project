@@ -659,5 +659,33 @@
     "deleted": "SSO-подключение удалено",
     "tab": "Единый вход",
     "tabDesc": "Корпоративный вход (OIDC)"
+  },
+  "settingsWebhooks": {
+    "tab": "Вебхуки",
+    "tabDesc": "Исходящие события",
+    "title": "Исходящие вебхуки",
+    "description": "Мгновенно отправляйте события платформы (отпуска, расходы, документы…) в ваши системы. Доставки подписываются HMAC-SHA256.",
+    "add": "Добавить endpoint",
+    "addTitle": "Новый webhook endpoint",
+    "empty": "Webhook endpoints ещё не настроены.",
+    "enabled": "Включён",
+    "disabled": "Отключён",
+    "lastOk": "последняя доставка OK",
+    "lastFail": "последняя доставка не удалась",
+    "allEvents": "Все события",
+    "eventCount": "типов событий",
+    "label": "Название",
+    "labelPlaceholder": "например: Zapier — рекрутинг",
+    "url": "URL",
+    "subscribeAll": "Подписаться на все события",
+    "saved": "Webhook endpoint создан",
+    "deleted": "Webhook endpoint удалён",
+    "enabledToast": "Endpoint включён",
+    "disabledToast": "Endpoint отключён",
+    "secretTitle": "Новый ключ подписи",
+    "secretWarning": "Скопируйте сейчас — он показывается только один раз. Сразу обновите consuming-систему: старый ключ перестаёт работать немедленно.",
+    "copied": "Скопировано",
+    "deliveries": "Последние доставки",
+    "noDeliveries": "Доставок пока нет."
   }
 }

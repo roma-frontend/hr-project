@@ -659,5 +659,33 @@
     "deleted": "SSO-Verbindung gelöscht",
     "tab": "Single Sign-On",
     "tabDesc": "Unternehmens-Anmeldung (OIDC)"
+  },
+  "settingsWebhooks": {
+    "tab": "Webhooks",
+    "tabDesc": "Ausgehende Ereignis-Zustellungen",
+    "title": "Ausgehende Webhooks",
+    "description": "Plattform-Ereignisse (Urlaub, Auslagen, Dokumente…) in Echtzeit an Ihre Systeme pushen. Zustellungen werden mit HMAC-SHA256 signiert.",
+    "add": "Endpoint hinzufügen",
+    "addTitle": "Webhook-Endpoint hinzufügen",
+    "empty": "Noch keine Webhook-Endpoints konfiguriert.",
+    "enabled": "Aktiv",
+    "disabled": "Inaktiv",
+    "lastOk": "letzte Zustellung OK",
+    "lastFail": "letzte Zustellung fehlgeschlagen",
+    "allEvents": "Alle Ereignisse",
+    "eventCount": "Ereignistypen",
+    "label": "Bezeichnung",
+    "labelPlaceholder": "z. B. Zapier — Recruiting",
+    "url": "URL",
+    "subscribeAll": "Alle Ereignisse abonnieren",
+    "saved": "Webhook-Endpoint erstellt",
+    "deleted": "Webhook-Endpoint gelöscht",
+    "enabledToast": "Endpoint aktiviert",
+    "disabledToast": "Endpoint deaktiviert",
+    "secretTitle": "Neuer Signaturschlüssel",
+    "secretWarning": "Jetzt kopieren — er wird nur einmal angezeigt. Aktualisieren Sie Ihren Consumer sofort; der alte Schlüssel wird umgehend ungültig.",
+    "copied": "Kopiert",
+    "deliveries": "Letzte Zustellungen",
+    "noDeliveries": "Noch keine Zustellungen."
   }
 }

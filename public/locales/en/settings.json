@@ -659,5 +659,33 @@
     "deleted": "SSO connection deleted",
     "tab": "Single Sign-On",
     "tabDesc": "Enterprise OIDC sign-in"
+  },
+  "settingsWebhooks": {
+    "tab": "Webhooks",
+    "tabDesc": "Outbound event deliveries",
+    "title": "Outbound Webhooks",
+    "description": "Push platform events (leaves, expenses, documents…) to your systems in real time. Deliveries are signed with HMAC-SHA256.",
+    "add": "Add endpoint",
+    "addTitle": "Add webhook endpoint",
+    "empty": "No webhook endpoints configured yet.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "lastOk": "last delivery OK",
+    "lastFail": "last delivery failed",
+    "allEvents": "All events",
+    "eventCount": "event types",
+    "label": "Label",
+    "labelPlaceholder": "e.g. Zapier — recruiting",
+    "url": "URL",
+    "subscribeAll": "Subscribe to all events",
+    "saved": "Webhook endpoint created",
+    "deleted": "Webhook endpoint deleted",
+    "enabledToast": "Endpoint enabled",
+    "disabledToast": "Endpoint disabled",
+    "secretTitle": "New signing secret",
+    "secretWarning": "Copy it now — it is shown only once. Update your consumer immediately; the old secret stops working right away.",
+    "copied": "Copied",
+    "deliveries": "Recent deliveries",
+    "noDeliveries": "No deliveries yet."
   }
 }

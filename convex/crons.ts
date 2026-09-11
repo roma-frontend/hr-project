@@ -166,4 +166,10 @@ crons.interval('task-comment-count-backfill', { hours: 1 }, dispatch, {
   jobKey: 'task-comment-count-backfill',
 });
 
+// Webhook housekeeping: purge delivery rows past the 30-day retention window
+// so the audit table (and its indexes) stay bounded. Nightly, off-peak.
+crons.daily('webhook-delivery-maintenance', { hourUTC: 3, minuteUTC: 45 }, dispatch, {
+  jobKey: 'webhook-delivery-maintenance',
+});
+
 export default crons;

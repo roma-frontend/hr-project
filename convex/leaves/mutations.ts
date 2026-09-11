@@ -18,6 +18,7 @@ import {
   HEAD_AUTO_APPROVAL_NOTE,
   type ApprovalReason,
 } from './approval';
+import { emitLeaveEvent } from '../lib/webhookEvents';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE LEAVE REQUEST
@@ -148,6 +149,16 @@ export const createLeave = mutation({
         createdAt: now,
       });
 
+      await emitLeaveEvent(ctx, 'leave.approved', leaveId, {
+        leaveId,
+        userId: args.userId,
+        type: args.type,
+        startDate: args.startDate,
+        endDate: args.endDate,
+        days: args.days,
+        autoApproved: true,
+      });
+
       return leaveId;
     }
 
@@ -241,6 +252,16 @@ export const createLeave = mutation({
         leaveId,
       });
     }
+
+    await emitLeaveEvent(ctx, 'leave.requested', leaveId, {
+      leaveId,
+      userId: args.userId,
+      type: args.type,
+      startDate: args.startDate,
+      endDate: args.endDate,
+      days: args.days,
+      reason: args.reason,
+    });
 
     return leaveId;
   },
@@ -397,6 +418,17 @@ export const approveLeave = mutation({
       createdAt: now,
     });
 
+    await emitLeaveEvent(ctx, 'leave.approved', leaveId, {
+      leaveId,
+      userId: leave.userId,
+      type: leave.type,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      days: leave.days,
+      reviewedBy: reviewerId,
+      comment,
+    });
+
     // Refresh the HR Assistant digest for every day this leave covers, so
     // the in-app chat shows the approved absence immediately rather than
     // waiting for the next midnight cron. Daily iteration is bounded by
@@ -527,6 +559,17 @@ export const rejectLeave = mutation({
         comment,
       }),
       createdAt: now,
+    });
+
+    await emitLeaveEvent(ctx, 'leave.rejected', leaveId, {
+      leaveId,
+      userId: leave.userId,
+      type: leave.type,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      days: leave.days,
+      reviewedBy: reviewerId,
+      comment,
     });
 
     return leaveId;

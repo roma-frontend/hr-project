@@ -21,6 +21,7 @@ import {
   Bot,
   Clock,
   KeyRound,
+  Webhook,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,6 +56,11 @@ const SecuritySettings = dynamic(
 );
 const SsoSettings = dynamic(
   () => import('@/components/settings/SsoSettings').then((m) => ({ default: m.SsoSettings })),
+  { ssr: false },
+);
+const WebhooksSettings = dynamic(
+  () =>
+    import('@/components/settings/WebhooksSettings').then((m) => ({ default: m.WebhooksSettings })),
   { ssr: false },
 );
 const AppearanceSettings = dynamic(
@@ -334,6 +340,12 @@ export default function SettingsPage() {
             icon: KeyRound,
             description: t('settingsSso.tabDesc', 'Enterprise OIDC sign-in'),
           },
+          {
+            value: 'webhooks',
+            label: t('settingsWebhooks.tab', 'Webhooks'),
+            icon: Webhook,
+            description: t('settingsWebhooks.tabDesc', 'Outbound event deliveries'),
+          },
         ]
       : []),
   ];
@@ -454,6 +466,12 @@ export default function SettingsPage() {
           {user?.role === 'admin' && (
             <TabsContent value="sso" className="space-y-6 mt-0">
               <SsoSettings />
+            </TabsContent>
+          )}
+
+          {user?.role === 'admin' && (
+            <TabsContent value="webhooks" className="space-y-6 mt-0">
+              <WebhooksSettings />
             </TabsContent>
           )}
 

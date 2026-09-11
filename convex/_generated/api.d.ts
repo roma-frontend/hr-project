@@ -136,6 +136,7 @@ import type * as lib_ticketFields from "../lib/ticketFields.js";
 import type * as lib_travelAllowance from "../lib/travelAllowance.js";
 import type * as lib_userProfile from "../lib/userProfile.js";
 import type * as lib_userRedaction from "../lib/userRedaction.js";
+import type * as lib_webhookEvents from "../lib/webhookEvents.js";
 import type * as meetingRooms from "../meetingRooms.js";
 import type * as meetings from "../meetings.js";
 import type * as meetingsActions from "../meetingsActions.js";
@@ -247,6 +248,7 @@ import type * as schema_tickets from "../schema/tickets.js";
 import type * as schema_userProfiles from "../schema/userProfiles.js";
 import type * as schema_userSettings from "../schema/userSettings.js";
 import type * as schema_users from "../schema/users.js";
+import type * as schema_webhooks from "../schema/webhooks.js";
 import type * as scripts_auditTestData from "../scripts/auditTestData.js";
 import type * as scripts_cleanupQaData from "../scripts/cleanupQaData.js";
 import type * as scripts_cleanupQaResidual from "../scripts/cleanupQaResidual.js";
@@ -307,6 +309,8 @@ import type * as users_auth from "../users/auth.js";
 import type * as users_index from "../users/index.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
+import type * as webhooks_main from "../webhooks/main.js";
+import type * as webhooks_protocol from "../webhooks/protocol.js";
 
 import type {
   ApiFromModules,
@@ -443,6 +447,7 @@ declare const fullApi: ApiFromModules<{
   "lib/travelAllowance": typeof lib_travelAllowance;
   "lib/userProfile": typeof lib_userProfile;
   "lib/userRedaction": typeof lib_userRedaction;
+  "lib/webhookEvents": typeof lib_webhookEvents;
   meetingRooms: typeof meetingRooms;
   meetings: typeof meetings;
   meetingsActions: typeof meetingsActions;
@@ -554,6 +559,7 @@ declare const fullApi: ApiFromModules<{
   "schema/userProfiles": typeof schema_userProfiles;
   "schema/userSettings": typeof schema_userSettings;
   "schema/users": typeof schema_users;
+  "schema/webhooks": typeof schema_webhooks;
   "scripts/auditTestData": typeof scripts_auditTestData;
   "scripts/cleanupQaData": typeof scripts_cleanupQaData;
   "scripts/cleanupQaResidual": typeof scripts_cleanupQaResidual;
@@ -614,6 +620,8 @@ declare const fullApi: ApiFromModules<{
   "users/index": typeof users_index;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
+  "webhooks/main": typeof webhooks_main;
+  "webhooks/protocol": typeof webhooks_protocol;
 }>;
 
 /**

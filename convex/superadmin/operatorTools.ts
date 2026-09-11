@@ -301,6 +301,13 @@ export const CRON_REGISTRY: Array<{
       'One-time migration: patches denormalized commentCount onto legacy task rows. Self-retiring — it drains its backlog, then every run patches nothing.',
     schedule: 'hourly',
   },
+  {
+    jobKey: 'webhook-delivery-maintenance',
+    label: 'Webhook delivery maintenance',
+    description:
+      'Nightly purge of webhook delivery rows past the 30-day retention window; keeps the delivery audit table and its indexes bounded.',
+    schedule: 'daily 03:45 UTC',
+  },
 ];
 
 export const listScheduledOps = query({
@@ -463,6 +470,9 @@ export const dispatchCron = internalAction({
           }
           break;
         }
+        case 'webhook-delivery-maintenance':
+          await ctx.runMutation(internal.webhooks.main.purgeOldDeliveries, {});
+          break;
         default:
           throw new Error(`Unknown cron job key: ${args.jobKey}`);
       }
