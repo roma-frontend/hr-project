@@ -142,7 +142,9 @@ const PROTECTED_PREFIXES = [
   '/chat',
   '/ai-chat',
   '/ai-site-editor',
-  '/security',
+  // '/security' is the PUBLIC trust page (src/app/security/page.tsx) — the
+  // in-app Security Center lives at /superadmin/security and stays guarded
+  // by the '/superadmin' prefix below.
   '/superadmin',
   '/organizations',
   '/join-requests',

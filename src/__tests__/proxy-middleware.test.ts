@@ -158,6 +158,21 @@ describe('path classification', () => {
     expect(NextResponse.next).toHaveBeenCalled();
   });
 
+  it('passes the public /security trust page through', async () => {
+    // Regression: /security used to sit in PROTECTED_PREFIXES (leftover from
+    // before the public trust page existed), so visitors got a login redirect.
+    await proxy(makeRequest('/security'));
+    expect(NextResponse.next).toHaveBeenCalled();
+    expect(NextResponse.redirect).not.toHaveBeenCalled();
+  });
+
+  it('still guards the in-app Security Center at /superadmin/security', async () => {
+    jwtVerify.mockRejectedValue(new Error('bad token'));
+    getToken.mockResolvedValue(null);
+    await proxy(makeRequest('/superadmin/security'));
+    expect(NextResponse.redirect).toHaveBeenCalled();
+  });
+
   it('passes public API endpoints through', async () => {
     await proxy(makeRequest('/api/health'));
     expect(NextResponse.next).toHaveBeenCalled();
