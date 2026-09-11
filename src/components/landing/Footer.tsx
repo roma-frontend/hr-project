@@ -63,6 +63,7 @@ export default function Footer({ initialLanguage = 'en' }: { initialLanguage?: s
       { nameKey: 'nav.help', href: '#faq' },
     ],
     legal: [
+      { nameKey: 'landingExtra.footerSecurity', href: '/security' },
       { nameKey: 'landingExtra.footerPrivacy', href: '/privacy' },
       { nameKey: 'landingExtra.footerTerms', href: '/terms' },
       { nameKey: 'landingExtra.footerCookies', href: '/privacy#cookies' },

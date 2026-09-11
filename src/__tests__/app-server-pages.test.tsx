@@ -102,6 +102,7 @@ import FeaturesPage, { generateMetadata as featuresMetadata } from '@/app/featur
 import ContactPage, { generateMetadata as contactMetadata } from '@/app/contact/page';
 import TermsPage from '@/app/terms/page';
 import PrivacyPage from '@/app/privacy/page';
+import SecurityPage from '@/app/security/page';
 import SuccessPage from '@/app/checkout/success/page';
 import robots from '@/app/robots';
 import sitemap from '@/app/sitemap';
@@ -202,6 +203,44 @@ describe('privacy page (src/app/privacy/page.tsx)', () => {
   });
 });
 
+describe('security trust page (src/app/security/page.tsx)', () => {
+  it('renders the trust-center sections', async () => {
+    const el = await SecurityPage();
+    render(el);
+    expect(screen.getByText('security.title')).toBeInTheDocument();
+    expect(screen.getByText('security.rbacTitle')).toBeInTheDocument();
+    expect(screen.getByText('security.auditTitle')).toBeInTheDocument();
+    expect(screen.getByText('security.ssoTitle')).toBeInTheDocument();
+    expect(screen.getByText('security.certificationsTitle')).toBeInTheDocument();
+    expect(screen.getByText('security.disclosureTitle')).toBeInTheDocument();
+  });
+
+  it('lists SOC 2 and ISO as in-progress, never as held', async () => {
+    const el = await SecurityPage();
+    render(el);
+    // The mock t returns raw keys; the status chips must show the planned
+    // status for the two unfinished certifications.
+    const chips = screen.getAllByText('security.statusPlanned');
+    expect(chips.length).toBe(2);
+    expect(screen.getByText('security.statusCompliant')).toBeInTheDocument();
+  });
+
+  it('links back home and to the contact page for disclosure', async () => {
+    const el = await SecurityPage();
+    const { container } = render(el);
+    expect(container.querySelector('a[href="/"]')).toBeInTheDocument();
+    expect(container.querySelector('a[href="/contact"]')).toBeInTheDocument();
+  });
+
+  it('exposes localized metadata', async () => {
+    mockCookieLng = 'de';
+    const mod = await import('@/app/security/page');
+    const meta = await mod.generateMetadata();
+    expect(meta.title).toBe('security.metaTitle');
+    mockCookieLng = undefined;
+  });
+});
+
 describe('checkout success page (src/app/checkout/success/page.tsx)', () => {
   let fetchMock: jest.Mock;
 
@@ -268,7 +307,9 @@ describe('robots (src/app/robots.ts)', () => {
 describe('sitemap (src/app/sitemap.ts)', () => {
   it('lists all public pages with priorities', () => {
     const entries = sitemap();
-    expect(entries).toHaveLength(6);
+    expect(entries).toHaveLength(7);
+    const urls = entries.map((e: any) => e.url);
+    expect(urls).toContain('http://localhost:3000/security');
     expect(entries[0]?.url).toBe(process.env.NEXT_PUBLIC_APP_URL ?? 'https://strata.work');
     expect(entries[0]?.priority).toBe(1);
     expect(entries.some((e) => e.url.endsWith('/login'))).toBe(true);

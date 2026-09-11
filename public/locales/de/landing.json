@@ -525,7 +525,8 @@
         "stat3Value": "✓",
         "tab": "Arzt"
       }
-    }
+    },
+    "footerSecurity": "Sicherheit"
   },
   "pricing": {
     "eyebrow": "Preise",
@@ -1179,5 +1180,46 @@
       "ogTitle": "Fuhrpark & Fahrer — Strata HR",
       "ogDescription": "Fahrten buchen und den Fuhrpark auf einem Bildschirm verwalten."
     }
+  },
+  "security": {
+    "metaTitle": "Sicherheit & Vertrauen — Strata",
+    "metaDescription": "Wie Strata Ihre HR-Daten schützt: Verschlüsselung, rollenbasierter Zugriff, Audit-Trails, SSO/SCIM, AI-Guardrails, Backups und GDPR-Rechte.",
+    "eyebrow": "Trust Center",
+    "title": "Sicherheit bei Strata",
+    "subtitle": "Ihre HR-Daten sind die sensibelsten Daten Ihres Unternehmens. Genau so schützen wir sie — keine vagen Versprechen, nur Funktionen, die heute live im Produkt sind.",
+    "encryptionTitle": "Verschlüsselung bei Übertragung und Ruhe",
+    "encryptionBody": "Der gesamte Verkehr läuft über TLS. Daten werden bei unseren Infrastruktur-Anbietern verschlüsselt gespeichert. Passwörter werden niemals lesbar gespeichert — nur gesalzene Hashes — und Passwort-Nutzer können Passkeys (WebAuthn) für phishingsichere Anmeldung ergänzen.",
+    "rbacTitle": "Rollenbasierte Zugriffskontrolle",
+    "rbacBody": "Jede Anfrage wird serverseitig gegen eine fünfstufige Rollenhierarchie (Superadmin, Admin, Supervisor, Fahrer, Mitarbeiter) plus individuelle Berechtigungen autorisiert. Clients entscheiden nie über Zugriff — das Backend lehnt unbefugte Lese- und Schreibvorgänge unabhängig von der Oberfläche ab.",
+    "auditTitle": "Vollständiger Audit-Trail",
+    "auditBody": "Sensible Aktionen — Genehmigungen, Gehaltsänderungen, Dokumentensignierung, Impersonierung, GDPR-Vorgänge — werden in einem Append-only-Protokoll mit Akteur, Aktion, Ziel, Details und IP-Adresse erfasst. Für Organisations-Admins im Security Center einsehbar.",
+    "ssoTitle": "SSO und automatisierte Bereitstellung",
+    "ssoBody": "Anmeldung über Ihren Identitätsanbieter per OIDC (Authorization Code mit PKCE, strenge Domänen-Allowlists). SCIM 2.0 hält das Mitarbeiterverzeichnis automatisch synchron: Neue werden angelegt, Abgehende deaktiviert — und SCIM kann niemals Administratoren anlegen oder deaktivieren.",
+    "aiTitle": "Regulierte KI",
+    "aiBody": "Der KI-Assistent läuft hinter organisationsbezogenen Guardrails mit Anfrage-Logging (Agent, Aktion, erlaubt/blockiert, Tokens, Latenz). Jeder KI-Entscheidungspfad ist prüfbar und kann von Ihren Admins eingeschränkt oder deaktiviert werden.",
+    "backupsTitle": "Backups und Resilienz",
+    "backupsBody": "Backups pro Mitarbeiter und pro Organisation werden on-demand und nach Zeitplan über die eingebaute Backup-Engine erstellt — Daten sind auch nach einem Fehler oder böswilliger Aktion wiederherstellbar.",
+    "dataRightsTitle": "GDPR-Betroffenenrechte, eingebaut",
+    "dataRightsBody": "Export, Anonymisierung oder Löschung jeder betroffenen Person aus einem einzigen Superadmin-Werkzeug, das alle Module nach dem digitalen Fußabdruck durchsucht und die Operation protokolliert. Auf Anfrage: Auftragsverarbeitungsverträge; für die KI-Funktionen eine DPIA-Zusammenfassung.",
+    "esignTitle": "Gerichtlich nachvollziehbare Dokumente",
+    "esignBody": "Offers, Urlaubsbescheide und Richtlinien werden mit vollständiger Signaturkette (wer, wann, von wo) signiert und als PDF archiviert — eine belastbare Beweisgrundlage für jede HR-Entscheidung.",
+    "certificationsTitle": "Zertifizierungen & Compliance-Roadmap",
+    "soc2Name": "SOC 2 Type II",
+    "soc2Note": "Gap-Assessment abgeschlossen; Audit im Rahmen des Enterprise-Readiness-Programms geplant.",
+    "isoName": "ISO/IEC 27001",
+    "isoNote": "Geplant nach SOC 2, auf derselben ISMS-Grundlage.",
+    "gdprName": "GDPR",
+    "gdprNote": "Betroffenentools, Datenminimierung und Auftragsverarbeitungsverträge sind live im Produkt.",
+    "statusPlanned": "In Arbeit",
+    "statusCompliant": "Konform",
+    "infrastructureTitle": "Infrastruktur & Subdienstleister",
+    "infrastructureBody": "Wir hosten bei etablierten Anbietern und halten die Subdienstleister-Liste bewusst kurz:",
+    "infraConvex": "Convex — primäre Anwendungsdatenbank und Funktionshosting (EU/US-Regionen mit Verschlüsselung at rest).",
+    "infraVercel": "Vercel — Application Hosting und CDN.",
+    "infraCloudinary": "Cloudinary — Medienspeicher für Avatare und Anhänge.",
+    "infraLivekit": "LiveKit — Medienrelais für Videobesprechungen (für sensible Kunden Self-Hosting möglich).",
+    "disclosureTitle": "Responsible Disclosure",
+    "disclosureBody": "Schwachstelle gefunden? Bitte melden Sie sich — wir nehmen jeden Report ernst, antworten schnell und verfolgen gutgläubige Forschung nicht rechtlich. Erreichen Sie uns über die Kontaktseite mit dem Stichwort „Security“ in Ihrer Nachricht.",
+    "disclosureLink": "Kontaktieren Sie uns"
   }
 }

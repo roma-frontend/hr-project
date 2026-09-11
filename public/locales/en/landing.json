@@ -525,7 +525,8 @@
         "stat3Value": "✓",
         "tab": "Doctor"
       }
-    }
+    },
+    "footerSecurity": "Security"
   },
   "pricing": {
     "eyebrow": "Pricing",
@@ -1179,5 +1180,46 @@
       "ogTitle": "Fleet & Driver Management — Strata HR",
       "ogDescription": "Book rides, manage drivers and recurring trips in one screen."
     }
+  },
+  "security": {
+    "metaTitle": "Security & Trust — Strata",
+    "metaDescription": "How Strata protects your HR data: encryption, role-based access, audit trails, SSO/SCIM, AI guardrails, backups and GDPR data-subject rights.",
+    "eyebrow": "Trust Center",
+    "title": "Security at Strata",
+    "subtitle": "Your HR data is the most sensitive data your company owns. Here is exactly how we protect it — no vague promises, only capabilities that are live in the product today.",
+    "encryptionTitle": "Encryption in transit and at rest",
+    "encryptionBody": "All traffic runs over TLS. Data at rest is encrypted by our infrastructure providers. Passwords are never stored in readable form — only salted hashes — and password-only users can add passkeys (WebAuthn) for phishing-resistant sign-in.",
+    "rbacTitle": "Role-based access control",
+    "rbacBody": "Every request is authorized server-side against a five-level role hierarchy (superadmin, admin, supervisor, driver, employee) plus per-employee capabilities. Clients never decide access — the backend refuses unauthorized reads and writes regardless of what the UI shows.",
+    "auditTitle": "Complete audit trail",
+    "auditBody": "Sensitive actions — approvals, payroll changes, document signing, impersonation, GDPR operations — are recorded in an append-only audit log with actor, action, target, details and IP address, visible to organization admins in the Security Center.",
+    "ssoTitle": "SSO and automated provisioning",
+    "ssoBody": "Sign in through your identity provider with OIDC single sign-on (authorization-code flow with PKCE, strict email-domain allowlists). SCIM 2.0 keeps the employee directory in sync automatically: new hires are provisioned, leavers are deactivated — and SCIM can never create or disable administrators.",
+    "aiTitle": "Governed AI",
+    "aiBody": "The AI assistant runs behind per-organization guardrails with request-level logging (agent, action, allowed/blocked, tokens, latency). Every AI decision path is auditable and can be restricted or disabled by your admins.",
+    "backupsTitle": "Backups and resilience",
+    "backupsBody": "Per-employee and per-organization backups are created on demand and on schedule through the platform backup engine, so your data can be restored even after an error or a malicious action.",
+    "dataRightsTitle": "GDPR data-subject rights, built in",
+    "dataRightsBody": "Export, anonymize or erase any data subject from a single superadmin toolkit that searches every module for the person’s footprint and logs the operation. Data-processing terms are available on request; a DPIA summary for the AI features can be provided.",
+    "esignTitle": "Legally traceable documents",
+    "esignBody": "Offers, leave orders and policies are signed with a full signature trail (who, when, from where) and archived as PDF, giving you a defensible audit trail for every HR decision.",
+    "certificationsTitle": "Certifications & compliance roadmap",
+    "soc2Name": "SOC 2 Type II",
+    "soc2Note": "Gap assessment complete; audit scheduled as part of the enterprise readiness program.",
+    "isoName": "ISO/IEC 27001",
+    "isoNote": "Planned after SOC 2, following the same ISMS groundwork.",
+    "gdprName": "GDPR",
+    "gdprNote": "Data-subject rights tooling, minimal data retention and processor terms are live in the product.",
+    "statusPlanned": "In progress",
+    "statusCompliant": "Compliant",
+    "infrastructureTitle": "Infrastructure & sub-processors",
+    "infrastructureBody": "We host on established infrastructure providers and keep the sub-processor list deliberately short:",
+    "infraConvex": "Convex — primary application database and function hosting (EU/US regions with encryption at rest).",
+    "infraVercel": "Vercel — application hosting and CDN.",
+    "infraCloudinary": "Cloudinary — media storage for avatars and attachments.",
+    "infraLivekit": "LiveKit — video meetings media relay (media can be self-hosted for sensitive customers).",
+    "disclosureTitle": "Responsible disclosure",
+    "disclosureBody": "Found a vulnerability? Please report it to us — we treat every report seriously, respond quickly and will not pursue legal action for good-faith research. Reach us via the contact page and include the word “security” in your message.",
+    "disclosureLink": "Contact us"
   }
 }
