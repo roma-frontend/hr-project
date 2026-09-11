@@ -22,6 +22,7 @@ import {
   Clock,
   KeyRound,
   Webhook,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,6 +62,10 @@ const SsoSettings = dynamic(
 const WebhooksSettings = dynamic(
   () =>
     import('@/components/settings/WebhooksSettings').then((m) => ({ default: m.WebhooksSettings })),
+  { ssr: false },
+);
+const ScimSettings = dynamic(
+  () => import('@/components/settings/ScimSettings').then((m) => ({ default: m.ScimSettings })),
   { ssr: false },
 );
 const AppearanceSettings = dynamic(
@@ -346,6 +351,12 @@ export default function SettingsPage() {
             icon: Webhook,
             description: t('settingsWebhooks.tabDesc', 'Outbound event deliveries'),
           },
+          {
+            value: 'scim',
+            label: t('settingsScim.tab', 'SCIM'),
+            icon: Users,
+            description: t('settingsScim.tabDesc', 'Automated user provisioning'),
+          },
         ]
       : []),
   ];
@@ -472,6 +483,12 @@ export default function SettingsPage() {
           {user?.role === 'admin' && (
             <TabsContent value="webhooks" className="space-y-6 mt-0">
               <WebhooksSettings />
+            </TabsContent>
+          )}
+
+          {user?.role === 'admin' && (
+            <TabsContent value="scim" className="space-y-6 mt-0">
+              <ScimSettings />
             </TabsContent>
           )}
 

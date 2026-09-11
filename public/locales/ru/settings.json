@@ -687,5 +687,26 @@
     "copied": "Скопировано",
     "deliveries": "Последние доставки",
     "noDeliveries": "Доставок пока нет."
+  },
+  "settingsScim": {
+    "tab": "SCIM",
+    "tabDesc": "Автоматическая провижининг пользователей",
+    "title": "SCIM-провижининг",
+    "description": "Позвольте вашему IdP (Azure AD, Okta, Google Workspace…) автоматически создавать, обновлять и деактивировать сотрудников.",
+    "add": "Создать токен",
+    "addTitle": "Новый SCIM-токен",
+    "baseUrl": "Базовый URL",
+    "empty": "SCIM-токены ещё не созданы.",
+    "enabled": "Включён",
+    "disabled": "Отключён",
+    "lastUsed": "Последнее использование",
+    "neverUsed": "Не использовался",
+    "label": "Название",
+    "labelPlaceholder": "например: Azure AD provisioning",
+    "create": "Создать",
+    "deleted": "SCIM-токен удалён",
+    "tokenTitle": "Ваш SCIM bearer-токен",
+    "tokenWarning": "Скопируйте сейчас — он показывается только один раз и не может быть получен позже. Вставьте его в настройки SCIM-провижининга вашего IdP.",
+    "copied": "Скопировано"
   }
 }

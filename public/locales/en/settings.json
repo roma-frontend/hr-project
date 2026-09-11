@@ -687,5 +687,26 @@
     "copied": "Copied",
     "deliveries": "Recent deliveries",
     "noDeliveries": "No deliveries yet."
+  },
+  "settingsScim": {
+    "tab": "SCIM",
+    "tabDesc": "Automated user provisioning",
+    "title": "SCIM Provisioning",
+    "description": "Let your identity provider (Azure AD, Okta, Google Workspace…) create, update and deactivate employees automatically.",
+    "add": "Create token",
+    "addTitle": "Create SCIM token",
+    "baseUrl": "Base URL",
+    "empty": "No SCIM tokens created yet.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "lastUsed": "Last used",
+    "neverUsed": "Never used",
+    "label": "Label",
+    "labelPlaceholder": "e.g. Azure AD provisioning",
+    "create": "Create",
+    "deleted": "SCIM token deleted",
+    "tokenTitle": "Your SCIM bearer token",
+    "tokenWarning": "Copy it now — it is shown only once and cannot be retrieved later. Paste it into your identity provider's SCIM provisioning settings.",
+    "copied": "Copied"
   }
 }

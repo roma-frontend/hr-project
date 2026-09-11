@@ -667,4 +667,292 @@ http.route({
   }),
 });
 
+// ── SCIM 2.0 provisioning (RFC 7644) ──────────────────────────────────────────
+/**
+ * Serves the subset of RFC 7644 that IdPs actually exercise:
+ *   GET  /api/scim/v2/ServiceProviderConfig
+ *   GET  /api/scim/v2/Users            (list/filter/pagination)
+ *   POST /api/scim/v2/Users            (create → 201)
+ *   GET  /api/scim/v2/Users/{id}       (retrieve → 200)
+ *   PUT  /api/scim/v2/Users/{id}       (replace)
+ *   PATCH /api/scim/v2/Users/{id}      (path ops incl. the "active" toggle)
+ *   DELETE /api/scim/v2/Users/{id}     (soft delete: deactivate + unlink)
+ *
+ * Auth: `Authorization: Bearer <token>`; only the SHA-256 of the token is
+ * stored, so the hash is computed here before the lookup.
+ */
+const SCIM_LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
+const SCIM_ERROR_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:Error';
+
+function scimError(status: number, detail: string): Response {
+  return Response.json(
+    { schemas: [SCIM_ERROR_SCHEMA], status: String(status), detail },
+    { status },
+  );
+}
+
+async function authenticateScim(
+  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
+  request: Request,
+): Promise<{ organizationId: Id<'organizations'> } | null> {
+  const auth = request.headers.get('authorization') ?? '';
+  const match = /^Bearer\s+(.+)$/i.exec(auth);
+  if (!match) return null;
+  const token = match[1]!.trim();
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  const tokenHash = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  const resolved = await ctx.runMutation(internal.scim.main.authenticateToken, { tokenHash });
+  return resolved ?? null;
+}
+
+interface ScimCoreUser {
+  schemas?: string[];
+  id?: string;
+  userName?: string;
+  name?: { formatted?: string; givenName?: string; familyName?: string } | string;
+  active?: boolean;
+  emails?: { value?: string; primary?: boolean }[];
+  'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'?: { department?: string };
+  department?: string;
+  title?: string;
+}
+
+function scimDisplayName(body: ScimCoreUser): string {
+  if (typeof body.name === 'string') return body.name;
+  return body.name?.formatted ?? body.name?.givenName ?? '';
+}
+
+function scimDepartment(body: ScimCoreUser): string | undefined {
+  const ent = body['urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'];
+  return body.department ?? ent?.department ?? undefined;
+}
+
+/** Extract the manager's IdP id from a SCIM enterprise manager ref, if any. */
+function scimManagerExternalId(body: Record<string, unknown>): string | undefined {
+  const ent = body['urn:ietf:params:scim:schemas:extension:enterprise:2.0:User'] as
+    | { manager?: { value?: string } }
+    | undefined;
+  const mgr = ent?.manager?.value ?? (body.manager as { value?: string } | undefined)?.value;
+  return mgr ? String(mgr) : undefined;
+}
+
+/** Pick the primary (or first) email from a SCIM payload. */
+function scimEmail(body: ScimCoreUser): string | undefined {
+  const primary = body.emails?.find((e) => e.primary) ?? body.emails?.[0];
+  return primary?.value ?? body.userName;
+}
+
+// SCIM 2.0 (RFC 7644) — one shared handler registered per HTTP method
+// (Convex routers don't support wildcard methods).
+type ScimActionCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
+async function scimHandler(ctx: ScimActionCtx, request: Request): Promise<Response> {
+  {
+    const url = new URL(request.url);
+    const parts = url.pathname.split('/').filter(Boolean); // ['api','scim','v2',…]
+    const tail = parts.slice(3);
+    const method = request.method.toUpperCase();
+
+    // ── ServiceProviderConfig — public capability discovery ─────────────
+    if (tail[0] === 'ServiceProviderConfig' && method === 'GET') {
+      return Response.json({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
+        documentationUri: 'https://www.rfc-editor.org/rfc/rfc7644',
+        patch: { supported: true },
+        filter: { supported: true, maxResults: 200 },
+        changePassword: { supported: false },
+        sort: { supported: false },
+        etag: { supported: false },
+        authenticationSchemes: [
+          {
+            type: 'oauthbearertoken',
+            name: 'OAuth Bearer Token',
+            description: 'Token generated in Settings → SCIM',
+          },
+        ],
+      });
+    }
+
+    // Every other endpoint requires a valid token.
+    const auth = await authenticateScim(ctx, request);
+    if (!auth) {
+      return scimError(401, 'Invalid or disabled SCIM token');
+    }
+    const orgId = auth.organizationId;
+
+    // ── /Users collection ─────────────────────────────────────────────────
+    if (tail[0] === 'Users' && tail.length === 1) {
+      if (method === 'GET') {
+        const startIndex = Math.max(Number(url.searchParams.get('startIndex') ?? 1) || 1, 1);
+        const count = Math.min(Number(url.searchParams.get('count') ?? 100) || 100, 200);
+        const filter = url.searchParams.get('filter') ?? '';
+        // The one filter IdPs rely on: userName eq "value" (also email eq).
+        const emailEq = /(?:userName|emails\.value|email)\s+eq\s+"([^"]+)"/i
+          .exec(filter)?.[1]
+          ?.toLowerCase();
+        const page = await ctx.runQuery(internal.scim.main.listUsers, {
+          organizationId: orgId,
+          startIndex,
+          count,
+          emailEq: emailEq ?? undefined,
+        });
+        return Response.json({ schemas: [SCIM_LIST_SCHEMA], ...page });
+      }
+      if (method === 'POST') {
+        let body: ScimCoreUser;
+        try {
+          body = (await request.json()) as ScimCoreUser;
+        } catch {
+          return scimError(400, 'Request body is not valid JSON');
+        }
+        const email = scimEmail(body)?.toLowerCase().trim();
+        if (!email) return scimError(400, 'userName (or a primary email) is required');
+        const result = await ctx.runMutation(internal.scim.main.createUser, {
+          organizationId: orgId,
+          userName: email,
+          name: scimDisplayName(body) || email.split('@')[0] || 'User',
+          active: body.active ?? true,
+          department: scimDepartment(body),
+          position: body.title ?? undefined,
+          managerExternalId: scimManagerExternalId(body as unknown as Record<string, unknown>),
+        });
+        if (result.conflict) return scimError(409, 'A user with this email already exists');
+        if ('seatLimit' in result && result.seatLimit) {
+          return scimError(400, 'Organization seat limit reached');
+        }
+        if (!result.scimUser) return scimError(500, 'User created but could not be read back');
+        return Response.json(result.scimUser, {
+          status: 201,
+          headers: { Location: `/api/scim/v2/Users/${result.userId}` },
+        });
+      }
+      return scimError(405, 'Method not allowed');
+    }
+
+    // ── /Users/{id} resource ─────────────────────────────────────────────
+    if (tail[0] === 'Users' && tail.length === 2) {
+      const userId = tail[1] as Id<'users'>;
+      if (method === 'GET') {
+        const user = await ctx.runQuery(internal.scim.main.getUser, {
+          organizationId: orgId,
+          userId,
+        });
+        if (!user) return scimError(404, 'User not found');
+        return Response.json(user);
+      }
+      if (method === 'PUT') {
+        let body: ScimCoreUser;
+        try {
+          body = (await request.json()) as ScimCoreUser;
+        } catch {
+          return scimError(400, 'Request body is not valid JSON');
+        }
+        const result = await ctx.runMutation(internal.scim.main.updateUser, {
+          organizationId: orgId,
+          userId,
+          name: scimDisplayName(body) || undefined,
+          active: body.active,
+          department: scimDepartment(body),
+          position: body.title ?? undefined,
+          managerExternalId: scimManagerExternalId(body as unknown as Record<string, unknown>),
+        });
+        if (result.notFound) return scimError(404, 'User not found');
+        if (result.lastAdmin) {
+          return scimError(400, 'Cannot deactivate the last active admin');
+        }
+        if (!result.scimUser) return scimError(500, 'User updated but could not be read back');
+        return Response.json(result.scimUser);
+      }
+      if (method === 'PATCH') {
+        let body: {
+          Operations?: { op?: string; path?: string; value?: unknown }[];
+        };
+        try {
+          body = (await request.json()) as {
+            Operations?: { op?: string; path?: string; value?: unknown }[];
+          };
+        } catch {
+          return scimError(400, 'Request body is not valid JSON');
+        }
+        const ops = body.Operations ?? [];
+        const patch: Record<string, unknown> = {};
+        for (const op of ops) {
+          const value = op.value;
+          if (
+            op.path === 'active' ||
+            (value && typeof value === 'object' && 'active' in (value as object))
+          ) {
+            const activeVal =
+              op.path === 'active' ? value : (value as { active?: unknown } | undefined)?.active;
+            if (typeof activeVal === 'boolean') patch.active = activeVal;
+          } else if (!op.path && value && typeof value === 'object') {
+            // path-less op: merge the attribute object (Name, title, department…)
+            const attrs = value as Record<string, unknown>;
+            if (typeof attrs.name === 'string') patch.name = attrs.name;
+            if (typeof attrs.title === 'string') patch.position = attrs.title;
+            if (typeof attrs.department === 'string') patch.department = attrs.department;
+            if (typeof attrs.active === 'boolean') patch.active = attrs.active;
+            const nameObj = attrs.name as { formatted?: string; givenName?: string } | undefined;
+            if (
+              nameObj &&
+              typeof nameObj === 'object' &&
+              (nameObj.formatted || nameObj.givenName)
+            ) {
+              patch.name = nameObj.formatted ?? nameObj.givenName;
+            }
+          } else if (op.path === 'name' || op.path === 'title' || op.path === 'department') {
+            if (typeof value === 'string') {
+              if (op.path === 'name') patch.name = value;
+              if (op.path === 'title') patch.position = value;
+              if (op.path === 'department') patch.department = value;
+            } else if (value && typeof value === 'object') {
+              const nameObj = value as { formatted?: string; givenName?: string };
+              if (op.path === 'name' && (nameObj.formatted || nameObj.givenName)) {
+                patch.name = nameObj.formatted ?? nameObj.givenName;
+              }
+            }
+          }
+        }
+        if (Object.keys(patch).length === 0) {
+          return scimError(400, 'No supported operations in patch');
+        }
+        const result = await ctx.runMutation(internal.scim.main.updateUser, {
+          organizationId: orgId,
+          userId,
+          name: typeof patch.name === 'string' ? patch.name : undefined,
+          active: typeof patch.active === 'boolean' ? patch.active : undefined,
+          department: typeof patch.department === 'string' ? patch.department : undefined,
+          position: typeof patch.position === 'string' ? patch.position : undefined,
+        });
+        if (result.notFound) return scimError(404, 'User not found');
+        if (result.lastAdmin) {
+          return scimError(400, 'Cannot deactivate the last active admin');
+        }
+        if (!result.scimUser) return scimError(500, 'User updated but could not be read back');
+        return Response.json(result.scimUser);
+      }
+      if (method === 'DELETE') {
+        const result = await ctx.runMutation(internal.scim.main.deleteUser, {
+          organizationId: orgId,
+          userId,
+        });
+        if (result.notFound) return scimError(404, 'User not found');
+        return new Response(null, { status: 204 });
+      }
+      return scimError(405, 'Method not allowed');
+    }
+
+    return scimError(404, 'Unknown SCIM resource');
+  }
+}
+
+for (const scimMethod of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const) {
+  http.route({
+    pathPrefix: '/api/scim/v2/',
+    method: scimMethod,
+    handler: httpAction(scimHandler),
+  });
+}
+
 export default http;

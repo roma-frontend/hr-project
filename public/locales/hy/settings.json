@@ -687,5 +687,26 @@
     "copied": "Պատճենված է",
     "deliveries": "Վերջին առաքումներ",
     "noDeliveries": "Առաքումներ դեռ չկան:"
+  },
+  "settingsScim": {
+    "tab": "SCIM",
+    "tabDesc": "Օգտատերերի ավտոմատ պրովիժինգ",
+    "title": "SCIM պրովիժինգ",
+    "description": "Թույլ տվեք ձեր IdP-ին (Azure AD, Okta, Google Workspace…) ավտոմատ ստեղծել, թարմացնել և ապաակտիվացնել աշխատակիցներին:",
+    "add": "Ստեղծել տոկեն",
+    "addTitle": "Նոր SCIM տոկեն",
+    "baseUrl": "Բազային URL",
+    "empty": "SCIM տոկեններ դեռ ստեղծված չեն:",
+    "enabled": "Միացված",
+    "disabled": "Անջատված",
+    "lastUsed": "Վերջին օգտագործում",
+    "neverUsed": "Երբեք չի օգտագործվել",
+    "label": "Անվանում",
+    "labelPlaceholder": "օրինակ՝ Azure AD provisioning",
+    "create": "Ստեղծել",
+    "deleted": "SCIM տոկենը հեռացված է",
+    "tokenTitle": "Ձեր SCIM bearer տոկենը",
+    "tokenWarning": "Պատճենեք հիմա — այն ցուցադրվում է միայն մեկ անգամ և հետո հնարավոր չէ վերականգնել: Տեղադրեք այն ձեր IdP-ի SCIM պրովիժինգի կարգավորումներում:",
+    "copied": "Պատճենված է"
   }
 }

@@ -687,5 +687,26 @@
     "copied": "Kopiert",
     "deliveries": "Letzte Zustellungen",
     "noDeliveries": "Noch keine Zustellungen."
+  },
+  "settingsScim": {
+    "tab": "SCIM",
+    "tabDesc": "Automatische Benutzerbereitstellung",
+    "title": "SCIM-Bereitstellung",
+    "description": "Lassen Sie Ihren Identitätsanbieter (Azure AD, Okta, Google Workspace…) Mitarbeiter automatisch anlegen, aktualisieren und deaktivieren.",
+    "add": "Token erstellen",
+    "addTitle": "SCIM-Token erstellen",
+    "baseUrl": "Basis-URL",
+    "empty": "Noch keine SCIM-Token erstellt.",
+    "enabled": "Aktiv",
+    "disabled": "Inaktiv",
+    "lastUsed": "Zuletzt verwendet",
+    "neverUsed": "Nie verwendet",
+    "label": "Bezeichnung",
+    "labelPlaceholder": "z. B. Azure AD-Bereitstellung",
+    "create": "Erstellen",
+    "deleted": "SCIM-Token gelöscht",
+    "tokenTitle": "Ihr SCIM-Bearer-Token",
+    "tokenWarning": "Jetzt kopieren — es wird nur einmal angezeigt und kann später nicht abgerufen werden. Fügen Sie es in die SCIM-Bereitstellungseinstellungen Ihres Identitätsanbieters ein.",
+    "copied": "Kopiert"
   }
 }
