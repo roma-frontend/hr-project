@@ -308,8 +308,7 @@ describe('sitemap (src/app/sitemap.ts)', () => {
   it('lists all public pages with priorities', () => {
     const entries = sitemap();
     expect(entries).toHaveLength(7);
-    const urls = entries.map((e: any) => e.url);
-    expect(urls).toContain('http://localhost:3000/security');
+    expect(entries.some((e: any) => e.url.endsWith('/security'))).toBe(true);
     expect(entries[0]?.url).toBe(process.env.NEXT_PUBLIC_APP_URL ?? 'https://strata.work');
     expect(entries[0]?.priority).toBe(1);
     expect(entries.some((e) => e.url.endsWith('/login'))).toBe(true);
