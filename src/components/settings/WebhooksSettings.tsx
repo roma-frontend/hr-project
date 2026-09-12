@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Webhook, Plus, Trash2, Copy, RefreshCcw, History } from 'lucide-react';
+import { Webhook, Plus, Trash2, Copy, RefreshCcw, History, Zap } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -36,6 +36,7 @@ export function WebhooksSettings() {
   const update = useMutation(api.webhooks.main.updateEndpoint);
   const remove = useMutation(api.webhooks.main.deleteEndpoint);
   const rotate = useMutation(api.webhooks.main.rotateSecret);
+  const sendTest = useMutation(api.webhooks.main.sendTestDelivery);
 
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,6 +45,45 @@ export function WebhooksSettings() {
   const [showDeliveriesFor, setShowDeliveriesFor] = useState<Id<'webhookEndpoints'> | null>(null);
   const [form, setForm] = useState({ label: '', url: '', allEvents: true });
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  // Endpoint currently being test-delivered, and the delivery row we're waiting on.
+  const [testing, setTesting] = useState<Id<'webhookEndpoints'> | null>(null);
+  const [pendingTestDeliveryId, setPendingTestDeliveryId] =
+    useState<Id<'webhookDeliveries'> | null>(null);
+  const testSettledRef = useRef(false);
+
+  // The delivery engine is async (worker action POSTs out of band), so the
+  // outcome arrives through the reactive `deliveries` query. Watch the test
+  // delivery row and toast the moment it leaves `pending`.
+  useEffect(() => {
+    if (!pendingTestDeliveryId) return;
+    const row = (deliveries ?? []).find((d) => d._id === pendingTestDeliveryId);
+    if (!row || row.status === 'pending') return;
+    if (testSettledRef.current) return;
+    testSettledRef.current = true;
+    if (row.status === 'success') {
+      toast.success(
+        t('settingsWebhooks.testOk', 'Test delivery succeeded — endpoint responded 2xx'),
+      );
+    } else {
+      const reason =
+        row.error ?? (row.responseStatus !== undefined ? `HTTP ${row.responseStatus}` : '');
+      toast.error(t('settingsWebhooks.testFail', 'Test delivery failed: {{reason}}', { reason }));
+    }
+    setTesting(null);
+    setPendingTestDeliveryId(null);
+  }, [pendingTestDeliveryId, deliveries, t]);
+
+  const runTest = async (id: Id<'webhookEndpoints'>) => {
+    setTesting(id);
+    testSettledRef.current = false;
+    try {
+      const { deliveryId } = await sendTest({ endpointId: id });
+      setPendingTestDeliveryId(deliveryId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+      setTesting(null);
+    }
+  };
 
   const save = async () => {
     if (!form.url.trim()) return;
@@ -175,6 +215,16 @@ export function WebhooksSettings() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Switch checked={row.enabled} onCheckedChange={(v) => void toggle(row._id, v)} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void runTest(row._id)}
+                  disabled={testing === row._id}
+                  title={t('settingsWebhooks.test', 'Send test delivery')}
+                  aria-label={t('settingsWebhooks.test', 'Send test delivery')}
+                >
+                  <Zap className={`w-4 h-4 ${testing === row._id ? 'animate-pulse' : ''}`} />
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"

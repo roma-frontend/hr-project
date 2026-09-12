@@ -28,7 +28,7 @@
  * header, since a sticky element only sticks to its nearest scrolling ancestor.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -459,10 +459,12 @@ function LazyTaskRow({
   contextMenu?: TaskTableProps['contextMenu'];
 }) {
   const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || visible) return;
+  // A ref callback rather than an effect: the observer has to attach the moment
+  // the node commits, and the "no IntersectionObserver" fallback must flip
+  // visibility without a synchronous setState inside an effect body. It also
+  // keeps SSR rendering the placeholder — the callback never runs on the server.
+  const observeRow = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
     if (typeof IntersectionObserver === 'undefined') {
       setVisible(true);
       return;
@@ -478,11 +480,11 @@ function LazyTaskRow({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [visible]);
+  }, []);
 
   if (!visible) {
     return (
-      <div ref={ref} data-task-id={task._id}>
+      <div ref={observeRow} data-task-id={task._id}>
         <div
           role="row"
           style={rowContext.gridStyle}
@@ -495,7 +497,7 @@ function LazyTaskRow({
   }
 
   return (
-    <div ref={ref} data-task-id={task._id}>
+    <div ref={observeRow} data-task-id={task._id}>
       <TaskContextMenu
         task={task as ContextTask}
         canManage={canManage}

@@ -11,6 +11,8 @@
 
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
@@ -30,12 +32,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -97,6 +100,8 @@ export default function ShiftsClient() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  // -1 → navigating to the previous week, 1 → next week (drives slide direction).
+  const [navDir, setNavDir] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const [templateApplyOpen, setTemplateApplyOpen] = useState(false);
   const [editing, setEditing] = useState<RosterShift | null>(null);
@@ -117,13 +122,31 @@ export default function ShiftsClient() {
     return days;
   }, [weekStart]);
 
+  const changeWeek = (delta: number) => {
+    setNavDir(delta);
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + delta * 7);
+    setWeekStart(d);
+  };
+
   const from = weekDays[0]!.ds;
   const to = weekDays[6]!.ds;
 
-  const roster = useQuery(api.shifts.getRoster, { from, to });
+  // Retains the previous week's roster while the new week loads (see
+  // useLastLoadedQuery) — the grid content crossfades instead of flashing
+  // "Loading…" on every week switch.
+  const roster = useLastLoadedQuery(api.shifts.getRoster, { from, to });
   const templates = useQuery(api.shifts.listTemplates, {}) ?? [];
   const swaps = useQuery(api.shifts.listSwapRequests, {}) ?? [];
-  const canManage = roster?.canManage ?? false;
+
+  // Persist `canManage` (a per-user permission) so the action buttons /
+  // template card never unmount mid-load.
+  const [canManage, setCanManage] = useState(false);
+  const rosterKey = `${from}|${to}`;
+  if (roster?.canManage !== undefined && roster.canManage !== canManage) {
+    setCanManage(roster.canManage);
+  }
+  const lastRoster = roster;
 
   const upsertShift = useMutation(api.shifts.upsertShift);
   const deleteShift = useMutation(api.shifts.deleteShift);
@@ -135,18 +158,18 @@ export default function ShiftsClient() {
 
   const shiftsByUserDay = useMemo(() => {
     const map = new Map<string, RosterShift[]>();
-    for (const s of (roster?.shifts ?? []) as RosterShift[]) {
+    for (const s of (lastRoster?.shifts ?? []) as RosterShift[]) {
       const key = `${s.userId}|${s.date}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     }
     return map;
-  }, [roster]);
+  }, [lastRoster]);
 
   // Row order: people with shifts this week, sorted by name; own row first.
   const rowUsers = useMemo(() => {
     const map = new Map<string, { name: string; position?: string }>();
-    for (const s of (roster?.shifts ?? []) as RosterShift[]) {
+    for (const s of (lastRoster?.shifts ?? []) as RosterShift[]) {
       if (!map.has(s.userId)) map.set(s.userId, { name: s.userName, position: s.userPosition });
     }
     const rows = [...map.entries()].map(([userId, info]) => ({ userId, ...info }));
@@ -156,7 +179,7 @@ export default function ShiftsClient() {
       return a.name.localeCompare(b.name);
     });
     return rows;
-  }, [roster, user]);
+  }, [lastRoster, user]);
 
   const pendingSwaps = (swaps as SwapRequest[]).filter(
     (s) => s.status === 'pending' || s.status === 'accepted',
@@ -236,11 +259,8 @@ export default function ShiftsClient() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => {
-              const d = new Date(weekStart);
-              d.setDate(d.getDate() - 7);
-              setWeekStart(d);
-            }}
+            onClick={() => changeWeek(-1)}
+            data-testid="shifts-prev-week"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -250,11 +270,8 @@ export default function ShiftsClient() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => {
-              const d = new Date(weekStart);
-              d.setDate(d.getDate() + 7);
-              setWeekStart(d);
-            }}
+            onClick={() => changeWeek(1)}
+            data-testid="shifts-next-week"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -302,119 +319,136 @@ export default function ShiftsClient() {
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          {roster === undefined ? (
-            <div className="py-12 text-center text-(--text-muted)">
-              {t('common.loading', 'Loading…')}
-            </div>
-          ) : rowUsers.length === 0 ? (
-            <div className="py-12 text-center text-(--text-muted)">
-              <CalendarClock className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p>{t('shifts.empty', 'No shifts scheduled this week')}</p>
-            </div>
-          ) : (
-            <table className="w-full min-w-[720px] border-collapse">
-              <thead>
-                <tr>
-                  <th className="w-44 text-left py-2 px-3 text-sm font-medium text-(--text-muted)">
-                    {t('shifts.employee', 'Employee')}
-                  </th>
-                  {weekDays.map((d) => (
-                    <th
-                      key={d.ds}
-                      className={`py-2 px-2 text-xs font-medium ${
-                        d.isToday ? 'text-(--brand-text)' : 'text-(--text-muted)'
-                      }`}
-                    >
-                      <div className="flex flex-col items-center">
-                        <span>{d.weekday}</span>
-                        <span
-                          className={`text-sm font-bold ${d.isToday ? 'text-(--brand-text)' : 'text-(--text-primary)'}`}
+          <AnimatePresence initial={false} mode="wait" custom={navDir}>
+            <motion.div
+              key={rosterKey}
+              custom={navDir}
+              variants={{
+                enter: (dir: number) => ({ opacity: 0, x: dir === 0 ? 0 : Math.sign(dir) * 24 }),
+                center: { opacity: 1, x: 0 },
+                exit: (dir: number) => ({ opacity: 0, x: dir === 0 ? 0 : -Math.sign(dir) * 24 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="min-h-[220px]"
+            >
+              {lastRoster === undefined ? (
+                <div className="py-12 text-center text-(--text-muted)">
+                  {t('common.loading', 'Loading…')}
+                </div>
+              ) : rowUsers.length === 0 ? (
+                <div className="py-12 text-center text-(--text-muted)">
+                  <CalendarClock className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                  <p>{t('shifts.empty', 'No shifts scheduled this week')}</p>
+                </div>
+              ) : (
+                <table className="w-full min-w-[720px] border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="w-44 text-left py-2 px-3 text-sm font-medium text-(--text-muted)">
+                        {t('shifts.employee', 'Employee')}
+                      </th>
+                      {weekDays.map((d) => (
+                        <th
+                          key={d.ds}
+                          className={`py-2 px-2 text-xs font-medium ${
+                            d.isToday ? 'text-(--brand-text)' : 'text-(--text-muted)'
+                          }`}
                         >
-                          {d.dayNum}
-                        </span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rowUsers.map((row) => (
-                  <tr key={row.userId} className="border-t border-(--border)">
-                    <td className="py-2 px-3">
-                      <p className="text-sm font-medium text-(--text-primary)">{row.name}</p>
-                      {row.position && (
-                        <p className="text-xs text-(--text-muted)">{row.position}</p>
-                      )}
-                    </td>
-                    {weekDays.map((d) => {
-                      const cellShifts = shiftsByUserDay.get(`${row.userId}|${d.ds}`) ?? [];
-                      return (
-                        <td key={d.ds} className="py-1.5 px-1 align-top">
-                          <div className="space-y-1">
-                            {cellShifts.map((s) => (
-                              <div
-                                key={s._id}
-                                className={`group relative rounded-lg px-2 py-1.5 text-xs border ${
-                                  s.status === 'cancelled'
-                                    ? 'opacity-40 border-(--border) text-(--text-muted) line-through'
-                                    : s.status === 'draft'
-                                      ? 'border-dashed border-(--border) bg-(--muted)'
-                                      : 'border-(--brand-500-ch, 59 130 246) / 30 bg-(--primary)/5'
-                                }`}
-                              >
-                                <span className="font-semibold text-(--text-primary) tabular-nums">
-                                  {minutesToHHMM(s.startMinute)}–{minutesToHHMM(s.endMinute)}
-                                </span>
-                                {s.note && (
-                                  <span className="block text-[10px] text-(--text-muted) truncate">
-                                    {s.note}
-                                  </span>
-                                )}
-                                {canManage && (
-                                  <span className="absolute -top-1.5 -right-1.5 hidden group-hover:flex gap-0.5">
-                                    <button
-                                      type="button"
-                                      className="w-5 h-5 rounded-full bg-(--card) border border-(--border) text-(--text-muted) hover:text-(--brand-text)"
-                                      onClick={() => {
-                                        setEditing(s);
-                                        setAddOpen(true);
-                                      }}
-                                      aria-label={t('common.edit', 'Edit')}
-                                    >
-                                      <RefreshCw className="w-3 h-3 mx-auto" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="w-5 h-5 rounded-full bg-(--card) border border-(--border) text-(--text-muted) hover:text-(--danger-text)"
-                                      onClick={() => void handleDelete(s._id)}
-                                      aria-label={t('common.delete', 'Delete')}
-                                    >
-                                      <Trash2 className="w-3 h-3 mx-auto" />
-                                    </button>
-                                  </span>
-                                )}
-                                {!canManage &&
-                                  s.userId === user?.id &&
-                                  s.status === 'published' && (
-                                    <button
-                                      type="button"
-                                      className="mt-1 text-[10px] text-(--brand-text) hover:underline"
-                                      onClick={() => void handleSwapRequest(s._id)}
-                                    >
-                                      {t('shifts.requestSwap', 'Request swap')}
-                                    </button>
-                                  )}
-                              </div>
-                            ))}
+                          <div className="flex flex-col items-center">
+                            <span>{d.weekday}</span>
+                            <span
+                              className={`text-sm font-bold ${d.isToday ? 'text-(--brand-text)' : 'text-(--text-primary)'}`}
+                            >
+                              {d.dayNum}
+                            </span>
                           </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rowUsers.map((row) => (
+                      <tr key={row.userId} className="border-t border-(--border)">
+                        <td className="py-2 px-3">
+                          <p className="text-sm font-medium text-(--text-primary)">{row.name}</p>
+                          {row.position && (
+                            <p className="text-xs text-(--text-muted)">{row.position}</p>
+                          )}
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                        {weekDays.map((d) => {
+                          const cellShifts = shiftsByUserDay.get(`${row.userId}|${d.ds}`) ?? [];
+                          return (
+                            <td key={d.ds} className="py-1.5 px-1 align-top">
+                              <div className="space-y-1">
+                                {cellShifts.map((s) => (
+                                  <div
+                                    key={s._id}
+                                    className={`group relative rounded-lg px-2 py-1.5 text-xs border ${
+                                      s.status === 'cancelled'
+                                        ? 'opacity-40 border-(--border) text-(--text-muted) line-through'
+                                        : s.status === 'draft'
+                                          ? 'border-dashed border-(--border) bg-(--muted)'
+                                          : 'border-(--brand-500-ch, 59 130 246) / 30 bg-(--primary)/5'
+                                    }`}
+                                  >
+                                    <span className="font-semibold text-(--text-primary) tabular-nums">
+                                      {minutesToHHMM(s.startMinute)}–{minutesToHHMM(s.endMinute)}
+                                    </span>
+                                    {s.note && (
+                                      <span className="block text-[10px] text-(--text-muted) truncate">
+                                        {s.note}
+                                      </span>
+                                    )}
+                                    {canManage && (
+                                      <span className="absolute -top-1.5 -right-1.5 hidden group-hover:flex gap-0.5">
+                                        <button
+                                          type="button"
+                                          className="w-5 h-5 rounded-full bg-(--card) border border-(--border) text-(--text-muted) hover:text-(--brand-text)"
+                                          onClick={() => {
+                                            setEditing(s);
+                                            setAddOpen(true);
+                                          }}
+                                          aria-label={t('common.edit', 'Edit')}
+                                        >
+                                          <RefreshCw className="w-3 h-3 mx-auto" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="w-5 h-5 rounded-full bg-(--card) border border-(--border) text-(--text-muted) hover:text-(--danger-text)"
+                                          onClick={() => void handleDelete(s._id)}
+                                          aria-label={t('common.delete', 'Delete')}
+                                        >
+                                          <Trash2 className="w-3 h-3 mx-auto" />
+                                        </button>
+                                      </span>
+                                    )}
+                                    {!canManage &&
+                                      s.userId === user?.id &&
+                                      s.status === 'published' && (
+                                        <button
+                                          type="button"
+                                          className="mt-1 text-[10px] text-(--brand-text) hover:underline"
+                                          onClick={() => void handleSwapRequest(s._id)}
+                                        >
+                                          {t('shifts.requestSwap', 'Request swap')}
+                                        </button>
+                                      )}
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </CardContent>
       </Card>
 
@@ -583,14 +617,14 @@ function ShiftDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" size="md" closeLabel={t('common.close', 'Close')}>
+        <SheetHeader>
+          <SheetTitle>
             {editing ? t('shifts.editShift', 'Edit shift') : t('shifts.addShift', 'Add shift')}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+          </SheetTitle>
+        </SheetHeader>
+        <SheetBody className="space-y-4">
           <div className="space-y-1.5">
             <Label>{t('shifts.employee', 'Employee')}</Label>
             {editing || !canManage ? (
@@ -668,8 +702,8 @@ function ShiftDialog({
               placeholder={t('shifts.notePlaceholder', 'Optional')}
             />
           </div>
-        </div>
-        <DialogFooter>
+        </SheetBody>
+        <SheetFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.cancel', 'Cancel')}
           </Button>
@@ -693,9 +727,9 @@ function ShiftDialog({
           >
             {t('common.save', 'Save')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -727,12 +761,12 @@ function ApplyTemplateDialog({
   const [saving, setSaving] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('shifts.applyTemplate', 'Apply template')}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" size="md" closeLabel={t('common.close', 'Close')}>
+        <SheetHeader>
+          <SheetTitle>{t('shifts.applyTemplate', 'Apply template')}</SheetTitle>
+        </SheetHeader>
+        <SheetBody className="space-y-4">
           <div className="space-y-1.5">
             <Label>{t('shifts.template', 'Template')}</Label>
             <select
@@ -779,8 +813,8 @@ function ApplyTemplateDialog({
               />
             </div>
           </div>
-        </div>
-        <DialogFooter>
+        </SheetBody>
+        <SheetFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.cancel', 'Cancel')}
           </Button>
@@ -797,9 +831,9 @@ function ApplyTemplateDialog({
           >
             {t('common.apply', 'Apply')}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 

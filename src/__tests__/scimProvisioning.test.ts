@@ -12,8 +12,10 @@ import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals
 jest.mock('../../convex/_generated/server', () => ({
   mutation: ({ handler, args }: any) => ({ handler, args }),
   query: ({ handler, args }: any) => ({ handler, args }),
+  action: ({ handler, args }: any) => ({ handler, args }),
   internalMutation: ({ handler, args }: any) => ({ handler, args }),
   internalQuery: ({ handler, args }: any) => ({ handler, args }),
+  internalAction: ({ handler, args }: any) => ({ handler, args }),
 }));
 
 jest.mock('../../convex/_generated/api', () => ({ internal: {}, api: {} }));

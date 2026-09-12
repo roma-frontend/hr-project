@@ -30,6 +30,17 @@ jest.mock('@/lib/convex-typed', () => ({
     },
 }));
 
+jest.mock('@/hooks/useLastLoadedQuery', () => ({
+  // Same visible contract as the plain useQuery mock below: data comes from
+  // the same queryResults map (keyed by the query's _name); 'skip'/loading →
+  // undefined. Avoids routing through the real convex useQuery, which needs a
+  // functionReference the api mock can't provide.
+  useLastLoadedQuery: (query: { _name?: string } | string, args: unknown) =>
+    args === 'skip'
+      ? undefined
+      : queryResults[typeof query === 'string' ? query : (query?._name ?? '')],
+}));
+
 jest.mock('@/convex/_generated/api', () => ({
   api: {
     assets: {

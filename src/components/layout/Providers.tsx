@@ -388,7 +388,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       </div>
                     </div>
                   ) : (
-                    <div className="px-6 pb-mobile-dock !pt-0 mx-auto max-w-7xl w-full">
+                    <div className="px-6 pt-6 pb-mobile-dock !pt-0 mx-auto max-w-7xl w-full">
                       <MobilePageTransition>{children}</MobilePageTransition>
                     </div>
                   )}

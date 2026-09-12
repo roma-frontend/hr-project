@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/convex/_generated/api';
@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { KeyRound, Plus, Trash2, Copy, History } from 'lucide-react';
+import { KeyRound, Plus, Trash2, Copy, History, Zap } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -34,6 +34,29 @@ export function SsoSettings() {
 
   const upsert = useMutation(api.sso.main.upsertConnection);
   const remove = useMutation(api.sso.main.deleteConnection);
+  const testConnection = useAction(api.sso.actions.testConnection);
+
+  // Per-row test state: 'testing' while the round-trip runs, then the result
+  // (or the raw error message) is toasted inline.
+  const [testingId, setTestingId] = useState<Id<'ssoConnections'> | null>(null);
+  const runTest = async (id: Id<'ssoConnections'>) => {
+    setTestingId(id);
+    try {
+      const res = await testConnection({ connectionId: id });
+      toast.success(t('settingsSso.testOk', 'Connection OK — discovery and signing keys found'), {
+        description: res.issuer,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e), {
+        description: t(
+          'settingsSso.testHint',
+          'Check the issuer URL (no trailing path unless the IdP requires one) and that the IdP is reachable.',
+        ),
+      });
+    } finally {
+      setTestingId(null);
+    }
+  };
 
   const [editing, setEditing] = useState<null | {
     id?: Id<'ssoConnections'>;
@@ -181,6 +204,16 @@ export function SsoSettings() {
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void runTest(row._id)}
+                  disabled={testingId === row._id}
+                  title={t('settingsSso.test', 'Test connection')}
+                  aria-label={t('settingsSso.test', 'Test connection')}
+                >
+                  <Zap className={`w-4 h-4 ${testingId === row._id ? 'animate-pulse' : ''}`} />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
                   {t('integration.configure', 'Configure')}
                 </Button>

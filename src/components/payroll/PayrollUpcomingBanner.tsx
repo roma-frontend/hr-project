@@ -327,12 +327,37 @@ export default function PayrollUpcomingBanner({ compact }: PayrollUpcomingBanner
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" asChild className="shrink-0">
-              <Link href="/payroll">
+            {compact ? (
+              <Button variant="ghost" size="sm" asChild className="shrink-0">
+                <Link href="/payroll">
+                  {t('payroll.viewAll', 'View all')}
+                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                </Link>
+              </Button>
+            ) : (
+              // On /payroll itself a link back to /payroll is a no-op — scroll
+              // to the current month in the schedule (or the section top for
+              // employees / when the grid hasn't rendered yet) and flash it.
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  const el =
+                    document.getElementById('payroll-current-month') ??
+                    document.getElementById('payroll-calendar') ??
+                    document.getElementById('my-payslips');
+                  if (!el) return;
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  // The current-month card listens for this and runs the same
+                  // kanban-style ring+wash the task highlight flow uses.
+                  window.dispatchEvent(new Event('flash-current-payroll-month'));
+                }}
+              >
                 {t('payroll.viewAll', 'View all')}
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </Link>
-            </Button>
+              </Button>
+            )}
           </div>
         </CardHeader>
 

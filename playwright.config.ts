@@ -1,4 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Playwright does not load `.env.local` on its own, but the e2e specs read
+// `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` from it (same convention as the node
+// scripts in `scripts/`).
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 export default defineConfig({
   testDir: './e2e',

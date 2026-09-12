@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'convex/react';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 import { motion } from '@/lib/cssMotion';
 import { api } from '@/convex/_generated/api';
 import { useAuthUser } from '@/store/useAuthStore';
@@ -116,7 +116,12 @@ export function MyPayrollClient() {
     setUnlocked(cached === user.id);
   }, [user?.id]);
 
-  const summary = useQuery(api.payroll.queries.getMyPayrollSummary, user?.id ? { year } : 'skip');
+  // Year arrows keep the previous year's charts on screen until the new year
+  // arrives — no skeleton flash between years.
+  const summary = useLastLoadedQuery(
+    api.payroll.queries.getMyPayrollSummary,
+    user?.id ? { year } : 'skip',
+  );
 
   const isLoading = !user || summary === undefined;
 

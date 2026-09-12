@@ -29,7 +29,6 @@ import { isSuperadmin } from './lib/auth';
 import { requireOrgAdmin } from './lib/rbac';
 import { sha256Hex } from './lib/sha256';
 import { notify } from './lib/notify';
-import type { Id } from './_generated/dataModel';
 
 // ── Webhook signature verification ──────────────────────────────────────────
 // HMAC-SHA256 (RFC 2104) built on the pure-TS sha256Hex the document-integrity

@@ -644,6 +644,9 @@
     "copied": "Kopiert",
     "loginLog": "Letzte SSO-Anmeldungen",
     "noEvents": "Noch keine SSO-Anmeldeereignisse.",
+    "test": "Verbindung testen",
+    "testOk": "Verbindung OK — Discovery-Dokument und Signaturschlüssel gefunden",
+    "testHint": "Prüfen Sie die Issuer-URL (kein Pfad, außer der IdP verlangt es) und ob der IdP erreichbar ist.",
     "addTitle": "SSO-Verbindung hinzufügen",
     "editTitle": "SSO-Verbindung bearbeiten",
     "issuer": "Issuer-URL",
@@ -686,7 +689,10 @@
     "secretWarning": "Jetzt kopieren — er wird nur einmal angezeigt. Aktualisieren Sie Ihren Consumer sofort; der alte Schlüssel wird umgehend ungültig.",
     "copied": "Kopiert",
     "deliveries": "Letzte Zustellungen",
-    "noDeliveries": "Noch keine Zustellungen."
+    "noDeliveries": "Noch keine Zustellungen.",
+    "test": "Testzustellung senden",
+    "testOk": "Testzustellung erfolgreich — Endpoint hat mit 2xx geantwortet",
+    "testFail": "Testzustellung fehlgeschlagen: {{reason}}"
   },
   "settingsScim": {
     "tab": "SCIM",
@@ -701,6 +707,8 @@
     "disabled": "Inaktiv",
     "lastUsed": "Zuletzt verwendet",
     "neverUsed": "Nie verwendet",
+    "probe": "Verbindung testen",
+    "probeOk": "SCIM-Endpoint OK — {{count}} Benutzer über Bearer-Auth sichtbar",
     "label": "Bezeichnung",
     "labelPlaceholder": "z. B. Azure AD-Bereitstellung",
     "create": "Erstellen",

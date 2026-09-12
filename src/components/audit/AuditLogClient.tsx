@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { usePaginatedQuery, useQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { useTranslation } from 'react-i18next';
 import { Check, Download, LayoutList, Link2, ScrollText, ShieldAlert, Table2 } from 'lucide-react';
 
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useNow } from '@/hooks/useNow';
+import { useLastLoadedPaginatedQuery } from '@/hooks/useLastLoadedQuery';
 import { copyText, downloadTextFile } from '@/lib/copyText';
 import { formatDateTime } from '@/lib/date-format';
 import { parseAuditDetails, type AuditCategory, type AuditSeverity } from '@/lib/audit/actionMeta';
@@ -90,9 +91,15 @@ export default function AuditLogClient() {
     [filters, now],
   );
 
-  const { results, status, loadMore } = usePaginatedQuery(api.security.listAuditTrail, queryArgs, {
-    initialNumItems: PAGE_SIZE,
-  });
+  // Filter/range switches keep the previous rows visible while the first page
+  // for the new args is in flight — the list never collapses into a loader.
+  const { results, status, loadMore, isLoadingFirstPage } = useLastLoadedPaginatedQuery(
+    api.security.listAuditTrail,
+    queryArgs,
+    {
+      initialNumItems: PAGE_SIZE,
+    },
+  );
   const stats = useQuery(api.security.getAuditTrailStats, queryArgs);
 
   // The panel reads from `results` rather than holding its own copy of the row,
@@ -102,7 +109,7 @@ export default function AuditLogClient() {
     [results, selectedId],
   );
 
-  const loading = status === 'LoadingFirstPage';
+  const loading = isLoadingFirstPage;
   const denied = stats?.allowed === false;
 
   /** Every active filter in words — the header of an export has to say what the

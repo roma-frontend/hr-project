@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { query, mutation, type QueryCtx, type MutationCtx } from './_generated/server';
-import type { Doc, Id } from './_generated/dataModel';
+import type { Id } from './_generated/dataModel';
 import { requireRole } from './lib/rbac';
 import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';

@@ -185,7 +185,6 @@ async function enrichTasksWithUserData(ctx: QueryCtx, tasks: Doc<'tasks'>[]) {
         .take(SMALL_LIST_CAP),
     ),
   );
-  const allComments: Doc<'taskComments'>[] = backfillRows.flat();
   const commentsByTask = new Map<Id<'tasks'>, Doc<'taskComments'>[]>();
   needsCommentBackfill.forEach((t: Doc<'tasks'>, i: number) => {
     commentsByTask.set(t._id, backfillRows[i] ?? []);
@@ -193,11 +192,6 @@ async function enrichTasksWithUserData(ctx: QueryCtx, tasks: Doc<'tasks'>[]) {
 
   // Author profiles are only fetched for rows that were actually read — and
   // once the backfill migration has run, that set is empty for most boards.
-  const commentAuthorIds = [...new Set(allComments.map((c: Doc<'taskComments'>) => c.authorId))];
-  const commentAuthors = await Promise.all(
-    commentAuthorIds.map((id: Id<'users'>) => ctx.db.get(id)),
-  );
-  const commentAuthorMap = new Map(commentAuthors.map((a: Doc<'users'> | null) => [a?._id, a]));
 
   // Batch load profiles for all users
   const profiles = await Promise.all(allUserIds.map((id: Id<'users'>) => getProfile(ctx, id)));

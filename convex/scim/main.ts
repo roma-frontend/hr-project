@@ -12,7 +12,8 @@
  * `employee` (fail-safe for the directory that out-ranks your HR system).
  */
 import { v } from 'convex/values';
-import { query, mutation, internalQuery, internalMutation } from '../_generated/server';
+import { query, mutation, internalQuery, internalMutation, action } from '../_generated/server';
+import { internal } from '../_generated/api';
 import type { Id } from '../_generated/dataModel';
 import { getAuthCaller } from '../lib/getAuthCaller';
 import { generateEndpointSecret } from '../webhooks/protocol';
@@ -123,6 +124,103 @@ export const getScimBaseUrl = query({
   handler: async () => {
     const appUrl = process.env.APP_URL ?? '';
     return { baseUrl: `${appUrl}/api/scim/v2` };
+  },
+});
+
+// ── Test connection ──────────────────────────────────────────────────────────
+
+/** Org + base URL for the probe action, resolved after auth (actions can't DB). */
+export const getProbeContext = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<{ organizationId: Id<'organizations'>; baseUrl: string }> => {
+    const caller = await getAuthCaller(ctx);
+    const organizationId = assertOrgManager(caller, 'manage SCIM provisioning');
+    const appUrl = process.env.APP_URL ?? '';
+    return { organizationId, baseUrl: `${appUrl}/api/scim/v2` };
+  },
+});
+
+/**
+ * End-to-end SCIM probe: mint a throwaway bearer token, call our own public
+ * SCIM endpoints over real HTTP the way an IdP would, then delete the token.
+ *
+ * Proves the whole chain — routing, bearer auth (hash lookup), the Users
+ * listing and the ServiceProviderConfig — without touching real employee data
+ * via the admin token. Errors surface verbatim so the admin sees exactly which
+ * link in the chain is broken.
+ */
+export const probeConnection = action({
+  args: {},
+  handler: async (ctx): Promise<{ ok: boolean; totalUsers: number; baseUrl: string }> => {
+    const { baseUrl } = await ctx.runQuery(internal.scim.main.getProbeContext, {});
+
+    // 1. ServiceProviderConfig must be public and parseable.
+    const configRes = await fetch(`${baseUrl}/ServiceProviderConfig`, { cache: 'no-store' });
+    if (!configRes.ok) {
+      throw new Error(`ServiceProviderConfig request failed (HTTP ${configRes.status})`);
+    }
+    const config = (await configRes.json()) as { schemas?: string[] };
+    if (!config.schemas?.includes('urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig')) {
+      throw new Error('ServiceProviderConfig returned an unexpected document');
+    }
+
+    // 2. Mint a short-lived probe token (raw value shown once — same as the UI).
+    const raw = `scim_${generateEndpointSecret()}`;
+    const hash = await sha256Hex(raw);
+    const now = Date.now();
+    const { organizationId } = await ctx.runQuery(internal.scim.main.getProbeContext, {});
+    const probeTokenId = await ctx.runMutation(internal.scim.main.insertProbeToken, {
+      organizationId,
+      tokenHash: hash,
+      createdAt: now,
+    });
+
+    try {
+      // 3. Call /Users with the bearer token, exactly like Azure AD/Okta would.
+      const usersRes = await fetch(`${baseUrl}/Users?startIndex=1&count=1`, {
+        headers: { Authorization: `Bearer ${raw}` },
+        cache: 'no-store',
+      });
+      if (!usersRes.ok) {
+        throw new Error(
+          `GET /Users failed (HTTP ${usersRes.status}) — bearer auth or routing broken`,
+        );
+      }
+      const usersDoc = (await usersRes.json()) as { totalResults?: number };
+      if (typeof usersDoc.totalResults !== 'number') {
+        throw new Error('GET /Users returned a non-SCIM response');
+      }
+      return { ok: true, totalUsers: usersDoc.totalResults, baseUrl };
+    } finally {
+      // 4. The probe token never outlives the request.
+      await ctx.runMutation(internal.scim.main.deleteProbeToken, { tokenId: probeTokenId });
+    }
+  },
+});
+
+/** Persist the throwaway probe token (internal — actions have no DB access). */
+export const insertProbeToken = internalMutation({
+  args: {
+    organizationId: v.id('organizations'),
+    tokenHash: v.string(),
+    createdAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert('scimTokens', {
+      organizationId: args.organizationId,
+      tokenHash: args.tokenHash,
+      label: 'connection-test (auto-deleted)',
+      enabled: true,
+      createdAt: args.createdAt,
+    });
+  },
+});
+
+/** Remove the probe token — runs in a finally block, best-effort. */
+export const deleteProbeToken = internalMutation({
+  args: { tokenId: v.id('scimTokens') },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.tokenId);
   },
 });
 async function sha256Hex(input: string): Promise<string> {

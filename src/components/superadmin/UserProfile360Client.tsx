@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { localizedTaskTitle } from '@/lib/taskTitle';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
@@ -68,6 +68,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 import { toast } from 'sonner';
 
 // Validity options for a superadmin-issued temporary password, in hours.
@@ -88,7 +89,9 @@ export default function UserProfile360Page() {
   const router = useRouter();
   const userId = params.userId as Id<'users'>;
 
-  const data = useQuery(api.superadmin.getUser360, userId ? { userId } : 'skip');
+  // Keeps the previous profile visible while switching users instead of
+  // flashing a full-screen loader on every navigation.
+  const data = useLastLoadedQuery(api.superadmin.getUser360, userId ? { userId } : 'skip');
   const issueTempPassword = useMutation(api.superadmin.tempPasswords.issueTempPassword);
   const suspendUser = useMutation(api.users.admin.suspendUser);
   const unsuspendUser = useMutation(api.users.admin.unsuspendUser);

@@ -644,6 +644,9 @@
     "copied": "Copied",
     "loginLog": "Recent SSO logins",
     "noEvents": "No SSO login events yet.",
+    "test": "Test connection",
+    "testOk": "Connection OK — discovery document and signing keys found",
+    "testHint": "Check the issuer URL (no trailing path unless the IdP requires one) and that the IdP is reachable.",
     "addTitle": "Add SSO connection",
     "editTitle": "Edit SSO connection",
     "issuer": "Issuer URL",
@@ -686,7 +689,10 @@
     "secretWarning": "Copy it now — it is shown only once. Update your consumer immediately; the old secret stops working right away.",
     "copied": "Copied",
     "deliveries": "Recent deliveries",
-    "noDeliveries": "No deliveries yet."
+    "noDeliveries": "No deliveries yet.",
+    "test": "Send test delivery",
+    "testOk": "Test delivery succeeded — endpoint responded 2xx",
+    "testFail": "Test delivery failed: {{reason}}"
   },
   "settingsScim": {
     "tab": "SCIM",
@@ -701,6 +707,8 @@
     "disabled": "Disabled",
     "lastUsed": "Last used",
     "neverUsed": "Never used",
+    "probe": "Test connection",
+    "probeOk": "SCIM endpoint OK — {{count}} user(s) visible via bearer auth",
     "label": "Label",
     "labelPlaceholder": "e.g. Azure AD provisioning",
     "create": "Create",

@@ -221,6 +221,69 @@ export const rotateSecret = mutation({
   },
 });
 
+/**
+ * Queue a `webhook.test` delivery so an admin can verify an endpoint works.
+ *
+ * Goes through the same signed-delivery engine as real events (same envelope,
+ * same headers, same retry/health bookkeeping), so a green test is a genuine
+ * end-to-end proof: reachable URL, 2xx response, valid signature scheme.
+ *
+ * Disabled endpoints are allowed — verifying a broken endpoint is exactly when
+ * you need a test — but the delivery is marked dead by the worker unless the
+ * admin re-enables first. `webhook.test` is not part of the subscription
+ * catalogue on purpose: test deliveries always reach their endpoint.
+ */
+export const sendTestDelivery = mutation({
+  args: { endpointId: v.id('webhookEndpoints') },
+  handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    const organizationId = assertOrgManager(caller, 'manage webhook endpoints');
+    const endpoint = await ctx.db.get(args.endpointId);
+    if (!endpoint || endpoint.organizationId !== organizationId) {
+      throw new Error('Webhook endpoint not found');
+    }
+
+    const now = Date.now();
+    const deliveryId = await ctx.db.insert('webhookDeliveries', {
+      organizationId,
+      endpointId: args.endpointId,
+      eventType: 'webhook.test',
+      status: 'pending',
+      attempt: 0,
+      payload: buildEnvelope({
+        eventType: 'webhook.test',
+        orgId: organizationId,
+        deliveryId: 'pending',
+        data: {
+          test: true,
+          message: 'This is a test delivery from the webhooks settings page.',
+          triggeredBy: caller!.name,
+          triggeredByEmail: caller!.email,
+        },
+        occurredAt: now,
+      }),
+      createdAt: now,
+    });
+    // Rebuild with the real delivery id, mirroring emitEvent.
+    await ctx.db.patch(deliveryId, {
+      payload: buildEnvelope({
+        eventType: 'webhook.test',
+        orgId: organizationId,
+        deliveryId,
+        data: {
+          test: true,
+          message: 'This is a test delivery from the webhooks settings page.',
+          triggeredBy: caller!.name,
+          triggeredByEmail: caller!.email,
+        },
+        occurredAt: now,
+      }),
+    });
+    await ctx.scheduler.runAfter(0, internal.webhooks.main.deliverPending, {});
+    return { deliveryId };
+  },
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Emission (called by product mutations)
 // ─────────────────────────────────────────────────────────────────────────────

@@ -146,60 +146,30 @@ export default function SettingsPage() {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
   }, []);
 
-  // Mouse drag scroll state
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ x: 0, scrollLeft: 0, hasMoved: false });
-
-  // Block Radix pointerdown from activating tab during potential drag
-  const handlePointerDownCapture = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const tab = (e.target as HTMLElement).closest("[role='tab']");
-    if (tab) {
-      // Prevent Radix from switching tab on pointerdown — we'll do it on mouseup if no drag
-      e.stopPropagation();
-    }
-  }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // Wheel-to-horizontal-scroll: with the cursor over the tab strip, a vertical
+  // wheel/trackpad scroll pans the strip instead of the page. No mouse-drag:
+  // dragging hijacked clicks and made tab activation feel broken.
+  //
+  // React's synthetic onWheel is registered passively, so preventDefault()
+  // inside it is ignored — this needs a native non-passive listener.
+  useEffect(() => {
     const el = tabsScrollRef.current;
     if (!el) return;
-
-    setIsDragging(true);
-    dragRef.current = {
-      x: e.pageX,
-      scrollLeft: el.scrollLeft,
-      hasMoved: false,
+    const onWheel = (e: WheelEvent) => {
+      // Trackpads emit small diagonal deltas — treat any meaningful |deltaY| as
+      // horizontal intent; plain horizontal deltas pass through untouched.
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const atStart = el.scrollLeft <= 0;
+      const atEnd = el.scrollLeft >= maxScroll;
+      // Only take over when the strip can actually absorb the delta in that
+      // direction — otherwise let the page scroll naturally past the strip.
+      if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
     };
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      const el = tabsScrollRef.current;
-      if (!el) return;
-
-      const dx = e.pageX - dragRef.current.x;
-      if (Math.abs(dx) > 3) {
-        dragRef.current.hasMoved = true;
-      }
-      el.scrollLeft = dragRef.current.scrollLeft - dx;
-    },
-    [isDragging],
-  );
-
-  const handleMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    setIsDragging(false);
-    // If no drag happened, treat as a click — activate the tab
-    if (!dragRef.current.hasMoved) {
-      const tab = (e.target as HTMLElement).closest("[role='tab']");
-      if (tab) {
-        const value = tab.getAttribute('data-value') || tab.getAttribute('value');
-        if (value) setActiveTab(value);
-      }
-    }
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsDragging(false);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
   useEffect(() => {
@@ -253,6 +223,12 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+
+  // SSO/Webhooks/SCIM are org-integration tabs; the backend (assertOrgManager
+  // in convex/sso, convex/webhooks, convex/scim) admits both org admins and
+  // superadmins, so the tab strip must match that RBAC — previously a
+  // superadmin saw the backend-allowed features nowhere in the UI.
+  const canManageIntegrations = user?.role === 'admin' || user?.role === 'superadmin';
 
   const tabs = [
     {
@@ -339,6 +315,10 @@ export default function SettingsPage() {
             icon: Clock,
             description: t('settings.meetingRooms.tabDesc', 'Room reminders & video links'),
           },
+        ]
+      : []),
+    ...(canManageIntegrations
+      ? [
           {
             value: 'sso',
             label: t('settingsSso.tab', 'Single Sign-On'),
@@ -396,11 +376,6 @@ export default function SettingsPage() {
           <div
             ref={tabsScrollRef}
             onScroll={updateScrollState}
-            onPointerDownCapture={handlePointerDownCapture}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
             className="bg-(--surface-1) p-1.5 rounded-xl border border-(--border) overflow-x-auto scrollbar-hide"
           >
             <TabsList className="inline-flex w-auto min-w-full gap-1 bg-transparent h-auto flex-nowrap">
@@ -474,19 +449,19 @@ export default function SettingsPage() {
             <IntegrationSettings />
           </TabsContent>
 
-          {user?.role === 'admin' && (
+          {canManageIntegrations && (
             <TabsContent value="sso" className="space-y-6 mt-0">
               <SsoSettings />
             </TabsContent>
           )}
 
-          {user?.role === 'admin' && (
+          {canManageIntegrations && (
             <TabsContent value="webhooks" className="space-y-6 mt-0">
               <WebhooksSettings />
             </TabsContent>
           )}
 
-          {user?.role === 'admin' && (
+          {canManageIntegrations && (
             <TabsContent value="scim" className="space-y-6 mt-0">
               <ScimSettings />
             </TabsContent>

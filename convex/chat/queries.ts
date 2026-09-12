@@ -113,7 +113,6 @@ export const getMyConversations = query({
     filteredConvs.forEach((conv, i) => {
       membersByConv.set(conv._id, membersPerConv[i] ?? []);
     });
-    const allChatMembers = membersPerConv.flat();
 
     // Step 6: Collect all user IDs
     const allUserIds = new Set<Id<'users'>>();

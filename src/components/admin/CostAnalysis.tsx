@@ -2,13 +2,13 @@
 
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 
 interface CostAnalysisProps {
   organizationId?: string;
@@ -18,7 +18,9 @@ export default function CostAnalysis({ organizationId }: CostAnalysisProps) {
   const { t } = useTranslation();
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
 
-  const data = useQuery(api.admin.getCostAnalysis, {
+  // Keeps the previous period's numbers on screen while the new period loads,
+  // so toggling month/quarter/year never collapses the card into a spinner.
+  const data = useLastLoadedQuery(api.admin.getCostAnalysis, {
     period,
     organizationId: organizationId as Id<'organizations'> | undefined,
   });

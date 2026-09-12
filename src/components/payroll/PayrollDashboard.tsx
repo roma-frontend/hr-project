@@ -436,14 +436,14 @@ export default function PayrollDashboard() {
 
       {/* Payroll Calendar */}
       {!isEmployee && (
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} id="payroll-calendar" className="scroll-mt-24">
           <PayrollCalendar />
         </motion.div>
       )}
 
       {/* Employee Self-Service: My Payslips */}
       {isEmployee && orgId && (
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} id="my-payslips" className="scroll-mt-24">
           <PayslipViewer />
         </motion.div>
       )}

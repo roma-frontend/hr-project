@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useNow } from '@/hooks/useNow';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -26,17 +26,23 @@ export function DriverStatsCard({ driverId }: DriverStatsCardProps) {
   const { t, i18n } = useTranslation(['drivers', 'common']);
   const [period, setPeriod] = React.useState<'week' | 'month' | 'year'>('month');
 
-  const stats = useQuery(api.drivers.requests_queries.getDriverStats, { driverId, period });
+  const stats = useLastLoadedQuery(api.drivers.requests_queries.getDriverStats, {
+    driverId,
+    period,
+  });
 
-  // Calculate time range with useMemo to prevent infinite re-renders
-  const now = useNow();
+  // Calculate time range with useMemo to prevent infinite re-renders.
+  // The range is derived from the selected period only — NOT from a ticking
+  // clock — so switching periods reuses a stable window instead of re-subscribing
+  // the schedule query every minute (old behaviour with useNow()).
   const timeRange = useMemo(() => {
-    const days = period === 'week' ? 7 : period === 'month' ? 30 : 365;
-    return {
-      startTime: now - days * 24 * 60 * 60 * 1000,
-      endTime: now,
-    };
-  }, [period, now]);
+    const end = new Date();
+    const start = new Date(end);
+    if (period === 'week') start.setDate(end.getDate() - 7);
+    else if (period === 'month') start.setMonth(end.getMonth() - 1);
+    else start.setFullYear(end.getFullYear() - 1);
+    return { startTime: start.getTime(), endTime: end.getTime() };
+  }, [period]);
 
   const schedules = useQuery(
     api.drivers.queries.getDriverSchedule,

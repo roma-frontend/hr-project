@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/useAuthStore';
 import { logoutAction } from '@/actions/auth';
+import { signOut } from 'next-auth/react';
+import { logger } from '@/lib/logger';
+import { hardRedirect } from '@/lib/hardRedirect';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -67,7 +70,7 @@ function ShieldIcon() {
 
 export default function Navbar({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
-  const { user, logout } = useAuthStore();
+  const { user, logout, beginSignOut } = useAuthStore();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -139,9 +142,22 @@ export default function Navbar({ embedded = false }: { embedded?: boolean }) {
   }, [embedded]);
 
   const handleLogout = async () => {
-    await logoutAction();
-    router.push('/');
-    logout();
+    // Same hard sign-out as the dashboard navbar: the router.push variant left
+    // the httpOnly Auth.js session cookie intact, so the middleware bounced the
+    // user straight back to /dashboard — "logout" appeared to do nothing.
+    beginSignOut();
+    try {
+      document.cookie = 'hr-auth-token=; path=/; max-age=0';
+      await logoutAction();
+      await signOut({ redirect: false });
+    } catch (error) {
+      logger.error('Logout error:', error);
+    } finally {
+      logout();
+      // Hard navigation drops the RSC cache and every mounted subscription;
+      // /api/clear-session wipes the remaining httpOnly cookies server-side.
+      hardRedirect('/api/clear-session?redirect=/');
+    }
   };
 
   const getInitials = (name: string) => {

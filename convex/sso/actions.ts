@@ -13,9 +13,12 @@
  *
  * Pure protocol helpers live in ./protocol.ts (unit-testable without Convex).
  */
-import { internalAction } from '../_generated/server';
+import { internalAction, internalQuery, action } from '../_generated/server';
 import { v } from 'convex/values';
 import { normalizeIssuer } from './protocol';
+import { getAuthCaller } from '../lib/getAuthCaller';
+import { internal } from '../_generated/api';
+import type { Id } from '../_generated/dataModel';
 
 export interface OidcDiscovery {
   authorization_endpoint: string;
@@ -27,20 +30,113 @@ export interface OidcDiscovery {
 export const fetchDiscovery = internalAction({
   args: { issuer: v.string() },
   handler: async (_ctx, { issuer }): Promise<OidcDiscovery> => {
-    const normalized = normalizeIssuer(issuer);
-    const res = await fetch(`${normalized}/.well-known/openid-configuration`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) throw new Error(`Discovery request failed (${res.status})`);
-    const doc = (await res.json()) as Partial<OidcDiscovery>;
-    if (!doc.authorization_endpoint || !doc.token_endpoint) {
-      throw new Error('IdP discovery document is missing required endpoints');
+    return runDiscovery(issuer);
+  },
+});
+
+/** Shared discovery fetch (also used by the admin test-connection action). */
+async function runDiscovery(issuer: string): Promise<OidcDiscovery> {
+  const normalized = normalizeIssuer(issuer);
+  const res = await fetch(`${normalized}/.well-known/openid-configuration`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) throw new Error(`Discovery request failed (${res.status})`);
+  const doc = (await res.json()) as Partial<OidcDiscovery>;
+  if (!doc.authorization_endpoint || !doc.token_endpoint) {
+    throw new Error('IdP discovery document is missing required endpoints');
+  }
+  return {
+    authorization_endpoint: doc.authorization_endpoint,
+    token_endpoint: doc.token_endpoint,
+    userinfo_endpoint: doc.userinfo_endpoint,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: test connection
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Org-admin connection check with the caller's row projected after auth.
+ * Public actions have no DB access — this internal query is the gate.
+ */
+export const getConnectionForTest = internalQuery({
+  args: { connectionId: v.id('ssoConnections') },
+  handler: async (ctx, args): Promise<{ issuer: string; label?: string }> => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'admin' && caller.role !== 'superadmin') {
+      throw new Error('Only organization admins can test SSO connections');
     }
+    const row = await ctx.db.get(args.connectionId);
+    if (!row || row.organizationId !== caller.organizationId) {
+      throw new Error('Connection not found');
+    }
+    return { issuer: row.issuer, label: row.label };
+  },
+});
+
+/**
+ * Verify an SSO connection is actually usable — the closest thing to the
+ * webhook test-delivery without a full browser redirect round-trip:
+ *
+ * 1. discovery document fetches and parses, with the required endpoints present
+ * 2. the JWKS endpoint answers and holds at least one signing key
+ *
+ * This catches the most common setup mistakes (typo'd issuer, IdP down, TLS,
+ * wrong well-known path). It cannot prove the client secret is correct — that
+ * needs a real authorization-code exchange from a browser login.
+ *
+ * A public action so the client gets the result synchronously and can toast it.
+ */
+interface TestConnectionResult {
+  issuer: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  userinfoEndpoint?: string;
+  jwksUri: string;
+  keyCount: number;
+}
+
+export const testConnection = action({
+  args: { connectionId: v.id('ssoConnections') },
+  handler: async (ctx, args): Promise<TestConnectionResult> => {
+    const conn: { issuer: string; label?: string } = await ctx.runQuery(
+      internal.sso.actions.getConnectionForTest,
+      { connectionId: args.connectionId as Id<'ssoConnections'> },
+    );
+
+    const discovery = await runDiscovery(conn.issuer);
+
+    // The JWKS URL is normally <issuer>/.well-known/jwks.json; prefer the
+    // discovery document's jwks_uri when the IdP publishes one.
+    let jwksUri = `${normalizeIssuer(conn.issuer)}/.well-known/jwks.json`;
+    try {
+      const res = await fetch(`${normalizeIssuer(conn.issuer)}/.well-known/openid-configuration`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const doc = (await res.json()) as { jwks_uri?: string };
+        if (doc.jwks_uri) jwksUri = doc.jwks_uri;
+      }
+    } catch {
+      // Discovery already succeeded above; fall back to the conventional URL.
+    }
+
+    const jwksRes = await fetch(jwksUri, { cache: 'no-store' });
+    if (!jwksRes.ok) throw new Error(`JWKS request failed (${jwksRes.status})`);
+    const jwks = (await jwksRes.json()) as { keys?: unknown[] };
+    const keyCount = Array.isArray(jwks.keys) ? jwks.keys.length : 0;
+    if (keyCount === 0) throw new Error('JWKS document contains no signing keys');
+
     return {
-      authorization_endpoint: doc.authorization_endpoint,
-      token_endpoint: doc.token_endpoint,
-      userinfo_endpoint: doc.userinfo_endpoint,
-    };
+      issuer: conn.issuer,
+      authorizationEndpoint: discovery.authorization_endpoint,
+      tokenEndpoint: discovery.token_endpoint,
+      userinfoEndpoint: discovery.userinfo_endpoint,
+      jwksUri,
+      keyCount,
+    } satisfies TestConnectionResult;
   },
 });
 

@@ -710,10 +710,12 @@ function LazyKanbanCard({
   highlightPulse?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || visible) return;
+  // A ref callback rather than an effect: the observer has to attach the moment
+  // the node commits, and the "no IntersectionObserver" fallback must flip
+  // visibility without a synchronous setState inside an effect body. It also
+  // keeps SSR rendering the placeholder — the callback never runs on the server.
+  const observeCard = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
     if (typeof IntersectionObserver === 'undefined') {
       setVisible(true);
       return;
@@ -729,9 +731,9 @@ function LazyKanbanCard({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [visible]);
+  }, []);
   return (
-    <div ref={ref}>
+    <div ref={observeCard}>
       {visible ? (
         <DraggableTaskCard
           task={task}

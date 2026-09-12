@@ -21,8 +21,6 @@ import { mutation, query } from './_generated/server';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP } from './lib/limits';
 
-const MINUTE_MS = 60_000;
-
 /** Validate `HH:MM` and convert to minutes from midnight. */
 function hhmmToMinutes(s: string): number {
   const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());

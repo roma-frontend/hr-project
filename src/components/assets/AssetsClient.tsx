@@ -35,6 +35,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { useQuery, useMutation } from '@/lib/convex-typed';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { useAuthStore } from '@/store/useAuthStore';
 import { StatsCard } from '@/components/dashboard/StatsCard';
@@ -1041,10 +1042,14 @@ export default function AssetsClient() {
     }
   }, [isSuperuser]);
 
-  // Queries
-  const stats = useQuery(api.assets.getAssetStats, orgId ? { organizationId: orgId } : 'skip');
+  // Queries — filter switches keep the previous list visible while the new
+  // one loads, so the catalog never collapses into skeletons on refilter.
+  const stats = useLastLoadedQuery(
+    api.assets.getAssetStats,
+    orgId ? { organizationId: orgId } : 'skip',
+  );
 
-  const assets = useQuery(
+  const assets = useLastLoadedQuery(
     api.assets.listAssets,
     orgId
       ? {

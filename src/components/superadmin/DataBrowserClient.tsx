@@ -57,6 +57,7 @@ import {
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { DocJsonEditor } from '@/components/superadmin/DocJsonEditor';
 import { cn } from '@/lib/utils';
+import { useLastLoadedQuery } from '@/hooks/useLastLoadedQuery';
 
 interface RowDoc {
   id: string;
@@ -166,7 +167,9 @@ export function DataBrowserClient() {
   const [importRunning, setImportRunning] = useState(false);
   const [importProgress, setImportProgress] = useState({ done: 0, total: 0, table: '' });
 
-  const getTableRows = useQuery(
+  // Table/search/offset switches keep the previous rows on screen while the
+  // new page loads — the browser pane never collapses into a loader.
+  const getTableRows = useLastLoadedQuery(
     api.superadmin.dbAdmin.getTableRows,
     selectedTable
       ? {

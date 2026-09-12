@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTypedQuery } from '@/lib/convex-typed';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -8,6 +8,7 @@ import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { motion } from '@/lib/cssMotion';
+import { highlightRowStyle } from '@/lib/highlightStyle';
 import {
   Calendar,
   ChevronLeft,
@@ -147,15 +148,46 @@ function MonthCard({ monthData, currency }: { monthData: PayrollCalendarMonth; c
   const { t } = useTranslation();
   const status = monthData.latestRun?.status ?? 'no_run';
   const cfg = STATUS_CONFIG[status];
-  if (!cfg) return null;
-  const Icon = cfg.icon;
   const isCurrent = monthData.period === new Date().toISOString().slice(0, 7);
   const isFuture = monthData.period > new Date().toISOString().slice(0, 7);
   const _isPast = monthData.period < new Date().toISOString().slice(0, 7);
   const hasRun = monthData.hasRun;
 
+  // "Посмотреть всё" in the banner scrolls here. The kanban-style ring+wash
+  // (highlightRowStyle) is driven by a custom event instead of the URL-based
+  // useHighlightedEntity, so the card flashes without a navigation.
+  const [pulsing, setPulsing] = useState(false);
+  const [pulsePhase, setPulsePhase] = useState(true);
+  useEffect(() => {
+    if (!isCurrent) return;
+    const onFlash = () => setPulsing(true);
+    window.addEventListener('flash-current-payroll-month', onFlash);
+    return () => window.removeEventListener('flash-current-payroll-month', onFlash);
+  }, [isCurrent]);
+  useEffect(() => {
+    if (!pulsing) return;
+    // Same on/off rhythm as useHighlightedEntity (600ms blink, 3.6s total).
+    const blink = setInterval(() => setPulsePhase((p) => !p), 600);
+    const stop = setTimeout(() => {
+      setPulsing(false);
+      setPulsePhase(true);
+    }, 3600);
+    return () => {
+      clearInterval(blink);
+      clearTimeout(stop);
+    };
+  }, [pulsing]);
+
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+
   return (
     <motion.div
+      id={isCurrent ? 'payroll-current-month' : undefined}
+      style={{
+        ...highlightRowStyle(pulsing, pulsePhase),
+        ...(pulsing ? { borderRadius: '16px' } : {}),
+      }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: (monthData.month - 1) * 0.04 }}

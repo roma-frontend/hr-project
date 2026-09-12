@@ -8,6 +8,20 @@ const TEST_PASSWORD = process.env.E2E_USER_PASSWORD || 'Test123!@#';
  * Login helper — fills email/password form and submits
  */
 export async function login(page: Page, email = TEST_EMAIL, password = TEST_PASSWORD) {
+  // Pre-mark the login-page onboarding tour as seen BEFORE the page renders:
+  // fresh browser contexts have no `tour_seen_login-tour` flag, and the tour's
+  // full-screen spotlight overlay (z-[9999]) races the Sign-in click, covering
+  // the button until the 120s click timeout. addInitScript runs on every
+  // navigation before any page script, so the tour never mounts.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem('tour_seen_login-tour', 'true');
+    } catch {
+      // Storage can be unavailable in some contexts — the tour then shows and
+      // the test fails visibly, which is acceptable.
+    }
+  });
+
   await page.goto('/login');
 
   // No waitForLoadState('networkidle') here. The app holds a live Convex

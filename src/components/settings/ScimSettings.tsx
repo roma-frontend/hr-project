@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useAction } from 'convex/react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/convex/_generated/api';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Plus, Trash2, Copy } from 'lucide-react';
+import { Users, Plus, Trash2, Copy, Zap } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
@@ -26,6 +26,24 @@ export function ScimSettings() {
   const create = useMutation(api.scim.main.createToken);
   const update = useMutation(api.scim.main.updateToken);
   const remove = useMutation(api.scim.main.deleteToken);
+  const probe = useAction(api.scim.main.probeConnection);
+
+  const [probing, setProbing] = useState(false);
+  const runProbe = async () => {
+    setProbing(true);
+    try {
+      const res = await probe({});
+      toast.success(
+        t('settingsScim.probeOk', 'SCIM endpoint OK — {{count}} user(s) visible via bearer auth', {
+          count: res.totalUsers,
+        }),
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProbing(false);
+    }
+  };
 
   const [creating, setCreating] = useState(false);
   const [label, setLabel] = useState('');
@@ -91,10 +109,22 @@ export function ScimSettings() {
               )}
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setCreating(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            {t('settingsScim.add', 'Create token')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void runProbe()}
+              disabled={probing}
+              title={t('settingsScim.probe', 'Test connection')}
+            >
+              <Zap className={`w-4 h-4 mr-1 ${probing ? 'animate-pulse' : ''}`} />
+              {t('settingsScim.probe', 'Test connection')}
+            </Button>
+            <Button size="sm" onClick={() => setCreating(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t('settingsScim.add', 'Create token')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="rounded-xl border border-(--border) p-3 space-y-2">
