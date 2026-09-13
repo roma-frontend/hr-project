@@ -430,23 +430,66 @@ export function ChatWidgetButton({
         />
       )}
 
-      {/* Rotating hints tooltip */}
+      {/* Rotating hints tooltip — floats ABOVE the round button, right edges
+          aligned, with a 0.5rem gap. It shares the button's `above-mobile-dock`
+          + `right-6` anchor and is lifted by the button's height (3.5rem at
+          sm+, where the hint is visible) via translateY; z-[60] keeps it above
+          the later-painted button so it can never hide behind it. (An earlier
+          side-placed variant was vertically centred on the button and painted
+          underneath — it looked stuck behind the button.) */}
       <AnimatePresence>
-        {showHint && !docked && hintIndex < MAX_HINTS_PER_SESSION && (
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            className="hidden sm:block fixed above-mobile-dock right-6 z-50 max-w-[200px] px-3 py-2 rounded-lg text-xs font-medium shadow-lg"
-            style={{
-              background: 'var(--card)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {getHintText(hintIndex)}
-          </motion.div>
-        )}
+        {showHint &&
+          !docked &&
+          hintIndex < MAX_HINTS_PER_SESSION &&
+          (dragPos && !returning ? (
+            // Button was dragged off its corner — pin the hint ABOVE the
+            // button's live position (centred on its X, bottom edge 0.5rem
+            // above the button's top edge at dragPos.y - 28) instead of
+            // leaving it stranded at the default corner.
+            <div
+              key="hint-dragged"
+              className="hidden sm:block fixed z-[60] pointer-events-none"
+              style={{
+                left: dragPos.x,
+                top: dragPos.y - 36,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="max-w-[220px] px-3 py-2 rounded-lg text-xs font-medium shadow-lg"
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {getHintText(hintIndex)}
+              </motion.div>
+            </div>
+          ) : (
+            <div
+              key="hint-corner"
+              className="hidden sm:block fixed above-mobile-dock right-6 z-[60] pointer-events-none"
+              style={{ transform: 'translateY(-4rem)' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                className="max-w-[220px] px-3 py-2 rounded-lg text-xs font-medium shadow-lg"
+                style={{
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {getHintText(hintIndex)}
+              </motion.div>
+            </div>
+          ))}
       </AnimatePresence>
 
       {/* Main button */}

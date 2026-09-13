@@ -1,10 +1,15 @@
 'use client';
 
 /**
- * Request Driver Modal - Wrapper for RequestDriverWizard
+ * Request Driver — slide-over Sheet hosting the multi-step wizard.
+ *
+ * A centred modal hides exactly the list the user clicked from, which is why
+ * every other detail view in the app is a right-side sheet; this wrapper exists
+ * so the wizard itself stays presentation-agnostic (it is also embedded
+ * elsewhere). Radix's Dialog primitive already locks body scroll while open —
+ * an earlier version re-implemented that by hand and leaked the lock on unmount.
  */
 
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sheet, SheetContent, SheetHeader, SheetBody, SheetTitle } from '@/components/ui/sheet';
 import { RequestDriverWizard } from '../RequestDriverWizard';
@@ -25,20 +30,8 @@ export function RequestDriverModal({
 }: RequestDriverModalProps) {
   const { t } = useTranslation();
 
-  // Block body scroll when modal is open
-  useEffect(() => {
-    if (open) {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
-      };
-    }
-  }, [open]);
-
   return (
-    <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" size="lg" closeLabel={t('common.close', 'Close')}>
         <SheetHeader>
           <SheetTitle className="text-lg md:text-xl">

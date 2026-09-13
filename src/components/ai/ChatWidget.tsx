@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { ChatWidgetButton } from './ChatWidgetButton';
 import { ChatWidgetWindow } from './ChatWidgetWindow';
 import { useChatWidgetAI } from './useChatWidgetAI';
@@ -8,6 +9,15 @@ import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  // The widget is mounted once in Providers, so an open window would otherwise
+  // survive client-side navigation and float over /ai-chat — which renders its
+  // own full-page chat (the button already hides itself there). Close the
+  // floating window whenever the user lands on the dedicated page.
+  useEffect(() => {
+    if (pathname === '/ai-chat') setIsOpen(false);
+  }, [pathname]);
 
   // ⌘J / Ctrl+J opens or closes the floating AI assistant from anywhere in the
   // dashboard — the brief's persistent assistant with a keyboard shortcut.

@@ -10,7 +10,7 @@
  * user across the whole dashboard, not just /dashboard.
  */
 
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -39,6 +39,7 @@ export function ToolDock() {
   const { t } = useTranslation();
   const user = useAuthUser();
   const openPalette = useCommandPaletteStore((s) => s.openPalette);
+  const paletteOpen = useCommandPaletteStore((s) => s.open);
   const { modules, recordVisit, togglePin, isPinned } = useToolDock();
 
   // The landing editor is a full-workspace canvas — the floating dock would
@@ -172,6 +173,28 @@ export function ToolDock() {
     setOpen(false);
     setAllOpen(false);
   }, []);
+
+  // The dock is mounted once in Providers, so its sheets survive client-side
+  // navigation. Every in-sheet Link already calls closeAll(), but navigation
+  // can also come from *outside* the sheet while it sits open — the ⌘K palette
+  // opened from the sheet's search button being the reported case: picking a
+  // module there pushed the route and left Your Tools covering the new page.
+  // Close both sheets whenever the route changes.
+  useEffect(() => {
+    setOpen(false);
+    setAllOpen(false);
+  }, [pathname]);
+
+  // The palette can navigate to the *same* route (e.g. "Book a meeting room"
+  // while already on /rooms) — pathname never changes, so the effect above
+  // never fires and the sheet would sit open behind the palette's result.
+  // Closing on `paletteOpen` covers that, and any other palette entry point.
+  useEffect(() => {
+    if (paletteOpen) {
+      setOpen(false);
+      setAllOpen(false);
+    }
+  }, [paletteOpen]);
 
   const Tile = ({
     href,
@@ -382,7 +405,12 @@ export function ToolDock() {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={openPalette}
+                onClick={() => {
+                  // Hand off to the palette: the sheet must close first, or it
+                  // stays open underneath and swallows the palette's result.
+                  closeAll();
+                  openPalette();
+                }}
                 aria-label={t('toolDock.search', 'Search')}
                 title={t('toolDock.search', 'Search')}
                 className={cn(

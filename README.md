@@ -66,19 +66,21 @@ Strata replaces all fragmented tools with a **unified platform** — zero manual
 
 ## ✨ Features
 
-| Module                      | Description                             | Highlights                                                          |
-| --------------------------- | --------------------------------------- | ------------------------------------------------------------------- |
-| 👤 **Employee Lifecycle**   | Full employee profile management        | Documents, performance metrics, onboarding/offboarding              |
-| 🔐 **Face Recognition**     | Biometric attendance check-in/out       | Browser-based camera, daily logs, anomaly detection                 |
-| 📅 **Leave Management**     | End-to-end leave workflow               | Multi-level approval, auto Outlook Calendar sync, entitlement rules |
-| 📋 **Task Management**      | Kanban board with drag-and-drop         | Assignment, deadlines, progress tracking, notifications             |
-| 💬 **Team Chat**            | Real-time messaging                     | File sharing, channels, direct messages                             |
-| 🤖 **AI HR Assistant**      | Conversational HR chatbot               | Policy Q&A, smart insights, analytics queries                       |
-| 🚗 **Driver Management**    | Vehicle/driver booking system           | Availability tracking, scheduling, route management                 |
-| 📊 **AI Analytics**         | Workforce intelligence dashboard        | Headcount trends, leave patterns, attendance heatmaps               |
-| 🔗 **M365 Integration**     | SharePoint + Outlook sync               | Auto employee sync, calendar events for leave                       |
-| 🆔 **imID Integration**     | Armenian digital identity & e-signature | OAuth login, document signing, employee verification via imID       |
-| 💳 **Multi-Tenant Billing** | Stripe subscription management          | Plans, invoicing, usage tracking                                    |
+| Module                      | Description                             | Highlights                                                                                                        |
+| --------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 👤 **Employee Lifecycle**   | Full employee profile management        | Documents, performance metrics, onboarding/offboarding                                                            |
+| 🔐 **Face Recognition**     | Biometric attendance check-in/out       | Browser-based camera, daily logs, anomaly detection                                                               |
+| 📅 **Leave Management**     | End-to-end leave workflow               | Multi-level approval, auto Outlook Calendar sync, entitlement rules                                               |
+| 📋 **Task Management**      | Kanban board with drag-and-drop         | Assignment, deadlines, progress tracking, notifications                                                           |
+| 💬 **Team Chat**            | Real-time messaging                     | File sharing, channels, direct messages                                                                           |
+| 🤖 **AI HR Assistant**      | Conversational HR chatbot               | Policy Q&A, smart insights, analytics queries                                                                     |
+| 🚗 **Driver Management**    | Vehicle/driver booking system           | Availability tracking, scheduling, route management                                                               |
+| 📊 **AI Analytics**         | Workforce intelligence dashboard        | Headcount trends, leave patterns, attendance heatmaps                                                             |
+| 🔗 **M365 Integration**     | SharePoint + Outlook sync               | Auto employee sync, calendar events for leave                                                                     |
+| 🆔 **imID Integration**     | Armenian digital identity & e-signature | OAuth login, document signing, employee verification via imID                                                     |
+| 🇦🇲 **Armenia Local-Ready**  | Tax & payments layer no global HR has   | SRC-ready payroll export (ՀՎՀՀ, stamp duty, pension), Idram/ArCa billing, Armsoft sync, SRC taxpayer verification |
+| 🗓 **Shift Scheduling**     | Weekly roster planner                   | Shift templates, swap requests with notifications, plan-gated module                                              |
+| 💳 **Multi-Tenant Billing** | Stripe + local PSP subscription mgmt    | Plans, invoicing, usage tracking, Idram/ArCa (Armenia) support                                                    |
 
 ### Role-Based Access Control (5 Roles)
 
@@ -429,6 +431,9 @@ vercel --prod           # Manual deploy
 - [x] Microsoft 365 integration, Stripe billing, i18n (EN/RU/HY/DE)
 - [x] Performance reviews, Payroll, E-signatures, PDF export
 - [x] imID — Armenian digital identity (OAuth login, e-signature, employee verification), Lucky Carrot employee sync
+- [x] Shift scheduling (weekly roster, templates, swap requests)
+- [x] SRC-ready payroll export — Armenian Tax Service filing sheet (income tax, funded pension, military stamp duty, health insurance, ՀՎՀՀ)
+- [x] Local payment provider scaffolding (Idram / ArCa) alongside Stripe
 - [ ] Mobile app (React Native)
 
 ---

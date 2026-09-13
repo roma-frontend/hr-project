@@ -117,10 +117,11 @@ jest.mock('@/components/layout/NavBadgesProvider', () => ({
   }),
 }));
 
+let mockPaletteState = { open: false, openPalette: () => {} };
 jest.mock('@/store/useCommandPaletteStore', () => ({
-  useCommandPaletteStore: () => ({
-    openPalette: jest.fn(),
-  }),
+  // Selector-based like real zustand: callers do useCommandPaletteStore((s) => s.x).
+  useCommandPaletteStore: (selector: (s: typeof mockPaletteState) => unknown) =>
+    selector(mockPaletteState),
 }));
 
 // ── Sheet (renders children inline for testing) ──────────────────────────────
@@ -164,6 +165,7 @@ describe('ToolDock', () => {
     mockUnreadByRoute = {};
     mutationCalls.length = 0;
     mockPathname = '/dashboard';
+    mockPaletteState = { open: false, openPalette: jest.fn() };
   });
 
   /** Helper — import ToolDock fresh each test to reset module-level state. */

@@ -12,9 +12,9 @@ import { useOrgSelectorStore } from '@/store/useOrgSelectorStore';
 import { useTranslation } from 'react-i18next';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { DriverBookingPage } from '@/components/drivers/sections';
-import { RequestDriverWizard } from '@/components/drivers/RequestDriverWizard';
 import {
   RegisterDriverModal,
+  RequestDriverModal,
   SelectDriverModal,
   DriverCalendarDialog,
   TripDetailsModal,
@@ -516,24 +516,9 @@ export default function DriversPage() {
         canRegisterDrivers={user?.role === 'admin'}
       />
 
-      {showRequestWizard &&
-        createPortal(
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-            <div className="w-full max-w-4xl max-h-[85vh] overflow-y-auto bg-(--card) rounded-2xl border border-(--border) shadow-2xl">
-              <div className="p-6 border-b border-(--border) flex items-center justify-between">
-                <h2 className="text-xl font-bold">{t('driver.requestDriver', 'Request Driver')}</h2>
-                <button
-                  onClick={closeModal}
-                  className="p-2 rounded-lg hover:bg-(--background-subtle) transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              <RequestDriverWizard userId={userId!} onComplete={closeModal} onCancel={closeModal} />
-            </div>
-          </div>,
-          document.body,
-        )}
+      {/* Request Driver — slide-over Sheet like every other detail view, not a
+          centred modal. The wizard (with its draft resume) is unchanged. */}
+      <RequestDriverModal open={showRequestWizard} onClose={closeModal} userId={userId!} />
 
       {showSelectDriverModal && (
         <SelectDriverModal

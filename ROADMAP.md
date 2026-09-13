@@ -1,8 +1,8 @@
 # Strata — Project Roadmap & Status
 
-> **Last updated:** 2026-05-10 (Full audit completed, Recruitment emails implemented, Cron jobs verified)
+> **Last updated:** 2026-09-13 (Armenia moat shipped: SRC-ready payroll export, local PSP payments scaffolding; Shift Scheduling implemented)
 > **Stack:** Next.js 16 (App Router) + Convex + Shadcn/ui + Tailwind CSS
-> **i18n:** EN / RU / HY (Armenian)
+> **i18n:** EN / RU / HY (Armenian) / DE
 > **Auth:** Convex Auth (session-based)
 > **RBAC Roles:** superadmin, admin, supervisor, employee, driver
 
@@ -674,23 +674,79 @@
 
 ### 3.9 Shift Scheduling
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                                          |
+| ------- | ------ | -------------------------------------------------------------- |
+| Schema  | ✅     | `convex/schema/shifts.ts` (shifts, shiftTemplates, shiftSwaps) |
+| Backend | ✅     | `convex/shifts.ts`                                             |
+| UI      | ✅     | `src/components/shifts/ShiftsClient.tsx`                       |
+| Route   | ✅     | `src/app/(dashboard)/shifts/page.tsx`                          |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅ (dedicated `shifts` namespace)      |
+| Nav     | ✅     | Sidebar + ToolDock + billing module map (`shiftScheduling`)    |
 
-- Schema: `convex/schema/shifts.ts` (shifts, shiftTemplates, shiftSwaps)
-- Backend: `convex/shifts.ts`
-- UI: `src/components/shifts/ShiftsClient.tsx`
-- Route: `src/app/(dashboard)/shifts/page.tsx`
+**Features implemented:**
 
-**Features to implement:**
+- Weekly roster grid with week navigation (prev/next/this week)
+- Shift templates (name + start/end), one-click apply to the week
+- Per-shift break minutes and notes
+- Shift swap requests with accept/decline + notifications (`shiftSwapRequested`, `shiftSwapResponded`)
+- Publish/unpublish rosters; RBAC: admins/supervisors manage, employees view own
+- Entitlement-gated module (plan-based access like other billing modules)
 
-- Visual shift schedule (week/month view)
-- Shift templates (morning, evening, night)
-- Swap requests
-- Auto-distribution
-- Change notifications
-- Attendance tracking integration
+**TODO:**
+
+- [ ] Month view + auto-distribution
+- [ ] Attendance integration (shift vs actual hours)
+
+---
+
+### 3.10 SRC-Ready Payroll Export (Armenia Tax Service)
+
+**Status:** ✅ Fully implemented
+
+| Layer | Status | Files                                                    |
+| ----- | ------ | -------------------------------------------------------- |
+| Logic | ✅     | `src/lib/payroll/srcExport.ts` (pure, tested)            |
+| API   | ✅     | `src/app/api/payroll/src-export/route.ts` (styled Excel) |
+| UI    | ✅     | `PayrollRunDetailClient` header button                   |
+| Tests | ✅     | `src/__tests__/srcExport.test.ts` (16 tests)             |
+| i18n  | ✅     | EN ✅, RU ✅, HY ✅, DE ✅                               |
+
+**Features implemented:**
+
+- Per-employee SRC filing rows: ՀՎՀՀ (tax ID) from `employeeProfiles.socialCardNumber`
+- Tax figures mirror `convex/lib/taxRules.ts` exactly: 20% flat income tax, funded pension 5% / 10%−25k (max 87,500), military stamp duty 1,000/15,000, tiered health insurance 0/4,800/10,800
+- Org header block (name, ՀՎՀՀ) + totals row + missing-tax-ID highlighting
+- Excel download styled per project workbook conventions
+
+This is the wedge against Armsoft/1C for Armenian accountants: payroll → one click → SRC filing sheet.
+
+---
+
+### 3.11 Local Payment Providers (Idram / ArCa)
+
+**Status:** ✅ Scaffolding implemented (needs PSP credentials to go live)
+
+| Layer   | Status | Files                                                                    |
+| ------- | ------ | ------------------------------------------------------------------------ |
+| Schema  | ✅     | `paymentProviderConfigs`, `localPayments` in `convex/schema/settings.ts` |
+| Backend | ✅     | `convex/payments.ts` (PSP-agnostic)                                      |
+| Billing | ✅     | `convex/subscriptions.ts` — `source: 'stripe' \| 'local'`                |
+
+**Features implemented:**
+
+- PSP-agnostic provider configs (Idram, Ameriabank/ArCa acquiring) stored per-org with server-only secrets
+- Webhook ingestion mutation with HMAC-SHA256 verification (timing-safe compare)
+- `localPayments` ledger (idempotent by provider payment id)
+- Subscription activation path shared with Stripe (`activateSubscription` with source), plan/period resolution reused
+- Superadmin manual-activation fallback unchanged
+
+**TODO (blocks go-live):**
+
+- [ ] Idram/ArCa merchant credentials + their exact webhook signature scheme per provider
+- [ ] Checkout handoff to PSP hosted page
+- [ ] Superadmin UI for provider configs
 
 ---
 
@@ -876,7 +932,9 @@ PHASE 3 (Differentiation):
   3.3 Asset Management ............... 🔲 ~3-4 days
   3.5 Custom Workflow Builder ........ ⚠️ ~7-10 days (backend only, no UI)
   3.8 Career Development ............. 🔲 ~4-5 days
-  3.9 Shift Scheduling ............... 🔲 ~4-5 days
+  3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
+  3.10 SRC Payroll Export (AM) ....... ✅ DONE (tested, Excel, ՀՎՀՀ)
+  3.11 Local Payments (Idram/ArCa) ... ✅ SCAFFOLDED (awaiting PSP credentials)
 
 PHASE 1 (Remaining TODOs):
   1.3 Recruitment email templates .... ✅ DONE (Resend integration, 4 templates)
@@ -952,41 +1010,46 @@ export default function ModulePage() {
 
 ## Competitive Analysis Summary
 
-| Feature                  |    This Project    | Rippling |  HiBob  | BambooHR | Leapsome |  Deel   |
-| ------------------------ | :----------------: | :------: | :-----: | :------: | :------: | :-----: |
-| Employee Management      |         ✅         |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
-| Leave Management         |         ✅         |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Attendance/Time Tracking |         ✅         |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
-| Task Management          |         ✅         |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Chat/Messaging           |         ✅         |    ❌    |   ✅    |    ❌    |    ❌    |   ❌    |
-| Calendar                 |         ✅         |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Recruitment/ATS          |         ✅         |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
-| Recruitment Emails       |         ✅         |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Onboarding               |         ✅         |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Offboarding              |         ✅         |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Performance Reviews      |         ✅         |    ✅    |   ✅    |    ❌    |    ✅    |   ❌    |
-| OKR/Goals                |         ✅         |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
-| E-Signatures             |         ✅         |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| Pulse Surveys            |         ✅         |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
-| Recognition/Kudos        |         ✅         |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
-| AI Assistant             |         ✅         |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Payroll                  |         ✅         |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| Driver Management        |         ✅         |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Approvals Workflow       |         ✅         |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
-| Analytics Dashboard      |         ✅         |    ✅    |   ✅    |    ✅    |    ✅    |   ❌    |
-| Multi-language (3+)      |         ✅         |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
-| **LMS**                  |         ✅         |    ✅    |   ❌    |    ❌    |    ✅    |   ❌    |
-| **Compensation**         |         ✅         |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Benefits**             |         🔲         |    ✅    |   ❌    |    ✅    |    ❌    |   ✅    |
-| **Org Chart**            |         ✅         |    ❌    |   ✅    |    ✅    |    ❌    |   ❌    |
-| **Documents**            |         ✅         |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Expenses**             |         🔲         |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Succession**           |         🔲         |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
-| **PWA/Mobile**           |         🔲         |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| **TOTAL**                | **~~23~~ **~28\*\* | **~16**  | **~14** | **~11**  | **~10**  | **~13** |
+| Feature                                         | This Project | Rippling |  HiBob  | BambooHR | Leapsome |  Deel   |
+| ----------------------------------------------- | :----------: | :------: | :-----: | :------: | :------: | :-----: |
+| Employee Management                             |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
+| Leave Management                                |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| Attendance/Time Tracking                        |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
+| Task Management                                 |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| Chat/Messaging                                  |      ✅      |    ❌    |   ✅    |    ❌    |    ❌    |   ❌    |
+| Calendar                                        |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| Recruitment/ATS                                 |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
+| Recruitment Emails                              |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| Onboarding                                      |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| Offboarding                                     |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| Performance Reviews                             |      ✅      |    ✅    |   ✅    |    ❌    |    ✅    |   ❌    |
+| OKR/Goals                                       |      ✅      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
+| E-Signatures                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
+| Pulse Surveys                                   |      ✅      |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
+| Recognition/Kudos                               |      ✅      |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
+| AI Assistant                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| Payroll                                         |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
+| Driver Management                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| Approvals Workflow                              |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
+| Analytics Dashboard                             |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ❌    |
+| Multi-language (3+)                             |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
+| **LMS**                                         |      ✅      |    ✅    |   ❌    |    ❌    |    ✅    |   ❌    |
+| **Compensation**                                |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
+| **Benefits**                                    |      🔲      |    ✅    |   ❌    |    ✅    |    ❌    |   ✅    |
+| **Org Chart**                                   |      ✅      |    ❌    |   ✅    |    ✅    |    ❌    |   ❌    |
+| **Documents**                                   |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
+| **Expenses**                                    |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Succession**                                  |      🔲      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
+| **PWA/Mobile**                                  |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Shift Scheduling**                            |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
+| **SRC Tax Export (AM)**                         |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Local PSP (Idram/ArCa)**                      |      🔶      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **TOTAL**                                       |   **~32**    | **~17**  | **~15** | **~11**  | **~10**  | **~14** |
 
-**After completing Phase 2:** This project will have **~31 features**, surpassing all competitors.
-**After completing Phase 3:** This project will have **~40 features**, becoming the most comprehensive HR platform.
+**Shipped since last audit:** Shift Scheduling, SRC-ready payroll export (Armenia Tax Service), local PSP payment scaffolding — the last two exist in **no** global competitor.
+**After completing Phase 2:** This project will have **~35 features**, surpassing all competitors.
+**After completing Phase 3:** This project will have **~42 features**, becoming the most comprehensive HR platform — and the only one natively built for Armenian legal reality.
 
 ---
 

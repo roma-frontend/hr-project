@@ -180,11 +180,11 @@ export function TripDetailsModal({
           {isTrip && schedule.tripInfo && (
             <>
               {/* Route */}
-              <div className="rounded-xl bg-muted/30 p-5">
+              <div className="rounded-xl bg-(--surface-2) p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Navigation2 className="w-4 h-4 text-(--primary)" />
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-(--text-primary)">
                       {t('driver.route', 'Route')}
                     </span>
                   </div>
@@ -252,22 +252,20 @@ export function TripDetailsModal({
                   <div className="flex items-start gap-3">
                     <div className="w-3 h-3 rounded-full bg-(--success-solid) mt-1.5 shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground">
-                        {t('driver.pickup', 'Pickup')}
-                      </p>
-                      <p className="text-sm font-medium text-foreground mt-0.5">
+                      <p className="text-xs text-(--text-muted)">{t('driver.pickup', 'Pickup')}</p>
+                      <p className="text-sm font-medium text-(--text-primary) mt-0.5">
                         {schedule.tripInfo.from}
                       </p>
                     </div>
                   </div>
-                  <div className="ml-1.5 border-l-2 border-dashed border-border/40 h-6" />
+                  <div className="ml-1.5 border-l-2 border-dashed border-(--border) h-6" />
                   <div className="flex items-start gap-3">
                     <div className="w-3 h-3 rounded-full bg-(--danger-solid) mt-1.5 shrink-0" />
                     <div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-(--text-muted)">
                         {t('driver.dropoff', 'Dropoff')}
                       </p>
-                      <p className="text-sm font-medium text-foreground mt-0.5">
+                      <p className="text-sm font-medium text-(--text-primary) mt-0.5">
                         {schedule.tripInfo.to}
                       </p>
                     </div>
@@ -277,10 +275,10 @@ export function TripDetailsModal({
 
               {/* Passenger Info */}
               {schedule.userName && (
-                <div className="rounded-xl bg-muted/30 p-5">
+                <div className="rounded-xl bg-(--surface-2) p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="w-4 h-4 text-(--primary)" />
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-(--text-primary)">
                       {t('driver.passenger', 'Passenger')}
                     </span>
                   </div>
@@ -295,9 +293,9 @@ export function TripDetailsModal({
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-foreground">{schedule.userName}</p>
+                      <p className="font-medium text-(--text-primary)">{schedule.userName}</p>
                       {schedule.tripInfo.passengerPhone && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-(--text-muted)">
                           {schedule.tripInfo.passengerPhone}
                         </p>
                       )}
@@ -308,25 +306,25 @@ export function TripDetailsModal({
 
               {/* Trip Details */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-muted/30 p-4">
+                <div className="rounded-xl bg-(--surface-2) p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-(--primary)" />
-                    <p className="text-xs text-muted-foreground">{t('driver.time', 'Time')}</p>
+                    <p className="text-xs text-(--text-muted)">{t('driver.time', 'Time')}</p>
                   </div>
-                  <p className="text-lg font-bold text-foreground">
+                  <p className="text-lg font-bold text-(--text-primary)">
                     {format(new Date(schedule.startTime), 'HH:mm', { locale: dateFnsLocale })} -{' '}
                     {format(new Date(schedule.endTime), 'HH:mm', { locale: dateFnsLocale })}
                   </p>
                 </div>
                 {schedule.tripInfo.distanceKm && (
-                  <div className="rounded-xl bg-muted/30 p-4">
+                  <div className="rounded-xl bg-(--surface-2) p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-4 h-4 text-(--primary)" />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-(--text-muted)">
                         {t('driver.distance', 'Distance')}
                       </p>
                     </div>
-                    <p className="text-lg font-bold text-foreground">
+                    <p className="text-lg font-bold text-(--text-primary)">
                       {schedule.tripInfo.distanceKm} km
                     </p>
                   </div>
@@ -335,27 +333,27 @@ export function TripDetailsModal({
 
               {/* Purpose */}
               {schedule.tripInfo.purpose && (
-                <div className="rounded-xl bg-muted/30 p-5">
+                <div className="rounded-xl bg-(--surface-2) p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Car className="w-4 h-4 text-(--primary)" />
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-(--text-primary)">
                       {t('driver.purpose', 'Purpose')}
                     </span>
                   </div>
-                  <p className="text-sm text-foreground">{schedule.tripInfo.purpose}</p>
+                  <p className="text-sm text-(--text-primary)">{schedule.tripInfo.purpose}</p>
                 </div>
               )}
 
               {/* Passenger Count */}
               {schedule.tripInfo.passengerCount && (
-                <div className="rounded-xl bg-muted/30 p-4">
+                <div className="rounded-xl bg-(--surface-2) p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-4 h-4 text-(--primary)" />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-(--text-muted)">
                       {t('driver.passengers', 'Passengers')}
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-foreground">
+                  <p className="text-lg font-bold text-(--text-primary)">
                     {schedule.tripInfo.passengerCount}
                   </p>
                 </div>
@@ -363,14 +361,14 @@ export function TripDetailsModal({
 
               {/* Notes */}
               {schedule.tripInfo.notes && (
-                <div className="rounded-xl bg-muted/30 p-5">
+                <div className="rounded-xl bg-(--surface-2) p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="w-4 h-4 text-(--primary)" />
-                    <span className="text-sm font-semibold text-foreground">
+                    <span className="text-sm font-semibold text-(--text-primary)">
                       {t('driver.notes', 'Notes')}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{schedule.tripInfo.notes}</p>
+                  <p className="text-sm text-(--text-muted)">{schedule.tripInfo.notes}</p>
                 </div>
               )}
             </>

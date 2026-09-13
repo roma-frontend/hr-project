@@ -140,25 +140,28 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-(--border) bg-(--background) shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="border-b border-(--border) bg-linear-to-r from-(--brand) via-(--purple) to-(--brand) px-6 py-5">
+              {/* Header — `.brand-panel` is the app's token for large brand
+                  surfaces (card headers, heroes). The old purple `via-`
+                  gradient existed nowhere else in the app and fought the
+                  theme; this reads as the same brand as every other header. */}
+              <div className="brand-panel border-b border-(--border) px-6 py-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-(--brand) shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 shadow-lg">
                       <Keyboard className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-(--foreground)">
+                      <h2 className="text-2xl font-bold text-white">
                         {t('shortcuts.keyboardShortcuts')}
                       </h2>
-                      <p className="text-sm text-(--text-muted) mt-0.5">
+                      <p className="text-sm text-white/80 mt-0.5">
                         {t('keyboard.subtitle', 'Work faster with these shortcuts')}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={onClose}
-                    className="rounded-lg p-2 text-(--text-muted) transition-colors hover:bg-(--background-subtle) hover:text-(--foreground)"
+                    className="rounded-lg p-2 text-white/80 transition-colors hover:bg-white/15 hover:text-white"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -208,9 +211,16 @@ export function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsMod
               {/* Footer */}
               <div className="border-t border-(--border) bg-(--background-subtle) px-6 py-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs text-(--text-muted)">
-                    {t('keyboard.closeHint', 'Press Esc to close')}
-                  </p>
+                  {/* Locale strings contain literal `<kbd>` HTML; i18next
+                      escapes it by default, which rendered the tags as raw
+                      text. The hint is plain markup we control — render with
+                      escaping disabled. */}
+                  <p
+                    className="text-xs text-(--text-muted)"
+                    dangerouslySetInnerHTML={{
+                      __html: t('keyboard.closeHint', 'Press <kbd>Esc</kbd> to close'),
+                    }}
+                  />
                   <Button onClick={onClose} variant="secondary" size="sm">
                     {t('keyboard.gotIt', 'Got it!')}
                   </Button>

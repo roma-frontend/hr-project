@@ -1,15 +1,22 @@
 'use client';
 
+/**
+ * Register as Driver — slide-over Sheet hosting the 4-step registration
+ * wizard (personal → vehicle → availability → confirm).
+ *
+ * Previously a centred portal modal with its own gradient header; it now uses
+ * the shared Sheet so it matches every other detail view (list stays visible,
+ * sticky header/footer, Radix focus trap + scroll lock). The step logic,
+ * validation and submitted payload are unchanged.
+ */
+
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from '@/lib/cssMotion';
 import {
   Car,
   User,
   Settings,
   Calendar,
   CheckCircle2,
-  X,
   ArrowRight,
   Shield,
   Clock,
@@ -19,6 +26,16 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
+import { motion, AnimatePresence } from '@/lib/cssMotion';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetBody,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,6 +67,8 @@ interface RegisterDriverModalProps {
     };
   }) => Promise<void>;
   onClose: () => void;
+  /** Kept for callers that keep the modal mounted; the parent currently mounts conditionally. */
+  open?: boolean;
 }
 
 const steps = ['personal', 'vehicle', 'schedule', 'confirm'];
@@ -69,6 +88,7 @@ export function RegisterDriverModal({
   userPhone,
   onSubmit,
   onClose,
+  open = true,
 }: RegisterDriverModalProps) {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
@@ -153,47 +173,25 @@ export function RegisterDriverModal({
     }
   };
 
-  return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="w-full max-w-2xl bg-(--card) rounded-2xl border border-(--border) shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="relative p-6 btn-gradient rounded-t-2xl">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
-          >
-            <X className="w-4 h-4 text-white" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white/20 rounded-xl">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                {t('driver.registerAsDriver', 'Register as Driver')}
-              </h2>
-              <p className="text-white/80 text-sm mt-0.5">
-                {t('driver.registerDesc', 'Join our driver team')}
-              </p>
-            </div>
+  return (
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+      <SheetContent side="right" size="lg" closeLabel={t('common.close', 'Close')}>
+        <SheetHeader className="flex-row items-center gap-3">
+          <div className="btn-gradient flex size-10 shrink-0 items-center justify-center rounded-xl">
+            <Shield className="size-5 text-white" />
           </div>
-        </div>
+          <div className="min-w-0">
+            <SheetTitle className="text-lg md:text-xl">
+              {t('driver.registerAsDriver', 'Register as Driver')}
+            </SheetTitle>
+            <SheetDescription className="mt-0.5">
+              {t('driver.registerDesc', 'Join our driver team')}
+            </SheetDescription>
+          </div>
+        </SheetHeader>
 
-        {/* Steps */}
-        <div className="px-6 pt-6">
+        <SheetBody className="space-y-5">
+          {/* Step indicator */}
           <div className="flex items-center justify-between">
             {steps.map((step, idx) => {
               const Icon: LucideIcon | undefined = stepIcons[idx];
@@ -229,10 +227,7 @@ export function RegisterDriverModal({
               );
             })}
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
           <AnimatePresence mode="wait">
             {/* Step 0: Personal Info */}
             {currentStep === 0 && (
@@ -243,7 +238,7 @@ export function RegisterDriverModal({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold text-(--text-primary)">
                   {t('driver.personalInfo', 'Personal Information')}
                 </h3>
                 <div className="space-y-3">
@@ -254,14 +249,14 @@ export function RegisterDriverModal({
                         <p className="text-xs text-(--text-muted)">
                           {t('driver.fullName', 'Full Name')}
                         </p>
-                        <p className="font-medium">{userName}</p>
+                        <p className="font-medium text-(--text-primary)">{userName}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-(--primary)" />
                       <div>
                         <p className="text-xs text-(--text-muted)">{t('driver.email', 'Email')}</p>
-                        <p className="font-medium">{userEmail}</p>
+                        <p className="font-medium text-(--text-primary)">{userEmail}</p>
                       </div>
                     </div>
                     {userPhone && (
@@ -271,7 +266,7 @@ export function RegisterDriverModal({
                           <p className="text-xs text-(--text-muted)">
                             {t('driver.phone', 'Phone')}
                           </p>
-                          <p className="font-medium">{userPhone}</p>
+                          <p className="font-medium text-(--text-primary)">{userPhone}</p>
                         </div>
                       </div>
                     )}
@@ -295,7 +290,7 @@ export function RegisterDriverModal({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold text-(--text-primary)">
                   {t('driver.vehicleInfo', 'Vehicle Information')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -364,7 +359,9 @@ export function RegisterDriverModal({
                         }`}
                       >
                         <span className="text-2xl">{type.icon}</span>
-                        <p className="text-xs font-medium mt-1">{type.label}</p>
+                        <p className="text-xs font-medium mt-1 text-(--text-primary)">
+                          {type.label}
+                        </p>
                       </button>
                     ))}
                   </div>
@@ -384,7 +381,7 @@ export function RegisterDriverModal({
                     >
                       -
                     </Button>
-                    <span className="text-lg font-bold w-8 text-center">
+                    <span className="text-lg font-bold w-8 text-center text-(--text-primary)">
                       {formData.maxPassengers}
                     </span>
                     <Button
@@ -413,7 +410,7 @@ export function RegisterDriverModal({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold text-(--text-primary)">
                   {t('driver.availability', 'Availability')}
                 </h3>
                 <p className="text-sm text-(--text-muted)">
@@ -439,7 +436,7 @@ export function RegisterDriverModal({
                       <Clock
                         className={`w-4 h-4 mx-auto mb-1 ${formData.availability[day] ? 'text-(--success-text)' : 'text-(--text-muted)'}`}
                       />
-                      <p className="text-xs font-medium">{dayLabels[day]}</p>
+                      <p className="text-xs font-medium text-(--text-primary)">{dayLabels[day]}</p>
                     </motion.button>
                   ))}
                 </div>
@@ -467,7 +464,7 @@ export function RegisterDriverModal({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-lg font-semibold text-(--text-primary)">
                   {t('driver.confirmRegistration', 'Confirm Registration')}
                 </h3>
                 <div className="space-y-3">
@@ -478,7 +475,7 @@ export function RegisterDriverModal({
                         <p className="text-xs text-(--text-muted)">
                           {t('driver.driver', 'Driver')}
                         </p>
-                        <p className="font-medium">{userName}</p>
+                        <p className="font-medium text-(--text-primary)">{userName}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -487,7 +484,7 @@ export function RegisterDriverModal({
                         <p className="text-xs text-(--text-muted)">
                           {t('driver.vehicle', 'Vehicle')}
                         </p>
-                        <p className="font-medium">
+                        <p className="font-medium text-(--text-primary)">
                           {formData.vehicleYear} {formData.vehicleMake} {formData.vehicleModel} (
                           {formData.licensePlate})
                         </p>
@@ -524,10 +521,9 @@ export function RegisterDriverModal({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </SheetBody>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-(--border) bg-(--background-subtle)">
+        <SheetFooter className="justify-between">
           {currentStep > 0 ? (
             <Button variant="outline" onClick={prevStep} disabled={isSubmitting}>
               {t('driver.back', 'Back')}
@@ -552,9 +548,8 @@ export function RegisterDriverModal({
               )}
             </Button>
           )}
-        </div>
-      </motion.div>
-    </motion.div>,
-    document.body,
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

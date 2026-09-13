@@ -399,7 +399,7 @@ export function CommandPalette() {
           }}
           className={cn(
             'command-panel fixed left-1/2 top-[12vh] z-(--z-command) w-[min(40rem,calc(100vw-2rem))]',
-            '-translate-x-1/2 overflow-hidden rounded-sheet border border-(--border-default)',
+            'overflow-hidden rounded-sheet border border-(--border-default)',
           )}
         >
           <VisuallyHidden asChild>

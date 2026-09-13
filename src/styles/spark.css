@@ -544,6 +544,28 @@
   line-height: 1;
 }
 
+/* Bare <kbd> elements (locale strings like "Press <kbd>Esc</kbd> to close")
+   get the same keycap treatment as `.kbd`, so translated hints render as real
+   keycaps instead of unstyled monospace text. */
+kbd:not(.kbd) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-2);
+  box-shadow: 0 1px 0 var(--border-default);
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
    REDUCED MOTION
 
@@ -551,6 +573,7 @@
    fades too makes state changes appear as hard jumps, which is harder to follow
    for exactly the users this setting protects.
    ─────────────────────────────────────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   .press:active,
   .press-subtle:active,
