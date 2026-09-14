@@ -23,28 +23,42 @@ interface ConvexResponse {
   errorMessage?: string;
 }
 
+/**
+ * Convex HTTP bridge. Any transport failure (unreachable deployment, bad
+ * gateway, non-JSON body) resolves to null so the route responds with its
+ * graceful `sso_disabled`/`sso_error` login redirect instead of a 500 —
+ * a login entry point must never crash the browser flow.
+ */
 async function convexQuery<T>(path: string, args: Record<string, unknown>): Promise<T | null> {
-  const res = await fetch(`${CONVEX_URL}/api/query`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, args, format: 'json' }),
-    cache: 'no-store',
-  });
-  const data = (await res.json()) as ConvexResponse;
-  if (data.status === 'error') return null;
-  return (data.value ?? null) as T | null;
+  try {
+    const res = await fetch(`${CONVEX_URL}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, args, format: 'json' }),
+      cache: 'no-store',
+    });
+    const data = (await res.json()) as ConvexResponse;
+    if (data.status === 'error') return null;
+    return (data.value ?? null) as T | null;
+  } catch {
+    return null;
+  }
 }
 
 async function convexMutation<T>(path: string, args: Record<string, unknown>): Promise<T | null> {
-  const res = await fetch(`${CONVEX_URL}/api/mutation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path, args, format: 'json' }),
-    cache: 'no-store',
-  });
-  const data = (await res.json()) as ConvexResponse;
-  if (data.status === 'error') return null;
-  return (data.value ?? null) as T | null;
+  try {
+    const res = await fetch(`${CONVEX_URL}/api/mutation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, args, format: 'json' }),
+      cache: 'no-store',
+    });
+    const data = (await res.json()) as ConvexResponse;
+    if (data.status === 'error') return null;
+    return (data.value ?? null) as T | null;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
