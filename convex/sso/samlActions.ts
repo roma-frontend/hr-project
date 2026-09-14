@@ -62,7 +62,7 @@ export const validateAssertion = internalAction({
     inResponseTo: v.optional(v.string()),
   },
   handler: async (_ctx, args): Promise<SamlClaimResult> => {
-    const { validateLoginResponse, setSchemaValidator } = await importSamlify();
+    const { validateLoginResponse } = await importSamlify();
     const sp = await buildSp(args.spEntityId, args.acsUrl);
     const idp = await buildIdp(args.idpEntityId, args.idpSsoUrl, args.idpCertificate);
 
