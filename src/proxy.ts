@@ -250,6 +250,17 @@ const RATE_LIMIT_RULES: RateLimitRule[] = [
     windowMs: 15 * 60 * 1000,
   },
   {
+    // SAML SP routes (metadata GET + start/ACS per login attempt). Dedicated
+    // bucket so SSO traffic from a shared office NAT IP doesn't compete with
+    // general API traffic — a company morning login wave is legitimate bursts
+    // of start+ACS pairs. Abuse stays bounded: each login needs a single-use
+    // flow created in /start, and ACS validates a signed assertion.
+    id: 'sso',
+    pattern: (p) => p.startsWith('/api/sso/'),
+    maxRequests: 150,
+    windowMs: 15 * 60 * 1000,
+  },
+  {
     id: 'api-default',
     pattern: (p) => p.startsWith('/api/'),
     maxRequests: 100,
