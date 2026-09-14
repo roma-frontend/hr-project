@@ -43,6 +43,47 @@ function getRedis(): Redis | null {
 // RATE LIMITING
 // ═══════════════════════════════════════════════════════════════
 
+interface MemoryWindow {
+  count: number;
+  resetAt: number;
+}
+
+/** Per-instance window store backing the no-Redis fallback. */
+const memoryRateWindows = new Map<string, MemoryWindow>();
+let lastMemorySweep = 0;
+
+function memoryCheckRateLimit(
+  key: string,
+  maxRequests: number,
+  windowMs: number,
+): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now();
+
+  // Sweep expired windows at most once per window period to keep the map bounded.
+  if (now - lastMemorySweep > windowMs) {
+    lastMemorySweep = now;
+    for (const [k, w] of memoryRateWindows) {
+      if (w.resetAt <= now) memoryRateWindows.delete(k);
+    }
+  }
+
+  const windowKey = `rate:${key}:${Math.floor(now / windowMs)}`;
+  const existing = memoryRateWindows.get(windowKey);
+  const window: MemoryWindow =
+    existing && existing.resetAt > now
+      ? existing
+      : { count: 0, resetAt: (Math.floor(now / windowMs) + 1) * windowMs };
+
+  window.count += 1;
+  memoryRateWindows.set(windowKey, window);
+
+  return {
+    allowed: window.count <= maxRequests,
+    remaining: Math.max(0, maxRequests - window.count),
+    resetAt: window.resetAt,
+  };
+}
+
 /**
  * Check if request is within rate limit
  * Uses sliding window algorithm
@@ -55,12 +96,13 @@ export async function checkRateLimit(
   const redis = getRedis();
 
   if (!redis) {
-    // Fail closed in production — deny request if Redis is unavailable.
-    // In development, allow the request to avoid blocking local work.
-    if (process.env.NODE_ENV === 'production') {
-      return { allowed: false, remaining: 0, resetAt: Date.now() + windowMs };
-    }
-    return { allowed: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
+    // Redis not configured → per-instance in-memory sliding window (the
+    // fallback this module has always documented). It enforces the same
+    // limits within one server instance: correct for single-instance
+    // deployments, CI and preview environments. Fail-closed is reserved
+    // for *configured* Redis that errors at runtime (catch below) — a
+    // missing Upstash env must never take the whole API down with 429s.
+    return memoryCheckRateLimit(key, maxRequests, windowMs);
   }
   try {
     const now = Date.now();

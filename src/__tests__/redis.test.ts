@@ -326,16 +326,29 @@ describe('redis — no-env fallback (fresh module)', () => {
     }
   });
 
-  it('checkRateLimit allows in non-production when Redis is unavailable', async () => {
-    const result = await fresh.checkRateLimit('k', 5, 60000);
-    expect(result).toEqual({ allowed: true, remaining: 5, resetAt: expect.any(Number) });
+  it('checkRateLimit allows the first request via in-memory fallback when Redis is unavailable', async () => {
+    const result = await fresh.checkRateLimit('mem-allow', 5, 60000);
+    expect(result).toEqual({ allowed: true, remaining: 4, resetAt: expect.any(Number) });
   });
 
-  it('checkRateLimit fails closed in production when Redis is unavailable', async () => {
+  it('in-memory fallback still enforces the limit when Redis is unavailable', async () => {
+    // Unconfigured Redis must not fail open either: the documented fallback
+    // (in-memory windows) keeps enforcing the same limit per server instance.
+    for (let i = 0; i < 5; i++) {
+      const allowed = await fresh.checkRateLimit('mem-cap', 5, 60000);
+      expect(allowed.allowed).toBe(true);
+    }
+    const over = await fresh.checkRateLimit('mem-cap', 5, 60000);
+    expect(over.allowed).toBe(false);
+    expect(over.remaining).toBe(0);
+  });
+
+  it('unconfigured Redis in production serves requests instead of hard-failing', async () => {
+    // A missing Upstash env must never take the whole API down with 429s
+    // (this is what broke every /api/* route in the CI E2E environment).
     process.env.NODE_ENV = 'production';
-    const result = await fresh.checkRateLimit('k', 5, 60000);
-    expect(result.allowed).toBe(false);
-    expect(result.remaining).toBe(0);
+    const result = await fresh.checkRateLimit('mem-prod', 5, 60000);
+    expect(result.allowed).toBe(true);
   });
 
   it('isBlocked returns false without Redis', async () => {
