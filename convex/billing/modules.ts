@@ -362,6 +362,20 @@ export const BILLING_MODULES: BillingModuleDef[] = [
     sortOrder: 53,
   },
   {
+    key: 'benefits',
+    name: 'Benefits',
+    icon: 'HeartHandshake',
+    category: 'finance',
+    status: 'active',
+    isCore: false,
+    featureToggleKey: 'benefits.module',
+    settingsSchema: {
+      plans: { type: 'number', unit: 'plans', min: 0 },
+      claims: { type: 'number', unit: 'claims/mo', min: 0 },
+    },
+    sortOrder: 53,
+  },
+  {
     key: 'reports',
     name: 'Reports',
     icon: 'BarChart3',

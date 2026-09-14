@@ -77,6 +77,116 @@ export const listConnections = query({
   },
 });
 
+export const listSamlConnections = query({
+  args: {},
+  handler: async (ctx) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller?.organizationId) return [];
+    const orgId = caller.organizationId;
+
+    const rows = await ctx.db
+      .query('ssoConnections')
+      .withIndex('by_org', (q) => q.eq('organizationId', orgId))
+      .take(SMALL_LIST_CAP);
+
+    return rows
+      .filter((row) => row.protocol === 'saml')
+      .map((row) => ({
+        _id: row._id,
+        connectionId: row.connectionId,
+        protocol: row.protocol,
+        issuer: row.issuer,
+        idpEntityId: row.idpEntityId,
+        idpSsoUrl: row.idpSsoUrl,
+        /** Write-only: admins see a masked hint, never the certificate. */
+        idpCertificateHint: row.idpCertificate
+          ? `••••${row.idpCertificate.replace(/\s+/g, '').slice(-8)}`
+          : '',
+        domains: row.domains ?? [],
+        label: row.label,
+        autoProvision: row.autoProvision,
+        enabled: row.enabled,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }));
+  },
+});
+
+/**
+ * Upsert a SAML 2.0 connection. The IdP certificate is write-only — like the
+ * OIDC client secret, an omitted value on update keeps the stored one.
+ */
+export const upsertSamlConnection = mutation({
+  args: {
+    id: v.optional(v.id('ssoConnections')),
+    idpEntityId: v.string(),
+    idpSsoUrl: v.string(),
+    /** Omit on update to keep the stored certificate. */
+    idpCertificate: v.optional(v.string()),
+    domains: v.optional(v.array(v.string())),
+    label: v.optional(v.string()),
+    autoProvision: v.boolean(),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    const orgId = assertOrgManager(caller, 'manage SSO connections');
+
+    if (!/^https:\/\//.test(args.idpSsoUrl.trim())) {
+      throw new Error('IdP Single Sign-On URL must be an https:// URL');
+    }
+    if (!args.idpEntityId.trim()) throw new Error('IdP entity ID is required');
+    if (!args.id && !args.idpCertificate?.trim()) {
+      throw new Error('IdP signing certificate is required');
+    }
+
+    const domains = normalizeDomains(args.domains);
+    const doc = {
+      idpEntityId: args.idpEntityId.trim(),
+      idpSsoUrl: args.idpSsoUrl.trim(),
+      domains,
+      label: args.label?.trim() || undefined,
+      autoProvision: args.autoProvision,
+      enabled: args.enabled,
+      updatedAt: Date.now(),
+    };
+
+    if (args.id) {
+      const existing = await ctx.db.get(args.id);
+      if (!existing || existing.organizationId !== orgId) throw new Error('Connection not found');
+      await ctx.db.patch(args.id, {
+        ...doc,
+        idpCertificate: args.idpCertificate?.trim() || existing.idpCertificate,
+      });
+      return args.id;
+    }
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const connectionId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+      const clash = await ctx.db
+        .query('ssoConnections')
+        .withIndex('by_connection_id', (q) => q.eq('connectionId', connectionId))
+        .unique();
+      if (clash) continue;
+      return await ctx.db.insert('ssoConnections', {
+        organizationId: orgId,
+        connectionId,
+        protocol: 'saml' as const,
+        // SAML connections carry no OIDC client pair; empty strings satisfy
+        // the required fields without ever being used.
+        issuer: args.idpEntityId.trim(),
+        clientId: '',
+        clientSecret: '',
+        ...doc,
+        idpCertificate: args.idpCertificate!.trim(),
+        createdAt: Date.now(),
+        createdBy: caller?._id,
+      });
+    }
+    throw new Error('Could not allocate a connection id — try again');
+  },
+});
+
 export const getLoginEvents = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {

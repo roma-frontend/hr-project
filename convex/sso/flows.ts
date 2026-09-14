@@ -127,6 +127,74 @@ export const getConnectionForStart = internalQuery({
   },
 });
 
+/**
+ * SAML connection projection for the ACS route — mirrors
+ * getConnectionForCallback but exposes the SAML IdP fields. Also resolves the
+ * app URL so the route can build the bridge redirect without trusting args.
+ */
+export const getSamlConnectionForAcs = internalQuery({
+  args: { connectionId: v.string() },
+  handler: async (
+    ctx,
+    { connectionId },
+  ): Promise<{
+    organizationId: import('../_generated/dataModel').Id<'organizations'>;
+    connectionId: string;
+    idpEntityId: string;
+    idpSsoUrl: string;
+    idpCertificate: string;
+    domains: string[];
+    autoProvision: boolean;
+    enabled: boolean;
+    appUrl: string;
+    spEntityId: string;
+    acsUrl: string;
+  } | null> => {
+    const row = await ctx.db
+      .query('ssoConnections')
+      .withIndex('by_connection_id', (q) => q.eq('connectionId', connectionId))
+      .unique();
+    if (!row || row.protocol !== 'saml') return null;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    return {
+      organizationId: row.organizationId,
+      connectionId: row.connectionId,
+      idpEntityId: row.idpEntityId ?? row.issuer,
+      idpSsoUrl: row.idpSsoUrl ?? '',
+      idpCertificate: row.idpCertificate ?? '',
+      domains: row.domains ?? [],
+      autoProvision: row.autoProvision,
+      enabled: row.enabled,
+      appUrl,
+      // SP identity is derived from the deployment, not configured per org —
+      // one entity ID + ACS host for every SAML connection.
+      spEntityId: `${appUrl}/api/sso/metadata`,
+      acsUrl: `${appUrl}/api/sso/acs/${row.connectionId}`,
+    };
+  },
+});
+
+/** Public-ish projection for the SAML start route (enabled + sso URL). */
+export const getSamlConnectionForStart = internalQuery({
+  args: { connectionId: v.string() },
+  handler: async (ctx, { connectionId }) => {
+    const row = await ctx.db
+      .query('ssoConnections')
+      .withIndex('by_connection_id', (q) => q.eq('connectionId', connectionId))
+      .unique();
+    if (!row || row.protocol !== 'saml' || !row.enabled) return null;
+    return { idpSsoUrl: row.idpSsoUrl ?? '' };
+  },
+});
+
+/** SAML flows reuse the same single-use table as OIDC flows. */
+export const getSamlLoginFlow = internalQuery({
+  args: { flowId: v.id('ssoLoginFlows') },
+  handler: async (ctx, { flowId }) => {
+    return await ctx.db.get(flowId);
+  },
+});
+
 /** Resolve a user by email scoped to the connection's organization. */
 export const findUserByEmail = internalQuery({
   args: {

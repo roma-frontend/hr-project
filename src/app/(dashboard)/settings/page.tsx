@@ -22,6 +22,7 @@ import {
   Clock,
   KeyRound,
   Webhook,
+  FileBadge,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,10 @@ const SecuritySettings = dynamic(
 );
 const SsoSettings = dynamic(
   () => import('@/components/settings/SsoSettings').then((m) => ({ default: m.SsoSettings })),
+  { ssr: false },
+);
+const SamlSettings = dynamic(
+  () => import('@/components/settings/SamlSettings').then((m) => ({ default: m.SamlSettings })),
   { ssr: false },
 );
 const WebhooksSettings = dynamic(
@@ -326,6 +331,12 @@ export default function SettingsPage() {
             description: t('settingsSso.tabDesc', 'Enterprise OIDC sign-in'),
           },
           {
+            value: 'saml',
+            label: t('settingsSaml.tab', 'SAML SSO'),
+            icon: FileBadge,
+            description: t('settingsSaml.tabDesc', 'Enterprise SAML 2.0 federation'),
+          },
+          {
             value: 'webhooks',
             label: t('settingsWebhooks.tab', 'Webhooks'),
             icon: Webhook,
@@ -452,6 +463,12 @@ export default function SettingsPage() {
           {canManageIntegrations && (
             <TabsContent value="sso" className="space-y-6 mt-0">
               <SsoSettings />
+            </TabsContent>
+          )}
+
+          {canManageIntegrations && (
+            <TabsContent value="saml" className="space-y-6 mt-0">
+              <SamlSettings />
             </TabsContent>
           )}
 

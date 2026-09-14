@@ -1142,6 +1142,22 @@ export default function PricingPreview() {
   const dataTiers: PricingTier[] = (publishedPlans ?? []).map((p, i) => {
     const accent = DATA_ACCENTS[i % DATA_ACCENTS.length] ?? DATA_ACCENTS[0]!;
     const isCustom = p.plan.isCustom;
+    // The superadmin-authored tagline is a single language (the one they typed);
+    // for the three standard plan keys prefer the visitor's locale and use the
+    // DB string only for custom/renamed plans where no translation exists.
+    const taglineKey =
+      p.plan.key === 'starter'
+        ? 'pricing.starterDesc'
+        : p.plan.key === 'pro'
+          ? 'pricing.professionalDesc'
+          : p.plan.key === 'enterprise'
+            ? 'pricing.enterpriseDesc'
+            : null;
+    const tagline = taglineKey
+      ? t(taglineKey, {
+          defaultValue: p.plan.tagline ?? undefined,
+        })
+      : (p.plan.tagline ?? undefined);
     return {
       id: p.plan.key,
       nameKey: 'pricing.starter',
@@ -1152,7 +1168,7 @@ export default function PricingPreview() {
       descriptionKey: 'pricing.starterDesc',
       featureKeys: [],
       nameText: p.plan.name,
-      descriptionText: p.plan.tagline ?? undefined,
+      descriptionText: tagline,
       featureTexts: p.modules.map((m) => t(`billing.modules.${m.key}`, m.name)),
       featureGroups: groupFeaturesByCategory(
         p.modules.map((m) => ({

@@ -66,6 +66,13 @@ export const payroll = {
     baseSalary: v.number(),
     grossSalary: v.number(),
     netSalary: v.number(),
+    /**
+     * Approved benefit-claims reimbursements attached to this record
+     * (non-taxable payout on top of net salary — documented expense
+     * repayment, not salary). `netPayout` is what the employee receives.
+     */
+    benefitsReimbursement: v.optional(v.number()),
+    netPayout: v.optional(v.number()),
     bonuses: v.optional(v.number()),
     overtimeHours: v.optional(v.number()),
     overtimePay: v.optional(v.number()),
@@ -113,6 +120,8 @@ export const payroll = {
     ),
     totalGross: v.optional(v.number()),
     totalNet: v.optional(v.number()),
+    totalBenefitsReimbursement: v.optional(v.number()),
+    totalNetPayout: v.optional(v.number()),
     totalDeductions: v.optional(v.number()),
     totalEmployerCost: v.optional(v.number()),
     employeeCount: v.optional(v.number()),

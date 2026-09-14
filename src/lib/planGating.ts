@@ -47,6 +47,7 @@ export const NAV_HREF_TO_MODULE: Record<string, string> = {
   '/payroll': 'payroll',
   '/compensation': 'compensation',
   '/expenses': 'expenses',
+  '/benefits': 'benefits',
   '/assets': 'assets',
   '/reports': 'reports',
   '/analytics': 'analytics',

@@ -38,6 +38,7 @@ export const allNamespaces = [
   'compensation',
   'learning',
   'expenses',
+  'benefits',
   'overtime',
   'shifts',
 ] as const;

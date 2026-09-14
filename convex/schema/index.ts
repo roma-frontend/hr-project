@@ -63,6 +63,7 @@ import { sso } from './sso';
 import { shifts } from './shifts';
 import { webhooks } from './webhooks';
 import { scim } from './scim';
+import { benefits } from './benefits';
 
 export default defineSchema({
   ...organizations,
@@ -129,6 +130,7 @@ export default defineSchema({
   ...shifts,
   ...webhooks,
   ...scim,
+  ...benefits,
 });
 
 export {
@@ -195,4 +197,5 @@ export {
   shifts,
   webhooks,
   scim,
+  benefits,
 };

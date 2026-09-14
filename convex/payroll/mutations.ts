@@ -16,6 +16,13 @@ import {
   decrementUsage,
   incrementUsage,
 } from '../lib/entitlements';
+import {
+  approvedClaimsByUser,
+  reimbursementFor,
+  attachClaimsToRecord,
+  releaseClaimsOfRecord,
+  markRecordClaimsReimbursed,
+} from '../lib/payrollBenefits';
 
 type RunTotals = {
   totalGross: number;
@@ -24,6 +31,30 @@ type RunTotals = {
   totalEmployerCost: number;
   employeeCount: number;
 };
+
+async function recomputeBenefitTotals(
+  ctx: MutationCtx,
+  payrollRunId: Id<'payrollRuns'>,
+): Promise<void> {
+  const records = await ctx.db
+    .query('payrollRecords')
+    .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', payrollRunId))
+    .take(DEFAULT_LIST_CAP);
+
+  let totalBenefitsReimbursement = 0;
+  let totalNetPayout = 0;
+  for (const r of records) {
+    if (r.status === 'cancelled') continue;
+    const reimbursement = r.benefitsReimbursement ?? 0;
+    totalBenefitsReimbursement += reimbursement;
+    totalNetPayout += (r.netSalary || 0) + reimbursement;
+  }
+  await ctx.db.patch(payrollRunId, {
+    totalBenefitsReimbursement: round2(totalBenefitsReimbursement),
+    totalNetPayout: round2(totalNetPayout),
+    updatedAt: Date.now(),
+  });
+}
 
 async function recomputeRunTotals(
   ctx: MutationCtx,
@@ -58,6 +89,9 @@ async function recomputeRunTotals(
     ...totals,
     updatedAt: Date.now(),
   });
+
+  // Keep the benefits/net-payout totals consistent when records change.
+  await recomputeBenefitTotals(ctx, payrollRunId);
 
   return totals;
 }
@@ -251,6 +285,8 @@ export const calculatePayrollRun = mutation({
     let totalNet = 0;
     let totalDeductions = 0;
     let totalEmployerCost = 0;
+    let totalBenefitsReimbursement = 0;
+    let totalNetPayout = 0;
     let processed = 0;
     const skipped: { userId: Id<'users'>; reason: string }[] = [];
 
@@ -260,6 +296,10 @@ export const calculatePayrollRun = mutation({
     const userMap = new Map(
       usersBatch.filter((u): u is NonNullable<typeof u> => u !== null).map((u) => [u._id, u]),
     );
+
+    // Approved benefit claims for the run's period ride into the run as a
+    // non-taxable reimbursement on top of net salary (see payrollBenefits.ts).
+    const benefitClaimsByUser = await approvedClaimsByUser(ctx, run.organizationId, run.period);
 
     for (const emp of employees) {
       const user = userMap.get(emp.userId);
@@ -291,6 +331,10 @@ export const calculatePayrollRun = mutation({
         overtimeHours = maxOvertime;
       }
 
+      // Non-taxable benefits reimbursement for this employee's period claims.
+      const userClaims = benefitClaimsByUser.get(emp.userId) ?? [];
+      const benefitsReimbursement = reimbursementFor(benefitClaimsByUser, emp.userId);
+
       const calculation = calculatePayroll({
         country: taxCountry,
         baseSalary,
@@ -309,7 +353,7 @@ export const calculatePayrollRun = mutation({
         healthInsured: emp.healthInsured ?? user.healthInsured ?? false,
       });
 
-      await ctx.db.insert('payrollRecords', {
+      const recordId = await ctx.db.insert('payrollRecords', {
         organizationId: run.organizationId,
         userId: emp.userId,
         payrollRunId: args.payrollRunId,
@@ -317,6 +361,8 @@ export const calculatePayrollRun = mutation({
         baseSalary: calculation.baseSalary,
         grossSalary: calculation.grossSalary,
         netSalary: calculation.netSalary,
+        benefitsReimbursement: benefitsReimbursement > 0 ? benefitsReimbursement : undefined,
+        netPayout: calculation.netSalary + benefitsReimbursement,
         bonuses: calculation.bonuses > 0 ? calculation.bonuses : undefined,
         overtimeHours: overtimeHours > 0 ? overtimeHours : undefined,
         overtimePay: calculation.overtimePay > 0 ? calculation.overtimePay : undefined,
@@ -330,10 +376,16 @@ export const calculatePayrollRun = mutation({
         updatedAt: Date.now(),
       });
 
+      if (userClaims.length > 0) {
+        await attachClaimsToRecord(ctx, userClaims, recordId);
+      }
+
       totalGross += calculation.grossSalary;
       totalNet += calculation.netSalary;
       totalDeductions += calculation.deductions.total;
       totalEmployerCost += calculation.totalCost ?? calculation.grossSalary;
+      totalBenefitsReimbursement += benefitsReimbursement;
+      totalNetPayout += calculation.netSalary + benefitsReimbursement;
       processed++;
     }
 
@@ -341,6 +393,8 @@ export const calculatePayrollRun = mutation({
       status: 'calculated',
       totalGross: round2(totalGross),
       totalNet: round2(totalNet),
+      totalBenefitsReimbursement: round2(totalBenefitsReimbursement),
+      totalNetPayout: round2(totalNetPayout),
       totalDeductions: round2(totalDeductions),
       totalEmployerCost: round2(totalEmployerCost),
       employeeCount: processed,
@@ -462,6 +516,8 @@ export const markPayrollRunAsPaid = mutation({
         status: 'paid',
         updatedAt: Date.now(),
       });
+      // Benefit claims attached to this record are now actually paid out.
+      await markRecordClaimsReimbursed(ctx, record._id);
     }
 
     await ctx.db.insert('payrollAuditLog', {
@@ -512,6 +568,8 @@ export const cancelPayrollRun = mutation({
         status: 'cancelled',
         updatedAt: Date.now(),
       });
+      // Release attached benefit claims so a later run picks them up.
+      await releaseClaimsOfRecord(ctx, record._id);
     }
 
     await ctx.db.insert('payrollAuditLog', {

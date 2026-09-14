@@ -2,12 +2,14 @@ import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 /**
- * SSO (OIDC) connections — Phase 1 of the enterprise SSO/SCIM rollout.
+ * SSO (OIDC / SAML) connections — enterprise SSO.
  *
  * Additive-only module: nothing here changes existing tables or flows. A
  * connection is created per organization by an org admin (see
- * convex/sso/main.ts) and used by the Next.js routes in
- * src/app/api/auth/sso/* to broker an OIDC authorization-code + PKCE login.
+ * convex/sso/main.ts). OIDC connections are used by the Convex httpActions in
+ * convex/http.ts under /api/sso/*; SAML connections additionally by the ACS
+ * route POST /api/sso/acs/<connectionId> (assertion validation happens in a
+ * Node runtime via convex/sso/samlActions.ts).
  *
  * Session issuance reuses the existing `auth:login { isOAuthLogin: true }`
  * path — the exact bridge Google OAuth already uses — so SSO sessions are
@@ -25,12 +27,21 @@ export const sso = {
     organizationId: v.id('organizations'),
     /** Public, URL-safe identifier used in /api/auth/sso/<connectionId>. */
     connectionId: v.string(),
-    protocol: v.literal('oidc'),
+    /** 'saml' connections carry the IdP metadata fields below instead of OIDC ones. */
+    protocol: v.union(v.literal('oidc'), v.literal('saml')),
     /** OIDC issuer, e.g. https://accounts.google.com or https://idp.corp.com */
     issuer: v.string(),
+    /** OIDC: confidential client id. */
     clientId: v.string(),
-    /** Confidential client secret — never exposed via API. */
+    /** OIDC: confidential client secret — never exposed via API. */
     clientSecret: v.string(),
+    // ── SAML 2.0 (protocol === 'saml') ─────────────────────────────────────
+    /** IdP entityID (as the IdP asserts `issuer`); required for SAML. */
+    idpEntityId: v.optional(v.string()),
+    /** IdP Single Sign-On URL (HTTP-POST binding target). */
+    idpSsoUrl: v.optional(v.string()),
+    /** IdP X.509 signing certificate (PEM, base64 body accepted). */
+    idpCertificate: v.optional(v.string()),
     /** Optional explicit endpoints; otherwise resolved from /.well-known/openid-configuration */
     authorizationEndpoint: v.optional(v.string()),
     tokenEndpoint: v.optional(v.string()),
