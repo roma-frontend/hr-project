@@ -24,6 +24,7 @@ import {
   Webhook,
   FileBadge,
   Users,
+  Code2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -71,6 +72,11 @@ const WebhooksSettings = dynamic(
 );
 const ScimSettings = dynamic(
   () => import('@/components/settings/ScimSettings').then((m) => ({ default: m.ScimSettings })),
+  { ssr: false },
+);
+const ApiKeysSettings = dynamic(
+  () =>
+    import('@/components/settings/ApiKeysSettings').then((m) => ({ default: m.ApiKeysSettings })),
   { ssr: false },
 );
 const AppearanceSettings = dynamic(
@@ -229,9 +235,9 @@ export default function SettingsPage() {
     }
   };
 
-  // SSO/Webhooks/SCIM are org-integration tabs; the backend (assertOrgManager
-  // in convex/sso, convex/webhooks, convex/scim) admits both org admins and
-  // superadmins, so the tab strip must match that RBAC — previously a
+  // SSO/Webhooks/SCIM/API are org-integration tabs; the backend (assertOrgManager
+  // in convex/sso, convex/webhooks, convex/scim, convex/apiKeys) admits both org
+  // admins and superadmins, so the tab strip must match that RBAC — previously a
   // superadmin saw the backend-allowed features nowhere in the UI.
   const canManageIntegrations = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -347,6 +353,12 @@ export default function SettingsPage() {
             label: t('settingsScim.tab', 'SCIM'),
             icon: Users,
             description: t('settingsScim.tabDesc', 'Automated user provisioning'),
+          },
+          {
+            value: 'api',
+            label: t('settingsApi.tab', 'API'),
+            icon: Code2,
+            description: t('settingsApi.tabDesc', 'Read-only API keys for integrations'),
           },
         ]
       : []),
@@ -481,6 +493,12 @@ export default function SettingsPage() {
           {canManageIntegrations && (
             <TabsContent value="scim" className="space-y-6 mt-0">
               <ScimSettings />
+            </TabsContent>
+          )}
+
+          {canManageIntegrations && (
+            <TabsContent value="api" className="space-y-6 mt-0">
+              <ApiKeysSettings />
             </TabsContent>
           )}
 

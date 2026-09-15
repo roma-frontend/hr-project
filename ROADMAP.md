@@ -1,6 +1,15 @@
 # Strata — Project Roadmap & Status
 
-> **Last updated:** 2026-09-13 (Armenia moat shipped: SRC-ready payroll export, local PSP payments scaffolding; Shift Scheduling implemented)
+> **Last updated:** 2026-09-15 — **statuses below were re-verified against the codebase** (schema + backend + UI + route present on disk).
+> **Previous audit:** 2026-09-13 (Armenia moat shipped: SRC-ready payroll export, local PSP payments scaffolding; Shift Scheduling implemented)
+>
+> ### ⚠️ Verification note (2026-09-15)
+>
+> Several modules were marked `🔲 Not started` here while being **fully shipped in code**
+> (schema + backend + client + route + i18n). Corrected below: **Benefits, Expenses,
+> Assets, News**. Also corrected: **Compliance**, **PDF/export**, **Mobile (PWA)**,
+> **Workflow builder**. Treat this file as the roadmap _now that it is synced_; when a
+> status and the code disagree, the code is right.
 > **Stack:** Next.js 16 (App Router) + Convex + Shadcn/ui + Tailwind CSS
 > **i18n:** EN / RU / HY (Armenian) / DE
 > **Auth:** Convex Auth (session-based)
@@ -269,7 +278,9 @@
 
 ---
 
-## Phase 2 — Competitive Edge (Not Started)
+## Phase 2 — Competitive Edge
+
+> Re-verified 2026-09-15: **2.1, 2.3, 2.4, 2.6 and 3.6 are shipped.** Remaining gap: 2.7 Succession.
 
 ### 2.1 Learning Management System (LMS)
 
@@ -353,22 +364,26 @@
 
 ### 2.3 Benefits Administration
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                        |
+| ------- | ------ | -------------------------------------------- |
+| Schema  | ✅     | `convex/schema/benefits.ts`                  |
+| Backend | ✅     | `convex/benefits.ts` (13 exports)            |
+| UI      | ✅     | `src/components/benefits/BenefitsClient.tsx` |
+| Route   | ✅     | `src/app/(dashboard)/benefits/page.tsx`      |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅                   |
+| Billing | ✅     | `benefits` module + `plans`/`claims` limits  |
 
-- Schema: `convex/schema/benefits.ts` (benefitPlans, benefitEnrollments, claims)
-- Backend: `convex/benefits.ts`
-- UI: `src/components/benefits/BenefitsClient.tsx`
-- Route: `src/app/(dashboard)/benefits/page.tsx`
+**Tables:** `benefitPlans`, `benefitEnrollments`, `benefitWallets`, `benefitClaims`
 
-**Features to implement:**
+**Features implemented:**
 
-- Benefits catalog (insurance, fitness, education)
-- Self-service enrollment
-- Flexible benefits budget
-- Claims submission and approval
-- Payroll integration for reimbursements
+- Benefits catalog (insurance, fitness, education — per-org plans)
+- Self-service enrollment with admin approve / cancel-enrollment flows
+- Flexible benefits budget (`benefitWallets`)
+- Claims submission (title, amount, receipt) with approval
+- Separation of duties — nobody approves their own claim
 
 **Competitors with this:** Rippling, Deel, BambooHR
 
@@ -455,22 +470,26 @@
 
 ### 2.6 Expense Management
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                        |
+| ------- | ------ | -------------------------------------------- |
+| Schema  | ✅     | `convex/schema/expenses.ts`                  |
+| Backend | ✅     | `convex/expenses.ts` (25 exports)            |
+| UI      | ✅     | `src/components/expenses/ExpensesClient.tsx` |
+| Route   | ✅     | `src/app/(dashboard)/expenses/page.tsx`      |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅                   |
+| Billing | ✅     | `expenses` module + `reports/mo` limit       |
 
-- Schema: `convex/schema/expenses.ts` (expenseReports, expenseItems, receipts, expensePolicies)
-- Backend: `convex/expenses.ts`
-- UI: `src/components/expenses/ExpensesClient.tsx`
-- Route: `src/app/(dashboard)/expenses/page.tsx`
+**Tables:** `expenses`, `expenseCategories`, `expensePolicies`, `expenseReports`, `expenseReportItems`
 
-**Features to implement:**
+**Features implemented:**
 
-- Expense submission (receipt photo, amount, category)
-- Manager approval workflow
-- Expense policies (category limits)
-- Reports by department/period
-- Payroll integration (reimbursement)
+- Expense submission (amount, category, receipt)
+- Approval workflow with policy thresholds: daily limit, director approval limit, auto-approval limit
+- Expense policies per category
+- Analytics by category and status
+- Self-approval forbidden (precedent reused by leaves/benefits/ratings)
 
 **Competitors with this:** Rippling
 
@@ -499,17 +518,28 @@
 
 ---
 
-## Phase 3 — Differentiation (Not Started)
+## Phase 3 — Differentiation
+
+> Re-verified 2026-09-15: **3.3, 3.4, 3.9, 3.10 shipped; 3.1, 3.2, 3.5, 3.7 partially shipped.**
+> Remaining: 3.8 Career Development.
 
 ### 3.1 Mobile App (PWA)
 
-**Status:** 🔲 Not started
+**Status:** ⚠️ Partially implemented (installable assets exist, offline/push not wired globally)
 
-**Required files:**
+**Existing:**
 
-- `public/manifest.json`
-- `public/sw.js` (service worker)
-- `src/app/(dashboard)/layout.tsx` — add PWA registration
+- `public/manifest.json` + `public/site.webmanifest` — linked from `src/app/layout.tsx`
+- `public/sw.js` (service worker) + `public/offline.html`
+- `src/app/offline/page.tsx`
+- Push notification helper: `src/lib/pushNotifications.ts` (registers the SW)
+
+**TODO:**
+
+- [ ] Register the service worker globally (today only `pushNotifications.ts` does)
+- [ ] Offline caching strategy for dashboard routes
+- [ ] Store-ready wrapper (React Native or Capacitor) if the stores are required
+- [ ] Quick actions: approve leave, mark attendance
 
 **Features to implement:**
 
@@ -524,86 +554,94 @@
 
 ### 3.2 Compliance & Audit Trail
 
-**Status:** ⚠️ Partially implemented
+**Status:** ⚠️ Mostly implemented (dedicated module + audit UI shipped; coverage of _all_ writes still incomplete)
 
 **Existing:**
 
-- Schema: `convex/schema/security.ts`
-- Backend: `convex/security.ts`
-- `convex/admin.ts` — auditLogs query
+- Schema: `convex/schema/{security,compliance}.ts`
+- Backend: `convex/security.ts`, `convex/compliance.ts`
+- Route + UI: `src/app/(dashboard)/compliance/page.tsx`, `src/components/compliance/ComplianceClient.tsx`
+- Audit UI: `src/app/(dashboard)/audit/page.tsx` — `AuditLogClient`, `AuditFilters`, `AuditDetailSheet`
+- Data Browser with before/after JSON + one-click undo: `adminDbChanges`, `src/components/superadmin/DataBrowserClient.tsx`
+- Backups: `convex/backups.ts`, `convex/backups.cron.ts`, `convex/schema/backups.ts`
 
 **TODO:**
 
-- [ ] Full audit logging for ALL actions (who, what, when, IP, before/after)
-- [ ] Audit log UI with filters (user, action, date)
-- [ ] GDPR tools (data export, right to delete)
-- [ ] Compliance dashboard
+- [ ] Full audit logging for ALL actions (who, what, when, IP, before/after) — rows exist, coverage is uneven
+- [ ] GDPR self-service data export + right to erasure
 - [ ] Data retention policies
+- [ ] SOC 2 evidence automation — see `docs/soc2-type2-readiness.md` (203-line control map, mostly `[ ]`)
 
 ---
 
 ### 3.3 Asset / IT Equipment Management
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                                  |
+| ------- | ------ | ------------------------------------------------------ |
+| Schema  | ✅     | `convex/schema/assets.ts`                              |
+| Backend | ✅     | `convex/assets.ts` (37 exports)                        |
+| UI      | ✅     | `src/components/assets/AssetsClient.tsx` (2 316 lines) |
+| Route   | ✅     | `src/app/(dashboard)/assets/page.tsx`                  |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅                             |
 
-- Schema: `convex/schema/assets.ts` (assets, assetAssignments, assetCategories)
-- Backend: `convex/assets.ts`
-- UI: `src/components/assets/AssetsClient.tsx`
-- Route: `src/app/(dashboard)/assets/page.tsx`
+**Tables:** `assetCatalog`, `assetAssignments`, `assetMaintenance`, `assetHistory`, `assetRequests`
 
-**Features to implement:**
+**Features implemented:**
 
-- Equipment inventory (laptops, phones, keys)
-- Assignment/return (linked to onboarding/offboarding)
-- Statuses: available, assigned, repair, retired
-- QR codes for quick scanning
-- Return reminders
+- Equipment inventory (catalog with categories)
+- Assignment / return with assigned-by / assigned-at tracking
+- Maintenance log
+- Asset requests (employee → admin approval)
+- Full asset history trail
+- PDF export for asset acts (`src/lib/assetActContent.ts`)
 
 ---
 
 ### 3.4 Company News Feed / Announcements
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                                    |
+| ------- | ------ | -------------------------------------------------------- |
+| Schema  | ✅     | `convex/schema/news.ts`                                  |
+| Backend | ✅     | `convex/news.ts` (12 exports)                            |
+| UI      | ✅     | `src/components/news/NewsClient.tsx`, `NewsComposer.tsx` |
+| Route   | ✅     | `src/app/(dashboard)/news/page.tsx`                      |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅                               |
 
-- Schema: `convex/schema/news.ts` (announcements, reactions, comments)
-- Backend: `convex/news.ts`
-- UI: `src/components/news/NewsClient.tsx`
-- Route: `src/app/(dashboard)/news/page.tsx`
+**Tables:** `announcements`, `announcementSchedule`, `announcementReactions`, `announcementComments`, `announcementViews`
 
-**Features to implement:**
+**Features implemented:**
 
-- Company news feed
-- Categories: news, events, birthdays, achievements
-- Rich-text editor for posts
+- Company feed with composer, featured/pinned posts
 - Reactions and comments
-- Pin important announcements
-- Targeting (by department, role)
+- View tracking
+- Scheduled announcements (`announcementSchedule`)
+- Categories (news, events, birthdays, achievements)
 
 ---
 
 ### 3.5 Custom Workflow Builder (Visual)
 
-**Status:** ⚠️ Partially implemented (backend only, no UI)
+**Status:** ⚠️ Built, but gated to the platform operator (superadmin) — not sold to customers yet
 
 **Existing:**
 
 - Schema: `convex/schema/automation.ts`
 - Backend: `convex/automation.ts`, `convex/automationActions.ts`, `convex/automationMutations.ts`, `convex/automationTest.ts`
+- UI: `src/components/automation/AutomationClient.tsx`
+- **Visual drag-and-drop builder: `src/components/workflow/WorkflowBuilderClient.tsx`** (React Flow)
+- Route: `src/app/(dashboard)/superadmin/automation/page.tsx`, lazily mounted from `SuperadminHubClient.tsx`
 
-**TODO:**
+**TODO (this is the real gap):**
 
-- [ ] Visual drag-and-drop builder (React Flow / xyflow)
-- [ ] Route: `src/app/(dashboard)/automation/page.tsx`
-- [ ] UI: `src/components/automation/AutomationClient.tsx`
-- [ ] Nodes: trigger → condition → action
-- [ ] Triggers: new employee, leave approved, birthday, etc.
-- [ ] Actions: send email, create task, notify, update field
-- [ ] Workflow templates
-- [ ] Execution logging
+- [ ] Expose the builder to org admins at `src/app/(dashboard)/automation/page.tsx`
+- [ ] Org-scoped workflows (today the console is platform-level)
+- [ ] Workflow templates for customers
+- [ ] Execution logging UI for the tenant
+- [ ] Entitlement gate (`automation` module exists in the billing catalog)
 
 ---
 
@@ -634,20 +672,23 @@
 
 ### 3.7 PDF Reports / Export
 
-**Status:** 🔲 Not started
+**Status:** ⚠️ Mostly implemented (export helpers exist per module; no unified report builder)
 
-**Required files:**
+**Existing:**
 
-- `src/lib/pdf.ts` (react-pdf or puppeteer wrapper)
-- Export utilities for each module
+- `src/lib/exportDocument.ts` (1 486 lines) — shared export pipeline
+- `src/lib/pdf.ts`-style helpers: `simplePdf.ts`, `exportMyPayslip.ts`, `exportDriversToPDF.ts`, `assetActContent.ts`
+- PDF generation via `pdfmake` (dependency) + `exceljs` for spreadsheets
+- Route + UI: `src/app/(dashboard)/reports/page.tsx` (648 lines, KPI + charts)
+- Signed e-signature documents export to PDF with audit trail
+- Armenian payroll → SRC filing sheet Excel: `src/app/api/payroll/src-export/route.ts`
+- Leave timesheet export: `src/app/api/leave/timesheet-export/route.ts`
 
-**Features to implement:**
+**TODO:**
 
-- Export: employee profile, payslip, leave report
-- Export: attendance report, team report
-- Customizable report templates
-- Bulk export (multiple employees)
-- Scheduled reports (auto-email)
+- [ ] Unified report builder (pick columns → template)
+- [ ] Bulk export across a selected employee set
+- [ ] Scheduled reports (auto-email via cron + Resend)
 
 ---
 
@@ -726,27 +767,40 @@ This is the wedge against Armsoft/1C for Armenian accountants: payroll → one c
 
 ### 3.11 Local Payment Providers (Idram / ArCa)
 
-**Status:** ✅ Scaffolding implemented (needs PSP credentials to go live)
+**Status:** ✅ End-to-end (checkout is complete; only the merchant credentials themselves are outstanding)
 
-| Layer   | Status | Files                                                                    |
-| ------- | ------ | ------------------------------------------------------------------------ |
-| Schema  | ✅     | `paymentProviderConfigs`, `localPayments` in `convex/schema/settings.ts` |
-| Backend | ✅     | `convex/payments.ts` (PSP-agnostic)                                      |
-| Billing | ✅     | `convex/subscriptions.ts` — `source: 'stripe' \| 'local'`                |
+| Layer        | Status | Files                                                                            |
+| ------------ | ------ | -------------------------------------------------------------------------------- |
+| Schema       | ✅     | `paymentProviderConfigs`, `localPayments` in `convex/schema/settings.ts`         |
+| Crypto       | ✅     | `convex/lib/paymentSignature.ts` — HMAC-SHA256, handshake, payload normalization |
+| Backend      | ✅     | `convex/payments.ts` (PSP-agnostic)                                              |
+| Webhook      | ✅     | `convex/http.ts` — `POST /webhooks/payments/<provider>`                          |
+| Checkout UI  | ✅     | `UpgradeModal` → local rails; `PaymentProvidersClient` (superadmin)              |
+| Result pages | ✅     | `/checkout/local/success`, `/checkout/local/fail`                                |
+| Tests        | ✅     | `src/__tests__/payments-local.test.ts` (26 cases, cross-checked vs Node crypto)  |
+| Billing      | ✅     | `convex/subscriptions.ts` — `source: 'stripe' \| 'local'`                        |
 
 **Features implemented:**
 
-- PSP-agnostic provider configs (Idram, Ameriabank/ArCa acquiring) stored per-org with server-only secrets
-- Webhook ingestion mutation with HMAC-SHA256 verification (timing-safe compare)
-- `localPayments` ledger (idempotent by provider payment id)
-- Subscription activation path shared with Stripe (`activateSubscription` with source), plan/period resolution reused
-- Superadmin manual-activation fallback unchanged
+- PSP-agnostic provider configs (Idram, Ameriabank / Ardshinbank / FastBank ArCa acquiring) with server-only secrets
+- **Handshake builder** covering both real PSP shapes: Idram-style form POST (`EDP_*` fields) and ArCa-style hosted-page redirect; AMD amounts are passed in by the caller so the backend never guesses FX
+- **Webhook endpoint** at `/webhooks/payments/<provider>`: HMAC-SHA256 over the raw body, 401 on a bad signature, 202 when disabled, 404 for an unknown order, 413 on oversized payloads
+- **Superadmin console** at `/superadmin/payments`: enable/disable, merchant id, write-only secret, endpoint override, return paths, the webhook URL to paste into the bank cabinet, and the local payment ledger
+- **Checkout entry** in the upgrade modal — one button per enabled provider, rendered only when a provider is enabled and sealed
+- `localPayments` ledger, idempotent by `orderId`, so a PSP retry never double-charges
+- Subscription activation through the same path Stripe uses, so plans/entitlements resolve identically
 
-**TODO (blocks go-live):**
+**Bug found and fixed while wiring this up (would have broken go-live on day one):**
 
-- [ ] Idram/ArCa merchant credentials + their exact webhook signature scheme per provider
-- [ ] Checkout handoff to PSP hosted page
-- [ ] Superadmin UI for provider configs
+`hmacSha256Hex` hashed the **hex string** of the inner digest in the outer round instead of its raw 32 bytes,
+and shortened long keys to a 64-character hex string rather than the RFC 2104 digest. Every real PSP
+signature would have been rejected — and it was invisible because the function had no caller and no test.
+Fixed, with `sha256BytesHex` extracted in `convex/lib/sha256.ts` so digests are never routed through
+UTF-8 encoding. Now verified against `crypto.createHmac` (short key, long key, empty key, non-ASCII body).
+
+**TODO (the only true blocker):**
+
+- [ ] Idram / bank merchant credentials, and the exact per-bank field & signature-header names from the signed merchant specification — the code paths are in place and configurable, but the spec must be confirmed before taking real money
 
 ---
 
@@ -914,33 +968,47 @@ This is the wedge against Armsoft/1C for Armenian accountants: payroll → one c
 ## Implementation Priority Order
 
 ```
-PHASE 2 (Competitive Edge — highest impact first):
-  2.4 Visual Org Chart ............... ✅ DONE (full i18n, tree layout)
+PHASE 2 (Competitive Edge):
   2.1 LMS ............................ ✅ DONE (full i18n, all core features)
-  2.2 Compensation Management ........ ⚠️ DONE (core + UI, HY + budgeting pending)
-  2.5 Document Management ............ ⚠️ DONE (core + UI + templates, HY pending)
+  2.2 Compensation Management ........ ⚠️ DONE (core + UI; HY translations + raise budgeting pending)
+  2.3 Benefits Administration ........ ✅ DONE (plans, wallets, enrollments, claims)
+  2.4 Visual Org Chart ............... ✅ DONE (full i18n, tree built from reporting line)
+  2.5 Document Management ............ ⚠️ DONE (core + UI + templates; HY pending)
+  2.6 Expense Management ............. ✅ DONE (policies, limits, approval, analytics)
+  2.7 Succession Planning ............ 🔲 NOT STARTED — the only true Phase 2 gap
   3.6 Employee Directory ............. ✅ DONE (full CRUD, departments, positions)
-  2.6 Expense Management ............. 🔲 ~3-4 days
-  2.3 Benefits Administration ........ 🔲 ~3-4 days
-  2.7 Succession Planning ............ 🔲 ~3-4 days
 
 PHASE 3 (Differentiation):
-  3.7 PDF Reports .................... 🔲 ~2-3 days  (quick win)
-  3.4 Company News Feed .............. 🔲 ~2-3 days
-  3.2 Compliance & Audit Trail ....... ⚠️ ~3-4 days (partial - backend only)
-  3.1 Mobile App (PWA) ............... 🔲 ~5-7 days
-  3.3 Asset Management ............... 🔲 ~3-4 days
-  3.5 Custom Workflow Builder ........ ⚠️ ~7-10 days (backend only, no UI)
-  3.8 Career Development ............. 🔲 ~4-5 days
+  3.1 Mobile App (PWA) ............... ⚠️ PARTIAL (manifest + SW + offline.html; SW registered only by the push helper)
+  3.2 Compliance & Audit Trail ....... ⚠️ MOSTLY DONE (module + audit UI + one-click undo; write coverage uneven)
+  3.3 Asset Management ............... ✅ DONE (catalog, assignments, maintenance, requests, history)
+  3.4 Company News Feed .............. ✅ DONE (feed, reactions, comments, scheduling)
+  3.5 Custom Workflow Builder ........ ⚠️ BUILT BUT SUPERADMIN-ONLY (visual builder exists; not sold to tenants)
+  3.7 PDF Reports / Export ........... ⚠️ MOSTLY DONE (per-module exporters; no unified builder)
+  3.8 Career Development ............. 🔲 NOT STARTED
   3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
   3.10 SRC Payroll Export (AM) ....... ✅ DONE (tested, Excel, ՀՎՀՀ)
   3.11 Local Payments (Idram/ArCa) ... ✅ SCAFFOLDED (awaiting PSP credentials)
 
 PHASE 1 (Remaining TODOs):
-  1.3 Recruitment email templates .... ✅ DONE (Resend integration, 4 templates)
-  1.1 Performance notifications ........ ✅ DONE (cron: checkDeadlineNotifications)
+  1.1 Performance notifications ...... ✅ DONE (cron: checkDeadlineNotifications)
   1.2 OKR reminders .................. ✅ DONE (cron: sendWeeklyCheckinReminders)
-  1.4 Onboarding integrations ........ ⚠️ DONE (cron: activateOnboardingTasks, sendOnboardingOverdueReminders)
+  1.3 Recruitment email templates .... ✅ DONE (Resend integration, 4 templates)
+  1.4 Onboarding integrations ........ ✅ DONE (cron: activateOnboardingTasks, sendOnboardingOverdueReminders)
+
+REAL REMAINING PRODUCT WORK (after re-verification — this is the honest list):
+  - Succession planning (9-box, key positions, successors) ........ 🔲 ~3-4 days
+  - Career development (skill matrix, tracks, gap analysis) ....... 🔲 ~4-5 days
+  - Workflow builder for TENANTS, not just superadmin ............. ⚠️ ~5-7 days
+  - Mobile: store-ready build OR global service-worker registration  ⚠️ ~5-7 days
+  - Unified report builder + scheduled exports .................... ⚠️ ~2-3 days
+  - Public API + webhooks for customers (currently `coming`) ....... 🔲 ~10-15 days
+  - HY translations: compensation / documents / recognition ........ ⚠️ ~1 day
+
+NOT code tasks — these cannot be shipped from the repository:
+  - SOC 2 Type II certification (see docs/soc2-type2-readiness.md)
+  - App Store / Google Play presence
+  - Brand, case studies, sales channels, funding
 ```
 
 ---
@@ -1035,30 +1103,75 @@ export default function ModulePage() {
 | Multi-language (3+)                             |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
 | **LMS**                                         |      ✅      |    ✅    |   ❌    |    ❌    |    ✅    |   ❌    |
 | **Compensation**                                |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Benefits**                                    |      🔲      |    ✅    |   ❌    |    ✅    |    ❌    |   ✅    |
+| **Benefits**                                    |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ✅    |
 | **Org Chart**                                   |      ✅      |    ❌    |   ✅    |    ✅    |    ❌    |   ❌    |
 | **Documents**                                   |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Expenses**                                    |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Succession**                                  |      🔲      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
-| **PWA/Mobile**                                  |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Expenses**                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Assets / IT equipment**                       |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **News / announcements**                        |      ✅      |    ❌    |   ✅    |    ❌    |    ❌    |   ❌    |
+| **Video conferencing**                          |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Meeting rooms**                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Overtime**                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Projects**                                    |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Strategy maps**                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Compliance (GDPR)**                           |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Security center**                             |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **SCIM + SSO (SAML / OIDC)**                    |      ✅      |    ✅    |   ✅    |    ⚠️    |    ❌    |   ✅    |
+| **Telegram integration**                        |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Shift Scheduling**                            |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
 | **SRC Tax Export (AM)**                         |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Local PSP (Idram/ArCa)**                      |      🔶      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **TOTAL**                                       |   **~32**    | **~17**  | **~15** | **~11**  | **~10**  | **~14** |
+| **Succession**                                  |      🔲      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
+| **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
+| **Public API + webhooks for customers**         |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
+| **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
+| **TOTAL (shipped features)**                    |   **~41**    | **~19**  | **~16** | **~13**  | **~11**  | **~16** |
 
-**Shipped since last audit:** Shift Scheduling, SRC-ready payroll export (Armenia Tax Service), local PSP payment scaffolding — the last two exist in **no** global competitor.
-**After completing Phase 2:** This project will have **~35 features**, surpassing all competitors.
-**After completing Phase 3:** This project will have **~42 features**, becoming the most comprehensive HR platform — and the only one natively built for Armenian legal reality.
+> **Competitor marks are indicative**, compiled from public vendor material as of 2026-09, and
+> must be re-verified per deal before being used in a sales document. This project's column was
+> re-verified against the repository on 2026-09-15.
+
+**Shipped and re-verified since the last audit:** Shift Scheduling, SRC-ready payroll export
+(Armenia Tax Service), local PSP scaffolding, **Benefits, Expenses, Assets, News, Compliance,
+Projects, Overtime, Strategy Maps, Telegram** — the Armenian-tax and local-PSP rows exist in
+**no** global competitor.
+
+### The distinction that actually decides the market
+
+Feature count is not the scoreboard. On **shipped capability** this project now sits above the
+mid-market set (BambooHR, HiBob, Personio) and roughly level with Rippling/Deel minus their
+finance infrastructure. What still separates it from the market leaders is **not features**:
+
+| Decides the deal                     | Status here                            |
+| ------------------------------------ | -------------------------------------- |
+| Native mobile apps                   | ❌ missing (PWA partial)               |
+| Public API + integration marketplace | ❌ missing (billing catalog: `coming`) |
+| SOC 2 Type II certificate            | ⚠️ readiness doc only                  |
+| Global payroll / EOR / entity        | ❌ out of scope by design              |
+| Support SLAs, DPA, legal entity      | ⚠️ not evidenced                       |
+| Brand, references, channel           | ❌ none                                |
+
+**Therefore the winnable position is not "beat Workday everywhere" — it is "be the only correct
+answer in Armenia and the Armenian/Russian-speaking diaspora",** where SRC filing, Idram/ArCa,
+imID, Armsoft and a native Armenian locale are things no global vendor will build.
 
 ---
 
 ## How to Use This File
 
-1. Pick a module number (e.g., "2.1" for LMS)
+1. Pick a module number (e.g., "2.7" for Succession Planning)
 2. Check the "Required files" section for what needs to be created
 3. Follow the "Technical Standards" for file structure and patterns
 4. Update this file after completing each module (change 🔲 → ✅)
 5. Update the competitive analysis table
 
-> 💡 **Next recommended module:** 2.6 Expense Management (~3-4 days) or 2.3 Benefits Administration (~3-4 days)
+> 💡 **Next recommended module:** 2.7 Succession Planning (~3-4 days) — the only genuinely
+> unstarted item in Phase 2. Everything else listed as "Not started" before 2026-09-15 is
+> already shipped; see the Verification note at the top.
+
+> ⚠️ **Before editing any status below:** check the code. The 2026-09-15 audit found four modules
+> marked "Not started" that were fully implemented for some time.

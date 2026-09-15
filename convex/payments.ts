@@ -23,68 +23,30 @@
  */
 
 import { v } from 'convex/values';
-import { internalMutation, mutation, query } from './_generated/server';
+import { internalMutation, internalQuery, mutation, query } from './_generated/server';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { isSuperadmin } from './lib/auth';
 import { requireOrgAdmin } from './lib/rbac';
-import { sha256Hex } from './lib/sha256';
+import { buildHandshake, type PaymentProvider } from './lib/paymentSignature';
 import { notify } from './lib/notify';
 
-// ── Webhook signature verification ──────────────────────────────────────────
-// HMAC-SHA256 (RFC 2104) built on the pure-TS sha256Hex the document-integrity
-// path already uses — no Node crypto needed in mutations.
-//
-// Encoding note: PSP secrets are ASCII (hex/base64 keys), and XOR-ing an ASCII
-// byte with 0x36/0x5c keeps it < 0x80, so the padded key blocks survive the
-// UTF-8 encoder inside sha256Hex byte-for-byte. Keys with non-ASCII bytes are
-// rejected rather than silently mis-signed.
-
-function hmacSha256Hex(key: string, message: string): string {
-  if (!/^[\x00-\x7F]*$/.test(key)) {
-    throw new Error('Payment webhook secret must be ASCII');
-  }
-  const block = 64;
-  let keyChars = key;
-  if (keyChars.length > block) keyChars = sha256Hex(keyChars);
-  // SHA-256 hex is ASCII too.
-  keyChars = keyChars.padEnd(block, '\u0000');
-
-  let ipad = '';
-  let opad = '';
-  for (let i = 0; i < block; i++) {
-    const k = keyChars.charCodeAt(i);
-    ipad += String.fromCharCode(k ^ 0x36);
-    opad += String.fromCharCode(k ^ 0x5c);
-  }
-  const inner = sha256Hex(ipad + message);
-  return sha256Hex(opad + inner);
-}
-
-/** Constant-time-ish comparison — never short-circuits on the first byte. */
-function safeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
-/** Verify a provider webhook signature over the raw request body. */
-export function verifyPaymentSignature(
-  secretKey: string,
-  rawBody: string,
-  signatureHex: string,
-): boolean {
-  try {
-    const expected = hmacSha256Hex(secretKey, rawBody);
-    return safeEqual(expected, signatureHex.trim().toLowerCase());
-  } catch {
-    return false;
-  }
-}
-
-export type PaymentProvider = 'idram' | 'ameriabank' | 'ardshinbank' | 'fastbank';
+// The pure half — HMAC verification, handshake building and PSP payload
+// normalization — lives in `lib/paymentSignature` so the HTTP router can import
+// it without loading this module's registered functions (see that file's
+// header for why that matters). Re-exported here so `api.payments` and the
+// tests keep one import site.
+// Named re-exports rather than `export *`: Convex analyses a module's exports
+// to find registered functions, and an explicit list keeps that analysis (and
+// the generated API) unambiguous.
+export {
+  PAYMENT_PROVIDERS,
+  buildHandshake,
+  extractOrderId,
+  hmacSha256Hex,
+  normalizePspSuccess,
+  verifyPaymentSignature,
+} from './lib/paymentSignature';
+export type { PaymentHandshake, PaymentProvider } from './lib/paymentSignature';
 
 /** Providers this deployment can accept — set by the superadmin. */
 const PROVIDER_LABELS: Record<PaymentProvider, string> = {
@@ -129,6 +91,35 @@ export const listEnabledProviders = query({
         provider: r.provider as PaymentProvider,
         label: PROVIDER_LABELS[r.provider as PaymentProvider] ?? r.provider,
       }));
+  },
+});
+
+/**
+ * Server-only: enablement + webhook secret for one provider.
+ *
+ * The HTTP webhook handler is an `httpAction` and therefore has no `ctx.db`,
+ * so it resolves the secret through this query. Never expose it to a client.
+ */
+export const getWebhookConfig = internalQuery({
+  args: {
+    provider: v.union(
+      v.literal('idram'),
+      v.literal('ameriabank'),
+      v.literal('ardshinbank'),
+      v.literal('fastbank'),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query('paymentProviderConfigs')
+      .withIndex('by_provider', (q) => q.eq('provider', args.provider))
+      .first();
+    if (!row) return null;
+    return {
+      isEnabled: row.isEnabled,
+      secretKey: row.secretKey ?? null,
+      merchantId: row.merchantId ?? null,
+    };
   },
 });
 
@@ -198,6 +189,14 @@ export const createLocalPayment = mutation({
     ),
     /** Months purchased up front (local PSPs rarely do true subscriptions). */
     months: v.optional(v.number()),
+    /**
+     * AMD amount for the PSP handshake. Local providers bill in AMD and the
+     * backend deliberately never guesses FX — the caller's UI converts at the
+     * same rate the pricing page shows and passes the number in.
+     */
+    amountAmd: v.optional(v.number()),
+    /** Browser origin, so PSP return URLs are absolute. */
+    origin: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
@@ -244,15 +243,38 @@ export const createLocalPayment = mutation({
       updatedAt: now,
     });
 
+    // PSPs redirect the customer's browser, so return URLs must be absolute.
+    const appUrl = (args.origin || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+    const successUrl = `${appUrl}${config.successPath ?? '/checkout/local/success'}`;
+    const failUrl = `${appUrl}${config.failPath ?? '/checkout/local/fail'}`;
+
+    const amountAmd = args.amountAmd ?? 0;
+    if (amountAmd <= 0) {
+      throw new Error('amountAmd is required — the PSP is billed in AMD');
+    }
+
+    const handshake = buildHandshake({
+      provider: args.provider,
+      merchantId: config.merchantId,
+      orderId,
+      amountAmd,
+      description: `Strata ${args.plan} plan, ${months} month(s)`,
+      successUrl,
+      failUrl,
+      apiUrl: config.apiUrl,
+    });
+
     return {
       paymentId,
       orderId,
       provider: args.provider,
-      // Idram-style: the customer is POSTed/redirected with these fields.
       merchantId: config.merchantId,
       amountUsd: usd,
-      successUrl: config.successPath ?? '/checkout/local/success',
-      failUrl: config.failPath ?? '/checkout/local/fail',
+      amountAmd,
+      successUrl,
+      failUrl,
+      /** Drive the browser: POST `fields` to `action`, or navigate to `url`. */
+      handshake,
     };
   },
 });

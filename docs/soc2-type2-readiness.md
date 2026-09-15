@@ -175,6 +175,46 @@ Automate everything below into a monthly folder (`/evidence/2026-MM/`):
 per job — that's a ready-made control-operation log for backups, webhook
 maintenance, and retention sweeps.
 
+### 7.1 Automated evidence collector (shipped 2026-09-15)
+
+Ten of the controls above now collect themselves:
+
+```bash
+npm run soc2:evidence            # writes reports/soc2-evidence-<date>.md
+npm run soc2:evidence:stdout     # print to terminal instead
+node scripts/soc2-evidence.mjs --strict   # exit 1 if any control fails (CI-friendly)
+```
+
+Each run reads repository state only — no network, no database, no secrets — and
+produces a dated artefact with per-control status, the evidence lines behind it and
+the TSC reference:
+
+| Automated control                                | TSC   | What it reads                                                                                                            |
+| ------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------ |
+| Change management (PR gates + commit discipline) | CC8.1 | `.github/workflows/ci.yml`, `package.json`, commitlint, husky                                                            |
+| Coverage gate                                    | CC4.1 | `jest.config.js` thresholds, `badges/coverage.json`                                                                      |
+| Dependency + SAST scanning                       | CC9.2 | CI workflow (npm audit, dependency review, CodeQL)                                                                       |
+| Secret inventory                                 | CC6.5 | `.env.example` — key names only, asserts no live values; `NEXT_PUBLIC_*` explicitly excluded (browser-exposed by design) |
+| Server-side authorization                        | CC6.1 | counts `getAuthCaller`, capabilities, entitlement assertions, superadmin exclusions across `convex/`                     |
+| Webhook signing                                  | CC6.7 | `convex/lib/paymentSignature.ts`, `convex/webhooks/protocol.ts`                                                          |
+| Credential hashing at rest                       | CC6.5 | SCIM token / API key storage paths                                                                                       |
+| Scheduled operations                             | CC7.2 | `convex/crons.ts` + pause-aware dispatcher                                                                               |
+| Backups                                          | A1.2  | `convex/schema/backups.ts`, `convex/backups.cron.ts`, retention config                                                   |
+| Privileged access                                | CC6.3 | impersonation sessions, time-boxed tokens, lockout tracking                                                              |
+
+**What it deliberately does NOT do:** pass judgement on the ten human controls
+(security policy, risk register, restore test, access review…). Those are emitted
+as a MANUAL checklist with the exact procedure, because claiming them without a
+human sign-off would be evidence theatre.
+
+**Cadence:** run monthly from a scheduled job and keep every output — Type II is
+about controls operating _consistently over 3–12 months_, so the value is the
+series, not any single report. `--strict` makes it a CI gate: any control that
+drops from pass fails the build.
+
+> The report is evidence that controls are _configured_. It is not an audit
+> opinion and does not replace §2's manual checklist.
+
 ---
 
 ## 8. Timeline (realistic for a solo/small team)

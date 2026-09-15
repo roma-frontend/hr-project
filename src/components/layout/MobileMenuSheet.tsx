@@ -238,6 +238,12 @@ const GROUPS: readonly MenuGroup[] = [
       },
       { href: '/superadmin/backups', labelKey: 'nav.backups', icon: Database, roles: SUPERADMIN },
       {
+        href: '/superadmin/payments',
+        labelKey: 'nav.payments',
+        icon: CreditCard,
+        roles: SUPERADMIN,
+      },
+      {
         href: '/superadmin/database',
         labelKey: 'nav.database',
         icon: Table2,

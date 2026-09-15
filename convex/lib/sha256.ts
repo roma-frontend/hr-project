@@ -39,7 +39,7 @@ function rotr(value: number, bits: number): number {
  * usable anywhere (and avoids surprises with lone surrogates, which are encoded
  * as U+FFFD exactly like TextEncoder does).
  */
-function utf8Bytes(input: string): number[] {
+export function utf8Bytes(input: string): number[] {
   if (typeof TextEncoder !== 'undefined') {
     return Array.from(new TextEncoder().encode(input));
   }
@@ -76,9 +76,19 @@ function utf8Bytes(input: string): number[] {
   return bytes;
 }
 
-/** Lowercase hex SHA-256 digest of a UTF-8 string. */
+/**
+ * Lowercase hex SHA-256 digest of a UTF-8 string.
+ *
+ * The input is UTF-8 encoded first, so this cannot hash arbitrary binary: a
+ * byte ≥ 0x80 becomes two bytes on the way in. Use `sha256BytesHex` whenever
+ * the input is already bytes — a digest, a key block, anything from HMAC.
+ */
 export function sha256Hex(message: string): string {
-  const bytes = utf8Bytes(message);
+  return sha256BytesHex(utf8Bytes(message));
+}
+
+/** Lowercase hex SHA-256 digest of a raw byte array (each entry 0–255). */
+export function sha256BytesHex(bytes: number[]): string {
   const bitLength = bytes.length * 8;
 
   // Padding: 0x80, then zeros until length ≡ 56 (mod 64), then the 64-bit length.

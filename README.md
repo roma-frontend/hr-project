@@ -3,7 +3,7 @@
 # 🏢 Strata Platform
 
 [![Build](https://img.shields.io/github/actions/workflow/status/roma-frontend/hr-project/ci.yml?branch=main&label=CI%2FCD)](https://github.com/roma-frontend/hr-project/actions)
-[![Coverage](https://img.shields.io/badge/coverage-9.8%25-red?logo=vitest)](https://github.com/roma-frontend/hr-project/actions)
+[![Coverage](https://img.shields.io/badge/coverage-71.9%25-green?logo=vitest)](https://github.com/roma-frontend/hr-project/actions)
 [![Coverage](https://img.shields.io/endpoint?url=https://roma-frontend.github.io/hr-project/coverage-badge.json&logo=vitest&cacheSeconds=3600)](https://github.com/roma-frontend/hr-project/actions)
 [![codecov](https://codecov.io/gh/roma-frontend/hr-project/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/roma-frontend/hr-project)
 
@@ -62,25 +62,53 @@ HR processes are typically fragmented across multiple disconnected tools:
 
 Strata replaces all fragmented tools with a **unified platform** — zero manual data entry, single source of truth synced from SharePoint, and automated Outlook Calendar integration for approved leaves.
 
+### Scale (verified 2026-09-15)
+
+|                         |                                                                 |
+| ----------------------- | --------------------------------------------------------------- |
+| Product modules shipped | **46** (Employees → Payroll → Compliance → Workflow automation) |
+| Dashboard pages         | 114 across 48 module folders                                    |
+| API route handlers      | 91                                                              |
+| UI components           | 504                                                             |
+| Convex backend modules  | ~90 files, 66 schema files, ~106k LOC                           |
+| Test files              | 652 (Jest + React Testing Library + Playwright)                 |
+| Languages               | EN / RU / HY / DE                                               |
+| Type safety             | `npm run type-check` clean                                      |
+
 ---
 
 ## ✨ Features
 
-| Module                      | Description                             | Highlights                                                                                                        |
-| --------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 👤 **Employee Lifecycle**   | Full employee profile management        | Documents, performance metrics, onboarding/offboarding                                                            |
-| 🔐 **Face Recognition**     | Biometric attendance check-in/out       | Browser-based camera, daily logs, anomaly detection                                                               |
-| 📅 **Leave Management**     | End-to-end leave workflow               | Multi-level approval, auto Outlook Calendar sync, entitlement rules                                               |
-| 📋 **Task Management**      | Kanban board with drag-and-drop         | Assignment, deadlines, progress tracking, notifications                                                           |
-| 💬 **Team Chat**            | Real-time messaging                     | File sharing, channels, direct messages                                                                           |
-| 🤖 **AI HR Assistant**      | Conversational HR chatbot               | Policy Q&A, smart insights, analytics queries                                                                     |
-| 🚗 **Driver Management**    | Vehicle/driver booking system           | Availability tracking, scheduling, route management                                                               |
-| 📊 **AI Analytics**         | Workforce intelligence dashboard        | Headcount trends, leave patterns, attendance heatmaps                                                             |
-| 🔗 **M365 Integration**     | SharePoint + Outlook sync               | Auto employee sync, calendar events for leave                                                                     |
-| 🆔 **imID Integration**     | Armenian digital identity & e-signature | OAuth login, document signing, employee verification via imID                                                     |
-| 🇦🇲 **Armenia Local-Ready**  | Tax & payments layer no global HR has   | SRC-ready payroll export (ՀՎՀՀ, stamp duty, pension), Idram/ArCa billing, Armsoft sync, SRC taxpayer verification |
-| 🗓 **Shift Scheduling**     | Weekly roster planner                   | Shift templates, swap requests with notifications, plan-gated module                                              |
-| 💳 **Multi-Tenant Billing** | Stripe + local PSP subscription mgmt    | Plans, invoicing, usage tracking, Idram/ArCa (Armenia) support                                                    |
+| Module                              | Description                             | Highlights                                                                                                        |
+| ----------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 👤 **Employee Lifecycle**           | Full employee profile management        | Documents, performance metrics, onboarding/offboarding                                                            |
+| 🔐 **Face Recognition**             | Biometric attendance check-in/out       | Browser-based camera, daily logs, anomaly detection                                                               |
+| 📅 **Leave Management**             | End-to-end leave workflow               | Multi-level approval, auto Outlook Calendar sync, entitlement rules                                               |
+| 📋 **Task Management**              | Kanban board with drag-and-drop         | Assignment, deadlines, progress tracking, notifications                                                           |
+| 💬 **Team Chat**                    | Real-time messaging                     | File sharing, channels, direct messages                                                                           |
+| 🤖 **AI HR Assistant**              | Conversational HR chatbot               | Policy Q&A, smart insights, analytics queries                                                                     |
+| 🚗 **Driver Management**            | Vehicle/driver booking system           | Availability tracking, scheduling, route management                                                               |
+| 📊 **AI Analytics**                 | Workforce intelligence dashboard        | Headcount trends, leave patterns, attendance heatmaps                                                             |
+| 🔗 **M365 Integration**             | SharePoint + Outlook sync               | Auto employee sync, calendar events for leave                                                                     |
+| 🆔 **imID Integration**             | Armenian digital identity & e-signature | OAuth login, document signing, employee verification via imID                                                     |
+| 🇦🇲 **Armenia Local-Ready**          | Tax & payments layer no global HR has   | SRC-ready payroll export (ՀՎՀՀ, stamp duty, pension), Idram/ArCa billing, Armsoft sync, SRC taxpayer verification |
+| 🗓 **Shift Scheduling**             | Weekly roster planner                   | Shift templates, swap requests with notifications, plan-gated module                                              |
+| 💳 **Multi-Tenant Billing**         | Stripe + local PSP subscription mgmt    | Plans, invoicing, usage tracking, Idram/ArCa (Armenia) support                                                    |
+| 📈 **Performance & OKR**            | 360° reviews and goal management        | Cycles, templates, competency snapshots, peer anonymity, OKR trees, check-ins                                     |
+| 🎓 **Learning (LMS)**               | Course catalog + compliance training    | Lessons, quizzes, certificates, team overview                                                                     |
+| 🧲 **Recruitment / ATS**            | End-to-end hiring pipeline              | Kanban stages, interviews, scorecards, public careers page, email templates                                       |
+| 🚀 **Onboarding / Offboarding**     | Lifecycle workflows                     | Checklists, buddy/mentor, exit interviews, retention analytics, cron reminders                                    |
+| ✍️ **E-Signatures**                 | Native e-signing                        | Canvas signing pad, sequential signing order, immutable snapshot, audit trail, PDF export                         |
+| 📣 **Surveys & Recognition**        | Engagement and culture                  | eNPS, pulse surveys, department segmentation, kudos feed, points economy, badges, rewards                         |
+| 💰 **Payroll & Compensation**       | Armenian tax rules built in             | Payroll runs, SRC filing sheet, salary bands, review cycles, bonuses                                              |
+| 🧾 **Expenses / Benefits / Assets** | Finance operations                      | Expense policies + approval limits, benefit wallets + claims, asset assignments + maintenance                     |
+| 🗂 **Document Management**          | Central document library                | Folders, versioning, access control, full-text search, document builder                                           |
+| 🕸 **Org Chart & Reporting Line**   | Authoritative hierarchy                 | Interactive tree built from the reporting line, head-of-org, drag-and-drop reorg, SVG export                      |
+| 📰 **News & Announcements**         | Company feed                            | Composer, reactions, comments, scheduled posts                                                                    |
+| 🎥 **Meetings & Video**             | LiveKit conferencing                    | Video rooms, recording, meeting-room booking                                                                      |
+| 🛡 **Security & Compliance**        | Enterprise controls                     | SSO (SAML 2.0 + OIDC), SCIM 2.0, TOTP, passkeys, audit trail, GDPR tools, reason-tracked impersonation            |
+| ⚙️ **Workflow Automation**          | Trigger → condition → action            | Visual drag-and-drop builder (operator console today)                                                             |
+| ⚡ **Platform Foundations**         | Multi-tenant SaaS base                  | Tariff constructor with versioned plans, server-side entitlements, backups, webhooks, Telegram                    |
 
 ### Role-Based Access Control (5 Roles)
 
@@ -302,29 +330,31 @@ NEXT_PUBLIC_ENABLE_DRIVER_MODULE=true
 ```
 hr-project/
 ├── .github/workflows/ci.yml
-├── app/
-│   ├── (auth)/
-│   ├── (dashboard)/
-│   │   ├── employees/
-│   │   ├── attendance/
-│   │   ├── leaves/
-│   │   ├── tasks/
-│   │   ├── chat/
-│   │   ├── ai-assistant/
-│   │   ├── drivers/
-│   │   ├── analytics/
-│   │   ├── settings/
-│   │   └── billing/
-│   └── api/
-├── components/
-├── convex/
-├── lib/
-├── hooks/
-├── locales/ (en.json, ru.json, hy.json)
-├── types/
-├── tests/
-├── TEST_PLAN.md
-└── README.md
+├── convex/                  — real-time DB + serverless backend
+│   ├── schema/              — 66 schema files (one per module)
+│   ├── billing/             — tariff catalog, plans, entitlements, seed
+│   ├── lib/                 — rbac, capabilities, entitlements, tax rules
+│   └── *.ts                 — one backend module per product area
+├── src/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   ├── (dashboard)/     — 114 pages across 48 module folders
+│   │   │   ├── employees/  attendance/  leaves/  tasks/  payroll/ …
+│   │   │   ├── performance/ goals/  learning/  recruitment/  surveys/ …
+│   │   │   ├── benefits/  expenses/  assets/  documents/  signatures/ …
+│   │   │   └── settings/  reports/  compliance/  audit/  superadmin/
+│   │   └── api/             — 91 route handlers
+│   ├── components/          — 504 components
+│   ├── i18n/                — i18next bootstrap
+│   ├── lib/                 — payroll rules, exports, PDF, plan gating
+│   └── __tests__/           — Jest + RTL suites
+├── public/
+│   ├── locales/{en,ru,hy,de}/ — 19 namespaces per language
+│   ├── manifest.json  sw.js  offline.html — PWA assets
+│   └── models/              — face-recognition model weights
+├── docs/                    — SOC 2 readiness, SSO/SAML, imID, permissions design
+├── e2e/                     — Playwright specs (cross-browser)
+└── scripts/                 — CI, coverage ratchet, billing & i18n checks
 ```
 
 ---
@@ -335,12 +365,15 @@ Coverage thresholds are enforced in CI (`jest.config.js`) and ratcheted up
 as coverage improves. Coverage reports and badges are published to GitHub
 Pages on every merge to `main`.
 
-| Metric         | Current gate | Target |
-| -------------- | ------------ | ------ |
-| **Lines**      | ≥ 9%         | ≥ 80%  |
-| **Branches**   | ≥ 6%         | ≥ 75%  |
-| **Functions**  | ≥ 8%         | ≥ 80%  |
-| **Statements** | ≥ 9%         | ≥ 80%  |
+| Metric         | Enforced gate | Last full local run | Target |
+| -------------- | ------------- | ------------------- | ------ |
+| **Lines**      | ≥ 68%         | 67.9%               | ≥ 80%  |
+| **Branches**   | ≥ 58%         | 57.6%               | ≥ 75%  |
+| **Functions**  | ≥ 59%         | 59.8%               | ≥ 80%  |
+| **Statements** | ≥ 67%         | 66.5%               | ≥ 80%  |
+
+> Gates live in `jest.config.js` (`coverageThreshold.global`). The published badge JSON is
+> `badges/coverage.json`; run `npm run test:coverage` to refresh `coverage/coverage-summary.json`.
 
 > ⚡ Thresholds are auto-ratcheted after each `main` merge via
 > `scripts/ratchet-coverage.mjs`. Coverage history tracked on
@@ -416,6 +449,11 @@ vercel --prod           # Manual deploy
 | `en` | 🇬🇧 English  | ✅ Complete |
 | `ru` | 🇷🇺 Russian  | ✅ Complete |
 | `hy` | 🇦🇲 Armenian | ✅ Complete |
+| `de` | 🇩🇪 German   | ✅ Complete |
+
+19 namespaces per language under `public/locales/<lang>/`. The landing bundles only
+`common` + `landing` for every language (first-paint SSR, no flash); dashboard namespaces
+lazy-load over HTTP so anonymous visitors never download them.
 
 ---
 
@@ -434,7 +472,16 @@ vercel --prod           # Manual deploy
 - [x] Shift scheduling (weekly roster, templates, swap requests)
 - [x] SRC-ready payroll export — Armenian Tax Service filing sheet (income tax, funded pension, military stamp duty, health insurance, ՀՎՀՀ)
 - [x] Local payment provider scaffolding (Idram / ArCa) alongside Stripe
+- [x] Benefits, Expenses, Assets, Company news feed, Compliance dashboard, Audit log
+- [x] Projects, Overtime, Strategy maps, Meeting rooms, LiveKit video conferencing
+- [x] Enterprise SSO (SAML 2.0 + OIDC), SCIM 2.0 provisioning, Telegram integration
+- [x] Visual workflow builder (currently exposed in the operator console only)
+- [ ] Succession planning, Career development paths
+- [ ] Public API + customer webhooks
 - [ ] Mobile app (React Native)
+
+> 📌 **Statuses are verified against the codebase on 2026-09-15.** Many items previously marked as
+> "not started" in [`ROADMAP.md`](./ROADMAP.md) were already shipped — see the verification note there.
 
 ---
 

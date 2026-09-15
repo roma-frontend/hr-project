@@ -596,15 +596,18 @@ export const BILLING_MODULES: BillingModuleDef[] = [
     isCore: false,
     sortOrder: 203,
   },
+  // Shipped: the `/api/v1` read surface is live (convex/http.ts +
+  // convex/apiV1.ts). Metered by monthly call volume, enforced per key in
+  // `apiKeys.authorizeApiRequest` against the organization's plan.
   {
     key: 'apiAccess',
     name: 'API access',
     icon: 'Code2',
-    category: 'future',
-    status: 'coming',
+    category: 'platform',
+    status: 'active',
     isCore: false,
     settingsSchema: { apiCalls: { type: 'number', unit: 'calls/mo', min: 0 } },
-    sortOrder: 204,
+    sortOrder: 84,
   },
 ];
 

@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { getFallbackRate } from '@/lib/currency';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   Check,
@@ -46,6 +49,34 @@ interface PlanTier {
 }
 
 type TFunc = ReturnType<typeof useTranslation>['t'];
+
+/** USD list price per plan — local PSPs are billed in AMD, converted below. */
+const PLAN_USD: Record<PlanType, number> = { starter: 29, professional: 79, enterprise: 199 };
+
+interface LocalProvider {
+  provider: string;
+  label: string;
+}
+
+/**
+ * AMD amount for the PSP handshake.
+ *
+ * The backend never guesses FX (see `payments.createLocalPayment`), so the
+ * conversion lives here: an Armenian-locale visitor already sees AMD amounts on
+ * the cards and those are reused as-is; everyone else is converted at the same
+ * bundled rate the pricing page uses, so the figure matches what they were
+ * shown rather than a second, possibly staler, rate.
+ */
+function amdAmountFor(
+  plan: PlanType,
+  currency: { currency: string; starter: { amount: number }; professional: { amount: number } },
+): number {
+  if (currency.currency === 'AMD') {
+    if (plan === 'starter') return Math.round(currency.starter.amount);
+    if (plan === 'professional') return Math.round(currency.professional.amount);
+  }
+  return Math.round(PLAN_USD[plan] * getFallbackRate('hy'));
+}
 
 function buildTiers(t: TFunc): PlanTier[] {
   return [
@@ -109,6 +140,7 @@ function PlanCard({
   email,
   onClose,
   t,
+  localProviders,
 }: {
   tier: PlanTier;
   relation: PlanRelation;
@@ -117,10 +149,13 @@ function PlanCard({
   email?: string;
   onClose: () => void;
   t: TFunc;
+  localProviders: LocalProvider[];
 }) {
   const [loading, setLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState<string | null>(null);
   const router = useRouter();
   const currency = useCurrency();
+  const createLocalPayment = useMutation(api.payments.createLocalPayment);
 
   const isCurrent = relation === 'current';
   const isDowngrade = relation === 'downgrade';
@@ -163,6 +198,50 @@ function PlanCard({
       logger.error('[Stripe checkout]', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Drive a local-PSP checkout. The mutation records the order and returns the
+   * handshake; the browser then either navigates to the PSP's hosted page or
+   * POSTs the Idram field set at it. Nothing is activated until the provider's
+   * webhook arrives.
+   */
+  const handleLocalPay = async (provider: string) => {
+    if (isCurrent) return;
+    setLocalLoading(provider);
+    try {
+      const res = await createLocalPayment({
+        plan: tier.id,
+        provider: provider as 'idram' | 'ameriabank' | 'ardshinbank' | 'fastbank',
+        months: 1,
+        amountAmd: amdAmountFor(tier.id, currency),
+        origin: window.location.origin,
+      });
+
+      if (res.handshake.mode === 'redirect') {
+        window.location.href = res.handshake.url;
+        return;
+      }
+
+      // Idram-style: a real form POST, so the browser leaves with the order.
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = res.handshake.action;
+      for (const [name, value] of Object.entries(res.handshake.fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } catch (e) {
+      logger.error('[Local PSP checkout]', e);
+      onClose();
+    } finally {
+      setLocalLoading(null);
     }
   };
 
@@ -357,6 +436,36 @@ function PlanCard({
               </>
             )}
           </button>
+
+          {/*
+            Local rails (Idram / ArCa). Shown only when the superadmin has
+            enabled and sealed a provider — an unconfigured provider is not a
+            payment option, it is a dead button.
+          */}
+          {!isCurrent && localProviders.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-center text-[10px] uppercase tracking-wide text-(--text-muted)">
+                {t('billing.localResult.payLocally', 'Pay locally')}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {localProviders.map((p) => (
+                  <button
+                    key={p.provider}
+                    type="button"
+                    onClick={() => void handleLocalPay(p.provider)}
+                    disabled={loading || localLoading !== null}
+                    className="rounded-lg border border-(--border) px-2.5 py-1.5 text-[11px] font-medium text-(--text-secondary) transition hover:bg-(--background-subtle) disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {localLoading === p.provider ? (
+                      <ShieldLoader size="xs" variant="inline" />
+                    ) : (
+                      p.label
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -391,6 +500,8 @@ export function UpgradeModal({
   const email = user?.email ?? undefined;
   const currentPlan: Plan = subscription.plan;
   const tiers = buildTiers(t);
+  // Only providers the superadmin has enabled appear as customer-facing options.
+  const localProviders = useQuery(api.payments.listEnabledProviders) ?? [];
 
   const currentIndex = PLAN_ORDER.indexOf(currentPlan as PlanType);
 
@@ -453,6 +564,7 @@ export function UpgradeModal({
               email={email}
               onClose={onClose}
               t={t}
+              localProviders={localProviders}
             />
           ))}
         </div>

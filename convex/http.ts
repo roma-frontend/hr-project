@@ -12,6 +12,16 @@ import {
   WEBHOOK_MAX_BODY_BYTES,
 } from './integrations';
 import { randomToken, pkceChallenge } from './sso/protocol';
+// Imported from the pure helper module (not `./payments`) so registering this
+// router does not pull in the payments module's query/mutation definitions.
+import {
+  PAYMENT_PROVIDERS,
+  extractOrderId,
+  normalizePspSuccess,
+  verifyPaymentSignature,
+  type PaymentProvider,
+} from './lib/paymentSignature';
+import { bearerToken, type ApiScope } from './lib/apiKey';
 
 const http = httpRouter();
 
@@ -305,6 +315,267 @@ http.route({
         });
       default:
         return json(500, { error: 'Unknown outcome status' });
+    }
+  }),
+});
+
+// ── Local payment provider webhooks (Idram / ArCa acquiring) ─────────────────
+/**
+ * PSP → Strata payment webhook, one path per provider:
+ *   POST <CONVEX_SITE>/webhooks/payments/idram
+ *   POST <CONVEX_SITE>/webhooks/payments/ameriabank   (and ardshinbank, fastbank)
+ *
+ * Register the matching URL in the bank's / Idram's merchant cabinet.
+ *
+ * Verification is HMAC-SHA256 over the **raw** body with the provider's stored
+ * secret (`paymentProviderConfigs.secretKey`, set by the superadmin). The raw
+ * text is used unstripped: re-serializing JSON changes key order and whitespace
+ * and the signature would never match.
+ *
+ * A missing or wrong signature is 401 and changes nothing. A delivery for an
+ * unknown order is 404 so the PSP surfaces it instead of retrying forever.
+ * `ingestWebhook` is idempotent by `orderId`, so a PSP retry after success is a
+ * no-op rather than a second subscription.
+ */
+http.route({
+  pathPrefix: '/webhooks/payments/',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const json = (status: number, payload: Record<string, unknown>) =>
+      new Response(JSON.stringify(payload), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    const raw = new URL(request.url).pathname.split('/').filter(Boolean).pop() ?? '';
+    if (!PAYMENT_PROVIDERS.includes(raw as PaymentProvider)) {
+      return json(404, { error: `Unknown payment provider: ${raw}` });
+    }
+    const provider = raw as PaymentProvider;
+
+    // Reject an oversized body before reading it into memory or hashing it.
+    const declaredLength = Number(request.headers.get('content-length') ?? '0');
+    if (Number.isFinite(declaredLength) && declaredLength > WEBHOOK_MAX_BODY_BYTES) {
+      return json(413, { error: 'Payload too large' });
+    }
+    const body = await request.text();
+    if (body.length > WEBHOOK_MAX_BODY_BYTES) {
+      return json(413, { error: 'Payload too large' });
+    }
+
+    const config = await ctx.runQuery(internal.payments.getWebhookConfig, { provider });
+    if (!config) return json(404, { error: `Provider ${provider} is not configured` });
+    if (!config.isEnabled) {
+      // 202: authentic-enough, nothing applied — a 4xx would make the PSP
+      // disable the endpoint on its side while we are still onboarding.
+      return json(202, { ok: false, error: `Provider ${provider} is disabled` });
+    }
+    if (!config.secretKey) {
+      return json(503, { error: `Provider ${provider} has no webhook secret configured` });
+    }
+
+    const signature =
+      request.headers.get('x-signature') ??
+      request.headers.get('x-idram-signature') ??
+      request.headers.get('x-arca-signature') ??
+      '';
+    if (!verifyPaymentSignature(config.secretKey, body, signature)) {
+      return json(401, { error: 'Invalid signature' });
+    }
+
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(body) as Record<string, unknown>;
+    } catch {
+      return json(400, { error: 'Body must be JSON' });
+    }
+
+    const orderId = extractOrderId(payload);
+    if (!orderId) return json(400, { error: 'Missing orderId' });
+
+    const success = normalizePspSuccess(payload);
+
+    try {
+      const outcome = await ctx.runMutation(internal.payments.ingestWebhook, {
+        provider,
+        orderId,
+        providerRef: payload.providerRef ? String(payload.providerRef) : undefined,
+        success,
+      });
+      return json(200, { ok: true, ...outcome });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.startsWith('Unknown order')) {
+        return json(404, { error: message });
+      }
+      return json(500, { error: 'Webhook handler failed' });
+    }
+  }),
+});
+
+// ── Public API v1 ────────────────────────────────────────────────────────────
+/**
+ * Customer-facing read API for integrations (HRIS sync, payroll export, BI).
+ *
+ * Base: `<CONVEX_SITE>/api/v1`
+ * Auth: `Authorization: Bearer strata_…` — a key created in Settings → API.
+ *
+ * Design notes that matter more than the routing:
+ *
+ *   1. The organization is resolved from the KEY, never from the request. The
+ *      same rule the whole product follows, and the only thing standing between
+ *      one customer's key and every customer's roster.
+ *   2. The scope is decided from the route BEFORE authorization runs, so a key
+ *      missing a scope is refused rather than charged for a call it cannot make.
+ *   3. An unknown resource is a 404 before any authorization — a typo should not
+ *      consume monthly quota.
+ *   4. Every response carries `X-API-Usage` / `X-API-Limit` so an integration can
+ *      back off before it hits the wall instead of after.
+ */
+const API_CORS_HEADERS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Max-Age': '86400',
+};
+
+function apiJson(
+  status: number,
+  payload: unknown,
+  usage?: { used: number; limit: number | null },
+): Response {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...API_CORS_HEADERS,
+  };
+  if (usage) {
+    headers['X-API-Usage'] = String(usage.used);
+    headers['X-API-Limit'] = usage.limit === null ? 'unlimited' : String(usage.limit);
+  }
+  return new Response(JSON.stringify(payload), { status, headers });
+}
+
+/** Route → required scope. `null` means any valid key may read it. */
+const API_V1_SCOPES: Record<string, ApiScope | null> = {
+  me: null,
+  employees: 'employees:read',
+  departments: 'departments:read',
+  positions: 'positions:read',
+  leaves: 'leaves:read',
+};
+
+http.route({
+  pathPrefix: '/api/v1/',
+  method: 'OPTIONS',
+  handler: httpAction(async () => new Response(null, { status: 204, headers: API_CORS_HEADERS })),
+});
+
+http.route({
+  pathPrefix: '/api/v1/',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const rawKey = bearerToken(request.headers.get('authorization'));
+    if (!rawKey) {
+      return apiJson(401, { error: 'Missing Authorization: Bearer <api-key>' });
+    }
+
+    const url = new URL(request.url);
+    // ['api', 'v1', <resource>, <id?>] → the resource and its optional id.
+    const tail = url.pathname.split('/').filter(Boolean).slice(2);
+    const resource = tail[0] ?? '';
+    const param = tail[1];
+
+    if (!(resource in API_V1_SCOPES)) {
+      return apiJson(404, {
+        error: `Unknown resource "${resource}"`,
+        available: Object.keys(API_V1_SCOPES),
+      });
+    }
+
+    const requiredScope = API_V1_SCOPES[resource] ?? null;
+    const auth = await ctx.runMutation(internal.apiKeys.authorizeApiRequest, {
+      rawKey,
+      requiredScope: requiredScope ?? undefined,
+    });
+    if (!auth.ok) {
+      return apiJson(auth.status, { error: auth.error });
+    }
+    const usage = { used: auth.used, limit: auth.limit };
+
+    // Query params are validated by the Convex validators downstream; a bad one
+    // surfaces as a 400 rather than a 500.
+    const limit = url.searchParams.get('limit');
+    const limitArg = limit ? Number(limit) : undefined;
+    if (limitArg !== undefined && !Number.isFinite(limitArg)) {
+      return apiJson(400, { error: 'limit must be a number' }, usage);
+    }
+    const activeOnly = url.searchParams.get('activeOnly') === 'true';
+    const status = url.searchParams.get('status') ?? undefined;
+    const userId = url.searchParams.get('userId') ?? undefined;
+
+    try {
+      switch (resource) {
+        case 'me': {
+          return apiJson(
+            200,
+            {
+              organizationId: auth.organizationId,
+              scopes: auth.scopes,
+              usage,
+            },
+            usage,
+          );
+        }
+        case 'employees': {
+          if (param) {
+            const employee = await ctx.runQuery(internal.apiV1.getEmployee, {
+              organizationId: auth.organizationId,
+              employeeId: param as Id<'users'>,
+            });
+            if (!employee) return apiJson(404, { error: 'Employee not found' }, usage);
+            return apiJson(200, { data: employee }, usage);
+          }
+          const data = await ctx.runQuery(internal.apiV1.listEmployees, {
+            organizationId: auth.organizationId,
+            limit: limitArg,
+            activeOnly,
+          });
+          return apiJson(200, { data, count: data.length }, usage);
+        }
+        case 'departments': {
+          const data = await ctx.runQuery(internal.apiV1.listDepartments, {
+            organizationId: auth.organizationId,
+            limit: limitArg,
+          });
+          return apiJson(200, { data, count: data.length }, usage);
+        }
+        case 'positions': {
+          const data = await ctx.runQuery(internal.apiV1.listPositions, {
+            organizationId: auth.organizationId,
+            limit: limitArg,
+          });
+          return apiJson(200, { data, count: data.length }, usage);
+        }
+        case 'leaves': {
+          const data = await ctx.runQuery(internal.apiV1.listLeaves, {
+            organizationId: auth.organizationId,
+            limit: limitArg,
+            status: status as 'pending' | 'approved' | 'rejected' | 'cancel_requested' | undefined,
+            userId: userId as Id<'users'> | undefined,
+          });
+          return apiJson(200, { data, count: data.length }, usage);
+        }
+        default:
+          return apiJson(404, { error: 'Unknown resource' }, usage);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // Convex validator failures are the caller's fault (bad id format, bad
+      // enum), so they belong in the 400 range, not in Sentry as a 500.
+      const isArgumentError = /ArgumentValidationError|Value does not match|not a valid ID/i.test(
+        message,
+      );
+      return apiJson(isArgumentError ? 400 : 500, { error: message }, usage);
     }
   }),
 });

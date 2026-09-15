@@ -64,6 +64,7 @@ import { shifts } from './shifts';
 import { webhooks } from './webhooks';
 import { scim } from './scim';
 import { benefits } from './benefits';
+import { apiKeys } from './apiKeys';
 
 export default defineSchema({
   ...organizations,
@@ -131,6 +132,7 @@ export default defineSchema({
   ...webhooks,
   ...scim,
   ...benefits,
+  ...apiKeys,
 });
 
 export {
@@ -198,4 +200,5 @@ export {
   webhooks,
   scim,
   benefits,
+  apiKeys,
 };
