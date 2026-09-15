@@ -1,0 +1,4 @@
+{
+  "$schemaNote": "Accepted critical/high advisories. id = GHSA advisory URL. Each entry needs a reason; remove entries once the advisory no longer applies.",
+  "advisories": {}
+}

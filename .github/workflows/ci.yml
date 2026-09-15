@@ -256,18 +256,20 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-      - name: npm audit (high+ report; non-blocking — known transitive advisories tracked separately)
+      - name: npm audit report (high+; informational)
         run: npm audit --audit-level=high
         continue-on-error: true
+      - name: Audit gate (fails on NEW critical/high advisories not in audit-baseline.json)
+        run: node scripts/audit-gate.mjs
       - name: Dependency Review (PRs only)
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@v5
-        # Non-blocking: the job must not fail if the Dependency Graph API is
-        # unavailable (e.g. graph still propagating, or disabled). Real high+
-        # advisories are already reported by the npm audit step above.
-        continue-on-error: true
+        # Blocking for new critical/high advisories on PRs; the Dependency
+        # Graph API occasionally 5xxes while propagating, so transient
+        # failures retry once rather than silently passing.
         with:
-          fail-on-severity: high
+          fail-on-severity: critical
+          retry-on-snapshot-warning: true
           comment-summary-in-pr: always
 
   codeql:

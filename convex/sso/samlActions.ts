@@ -26,21 +26,35 @@
 import { v } from 'convex/values';
 import { internalAction } from '../_generated/server';
 
+/**
+ * `inResponseTo` is accepted for SP-initiated validation and compared against
+ * the response's InResponseTo when provided. Replay itself is stopped one
+ * layer up: the ACS route consumes the single-use login flow row before this
+ * action ever runs.
+ */
+
 export interface SamlClaimResult {
   email: string;
   name?: string;
 }
 
-/** Normalize a PEM cert: strip whitespace, optionally base64-decode the body. */
+/**
+ * Normalize a PEM cert: handle escaped-\n storage, CRLF, bare base64 —
+ * always emitting exactly one PEM envelope around the base64 body.
+ *
+ * Headers must be removed BEFORE whitespace-stripping: `\s+` removal would
+ * also delete the space inside "BEGIN CERTIFICATE", after which the header
+ * pattern can never match and the body would keep both headers (double-wrap),
+ * producing a metadata certificate that never equals the KeyInfo certificate
+ * of a real IdP response (ERROR_UNMATCH_CERTIFICATE_DECLARATION_IN_METADATA).
+ */
 export function normalizeCertificate(input: string): string {
-  const trimmed = input.trim().replace(/\\n/g, '\n').replace(/\s+/g, '');
-  const body = trimmed
-    .replace(/-----BEGIN CERTIFICATE-----/i, '')
-    .replace(/-----END CERTIFICATE-----/i, '');
-  // samlify accepts either PEM or the bare base64; PEM is the safest bet.
-  if (body.startsWith('MI'))
-    return `-----BEGIN CERTIFICATE-----\n${body}\n-----END CERTIFICATE-----`;
-  return `-----BEGIN CERTIFICATE-----\n${input.trim()}\n-----END CERTIFICATE-----`;
+  const unescaped = input.trim().replace(/\\n/g, '\n');
+  const body = unescaped
+    .replace(/-----\s*BEGIN\s+CERTIFICATE\s*-----/gi, '')
+    .replace(/-----\s*END\s+CERTIFICATE\s*-----/gi, '')
+    .replace(/\s+/g, '');
+  return `-----BEGIN CERTIFICATE-----\n${body}\n-----END CERTIFICATE-----`;
 }
 
 /** Failure protocol shared with the OIDC layer: SSO_LOGIN_FAILED|<i18n key>. */
@@ -62,59 +76,79 @@ export const validateAssertion = internalAction({
     inResponseTo: v.optional(v.string()),
   },
   handler: async (_ctx, args): Promise<SamlClaimResult> => {
-    const { validateLoginResponse } = await importSamlify();
+    const samlify = await importSamlify();
     const sp = await buildSp(args.spEntityId, args.acsUrl);
     const idp = await buildIdp(args.idpEntityId, args.idpSsoUrl, args.idpCertificate);
 
-    const { extract } = await validateLoginResponse(sp, idp, {
-      parse: true,
-      // samlify throws a DOMException subclass on rejected assertions; we map
-      // every failure to the same opaque reason so the login page never leaks
-      // validation detail to an attacker probing the ACS.
-      ...({ inResponseTo: args.inResponseTo } as Record<string, unknown>),
-    });
+    // parseLoginResponse is samlify 2.x's entry point for inbound responses
+    // (there is no top-level validateLoginResponse). In one pass it:
+    //   - parses the XML (xmldom) and rejects malformed documents;
+    //   - checks the top-level StatusCode is Success;
+    //   - verifies the enveloped signature against the certificate pinned in
+    //     the IdP metadata (KeyInfo certs not matching metadata are rejected,
+    //     and embedded Signature/Assertion elements inside
+    //     SubjectConfirmationData raise a wrapping-attack error);
+    //   - rejects responses whose issuer is not the pinned IdP entity ID;
+    //   - enforces Conditions NotBefore/NotOnOrAfter (with clock drift).
+    //
+    // samlify signals every rejection (bad signature, bad XML, schema
+    // failure, issuer mismatch…) by throwing raw errors; we map them all to
+    // the opaque SamlValidationError so the ACS never leaks validation detail
+    // to an attacker probing the endpoint.
+    let extract: SamlExtract;
+    try {
+      ({ extract } = await sp.parseLoginResponse(idp, 'post', {
+        body: { SAMLResponse: args.samlResponse },
+      }));
+    } catch {
+      throw new SamlValidationError('sso_error');
+    }
 
-    const assertion = extract?.assertion;
-    const attributes = (extract?.attributes ?? {}) as Record<string, string | string[]>;
-    const conditions = assertion?.conditions as
-      | { notBefore?: Date; notOnOrAfter?: Date }
-      | undefined;
-
-    if (!assertion) throw new SamlValidationError('sso_error');
+    const attributes = (extract.attributes ?? {}) as Record<string, string | string[]>;
+    const conditions = extract.conditions ?? {};
 
     // Pin the audience to *this* connection's SP entity id.
-    const audienceRestriction = assertion.conditions?.audienceRestriction ?? [];
-    const audiences = audienceRestriction
-      .map((a: { __text?: string; value?: string }) => a.__text ?? a.value ?? '')
-      .filter(Boolean);
+    const audiences = (
+      Array.isArray(extract.audience)
+        ? extract.audience
+        : extract.audience
+          ? [extract.audience]
+          : []
+    ).filter(Boolean);
     if (audiences.length > 0 && !audiences.includes(args.spEntityId)) {
       throw new SamlValidationError('sso_error');
     }
 
-    // Pin the recipient to this connection's ACS URL.
-    const subject = assertion.subject as
-      | { subjectConfirmations?: Array<{ subjectConfirmationData?: { recipient?: string } }> }
-      | undefined;
-    const recipients = (subject?.subjectConfirmations ?? [])
-      .map((c) => c.subjectConfirmationData?.recipient)
-      .filter(Boolean) as string[];
-    if (recipients.length > 0 && !recipients.includes(args.acsUrl)) {
+    // Pin the binding destination to this connection's ACS URL.
+    const destination = firstOf(extract.response?.destination);
+    if (destination && destination !== args.acsUrl) {
       throw new SamlValidationError('sso_error');
     }
 
-    // Freshness: reject assertions outside a 90-second validity window.
+    // InResponseTo, when this action is used for SP-initiated validation.
+    if (args.inResponseTo !== undefined) {
+      const inResponseTo = firstOf(extract.response?.inResponseTo);
+      if (inResponseTo !== args.inResponseTo) {
+        throw new SamlValidationError('sso_error');
+      }
+    }
+
+    // Freshness: reject assertions outside a 90-second validity window
+    // (belt-and-braces on top of the flow's own time check).
     const now = Date.now();
-    if (conditions?.notOnOrAfter && new Date(conditions.notOnOrAfter).getTime() < now) {
+    const notOnOrAfter = firstOf(conditions.notOnOrAfter);
+    if (notOnOrAfter && new Date(notOnOrAfter).getTime() < now) {
       throw new SamlValidationError('sso_error');
     }
-    if (conditions?.notBefore && new Date(conditions.notBefore).getTime() > now + 90_000) {
+    const notBefore = firstOf(conditions.notBefore);
+    if (notBefore && new Date(notBefore).getTime() > now + 90_000) {
       throw new SamlValidationError('sso_error');
     }
 
     const email =
       firstOf(
         attributes.email ?? attributes.mail ?? attributes['urn:oid:0.9.2342.19200300.100.1.3'],
-      ) ?? extract?.nameID;
+      ) ?? extract.nameID;
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
       throw new SamlValidationError('sso_no_email');
     }
@@ -182,30 +216,30 @@ function firstOf(value: string | string[] | undefined): string | undefined {
 
 interface SamlifyModule {
   setSchemaValidator: (v: unknown) => void;
-  ServiceProvider: (settings: unknown) => unknown;
-  IdentityProvider: (settings: unknown) => unknown;
-  validateLoginResponse: (
-    sp: unknown,
+  ServiceProvider: (settings: unknown) => SamlifySp;
+  IdentityProvider: (settings: unknown) => SamlifyIdp;
+}
+
+interface SamlifySp {
+  parseLoginResponse: (
     idp: unknown,
-    opts: unknown,
-  ) => Promise<{ extract: SamlExtract }>;
+    binding: string,
+    request: { body: Record<string, string> },
+  ) => Promise<{ samlContent: string; extract: SamlExtract }>;
+}
+
+interface SamlifyIdp {
+  entityMeta: unknown;
 }
 
 interface SamlExtract {
   nameID?: string;
+  issuer?: string | string[];
+  audience?: string | string[];
   attributes?: Record<string, string | string[]>;
-  assertion?: {
-    conditions?: {
-      notBefore?: Date;
-      notOnOrAfter?: Date;
-      audienceRestriction?: Array<{ __text?: string; value?: string }>;
-    };
-    subject?: {
-      subjectConfirmations?: Array<{
-        subjectConfirmationData?: { recipient?: string; inResponseTo?: string };
-      }>;
-    };
-  };
+  conditions?: Record<string, string | string[]>;
+  response?: Record<string, string | string[]>;
+  sessionIndex?: Record<string, string | string[]>;
 }
 
 /** Exported for tests of the pure helper. */

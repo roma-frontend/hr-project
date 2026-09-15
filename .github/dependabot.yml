@@ -1,0 +1,53 @@
+# Dependabot version updates — weekly bump PRs for npm dependencies and
+# GitHub Actions. This complements (do not confuse with) the security-alert
+# system: version updates proactively bump everything that has a newer
+# release within the declared semver range, security alerts react to
+# published advisories.
+#
+# Groups keep the PR volume manageable: all minor/patch bumps land as one
+# PR per ecosystem; majors stay separate because they need individual
+# attention (changelog, breaking changes, tests).
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Yerevan'
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    labels:
+      - 'dependencies'
+      - 'npm'
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+    groups:
+      minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
+    # Bump these in lockfile + manifest even when they are ranges.
+    allow:
+      - dependency-type: 'direct'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '06:00'
+      timezone: 'Asia/Yerevan'
+    open-pull-requests-limit: 5
+    labels:
+      - 'dependencies'
+      - 'ci'
+    commit-message:
+      prefix: 'chore(ci)'
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
