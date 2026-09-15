@@ -82,6 +82,9 @@ scripts/*
 # SOC 2 evidence collector (npm run soc2:evidence) — dated control report from
 # repository state; part of the documented evidence plan (docs/soc2-type2-readiness.md §7.1).
 !scripts/soc2-evidence.mjs
+# End-user guide generator (npm run docs:user-guide) — builds the .docx manual
+# for the integration tabs, local payments and SOC 2 evidence tooling.
+!scripts/generate-user-guide.mjs
 !scripts/coverage-dashboard.mjs
 # Generates convex/lib/localeCatalog.ts from public/locales — npm run
 # build:convex-locales, and `-- --check` in CI to catch a stale catalog.

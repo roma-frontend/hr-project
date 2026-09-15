@@ -71,6 +71,7 @@
     "test:all": "npm run lint && npm run type-check && npm run test:coverage && npm run test:e2e",
     "soc2:evidence": "node scripts/soc2-evidence.mjs",
     "soc2:evidence:stdout": "node scripts/soc2-evidence.mjs --stdout",
+    "docs:user-guide": "node scripts/generate-user-guide.mjs",
     "changelog": "node scripts/generate-changelog.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
