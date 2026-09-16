@@ -14,6 +14,20 @@ async function resolveLocale(): Promise<Lang> {
   return (SUPPORTED as readonly string[]).includes(raw ?? '') ? (raw as Lang) : 'en';
 }
 
+/*
+ * Only the six known vendors are routable; anything else hits `notFound()` and
+ * renders the 404 boundary.
+ *
+ * Note on the status code: this page reads the locale cookie, so Next streams
+ * it, and a streamed response has already been committed as 200 by the time
+ * `notFound()` runs — the visitor gets the 404 *page*, not a 404 *status*.
+ * `dynamicParams = false` does not change that on a dynamic route (verified
+ * against `next start`). It does not matter in practice: the sitemap and every
+ * link only ever reference the six real slugs, so nothing indexes the rest.
+ * Moving the check into middleware would buy the status code at the cost of
+ * running middleware on every request, which this app deliberately avoids.
+ */
+
 export async function generateMetadata({
   params,
 }: {

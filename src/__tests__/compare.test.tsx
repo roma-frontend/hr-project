@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import i18n from '@/i18n/config';
 import CompareTable from '@/components/compare/CompareTable';
+import CompareDetailPage from '@/app/compare/[competitor]/page';
 import {
   CATEGORY_ORDER,
   COMPETITORS,
@@ -283,5 +284,29 @@ describe('CompareTable', () => {
     } finally {
       await i18n.changeLanguage('en');
     }
+  });
+});
+
+describe('/compare/[competitor]', () => {
+  it('renders the 404 boundary for an unknown vendor', async () => {
+    // The slug check runs before the locale cookie is read, so this needs no
+    // request context. `notFound()` surfaces as an error whose digest carries
+    // the status — that is the contract this page owes its callers.
+    const error = await CompareDetailPage({
+      params: Promise.resolve({ competitor: 'not-a-vendor' }),
+    }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(String((error as Error & { digest?: string }).digest ?? error)).toContain('404');
+  });
+
+  it.each(COMPARE_SLUGS)('accepts %s as a vendor slug', async (slug) => {
+    // Reaching the locale lookup (which throws outside a request scope) proves
+    // the slug passed validation.
+    const error = await CompareDetailPage({
+      params: Promise.resolve({ competitor: slug }),
+    }).catch((e: unknown) => e);
+
+    expect(String((error as Error & { digest?: string }).digest ?? error)).not.toContain('404');
   });
 });
