@@ -89,6 +89,14 @@ const menuItemsConfig: MenuItem[] = [
     accent: '#2563eb',
   },
   {
+    key: 'compare',
+    href: '/compare',
+    icon: BarChart3,
+    gradient: 'from-(--brand) to-(--brand)',
+    iconColor: 'text-(--brand-text) dark:text-(--brand-text)',
+    accent: '#2563eb',
+  },
+  {
     key: 'testimonials',
     href: '/#testimonials',
     sectionId: 'testimonials',

@@ -41,6 +41,8 @@ export const allNamespaces = [
   'benefits',
   'overtime',
   'shifts',
+  'succession',
+  'careerPaths',
 ] as const;
 
 export type AppNamespace = (typeof allNamespaces)[number];

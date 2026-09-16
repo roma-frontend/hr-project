@@ -1,0 +1,82 @@
+{
+  "careerPaths": {
+    "title": "Career paths",
+    "subtitle": "Skill matrices, career tracks, promotion readiness and mentorship",
+    "tabs": {
+      "matrix": "Skill matrix",
+      "tracks": "Career tracks",
+      "progress": "Track progress",
+      "gaps": "Gap analysis",
+      "mentorship": "Mentorship"
+    },
+    "levels": {
+      "junior": "Junior",
+      "mid": "Mid",
+      "senior": "Senior",
+      "lead": "Lead"
+    },
+    "matrix": {
+      "position": "Position title",
+      "positionHint": "e.g. Senior Accountant",
+      "employee": "Employee",
+      "allEmployees": "Me (default)",
+      "forPosition": "Requirements — {{position}}",
+      "typePosition": "Type a position title to see its requirements.",
+      "noRequirements": "No requirements defined for this position yet.",
+      "mandatory": "Mandatory",
+      "required": "Required",
+      "setLevel": "Set level {{level}}",
+      "newSkill": "New skill",
+      "skillName": "Skill name",
+      "skillCategory": "Category",
+      "skillCategoryHint": "technical / leadership / domain",
+      "pickSkill": "Pick a skill…",
+      "employeeSkillsFor": "Skills — {{name}}",
+      "mySkills": "My skills",
+      "noSkillsAssessed": "No skills assessed yet. Click a bar to set a level."
+    },
+    "tracks": {
+      "new": "New track",
+      "name": "Track name",
+      "department": "Department",
+      "steps": "Steps (one per line)",
+      "stepsHint": "Junior Accountant | junior | 12\nAccountant | mid | 18\nSenior Accountant | senior",
+      "months": "{{n}} mo"
+    },
+    "progress": {
+      "pickEmployee": "Pick an employee…",
+      "empty": "No track progress recorded yet.",
+      "current": "Current step",
+      "target": "Target step",
+      "eligible": "Eligible for promotion review: {{date}}"
+    },
+    "progressStatus": {
+      "on_track": "On track",
+      "at_risk": "At risk",
+      "blocked": "Blocked"
+    },
+    "gaps": {
+      "explain": "Compares a person's assessed skills against the requirements of the target position. Mandatory gaps block promotion; others just delay it.",
+      "typePositionAndEmployee": "Type a position title (Skill matrix tab) to compute the gap.",
+      "vsPosition": "Gap vs {{position}}",
+      "mandatoryGaps": "{{n}} mandatory gap(s)",
+      "recompute": "Recompute",
+      "row": "now {{current}} → need {{required}} (gap {{gap}})"
+    },
+    "mentorship": {
+      "mentor": "Mentor",
+      "mentee": "Mentee",
+      "focus": "Focus",
+      "track": "Track",
+      "noTrack": "No track",
+      "create": "Pair up",
+      "complete": "Complete",
+      "empty": "No mentorship pairs yet."
+    },
+    "mentorshipStatus": {
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  }
+}

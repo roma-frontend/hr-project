@@ -8,6 +8,7 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useCurrency } from '@/hooks/useCurrency';
 import { applyRate } from '@/lib/currency';
 import { api } from '@/convex/_generated/api';
@@ -1358,6 +1359,23 @@ export default function PricingPreview() {
 
       {/* Savings calculator — team size → annual savings, live and animated */}
       <SavingsCalculator professionalAmount={professionalAmount} symbol={currency.symbol} />
+
+      {/* Compare link — /compare is the page that ranks for "<vendor> alternative";
+       *  it reads the same live plan data, so the loop closes on real numbers. */}
+      <div className="max-w-6xl mx-auto mt-6 flex justify-center">
+        <Link
+          href="/compare"
+          className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-full transition-all hover:gap-3"
+          style={{
+            color: 'var(--landing-text-secondary)',
+            border: '1px solid var(--landing-card-border)',
+            background: 'var(--landing-card-bg)',
+          }}
+        >
+          {t('compare.compareWithCompetitors')}
+          <ArrowRightIcon />
+        </Link>
+      </div>
 
       {/* Footer note */}
       <p

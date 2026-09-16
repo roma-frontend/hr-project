@@ -50,7 +50,9 @@ import {
   Megaphone,
   MessageCircle,
   Monitor,
+  Landmark,
   Network,
+  Route,
   Package,
   PenTool,
   Receipt,
@@ -190,6 +192,8 @@ export const navItems: NavEntry[] = [
       { href: '/strategy', labelKey: 'nav.strategyMap', icon: Layers },
       { href: '/signatures', labelKey: 'nav.signatures', icon: PenTool },
       { href: '/recognition', labelKey: 'nav.recognition', icon: Heart },
+      { href: '/succession', labelKey: 'nav.succession', icon: Network },
+      { href: '/career-paths', labelKey: 'nav.careerPaths', icon: Route },
     ],
   },
 
@@ -457,6 +461,16 @@ export const navItems: NavEntry[] = [
         href: '/superadmin/subscriptions',
         labelKey: 'nav.subscriptions',
         icon: CreditCard,
+      },
+      {
+        href: '/superadmin/payments',
+        labelKey: 'nav.payments',
+        icon: Landmark,
+      },
+      {
+        href: '/superadmin/organizations',
+        labelKey: 'nav.organizations',
+        icon: Building2,
       },
       {
         href: '/superadmin/backups',

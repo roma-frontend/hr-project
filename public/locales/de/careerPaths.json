@@ -1,0 +1,82 @@
+{
+  "careerPaths": {
+    "title": "Karrierepfade",
+    "subtitle": "Kompetenzmatrizen, Karrierepfade, Beförderungsreife und Mentoring",
+    "tabs": {
+      "matrix": "Kompetenzmatrix",
+      "tracks": "Karrierepfade",
+      "progress": "Fortschritt im Pfad",
+      "gaps": "Lückenanalyse",
+      "mentorship": "Mentoring"
+    },
+    "levels": {
+      "junior": "Junior",
+      "mid": "Mittelstufe",
+      "senior": "Senior",
+      "lead": "Lead"
+    },
+    "matrix": {
+      "position": "Positionsbezeichnung",
+      "positionHint": "z. B. Senior-Buchhalter",
+      "employee": "Mitarbeiter",
+      "allEmployees": "Ich (Standard)",
+      "forPosition": "Anforderungen — {{position}}",
+      "typePosition": "Positionsbezeichnung eingeben, um die Anforderungen zu sehen.",
+      "noRequirements": "Für diese Position sind noch keine Anforderungen definiert.",
+      "mandatory": "Obligatorisch",
+      "required": "Erforderlich",
+      "setLevel": "Stufe {{level}} setzen",
+      "newSkill": "Neue Kompetenz",
+      "skillName": "Bezeichnung der Kompetenz",
+      "skillCategory": "Kategorie",
+      "skillCategoryHint": "technisch / Führungs- / Fachgebiet",
+      "pickSkill": "Kompetenz auswählen…",
+      "employeeSkillsFor": "Kompetenzen — {{name}}",
+      "mySkills": "Meine Kompetenzen",
+      "noSkillsAssessed": "Noch keine Kompetenzen bewertet. Klick auf ein Segment, um eine Stufe zu setzen."
+    },
+    "tracks": {
+      "new": "Neuer Pfad",
+      "name": "Name des Pfads",
+      "department": "Abteilung",
+      "steps": "Schritte (einer pro Zeile)",
+      "stepsHint": "Junior-Buchhalter | junior | 12\nBuchhalter | mid | 18\nSenior-Buchhalter | senior",
+      "months": "{{n}} Mon."
+    },
+    "progress": {
+      "pickEmployee": "Mitarbeiter auswählen…",
+      "empty": "Noch kein Fortschritt erfasst.",
+      "current": "Aktueller Schritt",
+      "target": "Zielschritt",
+      "eligible": "Beförderungsreview möglich ab: {{date}}"
+    },
+    "progressStatus": {
+      "on_track": "Im Plan",
+      "at_risk": "Gefährdet",
+      "blocked": "Blockiert"
+    },
+    "gaps": {
+      "explain": "Vergleicht die bewerteten Kompetenzen einer Person mit den Anforderungen der Zielposition. Obligatorische Lücken blockieren die Beförderung, andere verzögern sie nur.",
+      "typePositionAndEmployee": "Positionsbezeichnung eingeben (Tab „Kompetenzmatrix“), um die Lücke zu berechnen.",
+      "vsPosition": "Lücke gegenüber {{position}}",
+      "mandatoryGaps": "{{n}} obligatorische Lücke(n)",
+      "recompute": "Neu berechnen",
+      "row": "jetzt {{current}} → benötigt {{required}} (Lücke {{gap}})"
+    },
+    "mentorship": {
+      "mentor": "Mentor",
+      "mentee": "Mentee",
+      "focus": "Fokus",
+      "track": "Pfad",
+      "noTrack": "Ohne Pfad",
+      "create": "Tandem bilden",
+      "complete": "Abschließen",
+      "empty": "Noch keine Mentoring-Tandems."
+    },
+    "mentorshipStatus": {
+      "active": "Aktiv",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgebrochen"
+    }
+  }
+}

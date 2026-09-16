@@ -1,0 +1,102 @@
+{
+  "succession": {
+    "title": "Nachfolgeplanung",
+    "subtitle": "Nine-Box-Talentreviews, Risiko Schlüsselpositionen und Nachfolger-Pool",
+    "tabs": {
+      "nineBox": "Nine-Box-Raster",
+      "positions": "Schlüsselpositionen",
+      "plans": "Entwicklungspläne"
+    },
+    "perf": {
+      "low": "Geringe Leistung",
+      "mid": "Mittlere Leistung",
+      "high": "Hohe Leistung"
+    },
+    "pot": {
+      "low": "Geringes Potenzial",
+      "mid": "Mittleres Potenzial",
+      "high": "Hohes Potenzial"
+    },
+    "zones": {
+      "star": "Star",
+      "highPotential": "Hohes Potenzial",
+      "corePerformer": "Kernleistungsträger",
+      "growth": "Wachstum",
+      "specialist": "Spezialist",
+      "underReview": "In Prüfung",
+      "needsSupport": "Unterstützung nötig",
+      "risk": "Risiko"
+    },
+    "actions": {
+      "growFast": "Sofort größeren Wirkungsbereich geben",
+      "invest": "Investieren — künftige Führungskraft",
+      "retain": "Halten und würdigen",
+      "develop": "Kontinuierlich entwickeln",
+      "diagnose": "Klären: falsche Rolle oder falsche Daten?",
+      "coach": "Coachen, bevor es sich verschlechtert",
+      "actNow": "Jetzt handeln — Leistungsgespräch"
+    },
+    "risk": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "moderate": "Mittel",
+      "low": "Gering",
+      "noSuccessors": "Ohne Nachfolger"
+    },
+    "levels": {
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Gering"
+    },
+    "readiness": {
+      "ready_now": "Jetzt bereit",
+      "ready_within_year": "Bereit innerhalb eines Jahres",
+      "ready_within_two_years": "Bereit in 1–2 Jahren",
+      "development_needed": "Entwicklung nötig"
+    },
+    "coverage": "Abdeckung {{n}}%",
+    "rate": {
+      "employee": "Mitarbeiter",
+      "pickEmployee": "Mitarbeiter auswählen…",
+      "performance": "Leistung",
+      "potential": "Potenzial",
+      "submit": "Bewerten"
+    },
+    "positions": {
+      "add": "Schlüsselposition hinzufügen",
+      "edit": "Schlüsselposition bearbeiten",
+      "title": "Positionsbezeichnung",
+      "department": "Abteilung",
+      "criticalityLabel": "Kritikalität:",
+      "vacancyLabel": "Schaden bei Vakanz:",
+      "incumbent": "Aktueller Inhaber",
+      "pickIncumbent": "Nicht besetzt",
+      "noIncumbent": "Position ist vakant",
+      "emptyBench": "Noch keine Nachfolger — genau dieses Risiko zeigt das Dashboard.",
+      "manageBench": "Nachfolger verwalten",
+      "archive": "Position archivieren"
+    },
+    "bench": {
+      "title": "Nachfolger für {{position}}",
+      "successor": "Nachfolger",
+      "readiness": "Bereitschaft",
+      "add": "Zum Pool hinzufügen"
+    },
+    "plan": {
+      "title": "Plantomitel",
+      "steps": "Schritte (einer pro Zeile)",
+      "stepsHint": "Einen Abschlusszyklus mit dem CFO begleiten\nEin Kapitel des Vorstandsberichts übernehmen",
+      "create": "Plan erstellen"
+    },
+    "planStatus": {
+      "draft": "Entwurf",
+      "active": "Aktiv",
+      "completed": "Abgeschlossen"
+    },
+    "toasts": {
+      "rated": "Bewertung gespeichert",
+      "saved": "Gespeichert",
+      "archived": "Position archiviert"
+    }
+  }
+}

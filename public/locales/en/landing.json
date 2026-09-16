@@ -408,6 +408,7 @@
   },
   "landingExtra": {
     "compare": "Compare",
+    "compareSubtitle": "Head-to-head with Personio, BambooHR, HiBob, Rippling, Leapsome and Deel",
     "register": "Register",
     "logoTooltip": "Go to home page",
     "myAccount": "My Account",
@@ -726,7 +727,8 @@
     "recruitment": "Recruitment",
     "signIn": "Sign In",
     "getStartedFree": "Get Started Free",
-    "closeMenu": "Close Menu"
+    "closeMenu": "Close Menu",
+    "compare": "Compare"
   },
   "features": {
     "leaveTypes": "Leave Types",
@@ -1136,6 +1138,19 @@
       "detailDescription": "Strata vs {{name}}: strengths, gaps and a verdict on which platform fits an Armenian or CIS team better.",
       "detailOgTitle": "Strata vs {{name}}",
       "detailOgDescription": "Head-to-head comparison of Strata and {{name}}, including where {{name}} is stronger."
+    },
+    "pricing": {
+      "liveTitle": "Current plans and pricing",
+      "liveSubtitle": "Pulled live from the billing system — what you see here is what the platform enforces.",
+      "liveFallback": "Plan pricing is being published right now — check back shortly or talk to sales.",
+      "moduleCount": "{{n}} modules included",
+      "apiQuota": "Public API: {{n}} calls/mo",
+      "seats": "Up to {{n}} employees",
+      "customPrice": "Custom",
+      "viewPricing": "Full pricing & calculator",
+      "popular": "Most popular",
+      "unlimitedSeats": "Unlimited employees",
+      "unlimitedApi": "Unlimited public API"
     },
     "legend": {
       "yes": "Generally available",

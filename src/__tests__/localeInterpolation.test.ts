@@ -46,6 +46,8 @@ const NAMESPACES = [
   'compensation',
   'learning',
   'expenses',
+  'succession',
+  'careerPaths',
 ] as const;
 
 type Json = { [key: string]: unknown };

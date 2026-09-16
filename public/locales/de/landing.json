@@ -408,6 +408,7 @@
   },
   "landingExtra": {
     "compare": "Vergleich",
+    "compareSubtitle": "Direktvergleich mit Personio, BambooHR, HiBob, Rippling, Leapsome und Deel",
     "register": "Registrieren",
     "logoTooltip": "Zur Startseite",
     "myAccount": "Mein Konto",
@@ -726,7 +727,8 @@
     "testimonials": "Referenzen",
     "signIn": "Anmelden",
     "getStartedFree": "Kostenlos starten",
-    "closeMenu": "Menü schließen"
+    "closeMenu": "Menü schließen",
+    "compare": "Vergleich"
   },
   "features": {
     "leaveTypes": "Urlaubsarten",
@@ -1136,6 +1138,19 @@
       "detailDescription": "Strata vs. {{name}}: Stärken, Lücken und ein Fazit, welche Plattform besser zu einem Team in Armenien oder der GUS passt.",
       "detailOgTitle": "Strata vs. {{name}}",
       "detailOgDescription": "Direkter Vergleich von Strata und {{name}}, inklusive der Punkte, in denen {{name}} stärker ist."
+    },
+    "pricing": {
+      "liveTitle": "Aktuelle Tarife und Preise",
+      "liveSubtitle": "Direkt aus dem Billing-System — was Sie hier sehen, setzt die Plattform auch durch.",
+      "liveFallback": "Die Tarife werden gerade veröffentlicht — schauen Sie gleich wieder vorbei oder sprechen Sie mit dem Vertrieb.",
+      "moduleCount": "{{n}} Module enthalten",
+      "apiQuota": "Öffentliche API: {{n}} Aufrufe/Monat",
+      "seats": "Bis zu {{n}} Mitarbeitende",
+      "customPrice": "Individuell",
+      "viewPricing": "Vollständige Preise & Rechner",
+      "popular": "Am beliebtesten",
+      "unlimitedSeats": "Unbegrenzte Mitarbeitende",
+      "unlimitedApi": "Unbegrenzte öffentliche API"
     },
     "legend": {
       "yes": "Im Produkt enthalten",

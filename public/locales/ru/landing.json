@@ -408,6 +408,7 @@
   },
   "landingExtra": {
     "compare": "Сравнение",
+    "compareSubtitle": "Один на один с Personio, BambooHR, HiBob, Rippling, Leapsome и Deel",
     "register": "Регистрация",
     "logoTooltip": "На главную страницу",
     "myAccount": "Мой аккаунт",
@@ -726,7 +727,8 @@
     "testimonials": "Отзывы",
     "signIn": "Войти",
     "getStartedFree": "Начать бесплатно",
-    "closeMenu": "Закрыть меню"
+    "closeMenu": "Закрыть меню",
+    "compare": "Сравнение"
   },
   "features": {
     "leaveTypes": "Типы отпусков",
@@ -1136,6 +1138,19 @@
       "detailDescription": "Strata против {{name}}: сильные стороны, пробелы и вывод о том, какая платформа лучше подходит команде в Армении или СНГ.",
       "detailOgTitle": "Strata против {{name}}",
       "detailOgDescription": "Сравнение Strata и {{name}} один на один, включая то, в чём {{name}} сильнее."
+    },
+    "pricing": {
+      "liveTitle": "Текущие тарифы и цены",
+      "liveSubtitle": "Данные приходят прямо из биллинга — то, что вы видите, система и проверяет.",
+      "liveFallback": "Тарифы публикуются прямо сейчас — загляните чуть позже или напишите нам.",
+      "moduleCount": "{{n}} модулей включено",
+      "apiQuota": "Публичный API: {{n}} вызовов/мес",
+      "seats": "До {{n}} сотрудников",
+      "customPrice": "Индивидуально",
+      "viewPricing": "Полные тарифы и калькулятор",
+      "popular": "Популярный",
+      "unlimitedSeats": "Неограниченно сотрудников",
+      "unlimitedApi": "Неограниченный API"
     },
     "legend": {
       "yes": "Есть в продукте",

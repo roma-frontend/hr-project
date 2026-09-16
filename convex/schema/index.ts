@@ -33,6 +33,8 @@ import { onboarding } from './onboarding';
 import { offboarding } from './offboarding';
 import { orgchart } from './orgchart';
 import { learning } from './learning';
+import { succession } from './succession';
+import { careers } from './careers';
 import { documents } from './documents';
 import { backups } from './backups';
 import { compensation } from './compensation';
@@ -101,6 +103,8 @@ export default defineSchema({
   ...offboarding,
   ...orgchart,
   ...learning,
+  ...succession,
+  ...careers,
   ...documents,
   ...backups,
   ...compensation,
@@ -171,6 +175,8 @@ export {
   offboarding,
   orgchart,
   learning,
+  succession,
+  careers,
   documents,
   backups,
   compensation,

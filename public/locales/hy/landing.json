@@ -408,6 +408,7 @@
   },
   "landingExtra": {
     "compare": "Համեմատություն",
+    "compareSubtitle": "Դեմ առ դեմ Personio, BambooHR, HiBob, Rippling, Leapsome և Deel-ի հետ",
     "register": "Գրանցվել",
     "logoTooltip": "Անցնել գլխավոր էջ",
     "myAccount": "Իմ հաշիվը",
@@ -726,7 +727,8 @@
     "testimonials": "Վկայություններ",
     "signIn": "Մուտք գործել",
     "getStartedFree": "Սկսել անվճար",
-    "closeMenu": "Փակել մենյուն"
+    "closeMenu": "Փակել մենյուն",
+    "compare": "Համեմատություն"
   },
   "features": {
     "leaveTypes": "Արձակուրդների տեսակներ",
@@ -1136,6 +1138,19 @@
       "detailDescription": "Strata ընդդեմ {{name}}․ ուժեղ կողմեր, բացեր և եզրակացություն, թե որ հարթակն է ավելի հարմար Հայաստանում կամ ԱՊՀ-ում աշխատող թիմի համար։",
       "detailOgTitle": "Strata ընդդեմ {{name}}",
       "detailOgDescription": "Strata-ի և {{name}}-ի դեմ առ դեմ համեմատություն՝ ներառյալ այն, որտեղ {{name}}-ը ուժեղ է։"
+    },
+    "pricing": {
+      "liveTitle": "Գործող սակագներ և գներ",
+      "liveSubtitle": "Տվյալները գալիս են անմիջապես բիլինգից՝ այն, ինչ տեսնում ես, համակարգն էլ է ստուգում։",
+      "liveFallback": "Սակագները հրապարակվում են հենց հիմա՝ մտեք մի քիչ ուշ կամ գրեք մեզ։",
+      "moduleCount": "{{n}} մոդուլ ներառված է",
+      "apiQuota": "Հրապարակային API՝ {{n}} կանչ/ամիս",
+      "seats": "Մինչև {{n}} աշխատակից",
+      "customPrice": "Անհատական",
+      "viewPricing": "Ամբողջական սակագներ և հաշվիչ",
+      "popular": "Ամենապահանջվածը",
+      "unlimitedSeats": "Անսահմանափակ աշխատակիցներ",
+      "unlimitedApi": "Անսահմանափակ API"
     },
     "legend": {
       "yes": "Կա ապրանքի մեջ",

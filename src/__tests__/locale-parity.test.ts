@@ -38,6 +38,8 @@ const NAMESPACES = [
   'compensation',
   'learning',
   'expenses',
+  'succession',
+  'careerPaths',
 ];
 
 /** Flattened dotted paths that are intentionally absent from EN. */

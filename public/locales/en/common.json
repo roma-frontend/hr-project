@@ -152,7 +152,8 @@
     "clear": "Clear",
     "remove": "Remove",
     "change": "Change",
-    "progress": "Progress"
+    "progress": "Progress",
+    "saved": "Saved"
   },
   "nav": {
     "home": "Home",
@@ -275,7 +276,10 @@
     "trash": "Trash",
     "landingEditor": "Landing Editor",
     "plans": "Plans & Tariffs",
-    "companyPortal": "Company Portal"
+    "companyPortal": "Company Portal",
+    "succession": "Succession planning",
+    "careerPaths": "Career paths",
+    "organizations": "Organizations"
   },
   "plan": {
     "upgrade": "Upgrade",

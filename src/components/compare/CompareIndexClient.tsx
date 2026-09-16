@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import CompareTable, { COMPARE_ROW_COUNT } from './CompareTable';
+import ComparePricing from './ComparePricing';
 import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
 import { COMPETITORS, COMPARE_VERIFIED, compareScore } from '@/lib/competitors';
 
@@ -19,6 +22,9 @@ export default function CompareIndexClient({
   initialLanguage?: string;
 }) {
   const { t } = useLandingTranslation(initialLanguage);
+  // Same published snapshots the pricing section renders — the comparison page
+  // must never quote numbers the billing system does not enforce.
+  const publishedPlans = useQuery(api.billing.plans.getPublishedPlans);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
@@ -133,6 +139,9 @@ export default function CompareIndexClient({
             </div>
           </div>
         </section>
+
+        {/* ── Live tariffs from billing ────────────────────────────────── */}
+        <ComparePricing initialLanguage={initialLanguage} plans={publishedPlans} />
 
         {/* ── Full matrix ───────────────────────────────────────────────── */}
         <section className="px-6 pb-20">

@@ -38,11 +38,13 @@ export const NAV_HREF_TO_MODULE: Record<string, string> = {
   '/strategy': 'goals',
   '/signatures': 'signatures',
   '/recognition': 'recognition',
+  '/succession': 'succession',
   // Talent
   '/recruitment': 'recruitment',
   '/onboarding': 'onboarding',
   '/offboarding': 'offboarding',
   '/learning': 'learning',
+  '/career-paths': 'careerPaths',
   // Finance
   '/payroll': 'payroll',
   '/compensation': 'compensation',

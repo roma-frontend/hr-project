@@ -152,7 +152,8 @@
     "clear": "Очистить",
     "remove": "Удалить",
     "change": "Изменить",
-    "progress": "Прогресс"
+    "progress": "Прогресс",
+    "saved": "Сохранено"
   },
   "nav": {
     "home": "Главная",
@@ -275,7 +276,10 @@
     "trash": "Корзина",
     "landingEditor": "Редактор лендинга",
     "plans": "Планы и тарифы",
-    "companyPortal": "Компания"
+    "companyPortal": "Компания",
+    "succession": "Планирование преемственности",
+    "careerPaths": "Карьерные треки",
+    "organizations": "Организации"
   },
   "plan": {
     "upgrade": "Улучшить тариф",

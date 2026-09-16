@@ -1,0 +1,102 @@
+{
+  "succession": {
+    "title": "Succession planning",
+    "subtitle": "Nine-box talent reviews, key-position risk and successor benches",
+    "tabs": {
+      "nineBox": "Nine-box grid",
+      "positions": "Key positions",
+      "plans": "Development plans"
+    },
+    "perf": {
+      "low": "Low performance",
+      "mid": "Moderate performance",
+      "high": "High performance"
+    },
+    "pot": {
+      "low": "Low potential",
+      "mid": "Moderate potential",
+      "high": "High potential"
+    },
+    "zones": {
+      "star": "Star",
+      "highPotential": "High potential",
+      "corePerformer": "Core performer",
+      "growth": "Growth",
+      "specialist": "Specialist",
+      "underReview": "Under review",
+      "needsSupport": "Needs support",
+      "risk": "Risk"
+    },
+    "actions": {
+      "growFast": "Give stretch scope now",
+      "invest": "Invest — future leader",
+      "retain": "Retain and reward",
+      "develop": "Develop steadily",
+      "diagnose": "Diagnose: wrong role or wrong data?",
+      "coach": "Coach before it slips further",
+      "actNow": "Act now — performance conversation"
+    },
+    "risk": {
+      "critical": "Critical",
+      "high": "High",
+      "moderate": "Moderate",
+      "low": "Low",
+      "noSuccessors": "No successors"
+    },
+    "levels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "readiness": {
+      "ready_now": "Ready now",
+      "ready_within_year": "Ready within a year",
+      "ready_within_two_years": "Ready in 1–2 years",
+      "development_needed": "Development needed"
+    },
+    "coverage": "Coverage {{n}}%",
+    "rate": {
+      "employee": "Employee",
+      "pickEmployee": "Pick an employee…",
+      "performance": "Performance",
+      "potential": "Potential",
+      "submit": "Rate"
+    },
+    "positions": {
+      "add": "Add key position",
+      "edit": "Edit key position",
+      "title": "Position title",
+      "department": "Department",
+      "criticalityLabel": "Criticality:",
+      "vacancyLabel": "Vacancy damage:",
+      "incumbent": "Incumbent",
+      "pickIncumbent": "No incumbent",
+      "noIncumbent": "Position vacant",
+      "emptyBench": "No successors yet — this is the risk showing on the dashboard.",
+      "manageBench": "Manage successors",
+      "archive": "Archive position"
+    },
+    "bench": {
+      "title": "Successors for {{position}}",
+      "successor": "Successor",
+      "readiness": "Readiness",
+      "add": "Add to bench"
+    },
+    "plan": {
+      "title": "Plan title",
+      "steps": "Action steps (one per line)",
+      "stepsHint": "Shadow the CFO for one close cycle\nOwn one board-report section",
+      "create": "Create plan"
+    },
+    "planStatus": {
+      "draft": "Draft",
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "toasts": {
+      "rated": "Rating saved",
+      "saved": "Saved",
+      "archived": "Position archived"
+    }
+  }
+}
