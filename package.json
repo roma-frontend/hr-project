@@ -127,7 +127,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "@vladmandic/face-api": "^1.7.15",
     "@xyflow/react": "^12.10.2",
-    "ai": "^6.0.97",
+    "ai": "^7.0.99",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.9.0",
