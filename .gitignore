@@ -82,6 +82,9 @@ scripts/*
 # SOC 2 evidence collector (npm run soc2:evidence) — dated control report from
 # repository state; part of the documented evidence plan (docs/soc2-type2-readiness.md §7.1).
 !scripts/soc2-evidence.mjs
+# CI audit gate (npm run audit:gate) — fails the Security Audit job on a new
+# critical/high advisory. Missing from the repo => the job dies on a module-not-found.
+!scripts/audit-gate.mjs
 # End-user guide generator (npm run docs:user-guide) — builds the .docx manual
 # for the integration tabs, local payments and SOC 2 evidence tooling.
 !scripts/generate-user-guide.mjs
