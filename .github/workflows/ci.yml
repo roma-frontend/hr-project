@@ -123,7 +123,7 @@ jobs:
       # artifacts if it ran after the downloads below.
       - uses: actions/checkout@v5
       - name: Download base branch coverage from main
-        uses: dawidd6/action-download-artifact@v21
+        uses: dawidd6/action-download-artifact@v24
         continue-on-error: true
         with:
           branch: main
