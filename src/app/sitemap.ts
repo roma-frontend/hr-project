@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { COMPARE_SLUGS } from '@/lib/competitors';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://strata.work';
 
@@ -37,6 +38,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    {
+      url: `${APP_URL}/compare`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    // One entry per head-to-head page — these carry the non-brand search traffic.
+    ...COMPARE_SLUGS.map((slug) => ({
+      url: `${APP_URL}/compare/${slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     {
       url: `${APP_URL}/privacy`,
       lastModified: now,

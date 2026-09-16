@@ -103,6 +103,19 @@ describe('DEFAULT_ENTITLEMENTS', () => {
     const docs = DEFAULT_ENTITLEMENTS.enterprise.documents?.limits?.documents as number;
     expect(docs).toBe(99999);
   });
+
+  // Packaging decision, not an implementation detail (docs/gtm-playbook.md §4):
+  // every vendor we are compared against ships an API on their mid tier, so
+  // gating it to Enterprise made us look worse on the row buyers check first.
+  // Starter stays without it — a 10-seat team builds no integrations.
+  it('ships the public API from Pro up, with Enterprise above it', () => {
+    expect(DEFAULT_ENTITLEMENTS.pro.apiAccess?.included).toBe(true);
+    const proCalls = DEFAULT_ENTITLEMENTS.pro.apiAccess?.limits?.apiCalls as number;
+    const entCalls = DEFAULT_ENTITLEMENTS.enterprise.apiAccess?.limits?.apiCalls as number;
+    expect(proCalls).toBeGreaterThan(0);
+    expect(entCalls).toBeGreaterThan(proCalls);
+    expect(DEFAULT_ENTITLEMENTS.starter.apiAccess).toBeUndefined();
+  });
 });
 
 describe('buildDefaultEntitlements', () => {

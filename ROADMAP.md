@@ -988,7 +988,9 @@ PHASE 3 (Differentiation):
   3.8 Career Development ............. 🔲 NOT STARTED
   3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
   3.10 SRC Payroll Export (AM) ....... ✅ DONE (tested, Excel, ՀՎՀՀ)
-  3.11 Local Payments (Idram/ArCa) ... ✅ SCAFFOLDED (awaiting PSP credentials)
+  3.11 Local Payments (Idram/ArCa) ... ✅ DONE (checkout handoff, HMAC webhooks,
+                                        superadmin config, return pages; needs only
+                                        live PSP credentials in the superadmin UI)
 
 PHASE 1 (Remaining TODOs):
   1.1 Performance notifications ...... ✅ DONE (cron: checkDeadlineNotifications)
@@ -1002,8 +1004,11 @@ REAL REMAINING PRODUCT WORK (after re-verification — this is the honest list):
   - Workflow builder for TENANTS, not just superadmin ............. ⚠️ ~5-7 days
   - Mobile: store-ready build OR global service-worker registration  ⚠️ ~5-7 days
   - Unified report builder + scheduled exports .................... ⚠️ ~2-3 days
-  - Public API + webhooks for customers (currently `coming`) ....... 🔲 ~10-15 days
-  - HY translations: compensation / documents / recognition ........ ⚠️ ~1 day
+  - Public API + webhooks for customers ......................... ✅ DONE (REST /api/v1,
+                                        HMAC-signed webhooks, API keys, plan quotas)
+  - Translation coverage ....................................... ✅ DONE (key parity for
+                                        en/ru/hy/de is machine-checked in CI; 16 namespaces aligned)
+  - Public comparison pages (/compare + 6 head-to-head, ×4 langs) .. ✅ DONE (GTM surface)
 
 NOT code tasks — these cannot be shipped from the repository:
   - SOC 2 Type II certification (see docs/soc2-type2-readiness.md)
@@ -1120,25 +1125,28 @@ export default function ModulePage() {
 | **Telegram integration**                        |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Shift Scheduling**                            |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
 | **SRC Tax Export (AM)**                         |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Local PSP (Idram/ArCa)**                      |      🔶      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
+| **Local PSP (Idram/ArCa)**                      |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
 | **Succession**                                  |      🔲      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
 | **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
 | **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
 | **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Public API + webhooks for customers**         |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
+| **Public API + webhooks for customers**         |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
 | **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
 | **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| **TOTAL (shipped features)**                    |   **~41**    | **~19**  | **~16** | **~13**  | **~11**  | **~16** |
+| **TOTAL (shipped features)**                    |   **~43**    | **~31**  | **~20** | **~16**  | **~13**  | **~16** |
 
 > **Competitor marks are indicative**, compiled from public vendor material as of 2026-09, and
 > must be re-verified per deal before being used in a sales document. This project's column was
-> re-verified against the repository on 2026-09-15.
+> re-verified against the repository on 2026-09-16. Totals are the mechanical count of ✅ marks in
+> the table above, not estimates — change a mark and the total changes with it.
 
 **Shipped and re-verified since the last audit:** Shift Scheduling, SRC-ready payroll export
-(Armenia Tax Service), local PSP scaffolding, **Benefits, Expenses, Assets, News, Compliance,
-Projects, Overtime, Strategy Maps, Telegram** — the Armenian-tax and local-PSP rows exist in
-**no** global competitor.
+(Armenia Tax Service), **local payments (Idram/ArCa) end to end** — checkout handoff, HMAC-signed
+webhooks, superadmin configuration, return pages, **public API + signed webhooks with plan quotas**,
+automated SOC 2 evidence collection, public comparison pages in four languages, plus **Benefits,
+Expenses, Assets, News, Compliance, Projects, Overtime, Strategy Maps, Telegram** — the
+Armenian-tax and local-PSP rows exist in **no** global competitor.
 
 ### The distinction that actually decides the market
 
@@ -1146,14 +1154,14 @@ Feature count is not the scoreboard. On **shipped capability** this project now 
 mid-market set (BambooHR, HiBob, Personio) and roughly level with Rippling/Deel minus their
 finance infrastructure. What still separates it from the market leaders is **not features**:
 
-| Decides the deal                     | Status here                            |
-| ------------------------------------ | -------------------------------------- |
-| Native mobile apps                   | ❌ missing (PWA partial)               |
-| Public API + integration marketplace | ❌ missing (billing catalog: `coming`) |
-| SOC 2 Type II certificate            | ⚠️ readiness doc only                  |
-| Global payroll / EOR / entity        | ❌ out of scope by design              |
-| Support SLAs, DPA, legal entity      | ⚠️ not evidenced                       |
-| Brand, references, channel           | ❌ none                                |
+| Decides the deal                | Status here                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| Native mobile apps              | ❌ missing (PWA partial)                                                          |
+| Integration marketplace         | ❌ missing (API + webhooks shipped; no partner app store)                         |
+| SOC 2 Type II certificate       | ⚠️ readiness doc + automated evidence (`npm run soc2:evidence`); audit not booked |
+| Global payroll / EOR / entity   | ❌ out of scope by design                                                         |
+| Support SLAs, DPA, legal entity | ⚠️ not evidenced                                                                  |
+| Brand, references, channel      | ❌ none                                                                           |
 
 **Therefore the winnable position is not "beat Workday everywhere" — it is "be the only correct
 answer in Armenia and the Armenian/Russian-speaking diaspora",** where SRC filing, Idram/ArCa,

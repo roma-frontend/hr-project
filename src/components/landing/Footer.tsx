@@ -41,6 +41,8 @@ export default function Footer({ initialLanguage = 'en' }: { initialLanguage?: s
     product: [
       { nameKey: 'landing.features', href: '#features' },
       { nameKey: 'landing.pricing', href: '/pricing' },
+      // Comparison hub — the SEO surface that ranks for "<vendor> alternative".
+      { nameKey: 'landingExtra.compare', href: '/compare' },
       { nameKey: 'landing.testimonials', href: '#testimonials' },
       { nameKey: 'landing.faq', href: '#faq' },
     ],

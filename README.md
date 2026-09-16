@@ -471,17 +471,20 @@ lazy-load over HTTP so anonymous visitors never download them.
 - [x] imID — Armenian digital identity (OAuth login, e-signature, employee verification), Lucky Carrot employee sync
 - [x] Shift scheduling (weekly roster, templates, swap requests)
 - [x] SRC-ready payroll export — Armenian Tax Service filing sheet (income tax, funded pension, military stamp duty, health insurance, ՀՎՀՀ)
-- [x] Local payment provider scaffolding (Idram / ArCa) alongside Stripe
+- [x] Local payments (Idram / ArCa): checkout handoff, HMAC-signed webhooks, superadmin configuration — alongside Stripe
 - [x] Benefits, Expenses, Assets, Company news feed, Compliance dashboard, Audit log
 - [x] Projects, Overtime, Strategy maps, Meeting rooms, LiveKit video conferencing
 - [x] Enterprise SSO (SAML 2.0 + OIDC), SCIM 2.0 provisioning, Telegram integration
 - [x] Visual workflow builder (currently exposed in the operator console only)
+- [x] Public API (`/api/v1`) + HMAC-signed customer webhooks, metered per plan (from Pro up)
+- [x] SOC 2 evidence automation (`npm run soc2:evidence`) and public comparison pages (`/compare` + 6 head-to-head, ×4 languages)
 - [ ] Succession planning, Career development paths
-- [ ] Public API + customer webhooks
-- [ ] Mobile app (React Native)
+- [ ] Mobile app (React Native; PWA is installable today)
 
-> 📌 **Statuses are verified against the codebase on 2026-09-15.** Many items previously marked as
+> 📌 **Statuses are verified against the codebase on 2026-09-16.** Many items previously marked as
 > "not started" in [`ROADMAP.md`](./ROADMAP.md) were already shipped — see the verification note there.
+> Go-to-market material (positioning, pricing rationale, battlecards) lives in
+> [`docs/gtm-playbook.md`](./docs/gtm-playbook.md) and [`docs/battlecards.md`](./docs/battlecards.md).
 
 ---
 

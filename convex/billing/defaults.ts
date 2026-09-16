@@ -159,6 +159,11 @@ export const DEFAULT_ENTITLEMENTS: Record<PlanKey, EntitlementMap> = {
     aiSiteEditor: { included: true },
     securityCenter: { included: true },
     compliance: { included: true },
+    // Public API from Pro up: every competitor we are compared against ships an
+    // API on their mid tier, so gating it to Enterprise only made us look worse
+    // on the one row buyers check first. Starter stays without it — a 10-seat
+    // team integrates nothing, and it keeps the Pro upgrade honest.
+    apiAccess: { included: true, limits: { apiCalls: 25000 }, overLimit: 'block' },
   },
   enterprise: {
     dashboard: { included: true },
