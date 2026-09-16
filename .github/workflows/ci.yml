@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -121,7 +121,7 @@ jobs:
       # Must come first: this job runs a repo script (compare-coverage.mjs), and
       # actions/checkout cleans the workspace, which would delete the coverage
       # artifacts if it ran after the downloads below.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Download base branch coverage from main
         uses: dawidd6/action-download-artifact@v21
         continue-on-error: true
@@ -188,7 +188,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Download coverage report from unit-tests
         uses: actions/download-artifact@v8
         with:
@@ -251,7 +251,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -281,7 +281,7 @@ jobs:
       actions: read
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
@@ -296,7 +296,7 @@ jobs:
     timeout-minutes: 15
     needs: [lint, type-check, unit-tests]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -333,7 +333,7 @@ jobs:
     timeout-minutes: 30
     needs: [build]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
@@ -424,7 +424,7 @@ jobs:
       # The CLI-based deploy (vercel pull/build/deploy) was disabled due to
       # persistent "Could not retrieve Project Settings" errors with the token.
       # Convex schema + Sentry sourcemaps still run here after E2E tests pass.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
