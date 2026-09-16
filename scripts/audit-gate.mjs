@@ -114,7 +114,11 @@ const baseline = existsSync(BASELINE_PATH)
 if (process.argv.includes('--update')) {
   const report = runAudit();
   const current = collectAdvisories(report).filter((a) => GATE_LEVELS.has(a.severity));
-  const next = { $schemaNote: 'Accepted critical/high advisories. id = GHSA advisory URL. Each entry needs a reason; remove entries once the advisory no longer applies.' , advisories: {} };
+  const next = {
+    $schemaNote:
+      'Accepted critical/high advisories. id = GHSA advisory URL. Each entry needs a reason; remove entries once the advisory no longer applies.',
+    advisories: {},
+  };
   for (const a of current) {
     next.advisories[a.id] = {
       package: a.packageName,
@@ -142,7 +146,9 @@ for (const id of stale) {
 }
 
 if (violations.length > 0) {
-  console.error(`\n✖ ${violations.length} NEW critical/high advisory(ies) not in the accepted baseline:\n`);
+  console.error(
+    `\n✖ ${violations.length} NEW critical/high advisory(ies) not in the accepted baseline:\n`,
+  );
   for (const v of violations) {
     console.error(`  [${v.severity}] ${v.packageName} — ${v.title}`);
     console.error(`           ${v.id} (range: ${v.range})`);
@@ -154,4 +160,6 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(`✓ audit gate passed: ${gateable.length} critical/high advisory(ies), all in the accepted baseline (violations: 0, removable baseline entries: ${stale.length}).`);
+console.log(
+  `✓ audit gate passed: ${gateable.length} critical/high advisory(ies), all in the accepted baseline (violations: 0, removable baseline entries: ${stale.length}).`,
+);

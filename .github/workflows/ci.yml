@@ -32,6 +32,11 @@ jobs:
       - run: npm ci --prefer-offline --no-audit
       - name: ESLint (max-warnings=0 where possible; enforced on changed files)
         run: npm run lint
+        # Type-aware linting over the whole repository ran into V8's default
+        # ~4 GB old-space ceiling on the runner ("Ineffective mark-compacts near
+        # heap limit" → exit 134). Raise the ceiling explicitly.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
       - name: Prettier check
         run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
       - name: Locale parity (EN is the reference)

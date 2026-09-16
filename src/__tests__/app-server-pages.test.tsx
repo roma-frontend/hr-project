@@ -11,6 +11,7 @@
 import React from 'react';
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { COMPARE_SLUGS } from '@/lib/competitors';
 
 // ── next/headers cookies: configurable per test ───────────────────────────────
 let mockCookieLng: string | undefined = undefined;
@@ -307,12 +308,17 @@ describe('robots (src/app/robots.ts)', () => {
 describe('sitemap (src/app/sitemap.ts)', () => {
   it('lists all public pages with priorities', () => {
     const entries = sitemap();
-    expect(entries).toHaveLength(7);
+    // 7 core public pages + the comparison hub + one head-to-head per vendor.
+    expect(entries).toHaveLength(7 + 1 + COMPARE_SLUGS.length);
     expect(entries.some((e: any) => e.url.endsWith('/security'))).toBe(true);
     expect(entries[0]?.url).toBe(process.env.NEXT_PUBLIC_APP_URL ?? 'https://strata.work');
     expect(entries[0]?.priority).toBe(1);
     expect(entries.some((e) => e.url.endsWith('/login'))).toBe(true);
     expect(entries.some((e) => e.url.endsWith('/terms'))).toBe(true);
+    expect(entries.some((e) => e.url.endsWith('/compare'))).toBe(true);
+    for (const slug of COMPARE_SLUGS) {
+      expect(entries.some((e) => e.url.endsWith(`/compare/${slug}`))).toBe(true);
+    }
   });
 });
 
