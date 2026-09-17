@@ -26,7 +26,10 @@ import {
   COMPETITORS,
   COMPARE_ROWS,
   COMPARE_SLUGS,
+  GLOBAL_COMPARE_SLUGS,
+  LOCAL_COMPARE_SLUGS,
   compareScore,
+  competitorsByRegion,
   groupedRows,
 } from '@/lib/competitors';
 
@@ -70,6 +73,8 @@ const STATIC_KEYS = [
   'index.scoreOurs',
   'index.scoreTheirs',
   'index.viewComparison',
+  'index.globalTitle',
+  'index.localTitle',
   'index.featureColumn',
   'index.usColumn',
   'index.tableTitle',
@@ -151,14 +156,19 @@ describe('competitor matrix', () => {
   });
 
   it('counts a row for one side only when the other side ships nothing', () => {
-    // Our own row: we ship local compliance, none of the six do — the entire
-    // reason these pages exist, so it is asserted rather than assumed.
+    // Every compared vendor — global or local — must have rows where we ship it
+    // and they do not, otherwise the table is not a comparison.
     for (const slug of COMPARE_SLUGS) {
       const score = compareScore(slug);
       expect(score.oursOnly).toBeGreaterThan(0);
-      // The Armenian-market rows are exclusives for every competitor compared.
       expect(score.oursOnly).toBeGreaterThanOrEqual(5);
     }
+  });
+
+  it('splits competitors into a global and a local-market group', () => {
+    expect(competitorsByRegion('global').map((c) => c.slug)).toEqual([...GLOBAL_COMPARE_SLUGS]);
+    expect(competitorsByRegion('local').map((c) => c.slug)).toEqual([...LOCAL_COMPARE_SLUGS]);
+    expect(GLOBAL_COMPARE_SLUGS.length + LOCAL_COMPARE_SLUGS.length).toBe(COMPARE_SLUGS.length);
   });
 
   it('keeps the published gaps honest (mobile apps and SOC 2 are not ours)', () => {
@@ -171,15 +181,29 @@ describe('competitor matrix', () => {
     expect(soc2?.category).toBe('gaps');
   });
 
-  it('marks the Armenian-market rows as ours only', () => {
+  it('marks the Armenian-market rows as ours only against the global vendors', () => {
+    // Against the six global platforms every local row is a clean exclusive.
     const exclusive = ['srcExport', 'armenianUi', 'armsoft', 'imid', 'localPay'];
     for (const key of exclusive) {
       const row = COMPARE_ROWS.find((r) => r.key === key);
       expect(row?.us).toBe('yes');
-      for (const slug of COMPARE_SLUGS) {
+      for (const slug of GLOBAL_COMPARE_SLUGS) {
         expect(row?.vendors[slug]).toBe('no');
       }
     }
+  });
+
+  it('credits local vendors where they genuinely ship local compliance', () => {
+    // Honesty cut both ways: Armsoft and 1C do file Armenian taxes, Staff.am is
+    // Armenian-first. Pretending otherwise would make the whole table suspect.
+    const src = COMPARE_ROWS.find((r) => r.key === 'srcExport');
+    const armsoft = COMPARE_ROWS.find((r) => r.key === 'armsoft');
+    expect(src?.vendors.armsoft).toBe('yes');
+    expect(src?.vendors.onec).toBe('yes');
+    expect(armsoft?.vendors.armsoft).toBe('yes');
+    // …while the global platforms still get nothing on those rows.
+    expect(src?.vendors.personio).toBe('no');
+    expect(armsoft?.vendors.deel).toBe('no');
   });
 });
 

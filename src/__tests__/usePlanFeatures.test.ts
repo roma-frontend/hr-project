@@ -16,19 +16,25 @@ import {
   planIncludes,
 } from '@/hooks/usePlanFeatures';
 import { useSubscription } from '@/hooks/useSubscription';
+import { PLAN_SEAT_PRICING } from '@/lib/pricing';
+
+// Seat caps are asserted against the pricing model, not against a literal, so a
+// limit change cannot leave this file asserting the old number.
+const STARTER_SEATS = PLAN_SEAT_PRICING.starter.maxSeats ?? Infinity;
+const PRO_SEATS = PLAN_SEAT_PRICING.pro.maxSeats ?? Infinity;
 
 describe('PLAN_FEATURES', () => {
   it('starter plan has limited features', () => {
     expect(PLAN_FEATURES.starter.analytics).toBe(true);
     expect(PLAN_FEATURES.starter.strategyMaps).toBe(false);
-    expect(PLAN_FEATURES.starter.maxEmployees).toBe(50);
+    expect(PLAN_FEATURES.starter.maxEmployees).toBe(STARTER_SEATS);
     expect(PLAN_FEATURES.starter.aiSiteEditorDesignChanges).toBe(5);
     expect(PLAN_FEATURES.starter.aiSiteEditorLogicChanges).toBe(false);
   });
 
   it('professional plan has full features', () => {
     expect(PLAN_FEATURES.professional.strategyMaps).toBe(true);
-    expect(PLAN_FEATURES.professional.maxEmployees).toBe(200);
+    expect(PLAN_FEATURES.professional.maxEmployees).toBe(PRO_SEATS);
     expect(PLAN_FEATURES.professional.aiSiteEditorDesignChanges).toBe(Infinity);
     expect(PLAN_FEATURES.professional.aiSiteEditorLogicChanges).toBe(true);
   });
@@ -114,7 +120,7 @@ describe('usePlanFeatures', () => {
     const result = usePlanFeatures();
     expect(result.plan).toBe('professional');
     expect(result.features.strategyMaps).toBe(true);
-    expect(result.features.maxEmployees).toBe(200);
+    expect(result.features.maxEmployees).toBe(PRO_SEATS);
   });
 
   it('returns starter features when plan is not active', () => {
@@ -125,7 +131,7 @@ describe('usePlanFeatures', () => {
     });
 
     const result = usePlanFeatures();
-    expect(result.features.maxEmployees).toBe(50); // starter limit
+    expect(result.features.maxEmployees).toBe(STARTER_SEATS); // starter limit
     expect(result.features.strategyMaps).toBe(false); // starter: no strategy maps
   });
 
@@ -137,7 +143,7 @@ describe('usePlanFeatures', () => {
     });
 
     const result = usePlanFeatures();
-    expect(result.features.maxEmployees).toBe(50);
+    expect(result.features.maxEmployees).toBe(STARTER_SEATS);
   });
 
   describe('canAccess', () => {

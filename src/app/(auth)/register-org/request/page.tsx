@@ -28,6 +28,7 @@ import bcrypt from 'bcryptjs';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { useCurrency } from '@/hooks/useCurrency';
+import { entrySeatCount, formatPerSeat, perSeatPrice, seatCap } from '@/lib/pricing';
 
 const passwordStrength = (pwd: string) => {
   if (pwd.length < 8) return 0;
@@ -74,8 +75,23 @@ export default function RequestOrgPage() {
   const gradientColor =
     plan === 'enterprise' ? 'from-(--purple) to-(--pink)' : 'from-(--brand) to-(--cyan)';
 
+  // Per-seat rate (see src/lib/currency.ts BASE_PRICES). The USD figure is the
+  // entry rate straight from the pricing model, so a price change cannot leave
+  // the loading state quoting an old number.
   const proPrice =
-    plan === 'professional' ? (currency.loading ? '$79' : currency.professional.formatted) : '';
+    plan === 'professional'
+      ? currency.loading
+        ? formatPerSeat(perSeatPrice('pro', entrySeatCount('pro')))
+        : currency.professional.formatted
+      : '';
+
+  // Team-size promise, from the pricing model rather than the auth locale file
+  // (which still carries "Up to 50 employees" from the flat-plan era).
+  const proSeats = seatCap('pro');
+  const proTeamLabel =
+    proSeats === null
+      ? t('billing.unlimitedEmployees', 'Unlimited employees')
+      : t('billing.upToEmployees', { count: proSeats });
 
   useEffect(() => {
     if (plan !== 'professional' && plan !== 'enterprise') {
@@ -190,8 +206,8 @@ export default function RequestOrgPage() {
               </h1>
               <p className="text-xs sm:text-sm" style={{ color: 'var(--text-muted)' }}>
                 {plan === 'enterprise'
-                  ? `${t('registerOrgPage.enterpriseCustom')} • ${t('registerOrgPage.enterpriseTeam')}`
-                  : `${proPrice}${t('auth.plans.perMonth', '/мес')} • ${t('registerOrgPage.proTeam')}`}{' '}
+                  ? `${t('registerOrgPage.enterpriseCustom')} • ${t('billing.unlimitedEmployees', 'Unlimited employees')}`
+                  : `${proPrice} ${t('billing.upgradeModal.perSeatMonth', 'per seat / mo')} • ${proTeamLabel}`}{' '}
                 • {t('registerOrgPage.approvalNote')}
               </p>
             </div>

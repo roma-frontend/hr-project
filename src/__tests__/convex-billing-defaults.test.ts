@@ -123,12 +123,14 @@ describe('buildDefaultEntitlements', () => {
     const ents = buildDefaultEntitlements('starter');
     expect(ents.dashboard?.included).toBe(true);
     expect(ents.employees?.included).toBe(true);
-    expect(ents.employees?.limits?.seats).toBe(10);
+    // Plan ceiling matches the per-seat Starter range (5–25 seats).
+    expect(ents.employees?.limits?.seats).toBe(25);
   });
 
   it('returns entitlements for pro', () => {
     const ents = buildDefaultEntitlements('pro');
-    expect(ents.employees?.limits?.seats).toBe(50);
+    // Plan ceiling matches the per-seat Pro range (10–300 seats).
+    expect(ents.employees?.limits?.seats).toBe(300);
   });
 
   it('returns entitlements for enterprise', () => {

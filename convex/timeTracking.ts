@@ -108,11 +108,47 @@ async function resolveAttendanceScope(
 // Armenia timezone offset: UTC+4
 const ARMENIA_OFFSET_MS = 4 * 60 * 60 * 1000;
 
+// How far back a punch may be dated. The mobile quick-action bar queues punches
+// while the phone is offline and replays them on reconnect, so a punch is
+// routinely minutes-to-hours old when it lands. 36h covers an overnight shift
+// that never got signal, without letting the client rewrite history.
+const MAX_PUNCH_AGE_MS = 36 * 60 * 60 * 1000;
+// Small allowance for clock drift between the phone and Convex.
+const MAX_PUNCH_FUTURE_SKEW_MS = 5 * 60 * 1000;
+
+// Helper: get a date string in Armenia timezone (UTC+4)
+function getArmeniaDate(timestamp: number = Date.now()) {
+  const armeniaTime = new Date(timestamp + ARMENIA_OFFSET_MS);
+  return armeniaTime.toISOString().split('T')[0] || '';
+}
+
 // Helper: get today's date string in Armenia timezone (UTC+4)
 function getTodayDate() {
-  const now = new Date();
-  const armeniaTime = new Date(now.getTime() + ARMENIA_OFFSET_MS);
-  return armeniaTime.toISOString().split('T')[0] || '';
+  return getArmeniaDate();
+}
+
+/**
+ * The wall-clock a punch happened at.
+ *
+ * `occurredAt` is sent by the offline queue: without it a punch recorded at
+ * 09:00 in a lift with no signal was stored at the moment it synced (say
+ * 11:40), counting the employee as 2h40m late for arriving on time. Bounds are
+ * server-side, so a client cannot backdate arbitrarily or date a punch into the
+ * future.
+ */
+function resolvePunchTime(occurredAt: number | undefined): number {
+  const now = Date.now();
+  if (occurredAt === undefined) return now;
+  if (!Number.isFinite(occurredAt)) {
+    throw new Error('Invalid attendance timestamp');
+  }
+  if (occurredAt > now + MAX_PUNCH_FUTURE_SKEW_MS) {
+    throw new Error('Attendance timestamp cannot be in the future');
+  }
+  if (occurredAt < now - MAX_PUNCH_AGE_MS) {
+    throw new Error('Attendance timestamp is too old to record');
+  }
+  return occurredAt;
 }
 
 // Helper: get scheduled start/end timestamps in Armenia timezone (UTC+4)
@@ -145,12 +181,15 @@ export const checkIn = mutation({
     // Optional: the caller's own id is used when omitted. Supplying somebody
     // else's id is an HR correction and needs `attendance.manage`.
     userId: v.optional(v.id('users')),
+    // Wall-clock of the punch. Sent by the offline quick-action queue so a
+    // punch recorded without a connection is not stamped with its sync time.
+    occurredAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'attendance');
     const userId = await assertMayRecordAttendance(ctx, args.userId);
-    const now = Date.now();
-    const today = getTodayDate();
+    const now = resolvePunchTime(args.occurredAt);
+    const today = getArmeniaDate(now);
 
     // Check if already checked in today
     const existing = await ctx.db
@@ -187,7 +226,7 @@ export const checkIn = mutation({
         status: 'checked_in',
         isLate,
         lateMinutes: lateMinutes > 0 ? lateMinutes : undefined,
-        updatedAt: now,
+        updatedAt: Date.now(),
       });
       recordId = existing._id;
     } else {
@@ -203,7 +242,7 @@ export const checkIn = mutation({
         status: 'checked_in',
         date: today,
         createdAt: now,
-        updatedAt: now,
+        updatedAt: Date.now(),
       });
     }
 
@@ -247,14 +286,17 @@ export const checkOut = mutation({
   args: {
     userId: v.optional(v.id('users')),
     notes: v.optional(v.string()),
+    // See `checkIn` — same offline-queue contract.
+    occurredAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'attendance');
     const userId = await assertMayRecordAttendance(ctx, args.userId);
-    const now = Date.now();
-    const today = getTodayDate();
+    const now = resolvePunchTime(args.occurredAt);
+    const today = getArmeniaDate(now);
 
-    // Find today's check-in record
+    // Find the check-in record for the punch's own day (not "today"): a punch
+    // queued at 23:50 and synced at 00:10 belongs to the earlier shift.
     const record = await ctx.db
       .query('timeTracking')
       .withIndex('by_user_date', (q) => q.eq('userId', userId).eq('date', today))
@@ -266,6 +308,12 @@ export const checkOut = mutation({
 
     if (record.status === 'checked_out') {
       throw new Error('Already checked out today');
+    }
+
+    // A replayed punch must not run backwards through the shift and produce
+    // negative worked time.
+    if (now < record.checkInTime) {
+      throw new Error('Check-out cannot be earlier than check-in');
     }
 
     // Recalculate scheduled end fresh (correct Armenia UTC+4 timezone)
@@ -296,9 +344,8 @@ export const checkOut = mutation({
     if (approvedOvertime) {
       // Parse overtime end time and create a timestamp for it
       const [otEndH, otEndM] = approvedOvertime.endTime.split(':').map(Number);
-      const armeniaDayStartUTC =
-        Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) -
-        ARMENIA_OFFSET_MS;
+      const [y, m, d] = today.split('-').map(Number);
+      const armeniaDayStartUTC = Date.UTC(y ?? 0, (m ?? 1) - 1, d ?? 1) - ARMENIA_OFFSET_MS;
       const otEndTimestamp = armeniaDayStartUTC + ((otEndH ?? 0) * 60 + (otEndM ?? 0)) * 60 * 1000;
       // Use the later of scheduled end and overtime end
       effectiveEnd = Math.max(freshEnd, otEndTimestamp);
@@ -334,7 +381,7 @@ export const checkOut = mutation({
       earlyLeaveMinutes: earlyLeaveMinutes > 0 ? earlyLeaveMinutes : undefined,
       overtimeMinutes: overtimeMinutes > 0 ? overtimeMinutes : undefined,
       notes: args.notes,
-      updatedAt: now,
+      updatedAt: Date.now(),
     });
 
     // If approved overtime was used, link it to the timeTracking record

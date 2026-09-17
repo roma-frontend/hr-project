@@ -65,10 +65,12 @@ async function notifyManager({
   const managerEmail = process.env.MANAGER_EMAIL;
   if (!managerEmail) return;
 
+  // Per-seat rates (src/lib/pricing.ts) — the manager email used to quote the
+  // retired flat plan prices, which no longer exist anywhere in the product.
   const planLabels: Record<string, string> = {
-    starter: 'Starter ($29/mo)',
-    professional: 'Professional ($79/mo)',
-    enterprise: 'Enterprise ($199/mo)',
+    starter: 'Starter ($4/seat/mo)',
+    professional: 'Professional ($8/seat/mo)',
+    enterprise: 'Enterprise (custom)',
   };
 
   const trialEndStr = trialEnd

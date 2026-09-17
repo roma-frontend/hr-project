@@ -8,6 +8,7 @@ import { motion } from '@/lib/cssMotion';
 import { Building2, Check, Zap, Crown, ArrowRight } from 'lucide-react';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useLoginBranding } from '@/hooks/useLoginBranding';
+import { entrySeatCount, formatPerSeat, perSeatPrice, seatCap } from '@/lib/pricing';
 
 type Plan = 'starter' | 'professional' | 'enterprise';
 
@@ -20,19 +21,38 @@ export default function RegisterOrgPage() {
   const brandPrimary = branding?.primaryColor ?? '#2563eb';
   const brandSecondary = branding?.secondaryColor ?? '#059669';
 
+  // Seat caps come from the pricing model, never from a translated string: the
+  // auth locale file still carries "Up to 10/50 employees" from the flat-plan
+  // era, so any hardcoded number in copy goes stale on the next pricing change.
+  const seatCapLabel = (planKey: 'starter' | 'pro') => {
+    const cap = seatCap(planKey);
+    return cap === null
+      ? t('billing.unlimitedEmployees', 'Unlimited employees')
+      : t('billing.upToEmployees', { count: cap });
+  };
+
+  // Loading-state fallback (no FX rate yet): the entry per-seat rate in USD,
+  // computed from the model rather than a hardcoded '$4'.
+  const entrySeatPrice = (planKey: 'starter' | 'pro') =>
+    formatPerSeat(perSeatPrice(planKey, entrySeatCount(planKey)));
+  const perSeatLabel = t('billing.upgradeModal.perSeatMonth', 'per seat / mo');
+
   const plans = [
     {
       id: 'starter' as Plan,
       name: t('auth.plans.starter.name', 'Starter'),
+      // Per-seat rate, not a plan price — see src/lib/currency.ts BASE_PRICES.
+      // The suffix comes from the billing namespace (already translated in all
+      // four languages) rather than a new auth key.
       price: currency.loading
-        ? '$29' + t('auth.plans.perMonth', '/mo')
-        : currency.starter.formatted + t('auth.plans.perMonth', '/mo'),
+        ? `${entrySeatPrice('starter')} ${perSeatLabel}`
+        : currency.starter.formatted + ' ' + perSeatLabel,
       description: t('auth.plans.starter.desc', 'Ideal for small teams getting started'),
       icon: Zap,
       color: 'from-(--success-solid) to-(--success-solid)',
       gradient: 'var(--green-500), var(--green-600)',
       features: [
-        t('auth.plans.starter.employees', 'Up to 10 employees'),
+        seatCapLabel('starter'),
         t('auth.plans.starter.basicLeave', 'Basic leave management'),
         t('auth.plans.starter.timeTracking', 'Time tracking & attendance'),
         t('auth.plans.starter.employeeProfiles', 'Employee profiles & records'),
@@ -45,14 +65,14 @@ export default function RegisterOrgPage() {
       id: 'professional' as Plan,
       name: t('auth.plans.professional.name', 'Professional'),
       price: currency.loading
-        ? '$79' + t('auth.plans.perMonth', '/mo')
-        : currency.professional.formatted + t('auth.plans.perMonth', '/mo'),
+        ? `${entrySeatPrice('pro')} ${perSeatLabel}`
+        : currency.professional.formatted + ' ' + perSeatLabel,
       description: t('auth.plans.professional.desc', 'For growing teams with advanced needs'),
       icon: Building2,
       color: 'from-(--brand) to-(--cyan)',
       gradient: 'var(--brand-500), var(--cyan-500)',
       features: [
-        t('auth.plans.professional.employees50', 'Up to 50 employees'),
+        seatCapLabel('pro'),
         t('auth.plans.professional.everythingStarter', 'Everything in Starter +'),
         t('auth.plans.professional.advancedAnalytics', 'AI-powered insights & analytics'),
         t('auth.plans.professional.customWorkflows', 'Custom reports & dashboards'),
@@ -72,7 +92,7 @@ export default function RegisterOrgPage() {
       color: 'from-(--purple) to-(--pink)',
       gradient: 'var(--violet-500), var(--pink-500)',
       features: [
-        t('auth.plans.enterprise.employees100', 'Unlimited employees'),
+        t('billing.unlimitedEmployees', 'Unlimited employees'),
         t('auth.plans.enterprise.everythingPro', 'Everything in Professional +'),
         t('auth.plans.enterprise.dedicatedSupport', 'Dedicated support'),
         t('auth.plans.enterprise.customIntegrations', 'Custom integrations & webhooks'),

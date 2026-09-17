@@ -1,94 +1,167 @@
-// Service Worker for Push Notifications + Offline Support
-const CACHE_NAME = 'hr-office-v2';
-const OFFLINE_URL = '/offline';
-const PRECACHE_URLS = [OFFLINE_URL];
+/* eslint-disable no-undef */
+/**
+ * Strata service worker — offline support, push notifications and app quick
+ * actions.
+ *
+ * Strategy summary:
+ *   - navigations (HTML): network-first, cache the response, fall back to the
+ *     cached page, then to /offline. This is what makes the dashboard usable
+ *     after a reload with no connection.
+ *   - same-origin static assets (/_next/static, fonts, icons): cache-first with
+ *     a background revalidate, so repeat visits paint instantly.
+ *   - everything else (Convex queries, API routes, auth): network only — never
+ *     cached, because stale HR data is worse than no data.
+ *
+ * Note: this file is served as-is (not bundled), so it must not import project
+ * modules. The previous version called `logger` here, which does not exist in a
+ * service-worker scope and threw on every push — replaced with `console`.
+ */
 
-// Install event — precache offline page
+const VERSION = 'v3';
+const STATIC_CACHE = `strata-static-${VERSION}`;
+const PAGE_CACHE = `strata-pages-${VERSION}`;
+const OFFLINE_URL = '/offline';
+const PRECACHE_URLS = [OFFLINE_URL, '/manifest.json', '/offline.html'];
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
+  event.waitUntil(
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .catch(() => undefined),
+  );
   self.skipWaiting();
 });
 
-// Activate event — clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
+        Promise.all(
+          keys
+            .filter((key) => key !== STATIC_CACHE && key !== PAGE_CACHE)
+            .map((key) => caches.delete(key)),
+        ),
       ),
   );
-  clients.claim();
+  self.clients.claim();
 });
 
-// Fetch event — serve offline page when network fails for navigation requests
+/** Static assets that are safe to serve from cache first. */
+function isCacheableAsset(url) {
+  return (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/fonts/') ||
+    url.pathname.startsWith('/models/') ||
+    /\.(?:css|js|woff2?|ttf|png|jpg|jpeg|svg|gif|webp|ico)$/.test(url.pathname)
+  );
+}
+
 self.addEventListener('fetch', (event) => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+  const { request } = event;
+
+  // Only ever handle GETs; let the browser deal with everything else.
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+
+  // Never cache cross-origin or data requests (Convex, Stripe, auth…).
+  if (url.origin !== self.location.origin) return;
+
+  // ── Navigations: network-first with an offline page fallback ──────────────
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches
+            .open(PAGE_CACHE)
+            .then((cache) => cache.put(request, copy))
+            .catch(() => undefined);
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const offline = await caches.match(OFFLINE_URL);
+          if (offline) return offline;
+          return Response.error();
+        }),
+    );
+    return;
+  }
+
+  // ── Static assets: cache-first, revalidate in the background ──────────────
+  if (isCacheableAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const network = fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const copy = response.clone();
+              caches
+                .open(STATIC_CACHE)
+                .then((cache) => cache.put(request, copy))
+                .catch(() => undefined);
+            }
+            return response;
+          })
+          .catch(() => cached);
+        return cached || network;
+      }),
+    );
   }
 });
 
-// Push notification event
-self.addEventListener('push', (event) => {
-  logger.log('Push notification received:', event);
+// ── Messages from the app (e.g. activate an updated worker immediately) ──────
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
+// ── Push notifications ──────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
   let notificationData = {
-    title: 'Time for a Break! ☕',
-    body: "You've been working hard. Take a 5-minute break to stretch and recharge!",
+    title: 'Strata',
+    body: 'You have a new HR notification.',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
-    tag: 'break-reminder',
-    requireInteraction: false, // Changed to false for iOS
-    renotify: true, // Force notification even if tag exists
-    vibrate: [300, 100, 300, 100, 300, 100, 300], // Stronger vibration pattern
-    silent: false, // Ensure sound plays
-    data: {
-      url: '/dashboard',
-      timestamp: Date.now(),
-    },
+    tag: 'strata-notification',
+    requireInteraction: false,
+    renotify: true,
+    vibrate: [300, 100, 300],
+    silent: false,
+    data: { url: '/dashboard', timestamp: Date.now() },
     actions: [
-      {
-        action: 'dismiss',
-        title: 'Dismiss',
-      },
-      {
-        action: 'snooze',
-        title: 'Snooze 5 min',
-      },
+      { action: 'dismiss', title: 'Dismiss' },
+      { action: 'snooze', title: 'Snooze 5 min' },
     ],
   };
 
-  // If push has data, use it
   if (event.data) {
     try {
-      const data = event.data.json();
-      notificationData = { ...notificationData, ...data };
-    } catch (e) {
-      logger.error('Failed to parse push data:', e);
+      notificationData = { ...notificationData, ...event.data.json() };
+    } catch (error) {
+      console.error('Failed to parse push data:', error);
     }
   }
 
   event.waitUntil(self.registration.showNotification(notificationData.title, notificationData));
 });
 
-// Notification click event
+// ── Notification click — also serves the manifest app shortcuts ─────────────
 self.addEventListener('notificationclick', (event) => {
-  logger.log('Notification clicked:', event);
-
   event.notification.close();
 
-  if (event.action === 'dismiss') {
-    return;
-  }
+  if (event.action === 'dismiss') return;
 
   if (event.action === 'snooze') {
-    // Schedule another notification in 5 minutes
     setTimeout(
       () => {
-        self.registration.showNotification('Break Reminder - Snoozed ⏰', {
-          body: 'Your 5-minute snooze is up. Time for that break!',
+        self.registration.showNotification('Strata — snoozed reminder', {
+          body: 'Your 5-minute snooze is up.',
           icon: '/icon-192x192.png',
-          tag: 'break-reminder-snooze',
+          tag: 'strata-snooze',
         });
       },
       5 * 60 * 1000,
@@ -96,26 +169,31 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Open the app
+  // Quick-action deep links (see manifest `shortcuts`).
+  const actionUrls = {
+    'approve-leave': '/approvals',
+    'mark-attendance': '/attendance',
+  };
+  const targetUrl = actionUrls[event.action] || event.notification.data?.url || '/dashboard';
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if app is already open
-      for (let client of clientList) {
-        if (client.url.includes('/dashboard') && 'focus' in client) {
-          return client.focus();
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus();
+          if ('navigate' in client) return client.navigate(targetUrl);
+          return undefined;
         }
       }
-      // If not open, open new window
-      if (clients.openWindow) {
-        return clients.openWindow(event.notification.data.url || '/dashboard');
-      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return undefined;
     }),
   );
 });
 
-// Background sync for offline support (optional)
+// ── Background sync placeholder ─────────────────────────────────────────────
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-notifications') {
-    logger.log('Background sync triggered');
+    console.info('Background sync triggered');
   }
 });

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { useSubscription, type Plan } from '@/lib/hooks/useSubscription';
+import { entrySeatCount, formatPerSeat, perSeatPrice, type PlanKey } from '@/lib/pricing';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -35,8 +36,16 @@ type PlanRelation = 'current' | 'upgrade' | 'downgrade';
 interface PlanTier {
   id: PlanType;
   name: string;
+  /** Text price for quoted plans ("Custom"). Priced tiers use the live rate. */
   price: string;
-  priceMonthly?: number;
+  /** USD per seat per month at this plan's entry bracket. 0 = quoted. */
+  perSeatUsd: number;
+  /** Seats the subscription starts at — the plan's minimum billable team. */
+  entrySeats: number;
+  /** Seat-pricing key behind this tier. */
+  seatPlanKey: PlanKey;
+  /** False for quoted plans (Enterprise): no per-seat suffix, no trial badge. */
+  priced: boolean;
   description: string;
   icon: React.ReactNode;
   features: string[];
@@ -49,9 +58,6 @@ interface PlanTier {
 }
 
 type TFunc = ReturnType<typeof useTranslation>['t'];
-
-/** USD list price per plan — local PSPs are billed in AMD, converted below. */
-const PLAN_USD: Record<PlanType, number> = { starter: 29, professional: 79, enterprise: 199 };
 
 interface LocalProvider {
   provider: string;
@@ -68,23 +74,41 @@ interface LocalProvider {
  * shown rather than a second, possibly staler, rate.
  */
 function amdAmountFor(
-  plan: PlanType,
+  tier: Pick<PlanTier, 'id' | 'perSeatUsd' | 'entrySeats'>,
   currency: { currency: string; starter: { amount: number }; professional: { amount: number } },
+  seats: number,
+  months: number,
 ): number {
+  // `currency.starter/professional.amount` are PER-SEAT AMD rates (useCurrency
+  // converts BASE_PRICES, which is per seat), so the order total is the rate
+  // times the seats being bought. Rounded once, at the end, so seats do not
+  // amplify a per-seat rounding error.
   if (currency.currency === 'AMD') {
-    if (plan === 'starter') return Math.round(currency.starter.amount);
-    if (plan === 'professional') return Math.round(currency.professional.amount);
+    if (tier.id === 'starter') return Math.round(currency.starter.amount * seats * months);
+    if (tier.id === 'professional') {
+      return Math.round(currency.professional.amount * seats * months);
+    }
   }
-  return Math.round(PLAN_USD[plan] * getFallbackRate('hy'));
+  return Math.round(tier.perSeatUsd * seats * months * getFallbackRate('hy'));
 }
 
+/**
+ * Build the three cards from the shared per-seat model.
+ *
+ * Each card quotes the rate for its own *entry* bracket (the cheapest way to
+ * start that plan) — `perSeatPrice(key, minSeats)` is by construction the first
+ * volume tier — and the seat minimum that goes to Stripe as the quantity.
+ */
 function buildTiers(t: TFunc): PlanTier[] {
   return [
     {
       id: 'starter',
       name: t('billing.upgradeModal.starter.name'),
-      price: '$29',
-      priceMonthly: 29,
+      price: formatPerSeat(perSeatPrice('starter', entrySeatCount('starter'))),
+      perSeatUsd: perSeatPrice('starter', entrySeatCount('starter')),
+      entrySeats: entrySeatCount('starter'),
+      seatPlanKey: 'starter',
+      priced: true,
       description: t('billing.upgradeModal.starter.description'),
       icon: <Zap size={20} />,
       features: t('billing.upgradeModal.starter.features', {
@@ -99,8 +123,11 @@ function buildTiers(t: TFunc): PlanTier[] {
     {
       id: 'professional',
       name: t('billing.upgradeModal.professional.name'),
-      price: '$79',
-      priceMonthly: 79,
+      price: formatPerSeat(perSeatPrice('pro', entrySeatCount('pro'))),
+      perSeatUsd: perSeatPrice('pro', entrySeatCount('pro')),
+      entrySeats: entrySeatCount('pro'),
+      seatPlanKey: 'pro',
+      priced: true,
       description: t('billing.upgradeModal.professional.description'),
       icon: <Building2 size={20} />,
       features: t('billing.upgradeModal.professional.features', {
@@ -117,6 +144,10 @@ function buildTiers(t: TFunc): PlanTier[] {
       id: 'enterprise',
       name: t('billing.upgradeModal.enterprise.name'),
       price: t('billing.upgradeModal.enterprise.price'),
+      perSeatUsd: 0,
+      entrySeats: entrySeatCount('enterprise'),
+      seatPlanKey: 'enterprise',
+      priced: false,
       description: t('billing.upgradeModal.enterprise.description'),
       icon: <Rocket size={20} />,
       features: t('billing.upgradeModal.enterprise.features', {
@@ -162,13 +193,24 @@ function PlanCard({
   // Highlight the recommended tier only when it's actionable (not the current plan)
   const highlight = isRecommended && !isCurrent;
 
-  // Localized, API-rate-converted display price. Enterprise keeps its text price.
+  // Localized, API-rate-converted PER-SEAT price. Enterprise keeps its text
+  // price (it is quoted, not sold through this flow).
   const displayPrice =
     tier.id === 'starter'
       ? currency.starter.formatted
       : tier.id === 'professional'
         ? currency.professional.formatted
         : tier.price;
+  // What the plan costs the starting team each month — the figure an admin
+  // actually compares, since the big number is only a rate.
+  const perSeatDisplay =
+    tier.id === 'starter'
+      ? currency.starter.amount
+      : tier.id === 'professional'
+        ? currency.professional.amount
+        : null;
+  const entryTotalDisplay =
+    tier.priced && perSeatDisplay !== null ? perSeatDisplay * tier.entrySeats : null;
 
   const handleCheckout = async () => {
     if (isCurrent) return;
@@ -190,7 +232,15 @@ function PlanCard({
           'X-CSRF-Token': csrfData.token,
           'X-CSRF-Token-Signature': csrfData.signature,
         },
-        body: JSON.stringify({ plan: tier.checkoutPlan, organizationId, email }),
+        body: JSON.stringify({
+          plan: tier.checkoutPlan,
+          organizationId,
+          email,
+          // Per-seat billing: the Stripe Price is per unit, so the seat count is
+          // the quantity. Start at the plan's minimum billable team, exactly
+          // like the landing page's card; it can be raised as the team grows.
+          seats: tier.entrySeats,
+        }),
       });
       const data = (await res.json()) as { url?: string };
       if (data.url) window.location.href = data.url;
@@ -215,7 +265,8 @@ function PlanCard({
         plan: tier.id,
         provider: provider as 'idram' | 'ameriabank' | 'ardshinbank' | 'fastbank',
         months: 1,
-        amountAmd: amdAmountFor(tier.id, currency),
+        seats: tier.entrySeats,
+        amountAmd: amdAmountFor(tier, currency, tier.entrySeats, 1),
         origin: window.location.origin,
       });
 
@@ -335,23 +386,33 @@ function PlanCard({
             </div>
           </div>
 
-          {/* Price */}
+          {/* Price — the big number is a PER-SEAT rate, never the bill. */}
           <div>
             <div className="flex items-end gap-1 min-w-0">
               <span
                 className={`font-black leading-none text-(--text-primary) tracking-tight truncate ${
-                  tier.priceMonthly ? 'text-3xl' : 'text-xl'
+                  tier.priced ? 'text-3xl' : 'text-xl'
                 }`}
               >
                 {displayPrice}
               </span>
-              {tier.priceMonthly && (
+              {tier.priced && (
                 <span className="text-xs text-(--text-muted) pb-1">
-                  {t('billing.upgradeModal.perMonth')}
+                  {t('billing.upgradeModal.perSeatMonth')}
                 </span>
               )}
             </div>
-            {tier.priceMonthly && !isCurrent && (
+            {entryTotalDisplay !== null && (
+              <p className="mt-1 text-[11px] font-medium text-(--text-secondary)">
+                {t('billing.upgradeModal.forSeats', {
+                  seats: tier.entrySeats,
+                  // Symbol comes from the locale's currency (₽ / ֏ / €), never a
+                  // literal "$" in the translation.
+                  total: `${currency.symbol}${entryTotalDisplay.toLocaleString()}`,
+                })}
+              </p>
+            )}
+            {tier.priced && !isCurrent && (
               <p className="text-[11px] text-(--text-muted) mt-1 flex items-center gap-1">
                 <Shield size={10} className="text-(--success)" />
                 {t('billing.upgradeModal.freeTrial')}

@@ -28,6 +28,10 @@ import { getAuthCaller } from './lib/getAuthCaller';
 import { isSuperadmin } from './lib/auth';
 import { requireOrgAdmin } from './lib/rbac';
 import { buildHandshake, type PaymentProvider } from './lib/paymentSignature';
+import { entrySeatsFor, perSeatUsdFor } from './billing/defaults';
+
+/** Sanity cap on a manual order, mirroring the Stripe lane's clamp. */
+const MAX_PAYMENT_SEATS = 10_000;
 import { notify } from './lib/notify';
 
 // The pure half — HMAC verification, handshake building and PSP payload
@@ -190,6 +194,12 @@ export const createLocalPayment = mutation({
     /** Months purchased up front (local PSPs rarely do true subscriptions). */
     months: v.optional(v.number()),
     /**
+     * Seats being bought. Local rails are billed per seat like the Stripe lane,
+     * so the order total is per-seat rate × seats × months. Defaults to the
+     * plan's minimum billable team.
+     */
+    seats: v.optional(v.number()),
+    /**
      * AMD amount for the PSP handshake. Local providers bill in AMD and the
      * backend deliberately never guesses FX — the caller's UI converts at the
      * same rate the pricing page shows and passes the number in.
@@ -215,13 +225,23 @@ export const createLocalPayment = mutation({
     // Amount is authored in USD like the Stripe plans; local providers bill in
     // AMD, so the caller's UI converts at the same rate the pricing page shows
     // and passes `amountAmd` explicitly — the backend never guesses FX.
-    const amountByPlan: Record<string, number> = {
-      starter: 29,
-      professional: 79,
-      enterprise: 199,
-    };
+    //
+    // PER SEAT: this used to be a flat $29/$79/$199, which under-billed every
+    // order — a 50-seat Pro customer was recorded as $79 instead of $250. The
+    // rate comes from the shared billing defaults (the same numbers the landing
+    // page and the Stripe lane quote), resolved at the bracket the seat count
+    // actually reaches.
+    //
+    // The order row uses Stripe's naming ('professional'); the billing defaults
+    // call the same plan 'pro'. Without this mapping the lookup silently
+    // returned nothing and the order was recorded at $0.
+    const seatingKey = args.plan === 'professional' ? 'pro' : args.plan;
     const months = args.months ?? 1;
-    const usd = (amountByPlan[args.plan] ?? 0) * months;
+    const seats = Math.max(
+      1,
+      Math.min(Math.floor(args.seats ?? entrySeatsFor(seatingKey)), MAX_PAYMENT_SEATS),
+    );
+    const usd = perSeatUsdFor(seatingKey, seats) * seats * months;
 
     const now = Date.now();
     // Provider-agnostic order id: short, unique, traceable in both systems.
@@ -236,6 +256,7 @@ export const createLocalPayment = mutation({
       orderId,
       plan: args.plan,
       months,
+      seats,
       amountUsd: usd,
       status: 'pending',
       createdBy: caller._id,
@@ -258,7 +279,7 @@ export const createLocalPayment = mutation({
       merchantId: config.merchantId,
       orderId,
       amountAmd,
-      description: `Strata ${args.plan} plan, ${months} month(s)`,
+      description: `Strata ${args.plan} plan, ${seats} seat(s), ${months} month(s)`,
       successUrl,
       failUrl,
       apiUrl: config.apiUrl,

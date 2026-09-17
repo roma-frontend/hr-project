@@ -185,6 +185,9 @@ export const settings = {
     plan: v.union(v.literal('starter'), v.literal('professional'), v.literal('enterprise')),
     /** Months purchased up front (local PSPs rarely do true subscriptions). */
     months: v.optional(v.number()),
+    /** Seats paid for — per-seat billing applies to local rails too. */
+    seats: v.optional(v.number()),
+    /** Per-seat rate × seats × months, so the row explains its own total. */
     amountUsd: v.number(),
     /** Amount converted to AMD by the client at the displayed FX rate. */
     amountAmd: v.optional(v.number()),

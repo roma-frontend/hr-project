@@ -88,19 +88,20 @@ export async function GET(req: NextRequest) {
     const canceledSubs = subscriptions.data.filter((s) => s.status === 'canceled');
     const pastDueSubs = subscriptions.data.filter((s) => s.status === 'past_due');
 
-    // Calculate MRR
-    const planPrices: Record<string, number> = {
-      price_starter: 29,
-      price_professional: 79,
-      price_enterprise: 199,
-    };
-
+    // Calculate MRR.
+    //
+    // PER SEAT: every subscription item carries the seat count as its quantity,
+    // so MRR is unit amount × quantity. The map this replaced held flat plan
+    // prices ($29 / $79 / $199) and ignored quantity entirely, which reported a
+    // 50-seat Pro account as $79 — off by an order of magnitude.
     let mrr = 0;
     activeSubs.forEach((sub) => {
-      const priceId = sub.items.data[0]?.price?.id || '';
-      const price = planPrices[priceId] || 79; // default to professional
-      mrr += price;
+      const item = sub.items.data[0];
+      const unitAmount = (item?.price?.unit_amount ?? 0) / 100;
+      const quantity = item?.quantity ?? 1;
+      mrr += unitAmount * quantity;
     });
+    mrr = Math.round(mrr);
 
     // Calculate total revenue from charges
     const totalRevenue = charges.data

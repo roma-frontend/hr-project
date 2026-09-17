@@ -55,8 +55,10 @@ export const billing = {
     key: v.union(v.literal('starter'), v.literal('pro'), v.literal('enterprise')),
     name: v.string(),
     tagline: v.optional(v.string()),
-    priceMonthly: v.optional(v.number()), // undefined → "Contact us"
-    priceYearly: v.optional(v.number()), // per-month when billed annually
+    // PER-SEAT price in the plan currency, /month. `undefined` → "Contact us".
+    // Volume tiers live in convex/billing/defaults.ts + src/lib/pricing.ts.
+    priceMonthly: v.optional(v.number()),
+    priceYearly: v.optional(v.number()), // per-seat, monthly-equivalent, billed annually
     currency: v.string(),
     isActive: v.boolean(),
     isPopular: v.boolean(),

@@ -89,13 +89,15 @@ export function SubscriptionPlanCard() {
   const currency = useCurrency();
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Localized, API-rate-converted price for the current plan. Falls back to the
-  // static USD price string while rates load or for plans without a base price.
+  // Localized, API-rate-converted price for the current plan. `currency.*` holds
+  // PER-SEAT rates, so the label says so — an admin comparing this card with a
+  // competitor's "$6/user" must not read it as a flat monthly bill. Falls back
+  // to the static USD string while rates load or for plans without a base price.
   const planPriceLabel = (() => {
-    const perMonth = t('billing.upgradeModal.perMonth');
-    if (plan === 'starter') return `${currency.starter.formatted}${perMonth}`;
-    if (plan === 'professional') return `${currency.professional.formatted}${perMonth}`;
-    if (plan === 'free') return `${currency.symbol}0${perMonth}`;
+    const perSeat = t('billing.upgradeModal.perSeatMonth', 'per seat / month');
+    if (plan === 'starter') return `${currency.starter.formatted} ${perSeat}`;
+    if (plan === 'professional') return `${currency.professional.formatted} ${perSeat}`;
+    if (plan === 'free') return `${currency.symbol}0 ${perSeat}`;
     return PLAN_PRICES[plan];
   })();
 

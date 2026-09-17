@@ -394,9 +394,9 @@
       "adminEmailHint": "Die Einladung wird an diese E-Mail gesendet",
       "industryHint": "Zum Beispiel: Technologie, Gesundheitswesen, Einzelhandel",
       "starterTitle": "Starter",
-      "starterDesc": "Bis zu 10 Mitarbeiter · grundlegende HR-Tools",
+      "starterDesc": "Bis zu 25 Mitarbeiter · grundlegende HR-Tools",
       "professionalTitle": "Professional",
-      "professionalDesc": "Bis zu 100 Mitarbeiter · erweiterte Funktionen",
+      "professionalDesc": "Bis zu 300 Mitarbeiter · erweiterte Funktionen",
       "enterpriseTitle": "Enterprise",
       "enterpriseDesc": "Keine Begrenzung · Integrationen und SLA",
       "popular": "Beliebt",
@@ -1510,8 +1510,8 @@
     "paris": "Paris",
     "tokyo": "Tokio",
     "yerevan": "Eriwan",
-    "starterFree": "Starter ($29/Monat)",
-    "professionalPaid": "Professional ($79/Monat)",
+    "starterFree": "Starter ($4 pro Sitz/Monat)",
+    "professionalPaid": "Professional ($8 pro Sitz/Monat)",
     "enterpriseCustom": "Enterprise (Individuell)"
   },
   "editOrganization": {

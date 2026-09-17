@@ -31,39 +31,96 @@ export interface DefaultPlanDef {
   key: PlanKey;
   name: string;
   tagline: string;
+  /**
+   * PER-SEAT price in USD/month (billed monthly), NOT a flat plan price.
+   * Historic flat pricing ($29/$79 per plan) is retired: it made a 50-person
+   * customer pay $1.58/seat. Volume tiers live in `seatTiers` and in the shared
+   * model `src/lib/pricing.ts`; `src/__tests__/pricing.test.ts` asserts the two
+   * stay aligned. `undefined` marks a quoted (custom) plan.
+   */
   priceMonthly?: number;
+  /** Per-seat price when billed annually (a discount on `priceMonthly`). */
   priceYearly?: number;
   currency: string;
   isPopular: boolean;
   isCustom: boolean;
   ctaLabel: string;
   sortOrder: number;
+  /** Pricing shape. Kept explicit so the seed/editor can render it. */
+  priceModel: 'per_seat';
+  /** Volume brackets (whole-team rate). Mirrors `PLAN_SEAT_PRICING`. */
+  seatTiers: Array<{ fromSeats: number; pricePerSeatMonthly: number }>;
+  /** Fraction off the monthly per-seat price when billed annually. */
+  annualDiscount: number;
+}
+
+/**
+ * Volume brackets of a plan, ascending. Empty for an unknown key.
+ */
+export function seatTiersFor(planKey: string): DefaultPlanDef['seatTiers'] {
+  return DEFAULT_PLANS.find((p) => p.key === planKey)?.seatTiers ?? [];
+}
+
+/**
+ * Whole-team per-seat rate for a team size: the team moves to the bracket it
+ * reaches, it is not charged marginally. Mirrors `volumeTierFor` /
+ * `perSeatPrice` in `src/lib/pricing.ts` — a pricing unit test asserts the two
+ * agree, because the server (this file) and the UI must quote the same number.
+ */
+export function perSeatUsdFor(planKey: string, seats: number): number {
+  const tiers = seatTiersFor(planKey);
+  if (tiers.length === 0) return 0;
+  const billable = Math.max(1, Math.floor(seats || 1));
+  let rate = tiers[0]!.pricePerSeatMonthly;
+  for (const tier of tiers) {
+    if (billable >= tier.fromSeats) rate = tier.pricePerSeatMonthly;
+  }
+  return rate;
+}
+
+/** Entry seat count — the cheapest way to start the plan. */
+export function entrySeatsFor(planKey: string): number {
+  return seatTiersFor(planKey)[0]?.fromSeats ?? 1;
 }
 
 export const DEFAULT_PLANS: DefaultPlanDef[] = [
   {
     key: 'starter',
     name: 'Starter',
-    tagline: 'For small teams getting organized',
-    priceMonthly: 29,
-    priceYearly: 23,
+    tagline: 'For small teams getting organized — priced per seat',
+    priceMonthly: 4,
+    priceYearly: 3.2,
     currency: 'USD',
     isPopular: false,
     isCustom: false,
     ctaLabel: 'Start free trial',
     sortOrder: 1,
+    priceModel: 'per_seat',
+    seatTiers: [
+      { fromSeats: 5, pricePerSeatMonthly: 4 },
+      { fromSeats: 15, pricePerSeatMonthly: 3.5 },
+    ],
+    annualDiscount: 0.2,
   },
   {
     key: 'pro',
     name: 'Pro',
-    tagline: 'For growing companies that need the full toolkit',
-    priceMonthly: 79,
-    priceYearly: 63,
+    tagline: 'For growing companies that need the full toolkit — priced per seat',
+    priceMonthly: 8,
+    priceYearly: 6.4,
     currency: 'USD',
     isPopular: true,
     isCustom: false,
     ctaLabel: 'Start free trial',
     sortOrder: 2,
+    priceModel: 'per_seat',
+    seatTiers: [
+      { fromSeats: 10, pricePerSeatMonthly: 8 },
+      { fromSeats: 50, pricePerSeatMonthly: 7 },
+      { fromSeats: 100, pricePerSeatMonthly: 5.5 },
+      { fromSeats: 250, pricePerSeatMonthly: 4.5 },
+    ],
+    annualDiscount: 0.2,
   },
   {
     key: 'enterprise',
@@ -76,6 +133,9 @@ export const DEFAULT_PLANS: DefaultPlanDef[] = [
     isCustom: true,
     ctaLabel: 'Contact sales',
     sortOrder: 3,
+    priceModel: 'per_seat',
+    seatTiers: [{ fromSeats: 100, pricePerSeatMonthly: 12 }],
+    annualDiscount: 0.25,
   },
 ];
 
@@ -91,7 +151,7 @@ export const DEFAULT_ENTITLEMENTS: Record<PlanKey, EntitlementMap> = {
   starter: {
     dashboard: { included: true },
     profile: { included: true },
-    employees: { included: true, limits: { seats: 10 }, overLimit: 'block' },
+    employees: { included: true, limits: { seats: 25 }, overLimit: 'block' },
     departments: { included: true },
     positions: { included: true },
     orgchart: { included: true },
@@ -108,7 +168,7 @@ export const DEFAULT_ENTITLEMENTS: Record<PlanKey, EntitlementMap> = {
   pro: {
     dashboard: { included: true },
     profile: { included: true },
-    employees: { included: true, limits: { seats: 50 }, overLimit: 'block' },
+    employees: { included: true, limits: { seats: 300 }, overLimit: 'block' },
     departments: { included: true },
     positions: { included: true },
     orgchart: { included: true },

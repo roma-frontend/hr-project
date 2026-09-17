@@ -291,7 +291,7 @@ Organization has a plan (starter/professional/enterprise) controlling seat limit
     roles: SUP_ADM,
     keywords:
       'тариф plan billing stripe подписка subscription mrr цена price trial пробный upgrade downgrade enterprise starter professional',
-    body: `Subscription plans (Stripe): Starter $29/mo (up to 10 employees), Professional $79/mo (up to 50 employees), Enterprise $199/mo (unlimited seats).
+    body: `Subscription plans (Stripe), billed PER SEAT with volume tiers: Starter from $4/seat/mo (5+ seats, up to 25), Professional from $8/seat/mo (10+ seats, up to 300), Enterprise quoted (100+ seats). The whole team moves to the bracket rate; annual billing takes 20% off.
 Plans gate features (e.g. AI site editor limits per month: starter gets fewer edits than enterprise). Trials are supported; upgrades/downgrades prorate.
 Superadmin billing dashboard shows MRR, active subscriptions, revenue charts; subscriptions can be managed manually when needed.`,
   },

@@ -8,7 +8,14 @@ import Footer from '@/components/landing/Footer';
 import CompareTable, { COMPARE_ROW_COUNT } from './CompareTable';
 import ComparePricing from './ComparePricing';
 import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
-import { COMPETITORS, COMPARE_VERIFIED, compareScore } from '@/lib/competitors';
+import {
+  COMPARE_VERIFIED,
+  compareScore,
+  competitorsByRegion,
+  type CompetitorRegion,
+} from '@/lib/competitors';
+
+const COMPARE_SECTIONS: CompetitorRegion[] = ['global', 'local'];
 
 /**
  * `/compare` — the hub. Two jobs: give a buyer the full matrix in one screen,
@@ -80,63 +87,81 @@ export default function CompareIndexClient({
               {t('compare.index.cardsSubtitle')}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {COMPETITORS.map((c) => {
-                const score = compareScore(c.slug);
-                return (
-                  <Link
-                    key={c.slug}
-                    href={`/compare/${c.slug}`}
-                    className="group rounded-3xl p-6 transition-all duration-200 hover:shadow-lg"
-                    style={{
-                      background: 'var(--landing-card-bg)',
-                      border: '1px solid var(--landing-card-border)',
-                    }}
-                  >
-                    <div className="flex items-center gap-3 mb-4">
-                      <span
-                        className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-sm font-bold"
-                        style={{ background: `${c.color}1f`, color: c.color }}
+            {COMPARE_SECTIONS.map((region) => (
+              <div key={region} className="mb-12 last:mb-0">
+                <h3
+                  className="text-sm font-bold uppercase tracking-wider mb-4"
+                  style={{ color: 'var(--landing-text-muted)' }}
+                >
+                  {t(
+                    region === 'global' ? 'compare.index.globalTitle' : 'compare.index.localTitle',
+                  )}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {competitorsByRegion(region).map((c) => {
+                    const score = compareScore(c.slug);
+                    return (
+                      <Link
+                        key={c.slug}
+                        href={`/compare/${c.slug}`}
+                        className="group rounded-3xl p-6 transition-all duration-200 hover:shadow-lg"
+                        style={{
+                          background: 'var(--landing-card-bg)',
+                          border: '1px solid var(--landing-card-border)',
+                        }}
                       >
-                        {c.monogram}
-                      </span>
-                      <span className="font-bold" style={{ color: 'var(--landing-text-primary)' }}>
-                        {c.name}
-                      </span>
-                    </div>
-                    <p
-                      className="text-sm leading-relaxed mb-5 min-h-[60px]"
-                      style={{ color: 'var(--landing-text-secondary)' }}
-                    >
-                      {t(`compare.competitors.${c.slug}.tagline`)}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span
-                        className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                        style={{ background: 'rgba(16,185,129,0.12)', color: '#0f9b74' }}
-                      >
-                        {t('compare.index.scoreOurs', { n: score.oursOnly })}
-                      </span>
-                      {score.theirsOnly > 0 ? (
-                        <span
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                          style={{ background: 'rgba(245,158,11,0.14)', color: '#b06a00' }}
+                        <div className="flex items-center gap-3 mb-4">
+                          <span
+                            className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-sm font-bold"
+                            style={{ background: `${c.color}1f`, color: c.color }}
+                          >
+                            {c.monogram}
+                          </span>
+                          <span
+                            className="font-bold"
+                            style={{ color: 'var(--landing-text-primary)' }}
+                          >
+                            {c.name}
+                          </span>
+                        </div>
+                        <p
+                          className="text-sm leading-relaxed mb-5 min-h-[60px]"
+                          style={{ color: 'var(--landing-text-secondary)' }}
                         >
-                          {t('compare.index.scoreTheirs', { n: score.theirsOnly, name: c.name })}
+                          {t(`compare.competitors.${c.slug}.tagline`)}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span
+                            className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                            style={{ background: 'rgba(16,185,129,0.12)', color: '#0f9b74' }}
+                          >
+                            {t('compare.index.scoreOurs', { n: score.oursOnly })}
+                          </span>
+                          {score.theirsOnly > 0 ? (
+                            <span
+                              className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                              style={{ background: 'rgba(245,158,11,0.14)', color: '#b06a00' }}
+                            >
+                              {t('compare.index.scoreTheirs', {
+                                n: score.theirsOnly,
+                                name: c.name,
+                              })}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold transition-all group-hover:gap-2.5"
+                          style={{ color: 'var(--brand-text)' }}
+                        >
+                          {t('compare.index.viewComparison')}
+                          <ArrowIcon />
                         </span>
-                      ) : null}
-                    </div>
-                    <span
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold transition-all group-hover:gap-2.5"
-                      style={{ color: 'var(--brand-text)' }}
-                    >
-                      {t('compare.index.viewComparison')}
-                      <ArrowIcon />
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -155,7 +180,19 @@ export default function CompareIndexClient({
             <p className="mb-8 max-w-3xl" style={{ color: 'var(--landing-text-secondary)' }}>
               {t('compare.index.tableSubtitle')}
             </p>
-            <CompareTable initialLanguage={initialLanguage} />
+            {COMPARE_SECTIONS.map((region) => (
+              <div key={region} className="mb-10 last:mb-0">
+                <h3
+                  className="text-sm font-bold uppercase tracking-wider mb-4"
+                  style={{ color: 'var(--landing-text-muted)' }}
+                >
+                  {t(
+                    region === 'global' ? 'compare.index.globalTitle' : 'compare.index.localTitle',
+                  )}
+                </h3>
+                <CompareTable initialLanguage={initialLanguage} region={region} />
+              </div>
+            ))}
           </div>
         </section>
 

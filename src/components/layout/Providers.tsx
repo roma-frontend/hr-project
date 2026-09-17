@@ -124,6 +124,13 @@ const MobileTabBar = dynamic(
   { ssr: false, loading: () => null },
 );
 
+// Mobile quick-action bar (clock in/out, approvals, tasks) with an offline
+// attendance queue — replays punches recorded without a connection.
+const OfflineQuickActionsBar = dynamic(
+  () => import('@/components/pwa/OfflineQuickActionsBar').then((m) => m.OfflineQuickActionsBar),
+  { ssr: false, loading: () => null },
+);
+
 const MobilePageTransition = dynamic(
   () => import('@/components/ui/mobile-page-transition').then((m) => m.MobilePageTransition),
   { ssr: false, loading: () => null },
@@ -405,6 +412,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
             {/* Mobile Tab Bar — fixed bottom navigation for mobile */}
             <MobileTabBar />
+
+            {/* Mobile quick actions — sits above the tab bar; queues attendance
+              punches while offline and syncs them on reconnect. */}
+            {user && <OfflineQuickActionsBar />}
 
             {/* ⌘K palette — the navbar shortcut modal, the dashboard Quick Actions
               header and the productivity settings page all advertise this

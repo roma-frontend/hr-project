@@ -16,9 +16,10 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-// Mock currency lib
+// Mock currency lib — BASE_PRICES are PER-SEAT entry rates, mirroring the real
+// module (see src/lib/currency.ts); the flat $29/$79 era is over.
 jest.mock('@/lib/currency', () => ({
-  BASE_PRICES: { starter: 29, professional: 79 },
+  BASE_PRICES: { starter: 4, professional: 8 },
   convertPrice: jest.fn(async (price: number, _locale: string) => ({
     amount: price,
     formatted: `$${price}`,
@@ -54,10 +55,10 @@ describe('useCurrency', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.starter.amount).toBe(29);
-    expect(result.current.professional.amount).toBe(79);
-    expect(result.current.starter.formatted).toBe('$29');
-    expect(result.current.professional.formatted).toBe('$79');
+    expect(result.current.starter.amount).toBe(4);
+    expect(result.current.professional.amount).toBe(8);
+    expect(result.current.starter.formatted).toBe('$4');
+    expect(result.current.professional.formatted).toBe('$8');
   });
 
   it('uses the locale from i18next', async () => {

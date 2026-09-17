@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
+import { entrySeatCount, type PlanKey } from '@/lib/pricing';
 
 /**
  * Live tariff block for /compare.
@@ -176,13 +177,19 @@ export default function ComparePricing({
                     <>
                       <span className="text-4xl font-black">{price}</span>
                       <span className="text-sm ml-1" style={{ color: 'var(--landing-text-muted)' }}>
-                        {t('pricing.perMonth', { defaultValue: '/mo' })}
+                        {t('pricing.perUserMonth', { defaultValue: '/user/mo' })}
                       </span>
                     </>
                   )}
                 </p>
 
                 <ul className="mt-5 space-y-2 text-sm">
+                  {!isCustom ? (
+                    <li style={{ color: 'var(--landing-text-secondary)' }}>
+                      {entrySeatCount(p.plan.key as PlanKey)}{' '}
+                      {t('compare.pricing.minSeats', { defaultValue: 'seats minimum' })}
+                    </li>
+                  ) : null}
                   {typeof seats === 'number' ? (
                     <li style={{ color: 'var(--landing-text-secondary)' }}>
                       {seats >= UNLIMITED_SENTINEL

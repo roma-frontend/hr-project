@@ -25,6 +25,12 @@ function getStripe(): Stripe | null {
   return new Stripe(key, { apiVersion: '2026-02-25.clover' });
 }
 
+function normalizeSeats(value: unknown): number {
+  const n = typeof value === 'number' ? Math.floor(value) : 1;
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(n, 10_000);
+}
+
 const PLANS: Record<string, { priceId: string; name: string }> = {
   starter: { priceId: process.env.STRIPE_PRICE_STARTER!, name: 'Starter' },
   professional: { priceId: process.env.STRIPE_PRICE_PROFESSIONAL!, name: 'Professional' },
@@ -45,10 +51,12 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
   }
 
   try {
-    const { plan, email, organizationId } = (await req.json()) as {
+    const { plan, email, organizationId, seats } = (await req.json()) as {
       plan?: string;
       email?: string;
       organizationId?: string;
+      /** Per-seat billing: the number of seats to charge. Defaults to 1. */
+      seats?: number;
     };
 
     if (!plan || !PLANS[plan]) {
@@ -82,7 +90,9 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
       line_items: [
         {
           price: PLANS[plan].priceId,
-          quantity: 1,
+          // Per-seat pricing: the Stripe price is per unit, so the seat count is
+          // the quantity. Clamped defensively; Stripe also enforces its own max.
+          quantity: normalizeSeats(seats),
         },
       ],
       customer_email: email ?? undefined,

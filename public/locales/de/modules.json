@@ -1916,6 +1916,8 @@
       "currentPlanButton": "Ihr aktueller Plan",
       "mostPopular": "Am beliebtesten",
       "perMonth": "/Mon.",
+      "perSeatMonth": "pro Platz / Monat",
+      "forSeats": "{{seats}} Plätze — ab {{total}}/Monat",
       "freeTrial": "14 Tage kostenlos testen",
       "securedFooter": "Zahlungen über Stripe gesichert · Jederzeit kündbar · DSGVO-konform",
       "starter": {
@@ -1923,7 +1925,7 @@
         "description": "Ideal für kleine Teams am Anfang",
         "button": "Kostenlos testen",
         "features": [
-          "Bis zu 10 Mitarbeiter",
+          "Bis zu 25 Mitarbeiter",
           "Grundlegende Urlaubsverwaltung",
           "E-Mail-Benachrichtigungen",
           "Zugriff auf mobile App",
@@ -1935,7 +1937,7 @@
         "description": "Für wachsende Teams mit mehr Anforderungen",
         "button": "Auf Professional upgraden",
         "features": [
-          "Bis zu 50 Mitarbeiter",
+          "Bis zu 300 Mitarbeiter",
           "Erweiterte Analysen & Berichte",
           "KI-Urlaubsassistent & Insights",
           "SLA-Management",
@@ -2082,9 +2084,9 @@
     },
     "plans": {
       "starter": "Starter",
-      "starterDesc": "14-tägige kostenlose Testversion, dann $29/Monat",
+      "starterDesc": "14-tägige kostenlose Testversion, dann $4 pro Sitz/Monat",
       "professional": "Professional",
-      "professionalDesc": "14-tägige kostenlose Testversion, dann $79/Monat",
+      "professionalDesc": "14-tägige kostenlose Testversion, dann $8 pro Sitz/Monat",
       "enterprise": "Enterprise",
       "enterpriseDesc": "Individueller Preis, kontaktieren Sie uns für ein Angebot"
     },
@@ -3319,8 +3321,8 @@
     "category": "Kategorie"
   },
   "plan": {
-    "starter10Employees": "Starter (10 Mitarbeiter)",
-    "professional50Employees": "Professional (50 Mitarbeiter)",
+    "starter10Employees": "Starter (25 Mitarbeiter)",
+    "professional50Employees": "Professional (300 Mitarbeiter)",
     "enterprise100Plus": "Enterprise (100+)"
   },
   "planGate": {

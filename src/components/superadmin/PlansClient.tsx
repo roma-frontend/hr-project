@@ -27,8 +27,11 @@ import {
   ChevronUp,
   Copy,
   Crown,
+  AlertTriangle,
   DatabaseZap,
+  Eye,
   History,
+  Pencil,
   Lock,
   Minus,
   Plus,
@@ -38,6 +41,7 @@ import {
   Sparkles,
   Star,
   Unlock,
+  Users,
   Zap,
 } from 'lucide-react';
 
@@ -57,6 +61,26 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import {
+  PLAN_SEAT_PRICING,
+  formatPerSeat,
+  seatTierQuote,
+  volumeTierFor,
+  type PlanKey as PricingPlanKey,
+} from '@/lib/pricing';
+import { applyRatePrecise } from '@/lib/currency';
+import { resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
+import { useCurrency } from '@/hooks/useCurrency';
+// The public pricing card — the same component the landing renders, so this
+// preview cannot drift from the page it is previewing.
+// Aliased: this file's own `PlanCard` is the *editor* card.
+import {
+  ArrowRightIcon,
+  PLAN_CARD_ACCENTS,
+  PlanCard as LandingPlanCard,
+  groupFeaturesByCategory,
+  type PlanCardModel,
+} from '@/components/landing/PlanCard';
 
 type PlanKey = 'starter' | 'pro' | 'enterprise';
 type ModuleStatus = 'active' | 'beta' | 'coming';
@@ -182,6 +206,341 @@ function moduleIcon(name?: string) {
   return <Cmp className="h-4 w-4" />;
 }
 
+// ── Live landing preview ──────────────────────────────────────────────────────
+
+// Slider bounds for the team-size control: from the smallest self-serve entry
+// team to the largest self-serve cap. Enterprise is quoted (no cap), so it
+// widens nothing — it just follows along and shows its volume rate.
+const PREVIEW_SEAT_MIN = Math.min(
+  ...(Object.keys(PLAN_SEAT_PRICING) as PricingPlanKey[]).map(
+    (key) => PLAN_SEAT_PRICING[key].minSeats,
+  ),
+);
+const PREVIEW_SEAT_MAX = Math.max(
+  ...(Object.keys(PLAN_SEAT_PRICING) as PricingPlanKey[]).map(
+    (key) => PLAN_SEAT_PRICING[key].maxSeats ?? 0,
+  ),
+);
+const PREVIEW_SEAT_STEP = 5;
+/** Bracket boundaries worth one tap — the team sizes customers actually land on. */
+const PREVIEW_SEAT_PRESETS = [10, 50, 100, 250] as const;
+
+/**
+ * The public pricing section, rendered from the current drafts.
+ *
+ * Everything here is the landing's own component and the landing's own numbers:
+ * per-seat prices localized at the active FX rate, the entry-team total, the
+ * volume-discount strike-through, and the module list grouped by category.
+ * What the superadmin sees is what a visitor gets the moment they publish —
+ * including the two things that are easy to get wrong on paper: the figure is
+ * *per seat*, and the tagline follows the same rule as the landing (your own
+ * text wins; an untouched seeded tagline shows in the visitor's language).
+ */
+function LandingPreview({
+  plans,
+  modules,
+  entByPlanModule,
+  billing,
+  t,
+}: {
+  plans: PlanRow[];
+  modules: ModuleRow[];
+  entByPlanModule: Map<string, EntitlementRow>;
+  billing: 'monthly' | 'yearly';
+  t: TFunction;
+}) {
+  const currency = useCurrency();
+  // Default to a mid-size team: large enough to sit in a volume bracket, small
+  // enough that the entry cards still read normally.
+  const [seats, setSeats] = useState<number>(50);
+
+  // Prices are authored in USD (defaults.ts / this editor). The card shows the
+  // visitor's currency, converted at the same rate the pricing page uses — and
+  // keeping cents, because a volume bracket rate ($5.50) times a seat count is
+  // the number on the card.
+  const localize = (usd: number | undefined) =>
+    usd === undefined ? undefined : applyRatePrecise(usd, currency.rate);
+
+  return (
+    <div className="mt-6 rounded-2xl border border-(--border-default) bg-(--card)/40 p-4 sm:p-6">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--brand)/10 text-(--brand)">
+          <Eye className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {t('billing.plans.previewTitle', 'Landing preview')}
+          </h2>
+          <p className="mt-0.5 text-xs text-(--text-muted)">
+            {t(
+              'billing.plans.previewHint',
+              'The public pricing section rendered from these drafts — no publish needed. Prices are per seat; the line under each price is the entry team. Checkout is disabled here.',
+            )}
+          </p>
+        </div>
+      </div>
+
+      {/* Team size drives the bracket on every card. One control, so it is
+          obvious that 10 / 50 / 100 seats are different tiers of the same
+          plan — and which tier a given team actually lands in. */}
+      <div className="mt-4 rounded-xl border border-(--border-default) bg-(--card)/60 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <label
+            htmlFor="preview-seats"
+            className="flex items-center gap-2 text-xs font-medium text-(--text-secondary)"
+          >
+            <Users className="h-3.5 w-3.5" />
+            {t('billing.plans.previewTeamSize', 'Team size')}
+          </label>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className="text-sm font-semibold tabular-nums"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {t('billing.plans.previewSeatsValue', { n: seats })}
+            </span>
+            <div className="flex items-center gap-1">
+              {PREVIEW_SEAT_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setSeats(preset)}
+                  aria-pressed={seats === preset}
+                  className={cn(
+                    'rounded-lg border px-2 py-1 text-[11px] font-medium tabular-nums transition',
+                    seats === preset
+                      ? 'border-(--brand) bg-(--brand-quiet) text-(--brand-text)'
+                      : 'border-(--border-default) text-(--text-muted) hover:text-(--text-secondary)',
+                  )}
+                >
+                  {preset}+
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <input
+          id="preview-seats"
+          type="range"
+          min={PREVIEW_SEAT_MIN}
+          max={PREVIEW_SEAT_MAX}
+          step={PREVIEW_SEAT_STEP}
+          value={seats}
+          onChange={(e) => setSeats(Number(e.target.value))}
+          className="mt-3 w-full accent-(--brand)"
+        />
+        <p className="mt-1 text-[11px] text-(--text-muted)">
+          {t(
+            'billing.plans.previewSeatsHint',
+            'Brackets apply to the whole team, not just the seats above the line — a 50-seat Pro team pays the 50+ rate on every seat.',
+          )}
+        </p>
+
+        {/* Every bracket of every plan, with the one the current team size
+            lands in highlighted. This is the table the slider walks through. */}
+        <div className="mt-3 space-y-1.5">
+          <p className="text-[11px] font-medium tracking-wide text-(--text-muted) uppercase">
+            {t('billing.plans.previewBrackets', 'Volume brackets')}
+          </p>
+          {plans.map((plan) => {
+            const seatPlan = plan.key as PricingPlanKey;
+            const planDef = PLAN_SEAT_PRICING[seatPlan];
+            // A plan outside the model (a custom tariff) has no brackets: the
+            // strip is about volume tiers, so it stays out of the table.
+            if (!planDef) return null;
+            const active = volumeTierFor(seatPlan, seats);
+            const cap = planDef.maxSeats;
+            const overCap = cap !== null && seats > cap;
+            const entryRate = planDef.tiers[0]!.pricePerSeatMonthly;
+            const planName =
+              resolvePlanName({ planKey: plan.key, name: plan.name, t }) ?? plan.name;
+
+            return (
+              <div key={plan._id} className="flex flex-wrap items-center gap-1.5">
+                <span className="w-24 shrink-0 truncate text-[11px] text-(--text-muted)">
+                  {planName}
+                </span>
+                {planDef.tiers.map((tier) => {
+                  const isActive = !overCap && tier.fromSeats === active.fromSeats;
+                  // The draft's base rate scaled into this bracket — the same
+                  // arithmetic the card below does, so the strip cannot
+                  // disagree with the price it is annotating.
+                  const rate =
+                    plan.priceMonthly === undefined
+                      ? undefined
+                      : localize(plan.priceMonthly * (tier.pricePerSeatMonthly / entryRate));
+                  return (
+                    <span
+                      key={tier.fromSeats}
+                      title={
+                        isActive
+                          ? t('billing.plans.previewTierActive', 'Active bracket')
+                          : undefined
+                      }
+                      className={cn(
+                        'rounded-lg border px-2 py-0.5 text-[11px] tabular-nums',
+                        isActive
+                          ? 'border-(--brand) bg-(--brand-quiet) font-medium text-(--brand-text)'
+                          : 'border-(--border-default) text-(--text-muted)',
+                      )}
+                    >
+                      {t('billing.plans.tierFrom', { seats: tier.fromSeats })}
+                      {' · '}
+                      {rate === undefined
+                        ? t('billing.plans.custom', 'Custom')
+                        : `${currency.symbol}${rate.toLocaleString()}`}
+                    </span>
+                  );
+                })}
+                {overCap && (
+                  <span className="text-[11px] text-(--warning-text)">
+                    {t('billing.plans.tierMaxHint', { seats: cap })}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Simulated page background so the cards read as they do in the wild. */}
+      <div
+        className="mt-5 rounded-2xl px-3 py-10 sm:px-6"
+        style={{
+          background:
+            'radial-gradient(ellipse at 30% 0%, var(--brand-quiet), transparent 60%), var(--landing-card-bg)',
+        }}
+      >
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {plans.map((plan, i) => {
+            const accent = PLAN_CARD_ACCENTS[i % PLAN_CARD_ACCENTS.length] ?? PLAN_CARD_ACCENTS[0]!;
+            const seatPlan = plan.key as PricingPlanKey;
+            const planDef = PLAN_SEAT_PRICING[seatPlan];
+            const discount = planDef?.annualDiscount ?? 0;
+            const annualBase =
+              plan.priceMonthly === undefined
+                ? undefined
+                : plan.priceMonthly * (1 - (discount || 0));
+            const baseUsd =
+              billing === 'yearly' ? (plan.priceYearly ?? annualBase) : plan.priceMonthly;
+            // The slider's team size picks the bracket: the entry rate stays the
+            // draft's (so an edited base price shows up here), the volume
+            // discount comes from the model, and the total bills only the seats
+            // this plan can actually self-serve.
+            // `null` for a tariff the model does not know: it keeps the flat rate
+            // it was priced at instead of crashing the preview.
+            const quote = planDef ? seatTierQuote(seatPlan, seats) : null;
+            const billableSeats = quote?.billableSeats ?? seats;
+            const perSeat = localize(
+              baseUsd === undefined ? undefined : baseUsd * (quote?.rateMultiplier ?? 1),
+            );
+            // Quoted plans (Enterprise) have no list price; the card shows the
+            // "Custom" label exactly as the landing does.
+            const priced = perSeat !== undefined && !plan.isCustom;
+            const seatsLine = !priced
+              ? undefined
+              : quote?.overCap
+                ? t('billing.plans.previewOverCap', { seats: billableSeats })
+                : t('pricing.forTeam', {
+                    seats: billableSeats,
+                    total: `${currency.symbol}${Math.round(perSeat * billableSeats).toLocaleString()}`,
+                  });
+
+            // Same resolution the landing uses: a name you renamed or a tagline
+            // you typed here wins; untouched seeded strings show in the
+            // visitor's language.
+            const name = resolvePlanName({ planKey: plan.key, name: plan.name, t });
+            const tagline = resolvePlanTagline({
+              planKey: plan.key,
+              tagline: plan.tagline,
+              t,
+            });
+
+            const included = modules.filter(
+              (m) =>
+                m.status !== 'coming' &&
+                entByPlanModule.get(`${plan._id}::${m.key}`)?.included === true,
+            );
+            const featureGroups = groupFeaturesByCategory(
+              included.map((m) => ({
+                key: m.key,
+                name: t(`billing.modules.${m.key}`, m.name),
+                category: m.category,
+              })),
+            );
+            const ctaLabel = plan.isCustom
+              ? t('pricing.contactSales', 'Contact sales')
+              : plan.ctaLabel || t('pricing.startFreeTrial', 'Start free trial');
+
+            const model: PlanCardModel = {
+              accentFrom: accent.accentFrom,
+              accentTo: accent.accentTo,
+              glowColor: accent.glowColor,
+              icon: accent.icon,
+              name: name ?? plan.name,
+              tagline,
+              priceLabel: priced
+                ? `${currency.symbol}${perSeat.toLocaleString()}`
+                : t('pricing.custom', 'Custom'),
+              priced,
+              priceSuffix: t('pricing.perUserMonth'),
+              seatsLine,
+              strikeLabel:
+                priced && billing === 'yearly' && discount > 0
+                  ? `${currency.symbol}${Math.round(perSeat / (1 - discount)).toLocaleString()}`
+                  : undefined,
+              billingLabel: t(
+                billing === 'yearly' ? 'pricing.billedAnnually' : 'pricing.billedMonthly',
+              ),
+              trialLabel: plan.isCustom ? undefined : t('pricing.freeTrial'),
+              featureGroups,
+              popular: plan.isPopular,
+              badgeLabel: t('pricing.mostPopular'),
+            };
+
+            return (
+              <div
+                key={plan._id}
+                className={`relative flex flex-col ${plan.isPopular ? 'md:-mt-4 md:mb-4' : ''}`}
+              >
+                <LandingPlanCard
+                  model={model}
+                  cta={
+                    /* Inert copy of the landing CTA — a preview must not be
+                       able to start a checkout. */
+                    <div
+                      className="relative flex w-full items-center justify-center gap-2 rounded-2xl p-3 text-xs font-bold sm:p-4 sm:text-sm"
+                      style={
+                        plan.isPopular
+                          ? {
+                              background: `linear-gradient(135deg, ${accent.accentFrom}, ${accent.accentTo})`,
+                              boxShadow: `0 8px 32px ${accent.glowColor}`,
+                              color: '#ffffff',
+                            }
+                          : {
+                              background: `${accent.accentFrom}15`,
+                              border: `1px solid ${accent.accentFrom}55`,
+                              color: 'var(--landing-text-primary)',
+                            }
+                      }
+                      aria-hidden="true"
+                    >
+                      {ctaLabel}
+                      <ArrowRightIcon size={15} />
+                    </div>
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlansClient() {
   const { t } = useTranslation();
   const data = useQuery(api.billing.plans.listBillingData);
@@ -191,6 +550,7 @@ export function PlansClient() {
   const publishPlans = useMutation(api.billing.plans.publishBillingPlans);
 
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
+  const [view, setView] = useState<'editor' | 'preview'>('editor');
   const [search, setSearch] = useState('');
   const [drawerModule, setDrawerModule] = useState<string | null>(null);
   const [versionsPlan, setVersionsPlan] = useState<Id<'billingPlans'> | null>(null);
@@ -410,6 +770,26 @@ export function PlansClient() {
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
+          {/* Editor / landing preview — the same Monthly/Yearly toggle drives
+              both, so the preview always matches the numbers being edited. */}
+          <div className="flex items-center gap-0.5 rounded-full border border-(--border-default) bg-(--card)/60 p-0.5">
+            {(['editor', 'preview'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setView(mode)}
+                aria-pressed={view === mode}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors',
+                  view === mode
+                    ? 'bg-(--brand) text-white'
+                    : 'text-(--text-muted) hover:text-(--text-primary)',
+                )}
+              >
+                {mode === 'editor' ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {t(mode === 'editor' ? 'billing.plans.viewEditor' : 'billing.plans.viewPreview')}
+              </button>
+            ))}
+          </div>
           {/* Monthly / Yearly price preview */}
           <div className="flex items-center gap-0.5 rounded-full border border-(--border-default) bg-(--card)/60 p-0.5">
             {(['monthly', 'yearly'] as const).map((period) => (
@@ -441,19 +821,29 @@ export function PlansClient() {
       </div>
 
       {/* ── Plan cards ─────────────────────────────────────────────────────── */}
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <PlanCard
-            key={plan._id}
-            plan={plan}
-            billing={billing}
-            t={t}
-            patchPlan={patchPlan}
-            doPublish={() => doPublish([plan._id])}
-            openVersions={() => setVersionsPlan(plan._id)}
-          />
-        ))}
-      </div>
+      {view === 'editor' ? (
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {plans.map((plan) => (
+            <PlanCard
+              key={plan._id}
+              plan={plan}
+              billing={billing}
+              t={t}
+              patchPlan={patchPlan}
+              doPublish={() => doPublish([plan._id])}
+              openVersions={() => setVersionsPlan(plan._id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <LandingPreview
+          plans={plans}
+          modules={modules}
+          entByPlanModule={entByPlanModule}
+          billing={billing}
+          t={t}
+        />
+      )}
 
       {/* ── Matrix ────────────────────────────────────────────────────────── */}
       <div className="mt-8 rounded-2xl border border-(--border-default) bg-(--card)/40 overflow-hidden">
@@ -632,7 +1022,21 @@ function PlanCard({
   const price =
     displayPrice === null || displayPrice === undefined
       ? t('billing.plans.contactUs', 'Contact us')
-      : `$${displayPrice.toLocaleString()}`;
+      : formatPerSeat(displayPrice);
+
+  // The volume brackets live in code (src/lib/pricing.ts, mirrored by
+  // convex/billing/defaults.ts) because the calculator and the checkout read
+  // them from there, not from the plan row. Showing them here is what makes the
+  // per-seat numbers legible: the single price above is only the *entry* rate.
+  const seatPricing = PLAN_SEAT_PRICING[plan.key as PricingPlanKey];
+  const baseTier = seatPricing?.tiers[0];
+  // The rate the calculator will charge the entry team size. If the plan row
+  // disagrees, the landing page and the editor would quote different numbers.
+  const priceDrift =
+    !plan.isCustom &&
+    baseTier !== undefined &&
+    plan.priceMonthly !== undefined &&
+    plan.priceMonthly !== baseTier.pricePerSeatMonthly;
 
   return (
     <div
@@ -703,7 +1107,9 @@ function PlanCard({
           </span>
           {!plan.isCustom && (
             <span className="pb-0.5 text-xs text-(--text-muted)">
-              /{t('billing.plans.mo', 'mo')}
+              {billing === 'yearly'
+                ? t('billing.plans.perSeatYr', 'per seat / month, billed annually')
+                : t('billing.plans.perSeatMo', 'per seat / month')}
               {billing === 'yearly' && (
                 <span className="ml-1.5 rounded-full bg-(--success-bg) px-1.5 py-0.5 text-[9px] font-bold text-(--success-text)">
                   {t('billing.plans.save20', '-20%')}
@@ -713,17 +1119,22 @@ function PlanCard({
           )}
         </div>
 
-        {/* Editable fields */}
+        {/* Editable fields — both numbers are PER SEAT, never plan totals. */}
         <div className="grid grid-cols-2 gap-2.5">
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-(--text-muted)">
-              {t('billing.plans.monthlyPrice', 'Monthly $')}
+              {t('billing.plans.monthlyPrice', 'Price per seat / month ($)')}
             </span>
             <Input
               type="number"
               min={0}
+              step="0.5"
               value={plan.priceMonthly ?? ''}
               disabled={plan.isCustom}
+              title={t(
+                'billing.plans.monthlyPriceHint',
+                'USD per active seat per month when billed monthly.',
+              )}
               onChange={(e) => {
                 const n = Number(e.target.value);
                 patchPlan(plan._id, {
@@ -735,13 +1146,18 @@ function PlanCard({
           </label>
           <label className="block">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-(--text-muted)">
-              {t('billing.plans.yearlyPrice', 'Yearly $')}
+              {t('billing.plans.yearlyPrice', 'Price per seat / month, billed annually ($)')}
             </span>
             <Input
               type="number"
               min={0}
+              step="0.1"
               value={plan.priceYearly ?? ''}
               disabled={plan.isCustom}
+              title={t(
+                'billing.plans.yearlyPriceHint',
+                'Monthly-equivalent USD per seat when the annual plan is paid up front — not the yearly total.',
+              )}
               onChange={(e) => {
                 const n = Number(e.target.value);
                 patchPlan(plan._id, {
@@ -752,6 +1168,66 @@ function PlanCard({
             />
           </label>
         </div>
+
+        <p className="text-[11px] leading-relaxed text-(--text-muted)">
+          {t(
+            'billing.plans.perSeatHint',
+            "Per-seat pricing: every active seat pays the plan's volume rate. Tiers live in convex/billing/defaults.ts, mirrored by src/lib/pricing.ts.",
+          )}
+        </p>
+
+        {/* Volume tiers the calculator actually charges — set in code below. */}
+        {seatPricing && (
+          <div className="rounded-xl border border-(--border-default) bg-(--background-subtle)/60 p-2.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-(--text-muted)">
+              {t('billing.plans.tiersTitle', 'Volume tiers (whole team)')}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {seatPricing.tiers.map((tier) => (
+                <span
+                  key={tier.fromSeats}
+                  className={cn(
+                    'rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                    tier.fromSeats === baseTier?.fromSeats
+                      ? 'bg-(--brand-quiet) text-(--brand-text)'
+                      : 'bg-(--surface-2) text-(--text-secondary)',
+                  )}
+                >
+                  {t('billing.plans.tierFrom', '{{seats}}+ seats', { seats: tier.fromSeats })} ·{' '}
+                  {formatPerSeat(tier.pricePerSeatMonthly)}
+                </span>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-(--text-muted)">
+              {t(
+                'billing.plans.tierFromHint',
+                'Entry tier for this plan: {{seats}}+ seats. It is what the base price above should match.',
+                { seats: seatPricing.minSeats },
+              )}
+              {seatPricing.maxSeats !== null && (
+                <>
+                  {' '}
+                  {t('billing.plans.tierMaxHint', 'Self-serve up to {{seats}} seats.', {
+                    seats: seatPricing.maxSeats,
+                  })}
+                </>
+              )}
+            </p>
+            {priceDrift && (
+              <p className="mt-1.5 flex items-start gap-1 text-[10px] leading-relaxed text-(--warning-text)">
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                {t(
+                  'billing.plans.tierDrift',
+                  'Base price ${{price}} differs from the code tier ({{tier}}). Update convex/billing/defaults.ts and src/lib/pricing.ts, or the calculator will quote a different number.',
+                  {
+                    price: plan.priceMonthly,
+                    tier: formatPerSeat(baseTier?.pricePerSeatMonthly ?? 0),
+                  },
+                )}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-2.5">
           <label className="flex items-center gap-1.5 text-xs text-(--text-muted)">

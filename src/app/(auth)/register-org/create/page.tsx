@@ -28,6 +28,7 @@ import bcrypt from 'bcryptjs';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { useCurrency } from '@/hooks/useCurrency';
+import { seatCap } from '@/lib/pricing';
 
 const passwordStrength = (pwd: string) => {
   if (pwd.length < 8) return 0;
@@ -67,9 +68,18 @@ export default function CreateStarterOrgPage() {
 
   const strength = passwordStrength(formData.password);
 
+  // The price is a PER-SEAT rate — `currency.starter` converts BASE_PRICES,
+  // which is per seat — so it is labelled as one everywhere it appears. The
+  // employee cap likewise comes from the pricing model, not from a locale
+  // string that has to be edited by hand whenever the plan limits move.
+  const starterSeats = seatCap('starter');
+  const starterTeamLabel =
+    starterSeats === null
+      ? t('billing.unlimitedEmployees', 'Unlimited employees')
+      : t('billing.upToEmployees', { count: starterSeats });
   const starterSubtitle = currency.loading
-    ? `${t('auth.plans.starter.name', 'Starter')} • ${t('registerOrgPage.starterTeam', 'Up to 10 employees')} • ${t('registerOrgPage.instantSetup', 'Instant setup')}`
-    : `${currency.starter.formatted}${t('auth.plans.perMonth', '/мес')} • ${t('registerOrgPage.starterTeam', 'Up to 10 employees')} • ${t('registerOrgPage.instantSetup', 'Instant setup')}`;
+    ? `${t('auth.plans.starter.name', 'Starter')} • ${starterTeamLabel} • ${t('registerOrgPage.instantSetup', 'Instant setup')}`
+    : `${currency.starter.formatted} ${t('billing.upgradeModal.perSeatMonth', 'per seat / mo')} • ${starterTeamLabel} • ${t('registerOrgPage.instantSetup', 'Instant setup')}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

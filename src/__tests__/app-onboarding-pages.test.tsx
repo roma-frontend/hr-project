@@ -133,8 +133,8 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/hooks/useCurrency', () => ({
   useCurrency: () => ({
     loading: false,
-    starter: { formatted: '$29' },
-    professional: { formatted: '$79' },
+    starter: { formatted: '$4' },
+    professional: { formatted: '$8' },
     currency: 'USD',
     symbol: '$',
     locale: 'en',

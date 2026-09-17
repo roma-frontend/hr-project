@@ -24,5 +24,28 @@
   ],
   "categories": ["business", "productivity"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Approve leave",
+      "short_name": "Approvals",
+      "description": "Review and approve pending leave requests",
+      "url": "/approvals",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mark attendance",
+      "short_name": "Attendance",
+      "description": "Clock in or out",
+      "url": "/attendance",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My tasks",
+      "short_name": "Tasks",
+      "description": "Open your task board",
+      "url": "/tasks",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }

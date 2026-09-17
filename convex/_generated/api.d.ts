@@ -34,6 +34,7 @@ import type * as backups from "../backups.js";
 import type * as badges from "../badges.js";
 import type * as benefits from "../benefits.js";
 import type * as billing_defaults from "../billing/defaults.js";
+import type * as billing_migrations from "../billing/migrations.js";
 import type * as billing_modules from "../billing/modules.js";
 import type * as billing_plans from "../billing/plans.js";
 import type * as billing_seed from "../billing/seed.js";
@@ -363,6 +364,7 @@ declare const fullApi: ApiFromModules<{
   badges: typeof badges;
   benefits: typeof benefits;
   "billing/defaults": typeof billing_defaults;
+  "billing/migrations": typeof billing_migrations;
   "billing/modules": typeof billing_modules;
   "billing/plans": typeof billing_plans;
   "billing/seed": typeof billing_seed;

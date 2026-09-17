@@ -1916,6 +1916,8 @@
       "currentPlanButton": "Your Current Plan",
       "mostPopular": "Most Popular",
       "perMonth": "/mo",
+      "perSeatMonth": "per seat / month",
+      "forSeats": "{{seats}} seats — from {{total}}/month",
       "freeTrial": "14-day free trial",
       "securedFooter": "Payments secured by Stripe · Cancel anytime · GDPR compliant",
       "starter": {
@@ -1923,7 +1925,7 @@
         "description": "Perfect for small teams getting started",
         "button": "Start Free Trial",
         "features": [
-          "Up to 10 employees",
+          "Up to 25 employees",
           "Basic leave tracking",
           "Email notifications",
           "Mobile app access",
@@ -1935,7 +1937,7 @@
         "description": "For growing teams that need more power",
         "button": "Upgrade to Professional",
         "features": [
-          "Up to 50 employees",
+          "Up to 300 employees",
           "Advanced analytics & reports",
           "AI Leave Assistant & Insights",
           "SLA management",
@@ -2082,9 +2084,9 @@
     },
     "plans": {
       "starter": "Starter",
-      "starterDesc": "14-day free trial, then $29/mo",
+      "starterDesc": "14-day free trial, then $4 per seat / month",
       "professional": "Professional",
-      "professionalDesc": "14-day free trial, then $79/month",
+      "professionalDesc": "14-day free trial, then $8 per seat / month",
       "enterprise": "Enterprise",
       "enterpriseDesc": "Custom pricing"
     },
@@ -3319,8 +3321,8 @@
     "category": "Category"
   },
   "plan": {
-    "starter10Employees": "Starter (10 employees)",
-    "professional50Employees": "Professional (50 employees)",
+    "starter10Employees": "Starter (25 employees)",
+    "professional50Employees": "Professional (300 employees)",
     "enterprise100Plus": "Enterprise (100+)"
   },
   "planGate": {

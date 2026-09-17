@@ -1,7 +1,14 @@
 'use client';
 
 import { useSubscription, type PlanType } from './useSubscription';
+import { PLAN_SEAT_PRICING } from '@/lib/pricing';
 export type { PlanType };
+
+// Seat (employee) caps come from the pricing model — src/lib/pricing.ts — so the
+// limit shown to a customer can never drift from what billing enforces. These
+// used to read 50 / 200, which matched neither the model nor the plan cards.
+const STARTER_MAX_EMPLOYEES = PLAN_SEAT_PRICING.starter.maxSeats ?? Infinity;
+const PRO_MAX_EMPLOYEES = PLAN_SEAT_PRICING.pro.maxSeats ?? Infinity;
 
 // ── Определение функций по плану ─────────────────────────────────────────────
 export interface PlanFeatures {
@@ -33,7 +40,7 @@ export interface PlanFeatures {
   slaSettings: boolean; // professional+
 
   // Сотрудники
-  maxEmployees: number; // starter: 50, professional: 200, enterprise: unlimited
+  maxEmployees: number; // starter: 25, professional: 300, enterprise: unlimited
 
   // Calendar sync
   calendarSync: boolean; // professional+
@@ -60,7 +67,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     aiSiteEditorLogicChanges: false, // No logic changes
     aiSiteEditorFullControl: false, // No full control
     slaSettings: true,
-    maxEmployees: 50,
+    maxEmployees: STARTER_MAX_EMPLOYEES,
     calendarSync: true,
     integrations: true,
   },
@@ -81,7 +88,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     aiSiteEditorLogicChanges: true, // Logic changes allowed
     aiSiteEditorFullControl: true, // Full control allowed
     slaSettings: true,
-    maxEmployees: 200,
+    maxEmployees: PRO_MAX_EMPLOYEES,
     calendarSync: true,
     integrations: false,
   },
@@ -114,9 +121,12 @@ export const PLAN_LABELS: Record<PlanType, string> = {
   enterprise: 'Enterprise',
 };
 
+// Per-seat USD rates (see src/lib/pricing.ts). Kept as static strings only for
+// surfaces that cannot resolve a live rate; anything user-facing should prefer
+// `useCurrency()`, which converts BASE_PRICES.
 export const PLAN_PRICES: Record<PlanType, string> = {
-  starter: '$29/mo',
-  professional: '$79/mo',
+  starter: '$4/seat/mo',
+  professional: '$8/seat/mo',
   enterprise: 'Custom',
 };
 

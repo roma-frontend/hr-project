@@ -394,9 +394,9 @@
       "adminEmailHint": "An invitation email will be sent here",
       "industryHint": "e.g. Technology, Healthcare, Retail",
       "starterTitle": "Starter",
-      "starterDesc": "Up to 10 employees · core HR tools",
+      "starterDesc": "Up to 25 employees · core HR tools",
       "professionalTitle": "Professional",
-      "professionalDesc": "Up to 100 employees · advanced features",
+      "professionalDesc": "Up to 300 employees · advanced features",
       "enterpriseTitle": "Enterprise",
       "enterpriseDesc": "Unlimited · custom integrations & SLA",
       "popular": "Most popular",
@@ -1510,8 +1510,8 @@
     "paris": "Paris",
     "tokyo": "Tokyo",
     "yerevan": "Yerevan",
-    "starterFree": "Starter ($29/mo)",
-    "professionalPaid": "Professional ($79/mo)",
+    "starterFree": "Starter ($4 per seat/mo)",
+    "professionalPaid": "Professional ($8 per seat/mo)",
     "enterpriseCustom": "Enterprise (Custom)"
   },
   "editOrganization": {

@@ -14,6 +14,7 @@ import { BrandingPreviewProvider } from '@/context/BrandingPreviewContext';
 import { Toaster } from 'sonner';
 import { MaintenanceAutoLogout } from '@/components/MaintenanceAutoLogout';
 import { HtmlLangUpdater } from '@/components/HtmlLangUpdater';
+import { ServiceWorkerProvider } from '@/components/providers/ServiceWorkerProvider';
 import { RadixScrollLockFix } from './RadixScrollLockFix';
 
 /**
@@ -27,6 +28,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <SessionProvider>
           <I18nProvider>
             <HtmlLangUpdater />
+            <ServiceWorkerProvider />
             <StatusUpdateProvider>
               <ConvexClientProvider>
                 <AuthSyncProvider>

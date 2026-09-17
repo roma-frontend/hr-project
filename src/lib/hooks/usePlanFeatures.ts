@@ -1,6 +1,7 @@
 'use client';
 
 import { useSubscription, type Plan } from './useSubscription';
+import { PLAN_SEAT_PRICING } from '@/lib/pricing';
 
 // ── Feature matrix per plan ────────────────────────────────────────────────────
 // Add new features here as the product grows
@@ -26,6 +27,10 @@ export interface PlanFeatures {
   calendarSync: boolean;
   integrations: boolean;
   employeeBackups: boolean;
+  /**
+   * Employee cap shown next to the plan. Sourced from the pricing model so the
+   * displayed limit cannot drift from what billing enforces; `null` = unlimited.
+   */
   maxEmployees: number | null;
 }
 
@@ -76,7 +81,7 @@ const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     calendarSync: true,
     integrations: false,
     employeeBackups: false,
-    maxEmployees: 10,
+    maxEmployees: PLAN_SEAT_PRICING.starter.maxSeats,
   },
   professional: {
     analytics: true,
@@ -100,7 +105,7 @@ const PLAN_FEATURES: Record<Plan, PlanFeatures> = {
     calendarSync: true,
     integrations: false,
     employeeBackups: false,
-    maxEmployees: 50,
+    maxEmployees: PLAN_SEAT_PRICING.pro.maxSeats,
   },
   enterprise: {
     analytics: true,
@@ -135,10 +140,12 @@ export const PLAN_LABELS: Record<Plan, string> = {
   enterprise: 'Enterprise',
 };
 
+// Per-seat USD rates (see src/lib/pricing.ts) — static strings for surfaces that
+// cannot resolve a live FX rate.
 export const PLAN_PRICES: Record<Plan, string> = {
-  free: '$0/mo',
-  starter: '$29/mo',
-  professional: '$79/mo',
+  free: '$0/seat/mo',
+  starter: '$4/seat/mo',
+  professional: '$8/seat/mo',
   enterprise: 'Custom',
 };
 

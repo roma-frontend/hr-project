@@ -10,6 +10,7 @@ import {
   convertPrice,
   getExchangeRates,
 } from '@/lib/currency';
+import { PLAN_SEAT_PRICING } from '@/lib/pricing';
 
 describe('LOCALE_CURRENCY', () => {
   it('maps en to USD', () => {
@@ -37,16 +38,24 @@ describe('LOCALE_CURRENCY', () => {
 });
 
 describe('BASE_PRICES', () => {
-  it('has starter price', () => {
-    expect(BASE_PRICES.starter).toBe(29);
+  // Per seat, per month — these were flat plan prices ($29 / $79) and the
+  // per-seat model is the invariant that matters: the currency layer must never
+  // drift from the pricing model the checkout charges from.
+  it('has starter per-seat price', () => {
+    expect(BASE_PRICES.starter).toBe(PLAN_SEAT_PRICING.starter.tiers[0]!.pricePerSeatMonthly);
   });
 
-  it('has professional price', () => {
-    expect(BASE_PRICES.professional).toBe(79);
+  it('has professional per-seat price', () => {
+    expect(BASE_PRICES.professional).toBe(PLAN_SEAT_PRICING.pro.tiers[0]!.pricePerSeatMonthly);
   });
 
-  it('has enterprise price', () => {
+  it('leaves enterprise unset (quoted, never self-served)', () => {
     expect(BASE_PRICES.enterprise).toBe(0);
+  });
+
+  it('stays in per-seat territory', () => {
+    expect(BASE_PRICES.starter).toBeLessThan(20);
+    expect(BASE_PRICES.professional).toBeLessThan(20);
   });
 
   it('all prices are non-negative', () => {

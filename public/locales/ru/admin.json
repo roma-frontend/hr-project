@@ -394,9 +394,9 @@
       "adminEmailHint": "Приглашение будет отправлено на этот email",
       "industryHint": "Например: Технологии, Здравоохранение, Ритейл",
       "starterTitle": "Стартовый",
-      "starterDesc": "До 10 сотрудников · базовые HR-инструменты",
+      "starterDesc": "До 25 сотрудников · базовые HR-инструменты",
       "professionalTitle": "Профессиональный",
-      "professionalDesc": "До 100 сотрудников · расширенные функции",
+      "professionalDesc": "До 300 сотрудников · расширенные функции",
       "enterpriseTitle": "Корпоративный",
       "enterpriseDesc": "Без лимита · интеграции и SLA",
       "popular": "Популярный",
@@ -1510,8 +1510,8 @@
     "paris": "Париж",
     "tokyo": "Токио",
     "yerevan": "Ереван",
-    "starterFree": "Стартер ($29/мес)",
-    "professionalPaid": "Профессиональный ($79/мес)",
+    "starterFree": "Стартер ($4 за место/мес)",
+    "professionalPaid": "Профессиональный ($8 за место/мес)",
     "enterpriseCustom": "Корпоративный (Индивидуально)"
   },
   "editOrganization": {

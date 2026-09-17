@@ -3,7 +3,9 @@
 import {
   COMPETITORS,
   COMPARE_ROWS,
+  competitorsByRegion,
   groupedRows,
+  type CompetitorRegion,
   type CompetitorSlug,
   type Support,
   type RowCategory,
@@ -22,12 +24,19 @@ import { useLandingTranslation } from '@/components/landing/useLandingTranslatio
 export default function CompareTable({
   initialLanguage = 'en',
   only,
+  region,
 }: {
   initialLanguage?: string;
   only?: CompetitorSlug;
+  /** Limit columns to one market (the index renders a table per section). */
+  region?: CompetitorRegion;
 }) {
   const { t } = useLandingTranslation(initialLanguage);
-  const columns = only ? COMPETITORS.filter((c) => c.slug === only) : COMPETITORS;
+  const columns = only
+    ? COMPETITORS.filter((c) => c.slug === only)
+    : region
+      ? competitorsByRegion(region)
+      : COMPETITORS;
   const groups = groupedRows();
 
   return (

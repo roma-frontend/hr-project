@@ -10,177 +10,27 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCurrency } from '@/hooks/useCurrency';
-import { applyRate } from '@/lib/currency';
+import { applyRatePrecise } from '@/lib/currency';
+import { entrySeatCount, perSeatPrice, seatCap, type PlanKey } from '@/lib/pricing';
+import { resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
 import { api } from '@/convex/_generated/api';
 import { logger } from '@/lib/logger';
-
-// Inline SVG icons to eliminate lucide-react import overhead
-function CheckIcon({
-  size = 10,
-  className,
-  style,
-}: {
-  size?: number;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
-function ZapIcon({ size = 22, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-    </svg>
-  );
-}
-function BuildingIcon({ size = 22, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-      <path d="M9 22v-4h6v4" />
-      <path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M8 10h.01M16 10h.01" />
-    </svg>
-  );
-}
-function RocketIcon({ size = 22, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-      <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-    </svg>
-  );
-}
-function ArrowRightIcon({ size = 15, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  );
-}
-function ShieldIcon({
-  size = 11,
-  className,
-  style,
-}: {
-  size?: number;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      style={style}
-      aria-hidden="true"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  );
-}
-function StarIcon({ size = 11, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="1"
-      className={className}
-      aria-hidden="true"
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-function CheckCircleIcon({ size = 15 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
+// The card itself is shared with the tariff editor's live preview, so the
+// public page and /superadmin/plans can never drift apart.
+import {
+  ArrowRightIcon,
+  BuildingIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  PLAN_CARD_ACCENTS,
+  RocketIcon,
+  PlanCard,
+  ShieldIcon,
+  StarIcon,
+  ZapIcon,
+  groupFeaturesByCategory,
+  type PlanCardModel,
+} from '@/components/landing/PlanCard';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PricingTier {
@@ -193,6 +43,13 @@ interface PricingTier {
    *  base every exchange rate is quoted against. */
   priceCurrency?: string;
   descriptionKey: string;
+  /**
+   * Plan whose seat cap heads the feature list. The "Up to N employees" bullet
+   * is computed from the pricing model, not translated: the locale strings
+   * spelled the caps out and every one of them went stale when the plans gained
+   * seat limits. `null`-capped plans (Enterprise) read "Unlimited".
+   */
+  seatCapPlan?: PlanKey;
   icon: React.ReactNode;
   featureKeys: string[];
   /** Direct values win when the tier comes from live billing data. */
@@ -212,208 +69,9 @@ interface PricingTier {
   trialEligible?: boolean;
 }
 
-// Category display order for the grouped feature list — mirrors the billing
-// catalog (convex/billing/modules.ts) without pulling it into the landing
-// bundle. Categories not listed here sort after these, alphabetically.
-const FEATURE_CATEGORY_ORDER = [
-  'people',
-  'time',
-  'performance',
-  'talent',
-  'finance',
-  'communication',
-  'documents',
-  'platform',
-  'ai',
-  'security',
-  'future',
-] as const;
-
-function groupFeaturesByCategory(
-  modules: Array<{ key: string; name: string; category: string }>,
-): Array<{ category: string; items: string[] }> {
-  const byCategory = new Map<string, string[]>();
-  for (const m of modules) {
-    const list = byCategory.get(m.category) ?? [];
-    list.push(m.name);
-    byCategory.set(m.category, list);
-  }
-  const order = new Map<string, number>(FEATURE_CATEGORY_ORDER.map((c, i) => [c, i]));
-  return [...byCategory.entries()]
-    .sort((a, b) => {
-      const ai = order.get(a[0]);
-      const bi = order.get(b[0]);
-      if (ai !== undefined && bi !== undefined) return ai - bi;
-      if (ai !== undefined) return -1;
-      if (bi !== undefined) return 1;
-      return a[0].localeCompare(b[0]);
-    })
-    .map(([category, items]) => ({ category, items }));
-}
-
-/**
- * Sidebar-style feature navigator: the plan's categories are listed as rows
- * (like main sidebar items); clicking one slides a sub-menu in from the right
- * (back button + that category's features), exactly like the sidebar's sub-nav
- * — same springy cubic-bezier, staggered items, and no scroll: the panel is
- * exactly as tall as its content.
- */
-function FeatureNavigator({
-  groups,
-  accentFrom,
-}: {
-  groups: Array<{ category: string; items: string[] }>;
-  accentFrom: string;
-}) {
-  const { t } = useTranslation();
-  const [active, setActive] = useState<string | null>(null);
-  const activeGroup = groups.find((g) => g.category === active) ?? null;
-
-  return (
-    <div className="relative overflow-hidden">
-      <div className="grid" style={{ gridTemplateAreas: "'stack'" }}>
-        {/* Master view — category rows */}
-        <div
-          style={{
-            gridArea: 'stack',
-            opacity: activeGroup ? 0 : 1,
-            transform: activeGroup ? 'translateX(-24px)' : 'translateX(0)',
-            transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            pointerEvents: activeGroup ? 'none' : 'auto',
-          }}
-        >
-          {groups.map((group, i) => (
-            <button
-              key={group.category}
-              type="button"
-              onClick={() => setActive(group.category)}
-              className="group w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-left transition-all duration-200 hover:bg-(--landing-card-border)/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/40"
-              style={{
-                opacity: activeGroup ? 0 : 1,
-                transform: activeGroup ? 'translateX(-20px)' : 'translateX(0)',
-                transition: `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.02}s`,
-              }}
-            >
-              <span
-                className="flex-1 min-w-0 text-xs sm:text-sm truncate"
-                style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
-              >
-                {t(`billing.categories.${group.category}`, group.category)}
-              </span>
-              <span
-                className="shrink-0 min-w-5 text-center text-[10px] tabular-nums px-1.5 py-0.5 rounded-full"
-                style={{
-                  color: accentFrom,
-                  background: `${accentFrom}14`,
-                  border: `1px solid ${accentFrom}33`,
-                }}
-              >
-                {group.items.length}
-              </span>
-              <svg
-                width={12}
-                height={12}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                className="shrink-0 transition-transform duration-300 group-hover:translate-x-0.5"
-                style={{ color: 'var(--landing-text-muted)' }}
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          ))}
-        </div>
-
-        {/* Detail view — one category's features, slides in from the right */}
-        <div
-          style={{
-            gridArea: 'stack',
-            transform: activeGroup ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.95)',
-            opacity: activeGroup ? 1 : 0,
-            pointerEvents: activeGroup ? 'auto' : 'none',
-            transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setActive(null)}
-            className="group/back w-full flex items-center gap-2 px-2.5 py-2 mb-1 rounded-xl transition-all duration-300 hover:bg-(--landing-card-border)/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/40"
-            style={{
-              opacity: activeGroup ? 1 : 0,
-              transform: activeGroup ? 'translateX(0)' : 'translateX(20px)',
-              transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${activeGroup ? '0.1s' : '0ms'}`,
-            }}
-          >
-            <svg
-              width={13}
-              height={13}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className="transition-transform duration-300 group-hover/back:-translate-x-0.5"
-              style={{ color: 'var(--landing-text-muted)' }}
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            <span
-              className="text-xs sm:text-sm truncate"
-              style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
-            >
-              {activeGroup
-                ? t(`billing.categories.${activeGroup.category}`, activeGroup.category)
-                : ''}
-            </span>
-          </button>
-
-          <ul className="space-y-2 py-1">
-            {(activeGroup?.items ?? []).map((feature, i) => (
-              <li
-                key={`${activeGroup?.category}-${i}`}
-                className="flex items-start gap-2 sm:gap-2.5 px-1"
-                style={{
-                  opacity: activeGroup ? 1 : 0,
-                  transform: activeGroup ? 'translateX(0)' : 'translateX(30px)',
-                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${
-                    activeGroup ? 0.15 + i * 0.05 : 0
-                  }s`,
-                }}
-              >
-                <div
-                  className="w-4 h-4 sm:w-[18px] sm:h-[18px] rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{
-                    background: `${accentFrom}22`,
-                    border: `1px solid ${accentFrom}44`,
-                  }}
-                >
-                  <CheckIcon
-                    size={10}
-                    className="sm:w-[11px] sm:h-[11px]"
-                    style={{ color: accentFrom }}
-                  />
-                </div>
-                <span
-                  className="text-xs sm:text-sm flex-1 leading-relaxed"
-                  style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
-                >
-                  {feature}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Feature grouping, the category navigator, the icons and the card markup all
+// live in `@/components/landing/PlanCard` — shared with the tariff editor's
+// preview. See that module's header.
 
 // ── Plans ─────────────────────────────────────────────────────────────────────
 const pricingTiers: PricingTier[] = [
@@ -421,11 +79,12 @@ const pricingTiers: PricingTier[] = [
     id: 'starter',
     nameKey: 'pricing.starter',
     priceKey: 'pricing.starterPrice',
-    priceMonthly: 29,
+    priceMonthly: 4,
+    priceYearly: 3.2,
     descriptionKey: 'pricing.starterDesc',
     icon: <ZapIcon size={22} />,
+    seatCapPlan: 'starter',
     featureKeys: [
-      'pricing.upTo10Employees',
       'pricing.basicLeaveManagement',
       'pricing.timeTracking',
       'pricing.employeeProfiles',
@@ -442,11 +101,12 @@ const pricingTiers: PricingTier[] = [
     id: 'professional',
     nameKey: 'pricing.professional',
     priceKey: 'pricing.professionalPrice',
-    priceMonthly: 79,
+    priceMonthly: 8,
+    priceYearly: 6.4,
     descriptionKey: 'pricing.professionalDesc',
     icon: <BuildingIcon size={22} />,
+    seatCapPlan: 'pro',
     featureKeys: [
-      'pricing.upTo50Employees',
       'pricing.everythingInStarter',
       'pricing.aiPoweredInsights',
       'pricing.customReports',
@@ -467,8 +127,8 @@ const pricingTiers: PricingTier[] = [
     priceKey: 'pricing.custom',
     descriptionKey: 'pricing.enterpriseDesc',
     icon: <RocketIcon size={22} />,
+    seatCapPlan: 'enterprise',
     featureKeys: [
-      'pricing.unlimitedEmployees',
       'pricing.everythingInProfessional',
       'pricing.dedicatedSupport',
       'pricing.slaAgreement',
@@ -566,7 +226,12 @@ function PricingCard({
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  // Per-seat model: the big number is the per-seat price; the line below shows
+  // what the smallest billable team costs on this plan.
+  const seatPlan = resolveSeatPlan(tier.id);
+  const entrySeats = seatPlan ? entrySeatCount(seatPlan) : null;
+  const entryTotal =
+    entrySeats !== null && priceAmount !== null ? Math.round(priceAmount * entrySeats) : null;
   // Legacy subscriptions use 'professional' while the editor's plan key is
   // 'pro' — treat them as the same tier so the CTA shows "Current plan".
   const isCurrentPlan =
@@ -607,6 +272,9 @@ function PricingCard({
           plan: tier.id,
           email: user?.email || undefined,
           organizationId: user?.organizationId || undefined,
+          // Per-seat billing: charge for the minimum billable team of this
+          // plan. The subscription quantity can be raised later as the team grows.
+          seats: entrySeats ?? undefined,
         }),
       });
       const data = (await res.json()) as { url?: string; error?: string; message?: string };
@@ -633,187 +301,57 @@ function PricingCard({
     }
   };
 
+  // Everything the shared card renders, resolved here: strings in the display
+  // currency, features already translated. Same model the tariff editor's
+  // preview builds from its draft.
+  const seatCapLabel = (planKey: PlanKey): string => {
+    const cap = seatCap(planKey);
+    return cap === null
+      ? t('pricing.unlimitedEmployees', 'Unlimited employees')
+      : t('pricing.seatCap', { n: cap, defaultValue: 'Up to {{n}} employees' });
+  };
+
+  const model: PlanCardModel = {
+    accentFrom: tier.accentFrom,
+    accentTo: tier.accentTo,
+    glowColor: tier.glowColor,
+    icon: tier.icon,
+    name: tier.nameText ?? t(tier.nameKey),
+    tagline: tier.descriptionText ?? t(tier.descriptionKey),
+    priceLabel,
+    priced: tier.priceMonthly !== undefined && tier.priceMonthly >= 0,
+    priceSuffix: t('pricing.perUserMonth'),
+    seatsLine:
+      entrySeats !== null && entryTotal !== null
+        ? t('pricing.forTeam', {
+            seats: entrySeats,
+            total: `${symbol}${entryTotal.toLocaleString()}`,
+          })
+        : undefined,
+    strikeLabel:
+      billing === 'annual'
+        ? `${symbol}${Math.round((priceAmount ?? 0) / 0.8).toLocaleString()}`
+        : undefined,
+    billingLabel: t(billing === 'annual' ? 'pricing.billedAnnually' : 'pricing.billedMonthly'),
+    trialLabel: tier.trialEligible ? t('pricing.freeTrial') : undefined,
+    featureTexts: tier.featureTexts ?? [
+      ...(tier.seatCapPlan ? [seatCapLabel(tier.seatCapPlan)] : []),
+      ...tier.featureKeys.map((k) => t(k)),
+    ],
+    featureGroups: tier.featureGroups,
+    popular: tier.popular,
+    badgeLabel: tier.badgeKey ? t(tier.badgeKey) : undefined,
+  };
+
   return (
     <div
       ref={ref}
       style={style}
       className={`relative group flex flex-col ${tier.popular ? 'md:-mt-4 md:mb-4' : ''}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
-      {/* Popular badge */}
-      {tier.popular && (
-        <div className="absolute -top-5 inset-x-0 flex justify-center z-20">
-          <div
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg"
-            style={{
-              background: `linear-gradient(90deg, ${tier.accentFrom}, ${tier.accentTo})`,
-              boxShadow: `0 4px 20px ${tier.glowColor}`,
-              color: '#ffffff',
-            }}
-          >
-            <StarIcon size={11} />
-            {t(tier.badgeKey!)}
-          </div>
-        </div>
-      )}
-
-      {/* Glow effect */}
-      <div
-        className="absolute -inset-px rounded-3xl transition-opacity duration-500 -z-10 blur-2xl"
-        style={{
-          background: `radial-gradient(ellipse at center, ${tier.glowColor}, transparent 70%)`,
-          opacity: hovered ? 1 : 0,
-        }}
-      />
-
-      {/* Card border gradient */}
-      <div
-        className="absolute -inset-px rounded-3xl -z-[1] transition-opacity duration-500"
-        style={{
-          background: `linear-gradient(135deg, ${tier.accentFrom}55, ${tier.accentTo}22, transparent)`,
-          opacity: hovered || tier.popular ? 1 : 0.4,
-        }}
-      />
-
-      {/* Main card */}
-      <div
-        className={`relative h-full rounded-3xl flex flex-col overflow-hidden backdrop-blur-xl
-          ${hovered ? '-translate-y-2' : 'translate-y-0'}
-        `}
-        style={{
-          /* Tailwind v4's -translate-y-2 compiles to the native CSS `translate`
-             property, not `transform` — the transition must watch `translate`
-             or the hover lift snaps instantly instead of easing. */
-          transition:
-            'translate 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-          borderColor: tier.popular ? tier.accentFrom : 'var(--landing-card-border)',
-          borderWidth: tier.popular ? '2px' : '1px',
-          backgroundColor: 'var(--landing-card-bg)',
-          boxShadow: tier.popular ? `0 0 30px ${tier.glowColor}` : 'none',
-        }}
-      >
-        {/* Top accent line */}
-        <div
-          className="h-[2px] w-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${tier.accentFrom}, ${tier.accentTo}, transparent)`,
-          }}
-        />
-
-        <div className="p-5 sm:p-6 md:p-8 flex flex-col flex-1">
-          {/* Icon + name */}
-          <div className="flex items-start justify-between mb-4 sm:mb-6">
-            <div>
-              <div
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 shadow-lg"
-                style={{
-                  background: `linear-gradient(135deg, ${tier.accentFrom}33, ${tier.accentTo}22)`,
-                  border: `1px solid ${tier.accentFrom}44`,
-                  boxShadow: `0 8px 24px ${tier.glowColor}`,
-                  color: tier.accentFrom,
-                }}
-              >
-                {tier.icon}
-              </div>
-              <h3
-                className="text-lg sm:text-xl font-bold"
-                style={{ color: 'var(--landing-text-primary)' }}
-              >
-                {tier.nameText ?? t(tier.nameKey)}
-              </h3>
-              <p
-                className="text-xs sm:text-sm mt-1"
-                style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
-              >
-                {tier.descriptionText ?? t(tier.descriptionKey)}
-              </p>
-            </div>
-          </div>
-
-          {/* Price — animated when the plan or billing period changes */}
-          <div className="mb-6">
-            <div className="flex items-end gap-2">
-              <span
-                className="text-3xl font-black leading-none tabular-nums"
-                style={{ color: 'var(--landing-text-primary)' }}
-              >
-                {priceLabel}
-              </span>
-              {tier.priceMonthly !== undefined && (
-                <span
-                  className="text-sm pb-1.5"
-                  style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
-                >
-                  {t('pricing.perMonth')}
-                </span>
-              )}
-            </div>
-            {tier.priceMonthly !== undefined && (
-              <div className="flex items-center gap-2 mt-1.5">
-                {billing === 'annual' && (
-                  <span
-                    className="text-[10px] font-semibold line-through"
-                    style={{ color: 'var(--landing-text-muted)', opacity: 0.8 }}
-                  >
-                    {`${symbol}${Math.round((priceAmount ?? 0) / 0.8).toLocaleString()}`}
-                  </span>
-                )}
-                <span
-                  className="text-[10px] font-semibold"
-                  style={{ color: 'var(--landing-text-muted)', opacity: 0.85 }}
-                >
-                  {t(billing === 'annual' ? 'pricing.billedAnnually' : 'pricing.billedMonthly')}
-                </span>
-              </div>
-            )}
-            {tier.priceMonthly !== undefined && tier.priceMonthly >= 0 && tier.trialEligible && (
-              <p
-                className="text-xs mt-2 flex items-center gap-1.5"
-                style={{ color: 'var(--landing-text-secondary)', opacity: 0.85 }}
-              >
-                <ShieldIcon size={11} />
-                {t('pricing.freeTrial')}
-              </p>
-            )}
-          </div>
-
-          {/* Features — grouped into a sidebar-style navigator for data-driven
-              tiers (categories on the card, sub-menu slides in from the right),
-              flat checklist for the short bundled tiers. */}
-          {tier.featureGroups && tier.featureGroups.length > 0 ? (
-            <div className="flex-1 mb-6 sm:mb-8 -mx-1 px-1">
-              <FeatureNavigator groups={tier.featureGroups} accentFrom={tier.accentFrom} />
-            </div>
-          ) : (
-            <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8 flex-1">
-              {(tier.featureTexts ?? tier.featureKeys.map((k) => t(k))).map((feature, i) => (
-                <li key={i} className="flex items-start gap-2 sm:gap-3">
-                  <div
-                    className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                    style={{
-                      background: `${tier.accentFrom}22`,
-                      border: `1px solid ${tier.accentFrom}44`,
-                    }}
-                  >
-                    <CheckIcon
-                      size={10}
-                      className="sm:w-[11px] sm:h-[11px]"
-                      style={{ color: tier.accentFrom }}
-                    />
-                  </div>
-                  <span
-                    className="text-xs sm:text-sm flex-1 leading-relaxed"
-                    style={{ color: 'var(--landing-text-secondary)', opacity: 0.9 }}
-                  >
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* CTA Button */}
+      <PlanCard
+        model={model}
+        cta={
           <button
             onClick={handleCheckout}
             disabled={loading || isCurrentPlan}
@@ -863,8 +401,8 @@ function PricingCard({
               </>
             )}
           </button>
-        </div>
-      </div>
+        }
+      />
     </div>
   );
 }
@@ -875,29 +413,29 @@ function PricingCard({
  * stack (HRIS + time tracking + spreadsheets) with Strata saves per year.
  *
  * The numbers are deliberately conservative and derived from a single per-seat
- * assumption so the calculator stays honest: legacy tooling ≈ $12/seat/mo,
- * Strata Professional ≈ $1.58/seat/mo (the $79 flat plan at 50 seats), and HR
- * time saved ≈ 30 min/seat/mo at $30/hr. All three are multiplied through the
- * current currency's professional amount so the result matches the pricing
- * cards above.
+ * assumption so the calculator stays honest: legacy tooling ≈ $12/seat/mo, HR
+ * time saved ≈ 30 min/seat/mo at $30/hr, and Strata Pro read straight from the
+ * volume-tier model at the slider's team size (so the saving grows as the team
+ * crosses a bracket). The legacy and time figures are converted through the
+ * active FX rate so the result matches the pricing cards above.
  */
-function SavingsCalculator({
-  professionalAmount,
-  symbol,
-}: {
-  professionalAmount: number;
-  symbol: string;
-}) {
+function SavingsCalculator({ symbol, rate }: { symbol: string; rate: number }) {
   const { t } = useTranslation();
   const { ref, style } = useReveal('0.1s');
   const [employees, setEmployees] = useState(50);
 
-  // Scale everything by the current currency relative to the $79 base so the
-  // calculator's numbers match the card prices in every locale.
-  const scale = professionalAmount / 79;
-  const legacyPerSeat = 12 * scale;
-  const strataPerSeat = 1.58 * scale;
-  const timePerSeat = 0.5 * 30 * scale; // 30 min/seat/mo × $30/hr
+  // Conservative per-seat assumptions in USD, converted through the active FX
+  // rate so the calculator matches the card prices in every locale:
+  //   - the legacy stack (an HRIS + a time tool + spreadsheets) ≈ $12/seat/mo;
+  //   - HR time saved = 30 min/seat/mo at $30/hr = $15/seat/mo;
+  //   - Strata Pro, priced from the shared volume-tier model, so the saving
+  //     grows as the team crosses each bracket.
+  // Per-seat figures, so cents are kept: rounding $5.50 to $6 overstated the
+  // Pro rate and with it the saving this calculator claims.
+  const localize = (usd: number) => applyRatePrecise(usd, rate);
+  const legacyPerSeat = localize(12);
+  const strataPerSeat = localize(perSeatPrice('pro', employees));
+  const timePerSeat = localize(15);
   const monthlySavings = (legacyPerSeat + timePerSeat - strataPerSeat) * employees;
   const annualSavings = Math.round(monthlySavings * 12);
   const animatedSavings = useCountUp(annualSavings, 700);
@@ -1098,34 +636,11 @@ function SavingsCalculator({
 }
 
 // ── Section ───────────────────────────────────────────────────────────────────
-// Accent palettes for the three plan columns (data-driven tiers reuse these).
-const DATA_ACCENTS: Array<{
-  accentFrom: string;
-  accentTo: string;
-  glowColor: string;
-  icon: React.ReactNode;
-}> = [
-  {
-    accentFrom: '#10b981',
-    accentTo: '#059669',
-    glowColor: 'rgba(16,185,129,0.35)',
-    icon: <ZapIcon size={22} />,
-  },
-  {
-    accentFrom: '#3b82f6',
-    accentTo: '#2563eb',
-    glowColor: 'rgba(59,130,246,0.4)',
-    icon: <BuildingIcon size={22} />,
-  },
-  {
-    accentFrom: '#8b5cf6',
-    accentTo: '#6d28d9',
-    glowColor: 'rgba(139,92,246,0.35)',
-    icon: <RocketIcon size={22} />,
-  },
-];
-
-const FALLBACK_CURRENCY = { symbol: '$', amount: 79 };
+/** Map a pricing-tier id to a seat-pricing plan key ('professional' → 'pro'). */
+function resolveSeatPlan(id: string): PlanKey | null {
+  const key = id === 'professional' ? 'pro' : id;
+  return key === 'starter' || key === 'pro' || key === 'enterprise' ? key : null;
+}
 
 export default function PricingPreview() {
   const { ref, style } = useReveal();
@@ -1141,24 +656,18 @@ export default function PricingPreview() {
   const publishedPlans = useQuery(api.billing.plans.getPublishedPlans);
 
   const dataTiers: PricingTier[] = (publishedPlans ?? []).map((p, i) => {
-    const accent = DATA_ACCENTS[i % DATA_ACCENTS.length] ?? DATA_ACCENTS[0]!;
+    const accent = PLAN_CARD_ACCENTS[i % PLAN_CARD_ACCENTS.length] ?? PLAN_CARD_ACCENTS[0]!;
     const isCustom = p.plan.isCustom;
-    // The superadmin-authored tagline is a single language (the one they typed);
-    // for the three standard plan keys prefer the visitor's locale and use the
-    // DB string only for custom/renamed plans where no translation exists.
-    const taglineKey =
-      p.plan.key === 'starter'
-        ? 'pricing.starterDesc'
-        : p.plan.key === 'pro'
-          ? 'pricing.professionalDesc'
-          : p.plan.key === 'enterprise'
-            ? 'pricing.enterpriseDesc'
-            : null;
-    const tagline = taglineKey
-      ? t(taglineKey, {
-          defaultValue: p.plan.tagline ?? undefined,
-        })
-      : (p.plan.tagline ?? undefined);
+    // Name and tagline: a superadmin rename / hand-written tagline wins in every
+    // language; an untouched seeded one falls back to the visitor's locale.
+    // Shared with the tariff editor's preview (src/lib/planPresentation.ts) so
+    // the two can never disagree.
+    const name = resolvePlanName({ planKey: p.plan.key, name: p.plan.name, t });
+    const tagline = resolvePlanTagline({
+      planKey: p.plan.key,
+      tagline: p.plan.tagline,
+      t,
+    });
     return {
       id: p.plan.key,
       nameKey: 'pricing.starter',
@@ -1168,7 +677,7 @@ export default function PricingPreview() {
       priceCurrency: p.plan.currency,
       descriptionKey: 'pricing.starterDesc',
       featureKeys: [],
-      nameText: p.plan.name,
+      nameText: name,
       descriptionText: tagline,
       featureTexts: p.modules.map((m) => t(`billing.modules.${m.key}`, m.name)),
       featureGroups: groupFeaturesByCategory(
@@ -1209,7 +718,7 @@ export default function PricingPreview() {
   // shown as authored rather than converted twice.
   const localize = (amount: number, priceCurrency?: string) =>
     (priceCurrency ?? 'USD').toUpperCase() === 'USD'
-      ? applyRate(amount, currency.rate)
+      ? applyRatePrecise(amount, currency.rate)
       : Math.round(amount);
 
   const priceAmounts: Record<string, number | null> = Object.fromEntries(
@@ -1234,18 +743,6 @@ export default function PricingPreview() {
         : fmtPrice(priceAmounts[tier.id]!),
     ]),
   );
-
-  const proTier = tiers.find((tier) => tier.id === 'pro' || tier.id === 'professional');
-  const proMonthly = proTier?.priceMonthly;
-  // Always the *monthly* amount in the current currency — the calculator's
-  // per-seat assumptions are anchored to the $79/mo plan, so it must not swing
-  // with the billing toggle.
-  const professionalAmount =
-    proMonthly !== undefined
-      ? localize(proMonthly, proTier?.priceCurrency)
-      : currency.professional.amount ||
-        applyRate(FALLBACK_CURRENCY.amount, currency.rate) ||
-        FALLBACK_CURRENCY.amount;
 
   return (
     <section id="pricing" className="relative z-10 px-6 md:px-12 py-12 md:py-24 overflow-hidden">
@@ -1358,7 +855,7 @@ export default function PricingPreview() {
       </div>
 
       {/* Savings calculator — team size → annual savings, live and animated */}
-      <SavingsCalculator professionalAmount={professionalAmount} symbol={currency.symbol} />
+      <SavingsCalculator symbol={currency.symbol} rate={currency.rate} />
 
       {/* Compare link — /compare is the page that ranks for "<vendor> alternative";
        *  it reads the same live plan data, so the loop closes on real numbers. */}

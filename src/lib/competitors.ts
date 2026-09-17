@@ -14,7 +14,7 @@
 
 export const COMPARE_VERIFIED = '2026-09-16';
 
-export const COMPARE_SLUGS = [
+export const GLOBAL_COMPARE_SLUGS = [
   'personio',
   'bamboohr',
   'hibob',
@@ -23,7 +23,16 @@ export const COMPARE_SLUGS = [
   'deel',
 ] as const;
 
+/** Armenian and CIS vendors buyers actually shortlist in this market. */
+export const LOCAL_COMPARE_SLUGS = ['armsoft', 'onec', 'staffam', 'peopleforce', 'odoo'] as const;
+
+export const COMPARE_SLUGS = [...GLOBAL_COMPARE_SLUGS, ...LOCAL_COMPARE_SLUGS] as const;
+
 export type CompetitorSlug = (typeof COMPARE_SLUGS)[number];
+export type GlobalCompetitorSlug = (typeof GLOBAL_COMPARE_SLUGS)[number];
+
+/** Which market a vendor belongs to — drives the grouped sections on /compare. */
+export type CompetitorRegion = 'global' | 'local';
 
 /** `partial` = exists but limited (higher tier, add-on, single country, …). */
 export type Support = 'yes' | 'partial' | 'no';
@@ -38,6 +47,8 @@ export interface Competitor {
   monogram: string;
   /** Public marketing site, shown as a link on the detail page. */
   site: string;
+  /** Global platform vs Armenian/CIS local vendor. */
+  region: CompetitorRegion;
 }
 
 export const COMPETITORS: readonly Competitor[] = [
@@ -47,6 +58,7 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#ff5c35',
     monogram: 'PE',
     site: 'https://www.personio.com',
+    region: 'global',
   },
   {
     slug: 'bamboohr',
@@ -54,6 +66,7 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#7ac142',
     monogram: 'BH',
     site: 'https://www.bamboohr.com',
+    region: 'global',
   },
   {
     slug: 'hibob',
@@ -61,6 +74,7 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#4b4ded',
     monogram: 'HB',
     site: 'https://www.hibob.com',
+    region: 'global',
   },
   {
     slug: 'rippling',
@@ -68,6 +82,7 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#f5a623',
     monogram: 'RI',
     site: 'https://www.rippling.com',
+    region: 'global',
   },
   {
     slug: 'leapsome',
@@ -75,6 +90,7 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#00b3a4',
     monogram: 'LE',
     site: 'https://www.leapsome.com',
+    region: 'global',
   },
   {
     slug: 'deel',
@@ -82,8 +98,55 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#16a34a',
     monogram: 'DE',
     site: 'https://www.deel.com',
+    region: 'global',
+  },
+  // ── Armenia & CIS ────────────────────────────────────────────────────────
+  {
+    slug: 'armsoft',
+    name: 'Armsoft',
+    color: '#0b5fa5',
+    monogram: 'AS',
+    site: 'https://armsoft.am',
+    region: 'local',
+  },
+  {
+    slug: 'onec',
+    name: '1C:ZUP',
+    color: '#d4a017',
+    monogram: '1C',
+    site: 'https://1c.ru',
+    region: 'local',
+  },
+  {
+    slug: 'staffam',
+    name: 'Staff.am',
+    color: '#e11d48',
+    monogram: 'SA',
+    site: 'https://staff.am',
+    region: 'local',
+  },
+  {
+    slug: 'peopleforce',
+    name: 'PeopleForce',
+    color: '#0ea5e9',
+    monogram: 'PF',
+    site: 'https://peopleforce.io',
+    region: 'local',
+  },
+  {
+    slug: 'odoo',
+    name: 'Odoo',
+    color: '#714b67',
+    monogram: 'OD',
+    site: 'https://www.odoo.com',
+    region: 'local',
   },
 ];
+
+/** Vendors filtered by market — used to render the two comparison sections. */
+export function competitorsByRegion(region: CompetitorRegion): readonly Competitor[] {
+  return COMPETITORS.filter((c) => c.region === region);
+}
 
 export type RowCategory = 'people' | 'time' | 'talent' | 'ops' | 'platform' | 'local' | 'gaps';
 
@@ -106,7 +169,15 @@ export interface CompareRow {
   vendors: Record<CompetitorSlug, Support>;
 }
 
-export const COMPARE_ROWS: readonly CompareRow[] = [
+/**
+ * Row as authored: global vendor marks only. Local-market marks are folded in
+ * from `LOCAL_MARKS` below so a row never has to repeat 11 vendor keys.
+ */
+interface BaseCompareRow extends Omit<CompareRow, 'vendors'> {
+  vendors: Partial<Record<CompetitorSlug, Support>>;
+}
+
+const BASE_ROWS: readonly BaseCompareRow[] = [
   // ── People ──────────────────────────────────────────────────────────────
   {
     key: 'employees',
@@ -492,6 +563,52 @@ export const COMPARE_ROWS: readonly CompareRow[] = [
     },
   },
 ];
+
+/**
+ * Armenia & CIS competitor marks, keyed by row. Any local vendor omitted for a
+ * row is treated as `no`, so the table below only lists where they actually
+ * ship something. Sources: public vendor material, to be re-verified per deal
+ * like every other vendor mark.
+ */
+const LOCAL_MARKS: Record<string, Partial<Record<CompetitorSlug, Support>>> = {
+  employees: { armsoft: 'yes', onec: 'yes', staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  leave: { armsoft: 'partial', onec: 'yes', peopleforce: 'yes', odoo: 'yes' },
+  attendance: { armsoft: 'partial', onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  shifts: { armsoft: 'partial', onec: 'yes', peopleforce: 'yes', odoo: 'yes' },
+  recruitment: { onec: 'partial', staffam: 'yes', peopleforce: 'yes', odoo: 'yes' },
+  onboarding: { onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  performance: { onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  learning: { peopleforce: 'partial', odoo: 'partial' },
+  recognition: { peopleforce: 'yes', odoo: 'partial' },
+  payroll: { armsoft: 'yes', onec: 'yes', peopleforce: 'partial', odoo: 'partial' },
+  expenses: { armsoft: 'partial', onec: 'partial', peopleforce: 'partial', odoo: 'yes' },
+  documents: { armsoft: 'partial', onec: 'partial', peopleforce: 'partial', odoo: 'yes' },
+  assets: { onec: 'partial', odoo: 'partial' },
+  projects: { odoo: 'yes' },
+  analytics: { armsoft: 'yes', onec: 'yes', staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  chat: { staffam: 'partial', peopleforce: 'partial', odoo: 'partial' },
+  sso: { peopleforce: 'yes', odoo: 'partial' },
+  publicApi: { armsoft: 'partial', onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  srcExport: { armsoft: 'yes', onec: 'yes', odoo: 'partial' },
+  armenianUi: {
+    armsoft: 'yes',
+    onec: 'yes',
+    staffam: 'yes',
+    peopleforce: 'partial',
+    odoo: 'partial',
+  },
+  armsoft: { armsoft: 'yes', onec: 'partial' },
+  supportLanguage: { armsoft: 'yes', onec: 'yes', staffam: 'yes', peopleforce: 'partial' },
+  mobileApp: { staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
+};
+
+export const COMPARE_ROWS: readonly CompareRow[] = BASE_ROWS.map((row) => {
+  const vendors = { ...row.vendors } as Record<CompetitorSlug, Support>;
+  for (const slug of LOCAL_COMPARE_SLUGS) {
+    vendors[slug] = LOCAL_MARKS[row.key]?.[slug] ?? 'no';
+  }
+  return { ...row, vendors };
+});
 
 export function getCompetitor(slug: string): Competitor | undefined {
   return COMPETITORS.find((c) => c.slug === slug);

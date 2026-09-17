@@ -1,7 +1,20 @@
-// Base prices in USD
+import { PLAN_SEAT_PRICING } from '@/lib/pricing';
+
+/**
+ * Base prices in USD — PER SEAT, per month.
+ *
+ * These were flat plan prices ($29 / $79). The product is sold per seat with
+ * volume tiers, so `useCurrency()` — the single place prices become AMD/RUB/EUR
+ * — converts the per-seat entry rate now. Every surface that renders one of
+ * these numbers must label it "per seat / month": the figure is a rate, not a
+ * monthly bill. Derived from `src/lib/pricing.ts`, which mirrors
+ * `convex/billing/defaults.ts` (pricing.test.ts keeps the three aligned).
+ *
+ * Enterprise is 0 on purpose: it is quoted, never self-served.
+ */
 export const BASE_PRICES = {
-  starter: 29,
-  professional: 79,
+  starter: PLAN_SEAT_PRICING.starter.tiers[0]!.pricePerSeatMonthly,
+  professional: PLAN_SEAT_PRICING.pro.tiers[0]!.pricePerSeatMonthly,
   enterprise: 0,
 } as const;
 
@@ -126,4 +139,16 @@ export function getFallbackRate(locale: string = 'en'): number {
  */
 export function applyRate(usdAmount: number, rate: number): number {
   return Math.round(usdAmount * rate);
+}
+
+/**
+ * Localize a USD amount keeping minor units (cents).
+ *
+ * `applyRate` rounds to whole units — right for a plan price (₽2,610 is not
+ * shown with kopecks) but wrong for a *per-seat* rate: $5.50/seat became $6,
+ * and a 100-seat total came out as $600 instead of $550. Anything per-seat, and
+ * anything multiplied by a seat count, must use this instead.
+ */
+export function applyRatePrecise(usdAmount: number, rate: number): number {
+  return Math.round(usdAmount * rate * 100) / 100;
 }

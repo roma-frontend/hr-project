@@ -23,11 +23,19 @@ interface CurrencyState {
 export function useCurrency(): CurrencyState {
   const { i18n } = useTranslation();
   const locale = i18n.language;
+  // Pre-conversion defaults: BASE_PRICES holds PER-SEAT USD rates, so the
+  // formatted strings must be built from them rather than hardcoded — the
+  // initial render used to show $29 while `amount` was already the per-seat rate.
   const [state, setState] = useState<CurrencyState>({
-    starter: { amount: BASE_PRICES.starter, formatted: '$29', currency: 'USD', symbol: '$' },
+    starter: {
+      amount: BASE_PRICES.starter,
+      formatted: `$${BASE_PRICES.starter}`,
+      currency: 'USD',
+      symbol: '$',
+    },
     professional: {
       amount: BASE_PRICES.professional,
-      formatted: '$79',
+      formatted: `$${BASE_PRICES.professional}`,
       currency: 'USD',
       symbol: '$',
     },

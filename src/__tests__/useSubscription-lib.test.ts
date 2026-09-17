@@ -237,7 +237,11 @@ describe('lib/hooks/usePlanFeatures', () => {
 
   it('exposes plan labels, prices and upgrade paths', () => {
     expect(PLAN_LABELS.enterprise).toBe('Enterprise');
-    expect(PLAN_PRICES.free).toBe('$0/mo');
+    // Per-seat rates, not flat plan prices — the static fallbacks used to quote
+    // $29 / $79 / $199 and contradicted the checkout.
+    expect(PLAN_PRICES.free).toBe('$0/seat/mo');
+    expect(PLAN_PRICES.starter).toBe('$4/seat/mo');
+    expect(PLAN_PRICES.professional).toBe('$8/seat/mo');
     expect(UPGRADE_PLAN.free).toBe('starter');
     expect(UPGRADE_PLAN.starter).toBe('professional');
     expect(UPGRADE_PLAN.professional).toBe('enterprise');

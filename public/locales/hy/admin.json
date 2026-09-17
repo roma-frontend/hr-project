@@ -394,9 +394,9 @@
       "adminEmailHint": "Հրավերը կուղարկվի այս հասցեին",
       "industryHint": "Օրինակ՝ Տեխնոլոգիա, Առողջապահություն, Ռիթեյլ",
       "starterTitle": "Սկիզբ",
-      "starterDesc": "Մինչև 10 աշխատակից · հիմնական HR գործիքներ",
+      "starterDesc": "Մինչև 25 աշխատակից · հիմնական HR գործիքներ",
       "professionalTitle": "Մասնագիտական",
-      "professionalDesc": "Մինչև 100 աշխատակից · ընդլայնված հնարավորություններ",
+      "professionalDesc": "Մինչև 300 աշխատակից · ընդլայնված հնարավորություններ",
       "enterpriseTitle": "Enterprise",
       "enterpriseDesc": "Անսահմանափակ · ինտեգրումներ և SLA",
       "popular": "Հանրաճանաչ",
@@ -1510,8 +1510,8 @@
     "paris": "Փարիզ",
     "tokyo": "Տոկիո",
     "yerevan": "Երևան",
-    "starterFree": "Սկսնակ ($29/ամիս)",
-    "professionalPaid": "Պրոֆեսիոնալ ($79/ամիս)",
+    "starterFree": "Սկսնակ (ամսական $4 աշխատակցի համար)",
+    "professionalPaid": "Պրոֆեսիոնալ (ամսական $8 աշխատակցի համար)",
     "enterpriseCustom": "Կորպորատիվ (Անհատական)"
   },
   "editOrganization": {
