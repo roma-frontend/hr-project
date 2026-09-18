@@ -439,10 +439,13 @@
     "highRiskAlerts": "Hohe Risiken",
     "footerCookies": "Cookie-Richtlinie",
     "footerGdpr": "DSGVO",
+    "footerSubprocessors": "Subprozessoren",
+    "footerDpa": "AVV",
+    "footerSla": "SLA",
     "footerCopyright": "© {{year}} Strata. Alle Rechte vorbehalten.",
     "footerSsl": "SSL Gesichert",
     "footerGdprCompliant": "DSGVO-konform",
-    "footerSoc2": "SOC 2 zertifiziert",
+    "footerSoc2": "SOC 2-Readiness",
     "ctaTitle": "Bereit, Ihre",
     "ctaTitleHighlight": "HR-Operationen zu verbessern?",
     "features": {
@@ -1490,6 +1493,11 @@
     "infraLivekit": "LiveKit — Medienrelais für Videobesprechungen (für sensible Kunden Self-Hosting möglich).",
     "disclosureTitle": "Responsible Disclosure",
     "disclosureBody": "Schwachstelle gefunden? Bitte melden Sie sich — wir nehmen jeden Report ernst, antworten schnell und verfolgen gutgläubige Forschung nicht rechtlich. Erreichen Sie uns über die Kontaktseite mit dem Stichwort „Security“ in Ihrer Nachricht.",
-    "disclosureLink": "Kontaktieren Sie uns"
+    "disclosureLink": "Kontaktieren Sie uns",
+    "trustCenterTitle": "Trust Center",
+    "trustCenterBody": "Über diese Seite hinaus: wer Ihre Daten verarbeitet, unter welchem Vertrag und welche Service-Level wir zusagen.",
+    "trustSubprocessors": "Subprozessoren",
+    "trustDpa": "Auftragsverarbeitungsvertrag",
+    "trustSla": "Service Level Agreement"
   }
 }

@@ -50,6 +50,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
+    // Trust Center — procurement and security reviews land here before a call.
+    {
+      url: `${APP_URL}/subprocessors`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${APP_URL}/dpa`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: `${APP_URL}/sla`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
     // One entry per head-to-head page — these carry the non-brand search traffic.
     ...COMPARE_SLUGS.map((slug) => ({
       url: `${APP_URL}/compare/${slug}`,

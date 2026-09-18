@@ -439,10 +439,13 @@
     "highRiskAlerts": "high risk",
     "footerCookies": "Cookie Policy",
     "footerGdpr": "GDPR",
+    "footerSubprocessors": "Subprocessors",
+    "footerDpa": "DPA",
+    "footerSla": "SLA",
     "footerCopyright": "© {{year}} Strata. All rights reserved.",
     "footerSsl": "SSL Secured",
     "footerGdprCompliant": "GDPR Compliant",
-    "footerSoc2": "SOC 2 Certified",
+    "footerSoc2": "SOC 2 readiness",
     "ctaTitle": "Ready to elevate your",
     "ctaTitleHighlight": "HR operations?",
     "features": {
@@ -1490,6 +1493,11 @@
     "infraLivekit": "LiveKit — video meetings media relay (media can be self-hosted for sensitive customers).",
     "disclosureTitle": "Responsible disclosure",
     "disclosureBody": "Found a vulnerability? Please report it to us — we treat every report seriously, respond quickly and will not pursue legal action for good-faith research. Reach us via the contact page and include the word “security” in your message.",
-    "disclosureLink": "Contact us"
+    "disclosureLink": "Contact us",
+    "trustCenterTitle": "Trust Center",
+    "trustCenterBody": "Beyond this page: who processes your data, the agreement we process it under, and the service levels we commit to.",
+    "trustSubprocessors": "Subprocessors",
+    "trustDpa": "Data Processing Agreement",
+    "trustSla": "Service Level Agreement"
   }
 }

@@ -1,0 +1,95 @@
+{
+  "trust": {
+    "subprocessors": {
+      "metaTitle": "Subprocessors",
+      "metaDescription": "Every third-party service Strata uses to process customer data, split into the ones required to run the service and the ones that stay dormant until you enable the feature.",
+      "title": "Subprocessors",
+      "subtitle": "Every third party that can touch customer data, with what it processes and where.",
+      "counts": "{{core}} are required to run the service. {{optional}} process nothing until you enable the matching feature.",
+      "coreTitle": "Core platform",
+      "coreSubtitle": "Required to run Strata. These process data for every tenant.",
+      "optionalTitle": "Optional integrations",
+      "optionalSubtitle": "Dormant until you switch the feature on. Turn the feature off and processing stops.",
+      "colVendor": "Vendor",
+      "colPurpose": "What it processes",
+      "colRegion": "Region",
+      "changeNotice": "We give at least {{days}} days' notice before adding a subprocessor to this register, and you can object in writing during that window.",
+      "regionsNote": "Application compute is pinned to the EU (fra1, Frankfurt). Regions below are each vendor's published default for this deployment; vendors marked as vendor-managed route data according to their own infrastructure.",
+      "items": {
+        "convex": "Application database: employee records, documents metadata, audit logs, all tenant application data.",
+        "vercel": "Application hosting and CDN: request handling, server-rendered pages, edge logs.",
+        "sentry": "Error monitoring: stack traces and request context, with personal data scrubbed before transmission.",
+        "upstash": "Rate limiting and short-lived caching keys for abuse protection.",
+        "cloudinary": "Image and document uploads: profile photos, CVs, attachments added to records.",
+        "resend": "Transactional email: invitations, password resets, notifications and report exports.",
+        "stripe": "Subscription billing for self-serve plans: plan, seat count, invoice and payment status.",
+        "livekit": "Video and audio transport for meetings and video interviews, only during a call.",
+        "google": "Sign-in with Google, calendar sync, and the AI features when Gemini is selected as the provider.",
+        "microsoft": "Sign-in with Microsoft, Entra directory sync and the SharePoint document library.",
+        "openai": "AI assistant and meeting summarisation, when the AI features are enabled.",
+        "telegram": "Bot notifications for attendance, approvals and reminders, when the Telegram bot is configured.",
+        "imid": "Armenian national e-ID: sign-in, document signing and identity verification.",
+        "idram": "Local card and bank payment processing for Idram and ArCa transactions.",
+        "luckycarrot": "Employee engagement and recognition data exchanged with the Lucky Carrot integration."
+      }
+    },
+    "dpa": {
+      "metaTitle": "Data Processing Agreement",
+      "metaDescription": "What our Data Processing Agreement covers, which clauses are available on request, and how to get a signed copy.",
+      "title": "Data Processing Agreement",
+      "subtitle": "The terms we process customer personal data under, in plain language.",
+      "coversTitle": "What the agreement covers",
+      "covers1": "The subject matter, duration and purpose of processing, and the categories of data subjects and personal data involved.",
+      "covers2": "Our obligations as processor: act only on your documented instructions, keep personnel bound by confidentiality, and help you answer data subject requests.",
+      "covers3": "Technical and organisational measures — encryption in transit and at rest, role-based access control, audit logging, access reviews, and the practices published on our security page.",
+      "covers4": "Subprocessor authorisation, the register behind /subprocessors, and the notice period before a new subprocessor is added.",
+      "covers5": "Deletion or return of personal data when the agreement ends, and the audit and inspection rights you can exercise.",
+      "howTitle": "How to get a signed copy",
+      "howBody": "Standard Contractual Clauses and the UK addendum are available on request. Send us your legal entity name and the plan you are on, and we will return the executable version for signature.",
+      "howCta": "Request a DPA",
+      "subprocessorsCta": "See subprocessors",
+      "templateNote": "This page summarises the agreement so you can review it before a call. The version we sign with you is the binding one, and it governs if the two differ. Nothing here is legal advice."
+    },
+    "sla": {
+      "metaTitle": "Service Level Agreement",
+      "metaDescription": "Availability target, support hours, response times and service credits that a signed Enterprise order commits to.",
+      "title": "Service Level Agreement",
+      "subtitle": "The commitments a signed Enterprise order carries.",
+      "colCommitment": "Commitment",
+      "colValue": "Standard",
+      "rows": {
+        "availability": {
+          "label": "Availability target",
+          "value": "99.9% per calendar month, measured on the platform's public application endpoints."
+        },
+        "supportHours": {
+          "label": "Support hours",
+          "value": "Business hours, 09:00–18:00 (Asia/Yerevan), Monday to Friday, for High and Normal; 24×7 for Critical."
+        },
+        "critical": {
+          "label": "Critical response",
+          "value": "1 hour — the service is unavailable, or data is at risk."
+        },
+        "high": {
+          "label": "High response",
+          "value": "4 business hours — a major function is blocked and no workaround exists."
+        },
+        "normal": {
+          "label": "Normal response",
+          "value": "1 business day — questions, configuration help and minor issues."
+        },
+        "credits": {
+          "label": "Service credits",
+          "value": "As set out in the signed order form, credited against the next invoice."
+        }
+      },
+      "appliesTitle": "What this applies to",
+      "appliesBody": "This is the standard schedule for Enterprise agreements. Self-serve plans are covered by our terms of service and answered on a best-effort basis in the same support hours.",
+      "reportTitle": "Reporting an incident",
+      "reportBody": "Raise it in the support tickets module inside the app so it is tracked with a reference, or use the contact page for anything security-related — our security page lists the disclosure route.",
+      "reportCta": "Report an incident",
+      "securityCta": "Security practices",
+      "legalNote": "This page summarises the standard schedule; it becomes binding only in a signed agreement, and the signed document governs if the two differ. The executable template is reviewed with each contract."
+    }
+  }
+}

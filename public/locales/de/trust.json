@@ -1,0 +1,95 @@
+{
+  "trust": {
+    "subprocessors": {
+      "metaTitle": "Subprozessoren",
+      "metaDescription": "Alle Dienstleister, die Strata zur Verarbeitung von Kundendaten einsetzt – getrennt nach denen, die für den Betrieb nötig sind, und denen, die erst mit der jeweiligen Funktion aktiv werden.",
+      "title": "Subprozessoren",
+      "subtitle": "Jeder Dritte mit Zugriff auf Kundendaten – mit dem, was er verarbeitet, und wo.",
+      "counts": "{{core}} sind für den Betrieb erforderlich. {{optional}} verarbeiten nichts, bis Sie die passende Funktion aktivieren.",
+      "coreTitle": "Kernplattform",
+      "coreSubtitle": "Erforderlich für den Betrieb von Strata. Diese verarbeiten Daten aller Mandanten.",
+      "optionalTitle": "Optionale Integrationen",
+      "optionalSubtitle": "Inaktiv, bis Sie die Funktion einschalten. Schalten Sie sie aus, endet die Verarbeitung.",
+      "colVendor": "Anbieter",
+      "colPurpose": "Was verarbeitet wird",
+      "colRegion": "Region",
+      "changeNotice": "Wir kündigen neue Subprozessoren in diesem Register mindestens {{days}} Tage im Voraus an; in diesem Zeitraum können Sie schriftlich widersprechen.",
+      "regionsNote": "Die Anwendungsrechenleistung ist auf die EU festgelegt (fra1, Frankfurt). Die Regionen unten sind die veröffentlichten Standardwerte der Anbieter für dieses Deployment; als „vendor-managed“ gekennzeichnete Anbieter leiten Daten über ihre eigene Infrastruktur.",
+      "items": {
+        "convex": "Anwendungsdatenbank: Mitarbeiterdatensätze, Dokument-Metadaten, Audit-Logs, alle Mandantendaten.",
+        "vercel": "Anwendungs-Hosting und CDN: Request-Verarbeitung, serverseitiges Rendering, Edge-Logs.",
+        "sentry": "Fehlermonitoring: Stack-Traces und Request-Kontext; personenbezogene Daten werden vor dem Versand entfernt.",
+        "upstash": "Rate Limiting und kurzlebige Cache-Schlüssel zum Schutz vor Missbrauch.",
+        "cloudinary": "Bild- und Dokument-Uploads: Profilfotos, Lebensläufe, Anhänge zu Datensätzen.",
+        "resend": "Transaktions-E-Mails: Einladungen, Passwort-Reset, Benachrichtigungen und Report-Exporte.",
+        "stripe": "Abrechnung von Abonnements: Tarif, Anzahl der Seats, Rechnung und Zahlungsstatus.",
+        "livekit": "Video- und Audioübertragung für Meetings und Videointerviews, nur während eines Anrufs.",
+        "google": "Anmeldung mit Google, Kalendersynchronisierung und die KI-Funktionen, wenn Gemini als Anbieter gewählt ist.",
+        "microsoft": "Anmeldung mit Microsoft, Entra-Verzeichnissynchronisierung und die SharePoint-Dokumentbibliothek.",
+        "openai": "KI-Assistent und Meeting-Zusammenfassungen, wenn die KI-Funktionen aktiviert sind.",
+        "telegram": "Bot-Benachrichtigungen zu Anwesenheit, Freigaben und Erinnerungen, wenn der Telegram-Bot konfiguriert ist.",
+        "imid": "Armenische nationale e-ID: Anmeldung, Signatur und Identitätsprüfung.",
+        "idram": "Verarbeitung lokaler Karten- und Bankzahlungen für Idram und ArCa.",
+        "luckycarrot": "Daten zu Mitarbeiterbindung und Anerkennung, ausgetauscht über die Lucky-Carrot-Integration."
+      }
+    },
+    "dpa": {
+      "metaTitle": "Auftragsverarbeitungsvertrag (AVV)",
+      "metaDescription": "Was unser Auftragsverarbeitungsvertrag abdeckt, welche Klauseln auf Anfrage verfügbar sind und wie Sie eine unterzeichnete Fassung erhalten.",
+      "title": "Auftragsverarbeitungsvertrag",
+      "subtitle": "Die Bedingungen, unter denen wir personenbezogene Daten von Kunden verarbeiten – in klarer Sprache.",
+      "coversTitle": "Was der Vertrag abdeckt",
+      "covers1": "Gegenstand, Dauer und Zweck der Verarbeitung sowie die Kategorien betroffener Personen und personenbezogener Daten.",
+      "covers2": "Unsere Pflichten als Auftragsverarbeiter: nur auf Ihre dokumentierte Weisung tätig werden, Personal zur Vertraulichkeit verpflichten und Sie bei Betroffenenanfragen unterstützen.",
+      "covers3": "Technische und organisatorische Maßnahmen – Verschlüsselung bei Übertragung und Speicherung, rollenbasierte Zugriffskontrolle, Audit-Logging, Zugriffsüberprüfungen und die auf der Sicherheitsseite veröffentlichten Praktiken.",
+      "covers4": "Genehmigung von Subprozessoren, das Register unter /subprocessors und die Ankündigungsfrist für neue Subprozessoren.",
+      "covers5": "Löschung oder Rückgabe personenbezogener Daten nach Vertragsende sowie Ihre Audit- und Prüfungsrechte.",
+      "howTitle": "So erhalten Sie eine unterzeichnete Fassung",
+      "howBody": "Standardvertragsklauseln und das UK-Addendum sind auf Anfrage verfügbar. Nennen Sie uns Ihre juristische Bezeichnung und Ihren Tarif, und wir senden die unterschriftsreife Fassung zurück.",
+      "howCta": "AVV anfordern",
+      "subprocessorsCta": "Subprozessoren ansehen",
+      "templateNote": "Diese Seite fasst den Vertrag zusammen, damit Sie ihn vor einem Gespräch prüfen können. Verbindlich ist die Fassung, die wir mit Ihnen unterzeichnen; bei Abweichungen gilt sie. Dies ist keine Rechtsberatung."
+    },
+    "sla": {
+      "metaTitle": "Service Level Agreement",
+      "metaDescription": "Verfügbarkeitsziel, Supportzeiten, Reaktionszeiten und Service-Credits, zu denen sich ein unterzeichneter Enterprise-Auftrag verpflichtet.",
+      "title": "Service Level Agreement",
+      "subtitle": "Die Zusagen, die ein unterzeichneter Enterprise-Auftrag trägt.",
+      "colCommitment": "Zusage",
+      "colValue": "Standard",
+      "rows": {
+        "availability": {
+          "label": "Verfügbarkeitsziel",
+          "value": "99,9 % pro Kalendermonat, gemessen an den öffentlichen Anwendungs-Endpunkten."
+        },
+        "supportHours": {
+          "label": "Supportzeiten",
+          "value": "Geschäftszeiten 09:00–18:00 (Asia/Yerevan), Montag bis Freitag, für High und Normal; 24×7 für Critical."
+        },
+        "critical": {
+          "label": "Reaktion auf Critical",
+          "value": "1 Stunde — der Dienst ist nicht verfügbar oder Daten sind gefährdet."
+        },
+        "high": {
+          "label": "Reaktion auf High",
+          "value": "4 Geschäftsstunden — eine wesentliche Funktion ist blockiert, kein Workaround vorhanden."
+        },
+        "normal": {
+          "label": "Reaktion auf Normal",
+          "value": "1 Geschäftstag — Fragen, Konfigurationshilfe und kleinere Probleme."
+        },
+        "credits": {
+          "label": "Service-Credits",
+          "value": "Wie im unterzeichneten Auftragsformular festgelegt; Verrechnung mit der nächsten Rechnung."
+        }
+      },
+      "appliesTitle": "Wofür dies gilt",
+      "appliesBody": "Dies ist das Standardregime für Enterprise-Verträge. Self-Serve-Tarife unterliegen unseren Nutzungsbedingungen und werden nach bestem Bemühen in denselben Supportzeiten bearbeitet.",
+      "reportTitle": "Einen Vorfall melden",
+      "reportBody": "Eröffnen Sie ein Ticket im Support-Modul der Anwendung, damit es eine Referenz erhält, oder nutzen Sie die Kontaktseite für alles Sicherheitsrelevante — unsere Sicherheitsseite nennt den Meldeweg.",
+      "reportCta": "Vorfall melden",
+      "securityCta": "Sicherheitspraktiken",
+      "legalNote": "Diese Seite fasst das Standardregime zusammen; verbindlich wird es erst mit einem unterzeichneten Vertrag, und bei Abweichungen gilt das unterzeichnete Dokument. Die unterschriftsreife Vorlage wird mit jedem Vertrag geprüft."
+    }
+  }
+}

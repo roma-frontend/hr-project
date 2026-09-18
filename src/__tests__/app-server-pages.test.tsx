@@ -313,8 +313,8 @@ describe('sitemap (src/app/sitemap.ts)', () => {
   it('lists all public pages with priorities', () => {
     const entries = sitemap();
     // 7 core public pages + the comparison hub + the integrations directory +
-    // one head-to-head page per vendor.
-    expect(entries).toHaveLength(7 + 1 + 1 + COMPARE_SLUGS.length);
+    // the three Trust Center pages + one head-to-head page per vendor.
+    expect(entries).toHaveLength(7 + 1 + 1 + 3 + COMPARE_SLUGS.length);
     expect(entries.some((e: any) => e.url.endsWith('/security'))).toBe(true);
     expect(entries[0]?.url).toBe(process.env.NEXT_PUBLIC_APP_URL ?? 'https://strata.work');
     expect(entries[0]?.priority).toBe(1);
@@ -324,6 +324,10 @@ describe('sitemap (src/app/sitemap.ts)', () => {
     // The public integrations directory is an SEO surface too; losing it would
     // silently drop the "<tool> + HR system" search traffic.
     expect(entries.some((e) => e.url.endsWith('/integrations'))).toBe(true);
+    // Trust Center: procurement looks for the subprocessor register before a call.
+    expect(entries.some((e) => e.url.endsWith('/subprocessors'))).toBe(true);
+    expect(entries.some((e) => e.url.endsWith('/dpa'))).toBe(true);
+    expect(entries.some((e) => e.url.endsWith('/sla'))).toBe(true);
     for (const slug of COMPARE_SLUGS) {
       expect(entries.some((e) => e.url.endsWith(`/compare/${slug}`))).toBe(true);
     }

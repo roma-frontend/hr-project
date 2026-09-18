@@ -1195,14 +1195,13 @@ Feature count is not the scoreboard. On **shipped capability** this project now 
 mid-market set (BambooHR, HiBob, Personio) and roughly level with Rippling/Deel minus their
 finance infrastructure. What still separates it from the market leaders is **not features**:
 
-| Decides the deal                | Status here                                                                                       |
-| ------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Native mobile apps              | ❌ missing (PWA partial)                                                                          |
-| Integration marketplace         | ⚠️ shipped as a self-serve directory + webhook engine; no OAuth apps listed in partner catalogues |
-| SOC 2 Type II certificate       | ⚠️ readiness doc + automated evidence (`npm run soc2:evidence`); audit not booked                 |
-| Global payroll / EOR / entity   | ❌ out of scope by design                                                                         |
-| Support SLAs, DPA, legal entity | ⚠️ not evidenced                                                                                  |
-| Brand, references, channel      | ❌ none                                                                                           |
+| Decides the deal              | Status here                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | --- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native mobile apps            | ❌ missing (PWA partial)                                                                          |
+| Integration marketplace       | ⚠️ shipped as a self-serve directory + webhook engine; no OAuth apps listed in partner catalogues |
+| SOC 2 Type II certificate     | ⚠️ readiness doc + automated evidence (`npm run soc2:evidence`); audit not booked                 |
+| Global payroll / EOR / entity | ❌ out of scope by design                                                                         |     | Support SLAs, DPA, legal entity | ⚠️ published as Trust Center pages + templates (`/subprocessors`, `/dpa`, `/sla`, `docs/legal/`); legal entity and countersigned references still missing |
+| Brand, references, channel    | ❌ none                                                                                           |
 
 **Therefore the winnable position is not "beat Workday everywhere" — it is "be the only correct
 answer in Armenia and the Armenian/Russian-speaking diaspora",** where SRC filing, Idram/ArCa,

@@ -439,10 +439,13 @@
     "highRiskAlerts": "высокий риск",
     "footerCookies": "Политика cookie",
     "footerGdpr": "GDPR",
+    "footerSubprocessors": "Субпроцессоры",
+    "footerDpa": "DPA",
+    "footerSla": "SLA",
     "footerCopyright": "© {{year}} Strata. Все права защищены.",
     "footerSsl": "SSL Защищено",
     "footerGdprCompliant": "Соответствует GDPR",
-    "footerSoc2": "Сертифицировано SOC 2",
+    "footerSoc2": "Готовность к SOC 2",
     "ctaTitle": "Готовы улучшить ваш",
     "ctaTitleHighlight": "HR операции?",
     "features": {
@@ -1490,6 +1493,11 @@
     "infraLivekit": "LiveKit — медиа-релей видеовстреч (для чувствительных клиентов возможен self-hosting).",
     "disclosureTitle": "Ответственное раскрытие уязвимостей",
     "disclosureBody": "Нашли уязвимость? Пожалуйста, сообщите нам — мы относимся к каждому отчёту серьёзно, отвечаем быстро и не преследуем добросовестных исследователей. Напишите через страницу контактов и добавьте слово «security» в сообщение.",
-    "disclosureLink": "Связаться с нами"
+    "disclosureLink": "Связаться с нами",
+    "trustCenterTitle": "Центр доверия",
+    "trustCenterBody": "За пределами этой страницы: кто обрабатывает ваши данные, по какому соглашению и какие уровни сервиса мы гарантируем.",
+    "trustSubprocessors": "Субпроцессоры",
+    "trustDpa": "Соглашение об обработке данных",
+    "trustSla": "Соглашение об уровне сервиса"
   }
 }

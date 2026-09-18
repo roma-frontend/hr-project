@@ -68,6 +68,9 @@ export default function Footer({ initialLanguage = 'en' }: { initialLanguage?: s
     ],
     legal: [
       { nameKey: 'landingExtra.footerSecurity', href: '/security' },
+      { nameKey: 'landingExtra.footerSubprocessors', href: '/subprocessors' },
+      { nameKey: 'landingExtra.footerDpa', href: '/dpa' },
+      { nameKey: 'landingExtra.footerSla', href: '/sla' },
       { nameKey: 'landingExtra.footerPrivacy', href: '/privacy' },
       { nameKey: 'landingExtra.footerTerms', href: '/terms' },
       { nameKey: 'landingExtra.footerCookies', href: '/privacy#cookies' },

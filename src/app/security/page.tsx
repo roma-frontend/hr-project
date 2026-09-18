@@ -207,6 +207,43 @@ export default async function SecurityPage() {
             </Link>
           </p>
         </div>
+
+        {/*
+          Trust Center. The subprocessor register, the DPA and the SLA live on
+          their own pages so procurement can link to them directly instead of
+          citing this summary — and so a change to the register does not mean
+          editing the security page too.
+        */}
+        <div className="mt-16">
+          <h2
+            className="text-lg font-semibold mb-3"
+            style={{ color: 'var(--landing-text-primary)' }}
+          >
+            {t('security.trustCenterTitle')}
+          </h2>
+          <p className="text-sm mb-6" style={{ color: 'var(--landing-text-muted)' }}>
+            {t('security.trustCenterBody')}
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {[
+              { href: '/subprocessors', label: t('security.trustSubprocessors') },
+              { href: '/dpa', label: t('security.trustDpa') },
+              { href: '/sla', label: t('security.trustSla') },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-lg border px-4 py-2 text-sm font-medium"
+                style={{
+                  borderColor: 'var(--landing-card-border)',
+                  color: 'var(--landing-text-primary)',
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </PublicPageShell>
   );
