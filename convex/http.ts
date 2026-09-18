@@ -23,6 +23,7 @@ import {
 } from './lib/paymentSignature';
 import { bearerToken, type ApiScope } from './lib/apiKey';
 import { WEBHOOK_EVENT_TYPES, isValidEndpointUrl, isWebhookEventType } from './webhooks/protocol';
+import { normalizePunches, truncateRaw } from './lib/inboundPayload';
 
 const http = httpRouter();
 
@@ -742,6 +743,90 @@ http.route({
       const isArgumentError = /ArgumentValidationError|not a valid ID/i.test(message);
       return apiJson(isArgumentError ? 400 : 404, { error: message }, usage);
     }
+  }),
+});
+
+// ── Inbound integrations (devices and SaaS webhooks → Strata) ────────────────
+/**
+ * `POST /api/in/{token}` — one URL per tenant token, created in
+ * Settings → Integrations.
+ *
+ * The token *is* the credential and it is scoped to one organization, so the
+ * payload can never choose a tenant. The provider on the token decides the
+ * mapping: `device` → punch journal (HR confirms before payroll sees it),
+ * `jira` → task created for the token's configured assignee.
+ *
+ * Always answers 200/201/202 with what was stored instead of an error for a
+ * payload the mapping could not read: a terminal that gets a 500 retries the
+ * same batch forever, while a 202 with `stored: 0` lets the device clear its
+ * queue and keeps the problem visible in the token's `lastError`.
+ */
+http.route({
+  pathPrefix: '/api/in/',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const json = (status: number, payload: Record<string, unknown>) =>
+      new Response(JSON.stringify(payload), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    // ['api', 'in', <token>]
+    const tail = new URL(request.url).pathname.split('/').filter(Boolean);
+    const raw = tail[2] ?? '';
+    if (!raw) return json(401, { error: 'Missing integration token' });
+
+    const token = await ctx.runQuery(internal.inbound.resolveInboundToken, { raw });
+    if (!token) return json(404, { error: 'Unknown integration token' });
+    if (!token.enabled) return json(403, { error: 'This integration token is disabled' });
+
+    const declaredLength = Number(request.headers.get('content-length') ?? '');
+    if (Number.isFinite(declaredLength) && declaredLength > WEBHOOK_MAX_BODY_BYTES) {
+      return json(413, { error: 'Payload too large' });
+    }
+    const body = await request.text();
+    if (body.length > WEBHOOK_MAX_BODY_BYTES) return json(413, { error: 'Payload too large' });
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      return json(400, { error: 'Body must be JSON' });
+    }
+
+    if (token.provider === 'device') {
+      const punches = normalizePunches(parsed);
+      if (punches.length === 0) {
+        return json(202, {
+          received: 0,
+          stored: 0,
+          note: 'No punch with an employee number and a plausible time was found in the payload',
+        });
+      }
+      const result = await ctx.runMutation(internal.inbound.ingestDevicePunches, {
+        tokenId: token.tokenId,
+        organizationId: token.organizationId,
+        punches,
+        raw: truncateRaw(parsed),
+      });
+      return json(200, { received: punches.length, ...result });
+    }
+
+    if (token.provider === 'jira') {
+      const result = await ctx.runMutation(internal.inbound.ingestJiraEvent, {
+        tokenId: token.tokenId,
+        organizationId: token.organizationId,
+        payload: parsed,
+        raw: truncateRaw(parsed),
+      });
+      return json(result.created ? 201 : 200, result);
+    }
+
+    return json(202, {
+      received: 1,
+      stored: 0,
+      note: 'Generic token accepted the payload; no mapping is configured for it',
+    });
   }),
 });
 

@@ -87,6 +87,11 @@ jest.mock('../../convex/_generated/api', () => ({
       listPositions: 'internal.apiV1.listPositions',
       listLeaves: 'internal.apiV1.listLeaves',
     },
+    inbound: {
+      resolveInboundToken: 'internal.inbound.resolveInboundToken',
+      ingestDevicePunches: 'internal.inbound.ingestDevicePunches',
+      ingestJiraEvent: 'internal.inbound.ingestJiraEvent',
+    },
     webhooks: {
       main: {
         listEndpointsForOrg: 'internal.webhooks.main.listEndpointsForOrg',
@@ -608,6 +613,122 @@ describe('Public API v1 — webhook subscriptions', () => {
   it('requires the id on delete', async () => {
     const { ctx } = makeCtx(granted);
     const response = await remove.handler(ctx, apiRequest('DELETE', 'webhooks'));
+    expect(response.status).toBe(400);
+  });
+});
+
+/**
+ * `POST /api/in/{token}` — inbound from attendance hardware and Jira.
+ *
+ * The token is the only credential and it is bound to one organization, so these
+ * tests care about the three ways that could go wrong: an unknown or disabled
+ * token, a payload the mapping cannot read (which must still be acknowledged — a
+ * terminal that gets a 500 retries the same batch forever), and the tenant the
+ * write is scoped to.
+ */
+describe('Inbound integration route', () => {
+  const route = routeFor('POST', '/api/in/')!;
+
+  function post(path: string, body: unknown) {
+    return new Request(`https://project.convex.site/api/in/${path}`, {
+      method: 'POST',
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    });
+  }
+
+  function makeCtx(token: unknown, writeResult: unknown = { recorded: 1, unmatched: 0 }) {
+    const runQuery = jest.fn().mockResolvedValue(token);
+    const runMutation = jest.fn().mockResolvedValue(writeResult);
+    return { ctx: { runQuery, runMutation }, runQuery, runMutation };
+  }
+
+  const deviceToken = {
+    tokenId: 'tok_1',
+    organizationId: 'org1',
+    provider: 'device',
+    enabled: true,
+    defaultAssigneeId: null,
+    createdBy: 'u_admin',
+  };
+
+  it('registers the inbound route', () => {
+    expect(route).toBeDefined();
+  });
+
+  it('rejects a request with no token in the path', async () => {
+    const { ctx, runQuery } = makeCtx(deviceToken);
+    const response = await route.handler(ctx, post('', { pin: '1' }));
+    expect(response.status).toBe(401);
+    expect(runQuery).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown token before reading the body', async () => {
+    const { ctx, runMutation } = makeCtx(null);
+    const response = await route.handler(ctx, post('inb_nope', { pin: '1' }));
+    expect(response.status).toBe(404);
+    expect(runMutation).not.toHaveBeenCalled();
+  });
+
+  it('refuses a disabled token', async () => {
+    const { ctx } = makeCtx({ ...deviceToken, enabled: false });
+    const response = await route.handler(ctx, post('inb_off', { pin: '1' }));
+    expect(response.status).toBe(403);
+  });
+
+  it('stores device punches against the token’s organization', async () => {
+    const { ctx, runMutation } = makeCtx(deviceToken, {
+      recorded: 1,
+      unmatched: 0,
+      duplicates: 0,
+      total: 1,
+    });
+    const response = await route.handler(
+      ctx,
+      post('inb_device', { pin: '1024', timestamp: 1_787_000_000, punch_state: '0' }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = await jsonOf(response);
+    expect(body.received).toBe(1);
+    const [fn, args] = runMutation.mock.calls[0];
+    expect(fn).toBe('internal.inbound.ingestDevicePunches');
+    expect(args.organizationId).toBe('org1');
+    expect(args.tokenId).toBe('tok_1');
+    expect(args.punches).toHaveLength(1);
+    expect(args.punches[0]).toMatchObject({ employeeNumber: '1024', direction: 'in' });
+  });
+
+  it('acknowledges a payload the mapping cannot read instead of erroring', async () => {
+    const { ctx, runMutation } = makeCtx(deviceToken);
+    const response = await route.handler(ctx, post('inb_device', { hello: 'world' }));
+
+    // 202, not 500: the device clears its queue and the reason stays visible in
+    // the token's lastError rather than retrying the same batch forever.
+    expect(response.status).toBe(202);
+    expect(await jsonOf(response)).toMatchObject({ stored: 0 });
+    expect(runMutation).not.toHaveBeenCalled();
+  });
+
+  it('turns a Jira event into a task for the configured assignee', async () => {
+    const jiraToken = { ...deviceToken, provider: 'jira', defaultAssigneeId: 'u_hr' };
+    const { ctx, runMutation } = makeCtx(jiraToken, { created: true, taskId: 'task_1' });
+    const response = await route.handler(
+      ctx,
+      post('inb_jira', {
+        webhookEvent: 'jira:issue_created',
+        issue: { key: 'HR-1', fields: { summary: 'Do the thing' } },
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    const [fn, args] = runMutation.mock.calls[0];
+    expect(fn).toBe('internal.inbound.ingestJiraEvent');
+    expect(args).toMatchObject({ tokenId: 'tok_1', organizationId: 'org1' });
+  });
+
+  it('rejects a non-JSON body with 400', async () => {
+    const { ctx } = makeCtx(deviceToken);
+    const response = await route.handler(ctx, post('inb_device', 'not json'));
     expect(response.status).toBe(400);
   });
 });

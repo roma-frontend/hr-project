@@ -11,6 +11,15 @@ export const users = {
     clerkId: v.optional(v.string()),
     imidSub: v.optional(v.string()),
     /**
+     * Табельный номер — the number an attendance terminal prints next to a name,
+     * and the only identifier a ZKTeco/Suprema device sends with a punch.
+     *
+     * Kept separate from `externalId`: that one is scoped to a sync source
+     * (`externalSource`), while this is the payroll/HR number a company puts on
+     * the badge. Device punches are matched on it (see convex/inbound.ts).
+     */
+    employeeNumber: v.optional(v.string()),
+    /**
      * Stable identifier this user carries in the HR system they were imported
      * from (ՀԾ Armsoft, Lucky Carrot). Lets a sync recognise someone whose
      * email changed at the provider instead of creating a duplicate account.
@@ -158,6 +167,7 @@ export const users = {
     .index('by_approval', ['isApproved'])
     .index('by_clerk_id', ['clerkId'])
     .index('by_org_email', ['organizationId', 'email'])
+    .index('by_org_employee_number', ['organizationId', 'employeeNumber'])
     .index('by_org_created', ['organizationId', 'createdAt'])
     .index('by_session_token', ['sessionToken'])
     .index('by_reset_token', ['resetPasswordToken'])

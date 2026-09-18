@@ -67,6 +67,7 @@ import { webhooks } from './webhooks';
 import { scim } from './scim';
 import { benefits } from './benefits';
 import { apiKeys } from './apiKeys';
+import { inbound } from './inbound';
 
 export default defineSchema({
   ...organizations,
@@ -137,6 +138,7 @@ export default defineSchema({
   ...scim,
   ...benefits,
   ...apiKeys,
+  ...inbound,
 });
 
 export {
@@ -207,4 +209,5 @@ export {
   scim,
   benefits,
   apiKeys,
+  inbound,
 };
