@@ -21,27 +21,17 @@ const LOCALES_DIR = path.join(process.cwd(), 'public', 'locales');
 const REFERENCE = 'en';
 const TARGETS = ['ru', 'hy', 'de'];
 
-const NAMESPACES = [
-  'common',
-  'landing',
-  'auth',
-  'dashboard',
-  'leaves',
-  'tasks',
-  'employees',
-  'chat',
-  'admin',
-  'drivers',
-  'settings',
-  'modules',
-  'payroll',
-  'compensation',
-  'learning',
-  'expenses',
-  'succession',
-  'careerPaths',
-  'marketplace',
-];
+/**
+ * Discovered from disk, mirroring `scripts/check-locale-parity.mjs`.
+ *
+ * A hand-kept list here is how `overtime` drifted: the file shipped in the UI
+ * but was never listed, so nothing compared its hy/de translations.
+ */
+const NAMESPACES = fs
+  .readdirSync(path.join(LOCALES_DIR, REFERENCE))
+  .filter((file: string) => file.endsWith('.json'))
+  .map((file: string) => file.replace(/\.json$/, ''))
+  .sort();
 
 /** Flattened dotted paths that are intentionally absent from EN. */
 const PRESERVED_EXTRAS = new Set([

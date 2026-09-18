@@ -28,27 +28,19 @@ const ROOT = path.join(process.cwd(), 'public', 'locales');
 const REFERENCE = 'en';
 const TARGETS = ['ru', 'hy', 'de'];
 
-const NAMESPACES = [
-  'common',
-  'landing',
-  'auth',
-  'dashboard',
-  'leaves',
-  'tasks',
-  'employees',
-  'chat',
-  'admin',
-  'drivers',
-  'settings',
-  'modules',
-  'payroll',
-  'compensation',
-  'learning',
-  'expenses',
-  'succession',
-  'careerPaths',
-  'marketplace',
-];
+/**
+ * Namespaces are discovered from `public/locales/en` rather than listed by hand.
+ *
+ * The hand-kept list is exactly how `overtime` drifted unnoticed: it existed on
+ * disk and shipped in the UI but was never added here, so CI had nothing to
+ * compare and hy/de were missing keys for months. Anything EN ships is now
+ * covered, and adding a namespace cannot silently opt out of the check.
+ */
+const NAMESPACES = fs
+  .readdirSync(path.join(ROOT, REFERENCE))
+  .filter((file) => file.endsWith('.json'))
+  .map((file) => file.replace(/\.json$/, ''))
+  .sort();
 
 /** Flatten a nested translation object into a map of dotted-path → leaf value. */
 function flatten(obj, prefix = '') {

@@ -28,28 +28,18 @@ const LOCALES_ROOT = path.join(process.cwd(), 'public', 'locales');
 const REFERENCE = 'en';
 const TARGETS = ['ru', 'hy', 'de'] as const;
 
-/** Mirrors the namespace list in scripts/check-locale-parity.mjs. */
-const NAMESPACES = [
-  'common',
-  'landing',
-  'auth',
-  'dashboard',
-  'leaves',
-  'tasks',
-  'employees',
-  'chat',
-  'admin',
-  'drivers',
-  'settings',
-  'modules',
-  'payroll',
-  'compensation',
-  'learning',
-  'expenses',
-  'succession',
-  'careerPaths',
-  'marketplace',
-] as const;
+/**
+ * Discovered from disk, mirroring `scripts/check-locale-parity.mjs` — a
+ * hand-kept list is how `overtime` shipped with untranslated keys.
+ */
+const NAMESPACES: readonly string[] = (() => {
+  const dir = path.join(process.cwd(), 'public', 'locales', REFERENCE);
+  return fs
+    .readdirSync(dir)
+    .filter((file: string) => file.endsWith('.json'))
+    .map((file: string) => file.replace(/\.json$/, ''))
+    .sort();
+})();
 
 type Json = { [key: string]: unknown };
 

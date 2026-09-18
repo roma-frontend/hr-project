@@ -1,6 +1,6 @@
 # Strata — Project Roadmap & Status
 
-> **Last updated:** 2026-09-15 — **statuses below were re-verified against the codebase** (schema + backend + UI + route present on disk).
+> **Last updated:** 2026-09-18 — **statuses below were re-verified against the codebase** (schema + backend + UI + route present on disk).
 > **Previous audit:** 2026-09-13 (Armenia moat shipped: SRC-ready payroll export, local PSP payments scaffolding; Shift Scheduling implemented)
 >
 > ### ⚠️ Verification note (2026-09-15)
@@ -10,6 +10,18 @@
 > Assets, News**. Also corrected: **Compliance**, **PDF/export**, **Mobile (PWA)**,
 > **Workflow builder**. Treat this file as the roadmap _now that it is synced_; when a
 > status and the code disagree, the code is right.
+>
+> ### ⚠️ Second verification note (2026-09-18)
+>
+> The two modules listed here as the only unstarted work are now shipped: **2.7 Succession
+> Planning** (9-box grid, key positions, successor bench, vacancy risk) and **3.8 Career
+> Development** (skill matrix, career tracks, gap analysis, mentorship). Both are registered
+> in the billing catalog and plan gating (`succession`, `careerPaths`), localized in
+> en/ru/hy/de, and covered by `src/__tests__/talent-modules.test.ts`.
+>
+> Also shipped since the last pass: the **integration marketplace** (self-serve connections
+> on the outbound webhook engine + the public `/integrations` directory). The competitor
+> table's TOTAL row was recomputed mechanically from the ✅ marks below.
 > **Stack:** Next.js 16 (App Router) + Convex + Shadcn/ui + Tailwind CSS
 > **i18n:** EN / RU / HY (Armenian) / DE
 > **Auth:** Convex Auth (session-based)
@@ -40,7 +52,7 @@
 | Backend | ✅     | `convex/performance.ts`                                                                                                                                                                                                                                                                              |
 | UI      | ✅     | `src/components/PerformanceClient.tsx`, `src/components/performance/CreateCycleWizard.tsx`, `src/components/performance/FillReviewDialog.tsx`, `src/components/performance/LaunchCycleDialog.tsx`, `src/components/performance/ResultsDialog.tsx`, `src/components/performance/CycleSummaryCard.tsx` |
 | Route   | ✅     | `src/app/(dashboard)/performance/page.tsx`                                                                                                                                                                                                                                                           |
-| i18n    | ⚠️     | EN ✅, RU ✅, HY 🔲                                                                                                                                                                                                                                                                                  |
+| i18n    | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked)                                                                                                                                                                                                                                           |
 | Sidebar | ✅     | Nav item added                                                                                                                                                                                                                                                                                       |
 
 **Features implemented:**
@@ -73,7 +85,7 @@
 | Backend | ✅     | `convex/goals.ts`                                                                                                                                                              |
 | UI      | ✅     | `src/components/GoalsClient.tsx`, `src/components/goals/CreateObjectiveWizard.tsx`, `src/components/goals/CheckinDialog.tsx`, `src/components/goals/ObjectiveDetailDialog.tsx` |
 | Route   | ✅     | `src/app/(dashboard)/goals/page.tsx`                                                                                                                                           |
-| i18n    | ⚠️     | EN ✅, RU ✅, HY 🔲                                                                                                                                                            |
+| i18n    | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked)                                                                                                                     |
 | Sidebar | ✅     | Crosshair icon                                                                                                                                                                 |
 
 **Features implemented:**
@@ -100,14 +112,14 @@
 
 **Status:** ⚠️ Mostly implemented
 
-| Layer       | Status | Files                                      |
-| ----------- | ------ | ------------------------------------------ |
-| Schema      | ✅     | `convex/schema/recruitment.ts`             |
-| Backend     | ✅     | `convex/recruitment.ts`                    |
-| UI          | ✅     | `src/components/RecruitmentClient.tsx`     |
-| Route       | ✅     | `src/app/(dashboard)/recruitment/page.tsx` |
-| Public page | ✅     | `src/app/careers/[slug]/page.tsx`          |
-| i18n        | ⚠️     | EN ✅, RU ✅, HY 🔲                        |
+| Layer       | Status | Files                                                      |
+| ----------- | ------ | ---------------------------------------------------------- |
+| Schema      | ✅     | `convex/schema/recruitment.ts`                             |
+| Backend     | ✅     | `convex/recruitment.ts`                                    |
+| UI          | ✅     | `src/components/RecruitmentClient.tsx`                     |
+| Route       | ✅     | `src/app/(dashboard)/recruitment/page.tsx`                 |
+| Public page | ✅     | `src/app/careers/[slug]/page.tsx`                          |
+| i18n        | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked) |
 
 **Features implemented:**
 
@@ -256,13 +268,13 @@
 
 **Status:** ⚠️ Mostly implemented
 
-| Layer   | Status | Files                                              |
-| ------- | ------ | -------------------------------------------------- |
-| Schema  | ✅     | `convex/schema/recognition.ts`                     |
-| Backend | ✅     | `convex/recognition.ts`                            |
-| UI      | ✅     | `src/components/recognition/RecognitionClient.tsx` |
-| Route   | ✅     | `src/app/(dashboard)/recognition/page.tsx`         |
-| i18n    | ⚠️     | EN ✅, RU ✅, HY 🔲                                |
+| Layer   | Status | Files                                                      |
+| ------- | ------ | ---------------------------------------------------------- |
+| Schema  | ✅     | `convex/schema/recognition.ts`                             |
+| Backend | ✅     | `convex/recognition.ts`                                    |
+| UI      | ✅     | `src/components/recognition/RecognitionClient.tsx`         |
+| Route   | ✅     | `src/app/(dashboard)/recognition/page.tsx`                 |
+| i18n    | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked) |
 
 **Features implemented:**
 
@@ -280,7 +292,9 @@
 
 ## Phase 2 — Competitive Edge
 
-> Re-verified 2026-09-15: **2.1, 2.3, 2.4, 2.6 and 3.6 are shipped.** Remaining gap: 2.7 Succession.
+> Re-verified 2026-09-18: **all of Phase 2 is shipped** — 2.1 LMS, 2.3 Benefits, 2.4 Org Chart,
+> 2.6 Expenses, **2.7 Succession Planning** and 3.6 Employee Directory. No gaps remain in this
+> phase.
 
 ### 2.1 Learning Management System (LMS)
 
@@ -334,7 +348,7 @@
 | Backend | ✅     | `convex/compensation.ts`                                                                                                                                                                                                                                                              |
 | UI      | ✅     | `src/components/compensation/CompensationClient.tsx`, `src/components/compensation/CompensationRecordWizard.tsx`, `src/components/compensation/CompensationBandWizard.tsx`, `src/components/compensation/BonusProgramWizard.tsx`, `src/components/compensation/ReviewCycleWizard.tsx` |
 | Route   | ✅     | `src/app/(dashboard)/compensation/page.tsx`                                                                                                                                                                                                                                           |
-| i18n    | ⚠️     | EN ✅, RU ✅, HY 🔲                                                                                                                                                                                                                                                                   |
+| i18n    | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked)                                                                                                                                                                                                                            |
 | Sidebar | ✅     | Nav item added                                                                                                                                                                                                                                                                        |
 
 **Features implemented:**
@@ -434,7 +448,7 @@
 | Backend | ✅     | `convex/documents.ts`                                                                               |
 | UI      | ✅     | `src/components/documents/DocumentsClient.tsx`, `src/components/documents/DocumentUploadWizard.tsx` |
 | Route   | ✅     | `src/app/(dashboard)/documents/page.tsx`                                                            |
-| i18n    | ⚠️     | EN ✅, RU ✅, HY 🔲                                                                                 |
+| i18n    | ⚠️     | EN ✅, RU ✅, HY ✅, DE ✅ (key parity is machine-checked)                                          |
 | Sidebar | ✅     | Nav item added                                                                                      |
 
 **Features implemented:**
@@ -497,22 +511,26 @@
 
 ### 2.7 Succession Planning
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+| Layer   | Status | Files                                                                                                       |
+| ------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| Schema  | ✅     | `convex/schema/succession.ts` (nineBoxRatings, keyPositions, successors, developmentPlans)                  |
+| Backend | ✅     | `convex/succession.ts` (12 exports) + pure helpers in `convex/lib/succession.ts` (zone mapping, risk score) |
+| UI      | ✅     | `src/components/succession/SuccessionClient.tsx`                                                            |
+| Route   | ✅     | `src/app/(dashboard)/succession/page.tsx`                                                                   |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅ (dedicated `succession` namespace)                                               |
+| Nav     | ✅     | Sidebar + plan gating + billing module map (`succession`, Pro and above)                                    |
+| Tests   | ✅     | `src/__tests__/talent-modules.test.ts`                                                                      |
 
-- Schema: `convex/schema/succession.ts` (keyPositions, successors, developmentPlans, nineBoxRatings)
-- Backend: `convex/succession.ts`
-- UI: `src/components/succession/SuccessionClient.tsx`
-- Route: `src/app/(dashboard)/succession/page.tsx`
+**Features implemented:**
 
-**Features to implement:**
-
-- 9-Box Grid (Performance vs Potential)
-- Key position identification
-- Successor assignment
-- Development plans (linked to LMS)
-- Risk assessment (what if someone leaves)
+- 9-Box Grid (performance vs potential) with period selection and zone lookup
+- Key position identification (criticality + vacancy risk)
+- Successor assignment with readiness levels and a successor bench per position
+- Development plans with per-action toggles
+- Risk assessment — what happens if the incumbent leaves
+- Reads are admin/superadmin only: talent ratings are confidential by nature
 
 **Competitors with this:** Leapsome, HiBob
 
@@ -520,8 +538,9 @@
 
 ## Phase 3 — Differentiation
 
-> Re-verified 2026-09-15: **3.3, 3.4, 3.9, 3.10 shipped; 3.1, 3.2, 3.5, 3.7 partially shipped.**
-> Remaining: 3.8 Career Development.
+> Re-verified 2026-09-18: **3.3, 3.4, 3.8, 3.9, 3.10, 3.11 shipped; 3.1, 3.2, 3.5, 3.7 partially
+> shipped.** No unstarted module remains in this phase — what is left here is depth: mobile
+> delivery, tenant-facing automation and a unified report builder.
 
 ### 3.1 Mobile App (PWA)
 
@@ -694,22 +713,32 @@
 
 ### 3.8 Career Development Paths
 
-**Status:** 🔲 Not started
+**Status:** ✅ Fully implemented
 
-**Required files:**
+> ⚠️ **Naming trap.** The public job-board module is `convex/careers.ts` (`api.careers`, the
+> `/careers` route). The internal career-pathing toolkit this section describes lives in
+> `convex/careerPaths.ts` and must keep its own `careerPaths` API name — pointing this section
+> at `convex/careers.ts` is how a previous pass nearly overwrote the job board.
 
-- Schema: `convex/schema/careers.ts` (skillMatrices, careerTracks, gapAnalyses, mentorships)
-- Backend: `convex/careers.ts`
-- UI: `src/components/careers/CareersClient.tsx`
-- Route: `src/app/(dashboard)/careers/page.tsx`
+| Layer   | Status | Files                                                                                                                         |
+| ------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Schema  | ✅     | `convex/schema/careers.ts` (skills, skillRequirements, employeeSkills, careerTracks, trackProgress, gapAnalyses, mentorships) |
+| Backend | ✅     | `convex/careerPaths.ts` (20 exports) + pure helpers in `convex/lib/careers.ts` (gap analysis)                                 |
+| UI      | ✅     | `src/components/careerPaths/CareerPathsClient.tsx`                                                                            |
+| Route   | ✅     | `src/app/(dashboard)/career-paths/page.tsx`                                                                                   |
+| i18n    | ✅     | EN ✅, RU ✅, HY ✅, DE ✅ (dedicated `careerPaths` namespace)                                                                |
+| Nav     | ✅     | Sidebar + plan gating + billing module map (`careerPaths`, Pro and above)                                                     |
+| Tests   | ✅     | `src/__tests__/talent-modules.test.ts`                                                                                        |
 
-**Features to implement:**
+**Features implemented:**
 
-- Skill Matrix (skills by position)
-- Career tracks (Junior → Mid → Senior → Lead)
-- Gap analysis (what's needed for promotion)
-- LMS integration (recommended courses)
+- Skill Matrix (skills by position) — catalogue plus per-position requirement levels
+- Career tracks (Junior → Mid → Senior → Lead) with per-employee progress
+- Gap analysis — what is still missing for a target position, with readiness levels
+- LMS integration — recommended courses matched from the learning catalogue
 - Mentorship assignments
+
+**Competitors with this:** Leapsome (learning/development), HiBob (career pathing)
 
 ---
 
@@ -975,7 +1004,7 @@ PHASE 2 (Competitive Edge):
   2.4 Visual Org Chart ............... ✅ DONE (full i18n, tree built from reporting line)
   2.5 Document Management ............ ⚠️ DONE (core + UI + templates; HY pending)
   2.6 Expense Management ............. ✅ DONE (policies, limits, approval, analytics)
-  2.7 Succession Planning ............ 🔲 NOT STARTED — the only true Phase 2 gap
+  2.7 Succession Planning ............ ✅ DONE (9-box grid, key positions, successors, risk; i18n ×4)
   3.6 Employee Directory ............. ✅ DONE (full CRUD, departments, positions)
 
 PHASE 3 (Differentiation):
@@ -985,7 +1014,7 @@ PHASE 3 (Differentiation):
   3.4 Company News Feed .............. ✅ DONE (feed, reactions, comments, scheduling)
   3.5 Custom Workflow Builder ........ ⚠️ BUILT BUT SUPERADMIN-ONLY (visual builder exists; not sold to tenants)
   3.7 PDF Reports / Export ........... ⚠️ MOSTLY DONE (per-module exporters; no unified builder)
-  3.8 Career Development ............. 🔲 NOT STARTED
+  3.8 Career Development ............. ✅ DONE (skill matrix, tracks, gap analysis, mentorship)
   3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
   3.10 SRC Payroll Export (AM) ....... ✅ DONE (tested, Excel, ՀՎՀՀ)
   3.11 Local Payments (Idram/ArCa) ... ✅ DONE (checkout handoff, HMAC webhooks,
@@ -999,15 +1028,20 @@ PHASE 1 (Remaining TODOs):
   1.4 Onboarding integrations ........ ✅ DONE (cron: activateOnboardingTasks, sendOnboardingOverdueReminders)
 
 REAL REMAINING PRODUCT WORK (after re-verification — this is the honest list):
-  - Succession planning (9-box, key positions, successors) ........ 🔲 ~3-4 days
-  - Career development (skill matrix, tracks, gap analysis) ....... 🔲 ~4-5 days
+  - Succession planning (9-box, key positions, successors) ........ ✅ DONE
+  - Career development (skill matrix, tracks, gap analysis) ....... ✅ DONE
+  - Integration marketplace (catalogue + self-serve install) ...... ✅ DONE
+                                        (webhook-class apps install through the existing
+                                        delivery engine; OAuth apps deep-link to settings)
   - Workflow builder for TENANTS, not just superadmin ............. ⚠️ ~5-7 days
   - Mobile: store-ready build OR global service-worker registration  ⚠️ ~5-7 days
   - Unified report builder + scheduled exports .................... ⚠️ ~2-3 days
   - Public API + webhooks for customers ......................... ✅ DONE (REST /api/v1,
                                         HMAC-signed webhooks, API keys, plan quotas)
   - Translation coverage ....................................... ✅ DONE (key parity for
-                                        en/ru/hy/de is machine-checked in CI; 16 namespaces aligned)
+                                        en/ru/hy/de is machine-checked in CI over every namespace
+                                        on disk — 22 as of 2026-09-18; `overtime` was the last
+                                        real gap and is fixed)
   - Public comparison pages (/compare + 6 head-to-head, ×4 langs) .. ✅ DONE (GTM surface)
 
 NOT code tasks — these cannot be shipped from the repository:
@@ -1083,70 +1117,77 @@ export default function ModulePage() {
 
 ## Competitive Analysis Summary
 
-| Feature                                         | This Project | Rippling |  HiBob  | BambooHR | Leapsome |  Deel   |
-| ----------------------------------------------- | :----------: | :------: | :-----: | :------: | :------: | :-----: |
-| Employee Management                             |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
-| Leave Management                                |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Attendance/Time Tracking                        |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
-| Task Management                                 |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Chat/Messaging                                  |      ✅      |    ❌    |   ✅    |    ❌    |    ❌    |   ❌    |
-| Calendar                                        |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Recruitment/ATS                                 |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ✅    |
-| Recruitment Emails                              |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Onboarding                                      |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Offboarding                                     |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| Performance Reviews                             |      ✅      |    ✅    |   ✅    |    ❌    |    ✅    |   ❌    |
-| OKR/Goals                                       |      ✅      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
-| E-Signatures                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| Pulse Surveys                                   |      ✅      |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
-| Recognition/Kudos                               |      ✅      |    ❌    |   ✅    |    ❌    |    ✅    |   ❌    |
-| AI Assistant                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Payroll                                         |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| Driver Management                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| Approvals Workflow                              |      ✅      |    ✅    |   ✅    |    ✅    |    ❌    |   ❌    |
-| Analytics Dashboard                             |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ❌    |
-| Multi-language (3+)                             |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
-| **LMS**                                         |      ✅      |    ✅    |   ❌    |    ❌    |    ✅    |   ❌    |
-| **Compensation**                                |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Benefits**                                    |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ✅    |
-| **Org Chart**                                   |      ✅      |    ❌    |   ✅    |    ✅    |    ❌    |   ❌    |
-| **Documents**                                   |      ✅      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Expenses**                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Assets / IT equipment**                       |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **News / announcements**                        |      ✅      |    ❌    |   ✅    |    ❌    |    ❌    |   ❌    |
-| **Video conferencing**                          |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Meeting rooms**                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Overtime**                                    |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Projects**                                    |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Strategy maps**                               |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Compliance (GDPR)**                           |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Security center**                             |      ✅      |    ✅    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **SCIM + SSO (SAML / OIDC)**                    |      ✅      |    ✅    |   ✅    |    ⚠️    |    ❌    |   ✅    |
-| **Telegram integration**                        |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Shift Scheduling**                            |      ✅      |    ✅    |   ✅    |    ❌    |    ❌    |   ✅    |
-| **SRC Tax Export (AM)**                         |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Local PSP (Idram/ArCa)**                      |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌    |    ❌    |    ❌    |   ❌    |
-| **Succession**                                  |      🔲      |    ❌    |   ❌    |    ❌    |    ✅    |   ❌    |
-| **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌    |    ✅    |    ❌    |   ❌    |
-| **Public API + webhooks for customers**         |      ✅      |    ✅    |   ✅    |    ✅    |    ✅    |   ✅    |
-| **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌    |    ❌    |    ❌    |   ✅    |
-| **TOTAL (shipped features)**                    |   **~43**    | **~31**  | **~20** | **~16**  | **~13**  | **~16** |
+| Feature                                         | This Project | Rippling | HiBob  | BambooHR | Leapsome |  Deel  |
+| ----------------------------------------------- | :----------: | :------: | :----: | :------: | :------: | :----: |
+| Employee Management                             |      ✅      |    ✅    |   ✅   |    ✅    |    ❌    |   ✅   |
+| Leave Management                                |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| Attendance/Time Tracking                        |      ✅      |    ✅    |   ✅   |    ✅    |    ❌    |   ❌   |
+| Task Management                                 |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| Chat/Messaging                                  |      ✅      |    ❌    |   ✅   |    ❌    |    ❌    |   ❌   |
+| Calendar                                        |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| Recruitment/ATS                                 |      ✅      |    ✅    |   ✅   |    ✅    |    ❌    |   ✅   |
+| Recruitment Emails                              |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| Onboarding                                      |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| Offboarding                                     |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| Performance Reviews                             |      ✅      |    ✅    |   ✅   |    ❌    |    ✅    |   ❌   |
+| OKR/Goals                                       |      ✅      |    ❌    |   ❌   |    ❌    |    ✅    |   ❌   |
+| E-Signatures                                    |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
+| Pulse Surveys                                   |      ✅      |    ❌    |   ✅   |    ❌    |    ✅    |   ❌   |
+| Recognition/Kudos                               |      ✅      |    ❌    |   ✅   |    ❌    |    ✅    |   ❌   |
+| AI Assistant                                    |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| Payroll                                         |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
+| Driver Management                               |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| Approvals Workflow                              |      ✅      |    ✅    |   ✅   |    ✅    |    ❌    |   ❌   |
+| Analytics Dashboard                             |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ❌   |
+| Multi-language (3+)                             |      ✅      |    ✅    |   ✅   |    ❌    |    ❌    |   ✅   |
+| **LMS**                                         |      ✅      |    ✅    |   ❌   |    ❌    |    ✅    |   ❌   |
+| **Compensation**                                |      ✅      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
+| **Benefits**                                    |      ✅      |    ✅    |   ❌   |    ✅    |    ❌    |   ✅   |
+| **Org Chart**                                   |      ✅      |    ❌    |   ✅   |    ✅    |    ❌    |   ❌   |
+| **Documents**                                   |      ✅      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
+| **Expenses**                                    |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Assets / IT equipment**                       |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **News / announcements**                        |      ✅      |    ❌    |   ✅   |    ❌    |    ❌    |   ❌   |
+| **Video conferencing**                          |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Meeting rooms**                               |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Overtime**                                    |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Projects**                                    |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Strategy maps**                               |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Compliance (GDPR)**                           |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Security center**                             |      ✅      |    ✅    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **SCIM + SSO (SAML / OIDC)**                    |      ✅      |    ✅    |   ✅   |    ⚠️    |    ❌    |   ✅   |
+| **Telegram integration**                        |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Shift Scheduling**                            |      ✅      |    ✅    |   ✅   |    ❌    |    ❌    |   ✅   |
+| **SRC Tax Export (AM)**                         |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Local PSP (Idram/ArCa)**                      |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
+| **Succession**                                  |      ✅      |    ❌    |   ❌   |    ❌    |    ✅    |   ❌   |
+| **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
+| **Public API + webhooks for customers**         |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
+| **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
+| **TOTAL (shipped features)**                    |    **44**    |  **31**  | **20** |  **16**  |  **13**  | **16** |
 
 > **Competitor marks are indicative**, compiled from public vendor material as of 2026-09, and
 > must be re-verified per deal before being used in a sales document. This project's column was
-> re-verified against the repository on 2026-09-16. Totals are the mechanical count of ✅ marks in
+> re-verified against the repository on 2026-09-18. Totals are the mechanical count of ✅ marks in
 > the table above, not estimates — change a mark and the total changes with it.
+>
+> **Career Development (3.8) is shipped but has no row of its own on purpose.** This table scores
+> the vendor capability a row competes against; Career Development lives inside the LMS/Learning
+> ground already scored here. Inventing a row would mean asserting vendor marks nobody verified,
+> which is exactly what breaks the mechanical-count guarantee above.
 
 **Shipped and re-verified since the last audit:** Shift Scheduling, SRC-ready payroll export
 (Armenia Tax Service), **local payments (Idram/ArCa) end to end** — checkout handoff, HMAC-signed
 webhooks, superadmin configuration, return pages, **public API + signed webhooks with plan quotas**,
-automated SOC 2 evidence collection, public comparison pages in four languages, plus **Benefits,
-Expenses, Assets, News, Compliance, Projects, Overtime, Strategy Maps, Telegram** — the
-Armenian-tax and local-PSP rows exist in **no** global competitor.
+automated SOC 2 evidence collection, public comparison pages in four languages, **Succession
+Planning**, **Career Development**, the **integration marketplace** (self-serve connections on the
+outbound webhook engine + the public `/integrations` directory), plus **Benefits, Expenses, Assets,
+News, Compliance, Projects, Overtime, Strategy Maps, Telegram** — the Armenian-tax and local-PSP
+rows exist in **no** global competitor.
 
 ### The distinction that actually decides the market
 
@@ -1154,14 +1195,14 @@ Feature count is not the scoreboard. On **shipped capability** this project now 
 mid-market set (BambooHR, HiBob, Personio) and roughly level with Rippling/Deel minus their
 finance infrastructure. What still separates it from the market leaders is **not features**:
 
-| Decides the deal                | Status here                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------- |
-| Native mobile apps              | ❌ missing (PWA partial)                                                          |
-| Integration marketplace         | ❌ missing (API + webhooks shipped; no partner app store)                         |
-| SOC 2 Type II certificate       | ⚠️ readiness doc + automated evidence (`npm run soc2:evidence`); audit not booked |
-| Global payroll / EOR / entity   | ❌ out of scope by design                                                         |
-| Support SLAs, DPA, legal entity | ⚠️ not evidenced                                                                  |
-| Brand, references, channel      | ❌ none                                                                           |
+| Decides the deal                | Status here                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Native mobile apps              | ❌ missing (PWA partial)                                                                          |
+| Integration marketplace         | ⚠️ shipped as a self-serve directory + webhook engine; no OAuth apps listed in partner catalogues |
+| SOC 2 Type II certificate       | ⚠️ readiness doc + automated evidence (`npm run soc2:evidence`); audit not booked                 |
+| Global payroll / EOR / entity   | ❌ out of scope by design                                                                         |
+| Support SLAs, DPA, legal entity | ⚠️ not evidenced                                                                                  |
+| Brand, references, channel      | ❌ none                                                                                           |
 
 **Therefore the winnable position is not "beat Workday everywhere" — it is "be the only correct
 answer in Armenia and the Armenian/Russian-speaking diaspora",** where SRC filing, Idram/ArCa,
@@ -1171,15 +1212,17 @@ imID, Armsoft and a native Armenian locale are things no global vendor will buil
 
 ## How to Use This File
 
-1. Pick a module number (e.g., "2.7" for Succession Planning)
+1. Pick a module number (e.g., "3.5" for the Custom Workflow Builder)
 2. Check the "Required files" section for what needs to be created
 3. Follow the "Technical Standards" for file structure and patterns
 4. Update this file after completing each module (change 🔲 → ✅)
 5. Update the competitive analysis table
 
-> 💡 **Next recommended module:** 2.7 Succession Planning (~3-4 days) — the only genuinely
-> unstarted item in Phase 2. Everything else listed as "Not started" before 2026-09-15 is
-> already shipped; see the Verification note at the top.
+> 💡 **No unstarted module remains.** Phase 2 and Phase 3 are fully shipped; what is left is
+> depth rather than new surface — the tenant-facing **workflow builder (3.5)**, mobile delivery
+> **(3.1)** and the unified **report builder (3.7)**. See "REAL REMAINING PRODUCT WORK".
 
-> ⚠️ **Before editing any status below:** check the code. The 2026-09-15 audit found four modules
-> marked "Not started" that were fully implemented for some time.
+> ⚠️ **Before editing any status below:** check the code. Two audits of this file found modules
+> marked "Not started" that had been fully implemented for some time — 2026-09-15 (Benefits,
+> Expenses, Assets, News) and 2026-09-18 (Succession Planning, Career Development). The statuses
+> here are claims about the repository; the repository wins.

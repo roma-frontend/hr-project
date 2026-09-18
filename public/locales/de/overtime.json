@@ -57,8 +57,11 @@
       "reviewBeforeSubmitting": "Überprüfen Sie Ihren Antrag vor dem Absenden",
       "reasonPlaceholder": "z.B. Projekt-Deadline, dringende Aufgabe, Kundentermin...",
       "commentPlaceholder": "Zusätzliche Informationen...",
-      "submit": "Antrag einreichen"
-    }
+      "submit": "Antrag einreichen",
+      "subtitle": "Geben Sie die Details für Ihren Überstundenantrag ein"
+    },
+    "noSupervisor": "Kein Vorgesetzter zugewiesen",
+    "noSupervisorDesc": "Bitte wenden Sie sich an HR, um Ihre Berichtslinie einzurichten, bevor Sie Überstundenanträge stellen."
   },
   "nav": {
     "overtime": "Überstunden"
