@@ -101,7 +101,10 @@ export default function ContactClient() {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 mt-12 pb-24">
+      {/* `mt-20 sm:mt-32` clears the fixed navbar (which is ~64px tall) — the
+          previous `mt-12` put the back link underneath it. Matches the top
+          clearance `/compare`, `/features` and `/careers` use. */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 mt-20 sm:mt-32 pb-24">
         {/* Back link */}
         <Link
           href="/#pricing"

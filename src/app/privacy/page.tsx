@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getServerTranslation } from '@/lib/i18n/server-translation';
+import PublicPageShell from '@/components/landing/PublicPageShell';
 import { formatDate } from '@/lib/date-format';
 
 export default async function PrivacyPage() {
@@ -15,26 +16,8 @@ export default async function PrivacyPage() {
   });
 
   return (
-    <div className="min-h-screen">
-      <div className="border-b px-6 py-4" style={{ borderColor: 'var(--landing-card-border)' }}>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm transition-colors hover:opacity-80"
-          style={{ color: 'var(--primary)' }}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          {t('legal.backToHome')}
-        </Link>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-6 py-16">
+    <PublicPageShell language={locale}>
+      <div className="max-w-3xl mx-auto px-6 pb-16">
         <div className="mb-12">
           <span
             className="text-xs font-semibold uppercase tracking-widest"
@@ -199,6 +182,6 @@ export default async function PrivacyPage() {
           </Link>
         </div>
       </div>
-    </div>
+    </PublicPageShell>
   );
 }

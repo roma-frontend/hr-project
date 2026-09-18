@@ -132,6 +132,8 @@
       "quickbooks": {
         "description": "Post payroll totals and expenses to QuickBooks."
       }
-    }
+    },
+    "adminOnly": "Ask an admin to connect",
+    "alreadyConnected": "{{name}} is already connected. Manage it in Settings → Webhooks."
   }
 }

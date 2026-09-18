@@ -226,10 +226,14 @@ describe('security trust page (src/app/security/page.tsx)', () => {
     expect(screen.getByText('security.statusCompliant')).toBeInTheDocument();
   });
 
-  it('links back home and to the contact page for disclosure', async () => {
+  it('renders inside the shared public shell and links to contact for disclosure', async () => {
     const el = await SecurityPage();
     const { container } = render(el);
-    expect(container.querySelector('a[href="/"]')).toBeInTheDocument();
+    // Home navigation now comes from the shared shell (Navbar/Footer) that all
+    // standalone public pages render in, instead of a per-page "back to home"
+    // bar — so this page must sit inside the shell's <main>, and keep its own
+    // disclosure route.
+    expect(container.querySelector('main')).toBeInTheDocument();
     expect(container.querySelector('a[href="/contact"]')).toBeInTheDocument();
   });
 

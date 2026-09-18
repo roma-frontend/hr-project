@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getServerTranslation } from '@/lib/i18n/server-translation';
+import PublicPageShell from '@/components/landing/PublicPageShell';
 
 /**
  * Public trust & security page.
@@ -82,26 +83,8 @@ export default async function SecurityPage() {
   ];
 
   return (
-    <div className="min-h-screen">
-      <div className="border-b px-6 py-4" style={{ borderColor: 'var(--landing-card-border)' }}>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm transition-colors hover:opacity-80"
-          style={{ color: 'var(--primary)' }}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          {t('legal.backToHome')}
-        </Link>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-16">
+    <PublicPageShell language={locale}>
+      <div className="max-w-4xl mx-auto px-6 pb-16">
         {/* Hero */}
         <div className="mb-14">
           <span
@@ -225,6 +208,6 @@ export default async function SecurityPage() {
           </p>
         </div>
       </div>
-    </div>
+    </PublicPageShell>
   );
 }

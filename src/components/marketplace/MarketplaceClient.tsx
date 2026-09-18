@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuthUser } from '@/store/useAuthStore';
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,14 @@ export default function MarketplaceClient() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<MarketplaceCategory | 'all'>('all');
   const [pending, setPending] = useState<MarketplaceApp | null>(null);
+
+  const user = useAuthUser();
+  /**
+   * Installation is org-admin only — enforced server-side by `assertOrgManager`
+   * in the webhook mutations. Without this check the directory offered every
+   * employee a Connect button whose only possible outcome was an error toast.
+   */
+  const canInstall = user?.role === 'admin' || user?.role === 'superadmin';
 
   const endpoints = useQuery(api.webhooks.main.listEndpoints);
   const eventTypes = useQuery(api.webhooks.main.listEventTypes);
@@ -96,6 +105,14 @@ export default function MarketplaceClient() {
     if (!pending || pending.setup.kind !== 'webhook') return;
     if (!/^https:\/\/.+/i.test(url.trim())) {
       toast.error(t('marketplace.invalidUrl'));
+      return;
+    }
+    // Two endpoints on the same app deliver every event twice. The label is the
+    // key the directory matches on, so refuse the duplicate here instead of
+    // silently creating a second consumer the admin cannot see from this page.
+    if (isInstalled(pending)) {
+      toast.error(t('marketplace.alreadyConnected', { name: pending.name }));
+      setPending(null);
       return;
     }
     setInstalling(true);
@@ -203,12 +220,19 @@ export default function MarketplaceClient() {
                   </p>
 
                   <div className="flex items-center gap-2">
-                    {status === 'available' && app.setup.kind === 'webhook' && !installed && (
-                      <Button size="sm" className="gap-1.5" onClick={() => openInstall(app)}>
-                        <Plug className="h-3.5 w-3.5" />
-                        {t('marketplace.actionConnect')}
-                      </Button>
-                    )}
+                    {status === 'available' &&
+                      app.setup.kind === 'webhook' &&
+                      !installed &&
+                      (canInstall ? (
+                        <Button size="sm" className="gap-1.5" onClick={() => openInstall(app)}>
+                          <Plug className="h-3.5 w-3.5" />
+                          {t('marketplace.actionConnect')}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {t('marketplace.adminOnly')}
+                        </span>
+                      ))}
                     {status === 'available' && app.setup.kind === 'settings' && (
                       <Button size="sm" variant="outline" className="gap-1.5" asChild>
                         <Link href={(app.setup as { href: string }).href}>

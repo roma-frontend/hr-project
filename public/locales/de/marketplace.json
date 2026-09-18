@@ -132,6 +132,8 @@
       "quickbooks": {
         "description": "Lohnsummen und Spesen an QuickBooks übertragen."
       }
-    }
+    },
+    "adminOnly": "Nur Administratoren können verbinden",
+    "alreadyConnected": "{{name}} ist bereits verbunden. Verwalten Sie es unter Einstellungen → Webhooks."
   }
 }

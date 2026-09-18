@@ -19,7 +19,11 @@ export default function PricingClient() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
       <Navbar />
-      <main>
+      {/* The pricing section below carries `py-12 md:py-24` of its own, which is
+          enough on desktop but only 48px on mobile — less than the fixed
+          navbar, so the eyebrow slid under it. `pt-10 md:pt-0` tops mobile up
+          without double-padding desktop. */}
+      <main className="pt-10 md:pt-0">
         {/* The pricing section itself — same component as the landing anchor. */}
         <PricingPreview />
         {/* FAQ */}
