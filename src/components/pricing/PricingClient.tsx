@@ -1,7 +1,7 @@
 'use client';
 
-import { useTranslation } from 'react-i18next';
 import '@/i18n/config';
+import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import PricingPreview from '@/components/landing/PricingPreview';
@@ -13,21 +13,25 @@ import FAQSection from '@/components/landing/FAQSection';
  * then adds the FAQ block and a final CTA so deep links and SEO traffic land on
  * a complete conversion page.
  */
-export default function PricingClient() {
-  const { t } = useTranslation();
+export default function PricingClient({ initialLanguage = 'en' }: { initialLanguage?: string }) {
+  // Server-render in the visitor's language (the landing namespaces are bundled
+  // for every locale), so the first paint is translated and hydration matches:
+  // with the live `t` alone the server emitted English and React reported a
+  // text mismatch on every non-English visit.
+  const { t } = useLandingTranslation(initialLanguage);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
-      <Navbar />
+      <Navbar initialLanguage={initialLanguage} />
       {/* The pricing section below carries `py-12 md:py-24` of its own, which is
           enough on desktop but only 48px on mobile — less than the fixed
           navbar, so the eyebrow slid under it. `pt-10 md:pt-0` tops mobile up
           without double-padding desktop. */}
       <main className="pt-10 md:pt-0">
         {/* The pricing section itself — same component as the landing anchor. */}
-        <PricingPreview />
+        <PricingPreview initialLanguage={initialLanguage} />
         {/* FAQ */}
-        <FAQSection />
+        <FAQSection initialLanguage={initialLanguage} />
         {/* Final CTA */}
         <section className="relative px-6 md:px-12 py-16 md:py-24 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">

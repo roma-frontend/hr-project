@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import {
@@ -27,8 +27,9 @@ import Footer from '@/components/landing/Footer';
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-export default function ContactClient() {
-  const { t } = useTranslation();
+export default function ContactClient({ initialLanguage = 'en' }: { initialLanguage?: string }) {
+  // Server-render in the visitor's language; see PricingClient for why.
+  const { t } = useLandingTranslation(initialLanguage);
 
   const TEAM_SIZES = [
     t('contactPage.team1to10'),
@@ -83,7 +84,7 @@ export default function ContactClient() {
       style={{ background: 'var(--landing-bg)' }}
     >
       {/* Navbar */}
-      <Navbar />
+      <Navbar initialLanguage={initialLanguage} />
 
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none">

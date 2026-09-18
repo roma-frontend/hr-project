@@ -3,9 +3,14 @@
 import { Clock } from 'lucide-react';
 import ModuleSeoPage from '@/components/features/ModuleSeoPage';
 
-export default function AttendancePageClient() {
+export default function AttendancePageClient({
+  initialLanguage = 'en',
+}: {
+  initialLanguage?: string;
+}) {
   return (
     <ModuleSeoPage
+      initialLanguage={initialLanguage}
       module="attendance"
       icon={<Clock className="w-6 h-6" />}
       color="#6366f1"

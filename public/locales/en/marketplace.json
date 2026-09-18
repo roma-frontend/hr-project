@@ -134,6 +134,7 @@
       }
     },
     "adminOnly": "Ask an admin to connect",
-    "alreadyConnected": "{{name}} is already connected. Manage it in Settings → Webhooks."
+    "alreadyConnected": "{{name}} is already connected. Manage it in Settings → Webhooks.",
+    "metaTitleSuffix": "{{count}}+ integrations"
   }
 }

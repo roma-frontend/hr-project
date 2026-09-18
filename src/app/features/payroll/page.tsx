@@ -24,6 +24,8 @@ const PayrollPageClient = nextDynamic(
   { loading: () => <Skeleton className="h-screen w-full" /> },
 );
 
-export default function PayrollPage() {
-  return <PayrollPageClient />;
+export default async function PayrollPage() {
+  // SSR in the visitor's language like /pricing — see PricingPage.
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <PayrollPageClient initialLanguage={locale} />;
 }

@@ -23,6 +23,8 @@ const CareersClient = nextDynamic(() => import('@/components/careers/CareersClie
   loading: () => <Skeleton className="h-screen w-full" />,
 });
 
-export default function CareersPage() {
-  return <CareersClient />;
+export default async function CareersPage() {
+  // Public job board: SSR it in the visitor's language (see PricingPage).
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <CareersClient initialLanguage={locale} />;
 }

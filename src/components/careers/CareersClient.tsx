@@ -7,6 +7,7 @@ import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, ru, hy, de } from 'date-fns/locale';
 import { useAuthStore, type User } from '@/store/useAuthStore';
@@ -83,8 +84,10 @@ const EMPLOYMENT_TYPE_KEYS: Record<string, string> = {
 };
 
 // ─── Main Page ───────────────────────────────────────────────
-export default function CareersClient() {
-  const { t } = useTranslation();
+export default function CareersClient({ initialLanguage = 'en' }: { initialLanguage?: string }) {
+  // Server-render translated (see PricingClient) so the public job board does
+  // not flash English and the SSR HTML is indexable in the visitor's language.
+  const { t } = useLandingTranslation(initialLanguage);
   const { user } = useAuthStore();
   const vacancies = useQuery(api.careers.listAllOpenVacancies);
   const allOrgs = useQuery(api.careers.listActiveOrganizations);
@@ -133,14 +136,14 @@ export default function CareersClient() {
   if (!isMounted) {
     return (
       <div className="min-h-screen">
-        <Navbar />
+        <Navbar initialLanguage={initialLanguage} />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      <Navbar initialLanguage={initialLanguage} />
 
       {/* Hero */}
       <section className="pt-20 sm:pt-32 pb-16 px-4 text-center relative">

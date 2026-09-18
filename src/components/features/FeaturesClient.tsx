@@ -1,7 +1,7 @@
 'use client';
 
 import { useHydrated } from '@/hooks/useHydrated';
-import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from '@/components/landing/useLandingTranslation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import '@/i18n/config';
@@ -120,8 +120,10 @@ const PLATFORM_FEATURES = [
   { id: 'integrations', icon: Layers },
 ] as const;
 
-export default function FeaturesClient() {
-  const { t } = useTranslation();
+export default function FeaturesClient({ initialLanguage = 'en' }: { initialLanguage?: string }) {
+  // See PricingClient: the live `t` renders English on the server, so the
+  // server-detected locale has to drive the first render too.
+  const { t } = useLandingTranslation(initialLanguage);
   const router = useRouter();
   const { isAuthenticated } = useAuthStoreShallow();
   const mounted = useHydrated();
@@ -142,7 +144,7 @@ export default function FeaturesClient() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      <Navbar initialLanguage={initialLanguage} />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-32 pb-20">

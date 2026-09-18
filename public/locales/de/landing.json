@@ -721,7 +721,9 @@
       "trends": "Wöchentliche HR-Trends & Einblicke",
       "updates": "Neue Funktionen zuerst, vor allen anderen",
       "noSpam": "Kein Spam — jederzeit abbestellbar"
-    }
+    },
+    "alreadySubscribed": "Sie sind bereits angemeldet!",
+    "errorMessage": "Etwas ist schiefgelaufen"
   },
   "mobileMenu": {
     "home": "Startseite",
@@ -733,7 +735,11 @@
     "signIn": "Anmelden",
     "getStartedFree": "Kostenlos starten",
     "closeMenu": "Menü schließen",
-    "compare": "Vergleich"
+    "compare": "Vergleich",
+    "navigation": "Navigation",
+    "preferences": "Einstellungen",
+    "language": "Sprache",
+    "secure": "Sicher & privat"
   },
   "features": {
     "leaveTypes": "Urlaubsarten",
@@ -1155,7 +1161,8 @@
       "viewPricing": "Vollständige Preise & Rechner",
       "popular": "Am beliebtesten",
       "unlimitedSeats": "Unbegrenzte Mitarbeitende",
-      "unlimitedApi": "Unbegrenzte öffentliche API"
+      "unlimitedApi": "Unbegrenzte öffentliche API",
+      "minSeats": "Sitze Minimum"
     },
     "legend": {
       "yes": "Im Produkt enthalten",
@@ -1396,7 +1403,8 @@
         "bestFor": "Wählen Sie Odoo, wenn HR ein Modul einer unternehmensweiten ERP-Entscheidung ist.",
         "notFor": "Wählen Sie Strata, wenn HR die Priorität ist und ohne Anpassungsprojekt laufen soll."
       }
-    }
+    },
+    "compareWithCompetitors": "Mit Wettbewerbern vergleichen"
   },
   "meta": {
     "features": {

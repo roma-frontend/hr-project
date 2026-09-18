@@ -23,6 +23,9 @@ const FeaturesClient = nextDynamic(() => import('@/components/features/FeaturesC
   loading: () => <Skeleton className="h-screen w-full" />,
 });
 
-export default function FeaturesPage() {
-  return <FeaturesClient />;
+export default async function FeaturesPage() {
+  // Hand the server-detected locale to the client tree so the SSR'd page —
+  // heading, cards and navbar — is in the visitor's language (see PricingPage).
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <FeaturesClient initialLanguage={locale} />;
 }

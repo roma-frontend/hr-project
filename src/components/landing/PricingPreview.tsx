@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from './useLandingTranslation';
 import { useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useCurrency } from '@/hooks/useCurrency';
 import { applyRatePrecise } from '@/lib/currency';
 import { entrySeatCount, perSeatPrice, seatCap, type PlanKey } from '@/lib/pricing';
-import { resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
+import { resolvePlanCta, resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
 import { api } from '@/convex/_generated/api';
 import { logger } from '@/lib/logger';
 // The card itself is shared with the tariff editor's live preview, so the
@@ -211,6 +211,7 @@ function PricingCard({
   priceAmount,
   billing,
   symbol,
+  initialLanguage,
 }: {
   tier: PricingTier;
   delay: number;
@@ -221,9 +222,11 @@ function PricingCard({
   billing: 'monthly' | 'annual';
   /** Currency symbol, passed down so it can never lag behind `priceAmount`. */
   symbol: string;
+  /** Server-detected locale so the card SSRs translated (see PricingClient). */
+  initialLanguage: string;
 }) {
   const { ref, style } = useReveal(`${delay}s`);
-  const { t } = useTranslation();
+  const { t } = useLandingTranslation(initialLanguage);
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   // Per-seat model: the big number is the per-seat price; the line below shows
@@ -419,8 +422,16 @@ function PricingCard({
  * crosses a bracket). The legacy and time figures are converted through the
  * active FX rate so the result matches the pricing cards above.
  */
-function SavingsCalculator({ symbol, rate }: { symbol: string; rate: number }) {
-  const { t } = useTranslation();
+function SavingsCalculator({
+  symbol,
+  rate,
+  initialLanguage,
+}: {
+  symbol: string;
+  rate: number;
+  initialLanguage: string;
+}) {
+  const { t } = useLandingTranslation(initialLanguage);
   const { ref, style } = useReveal('0.1s');
   const [employees, setEmployees] = useState(50);
 
@@ -642,9 +653,9 @@ function resolveSeatPlan(id: string): PlanKey | null {
   return key === 'starter' || key === 'pro' || key === 'enterprise' ? key : null;
 }
 
-export default function PricingPreview() {
+export default function PricingPreview({ initialLanguage = 'en' }: { initialLanguage?: string }) {
   const { ref, style } = useReveal();
-  const { t } = useTranslation();
+  const { t } = useLandingTranslation(initialLanguage);
   const { user } = useAuthStore();
   const { plan } = useSubscription();
   const currency = useCurrency();
@@ -687,9 +698,15 @@ export default function PricingPreview() {
           category: m.category,
         })),
       ),
-      ctaText: isCustom
-        ? t('pricing.contactSales', 'Contact sales')
-        : p.plan.ctaLabel || t('pricing.startFreeTrial', 'Start free trial'),
+      // The seeded `ctaLabel` is English text, so it has to go through the
+      // locale resolver — otherwise a Russian visitor reads "Start free trial"
+      // in the middle of a translated pricing card.
+      ctaText: resolvePlanCta({
+        planKey: p.plan.key,
+        ctaLabel: p.plan.ctaLabel,
+        isCustom,
+        t,
+      }),
       buttonTextKey: 'pricing.startFreeTrial',
       popular: p.plan.isPopular,
       badgeKey: 'pricing.mostPopular',
@@ -850,12 +867,17 @@ export default function PricingPreview() {
             priceAmount={priceAmounts[tier.id] ?? null}
             billing={billing}
             symbol={currency.symbol}
+            initialLanguage={initialLanguage}
           />
         ))}
       </div>
 
       {/* Savings calculator — team size → annual savings, live and animated */}
-      <SavingsCalculator symbol={currency.symbol} rate={currency.rate} />
+      <SavingsCalculator
+        symbol={currency.symbol}
+        rate={currency.rate}
+        initialLanguage={initialLanguage}
+      />
 
       {/* Compare link — /compare is the page that ranks for "<vendor> alternative";
        *  it reads the same live plan data, so the loop closes on real numbers. */}

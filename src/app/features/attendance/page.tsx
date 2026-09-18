@@ -24,6 +24,8 @@ const AttendancePageClient = nextDynamic(
   { loading: () => <Skeleton className="h-screen w-full" /> },
 );
 
-export default function AttendancePage() {
-  return <AttendancePageClient />;
+export default async function AttendancePage() {
+  // SSR in the visitor's language like /pricing — see PricingPage.
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <AttendancePageClient initialLanguage={locale} />;
 }

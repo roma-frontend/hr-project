@@ -3,9 +3,14 @@
 import { Wallet } from 'lucide-react';
 import ModuleSeoPage from '@/components/features/ModuleSeoPage';
 
-export default function PayrollPageClient() {
+export default function PayrollPageClient({
+  initialLanguage = 'en',
+}: {
+  initialLanguage?: string;
+}) {
   return (
     <ModuleSeoPage
+      initialLanguage={initialLanguage}
       module="payroll"
       icon={<Wallet className="w-6 h-6" />}
       color="#10b981"

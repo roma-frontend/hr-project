@@ -35,7 +35,7 @@ export default function CompareIndexClient({
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
-      <Navbar />
+      <Navbar initialLanguage={initialLanguage} />
 
       <main>
         <section className="relative overflow-hidden pt-32 pb-14 px-6">

@@ -28,7 +28,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const available = MARKETPLACE_APPS.filter((app) => appStatus(app) === 'available').length;
 
   return {
-    title: `${t('marketplace.title')} — ${available}+ integrations`,
+    // The suffix is a key, not a literal: a Russian searcher saw "Интеграции —
+    // 21+ integrations" in the tab title.
+    title: `${t('marketplace.title')} — ${t('marketplace.metaTitleSuffix').replace(
+      '{{count}}',
+      String(available),
+    )}`,
     description: t('marketplace.subtitle'),
     alternates: { canonical: '/integrations' },
   };

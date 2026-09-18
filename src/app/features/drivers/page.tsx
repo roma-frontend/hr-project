@@ -24,6 +24,8 @@ const DriversPageClient = nextDynamic(
   { loading: () => <Skeleton className="h-screen w-full" /> },
 );
 
-export default function DriversPage() {
-  return <DriversPageClient />;
+export default async function DriversPage() {
+  // SSR in the visitor's language like /pricing — see PricingPage.
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <DriversPageClient initialLanguage={locale} />;
 }

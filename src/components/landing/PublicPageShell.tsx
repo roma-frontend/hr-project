@@ -41,7 +41,7 @@ export default function PublicPageShell({
 }) {
   return (
     <div className="min-h-screen" style={{ background: 'var(--landing-bg)' }}>
-      <NavbarWrapper />
+      <NavbarWrapper initialLanguage={language} />
       <main className="pt-20 sm:pt-32">{children}</main>
       <Footer initialLanguage={language} />
     </div>

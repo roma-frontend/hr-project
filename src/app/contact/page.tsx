@@ -23,6 +23,8 @@ const ContactClient = nextDynamic(() => import('@/components/contact/ContactClie
   loading: () => <Skeleton className="h-screen w-full" />,
 });
 
-export default function ContactPage() {
-  return <ContactClient />;
+export default async function ContactPage() {
+  // Same as /pricing and /features: SSR the page in the visitor's language.
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <ContactClient initialLanguage={locale} />;
 }

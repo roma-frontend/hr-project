@@ -721,7 +721,9 @@
       "trends": "Weekly HR trends & insights",
       "updates": "New features first, before anyone else",
       "noSpam": "No spam — unsubscribe anytime"
-    }
+    },
+    "alreadySubscribed": "You are already subscribed!",
+    "errorMessage": "Something went wrong"
   },
   "mobileMenu": {
     "home": "Home",
@@ -733,7 +735,11 @@
     "signIn": "Sign In",
     "getStartedFree": "Get Started Free",
     "closeMenu": "Close Menu",
-    "compare": "Compare"
+    "compare": "Compare",
+    "navigation": "Navigation",
+    "preferences": "Preferences",
+    "language": "Language",
+    "secure": "Secure & Private"
   },
   "features": {
     "leaveTypes": "Leave Types",
@@ -1155,7 +1161,8 @@
       "viewPricing": "Full pricing & calculator",
       "popular": "Most popular",
       "unlimitedSeats": "Unlimited employees",
-      "unlimitedApi": "Unlimited public API"
+      "unlimitedApi": "Unlimited public API",
+      "minSeats": "seats minimum"
     },
     "legend": {
       "yes": "Generally available",
@@ -1396,7 +1403,8 @@
         "bestFor": "Choose Odoo when HR is one module of a company-wide ERP decision.",
         "notFor": "Choose Strata when HR is the priority and you want it working without a customisation project."
       }
-    }
+    },
+    "compareWithCompetitors": "Compare with competitors"
   },
   "meta": {
     "features": {

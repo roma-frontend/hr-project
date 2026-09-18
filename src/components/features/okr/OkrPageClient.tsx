@@ -3,9 +3,10 @@
 import { Target } from 'lucide-react';
 import ModuleSeoPage from '@/components/features/ModuleSeoPage';
 
-export default function OkrPageClient() {
+export default function OkrPageClient({ initialLanguage = 'en' }: { initialLanguage?: string }) {
   return (
     <ModuleSeoPage
+      initialLanguage={initialLanguage}
       module="okr"
       icon={<Target className="w-6 h-6" />}
       color="#f59e0b"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from './useLandingTranslation';
 
 interface FAQ {
   id: number;
@@ -68,10 +68,18 @@ function MailIcon() {
   );
 }
 
-function FAQItem({ faq, delay }: { faq: FAQ; delay: number }) {
+function FAQItem({
+  faq,
+  delay,
+  initialLanguage,
+}: {
+  faq: FAQ;
+  delay: number;
+  initialLanguage: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const { ref, visible } = useReveal();
-  const { t } = useTranslation();
+  const { t } = useLandingTranslation(initialLanguage);
 
   return (
     <div
@@ -182,9 +190,9 @@ function FAQItem({ faq, delay }: { faq: FAQ; delay: number }) {
   );
 }
 
-export default function FAQSection() {
+export default function FAQSection({ initialLanguage = 'en' }: { initialLanguage?: string }) {
   const { ref, visible } = useReveal();
-  const { t } = useTranslation();
+  const { t } = useLandingTranslation(initialLanguage);
 
   const faqs: FAQ[] = [
     { id: 1, questionKey: 'faq.q1', answerKey: 'faq.a1' },
@@ -239,7 +247,7 @@ export default function FAQSection() {
         {/* FAQ list — glass cards, one per question */}
         <div className="space-y-3">
           {faqs.map((faq, i) => (
-            <FAQItem key={faq.id} faq={faq} delay={i * 0.08} />
+            <FAQItem key={faq.id} faq={faq} delay={i * 0.08} initialLanguage={initialLanguage} />
           ))}
         </div>
 

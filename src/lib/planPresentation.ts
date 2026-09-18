@@ -44,6 +44,21 @@ export const PLAN_TAGLINE_KEYS: Record<PlanKey, string> = {
   enterprise: 'pricing.enterpriseDesc',
 };
 
+/**
+ * The CTA labels the seed writes, mapped to their locale strings.
+ *
+ * `ctaLabel` is a plain column, not an i18n key: the seed stores English text
+ * (`Start free trial`, `Contact sales`) and the pricing section rendered it
+ * verbatim, so every Russian and Armenian visitor saw an English button in the
+ * middle of a translated page. Matching the stored string against the seed —
+ * case-insensitively, because the i18n copy capitalizes "Start Free Trial" —
+ * tells a seeded label apart from one the superadmin typed in the editor.
+ */
+export const DEFAULT_CTA_LABELS: Record<string, string> = {
+  'start free trial': 'pricing.startFreeTrial',
+  'contact sales': 'pricing.contactSales',
+};
+
 function seedFor(planKey: string) {
   return DEFAULT_PLANS.find((p) => p.key === planKey);
 }
@@ -74,6 +89,13 @@ export function isAuthoredTagline(planKey: string, tagline: string | null | unde
   return !isDefaultTagline(planKey, tagline);
 }
 
+/** True when the stored CTA is the seeded one, i.e. nobody edited it. */
+export function isDefaultCta(ctaLabel: string | null | undefined): boolean {
+  const stored = ctaLabel?.trim().toLowerCase();
+  if (!stored) return true;
+  return stored in DEFAULT_CTA_LABELS;
+}
+
 type Translate = (key: string, options?: { defaultValue?: string }) => string;
 
 /**
@@ -93,6 +115,34 @@ export function resolvePlanName({
   const key = PLAN_NAME_KEYS[planKey as PlanKey];
   if (!key || !isDefaultName(planKey, name)) return stored;
   return t(key, { defaultValue: stored });
+}
+
+/**
+ * Resolve a plan's call-to-action for a visitor: a label the superadmin typed
+ * in the tariff editor wins as written, a seeded one is rendered in the
+ * visitor's language.
+ *
+ * A custom plan (or one with no stored label) offers the trial CTA — the same
+ * default the pricing section used before, but localized.
+ */
+export function resolvePlanCta({
+  ctaLabel,
+  isCustom,
+  t,
+}: {
+  planKey: string;
+  ctaLabel: string | null | undefined;
+  /** A custom-quote plan sells a conversation, not a trial. */
+  isCustom?: boolean;
+  t: Translate;
+}): string {
+  const stored = ctaLabel?.trim();
+  const key = stored ? DEFAULT_CTA_LABELS[stored.toLowerCase()] : undefined;
+  if (key) return t(key, { defaultValue: stored });
+  if (stored) return stored;
+  return isCustom
+    ? t('pricing.contactSales', { defaultValue: 'Contact sales' })
+    : t('pricing.startFreeTrial', { defaultValue: 'Start free trial' });
 }
 
 /**

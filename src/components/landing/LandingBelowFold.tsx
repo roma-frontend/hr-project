@@ -78,14 +78,14 @@ export default function LandingBelowFold({ initialLanguage = 'en' }: { initialLa
           <PersonasSection initialLanguage={initialLanguage} />
         </LazyMount>
         <LazyMount minHeight={384}>
-          <PricingPreview />
+          <PricingPreview initialLanguage={initialLanguage} />
         </LazyMount>
         <section id="testimonials">
           <LazyMount minHeight={384}>
             <TestimonialsSection initialLanguage={initialLanguage} />
           </LazyMount>
         </section>
-        <FAQSection />
+        <FAQSection initialLanguage={initialLanguage} />
         <LazyMount minHeight={288}>
           <FinalCtaSection initialLanguage={initialLanguage} />
         </LazyMount>

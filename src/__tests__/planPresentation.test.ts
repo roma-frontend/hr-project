@@ -10,8 +10,10 @@ import {
   PLAN_NAME_KEYS,
   PLAN_TAGLINE_KEYS,
   isAuthoredTagline,
+  isDefaultCta,
   isDefaultName,
   isDefaultTagline,
+  resolvePlanCta,
   resolvePlanName,
   resolvePlanTagline,
 } from '@/lib/planPresentation';
@@ -25,6 +27,8 @@ const localized: Record<string, string> = {
   'pricing.starterDesc': 'Փոքր թիմերի համար',
   'pricing.professionalDesc': 'Աճող ընկերությունների համար',
   'pricing.enterpriseDesc': 'Անհատական լուծումներ',
+  'pricing.startFreeTrial': 'Սկսել անվճար փորձաշրջանը',
+  'pricing.contactSales': 'Կապվել վաճառքի հետ',
 };
 const t = (key: string, options?: { defaultValue?: string }) =>
   localized[key] ?? options?.defaultValue ?? key;
@@ -86,6 +90,41 @@ describe('isDefaultTagline', () => {
   it('treats a missing tagline as untouched', () => {
     expect(isDefaultTagline('pro', undefined)).toBe(true);
     expect(isDefaultTagline('pro', '   ')).toBe(true);
+  });
+});
+
+describe('resolvePlanCta', () => {
+  it('renders a seeded CTA in the visitor’s language', () => {
+    // Regression: the seed stores English `ctaLabel` text, so a Russian or
+    // Armenian pricing card showed an English "Start free trial" button.
+    expect(resolvePlanCta({ planKey: 'pro', ctaLabel: 'Start free trial', t })).toBe(
+      'Սկսել անվճար փորձաշրջանը',
+    );
+    expect(resolvePlanCta({ planKey: 'enterprise', ctaLabel: 'Contact sales', t })).toBe(
+      'Կապվել վաճառքի հետ',
+    );
+  });
+
+  it('keeps a label the superadmin typed, in every language', () => {
+    expect(resolvePlanCta({ planKey: 'pro', ctaLabel: 'Записаться на демо', t })).toBe(
+      'Записаться на демо',
+    );
+  });
+
+  it('defaults to a localized trial CTA, or sales for a custom plan', () => {
+    expect(resolvePlanCta({ planKey: 'starter', ctaLabel: null, t })).toBe(
+      'Սկսել անվճար փորձաշրջանը',
+    );
+    expect(resolvePlanCta({ planKey: 'custom_2026', ctaLabel: undefined, isCustom: true, t })).toBe(
+      'Կապվել վաճառքի հետ',
+    );
+  });
+
+  it('detects the seeded labels, case- and whitespace-insensitively', () => {
+    expect(isDefaultCta('Start free trial')).toBe(true);
+    expect(isDefaultCta('  Contact Sales ')).toBe(true);
+    expect(isDefaultCta('Book a demo')).toBe(false);
+    expect(isDefaultCta(null)).toBe(true);
   });
 });
 

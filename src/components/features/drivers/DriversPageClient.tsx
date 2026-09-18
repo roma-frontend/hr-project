@@ -3,9 +3,14 @@
 import { Car } from 'lucide-react';
 import ModuleSeoPage from '@/components/features/ModuleSeoPage';
 
-export default function DriversPageClient() {
+export default function DriversPageClient({
+  initialLanguage = 'en',
+}: {
+  initialLanguage?: string;
+}) {
   return (
     <ModuleSeoPage
+      initialLanguage={initialLanguage}
       module="drivers"
       icon={<Car className="w-6 h-6" />}
       color="#f97316"

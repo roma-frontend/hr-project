@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { useTranslation } from 'react-i18next';
+import { useLandingTranslation } from './useLandingTranslation';
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuthStore } from '@/store/useAuthStore';
 import { logoutAction } from '@/actions/auth';
@@ -68,8 +68,20 @@ function ShieldIcon() {
   );
 }
 
-export default function Navbar({ embedded = false }: { embedded?: boolean }) {
-  const { t } = useTranslation();
+export default function Navbar({
+  embedded = false,
+  initialLanguage = 'en',
+}: {
+  embedded?: boolean;
+  /**
+   * The locale the server rendered this page in. Without it the navbar is
+   * server-rendered in English on every public page and only switches to the
+   * visitor's language on hydration — a flash of English nav, a React text
+   * mismatch (error #418), and English labels in the indexed HTML.
+   */
+  initialLanguage?: string;
+}) {
+  const { t } = useLandingTranslation(initialLanguage);
   const { user, logout, beginSignOut } = useAuthStore();
   const router = useRouter();
   const { theme, setTheme } = useTheme();

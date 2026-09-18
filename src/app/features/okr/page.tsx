@@ -23,6 +23,8 @@ const OkrPageClient = nextDynamic(() => import('@/components/features/okr/OkrPag
   loading: () => <Skeleton className="h-screen w-full" />,
 });
 
-export default function OkrPage() {
-  return <OkrPageClient />;
+export default async function OkrPage() {
+  // SSR in the visitor's language like /pricing — see PricingPage.
+  const locale = (await cookies()).get('i18nextLng')?.value || 'en';
+  return <OkrPageClient initialLanguage={locale} />;
 }

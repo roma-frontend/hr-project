@@ -69,7 +69,7 @@ import {
   type PlanKey as PricingPlanKey,
 } from '@/lib/pricing';
 import { applyRatePrecise } from '@/lib/currency';
-import { resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
+import { resolvePlanCta, resolvePlanName, resolvePlanTagline } from '@/lib/planPresentation';
 import { useCurrency } from '@/hooks/useCurrency';
 // The public pricing card — the same component the landing renders, so this
 // preview cannot drift from the page it is previewing.
@@ -470,9 +470,14 @@ function LandingPreview({
                 category: m.category,
               })),
             );
-            const ctaLabel = plan.isCustom
-              ? t('pricing.contactSales', 'Contact sales')
-              : plan.ctaLabel || t('pricing.startFreeTrial', 'Start free trial');
+            // Same resolver the public pricing card uses, so the editor's
+            // preview shows the button a visitor of this language sees.
+            const ctaLabel = resolvePlanCta({
+              planKey: plan.key,
+              ctaLabel: plan.ctaLabel,
+              isCustom: plan.isCustom,
+              t,
+            });
 
             const model: PlanCardModel = {
               accentFrom: accent.accentFrom,

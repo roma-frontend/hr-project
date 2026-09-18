@@ -134,6 +134,7 @@
       }
     },
     "adminOnly": "Nur Administratoren können verbinden",
-    "alreadyConnected": "{{name}} ist bereits verbunden. Verwalten Sie es unter Einstellungen → Webhooks."
+    "alreadyConnected": "{{name}} ist bereits verbunden. Verwalten Sie es unter Einstellungen → Webhooks.",
+    "metaTitleSuffix": "{{count}}+ Integrationen"
   }
 }
