@@ -22,6 +22,7 @@ import {
   type PaymentProvider,
 } from './lib/paymentSignature';
 import { bearerToken, type ApiScope } from './lib/apiKey';
+import { WEBHOOK_EVENT_TYPES, isValidEndpointUrl, isWebhookEventType } from './webhooks/protocol';
 
 const http = httpRouter();
 
@@ -434,7 +435,7 @@ http.route({
  */
 const API_CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
   'Access-Control-Max-Age': '86400',
 };
@@ -462,6 +463,16 @@ const API_V1_SCOPES: Record<string, ApiScope | null> = {
   departments: 'departments:read',
   positions: 'positions:read',
   leaves: 'leaves:read',
+  webhooks: 'webhooks:read',
+};
+
+/**
+ * Resources a key may WRITE, with the scope each one needs. Kept apart from the
+ * read map so a read scope can never imply a write, and so adding a write verb
+ * is a deliberate line in this table rather than a side effect of the router.
+ */
+const API_V1_WRITE_SCOPES: Record<string, ApiScope> = {
+  webhooks: 'webhooks:write',
 };
 
 http.route({
@@ -565,6 +576,14 @@ http.route({
           });
           return apiJson(200, { data, count: data.length }, usage);
         }
+        case 'webhooks': {
+          // Outbound endpoints of this key's organization. The signing secret is
+          // never returned here — only at creation, and only once.
+          const data = await ctx.runQuery(internal.webhooks.main.listEndpointsForOrg, {
+            organizationId: auth.organizationId,
+          });
+          return apiJson(200, { data, count: data.length }, usage);
+        }
         default:
           return apiJson(404, { error: 'Unknown resource' }, usage);
       }
@@ -576,6 +595,152 @@ http.route({
         message,
       );
       return apiJson(isArgumentError ? 400 : 500, { error: message }, usage);
+    }
+  }),
+});
+
+/**
+ * `POST /api/v1/webhooks` — REST-hooks subscribe (Zapier, Make, n8n, any
+ * service that registers its own callback URL).
+ *
+ * Body: `{ url, events?, label?, appId? }`. Requires the `webhooks:write`
+ * scope: a read-only key must not be able to redirect a customer's event
+ * stream to an address of its choosing. The response carries the signing secret
+ * once — the caller stores it, we only keep a masked hint.
+ */
+http.route({
+  pathPrefix: '/api/v1/',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const rawKey = bearerToken(request.headers.get('authorization'));
+    if (!rawKey) {
+      return apiJson(401, { error: 'Missing Authorization: Bearer <api-key>' });
+    }
+
+    const tail = new URL(request.url).pathname.split('/').filter(Boolean).slice(2);
+    const resource = tail[0] ?? '';
+    const requiredScope = API_V1_WRITE_SCOPES[resource];
+    if (!requiredScope) {
+      return apiJson(404, {
+        error: `Resource "${resource}" is read-only or unknown`,
+        writable: Object.keys(API_V1_WRITE_SCOPES),
+      });
+    }
+
+    const auth = await ctx.runMutation(internal.apiKeys.authorizeApiRequest, {
+      rawKey,
+      requiredScope,
+    });
+    if (!auth.ok) {
+      return apiJson(auth.status, { error: auth.error });
+    }
+    const usage = { used: auth.used, limit: auth.limit };
+
+    // `text()` + JSON.parse rather than `request.json()`: the same shape the
+    // other inbound handlers read, and it keeps the route testable with the
+    // repo's Request polyfill (which has text() but not json()).
+    let body: { url?: unknown; events?: unknown; label?: unknown; appId?: unknown };
+    try {
+      body = JSON.parse(await request.text()) as typeof body;
+    } catch {
+      return apiJson(400, { error: 'Body must be a JSON object' }, usage);
+    }
+
+    const url = typeof body.url === 'string' ? body.url.trim() : '';
+    if (!isValidEndpointUrl(url)) {
+      return apiJson(400, { error: 'url must be an absolute https:// URL' }, usage);
+    }
+    if (body.events !== undefined && !Array.isArray(body.events)) {
+      return apiJson(400, { error: 'events must be an array of event names' }, usage);
+    }
+    const events = Array.isArray(body.events)
+      ? body.events.filter((e): e is string => typeof e === 'string')
+      : [];
+    const unknownEvents = events.filter((e) => !isWebhookEventType(e));
+    if (unknownEvents.length > 0) {
+      return apiJson(
+        400,
+        {
+          error: `Unknown event type(s): ${unknownEvents.join(', ')}`,
+          available: WEBHOOK_EVENT_TYPES,
+        },
+        usage,
+      );
+    }
+
+    try {
+      const created = await ctx.runMutation(internal.webhooks.main.createEndpointForOrg, {
+        organizationId: auth.organizationId,
+        url,
+        events,
+        label: typeof body.label === 'string' ? body.label : undefined,
+        appId: typeof body.appId === 'string' ? body.appId : undefined,
+      });
+      return apiJson(
+        201,
+        {
+          data: {
+            id: created.endpointId,
+            url,
+            events: created.events,
+            secret: created.secret,
+            secretShownOnce: true,
+          },
+        },
+        usage,
+      );
+    } catch (err) {
+      return apiJson(400, { error: err instanceof Error ? err.message : String(err) }, usage);
+    }
+  }),
+});
+
+/**
+ * `DELETE /api/v1/webhooks/{id}` — REST-hooks unsubscribe. Scoped to the key's
+ * organization downstream, so an id from another tenant reads as not found.
+ */
+http.route({
+  pathPrefix: '/api/v1/',
+  method: 'DELETE',
+  handler: httpAction(async (ctx, request) => {
+    const rawKey = bearerToken(request.headers.get('authorization'));
+    if (!rawKey) {
+      return apiJson(401, { error: 'Missing Authorization: Bearer <api-key>' });
+    }
+
+    const tail = new URL(request.url).pathname.split('/').filter(Boolean).slice(2);
+    const resource = tail[0] ?? '';
+    const endpointId = tail[1];
+    const requiredScope = API_V1_WRITE_SCOPES[resource];
+    if (!requiredScope) {
+      return apiJson(404, {
+        error: `Resource "${resource}" is read-only or unknown`,
+        writable: Object.keys(API_V1_WRITE_SCOPES),
+      });
+    }
+    if (!endpointId) {
+      return apiJson(400, { error: 'Missing id: use DELETE /webhooks/{id}' });
+    }
+
+    const auth = await ctx.runMutation(internal.apiKeys.authorizeApiRequest, {
+      rawKey,
+      requiredScope,
+    });
+    if (!auth.ok) {
+      return apiJson(auth.status, { error: auth.error });
+    }
+    const usage = { used: auth.used, limit: auth.limit };
+
+    try {
+      await ctx.runMutation(internal.webhooks.main.deleteEndpointForOrg, {
+        organizationId: auth.organizationId,
+        endpointId: endpointId as Id<'webhookEndpoints'>,
+      });
+      return apiJson(200, { ok: true }, usage);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isArgumentError = /ArgumentValidationError|not a valid ID/i.test(message);
+      return apiJson(isArgumentError ? 400 : 404, { error: message }, usage);
     }
   }),
 });

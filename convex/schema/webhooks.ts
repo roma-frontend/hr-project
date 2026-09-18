@@ -24,6 +24,14 @@ export const webhooks = {
     organizationId: v.id('organizations'),
     /** Admin-facing label, e.g. "Zapier — recruiting". */
     label: v.optional(v.string()),
+    /**
+     * Marketplace app this endpoint installed (`src/lib/marketplace.ts` id, e.g.
+     * `slack`). The directory matches installs on this rather than on the label:
+     * an admin who renames the endpoint in Settings → Webhooks used to reset the
+     * "Connected" badge, even though the webhook kept working. Optional because
+     * endpoints created outside the marketplace (and rows written before the
+     * column existed) have no app. */
+    appId: v.optional(v.string()),
     /** Must be https:// — plain HTTP endpoints are rejected at creation. */
     url: v.string(),
     /**

@@ -188,7 +188,9 @@ server-side calls are strongly preferred.
 ## Outbound webhooks
 
 Strata → your endpoint deliveries are a **separate** feature with its own signing protocol and
-delivery log: see **Settings → Webhooks**. The API above is inbound only.
+delivery log: see **Settings → Webhooks**. The API above is inbound only. The protocol
+(headers, signature verification, dedupe by `x-webhook-id`, retry schedule) is documented in
+[`docs/webhooks.md`](./webhooks.md).
 
 ---
 

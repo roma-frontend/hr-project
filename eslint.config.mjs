@@ -24,6 +24,9 @@ const eslintConfig = defineConfig([
     'ocr_extract.mjs',
     // Ignore scripts
     'scripts/**',
+    // Partner app bundles published with their own CLIs (Zapier platform,
+    // Slack manifest) — plain CommonJS, not part of the web build
+    'integrations/**',
     'remove-console-logs.js',
     // Ignore tests
     'src/__tests__/**',

@@ -157,6 +157,28 @@ describe('webhook admin CRUD (auth + org scoping)', () => {
     expect(ctx.__tables.webhookEndpoints[0].secret).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it('stores the marketplace app id and rejects a malformed one', async () => {
+    mockGetAuthCaller.mockResolvedValue(admin);
+    const ctx = makeCtx();
+    await mod.createEndpoint.handler(ctx, {
+      url: 'https://ok.com/hook',
+      events: [],
+      label: 'Slack',
+      appId: 'Slack', // case is normalized, so the directory match still works
+    });
+    expect(ctx.__tables.webhookEndpoints[0].appId).toBe('slack');
+
+    const other = makeCtx();
+    await expect(
+      mod.createEndpoint.handler(other, {
+        url: 'https://ok.com/hook',
+        events: [],
+        appId: 'not a real app',
+      }),
+    ).rejects.toThrow(/marketplace app id/);
+    expect(other.__tables.webhookEndpoints).toHaveLength(0);
+  });
+
   it('invalid event subscriptions are normalized away', async () => {
     mockGetAuthCaller.mockResolvedValue(admin);
     const ctx = makeCtx();
@@ -371,6 +393,10 @@ describe('deliverPending worker', () => {
     expect(init.headers['x-webhook-signature']).toMatch(/^[0-9a-f]{64}$/);
     expect(init.headers['x-webhook-timestamp']).toMatch(/^\d+$/);
     expect(init.headers['x-webhook-event']).toBe('leave.approved');
+    // Dedupe contract: the id identifies the *delivery*, not the attempt, so a
+    // retry repeats it and the consumer can drop the duplicate.
+    expect(init.headers['x-webhook-id']).toBe('d1');
+    expect(init.headers['x-webhook-attempt']).toBe('1');
     expect(init.body).toBe(delivery.payload);
 
     const outcome = runMutationSpy.mock.calls

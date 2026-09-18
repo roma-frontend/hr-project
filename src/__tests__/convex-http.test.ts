@@ -79,6 +79,21 @@ jest.mock('../../convex/_generated/server', () => ({
 
 jest.mock('../../convex/_generated/api', () => ({
   internal: {
+    apiKeys: { authorizeApiRequest: 'internal.apiKeys.authorizeApiRequest' },
+    apiV1: {
+      listEmployees: 'internal.apiV1.listEmployees',
+      getEmployee: 'internal.apiV1.getEmployee',
+      listDepartments: 'internal.apiV1.listDepartments',
+      listPositions: 'internal.apiV1.listPositions',
+      listLeaves: 'internal.apiV1.listLeaves',
+    },
+    webhooks: {
+      main: {
+        listEndpointsForOrg: 'internal.webhooks.main.listEndpointsForOrg',
+        createEndpointForOrg: 'internal.webhooks.main.createEndpointForOrg',
+        deleteEndpointForOrg: 'internal.webhooks.main.deleteEndpointForOrg',
+      },
+    },
     integrations: {
       ingestLuckyCarrotWebhook: 'internal.ingestLuckyCarrotWebhook',
       imidResolveOrgByState: 'internal.imidResolveOrgByState',
@@ -448,5 +463,151 @@ describe('imID verify webhook', () => {
       organizationIdRaw: 'org_1',
       body: '{"verified":true}',
     });
+  });
+});
+
+/**
+ * `POST`/`DELETE /api/v1/webhooks` — the REST-hooks pair an integration platform
+ * (Zapier's subscribeHook/unsubscribeHook, Make, n8n) calls to register and
+ * remove its own callback URL without an admin touching Settings → Webhooks.
+ *
+ * The three things worth pinning down: a read-only key cannot write, the secret
+ * is handed out exactly once, and the organization always comes from the key.
+ */
+describe('Public API v1 — webhook subscriptions', () => {
+  const post = routeFor('POST', '/api/v1/')!;
+  const remove = routeFor('DELETE', '/api/v1/')!;
+
+  const KEY = { authorization: 'Bearer strata_test' };
+
+  function apiRequest(method: string, path: string, body?: unknown) {
+    return new Request(`https://project.convex.site/api/v1/${path}`, {
+      method,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: KEY,
+    });
+  }
+
+  /** ctx whose runMutation answers the auth check, then the write it guards. */
+  function makeCtx(auth: unknown, writeResult: unknown = { ok: true }) {
+    const runMutation = jest
+      .fn()
+      .mockResolvedValueOnce(auth)
+      .mockResolvedValue(writeResult) as jest.Mock;
+    return { ctx: { runMutation, runQuery: jest.fn() }, runMutation };
+  }
+
+  const granted = {
+    ok: true,
+    status: 200,
+    organizationId: 'org1',
+    scopes: ['webhooks:write'],
+    used: 1,
+    limit: null,
+  };
+
+  it('registers the write routes', () => {
+    expect(post).toBeDefined();
+    expect(remove).toBeDefined();
+  });
+
+  it('rejects a request with no key', async () => {
+    const { ctx, runMutation } = makeCtx(granted);
+    const response = await post.handler(
+      ctx,
+      new Request('https://project.convex.site/api/v1/webhooks', { method: 'POST', body: '{}' }),
+    );
+    expect(response.status).toBe(401);
+    expect(runMutation).not.toHaveBeenCalled();
+  });
+
+  it('refuses a key without webhooks:write', async () => {
+    const { ctx, runMutation } = makeCtx({
+      ok: false,
+      status: 403,
+      error: 'Missing scope webhooks:write',
+    });
+    const response = await post.handler(
+      ctx,
+      apiRequest('POST', 'webhooks', { url: 'https://consumer.example/hook' }),
+    );
+    expect(response.status).toBe(403);
+    // The scope was decided from the route, not after the write attempt.
+    expect(runMutation).toHaveBeenCalledWith('internal.apiKeys.authorizeApiRequest', {
+      rawKey: 'strata_test',
+      requiredScope: 'webhooks:write',
+    });
+  });
+
+  it('creates the endpoint for the key’s organization and returns the secret once', async () => {
+    const { ctx, runMutation } = makeCtx(granted, {
+      endpointId: 'wh_1',
+      secret: 'a'.repeat(64),
+      events: ['leave.approved'],
+      createdAt: 1,
+    });
+    const response = await post.handler(
+      ctx,
+      apiRequest('POST', 'webhooks', {
+        url: 'https://hooks.zapier.com/hooks/catch/1/abc/'.trim(),
+        events: ['leave.approved'],
+        label: 'Zapier',
+        appId: 'zapier',
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    const body = await jsonOf(response);
+    expect(body.data.id).toBe('wh_1');
+    expect(body.data.secret).toHaveLength(64);
+    expect(body.data.secretShownOnce).toBe(true);
+    expect(runMutation).toHaveBeenLastCalledWith('internal.webhooks.main.createEndpointForOrg', {
+      organizationId: 'org1',
+      url: 'https://hooks.zapier.com/hooks/catch/1/abc/',
+      events: ['leave.approved'],
+      label: 'Zapier',
+      appId: 'zapier',
+    });
+  });
+
+  it('rejects a non-https target and an unknown event type', async () => {
+    const insecure = makeCtx(granted);
+    const insecureResponse = await post.handler(
+      insecure.ctx,
+      apiRequest('POST', 'webhooks', { url: 'http://plain.example/hook' }),
+    );
+    expect(insecureResponse.status).toBe(400);
+
+    const bogus = makeCtx(granted);
+    const bogusResponse = await post.handler(
+      bogus.ctx,
+      apiRequest('POST', 'webhooks', {
+        url: 'https://consumer.example/hook',
+        events: ['leave.exploded'],
+      }),
+    );
+    expect(bogusResponse.status).toBe(400);
+    expect(await jsonOf(bogusResponse)).toMatchObject({
+      error: expect.stringContaining('leave.exploded'),
+    });
+    // Nothing was written: validation happens before the mutation.
+    expect(bogus.runMutation).toHaveBeenCalledTimes(1);
+  });
+
+  it('deletes by id, scoped to the key’s organization', async () => {
+    const { ctx, runMutation } = makeCtx(granted, { ok: true });
+    const response = await remove.handler(ctx, apiRequest('DELETE', 'webhooks/wh_1'));
+
+    expect(response.status).toBe(200);
+    expect(runMutation).toHaveBeenLastCalledWith('internal.webhooks.main.deleteEndpointForOrg', {
+      organizationId: 'org1',
+      endpointId: 'wh_1',
+    });
+  });
+
+  it('requires the id on delete', async () => {
+    const { ctx } = makeCtx(granted);
+    const response = await remove.handler(ctx, apiRequest('DELETE', 'webhooks'));
+    expect(response.status).toBe(400);
   });
 });

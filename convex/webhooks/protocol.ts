@@ -37,6 +37,15 @@ export function isWebhookEventType(value: string): value is WebhookEventType {
 export const OUTBOUND_SIGNATURE_HEADER = 'x-webhook-signature';
 export const OUTBOUND_TIMESTAMP_HEADER = 'x-webhook-timestamp';
 export const OUTBOUND_EVENT_HEADER = 'x-webhook-event';
+/**
+ * Stable id of this delivery (`webhookDeliveries._id`), identical on every
+ * retry. A consumer that sees the same id twice has received a redelivery and
+ * should drop it — the body carries the same value as `deliveryId`, but header
+ * access is what most gateways, Zapier/Make code steps and n8n functions use.
+ */
+export const OUTBOUND_DELIVERY_ID_HEADER = 'x-webhook-id';
+/** 1-based attempt counter for this delivery — for logs, not for logic. */
+export const OUTBOUND_ATTEMPT_HEADER = 'x-webhook-attempt';
 
 /** Backoff schedule for failed deliveries, in milliseconds. */
 export const RETRY_DELAYS_MS = [0, 60_000, 5 * 60_000, 30 * 60_000, 2 * 60 * 60_000] as const;

@@ -70,15 +70,30 @@ export default function MarketplaceClient() {
   const [installing, setInstalling] = useState(false);
 
   const endpointsList = useMemo(
-    () => (endpoints ?? []) as Array<{ _id: string; label?: string; enabled?: boolean }>,
+    () =>
+      (endpoints ?? []) as Array<{
+        _id: string;
+        label?: string;
+        appId?: string;
+        enabled?: boolean;
+      }>,
     [endpoints],
   );
 
   /** Label written by this page — the contract that makes the badge honest. */
   const labelFor = (app: MarketplaceApp) => app.name;
 
+  /**
+   * Installed = an endpoint this directory created for that app.
+   *
+   * The app id is the key (`webhookEndpoints.appId`); the label check keeps
+   * endpoints created before that column existed — and any endpoint an admin
+   * intentionally labelled after the app — counted as installed. Without the id
+   * a rename in Settings → Webhooks flipped the badge back to "Connect" while
+   * the webhook kept delivering.
+   */
   const isInstalled = (app: MarketplaceApp) =>
-    endpointsList.some((endpoint) => endpoint.label === labelFor(app));
+    endpointsList.some((endpoint) => endpoint.appId === app.id || endpoint.label === labelFor(app));
 
   const categories = useMemo(() => populatedCategories(), []);
 
@@ -119,6 +134,7 @@ export default function MarketplaceClient() {
     try {
       await createEndpoint({
         label: labelFor(pending),
+        appId: pending.id,
         url: url.trim(),
         events: selectedEvents,
         enabled: true,

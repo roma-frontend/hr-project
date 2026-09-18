@@ -25,7 +25,14 @@ import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { publicApiBaseUrl } from '@/lib/convexSiteUrl';
 
 /** Mirrors `API_SCOPES` in convex/lib/apiKey.ts — the backend also validates. */
-const SCOPES = ['employees:read', 'departments:read', 'positions:read', 'leaves:read'] as const;
+const SCOPES = [
+  'employees:read',
+  'departments:read',
+  'positions:read',
+  'leaves:read',
+  'webhooks:read',
+  'webhooks:write',
+] as const;
 
 export function ApiKeysSettings() {
   const { t } = useTranslation();

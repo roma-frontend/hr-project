@@ -20,6 +20,7 @@ import {
   internalAction,
 } from '../_generated/server';
 import { internal } from '../_generated/api';
+import type { MutationCtx } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { getAuthCaller } from '../lib/getAuthCaller';
 import {
@@ -30,12 +31,66 @@ import {
   OUTBOUND_SIGNATURE_HEADER,
   OUTBOUND_TIMESTAMP_HEADER,
   OUTBOUND_EVENT_HEADER,
+  OUTBOUND_DELIVERY_ID_HEADER,
+  OUTBOUND_ATTEMPT_HEADER,
   signPayload,
   buildEnvelope,
   generateEndpointSecret,
   isValidEndpointUrl,
   normalizeEventSubscription,
 } from './protocol';
+
+/**
+ * Keep `appId` to the shape the marketplace catalog uses (`slack`, `m365-teams`)
+ * and drop anything else — the directory matches installs on this value, so a
+ * free-form string would only create badges nobody can trust. Convex can't
+ * import `src/lib/marketplace.ts` (different runtime), so the shape is checked
+ * here and membership in the catalog is enforced by the UI that passes it.
+ */
+function normalizeAppId(appId: string | undefined): string | undefined {
+  const trimmed = appId?.trim().toLowerCase();
+  if (!trimmed) return undefined;
+  if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(trimmed)) {
+    throw new Error('Unknown marketplace app id');
+  }
+  return trimmed;
+}
+
+/**
+ * The single write path for a new endpoint. Shared by the admin mutation, the
+ * marketplace install and the public API (`createEndpointForOrg`) so the three
+ * cannot drift on URL validation, event normalization or the generated secret.
+ */
+async function insertEndpointRow(
+  ctx: MutationCtx,
+  args: {
+    organizationId: Id<'organizations'>;
+    label?: string;
+    appId?: string;
+    url: string;
+    events: string[];
+    enabled?: boolean;
+    createdBy?: Id<'users'>;
+  },
+): Promise<Id<'webhookEndpoints'>> {
+  if (!isValidEndpointUrl(args.url)) {
+    throw new Error('Webhook URL must be a valid https:// URL');
+  }
+  const now = Date.now();
+  return ctx.db.insert('webhookEndpoints', {
+    organizationId: args.organizationId,
+    label: args.label?.trim() || undefined,
+    appId: normalizeAppId(args.appId),
+    url: args.url.trim(),
+    events: normalizeEventSubscription(args.events),
+    secret: generateEndpointSecret(),
+    enabled: args.enabled ?? true,
+    consecutiveFailures: 0,
+    createdAt: now,
+    updatedAt: now,
+    createdBy: args.createdBy,
+  });
+}
 
 function assertOrgManager(
   caller: { role: string; organizationId?: Id<'organizations'> } | null,
@@ -126,6 +181,8 @@ export const createEndpoint = mutation({
     url: v.string(),
     events: v.array(v.string()),
     enabled: v.optional(v.boolean()),
+    /** Marketplace app id when the endpoint comes from the directory. */
+    appId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
@@ -134,19 +191,13 @@ export const createEndpoint = mutation({
     if (!isValidEndpointUrl(args.url)) {
       throw new Error('Webhook URL must be a valid https:// URL');
     }
-    const events = normalizeEventSubscription(args.events);
-
-    const now = Date.now();
-    return ctx.db.insert('webhookEndpoints', {
+    return insertEndpointRow(ctx, {
       organizationId,
-      label: args.label?.trim() || undefined,
-      url: args.url.trim(),
-      events,
-      secret: generateEndpointSecret(),
-      enabled: args.enabled ?? true,
-      consecutiveFailures: 0,
-      createdAt: now,
-      updatedAt: now,
+      label: args.label,
+      appId: args.appId,
+      url: args.url,
+      events: args.events,
+      enabled: args.enabled,
       createdBy: caller!._id as Id<'users'>,
     });
   },
@@ -203,6 +254,82 @@ export const deleteEndpoint = mutation({
     return { ok: true };
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Org-scoped access for the public API (convex/http.ts)
+//
+// The admin mutations above resolve the organization from the signed-in user;
+// these take it from the API key instead. They are internal, so nothing can
+// reach them without the key check that already ran in the HTTP handler.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Register an outbound endpoint for an organization (REST-hooks subscribe).
+ * Returns the signing secret in plain text **once** — it is never readable
+ * again through the API, exactly like an admin-facing endpoint.
+ */
+export const createEndpointForOrg = internalMutation({
+  args: {
+    organizationId: v.id('organizations'),
+    url: v.string(),
+    events: v.array(v.string()),
+    label: v.optional(v.string()),
+    appId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const endpointId = await insertEndpointRow(ctx, {
+      organizationId: args.organizationId,
+      label: args.label,
+      appId: args.appId,
+      url: args.url,
+      events: args.events,
+    });
+    const row = await ctx.db.get(endpointId);
+    return {
+      endpointId,
+      secret: row?.secret ?? '',
+      events: row?.events ?? [],
+      createdAt: row?.createdAt ?? Date.now(),
+    };
+  },
+});
+
+/** Endpoints of one organization, without the signing secret. */
+export const listEndpointsForOrg = internalQuery({
+  args: { organizationId: v.id('organizations') },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query('webhookEndpoints')
+      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+      .collect();
+    return rows
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map(({ secret, ...rest }) => ({ ...rest, secretHint: maskTail(secret) }));
+  },
+});
+
+/**
+ * Remove one endpoint. Scoped by organization, so a key can only ever delete
+ * an endpoint of the tenant that owns it.
+ */
+export const deleteEndpointForOrg = internalMutation({
+  args: {
+    organizationId: v.id('organizations'),
+    endpointId: v.id('webhookEndpoints'),
+  },
+  handler: async (ctx, args) => {
+    const endpoint = await ctx.db.get(args.endpointId);
+    if (!endpoint || endpoint.organizationId !== args.organizationId) {
+      throw new Error('Webhook endpoint not found');
+    }
+    await ctx.db.delete(args.endpointId);
+    return { ok: true };
+  },
+});
+
+function maskTail(secret: string | undefined): string | undefined {
+  return secret ? `••••••••${secret.slice(-4)}` : undefined;
+}
 
 /** Rotate the signing secret; the old one stops working immediately. */
 export const rotateSecret = mutation({
@@ -408,6 +535,10 @@ export const deliverPending = internalAction({
             [OUTBOUND_SIGNATURE_HEADER]: signature,
             [OUTBOUND_TIMESTAMP_HEADER]: timestampSeconds,
             [OUTBOUND_EVENT_HEADER]: delivery.eventType,
+            // Same delivery keeps the same id across retries, so a receiver can
+            // drop the duplicate instead of creating a second ticket/record.
+            [OUTBOUND_DELIVERY_ID_HEADER]: delivery._id,
+            [OUTBOUND_ATTEMPT_HEADER]: String(delivery.attempt + 1),
           },
           body,
         });

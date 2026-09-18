@@ -10,14 +10,22 @@ import { randomToken } from '../sso/protocol';
 export const API_KEY_PREFIX = 'strata_';
 
 /**
- * The v1 read surface. Deliberately four resources: an API that promises
+ * The v1 surface. Read resources stay deliberately few: an API that promises
  * everything and delivers half of it is worse than a small one that is exact.
+ *
+ * `webhooks:read` / `webhooks:write` exist so an integration platform (Zapier,
+ * Make, n8n, a customer's own service) can register and remove its own outbound
+ * webhook subscription instead of asking an admin to paste a URL into
+ * Settings → Webhooks. Write is a separate scope because a key that can only
+ * read the roster must not be able to redirect a customer's event stream.
  */
 export const API_SCOPES = [
   'employees:read',
   'departments:read',
   'positions:read',
   'leaves:read',
+  'webhooks:read',
+  'webhooks:write',
 ] as const;
 
 export type ApiScope = (typeof API_SCOPES)[number];

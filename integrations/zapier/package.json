@@ -1,0 +1,21 @@
+{
+  "name": "strata-zapier",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zapier integration for Strata HR — REST hooks over the public API v1",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --testTimeout 10000"
+  },
+  "dependencies": {
+    "zapier-platform-core": "^15.5.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "zapier-platform-cli": "^15.5.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  }
+}

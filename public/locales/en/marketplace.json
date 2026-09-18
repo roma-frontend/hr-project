@@ -14,7 +14,7 @@
     "actionManage": "Manage",
     "docs": "Docs",
     "installTitle": "Connect {{name}}",
-    "installDescription": "Pick the events to send, paste the incoming webhook URL from the tool, and save. Deliveries are signed with HMAC-SHA256 and retried automatically.",
+    "installDescription": "Pick the events to send, paste the incoming webhook URL from the tool, and save. Deliveries are signed with HMAC-SHA256 and retried automatically. Deliveries are signed with HMAC-SHA256 and retried automatically — repeats repeat the same x-webhook-id, so drop duplicates on it.",
     "urlLabel": "Incoming webhook URL",
     "urlHint": "Must be an https:// endpoint that accepts POST with a JSON body.",
     "eventsLabel": "Events to send",
