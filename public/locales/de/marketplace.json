@@ -1,0 +1,137 @@
+{
+  "marketplace": {
+    "title": "Integrationen",
+    "subtitle": "Verbinden Sie Strata mit den Tools, die Ihr Team bereits nutzt – Ereignisse gehen hinaus, Arbeit kommt zurück.",
+    "statsAvailable": "{{count}} direkt verbindbar",
+    "statsComing": "{{count}} in Planung",
+    "searchPlaceholder": "Integrationen suchen",
+    "filterAll": "Alle",
+    "statusAvailable": "Verfügbar",
+    "statusComing": "Demnächst",
+    "actionConnect": "Verbinden",
+    "actionConfigure": "Konfigurieren",
+    "actionInstalled": "Verbunden",
+    "actionManage": "Verwalten",
+    "docs": "Dokumentation",
+    "installTitle": "{{name}} verbinden",
+    "installDescription": "Wählen Sie die zu sendenden Ereignisse, fügen Sie die eingehende Webhook-URL des Tools ein und speichern Sie. Zustellungen werden mit HMAC-SHA256 signiert und automatisch wiederholt.",
+    "urlLabel": "Eingehende Webhook-URL",
+    "urlHint": "Erforderlich ist eine https://-URL, die POST mit JSON-Body annimmt.",
+    "eventsLabel": "Zu sendende Ereignisse",
+    "eventsHint": "Ohne Auswahl werden alle Ereignistypen gesendet.",
+    "installSubmit": "Verbinden",
+    "installing": "Wird verbunden…",
+    "installSuccess": "{{name}} verbunden",
+    "installError": "Integration konnte nicht verbunden werden",
+    "invalidUrl": "Bitte eine gültige https://-URL eingeben",
+    "noResults": "Keine Integration passt zu Ihrer Suche.",
+    "footnote": "Jede Verbindung hier ist ein signierter ausgehender Webhook, den Sie einsehen, pausieren oder neu ausstellen können unter",
+    "footnoteLink": "Einstellungen → Webhooks",
+    "categories": {
+      "communication": "Kommunikation",
+      "automation": "Automatisierung",
+      "productivity": "Produktivität",
+      "identity": "Identität & Zugriff",
+      "hr": "HR & Recruiting",
+      "accounting": "Buchhaltung"
+    },
+    "apps": {
+      "slack": {
+        "description": "Urlaubs-, Spesen- und Neueinstellungs-Ereignisse in jeden Slack-Kanal posten."
+      },
+      "msteams": {
+        "description": "Denselben Ereignisstrom in einen Microsoft-Teams-Kanal liefern."
+      },
+      "googlechat": {
+        "description": "HR-Benachrichtigungen in einen Google-Chat-Bereich senden."
+      },
+      "discord": {
+        "description": "Ankündigungen und Freigaben in einen Discord-Kanal leiten."
+      },
+      "telegram": {
+        "description": "Bot-Benachrichtigungen zu Anwesenheit, Freigaben und Erinnerungen."
+      },
+      "zapier": {
+        "description": "Über 6.000 Apps durch Strata-Ereignisse auslösen – ohne Code."
+      },
+      "make": {
+        "description": "Mehrstufige visuelle Szenarien als Reaktion auf Strata-Ereignisse bauen."
+      },
+      "n8n": {
+        "description": "Strata in selbst gehostete Workflows einbinden."
+      },
+      "powerautomate": {
+        "description": "Microsoft-365-Flows mit HR-Ereignissen verbinden."
+      },
+      "webhook": {
+        "description": "Signiertes JSON an jede HTTPS-URL, bei frei wählbaren Ereignissen."
+      },
+      "googlecalendar": {
+        "description": "Bidirektionale Synchronisierung für Urlaub, Feiertage und Teamkalender."
+      },
+      "sharepoint": {
+        "description": "Dokumente und Unternehmensdateien in Ihrer SharePoint-Bibliothek halten."
+      },
+      "tasks": {
+        "description": "Aufgaben- und Freigabeereignisse dorthin senden, wo die Arbeit passiert."
+      },
+      "jira": {
+        "description": "HR-Anfragen in verfolgte Tickets verwandeln – mit Status-Rücksynchronisierung."
+      },
+      "outlook": {
+        "description": "Kalendersynchronisierung für Microsoft 365 und Outlook-Postfächer."
+      },
+      "saml": {
+        "description": "SAML-2.0-Föderation mit Ihrem Identity Provider – ohne separate Passwörter."
+      },
+      "oidc": {
+        "description": "Unternehmensweites Single Sign-on über OIDC/OAuth 2.0."
+      },
+      "scim": {
+        "description": "Automatisierte Benutzeranlage und -deaktivierung aus Ihrem Verzeichnis."
+      },
+      "imid": {
+        "description": "Armenische nationale e-ID: Anmeldung, Signatur und Identitätsprüfung."
+      },
+      "apikeys": {
+        "description": "Nur lesende API-Schlüssel für Dashboards, BI-Tools und Datenpipelines."
+      },
+      "entra": {
+        "description": "Verzeichnissynchronisierung und SSO mit Microsoft Entra ID."
+      },
+      "okta": {
+        "description": "Benutzer und Gruppen aus Okta bereitstellen."
+      },
+      "googleworkspace": {
+        "description": "Verzeichnissynchronisierung für Benutzer, Gruppen und Organisationseinheiten."
+      },
+      "luckycarrot": {
+        "description": "Daten zu Mitarbeiterbindung und Anerkennung, automatisch synchronisiert."
+      },
+      "attendance": {
+        "description": "Kommen- und Gehen-Ereignisse von jedem Zeiterfassungsgerät streamen."
+      },
+      "zkteco": {
+        "description": "Direkte Geräteintegration für biometrische Leser von ZKTeco und Suprema."
+      },
+      "staffam": {
+        "description": "Stellen ausschreiben und Bewerbungen von Staff.am empfangen."
+      },
+      "greenhouse": {
+        "description": "Bidirektionale Synchronisierung von Kandidaten und Stellen mit Ihrem ATS."
+      },
+      "armsoft": {
+        "description": "Mitarbeiter- und Lohndaten mit Armsoft (ՀԾ) austauschen."
+      },
+      "oneczup": {
+        "description": "Rückstellungen und Buchungen mit 1C:ZUP synchronisieren."
+      },
+      "xero": {
+        "description": "Lohnbuchungen und Erstattungen an Xero übergeben."
+      },
+      "quickbooks": {
+        "description": "Lohnsummen und Spesen an QuickBooks übertragen."
+      }
+    }
+  }
+}

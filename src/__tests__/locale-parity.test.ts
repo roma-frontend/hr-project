@@ -40,6 +40,7 @@ const NAMESPACES = [
   'expenses',
   'succession',
   'careerPaths',
+  'marketplace',
 ];
 
 /** Flattened dotted paths that are intentionally absent from EN. */

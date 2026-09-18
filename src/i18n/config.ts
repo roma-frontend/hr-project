@@ -43,6 +43,7 @@ export const allNamespaces = [
   'shifts',
   'succession',
   'careerPaths',
+  'marketplace',
 ] as const;
 
 export type AppNamespace = (typeof allNamespaces)[number];

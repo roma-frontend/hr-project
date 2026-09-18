@@ -47,6 +47,7 @@ const NAMESPACES = [
   'expenses',
   'succession',
   'careerPaths',
+  'marketplace',
 ];
 
 /** Flatten a nested translation object into a map of dotted-path → leaf value. */

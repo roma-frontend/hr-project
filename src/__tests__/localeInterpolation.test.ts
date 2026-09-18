@@ -48,6 +48,7 @@ const NAMESPACES = [
   'expenses',
   'succession',
   'careerPaths',
+  'marketplace',
 ] as const;
 
 type Json = { [key: string]: unknown };

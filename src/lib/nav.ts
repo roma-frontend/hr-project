@@ -23,6 +23,7 @@ import {
   CalendarClock,
   CalendarDays,
   Car,
+  Blocks,
   CheckSquare,
   ClipboardCheck,
   ClipboardList,
@@ -372,6 +373,16 @@ export const navItems: NavEntry[] = [
         roles: ['superadmin', 'admin'],
       },
     ],
+  },
+  // Marketplace is browsable by every role — the catalog is also a
+  // discoverability surface — while the install action inside it is enforced
+  // org-admin server-side. Gating the entry point here would hide the page from
+  // the people who need to ask for an integration by name.
+  {
+    href: '/marketplace',
+    labelKey: 'nav.marketplace',
+    icon: Blocks,
+    roles: ['superadmin', 'admin', 'supervisor', 'employee', 'driver'],
   },
 
   // ── Superadmin ──

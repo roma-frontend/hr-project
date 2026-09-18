@@ -63,6 +63,7 @@ const NAMESPACES = [
   'expenses',
   'succession',
   'careerPaths',
+  'marketplace',
 ] as const;
 type Tab = 'translations' | 'limits' | 'scheduled' | 'maintenance';
 

@@ -44,6 +44,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${APP_URL}/integrations`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
     // One entry per head-to-head page — these carry the non-brand search traffic.
     ...COMPARE_SLUGS.map((slug) => ({
       url: `${APP_URL}/compare/${slug}`,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from '@/lib/cssMotion';
 import {
@@ -139,6 +140,7 @@ const MeetingRoomSettings = dynamic(
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { user, login } = useAuthStore();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('productivity');
   const [saving, setSaving] = useState(false);
   const [productivitySettings, setProductivitySettings] = useState({});
@@ -363,6 +365,21 @@ export default function SettingsPage() {
         ]
       : []),
   ];
+
+  // Deep links from the integration marketplace (`/marketplace`) land on a
+  // specific tab: `/settings?tab=webhooks`. The requested tab is applied only if
+  // the current role's tab strip actually contains it — a stale or hand-typed
+  // value must not blank the page, and must not bypass the RBAC-administered
+  // tab list above.
+  const requestedTab = searchParams.get('tab');
+  useEffect(() => {
+    if (requestedTab && tabs.some((tab) => tab.value === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+    // `tabs` is rebuilt every render from the role; keying the effect on the
+    // requested tab keeps this from re-firing on unrelated re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedTab]);
 
   return (
     <motion.div

@@ -1,0 +1,137 @@
+{
+  "marketplace": {
+    "title": "Integrations",
+    "subtitle": "Connect Strata to the tools your team already uses — events flow out, work flows back.",
+    "statsAvailable": "{{count}} ready to connect",
+    "statsComing": "{{count}} on the roadmap",
+    "searchPlaceholder": "Search integrations",
+    "filterAll": "All",
+    "statusAvailable": "Available",
+    "statusComing": "Coming soon",
+    "actionConnect": "Connect",
+    "actionConfigure": "Configure",
+    "actionInstalled": "Connected",
+    "actionManage": "Manage",
+    "docs": "Docs",
+    "installTitle": "Connect {{name}}",
+    "installDescription": "Pick the events to send, paste the incoming webhook URL from the tool, and save. Deliveries are signed with HMAC-SHA256 and retried automatically.",
+    "urlLabel": "Incoming webhook URL",
+    "urlHint": "Must be an https:// endpoint that accepts POST with a JSON body.",
+    "eventsLabel": "Events to send",
+    "eventsHint": "Select none to receive every event type.",
+    "installSubmit": "Connect",
+    "installing": "Connecting…",
+    "installSuccess": "{{name}} connected",
+    "installError": "Could not connect this integration",
+    "invalidUrl": "Enter a valid https:// URL",
+    "noResults": "No integrations match your search.",
+    "footnote": "Every connection here is a signed outbound webhook you can inspect, pause or rotate in",
+    "footnoteLink": "Settings → Webhooks",
+    "categories": {
+      "communication": "Communication",
+      "automation": "Automation",
+      "productivity": "Productivity",
+      "identity": "Identity & access",
+      "hr": "HR & recruiting",
+      "accounting": "Accounting"
+    },
+    "apps": {
+      "slack": {
+        "description": "Post leave, expense and new-hire events into any Slack channel."
+      },
+      "msteams": {
+        "description": "Deliver the same event stream to a Microsoft Teams channel."
+      },
+      "googlechat": {
+        "description": "Send HR notifications into a Google Chat space."
+      },
+      "discord": {
+        "description": "Route announcements and approvals into a Discord channel."
+      },
+      "telegram": {
+        "description": "Bot notifications for attendance, approvals and reminders."
+      },
+      "zapier": {
+        "description": "Trigger 6,000+ apps from Strata events — no code required."
+      },
+      "make": {
+        "description": "Build multi-step visual scenarios that react to Strata events."
+      },
+      "n8n": {
+        "description": "Wire Strata into self-hosted workflows you control."
+      },
+      "powerautomate": {
+        "description": "Connect Microsoft 365 flows to HR events."
+      },
+      "webhook": {
+        "description": "Send signed JSON to any HTTPS endpoint, on any event you choose."
+      },
+      "googlecalendar": {
+        "description": "Two-way sync for leave, holidays and team calendars."
+      },
+      "sharepoint": {
+        "description": "Keep documents and company files in your SharePoint library."
+      },
+      "tasks": {
+        "description": "Push task and approval events into the tools where work happens."
+      },
+      "jira": {
+        "description": "Turn HR requests into tracked issues with status back-sync."
+      },
+      "outlook": {
+        "description": "Calendar sync for Microsoft 365 and Outlook mailboxes."
+      },
+      "saml": {
+        "description": "SAML 2.0 federation with your identity provider — no password to manage."
+      },
+      "oidc": {
+        "description": "Enterprise single sign-on over OIDC/OAuth 2.0."
+      },
+      "scim": {
+        "description": "Automated user provisioning and de-provisioning from your directory."
+      },
+      "imid": {
+        "description": "Armenian national e-ID: login, document signing and identity verification."
+      },
+      "apikeys": {
+        "description": "Read-only API keys for dashboards, BI tools and data pipelines."
+      },
+      "entra": {
+        "description": "Directory sync and SSO with Microsoft Entra ID."
+      },
+      "okta": {
+        "description": "Provision users and groups from Okta."
+      },
+      "googleworkspace": {
+        "description": "Directory sync for users, groups and organisational units."
+      },
+      "luckycarrot": {
+        "description": "Employee engagement and recognition data, synced automatically."
+      },
+      "attendance": {
+        "description": "Stream clock-in and clock-out events from any attendance device."
+      },
+      "zkteco": {
+        "description": "Direct device integration for ZKTeco and Suprema biometric readers."
+      },
+      "staffam": {
+        "description": "Publish vacancies and receive applications from Staff.am."
+      },
+      "greenhouse": {
+        "description": "Two-way candidate and requisition sync with your ATS."
+      },
+      "armsoft": {
+        "description": "Exchange employee and payroll data with Armsoft (ՀԾ)."
+      },
+      "oneczup": {
+        "description": "Sync accruals and postings with 1C:ZUP."
+      },
+      "xero": {
+        "description": "Push payroll journals and reimbursements into Xero."
+      },
+      "quickbooks": {
+        "description": "Post payroll totals and expenses to QuickBooks."
+      }
+    }
+  }
+}

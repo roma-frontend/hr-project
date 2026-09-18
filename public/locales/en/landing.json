@@ -408,6 +408,7 @@
   },
   "landingExtra": {
     "compare": "Compare",
+    "integrations": "Integrations",
     "compareSubtitle": "Head-to-head with Personio, BambooHR, HiBob, Rippling, Leapsome and Deel",
     "register": "Register",
     "logoTooltip": "Go to home page",
