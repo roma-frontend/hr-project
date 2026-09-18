@@ -14,7 +14,7 @@
     "continueCourse": "Продолжить",
     "resumeCourse": "Продолжить",
     "enroll": "Записаться",
-    "enrolled": "Записан",
+    "enrolled": "Дата записи",
     "alreadyEnrolled": "Уже записан",
     "enrollSuccess": "Вы успешно записаны на курс",
     "enrollError": "Не удалось записаться на курс",
@@ -193,9 +193,6 @@
     "filterMandatory": "Обязательные",
     "employee": "Сотрудник",
     "course": "Курс",
-    "progress": "Прогресс",
-    "enrolled": "Дата записи",
-    "mandatory": "Обязательный",
     "statusCompleted": "Завершён",
     "statusInProgress": "В процессе",
     "statusNotStarted": "Не начат",
@@ -207,6 +204,16 @@
     "descriptionPlaceholder": "Введите описание курса",
     "categoryPlaceholder": "например, HR и Комплаенс",
     "estimatedHoursPlaceholder": "например, 4",
-    "tagsPlaceholder": "Теги через запятую"
+    "tagsPlaceholder": "Теги через запятую",
+    "certificateError": "Не удалось выпустить сертификат",
+    "certificateExists": "Сертификат уже существует",
+    "certificateTemplate": "Шаблон сертификата",
+    "certified": "✓ Сертифицирован",
+    "contactAdmin": "Обратитесь к администратору, чтобы добавить контент",
+    "courseCreateError": "Не удалось создать курс",
+    "description": "Описание",
+    "enterUrlToPreview": "Введите URL видео, чтобы увидеть предпросмотр",
+    "hidePreview": "Скрыть",
+    "selectTemplate": "Выберите шаблон сертификата"
   }
 }

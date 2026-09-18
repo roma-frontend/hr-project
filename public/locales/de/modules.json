@@ -339,7 +339,8 @@
       "subtitle": "Scannen, um Asset-Details zu öffnen",
       "show": "QR-Code anzeigen",
       "downloaded": "QR-Code heruntergeladen",
-      "linkCopied": "Link in die Zwischenablage kopiert"
+      "linkCopied": "Link in die Zwischenablage kopiert",
+      "deepLink": "Deep-Link"
     }
   },
   "news": {
@@ -820,7 +821,8 @@
       "requiredFields": "Bitte beantworten Sie alle Pflichtfragen",
       "updateFailed": "Umfrage konnte nicht aktualisiert werden",
       "cannotEditPublished": "Sie können nur Umfragen im Entwurfsstatus bearbeiten. Veröffentlichten oder geschlossenen Umfragen können nicht geändert werden."
-    }
+    },
+    "newSurvey": "Neue Umfrage"
   },
   "surveyStatus": {
     "draft": "Entwurf",
@@ -1069,7 +1071,15 @@
     "docxExported": "Word-Datei exportiert",
     "archiving": "Wird archiviert…",
     "archived": "Signiertes Dokument archiviert",
-    "alreadyArchived": "Dokument bereits archiviert"
+    "alreadyArchived": "Dokument bereits archiviert",
+    "alreadySigned": "Dieses Dokument ist vollständig unterzeichnet",
+    "documentContent": "Dokumentinhalt",
+    "drawOrUpload": "Zeichnen oder laden Sie Ihre Unterschrift unten hoch",
+    "notASigner": "Sie sind kein Unterzeichner dieses Dokuments",
+    "notFound": "Dokument nicht gefunden",
+    "signDocument": "Dokument unterschreiben",
+    "signing": "Wird unterzeichnet…",
+    "you": "Sie"
   },
   "goals": {
     "title": "OKR und Ziele",
@@ -1144,7 +1154,14 @@
       "krSummary": "Schlüsselergebnisse",
       "create": "Ziel erstellen",
       "success": "Ziel erfolgreich erstellt!",
-      "fillRequired": "Bitte füllen Sie alle Pflichtfelder aus"
+      "fillRequired": "Bitte füllen Sie alle Pflichtfelder aus",
+      "departmentPlaceholder": "z.B. Entwicklung",
+      "owner": "Verantwortlicher",
+      "periodEnd": "Enddatum",
+      "periodStart": "Startdatum",
+      "periodType": "Zeitraum",
+      "periodYear": "Jahr",
+      "selectOwner": "Verantwortlichen auswählen"
     },
     "metric": {
       "number": "Zahl",
@@ -1218,7 +1235,16 @@
     "subtitle": "Verwalten Sie Stellenangebote, Kandidaten und den Bewerbungsprozess",
     "createVacancy": "Neue Stelle",
     "addCandidate": "Hinzufügen",
-    "candidates": "Kandidaten",
+    "candidates": {
+      "empty": "Noch keine Kandidaten",
+      "exportCsv": "CSV exportieren",
+      "exported": "CSV exportiert",
+      "filters": "Filter",
+      "hint": "Kandidaten erscheinen hier, wenn sie sich bewerben",
+      "loading": "Kandidat wird geladen",
+      "noResults": "Keine Kandidaten gefunden",
+      "search": "Suche nach Name, E-Mail oder Telefon..."
+    },
     "selectVacancy": "Wählen Sie eine Stelle aus, um den Bewerbungsprozess anzuzeigen:",
     "empty": "Keine Stellenangebote vorhanden",
     "noInterviews": "Keine bevorstehenden Interviews",
@@ -1248,7 +1274,8 @@
     "tabs": {
       "vacancies": "Stellenangebote",
       "pipeline": "Bewerbungsprozess",
-      "interviews": "Meine Interviews"
+      "interviews": "Meine Interviews",
+      "candidates": "Kandidaten"
     },
     "wizard": {
       "title": "Stelle erstellen",
@@ -1319,7 +1346,8 @@
       "moved": "Kandidat verschoben",
       "rejected": "Kandidat abgelehnt",
       "reject": "Ablehnen",
-      "delete": "Löschen"
+      "delete": "Löschen",
+      "title": "Kandidat"
     },
     "interviewType": {
       "phone": "Telefonische",
@@ -1364,7 +1392,23 @@
     "applicationHistory": "Bewerbungsverlauf",
     "noApplications": "Noch keine Bewerbungen",
     "applied": "Beworben",
-    "resume": "Lebenslauf"
+    "resume": "Lebenslauf",
+    "newVacancy": "Neue Stelle",
+    "screening": {
+      "aiScore": "KI-Screening-Bewertung",
+      "candidateReply": "Kandidat-Antwort",
+      "completed": "Abgeschlossen",
+      "concerns": "Bedenken",
+      "hrReply": "HR-Antwort",
+      "pending": "Warte auf Kandidaten...",
+      "replyPlaceholder": "Antwort an den Kandidaten schreiben...",
+      "replySent": "Antwort gesendet",
+      "responses": "Screening-Antworten",
+      "sent": "Anweisungen per Telegram gesendet",
+      "status": "Screening-Status",
+      "strengths": "Stärken"
+    },
+    "candidatesLabel": "Kandidaten"
   },
   "careers": {
     "loading": "",
@@ -1427,7 +1471,15 @@
     "emailInvalid": "Ungültige Email-Adresse",
     "joinOrg": "Organisation beitreten",
     "viewAll": "Alle Positionen",
-    "positionsCount": "Positionen"
+    "positionsCount": "Positionen",
+    "alreadyApplied": "Sie haben sich bereits auf diese Stelle beworben",
+    "alreadyAppliedDesc": "Wir haben Ihre Bewerbung bereits erhalten — unser Team wird sie bald prüfen.",
+    "connectTelegram": "Telegram verbinden — Screening, Interview-Links & Updates",
+    "copy": "Kopieren",
+    "linkCopied": "Link kopiert!",
+    "portalDesc": "Speichern Sie diesen Link, um Ihren Bewerbungsfortschritt zu verfolgen, KI-Bewertungen zu sehen und mit HR zu chatten.",
+    "portalHint": "Tippen Sie auf die Schaltfläche, drücken Sie Start im Bot — und jedes Update erreicht Sie hier und in Telegram.",
+    "portalTitle": "Ihr persönliches Dashboard"
   },
   "offboarding": {
     "title": "Offboarding",
@@ -1516,7 +1568,10 @@
       "feedback": "Feedback und Vorschläge",
       "improvements": "Verbesserungsvorschläge",
       "submit": "Absenden"
-    }
+    },
+    "accountDeactivated": "Konto deaktiviert",
+    "approvedLeavesRemain": "{{count}} genehmigte Urlaubsanträge beginnen nach dem letzten Arbeitstag — prüfen Sie sie in der Schlussabrechnung.",
+    "forceCompleteConfirm": "Offboarding trotzdem abschließen?"
   },
   "onboarding": {
     "title": "Onboarding",
@@ -1594,7 +1649,9 @@
       "step2": "Aufgaben",
       "step3": "Übersicht",
       "create": "Erstellen",
-      "success": "Template erstellt!"
+      "success": "Template erstellt!",
+      "editTitle": "Vorlage bearbeiten",
+      "updated": "Vorlage aktualisiert!"
     },
     "fields": {
       "employee": "Neuer Mitarbeiter",
@@ -1618,7 +1675,30 @@
       "noCourses": "Keine veröffentlichten Kurse verfügbar. Erstellen Sie zuerst Kurse im Lernmodul."
     },
     "coursesSelected": "Kurs(e) ausgewählt",
-    "checkLater": "Später erneut prüfen"
+    "checkLater": "Später erneut prüfen",
+    "approvalTime": "Administratoren antworten in der Regel innerhalb von 24–48 Stunden",
+    "backToLogin": "Zurück zum Login",
+    "editTemplate": "Onboarding-Vorlage bearbeiten",
+    "login": {
+      "google": {
+        "desc": "Sie können sich auch sofort mit Ihrem Google-Konto anmelden — ein Klick und Sie sind drin!",
+        "title": "🔵 Mit Google anmelden"
+      }
+    },
+    "nextSteps": "Nächste Schritte",
+    "noReason": "Kein Grund angegeben",
+    "noRequest": "Keine offenen Anfragen gefunden",
+    "pendingApproval": "Wartet auf Genehmigung",
+    "pendingDesc": "Ihre Anfrage wird von Administratoren geprüft",
+    "requestRejected": "Anfrage abgelehnt",
+    "requestSent": "Anfrage gesendet",
+    "requestSentTo": "Anfrage an Administratoren gesendet",
+    "step1": "Antrag eingereicht",
+    "step2": "Warten Sie auf die Genehmigung durch den Administrator",
+    "step4": "Greifen Sie auf das Dashboard zu",
+    "tryAnotherEmail": "Andere E-Mail versuchen",
+    "waitingForApproval": "Warten auf Genehmigung durch den Administrator",
+    "step3": "Sie erhalten eine E-Mail-Benachrichtigung"
   },
   "compliance": {
     "title": "Compliance und GDPR",
@@ -1725,7 +1805,8 @@
     "edit": "Bearbeiten",
     "view": "Ansehen",
     "close": "Schließen",
-    "policyType": "Richtlinientyp"
+    "policyType": "Richtlinientyp",
+    "loadMore": "Weitere Protokolle laden"
   },
   "documents": {
     "title": "Dokumentenverwaltung",
@@ -1860,7 +1941,30 @@
     "acknowledgedBadge": "Gelesen",
     "acknowledgeError": "Kenntnisnahme konnte nicht bestätigt werden",
     "enterPlaceholder": "Platzhaltertext eingeben",
-    "selectCategory": "Kategorie auswählen"
+    "selectCategory": "Kategorie auswählen",
+    "contentTip": "Für Abschnitte können Sie eine markdown-ähnliche Formatierung verwenden",
+    "createDocument": "Dokument erstellen",
+    "createTemplateDesc": "Erstellen Sie eine wiederverwendbare Vorlage für die Dokumentenunterschrift",
+    "department": "Abteilung",
+    "email": "E-Mail",
+    "employee": "Mitarbeiter",
+    "filledFields": "Ausgefüllte Felder",
+    "myDocuments": "Meine Dokumente",
+    "name": "Name",
+    "noFields": "Diese Vorlage hat keine benutzerdefinierten Felder",
+    "noIssuedDocuments": "Keine Dokumente vorhanden",
+    "noIssuedDocumentsDesc": "Hier erscheinen Dokumente, die HR für Sie ausgestellt hat",
+    "popupBlocked": "Dokument im aktuellen Tab geöffnet — erlauben Sie Popups für diese Seite, um es in einem neuen Tab zu öffnen",
+    "position": "Position",
+    "resolvedContent": "Aufgelöster Inhalt",
+    "resolvedData": "Aufgelöste Mitarbeiterdaten",
+    "selectEmployee": "Mitarbeiter",
+    "selectEmployeePlaceholder": "Wählen Sie einen Mitarbeiter für dieses Dokument",
+    "signaturePlaceholder": "Die Unterschrift wird während der Unterzeichnung erfasst",
+    "templateContentPlaceholder": "Geben Sie hier den Vorlageninhalt ein...",
+    "templateTitle": "Dokumentvorlage",
+    "uploadTitle": "Dokument hochladen",
+    "useTemplateDesc": "Füllen Sie die Vorlagenfelder aus und erstellen Sie ein Dokument"
   },
   "documentCategories": {
     "policy": "Richtlinie",
@@ -2585,7 +2689,8 @@
     "board": {
       "freeNow": "Jetzt frei",
       "busyNow": "Jetzt belegt",
-      "total": "Räume"
+      "total": "Räume",
+      "platformUsage": "Plattformnutzung (30 Tage)"
     },
     "empty": {
       "noRooms": "Noch keine Besprechungsräume",
@@ -2658,7 +2763,17 @@
       "videoConferenceHint": "Wählen Sie eine Plattform für externe Teilnehmer.",
       "videoUrl": "Meeting-Link",
       "livekitHint": "Ein eingebauter Videoraum wird automatisch erstellt.",
-      "shareLink": "Link teilen"
+      "shareLink": "Link teilen",
+      "fieldEmail": "E-Mail",
+      "fieldFullName": "Vollständiger Name",
+      "fieldOptional": "Optional",
+      "fieldPhone": "Telefon",
+      "fieldRequired": "Erforderlich",
+      "livekitCreated": "LiveKit-Raum erstellt",
+      "registrationDesc": "Gäste füllen vor dem Beitritt ein Formular aus. Die Antworten werden für den Teilnehmerbericht gespeichert.",
+      "registrationLabel": "Registrierungsformular",
+      "waitingRoomDesc": "Externe Gäste warten in einer Lobby, bis Sie sie zulassen.",
+      "waitingRoomLabel": "Warteraum"
     },
     "details": {
       "open": "Details",
@@ -2911,7 +3026,8 @@
       "downloaded": "Kalenderdatei heruntergeladen"
     },
     "hints": {
-      "doubleClick": "Doppelklick öffnet den vollständigen Zeitverlauf"
+      "doubleClick": "Doppelklick öffnet den vollständigen Zeitverlauf",
+      "singleDetails": "Klicken für Details · Doppelklick zum Bearbeiten"
     }
   },
   "conflicts": {
@@ -3560,7 +3676,8 @@
       "technical": "Fachlich",
       "behavioral": "Verhalten",
       "culture": "Kulturfit"
-    }
+    },
+    "saveError": "Das Vorbereitungspaket konnte nicht gespeichert werden"
   },
   "attrition": {
     "title": "Fluktuationsrisiko",
@@ -3593,5 +3710,22 @@
     "adviceWellbeingCheck": "Wohlbefinden ansprechen",
     "adviceGoalsReview": "Ziele neu ausrichten",
     "adviceFeedbackSession": "Feedback-Gespräch führen"
+  },
+  "candidate": {
+    "poweredBy": "Bereitgestellt von Strata HR"
+  },
+  "candidatePortal": {
+    "evaluations": "Bewertungen",
+    "interviews": "Interviews",
+    "join": "Werde Teil von",
+    "progress": "Ihr Fortschritt",
+    "screeningChat": "Screening-Chat",
+    "screeningResult": "Screening-Ergebnis",
+    "telegramConnect": "Telegram verbinden",
+    "telegramDesc": "Verbinden Sie den Bot, um Screening-Fragen, Links zum Interviewraum und Statusaktualisierungen direkt in Telegram zu erhalten.",
+    "telegramTitle": "Updates in Telegram erhalten",
+    "timeline": "Zeitachse",
+    "with": "mit",
+    "you": "Sie"
   }
 }

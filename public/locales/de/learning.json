@@ -14,7 +14,7 @@
     "continueCourse": "Kurs fortsetzen",
     "resumeCourse": "Kurs fortsetzen",
     "enroll": "Anmelden",
-    "enrolled": "Angemeldet",
+    "enrolled": "Einschreibedatum",
     "alreadyEnrolled": "Bereits angemeldet",
     "enrollSuccess": "Sie haben sich erfolgreich für den Kurs angemeldet",
     "enrollError": "Anmeldung für den Kurs fehlgeschlagen",
@@ -193,7 +193,6 @@
     "filterMandatory": "Pflicht",
     "employee": "Mitarbeiter",
     "course": "Kurs",
-    "enrolled": "Einschreibedatum",
     "statusCompleted": "Abgeschlossen",
     "statusInProgress": "In Bearbeitung",
     "statusNotStarted": "Nicht gestartet",
@@ -205,6 +204,16 @@
     "tagsPlaceholder": "Tags durch Kommas getrennt",
     "certificateOfCompletion": "Abschlusszertifikat",
     "presentedTo": "Hiermit wird bestätigt, dass",
-    "hasCompleted": "erfolgreich abgeschlossen hat"
+    "hasCompleted": "erfolgreich abgeschlossen hat",
+    "certificateError": "Zertifikat konnte nicht ausgestellt werden",
+    "certificateExists": "Zertifikat existiert bereits",
+    "certificateTemplate": "Zertifikatsvorlage",
+    "certified": "✓ Zertifiziert",
+    "contactAdmin": "Wenden Sie sich an Ihren Administrator, um Inhalte hinzuzufügen",
+    "courseCreateError": "Kurs konnte nicht erstellt werden",
+    "description": "Beschreibung",
+    "enterUrlToPreview": "Geben Sie eine Video-URL ein, um eine Vorschau zu sehen",
+    "hidePreview": "Verbergen",
+    "selectTemplate": "Zertifikatsvorlage auswählen"
   }
 }

@@ -40,11 +40,11 @@ export default function ChangePasswordPage() {
     setError(null);
 
     if (password !== confirm) {
-      setError(t('auth.changePassword.passwordsDoNotMatch'));
+      setError(t('changePassword.passwordsDoNotMatch'));
       return;
     }
     if (password.length < 8) {
-      setError(t('auth.changePassword.passwordMinLength'));
+      setError(t('changePassword.passwordMinLength'));
       return;
     }
 
@@ -57,14 +57,14 @@ export default function ChangePasswordPage() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        throw new Error(data.error || t('auth.changePassword.somethingWentWrong'));
+        throw new Error(data.error || t('changePassword.somethingWentWrong'));
       }
       setSuccess(true);
       // Sessions were killed server-side; re-enter with the new password.
       setTimeout(() => router.push('/login'), 1800);
     } catch (err) {
       logger.error('Change password failed:', err);
-      setError(err instanceof Error ? err.message : t('auth.changePassword.somethingWentWrong'));
+      setError(err instanceof Error ? err.message : t('changePassword.somethingWentWrong'));
     } finally {
       setBusy(false);
     }
@@ -94,7 +94,7 @@ export default function ChangePasswordPage() {
               {branding?.brandName || 'Strata'}
             </p>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {t('auth.changePassword.hrSystemTitle')}
+              {t('changePassword.hrSystemTitle')}
             </p>
           </div>
         </Link>
@@ -105,10 +105,10 @@ export default function ChangePasswordPage() {
               <CheckCircle2 className="w-8 h-8 text-(--success-text)" />
             </div>
             <h1 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-              {t('auth.changePassword.successTitle')}
+              {t('changePassword.successTitle')}
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {t('auth.changePassword.redirectingToLogin')}
+              {t('changePassword.redirectingToLogin')}
             </p>
           </div>
         ) : (
@@ -118,10 +118,10 @@ export default function ChangePasswordPage() {
                 <KeyRound className="w-6 h-6" />
               </span>
               <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {t('auth.changePassword.title')}
+                {t('changePassword.title')}
               </h1>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                {t('auth.changePassword.subtitle')}
+                {t('changePassword.subtitle')}
               </p>
             </div>
 
@@ -139,7 +139,7 @@ export default function ChangePasswordPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {t('auth.changePassword.currentPassword')}
+                  {t('changePassword.currentPassword')}
                 </label>
                 <div className="relative">
                   <Input
@@ -155,9 +155,7 @@ export default function ChangePasswordPage() {
                     onClick={() => setShowCurrent((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                     style={{ color: 'var(--text-muted)' }}
-                    aria-label={
-                      showCurrent ? t('auth.changePassword.hide') : t('auth.changePassword.show')
-                    }
+                    aria-label={showCurrent ? t('changePassword.hide') : t('changePassword.show')}
                   >
                     {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -170,7 +168,7 @@ export default function ChangePasswordPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {t('auth.changePassword.newPassword')}
+                  {t('changePassword.newPassword')}
                 </label>
                 <div className="relative">
                   <Lock
@@ -192,9 +190,7 @@ export default function ChangePasswordPage() {
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
                     style={{ color: 'var(--text-muted)' }}
-                    aria-label={
-                      showPassword ? t('auth.changePassword.hide') : t('auth.changePassword.show')
-                    }
+                    aria-label={showPassword ? t('changePassword.hide') : t('changePassword.show')}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -207,7 +203,7 @@ export default function ChangePasswordPage() {
                   className="block text-sm font-medium mb-1.5"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {t('auth.changePassword.confirmPassword')}
+                  {t('changePassword.confirmPassword')}
                 </label>
                 <div className="relative">
                   <Lock
@@ -231,10 +227,10 @@ export default function ChangePasswordPage() {
                 {busy ? (
                   <>
                     <ShieldLoader size="xs" variant="inline" />
-                    {t('auth.changePassword.saving')}
+                    {t('changePassword.saving')}
                   </>
                 ) : (
-                  t('auth.changePassword.submit')
+                  t('changePassword.submit')
                 )}
               </Button>
             </form>

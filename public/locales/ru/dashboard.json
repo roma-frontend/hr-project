@@ -394,7 +394,14 @@
   },
   "tasksClient": {
     "linkedObjective": "Связанная цель",
-    "linkedObjectiveDesc": "Эта задача способствует достижению следующего OKR"
+    "linkedObjectiveDesc": "Эта задача способствует достижению следующего OKR",
+    "delete": "Удалить",
+    "duplicate": "Дублировать",
+    "edit": "Изменить",
+    "open": "Открытые",
+    "rename": "Переименовать",
+    "undo": "Отменить",
+    "statusChanged": "Статус изменён: {{from}} → {{to}}"
   },
   "goals": {
     "linkedTasks": "Связанные задачи",
@@ -430,8 +437,19 @@
         "keyResultLabel": "Ключевой результат",
         "keyResultPlaceholder": "Выберите KR (опционально)",
         "keyResultHint": "Привязать к конкретному ключевому результату"
+      },
+      "checklistTemplates": {
+        "add": "+ Добавить",
+        "description": "Пункты чек-листа копируются в каждое повторение",
+        "placeholder": "Добавьте пункт и нажмите Enter"
+      },
+      "subtaskTemplates": {
+        "add": "+ Добавить",
+        "description": "Подзадачи копируются в каждое повторение",
+        "placeholder": "Добавьте подзадачу и нажмите Enter"
       }
-    }
+    },
+    "save": "Сохранить"
   },
   "dashboardWidgets": {
     "myTasks": "Мои задачи",

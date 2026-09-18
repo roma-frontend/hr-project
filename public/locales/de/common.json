@@ -153,7 +153,25 @@
     "remove": "Entfernen",
     "change": "Ändern",
     "progress": "Fortschritt",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "accept": "Annehmen",
+    "apply": "Anwenden",
+    "breakdown": "Aufschlüsselung",
+    "copy": "Kopieren",
+    "copyFailed": "Kopieren fehlgeschlagen",
+    "decline": "Ablehnen",
+    "deleting": "Lösche...",
+    "download": "Herunterladen",
+    "of": "von",
+    "openFullPage": "Vollständige Seite öffnen",
+    "prev": "Zurück",
+    "processing": "Verarbeitung...",
+    "retry": "Wiederholen",
+    "somethingWentWrong": "Etwas ist schief gelaufen",
+    "today": "Heute",
+    "tryAgain": "Erneut versuchen",
+    "type": "Typ",
+    "unknownError": "Unbekannter Fehler"
   },
   "nav": {
     "home": "Startseite",
@@ -549,7 +567,8 @@
     "today": "Heute",
     "pause": "Pause",
     "resume": "Fortsetzen",
-    "start": "Starten"
+    "start": "Starten",
+    "close": "Schließen"
   },
   "labels": {
     "fullName": "Vollständiger Name",
@@ -594,7 +613,13 @@
     "email": "-Mail",
     "dates": "Daten",
     "to": "An",
-    "approved": "Genehmigt"
+    "approved": "Genehmigt",
+    "comment": "Kommentar",
+    "date": "Datum",
+    "endTime": "Endzeit",
+    "overtimeDate": "Überstundendatum",
+    "startTime": "Startzeit",
+    "time": "Zeit"
   },
   "forms": {
     "required": "Erforderlich",
@@ -724,7 +749,10 @@
     "cancel": "Abbrechen",
     "fullscreen": "Vollbild",
     "exitFullscreen": "Vollbild beenden",
-    "back": "Zurück"
+    "back": "Zurück",
+    "calendar": "Kalender",
+    "confirm": "Bestätigen",
+    "list": "Liste"
   },
   "placeholders": {
     "selectEmployee": "Mitarbeiter auswählen",
@@ -765,7 +793,9 @@
     "position": "Position",
     "selectOrg": "Organisation auswählen",
     "selectDepartment": "Abteilung auswählen",
-    "selectPosition": "Position auswählen"
+    "selectPosition": "Position auswählen",
+    "search": "Projekte suchen...",
+    "select": "Auswählen..."
   },
   "ariaLabels": {
     "changeAvatar": "Avatar ändern",
@@ -1049,7 +1079,8 @@
     "noDrivers": {
       "title": "Keine verfügbaren Fahrer",
       "description": "Derzeit sind keine Fahrer verfügbar. Bitte versuchen Sie es später erneut.",
-      "requestDriver": "Fahrer anfordern"
+      "requestDriver": "Fahrer anfordern",
+      "action": "Fahrer anfordern"
     }
   },
   "months": {
@@ -1656,7 +1687,8 @@
       "leaveCancellationRejected": "Stornierung abgelehnt",
       "roomMeetingReminder": "Bald: {{bookingTitle}}",
       "tempPasswordLogin": "🔑 Temporäres Passwort verwendet"
-    }
+    },
+    "markReadFailed": "Benachrichtigung konnte nicht aktualisiert werden"
   },
   "aiChat": {
     "suggestions": {
@@ -1750,7 +1782,8 @@
   },
   "leaves": {
     "newRequestNotification": "Neuer Urlaubsantrag! 🏖️",
-    "pendingRequestsCount": "Sie haben {{count}} ausstehende Urlaubsanträge"
+    "pendingRequestsCount": "Sie haben {{count}} ausstehende Urlaubsanträge",
+    "loadMore": "Weitere Anfragen laden"
   },
   "tasks": {
     "failedToUpdateStatus": "Status konnte nicht aktualisiert werden",
@@ -1785,7 +1818,31 @@
     "roleManagedByAdmin": "Ihre Rolle und Abteilung werden von Administratoren verwaltet.",
     "deleteAvatarTitle": "Profilbild löschen?",
     "deleteAvatarWarning": "Sind Sie sicher, dass Sie Ihr Profilbild löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-    "currentAvatar": "Aktuelles Avatar"
+    "currentAvatar": "Aktuelles Avatar",
+    "avatar": "Profilfoto",
+    "avatarDesc": "Neues Profilbild hochladen",
+    "deleteAccount": "Konto löschen",
+    "deleteConfirmDesc": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre Daten werden dauerhaft entfernt.",
+    "deleteConfirmTitle": "Konto löschen",
+    "deleteForever": "Endgültig löschen",
+    "department": "Abteilung",
+    "discard": "Verwerfen",
+    "editInfo": "Informationen bearbeiten",
+    "editInfoDesc": "Aktualisieren Sie Ihre persönlichen Daten",
+    "email": "E-Mail",
+    "fullName": "Vollständiger Name",
+    "joinDate": "Beitrittsdatum",
+    "location": "Standort",
+    "locationPlaceholder": "Stadt, Land",
+    "namePlaceholder": "Geben Sie Ihren vollständigen Namen ein",
+    "phone": "Telefon",
+    "position": "Position",
+    "registered": "Registriert",
+    "removeAvatar": "Entfernen",
+    "role": "Rolle",
+    "save": "Änderungen speichern",
+    "saved": "Profil erfolgreich aktualisiert",
+    "saveError": "Profil konnte nicht aktualisiert werden"
   },
   "dashboard": {
     "viewAll": "Alle",
@@ -1817,7 +1874,9 @@
     "focusModeActive": "Fokusmodus aktiv"
   },
   "analytics": {
-    "vsLastMonth": "ggü. Vormonat"
+    "vsLastMonth": "ggü. Vormonat",
+    "errorDescription": "Beim Laden des Analyse-Dashboards ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "errorTitle": "Analysefehler"
   },
   "auth": {
     "selectCamera": "Kamera wählen:",
@@ -1841,7 +1900,12 @@
     "nationalIdSection": "National-ID & Versicherung",
     "nationalIdSectionHint": "Armenische National-ID und Krankenversicherungsstatus",
     "healthInsured": "Pflichtkrankenversicherung",
-    "healthInsuredHint": "Mitarbeiter ist in der Pflichtkrankenversicherung versichert"
+    "healthInsuredHint": "Mitarbeiter ist in der Pflichtkrankenversicherung versichert",
+    "confirmDelete": "Löschen bestätigen",
+    "deleteFailed": "Mitarbeiter konnte nicht gelöscht werden",
+    "deleteWarning": "Möchten Sie diesen Mitarbeiter wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "employeeDeleted": "Mitarbeiter erfolgreich gelöscht",
+    "cantEditOwnSalary": "Sie können Ihre eigene Vergütung nicht ändern — wenden Sie sich an HR oder das Finanzteam."
   },
   "quickStats": {
     "active": "aktiv"
@@ -1949,7 +2013,8 @@
     "fieldEmail": "Email",
     "fieldPhone": "Phone",
     "fieldRequired": "Required",
-    "fieldOptional": "Optional"
+    "fieldOptional": "Optional",
+    "dateInPast": "Sie können keinen Raum in der Vergangenheit buchen — wählen Sie ein zukünftiges Datum oder eine Uhrzeit."
   },
   "dayDetails": {
     "events": "Ereignisse",
@@ -2046,7 +2111,8 @@
     "analyticsDesc": "Berichte, Trends & Dateneinblicke",
     "kpi": "KPI",
     "kpiDesc": "OKR, Ziele & Leistungsstrategie",
-    "hint": "Spezialisierte Agenten für domänenspezifische Aufgaben"
+    "hint": "Spezialisierte Agenten für domänenspezifische Aufgaben",
+    "select": "KI-Agent auswählen"
   },
   "strategyPage": {
     "title": "Ausrichtung, Strategie & BSC",

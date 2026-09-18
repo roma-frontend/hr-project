@@ -247,7 +247,9 @@
       "inProgress": "In Progress",
       "in_progress": "In Progress",
       "completed": "Completed",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "rateDriver": "Rate Your Driver",
     "howWasTrip": "How was your trip with",
@@ -459,7 +461,31 @@
       "pickupTarget": "Pickup",
       "dropoffTarget": "Dropoff"
     },
-    "min": "min"
+    "min": "min",
+    "availability": "Availability",
+    "blockTime": "Block Time",
+    "cancel": "Cancel",
+    "clickDropoff": "Click to set dropoff",
+    "clickPickup": "Click to set pickup",
+    "clickToChange": "Click to change dropoff",
+    "currentDriver": "Current Driver",
+    "distance": "Distance",
+    "email": "Email",
+    "fromPlaceholder": "e.g., Office",
+    "phone": "Phone",
+    "rate": "Rate",
+    "ratingBad": "Bad",
+    "ratingExcellent": "Excellent",
+    "ratingGood": "Good",
+    "ratingOkay": "Okay",
+    "ratingVeryBad": "Very Bad",
+    "reassignDesc": "Choose a new driver for this trip",
+    "reassignDriver": "Reassign Driver",
+    "reassigning": "Reassigning...",
+    "searchDrivers": "Search drivers...",
+    "selectOrgForFavorite": "Select an organization first",
+    "submitting": "Submitting...",
+    "toPlaceholder": "e.g., Airport"
   },
   "drivers": {
     "notRegistered": "Not Registered",
@@ -513,7 +539,8 @@
       }
     },
     "blocked": "Blocked",
-    "trip": "Trip"
+    "trip": "Trip",
+    "userIdRequired": "User ID is required"
   },
   "driversWizard": {
     "personalInfo": "Personal Information",
@@ -628,7 +655,8 @@
     "toasts": {
       "messageSentToDriver": "Message sent",
       "messageFailedToSend": "Failed to send message"
-    }
+    },
+    "message": "Message"
   },
   "driverWizard": {
     "submit": "Submit",
@@ -684,7 +712,16 @@
       "noOrg": "No organization selected",
       "fillDateAndTime": "Please fill in both date and time fields.",
       "invalidDateTime": "Invalid date or time. Please use YYYY-MM-DD and HH:MM formats."
-    }
+    },
+    "colorPlaceholder": "Black",
+    "luxury": "Luxury",
+    "makePlaceholder": "Toyota",
+    "modelPlaceholder": "Camry",
+    "platePlaceholder": "ABC-1234",
+    "sedan": "Sedan",
+    "suv": "SUV",
+    "van": "Van",
+    "yearPlaceholder": "2024"
   },
   "timezone": {
     "easternTime": "Eastern Time (ET)",

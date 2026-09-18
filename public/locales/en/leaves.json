@@ -36,7 +36,10 @@
       "maternity": "Maternity Leave",
       "maternityDesc": "Paid leave before and after childbirth",
       "study": "Study Leave",
-      "studyDesc": "Paid leave for exams and study sessions"
+      "studyDesc": "Paid leave for exams and study sessions",
+      "maternityBadge": "18 weeks",
+      "paternity": "Paternity Leave",
+      "paternityDesc": "Parental leave for a new father"
     },
     "reason": "Reason",
     "requestDetails": "Leave Request Details",
@@ -72,7 +75,8 @@
     "reviewNotAllowedHint": "This request is decided by the manager above this employee in the reporting line, or by HR.",
     "documents": "Documents",
     "leaveRequestDocument": "Leave Request Document",
-    "leaveOrderDocument": "Leave Order (\u041f\u0440\u0438\u043a\u0430\u0437)"
+    "leaveOrderDocument": "Leave Order (Приказ)",
+    "availableBalances": "Available Balances"
   },
   "signatures": {
     "sign": "Sign",

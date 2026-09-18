@@ -185,6 +185,7 @@
       "eligibilityDesc": "Set eligibility criteria and bonus amount",
       "periodDesc": "Define the bonus program period",
       "settingsDesc": "Configure review cycle settings"
-    }
+    },
+    "notesPlaceholder": "Add notes..."
   }
 }

@@ -1568,7 +1568,7 @@ export default function RecruitmentClient() {
                           )}
                           <span>
                             <Users className="h-3 w-3 inline mr-0.5" />
-                            {vac.candidateCount} {t('recruitment.candidates', 'candidates')}
+                            {vac.candidateCount} {t('recruitment.candidatesLabel', 'candidates')}
                           </span>
                         </div>
                       </div>
@@ -1679,7 +1679,7 @@ export default function RecruitmentClient() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{vac.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {vac.candidateCount} {t('recruitment.candidates', 'candidates')}
+                          {vac.candidateCount} {t('recruitment.candidatesLabel', 'candidates')}
                         </p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />

@@ -767,7 +767,8 @@
       "orgsBackedUpCount": "{{count}} Organisationen mit Backups",
       "totalEmployees": "Mitarbeiter insgesamt",
       "totalEmployeesCount": "{{count}} Mitarbeiter",
-      "accessDenied": "Zugriff verweigert"
+      "accessDenied": "Zugriff verweigert",
+      "refresh": "Aktualisieren"
     },
     "user360": {
       "back": "Zurück",
@@ -1032,8 +1033,23 @@
         "keyRequired": "Jedes Feld benötigt einen Schlüssel",
         "duplicateKey": "Doppeltes Feld: {{key}}",
         "invalidValue": "Ungültiger Wert für Feld: {{key}}",
-        "noChanges": "Keine Änderungen zum Speichern"
-      }
+        "noChanges": "Keine Änderungen zum Speichern",
+        "keyPlaceholder": "feld_name"
+      },
+      "import": "Importieren",
+      "importBadFormat": "Unbekannte Datei — erwartet wurde ein DB-Export oder ein Array von Zeilen",
+      "imported": "{{count}} Zeilen importiert",
+      "importedPartial": "{{inserted}} Zeilen importiert, {{failed}} fehlgeschlagen",
+      "importEmpty": "Keine Zeilen in der Datei gefunden",
+      "importing": "Importiere…",
+      "importNeedsTable": "Wählen Sie zuerst eine Tabelle, um ein reines Zeilen-Array zu importieren",
+      "importParseFailed": "Die Datei konnte nicht als JSON gelesen werden",
+      "importStart": "Importieren",
+      "importSummary": "{{tables}} Tabellen · {{rows}} Zeilen",
+      "importTitle": "Datenbank importieren",
+      "importWarning": "Zeilen werden als neue Dokumente mit neuen IDs eingefügt. Jede Einfügung wird im Änderungsverlauf erfasst und kann rückgängig gemacht werden. Geschützte Tabellen (Sitzungen, Audit-Logs) werden übersprungen.",
+      "searchTables": "Tabelle finden…",
+      "noTableMatch": "Keine Tabelle passt zu „{{query}}“"
     },
     "sessions": {
       "title": "Aktive Sitzungen",
@@ -1423,6 +1439,47 @@
       "revoke": "Abbrechen",
       "revokeConfirm": "Sicher?",
       "revoking": "Wird abgebrochen..."
+    },
+    "accessMatrix": {
+      "capabilities": "erzwungene Berechtigungen",
+      "capability": "Funktion",
+      "drift": "Rollen-Drift — Konten mit Rollen außerhalb der Aufzählung",
+      "driftHint": "Diese Rollen entsprechen keiner Stufe, daher haben die Konten keine gewährten Berechtigungen. Benennen Sie die Rolle um oder markieren Sie das Konto.",
+      "globalDistribution": "Globale Rollenverteilung",
+      "grid": "Berechtigungsraster",
+      "noDrift": "Kein Rollen-Drift — jedes Konto hat eine Rolle aus der Aufzählung.",
+      "org": "Organisation",
+      "perOrg": "Rollen pro Organisation",
+      "role": "Rolle",
+      "subtitle": "Wer was in allen Mandanten darf — Berechtigungen je Rollenstufe",
+      "title": "Zugriffsmatrix",
+      "user": "Benutzer",
+      "users": "Benutzer"
+    },
+    "gdpr": {
+      "anonFailed": "Anonymisierung fehlgeschlagen",
+      "anonymize": "Anonymisieren",
+      "anonymized": "Benutzer anonymisiert",
+      "erase": "Löschen",
+      "eraseConfirm": "Endgültig löschen",
+      "eraseConfirmPlaceholder": "Geben Sie die E-Mail oder ERASE ein, um das endgültige Löschen zu bestätigen",
+      "erased": "Betroffene Person gelöscht",
+      "eraseFailed": "Löschen fehlgeschlagen",
+      "export": "Exportieren",
+      "exported": "Export heruntergeladen",
+      "exportFailed": "Export fehlgeschlagen",
+      "exporting": "Exportiere…",
+      "footprint": "Datenbestand nach Modul",
+      "inactive": "inaktiv",
+      "inspect": "Prüfen",
+      "moreTables": "mehr",
+      "noRecords": "Keine Einträge gefunden",
+      "noResults": "Keine betroffene Person gefunden. Die GDPR-Suche prüft auf die exakte E-Mail oder den vollständigen Namen.",
+      "recordCount": "{{count}} Einträge",
+      "search": "Suche",
+      "searchPlaceholder": "Nach exakter E-Mail oder Name suchen…",
+      "subtitle": "Betroffene Person finden, Datenbestand prüfen, exportieren, anonymisieren oder löschen",
+      "title": "GDPR-Datenwerkzeuge"
     }
   },
   "superadminSecurity": {

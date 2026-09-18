@@ -61,7 +61,9 @@
       "subtitle": "Fill in the details for your overtime request"
     },
     "noSupervisor": "No supervisor assigned",
-    "noSupervisorDesc": "Please contact HR to set up your reporting line before submitting overtime requests."
+    "noSupervisorDesc": "Please contact HR to set up your reporting line before submitting overtime requests.",
+    "ofLimit": "of limit",
+    "pendingRequests": "pending request(s)"
   },
   "nav": {
     "overtime": "Overtime"

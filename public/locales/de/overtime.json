@@ -61,7 +61,9 @@
       "subtitle": "Geben Sie die Details für Ihren Überstundenantrag ein"
     },
     "noSupervisor": "Kein Vorgesetzter zugewiesen",
-    "noSupervisorDesc": "Bitte wenden Sie sich an HR, um Ihre Berichtslinie einzurichten, bevor Sie Überstundenanträge stellen."
+    "noSupervisorDesc": "Bitte wenden Sie sich an HR, um Ihre Berichtslinie einzurichten, bevor Sie Überstundenanträge stellen.",
+    "ofLimit": "vom Limit",
+    "pendingRequests": "offene Anfrage(n)"
   },
   "nav": {
     "overtime": "Überstunden"

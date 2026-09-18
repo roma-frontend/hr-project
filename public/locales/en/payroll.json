@@ -211,7 +211,19 @@
       "totalDeductions": "Total Deductions",
       "netFormula": "Net Pay",
       "employerTotal": "Employer Total Cost",
-      "button": "View Breakdown"
+      "button": "View Breakdown",
+      "applied": "Applied",
+      "employerCost": "Total Employer Cost",
+      "employerCostDesc": "Gross + employer contributions",
+      "formula": {
+        "gross": "Gross Formula",
+        "grossCalc": "Base Salary + Bonuses + Overtime",
+        "incomeTax": "Income Tax",
+        "incomeTaxProgressive": "Progressive brackets applied to taxable income",
+        "net": "Net Formula"
+      },
+      "healthInsuranceNote": "Health insurance is mandatory for enrolled employees. The amount depends on the gross salary bracket.",
+      "status": "Status"
     },
     "details": "Details",
     "actions": "Actions",
@@ -506,7 +518,10 @@
       "noteHourly": "Multiply by hours worked to get the gross pay for partial days.",
       "noteVacation": "Annual, study, and family leave all pay at 100% of your daily rate.",
       "noteSick": "Sick pay is capped by the Social Security Fund; the employer tops up to your daily rate after the first 5 days.",
-      "noteOvertime": "Night shifts and holidays pay at 2×, regular overtime at 1.5×."
-    }
+      "noteOvertime": "Night shifts and holidays pay at 2×, regular overtime at 1.5×.",
+      "net": "Net",
+      "other": "Other"
+    },
+    "hourlyRate": "Hourly Rate"
   }
 }

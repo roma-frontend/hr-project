@@ -220,7 +220,10 @@
     "fileReadyToSend": "file ready to send",
     "fileSizeLimit": "File exceeds the size limit",
     "filesReadyToSend": "files ready to send",
-    "voiceSizeLimit": "Voice message exceeds the size limit"
+    "voiceSizeLimit": "Voice message exceeds the size limit",
+    "chatMessages": "Chat messages",
+    "loadOlderMessages": "↑ Load older messages",
+    "voiceMessage": "Voice message"
   },
   "chatWidget": {
     "chat": "Chat",

@@ -767,7 +767,8 @@
       "orgsBackedUpCount": "{{count}} organizations backed up",
       "totalEmployees": "Total Employees",
       "totalEmployeesCount": "{{count}} employees",
-      "accessDenied": "Access denied"
+      "accessDenied": "Access denied",
+      "refresh": "Refresh"
     },
     "user360": {
       "back": "Back",
@@ -1032,8 +1033,23 @@
         "keyRequired": "Every field needs a key",
         "duplicateKey": "Duplicate field: {{key}}",
         "invalidValue": "Invalid value for field: {{key}}",
-        "noChanges": "No changes to save"
-      }
+        "noChanges": "No changes to save",
+        "keyPlaceholder": "field_name"
+      },
+      "import": "Import",
+      "importBadFormat": "Unrecognized file — expected a DB export or an array of rows",
+      "imported": "Imported {{count}} rows",
+      "importedPartial": "Imported {{inserted}} rows, {{failed}} failed",
+      "importEmpty": "No rows found in the file",
+      "importing": "Importing…",
+      "importNeedsTable": "Select a table first to import a bare array of rows",
+      "importParseFailed": "Could not parse the file as JSON",
+      "importStart": "Import",
+      "importSummary": "{{tables}} tables · {{rows}} rows",
+      "importTitle": "Import database",
+      "importWarning": "Rows are inserted as new documents with fresh ids. Every insert is recorded in the change history and can be undone. Protected tables (sessions, audit logs) are skipped.",
+      "searchTables": "Find a table…",
+      "noTableMatch": "No table matches \"{{query}}\""
     },
     "sessions": {
       "title": "Active sessions",
@@ -1423,6 +1439,47 @@
       "revoke": "Cancel",
       "revokeConfirm": "Confirm?",
       "revoking": "Cancelling..."
+    },
+    "accessMatrix": {
+      "capabilities": "enforced capabilities",
+      "capability": "Capability",
+      "drift": "Role drift — accounts with roles outside the enum",
+      "driftHint": "These roles match no tier, so the accounts hold no granted capabilities. Rename the role or flag the account.",
+      "globalDistribution": "Global role distribution",
+      "grid": "Capability grid",
+      "noDrift": "No role drift — every account holds a role from the enum.",
+      "org": "Organization",
+      "perOrg": "Roles per organization",
+      "role": "Role",
+      "subtitle": "Who can do what across every tenant — capability grants per role tier",
+      "title": "Access Matrix",
+      "user": "User",
+      "users": "users"
+    },
+    "gdpr": {
+      "anonFailed": "Anonymize failed",
+      "anonymize": "Anonymize",
+      "anonymized": "User anonymized",
+      "erase": "Erase",
+      "eraseConfirm": "Erase forever",
+      "eraseConfirmPlaceholder": "Type the email or ERASE to confirm permanent erasure",
+      "erased": "Data subject erased",
+      "eraseFailed": "Erase failed",
+      "export": "Export",
+      "exported": "Export downloaded",
+      "exportFailed": "Export failed",
+      "exporting": "Exporting…",
+      "footprint": "Data footprint by module",
+      "inactive": "inactive",
+      "inspect": "Inspect",
+      "moreTables": "more",
+      "noRecords": "No records found",
+      "noResults": "No data subject found. GDPR search matches the exact email or full name.",
+      "recordCount": "{{count}} records",
+      "search": "Search",
+      "searchPlaceholder": "Search by exact email or name…",
+      "subtitle": "Find a data subject, inspect their data footprint, export, anonymize or erase",
+      "title": "GDPR Data Toolkit"
     }
   },
   "superadminSecurity": {

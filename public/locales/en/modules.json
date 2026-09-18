@@ -339,7 +339,8 @@
       "subtitle": "Scan to open asset details",
       "show": "Show QR Code",
       "downloaded": "QR code downloaded",
-      "linkCopied": "Link copied to clipboard"
+      "linkCopied": "Link copied to clipboard",
+      "deepLink": "Deep Link"
     }
   },
   "news": {
@@ -820,7 +821,8 @@
       "cannotEditPublished": "You can only edit surveys that are in draft status. Published or closed surveys cannot be modified."
     },
     "questions": "Questions",
-    "average": "Average"
+    "average": "Average",
+    "newSurvey": "New Survey"
   },
   "surveyStatus": {
     "draft": "Draft",
@@ -1069,7 +1071,15 @@
     "docxExported": "Word file exported",
     "archiving": "Archiving…",
     "archived": "Signed document archived",
-    "alreadyArchived": "Document already archived"
+    "alreadyArchived": "Document already archived",
+    "alreadySigned": "This document has been fully signed",
+    "documentContent": "Document Content",
+    "drawOrUpload": "Draw or upload your signature below",
+    "notASigner": "You are not a signer on this document",
+    "notFound": "Document not found",
+    "signDocument": "Sign Document",
+    "signing": "Signing…",
+    "you": "You"
   },
   "goals": {
     "title": "OKR & Goals",
@@ -1144,7 +1154,14 @@
       "krSummary": "Key Results",
       "create": "Create Objective",
       "success": "Objective created successfully!",
-      "fillRequired": "Please fill in all required fields"
+      "fillRequired": "Please fill in all required fields",
+      "departmentPlaceholder": "e.g. Engineering",
+      "owner": "Owner",
+      "periodEnd": "End Date",
+      "periodStart": "Start Date",
+      "periodType": "Period",
+      "periodYear": "Year",
+      "selectOwner": "Select owner"
     },
     "metric": {
       "number": "Number",
@@ -1218,7 +1235,16 @@
     "subtitle": "Manage vacancies, candidates, and hiring pipeline",
     "createVacancy": "New Vacancy",
     "addCandidate": "Add",
-    "candidates": "candidates",
+    "candidates": {
+      "empty": "No candidates yet",
+      "exportCsv": "Export CSV",
+      "exported": "CSV exported",
+      "filters": "Filters",
+      "hint": "Candidates will appear here as they apply to your vacancies",
+      "loading": "Loading candidate",
+      "noResults": "No candidates match your search",
+      "search": "Search by name, email, or phone..."
+    },
     "selectVacancy": "Select a vacancy to view pipeline:",
     "empty": "No vacancies yet",
     "noInterviews": "No upcoming interviews",
@@ -1248,7 +1274,8 @@
     "tabs": {
       "vacancies": "Vacancies",
       "pipeline": "Pipeline",
-      "interviews": "My Interviews"
+      "interviews": "My Interviews",
+      "candidates": "Candidates"
     },
     "wizard": {
       "title": "Create Vacancy",
@@ -1319,7 +1346,8 @@
       "moved": "Candidate moved",
       "rejected": "Candidate rejected",
       "reject": "Reject",
-      "delete": "Remove"
+      "delete": "Remove",
+      "title": "Candidate"
     },
     "interviewType": {
       "phone": "Phone",
@@ -1364,7 +1392,23 @@
     "applicationHistory": "Application History",
     "noApplications": "No applications yet",
     "applied": "Applied",
-    "resume": "Resume"
+    "resume": "Resume",
+    "newVacancy": "New Vacancy",
+    "screening": {
+      "aiScore": "AI Screening Score",
+      "candidateReply": "Candidate reply",
+      "completed": "Completed",
+      "concerns": "Concerns",
+      "hrReply": "HR reply",
+      "pending": "Waiting for candidate...",
+      "replyPlaceholder": "Type a reply to the candidate...",
+      "replySent": "Reply sent",
+      "responses": "Screening Responses",
+      "sent": "Instructions sent via Telegram",
+      "status": "Screening Status",
+      "strengths": "Strengths"
+    },
+    "candidatesLabel": "candidates"
   },
   "careers": {
     "loading": "Loading...",
@@ -1427,7 +1471,15 @@
     "emailInvalid": "Invalid email address",
     "joinOrg": "Join this Organization",
     "viewAll": "View all positions at",
-    "positionsCount": "positions"
+    "positionsCount": "positions",
+    "alreadyApplied": "You have already applied to this position",
+    "alreadyAppliedDesc": "We already received your application — our team will review it soon.",
+    "connectTelegram": "Connect Telegram — screening, interview links & updates",
+    "copy": "Copy",
+    "linkCopied": "Link copied!",
+    "portalDesc": "Save this link to track your application progress, view AI scores, and chat with HR.",
+    "portalHint": "Tap the button, press Start in the bot — and every update reaches you here and in Telegram.",
+    "portalTitle": "Your Personal Dashboard"
   },
   "offboarding": {
     "title": "Offboarding",
@@ -1516,7 +1568,10 @@
       "feedback": "Feedback",
       "improvements": "Suggestions for improvement",
       "submit": "Submit"
-    }
+    },
+    "accountDeactivated": "account deactivated",
+    "approvedLeavesRemain": "{{count}} approved leave request(s) start after the last working day — review them in the final settlement.",
+    "forceCompleteConfirm": "Complete the offboarding anyway?"
   },
   "onboarding": {
     "title": "Onboarding",
@@ -1594,7 +1649,9 @@
       "step2": "Tasks",
       "step3": "Review",
       "create": "Create",
-      "success": "Template created!"
+      "success": "Template created!",
+      "editTitle": "Edit Template",
+      "updated": "Template updated!"
     },
     "fields": {
       "employee": "New hire",
@@ -1618,7 +1675,30 @@
       "noCourses": "No published courses available. Create courses in the Learning module first."
     },
     "coursesSelected": "course(s) selected",
-    "checkLater": "Check back later"
+    "checkLater": "Check back later",
+    "approvalTime": "Administrators typically respond within 24-48 hours",
+    "backToLogin": "Back to Login",
+    "editTemplate": "Edit onboarding template",
+    "login": {
+      "google": {
+        "desc": "You can also sign in instantly with your Google account — one click and you are in!",
+        "title": "🔵 Sign in with Google"
+      }
+    },
+    "nextSteps": "Next Steps",
+    "noReason": "No reason provided",
+    "noRequest": "No pending requests found",
+    "pendingApproval": "Pending Approval",
+    "pendingDesc": "Your request is being reviewed by administrators",
+    "requestRejected": "Request Rejected",
+    "requestSent": "Request Sent",
+    "requestSentTo": "Request sent to administrators",
+    "step1": "Request submitted",
+    "step2": "Wait for admin approval",
+    "step4": "Access the dashboard",
+    "tryAnotherEmail": "Try Another Email",
+    "waitingForApproval": "Waiting for administrator approval",
+    "step3": "You'll receive an email notification"
   },
   "compliance": {
     "title": "Compliance & GDPR",
@@ -1725,7 +1805,8 @@
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
-    "close": "Close"
+    "close": "Close",
+    "loadMore": "Load more logs"
   },
   "documents": {
     "title": "Title",
@@ -1860,7 +1941,30 @@
     "acknowledgedBadge": "Read",
     "acknowledgeError": "Could not confirm reading",
     "enterPlaceholder": "Enter placeholder text",
-    "selectCategory": "Select category"
+    "selectCategory": "Select category",
+    "contentTip": "You can use markdown-like formatting for sections",
+    "createDocument": "Create Document",
+    "createTemplateDesc": "Create a reusable template for document signing",
+    "department": "Department",
+    "email": "Email",
+    "employee": "Employee",
+    "filledFields": "Filled Fields",
+    "myDocuments": "My Documents",
+    "name": "Name",
+    "noFields": "This template has no custom fields",
+    "noIssuedDocuments": "No documents yet",
+    "noIssuedDocumentsDesc": "Documents issued to you by HR will appear here",
+    "popupBlocked": "Document opened in the current tab — allow popups for this site to open in a new tab",
+    "position": "Position",
+    "resolvedContent": "Resolved Content",
+    "resolvedData": "Resolved Employee Data",
+    "selectEmployee": "Employee",
+    "selectEmployeePlaceholder": "Choose an employee for this document",
+    "signaturePlaceholder": "Signature will be collected during signing",
+    "templateContentPlaceholder": "Enter the template content here...",
+    "templateTitle": "Document Template",
+    "uploadTitle": "Upload Document",
+    "useTemplateDesc": "Fill in the template fields and create a document"
   },
   "documentCategories": {
     "policy": "Policy",
@@ -2585,7 +2689,8 @@
     "board": {
       "freeNow": "Free now",
       "busyNow": "Busy now",
-      "total": "Rooms"
+      "total": "Rooms",
+      "platformUsage": "Platform Usage (30 days)"
     },
     "empty": {
       "noRooms": "No meeting rooms yet",
@@ -2658,7 +2763,17 @@
       "videoConferenceHint": "Choose a platform for external guests to join remotely.",
       "videoUrl": "Meeting Link",
       "livekitHint": "A built-in video room will be created automatically.",
-      "shareLink": "Share Link"
+      "shareLink": "Share Link",
+      "fieldEmail": "Email",
+      "fieldFullName": "Full name",
+      "fieldOptional": "Optional",
+      "fieldPhone": "Phone",
+      "fieldRequired": "Required",
+      "livekitCreated": "LiveKit room created",
+      "registrationDesc": "Guests fill out a form before joining. Responses are saved for the attendee report.",
+      "registrationLabel": "Registration form",
+      "waitingRoomDesc": "External guests wait in a lobby until you admit them.",
+      "waitingRoomLabel": "Waiting room"
     },
     "details": {
       "open": "Details",
@@ -2911,7 +3026,8 @@
       "downloaded": "Calendar file downloaded"
     },
     "hints": {
-      "doubleClick": "Double-click to open the full timeline"
+      "doubleClick": "Double-click to open the full timeline",
+      "singleDetails": "Click to view details · double-click to edit"
     }
   },
   "conflicts": {
@@ -3560,7 +3676,8 @@
       "technical": "Technical",
       "behavioral": "Behavioral",
       "culture": "Culture fit"
-    }
+    },
+    "saveError": "Could not save the prep pack"
   },
   "attrition": {
     "title": "Attrition Risk",
@@ -3593,5 +3710,22 @@
     "adviceWellbeingCheck": "Check in on wellbeing and offer support",
     "adviceGoalsReview": "Revisit goals and provide coaching",
     "adviceFeedbackSession": "Hold a feedback session and agree on improvement steps"
+  },
+  "candidate": {
+    "poweredBy": "Powered by Strata HR"
+  },
+  "candidatePortal": {
+    "evaluations": "Evaluations",
+    "interviews": "Interviews",
+    "join": "Join",
+    "progress": "Your Progress",
+    "screeningChat": "Screening Chat",
+    "screeningResult": "Screening Result",
+    "telegramConnect": "Connect Telegram",
+    "telegramDesc": "Connect the bot to receive screening questions, interview room links and status updates directly in Telegram.",
+    "telegramTitle": "Get updates in Telegram",
+    "timeline": "Timeline",
+    "with": "with",
+    "you": "You"
   }
 }

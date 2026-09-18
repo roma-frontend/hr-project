@@ -394,7 +394,14 @@
   },
   "tasksClient": {
     "linkedObjective": "Կապակցված նպատակ",
-    "linkedObjectiveDesc": "Այս առաջադրանքը նպաստում է հետևյալ OKR-ին"
+    "linkedObjectiveDesc": "Այս առաջադրանքը նպաստում է հետևյալ OKR-ին",
+    "delete": "Ջնջել",
+    "duplicate": "Կրկնօրինակել",
+    "edit": "Խմբագրել",
+    "open": "Բաց",
+    "rename": "Վերանվանել",
+    "undo": "Հետարկել",
+    "statusChanged": "Կարգավիճակը փոխվել է՝ {{from}} → {{to}}"
   },
   "goals": {
     "linkedTasks": "Կապակցված առաջադրանքներ",
@@ -430,8 +437,19 @@
         "keyResultLabel": "Հիմնական արդյունք",
         "keyResultPlaceholder": "Ընտրել KR (ըստ ցանկության)",
         "keyResultHint": "Կապել կոնկրետ հիմնական արդյունքին"
+      },
+      "checklistTemplates": {
+        "add": "+ Ավելացնել",
+        "description": "Ստուգաթերթի կետերը պատճենվում են յուրաքանչյուր կրկնության մեջ",
+        "placeholder": "Ավելացրեք կետ և սեղմեք Enter"
+      },
+      "subtaskTemplates": {
+        "add": "+ Ավելացնել",
+        "description": "Ենթաառաջադրանքները պատճենվում են յուրաքանչյուր կրկնության մեջ",
+        "placeholder": "Ավելացրեք ենթախնդիր և սեղմեք Enter"
       }
-    }
+    },
+    "save": "Պահպանել"
   },
   "dashboardWidgets": {
     "myTasks": "Իմ առաջադրանքները",

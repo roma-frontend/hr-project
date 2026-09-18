@@ -226,7 +226,10 @@
     "fileReadyToSend": "файл готов к отправке",
     "fileSizeLimit": "Файл превышает допустимый размер",
     "filesReadyToSend": "файлов готово к отправке",
-    "voiceSizeLimit": "Голосовое сообщение превышает допустимый размер"
+    "voiceSizeLimit": "Голосовое сообщение превышает допустимый размер",
+    "chatMessages": "Сообщения чата",
+    "loadOlderMessages": "↑ Загрузить старые сообщения",
+    "voiceMessage": "Голосовое сообщение"
   },
   "chatWidget": {
     "chat": "Чат",

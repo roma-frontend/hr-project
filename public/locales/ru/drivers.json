@@ -247,7 +247,9 @@
       "inProgress": "В процессе",
       "in_progress": "В процессе",
       "completed": "Завершено",
-      "cancelled": "Отменено"
+      "cancelled": "Отменено",
+      "active": "Активна",
+      "inactive": "Неактивна"
     },
     "rateDriver": "Оценить водителя",
     "howWasTrip": "Как прошла ваша поездка с",
@@ -459,7 +461,31 @@
       "pickupTarget": "Посадка",
       "dropoffTarget": "Высадка"
     },
-    "min": "мин"
+    "min": "мин",
+    "availability": "Доступность",
+    "blockTime": "Заблокировать время",
+    "cancel": "Отмена",
+    "clickDropoff": "Нажмите, чтобы указать точку высадки",
+    "clickPickup": "Нажмите, чтобы указать точку посадки",
+    "clickToChange": "Нажмите, чтобы изменить точку высадки",
+    "currentDriver": "Текущий водитель",
+    "distance": "Расстояние",
+    "email": "Эл. почта",
+    "fromPlaceholder": "напр., Офис",
+    "phone": "Телефон",
+    "rate": "Оценить",
+    "ratingBad": "Плохо",
+    "ratingExcellent": "Отлично",
+    "ratingGood": "Хорошо",
+    "ratingOkay": "Нормально",
+    "ratingVeryBad": "Очень плохо",
+    "reassignDesc": "Выберите нового водителя для этой поездки",
+    "reassignDriver": "Переназначить водителя",
+    "reassigning": "Переназначение...",
+    "searchDrivers": "Поиск водителей...",
+    "selectOrgForFavorite": "Сначала выберите организацию",
+    "submitting": "Отправка...",
+    "toPlaceholder": "напр., Аэропорт"
   },
   "drivers": {
     "notRegistered": "Не зарегистрирован",
@@ -513,7 +539,8 @@
       }
     },
     "blocked": "Заблокировано",
-    "trip": "Поездка"
+    "trip": "Поездка",
+    "userIdRequired": "Требуется ID пользователя"
   },
   "driversWizard": {
     "personalInfo": "Личная информация",
@@ -628,7 +655,8 @@
     "toasts": {
       "messageSentToDriver": "Сообщение отправлено",
       "messageFailedToSend": "Не удалось отправить сообщение"
-    }
+    },
+    "message": "Сообщение"
   },
   "driverWizard": {
     "submit": "Отправить",
@@ -684,7 +712,16 @@
       "noOrg": "Организация не выбрана",
       "fillDateAndTime": "Пожалуйста, заполните оба поля: дата и время.",
       "invalidDateTime": "Неверная дата или время. Пожалуйста, используйте формат YYYY-MM-DD и HH:MM."
-    }
+    },
+    "colorPlaceholder": "Чёрный",
+    "luxury": "Люкс",
+    "makePlaceholder": "Toyota",
+    "modelPlaceholder": "Camry",
+    "platePlaceholder": "А123БВ",
+    "sedan": "Седан",
+    "suv": "Внедорожник",
+    "van": "Минивэн",
+    "yearPlaceholder": "2024"
   },
   "timezone": {
     "easternTime": "Восточное время (ET)",

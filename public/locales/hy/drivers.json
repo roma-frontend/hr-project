@@ -234,7 +234,9 @@
       "inProgress": "Ընթացքի մեջ",
       "in_progress": "Ընթացքի մեջ",
       "completed": "Ավարտված",
-      "cancelled": "Չեղարկված"
+      "cancelled": "Չեղարկված",
+      "active": "Ակտիվ",
+      "inactive": "Ոչ ակտիվ"
     },
     "active": "Ակտիվ",
     "history": "Պատմություն",
@@ -459,7 +461,31 @@
     "noActiveRequests": "Ակտիվ հայտեր չկան",
     "noHistory": "Պատմություն չկա",
     "timeBlock": "Ժամանակի բլոկ",
-    "min": "րоп"
+    "min": "րоп",
+    "availability": "Հասանելիություն",
+    "blockTime": "Արգելափակել ժամանակը",
+    "cancel": "Չեղարկել",
+    "clickDropoff": "Սեղմեք՝ իջեցման կետը նշելու համար",
+    "clickPickup": "Սեղմեք՝ վերցնելու կետը նշելու համար",
+    "clickToChange": "Սեղմեք՝ իջեցման կետը փոխելու համար",
+    "currentDriver": "Ընթացիկ վարորդ",
+    "distance": "Հեռավորություն",
+    "email": "Էլ. փոստ",
+    "fromPlaceholder": "օր․, Գրասենյակ",
+    "phone": "Հեռախոս",
+    "rate": "Գնահատել",
+    "ratingBad": "Վատ",
+    "ratingExcellent": "Գերազանց",
+    "ratingGood": "Լավ",
+    "ratingOkay": "Նորմալ",
+    "ratingVeryBad": "Շատ վատ",
+    "reassignDesc": "Ընտրեք նոր վարորդ այս ուղևորության համար",
+    "reassignDriver": "Վերանշանակել վարորդին",
+    "reassigning": "Վերանշանակում...",
+    "searchDrivers": "Որոնել վարորդներ...",
+    "selectOrgForFavorite": "Նախ ընտրեք կազմակերպությունը",
+    "submitting": "Ուղարկում...",
+    "toPlaceholder": "օր.՝ Օդանավակայան"
   },
   "drivers": {
     "notRegistered": "Գրանցված չէ",
@@ -513,7 +539,8 @@
       }
     },
     "blocked": "Արգելափակված",
-    "trip": "Ուղևորություն"
+    "trip": "Ուղևորություն",
+    "userIdRequired": "Պահանջվում է օգտատիրոջ ID"
   },
   "driversWizard": {
     "personalInfo": "Անձնական տվյալներ",
@@ -628,7 +655,8 @@
     "toasts": {
       "messageSentToDriver": "Հաղորդագրությունն ուղարկված է",
       "messageFailedToSend": "Չհաջողվեց ուղարկել հաղորդագրությունը"
-    }
+    },
+    "message": "Հաղորդագրություն"
   },
   "driverWizard": {
     "submit": "Պատվիրել վարորդ",
@@ -684,7 +712,16 @@
       "noOrg": "Կազմակերպություն չի գտնվել",
       "fillDateAndTime": "Խնդրում ենք լրացնել երկու դաշտերը՝ ամսաթիվ և ժամ:",
       "invalidDateTime": "Անվավեր ամսաթիվ կամ ժամ: Խնդրում ենք օգտագործել YYYY-MM-DD և HH:MM ձևաչափեր:"
-    }
+    },
+    "colorPlaceholder": "Սև",
+    "luxury": "Շքեղ",
+    "makePlaceholder": "Toyota",
+    "modelPlaceholder": "Camry",
+    "platePlaceholder": "34-AB-123",
+    "sedan": "Սեդան",
+    "suv": "Ամենագնաց",
+    "van": "Մինիվեն",
+    "yearPlaceholder": "2024"
   },
   "timezone": {
     "easternTime": "Արևելյան ժամանակ (ET)",

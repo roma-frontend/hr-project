@@ -220,7 +220,10 @@
     "fileReadyToSend": "Datei bereit zum Senden",
     "fileSizeLimit": "Datei überschreitet das Größenlimit",
     "filesReadyToSend": "Dateien bereit zum Senden",
-    "voiceSizeLimit": "Sprachnachricht überschreitet das Größenlimit"
+    "voiceSizeLimit": "Sprachnachricht überschreitet das Größenlimit",
+    "chatMessages": "Chat-Nachrichten",
+    "loadOlderMessages": "↑ Ältere Nachrichten laden",
+    "voiceMessage": "Sprachnachricht"
   },
   "chatWidget": {
     "chat": "Chat",

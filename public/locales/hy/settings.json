@@ -686,7 +686,16 @@
       "cancelled": "Չեղարկված"
     },
     "unassigned": "Չնշանակված",
-    "recurringSeries": "Կրկնվող շարքեր"
+    "recurringSeries": "Կրկնվող շարքեր",
+    "editTitle": "Խմբագրել նախագիծը",
+    "endDate": "Ավարտի ամսաթիվ",
+    "nameRequired": "Նախագծի անվանումը պարտադիր է",
+    "startDate": "Մեկնարկի ամսաթիվ",
+    "statusLabel": "Կարգավիճակ",
+    "tagsLabel": "Պիտակներ",
+    "tagsPlaceholder": "Պիտակներ կոմայով",
+    "updated": "Նախագիծը թարմացվեց",
+    "updateFailed": "Ձախողված"
   },
   "settingsSso": {
     "title": "Միասնական մուտք (OIDC)",

@@ -41,13 +41,44 @@ function loadNamespaces() {
   return bundles;
 }
 
+/**
+ * i18next's own resource walk, copied from dist/esm/i18next.js (`deepFind`).
+ *
+ * A plain `obj.a.b` walk is not equivalent: the locale files mix nested groups
+ * with flat dotted keys — `nav: { employees: 'Employees',
+ * 'employees.departments': 'Departments' }` — and the naive walk calls every
+ * such flat key missing. That produced ~400 false positives and buried the
+ * handful of genuinely broken keys, so the walk has to match production.
+ */
 function lookup(bundle, path) {
-  let node = bundle;
-  for (const part of path.split('.')) {
-    if (node === null || typeof node !== 'object' || !(part in node)) return undefined;
-    node = node[part];
+  if (!bundle) return undefined;
+  if (bundle[path]) {
+    if (!Object.prototype.hasOwnProperty.call(bundle, path)) return undefined;
+    return bundle[path];
   }
-  return node;
+  const tokens = path.split('.');
+  let current = bundle;
+  for (let i = 0; i < tokens.length; ) {
+    if (!current || typeof current !== 'object') return undefined;
+    let next;
+    let nextPath = '';
+    for (let j = i; j < tokens.length; ++j) {
+      if (j !== i) nextPath += '.';
+      nextPath += tokens[j];
+      next = current[nextPath];
+      if (next !== undefined) {
+        // A string mid-path means a *longer* flat key may still exist, so keep
+        // extending the path instead of stopping at the value.
+        if (['string', 'number', 'boolean'].indexOf(typeof next) > -1 && j < tokens.length - 1) {
+          continue;
+        }
+        i += j - i + 1;
+        break;
+      }
+    }
+    current = next;
+  }
+  return current;
 }
 
 /** i18next JSON v4 plural suffixes. */

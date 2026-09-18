@@ -247,7 +247,9 @@
       "inProgress": "In Bearbeitung",
       "in_progress": "In Bearbeitung",
       "completed": "Abgeschlossen",
-      "cancelled": "Abgebrochen"
+      "cancelled": "Abgebrochen",
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
     },
     "rateDriver": "Fahrer bewerten",
     "howWasTrip": "Wie war Ihre Fahrt mit",
@@ -459,7 +461,31 @@
       "pickupTarget": "Abholung",
       "dropoffTarget": "Abgabe"
     },
-    "min": "Min"
+    "min": "Min",
+    "availability": "Verfügbarkeit",
+    "blockTime": "Zeit blockieren",
+    "cancel": "Abbrechen",
+    "clickDropoff": "Klicken, um den Ausstiegspunkt zu setzen",
+    "clickPickup": "Klicken, um den Abholpunkt zu setzen",
+    "clickToChange": "Klicken, um den Ausstiegspunkt zu ändern",
+    "currentDriver": "Aktueller Fahrer",
+    "distance": "Entfernung",
+    "email": "E-Mail",
+    "fromPlaceholder": "z.B., Büro",
+    "phone": "Telefon",
+    "rate": "Bewerten",
+    "ratingBad": "Schlecht",
+    "ratingExcellent": "Hervorragend",
+    "ratingGood": "Gut",
+    "ratingOkay": "Okay",
+    "ratingVeryBad": "Sehr schlecht",
+    "reassignDesc": "Wählen Sie einen neuen Fahrer für diese Fahrt",
+    "reassignDriver": "Fahrer neu zuweisen",
+    "reassigning": "Wird neu zugewiesen...",
+    "searchDrivers": "Fahrer suchen...",
+    "selectOrgForFavorite": "Wählen Sie zuerst eine Organisation",
+    "submitting": "Sende...",
+    "toPlaceholder": "z. B. Flughafen"
   },
   "drivers": {
     "notRegistered": "Nicht registriert",
@@ -513,7 +539,8 @@
       }
     },
     "blocked": "Blockiert",
-    "trip": "Fahrt"
+    "trip": "Fahrt",
+    "userIdRequired": "Benutzer-ID ist erforderlich"
   },
   "driversWizard": {
     "personalInfo": "Persönliche Informationen",
@@ -628,7 +655,8 @@
     "toasts": {
       "messageSentToDriver": "Nachricht gesendet",
       "messageFailedToSend": "Nachricht konnte nicht gesendet werden"
-    }
+    },
+    "message": "Nachricht"
   },
   "driverWizard": {
     "submit": "Absenden",
@@ -684,7 +712,16 @@
       "noOrg": "Organisation nicht ausgewählt",
       "fillDateAndTime": "Bitte füllen Sie beide Felder aus: Datum und Uhrzeit.",
       "invalidDateTime": "Ungültiges Datum oder Uhrzeit. Bitte verwenden Sie das Format YYYY-MM-DD und HH:MM."
-    }
+    },
+    "colorPlaceholder": "Schwarz",
+    "luxury": "Luxus",
+    "makePlaceholder": "Toyota",
+    "modelPlaceholder": "Camry",
+    "platePlaceholder": "A123BC",
+    "sedan": "Limousine",
+    "suv": "SUV",
+    "van": "Van",
+    "yearPlaceholder": "2024"
   },
   "timezone": {
     "easternTime": "Ostküstenzeit (ET)",

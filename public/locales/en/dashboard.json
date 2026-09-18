@@ -394,7 +394,14 @@
   },
   "tasksClient": {
     "linkedObjective": "Linked Goal",
-    "linkedObjectiveDesc": "This task contributes to the following OKR"
+    "linkedObjectiveDesc": "This task contributes to the following OKR",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "edit": "Edit",
+    "open": "Open",
+    "rename": "Rename",
+    "undo": "Undo",
+    "statusChanged": "Status changed: {{from}} → {{to}}"
   },
   "goals": {
     "linkedTasks": "Linked Tasks",
@@ -430,8 +437,19 @@
         "keyResultLabel": "Key Result",
         "keyResultPlaceholder": "Select a key result (optional)",
         "keyResultHint": "Link to a specific key result"
+      },
+      "checklistTemplates": {
+        "add": "+ Add",
+        "description": "Checklist items copied to every occurrence",
+        "placeholder": "Add an item and press Enter"
+      },
+      "subtaskTemplates": {
+        "add": "+ Add",
+        "description": "Subtasks copied to every occurrence",
+        "placeholder": "Add a subtask and press Enter"
       }
-    }
+    },
+    "save": "Save"
   },
   "dashboardWidgets": {
     "myTasks": "My Tasks",

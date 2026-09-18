@@ -153,7 +153,25 @@
     "remove": "Remove",
     "change": "Change",
     "progress": "Progress",
-    "saved": "Saved"
+    "saved": "Saved",
+    "accept": "Accept",
+    "apply": "Apply",
+    "breakdown": "Breakdown",
+    "copy": "Copy",
+    "copyFailed": "Copy failed",
+    "decline": "Decline",
+    "deleting": "Deleting...",
+    "download": "Download",
+    "of": "of",
+    "openFullPage": "Open full page",
+    "prev": "Prev",
+    "processing": "Processing...",
+    "retry": "Retry",
+    "somethingWentWrong": "Something went wrong",
+    "today": "Today",
+    "tryAgain": "Try Again",
+    "type": "Type",
+    "unknownError": "Unknown error"
   },
   "nav": {
     "home": "Home",
@@ -549,7 +567,8 @@
     "today": "Today",
     "pause": "Pause",
     "resume": "Resume",
-    "start": "Start"
+    "start": "Start",
+    "close": "Close"
   },
   "labels": {
     "fullName": "Full Name",
@@ -594,7 +613,13 @@
     "email": "Email",
     "to": "to",
     "approved": "Approved",
-    "dates": "Dates"
+    "dates": "Dates",
+    "comment": "Comment",
+    "date": "Date",
+    "endTime": "End Time",
+    "overtimeDate": "Overtime Date",
+    "startTime": "Start Time",
+    "time": "Time"
   },
   "forms": {
     "required": "*",
@@ -724,7 +749,10 @@
     "cancel": "Cancel",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen",
-    "back": "Back"
+    "back": "Back",
+    "calendar": "Calendar",
+    "confirm": "Confirm",
+    "list": "List"
   },
   "placeholders": {
     "selectEmployee": "Select employee",
@@ -765,7 +793,9 @@
     "position": "Position",
     "selectOrg": "Select organization",
     "selectDepartment": "Select department",
-    "selectPosition": "Select position"
+    "selectPosition": "Select position",
+    "search": "Search projects...",
+    "select": "Select..."
   },
   "ariaLabels": {
     "changeAvatar": "Change avatar",
@@ -1049,7 +1079,8 @@
     "noDrivers": {
       "title": "No Drivers Available",
       "description": "There are no drivers available right now. Try again later.",
-      "requestDriver": "Request Driver"
+      "requestDriver": "Request Driver",
+      "action": "Request Driver"
     }
   },
   "months": {
@@ -1656,7 +1687,8 @@
       "leaveCancellationRejected": "Cancellation Rejected",
       "roomMeetingReminder": "Upcoming: {{bookingTitle}}",
       "tempPasswordLogin": "🔑 Temporary Password Used"
-    }
+    },
+    "markReadFailed": "Could not update the notification"
   },
   "aiChat": {
     "suggestions": {
@@ -1750,7 +1782,8 @@
   },
   "leaves": {
     "newRequestNotification": "New Leave Request! 🏖️",
-    "pendingRequestsCount": "You have {{count}} pending leave request(s)"
+    "pendingRequestsCount": "You have {{count}} pending leave request(s)",
+    "loadMore": "Load more requests"
   },
   "tasks": {
     "failedToUpdateStatus": "Failed to update status",
@@ -1785,7 +1818,31 @@
     "roleManagedByAdmin": "Your role and department are managed by administrators.",
     "deleteAvatarTitle": "Delete Profile Picture?",
     "deleteAvatarWarning": "Are you sure you want to delete your profile picture? This action cannot be undone.",
-    "currentAvatar": "Current avatar"
+    "currentAvatar": "Current avatar",
+    "avatar": "Profile Photo",
+    "avatarDesc": "Upload a new profile picture",
+    "deleteAccount": "Delete Account",
+    "deleteConfirmDesc": "This action cannot be undone. All your data will be permanently removed.",
+    "deleteConfirmTitle": "Delete Account",
+    "deleteForever": "Delete Forever",
+    "department": "Department",
+    "discard": "Discard",
+    "editInfo": "Edit Information",
+    "editInfoDesc": "Update your personal details",
+    "email": "Email",
+    "fullName": "Full Name",
+    "joinDate": "Join Date",
+    "location": "Location",
+    "locationPlaceholder": "City, Country",
+    "namePlaceholder": "Enter your full name",
+    "phone": "Phone",
+    "position": "Position",
+    "registered": "Registered",
+    "removeAvatar": "Remove",
+    "role": "Role",
+    "save": "Save Changes",
+    "saved": "Profile updated successfully",
+    "saveError": "Failed to update profile"
   },
   "dashboard": {
     "viewAll": "View all",
@@ -1817,7 +1874,9 @@
     "focusModeActive": "Focus Mode Active"
   },
   "analytics": {
-    "vsLastMonth": "vs last month"
+    "vsLastMonth": "vs last month",
+    "errorDescription": "Something went wrong loading the analytics dashboard. Please try again.",
+    "errorTitle": "Analytics Error"
   },
   "auth": {
     "selectCamera": "Select Camera:",
@@ -1841,7 +1900,12 @@
     "nationalIdSection": "National ID & Insurance",
     "nationalIdSectionHint": "Armenian national ID and health insurance status",
     "healthInsured": "Mandatory Health Insurance",
-    "healthInsuredHint": "Employee participates in mandatory health insurance"
+    "healthInsuredHint": "Employee participates in mandatory health insurance",
+    "confirmDelete": "Confirm Deletion",
+    "deleteFailed": "Failed to delete employee",
+    "deleteWarning": "Are you sure you want to delete this employee? This action cannot be undone.",
+    "employeeDeleted": "Employee deleted successfully",
+    "cantEditOwnSalary": "You can't change your own compensation — contact your HR or finance team to make changes."
   },
   "quickStats": {
     "active": "active"
@@ -1949,7 +2013,8 @@
     "videoMode": {
       "meeting": "Meeting",
       "webinar": "Webinar"
-    }
+    },
+    "dateInPast": "You can\\u2019t book a room in the past \\u2014 pick a future date or time."
   },
   "dayDetails": {
     "events": "events",
@@ -2046,7 +2111,8 @@
     "analyticsDesc": "Reports, trends & data insights",
     "kpi": "KPI",
     "kpiDesc": "OKR, goals & performance strategy",
-    "hint": "Specialized agents for domain-specific tasks"
+    "hint": "Specialized agents for domain-specific tasks",
+    "select": "Select AI Agent"
   },
   "strategyPage": {
     "title": "Alignment View, Strategy & Balanced Scorecard",

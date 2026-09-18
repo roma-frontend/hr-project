@@ -458,7 +458,8 @@
       "error": "Failed to save department"
     },
     "submit": "Create Department",
-    "update": "Update Department"
+    "update": "Update Department",
+    "title": "New Department"
   },
   "positionWizard": {
     "steps": {
@@ -512,7 +513,8 @@
       "error": "Failed to save position"
     },
     "submit": "Create Position",
-    "update": "Update Position"
+    "update": "Update Position",
+    "title": "New Position"
   },
   "orgChart": {
     "title": "Organization Chart",
@@ -569,7 +571,8 @@
     "headSaveError": "Failed to save the head of the organization",
     "unassigned": "Not placed in the hierarchy",
     "unassignedNone": "Everyone reports to someone.",
-    "unassignedHint": "These people have no manager, so they render as separate roots. Assign a manager to place them."
+    "unassignedHint": "These people have no manager, so they render as separate roots. Assign a manager to place them.",
+    "noDataDesc": "Generate an org chart from employee data or add nodes manually."
   },
   "organization": {
     "organization": "Organization",

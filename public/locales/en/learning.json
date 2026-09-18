@@ -86,7 +86,7 @@
     "unpublish": "Unpublish",
     "published": "Published",
     "unpublished": "Unpublished",
-    "mandatory": "Mandatory",
+    "mandatory": "Required",
     "optional": "Optional",
     "tags": "Tags",
     "addTag": "Add Tag",
@@ -193,9 +193,6 @@
     "filterMandatory": "Mandatory",
     "employee": "Employee",
     "course": "Course",
-    "progress": "Progress",
-    "enrolled": "Enrolled",
-    "mandatory": "Required",
     "statusCompleted": "Completed",
     "statusInProgress": "In Progress",
     "statusNotStarted": "Not Started",
@@ -207,6 +204,16 @@
     "descriptionPlaceholder": "Enter course description",
     "categoryPlaceholder": "e.g. HR & Compliance",
     "estimatedHoursPlaceholder": "e.g. 4",
-    "tagsPlaceholder": "Comma-separated tags"
+    "tagsPlaceholder": "Comma-separated tags",
+    "certificateError": "Failed to issue certificate",
+    "certificateExists": "Certificate already exists",
+    "certificateTemplate": "Certificate Template",
+    "certified": "✓ Certified",
+    "contactAdmin": "Contact your administrator to add content",
+    "courseCreateError": "Failed to create course",
+    "description": "Description",
+    "enterUrlToPreview": "Enter a video URL to see a preview",
+    "hidePreview": "Hide",
+    "selectTemplate": "Select Certificate Template"
   }
 }

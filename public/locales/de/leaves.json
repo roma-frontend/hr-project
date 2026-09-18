@@ -36,7 +36,10 @@
       "maternity": "Mutterschaftsurlaub",
       "maternityDesc": "Bezahlter Urlaub vor und nach der Geburt",
       "study": "Bildungsurlaub",
-      "studyDesc": "Bezahlter Urlaub für Prüfungen und Studienzeiten"
+      "studyDesc": "Bezahlter Urlaub für Prüfungen und Studienzeiten",
+      "maternityBadge": "18 Wochen",
+      "paternity": "Vaterschaftsurlaub",
+      "paternityDesc": "Elternzeit für einen frischgebackenen Vater"
     },
     "reason": "Grund",
     "requestDetails": "Details zum Urlaubsantrag",
@@ -72,7 +75,8 @@
     "reviewNotAllowedHint": "Über diesen Antrag entscheidet die vorgesetzte Person dieses Mitarbeiters in der Berichtslinie oder HR.",
     "documents": "Dokumente",
     "leaveRequestDocument": "Urlaubsantrag (Dokument)",
-    "leaveOrderDocument": "Urlaubsanordnung"
+    "leaveOrderDocument": "Urlaubsanordnung",
+    "availableBalances": "Verfügbare Salden"
   },
   "signatures": {
     "sign": "Unterschreiben",

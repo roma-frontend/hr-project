@@ -185,6 +185,7 @@
       "eligibilityDesc": "Legen Sie die Verfügbarkeitskriterien und den Bonusbetrag fest",
       "periodDesc": "Definieren Sie den Zeitraum des Bonusprogramms",
       "settingsDesc": "Konfigurieren Sie die Einstellungen des Überprüfungszyklus"
-    }
+    },
+    "notesPlaceholder": "Notizen hinzufügen..."
   }
 }

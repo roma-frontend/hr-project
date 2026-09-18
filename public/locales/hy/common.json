@@ -153,7 +153,25 @@
     "remove": "Հեռացնել",
     "change": "Փոխել",
     "progress": "Առաջընթաց",
-    "saved": "Պահպանված է"
+    "saved": "Պահպանված է",
+    "accept": "Ընդունել",
+    "apply": "Կիրառել",
+    "breakdown": "Բաշխում",
+    "copy": "Պատճենել",
+    "copyFailed": "Պատճենումը ձախողվեց",
+    "decline": "Մերժել",
+    "deleting": "Ջնջում...",
+    "download": "Ներբեռնել",
+    "of": "-ից",
+    "openFullPage": "Բացել ամբողջական էջը",
+    "prev": "Նախորդ",
+    "processing": "Մշակվում է...",
+    "retry": "Կրկին փորձել",
+    "somethingWentWrong": "Ինչ-որ բան սխալ է անցել",
+    "today": "Այսօր",
+    "tryAgain": "Փորձել կրկին",
+    "type": "Տեսակ",
+    "unknownError": "Անհայտ սխալ"
   },
   "nav": {
     "home": "Գլխավոր",
@@ -549,7 +567,8 @@
     "today": "Այսօր",
     "pause": "Կարճ",
     "resume": "Հաջորդ",
-    "start": "Սկսել"
+    "start": "Սկսել",
+    "close": "Փակել"
   },
   "labels": {
     "fullName": "Լրիվ անուն",
@@ -594,7 +613,13 @@
     "email": "Էլ. փոստ",
     "to": "Ում",
     "approved": "Հաստատված",
-    "dates": "Ամսաթվեր"
+    "dates": "Ամսաթվեր",
+    "comment": "Մեկնաբանություն",
+    "date": "Ամսաթիվ",
+    "endTime": "Ավարտի ժամանակ",
+    "overtimeDate": "Գերժամյա աշխատանքի ամսաթիվ",
+    "startTime": "Սկսման ժամանակ",
+    "time": "Ժամ"
   },
   "forms": {
     "required": "Պարտադիր",
@@ -724,7 +749,10 @@
     "cancel": "Չեղարկել",
     "fullscreen": "Լիաէկրան",
     "exitFullscreen": "Դուրս գալ լիաէկրան ռեժիմից",
-    "back": "Հետ"
+    "back": "Հետ",
+    "calendar": "Օրացույց",
+    "confirm": "Հաստատել",
+    "list": "Ցանկ"
   },
   "placeholders": {
     "selectEmployee": "Ընտրել աշխատակից",
@@ -765,7 +793,9 @@
     "position": "Պաշտոն",
     "selectOrg": "Ընտրել կազմակերպություն",
     "selectDepartment": "Ընտրեք բաժինը",
-    "selectPosition": "Ընտրեք պաշտոնը"
+    "selectPosition": "Ընտրեք պաշտոնը",
+    "search": "Որոնել նախագծեր...",
+    "select": "Ընտրեք..."
   },
   "ariaLabels": {
     "changeAvatar": "Փոխել ավատարը",
@@ -1049,7 +1079,8 @@
     "noDrivers": {
       "title": "Չկան հասանելի վարորդներ",
       "description": "Ներկայումս հասանելի վարորդներ չկան: Փորձեք դիմել ավելի ուշ:",
-      "requestDriver": "Պատվիրել վարորդ"
+      "requestDriver": "Պատվիրել վարորդ",
+      "action": "Պատվիրել վարորդ"
     }
   },
   "months": {
@@ -1656,7 +1687,8 @@
       "leaveCancellationRejected": "Չեղարկումը մերժված է",
       "roomMeetingReminder": "Շուտով՝ {{bookingTitle}}",
       "tempPasswordLogin": "🔑 Մուտք ժամանակավոր գաղտնաբառով"
-    }
+    },
+    "markReadFailed": "Չհաջողվեց թարմացնել ծանուցումը"
   },
   "aiChat": {
     "suggestions": {
@@ -1750,7 +1782,8 @@
   },
   "leaves": {
     "newRequestNotification": "Նոր արձակուրդի հայտ! 🏖️",
-    "pendingRequestsCount": "Դու ունես {{count}} սպասող հայտ"
+    "pendingRequestsCount": "Դու ունես {{count}} սպասող հայտ",
+    "loadMore": "Բեռնել ավելի շատ հայտեր"
   },
   "tasks": {
     "failedToUpdateStatus": "Չհաջողվեց թարմացնել կարգավիճակը",
@@ -1785,7 +1818,31 @@
     "roleManagedByAdmin": "Ձեր դերը և բաժինը կառավարվում են կազմակերպության կողմից։",
     "deleteAvatarTitle": "Ջնջել պրոֆիլի նկարը?",
     "deleteAvatarWarning": "Վստա՞հ եք, որ ուզում եք ջնջել պրոֆիլի նկարը։ Գործողությունը չի կարող հետադարձվել։",
-    "currentAvatar": "Ներկա ավատար"
+    "currentAvatar": "Ներկա ավատար",
+    "avatar": "Պրոֆիլի լուսանկար",
+    "avatarDesc": "Վերբեռնել նոր պրոֆիլի լուսանկար",
+    "deleteAccount": "Ջնջել հաշիվը",
+    "deleteConfirmDesc": "Այս գործողությունը հնարավոր չէ հետարկել։ Ձեր բոլոր տվյալները վերջնականապես կհեռացվեն։",
+    "deleteConfirmTitle": "Ջնջել հաշիվը",
+    "deleteForever": "Ջնջել ընդմիշտ",
+    "department": "Բաժին",
+    "discard": "Հեռացնել",
+    "editInfo": "Խմբագրել տվյալները",
+    "editInfoDesc": "Թարմացրեք ձեր անձնական տվյալները",
+    "email": "Էլ. փոստ",
+    "fullName": "Լրիվ անուն",
+    "joinDate": "Միացման ամսաթիվ",
+    "location": "Տեղակայություն",
+    "locationPlaceholder": "Քաղաք, երկիր",
+    "namePlaceholder": "Մուտքագրեք ձեր լրիվ անունը",
+    "phone": "Հեռախոս",
+    "position": "Պաշտոն",
+    "registered": "Գրանցված",
+    "removeAvatar": "Հեռացնել",
+    "role": "Դեր",
+    "save": "Պահպանել փոփոխությունները",
+    "saved": "Պրոֆիլը թարմացվել է",
+    "saveError": "Չհաջողվեց թարմացնել պրոֆիլը"
   },
   "dashboard": {
     "viewAll": "Բոլորը",
@@ -1817,7 +1874,9 @@
     "focusModeActive": "Ֆոկուս ռեժիմը ակտիվ է"
   },
   "analytics": {
-    "vsLastMonth": "նախորդ ամսվա համեմատ"
+    "vsLastMonth": "նախորդ ամսվա համեմատ",
+    "errorDescription": "Չհաջողվեց բեռնել վերլուծության վահանակը։ Փորձեք կրկին։",
+    "errorTitle": "Վերլուծության սխալ"
   },
   "auth": {
     "selectCamera": "Ընտրեք տեսախցիկը",
@@ -1841,7 +1900,12 @@
     "nationalIdSection": "Ազգային համար և ապահովագրություն",
     "nationalIdSectionHint": "Ազգային համար և առողջապահական ապահովագրության կարգավիճակ",
     "healthInsured": "Պարտադիր առողջապահական ապահովագրություն",
-    "healthInsuredHint": "Աշխատակիցը մասնակցում է պարտադիր առողջապահական ապահովագրությանը"
+    "healthInsuredHint": "Աշխատակիցը մասնակցում է պարտադիր առողջապահական ապահովագրությանը",
+    "confirmDelete": "Հաստատել ջնջումը",
+    "deleteFailed": "Չհաջողվեց ջնջել աշխատակցին",
+    "deleteWarning": "Համոզվա՞ծ եք, որ ուզում եք ջնջել այս աշխատակցին։ Այս գործողությունը հնարավոր չէ հետարկել։",
+    "employeeDeleted": "Աշխատակիցը ջնջվել է",
+    "cantEditOwnSalary": "Դուք չեք կարող փոփոխել սեփական վարձատրությունը — դիմեք HR-ին կամ ֆինանսական թիմին։"
   },
   "quickStats": {
     "active": "Ակտիվ"
@@ -1949,7 +2013,8 @@
     "fieldEmail": "Email",
     "fieldPhone": "Phone",
     "fieldRequired": "Required",
-    "fieldOptional": "Optional"
+    "fieldOptional": "Optional",
+    "dateInPast": "Չեք կարող սենյակ ամրագրել անցյալում — ընտրեք ապագա ամսաթիվ կամ ժամ։"
   },
   "dayDetails": {
     "events": "Իրադարձություններ",
@@ -2046,7 +2111,8 @@
     "analyticsDesc": "Հաշվետվություններ, միտումներ և տվյալների վերլուծություն",
     "kpi": "KPI",
     "kpiDesc": "OKR, նպատակներ և կատարողականության ռազմավարություն",
-    "hint": "Մասնագիտացված գործակալներ կոնկրետ ոլորտների առաջադրանքների համար"
+    "hint": "Մասնագիտացված գործակալներ կոնկրետ ոլորտների առաջադրանքների համար",
+    "select": "Ընտրեք AI գործակալ"
   },
   "strategyPage": {
     "title": "Հավասարեցում, ռազմավարություն և BSC",

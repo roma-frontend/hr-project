@@ -393,7 +393,7 @@ export default function LoginPage() {
           // Temporary password grace window has passed — show a precise,
           // localized message instead of a generic failure.
           if (errorData.error === 'temp_password_expired') {
-            throw new Error(t('auth.changePassword.tempExpired'));
+            throw new Error(t('changePassword.tempExpired'));
           }
           throw new Error(errorData.error || 'Login failed');
         }

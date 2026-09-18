@@ -686,7 +686,16 @@
       "cancelled": "Отменён"
     },
     "unassigned": "Не назначен",
-    "recurringSeries": "Повторяющиеся серии"
+    "recurringSeries": "Повторяющиеся серии",
+    "editTitle": "Редактировать проект",
+    "endDate": "Дата окончания",
+    "nameRequired": "Требуется название проекта",
+    "startDate": "Дата начала",
+    "statusLabel": "Статус",
+    "tagsLabel": "Теги",
+    "tagsPlaceholder": "Теги через запятую",
+    "updated": "Проект обновлён",
+    "updateFailed": "Неудачные"
   },
   "settingsSso": {
     "title": "Единый вход (OIDC)",

@@ -394,7 +394,14 @@
   },
   "tasksClient": {
     "linkedObjective": "Verknüpftes Ziel",
-    "linkedObjectiveDesc": "Diese Aufgabe trägt zum folgenden OKR bei"
+    "linkedObjectiveDesc": "Diese Aufgabe trägt zum folgenden OKR bei",
+    "delete": "Löschen",
+    "duplicate": "Duplizieren",
+    "edit": "Bearbeiten",
+    "open": "Offen",
+    "rename": "Umbenennen",
+    "undo": "Rückgängig",
+    "statusChanged": "Status geändert: {{from}} → {{to}}"
   },
   "goals": {
     "linkedTasks": "Verknüpfte Aufgaben",
@@ -430,8 +437,19 @@
         "keyResultLabel": "Schlüsselergebnis",
         "keyResultPlaceholder": "KR auswählen (optional)",
         "keyResultHint": "Mit konkretem Schlüsselergebnis verknüpfen"
+      },
+      "checklistTemplates": {
+        "add": "+ Hinzufügen",
+        "description": "Checklisten-Einträge werden in jede Wiederholung kopiert",
+        "placeholder": "Punkt eingeben und Enter drücken"
+      },
+      "subtaskTemplates": {
+        "add": "+ Hinzufügen",
+        "description": "Unteraufgaben werden in jede Wiederholung kopiert",
+        "placeholder": "Unteraufgabe eingeben und Enter drücken"
       }
-    }
+    },
+    "save": "Speichern"
   },
   "dashboardWidgets": {
     "myTasks": "Meine Aufgaben",

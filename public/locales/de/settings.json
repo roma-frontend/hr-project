@@ -686,7 +686,16 @@
       "cancelled": "Abgebrochen"
     },
     "unassigned": "Nicht zugewiesen",
-    "recurringSeries": "Wiederkehrende Serien"
+    "recurringSeries": "Wiederkehrende Serien",
+    "editTitle": "Projekt bearbeiten",
+    "endDate": "Enddatum",
+    "nameRequired": "Projektname ist erforderlich",
+    "startDate": "Startdatum",
+    "statusLabel": "Status",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Tags durch Kommas getrennt",
+    "updated": "Projekt aktualisiert",
+    "updateFailed": "Fehlgeschlagen"
   },
   "settingsSso": {
     "title": "Single Sign-On (OIDC)",

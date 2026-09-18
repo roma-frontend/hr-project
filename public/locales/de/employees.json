@@ -458,7 +458,8 @@
       "error": "Fehler beim Speichern der Abteilung"
     },
     "submit": "Abteilung erstellen",
-    "update": "Abteilung aktualisieren"
+    "update": "Abteilung aktualisieren",
+    "title": "Neue Abteilung"
   },
   "positionWizard": {
     "steps": {
@@ -512,7 +513,8 @@
       "error": "Fehler beim Speichern der Position"
     },
     "submit": "Position erstellen",
-    "update": "Position aktualisieren"
+    "update": "Position aktualisieren",
+    "title": "Neue Position"
   },
   "orgChart": {
     "title": "Organisationsstruktur",
@@ -569,7 +571,8 @@
     "headSaveError": "Leitung der Organisation konnte nicht gespeichert werden",
     "unassigned": "Nicht in der Hierarchie platziert",
     "unassignedNone": "Alle berichten an jemanden.",
-    "unassignedHint": "Diese Personen haben keine Führungskraft und erscheinen daher als eigene Wurzeln. Weisen Sie eine Führungskraft zu, um sie zu platzieren."
+    "unassignedHint": "Diese Personen haben keine Führungskraft und erscheinen daher als eigene Wurzeln. Weisen Sie eine Führungskraft zu, um sie zu platzieren.",
+    "noDataDesc": "Erstellen Sie ein Organigramm aus Mitarbeiterdaten oder fügen Sie Knoten manuell hinzu."
   },
   "organization": {
     "organization": "Organisation",

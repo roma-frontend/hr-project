@@ -14,7 +14,7 @@
     "continueCourse": "Շարունակել",
     "resumeCourse": "Շարունակել",
     "enroll": "Գրանցվել",
-    "enrolled": "Գրանցված է",
+    "enrolled": "Գրանցման ամսաթիվ",
     "alreadyEnrolled": "Արդեն գրանցված է",
     "enrollSuccess": "Հաջողությամբ գրանցվեցիք դասընթացին",
     "enrollError": "Չհաջողվեց գրանցվել դասընթացին",
@@ -193,7 +193,6 @@
     "filterMandatory": "Պարտադիր",
     "employee": "Աշխատակից",
     "course": "Դասընթաց",
-    "enrolled": "Գրանցման ամսաթիվ",
     "statusCompleted": "Ավարտված",
     "statusInProgress": "Ընթացքի մեջ",
     "statusNotStarted": "Չսկսված",
@@ -205,6 +204,16 @@
     "tagsPlaceholder": "Պիտակներ կոմայով",
     "certificateOfCompletion": "Ավարտման վկայական",
     "presentedTo": "Ստորև հաստատվում է, որ",
-    "hasCompleted": "հաջողությամբ ավարտել է"
+    "hasCompleted": "հաջողությամբ ավարտել է",
+    "certificateError": "Չհաջողվեց թողարկել վկայականը",
+    "certificateExists": "Վկայականն արդեն գոյություն ունի",
+    "certificateTemplate": "Վկայականի տիպար",
+    "certified": "✓ Վավերացված",
+    "contactAdmin": "Կապվեք ձեր ադմինիստրատորի հետ՝ բովանդակություն ավելացնելու համար",
+    "courseCreateError": "Չհաջողվեց ստեղծել դասընթաց",
+    "description": "Նկարագրություն",
+    "enterUrlToPreview": "Մուտքագրեք տեսանյութի URL՝ նախադիտումը տեսնելու համար",
+    "hidePreview": "Թաքցնել",
+    "selectTemplate": "Ընտրեք վկայականի տիպարը"
   }
 }

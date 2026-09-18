@@ -207,7 +207,19 @@
       "totalDeductions": "Gesamtabzüge",
       "netFormula": "Nettogehalt",
       "employerTotal": "Gesamtkosten für Arbeitgeber",
-      "button": "Aufschlüsselung anzeigen"
+      "button": "Aufschlüsselung anzeigen",
+      "applied": "Bewerbung eingegangen",
+      "employerCost": "Gesamtkosten für den Arbeitgeber",
+      "employerCostDesc": "Brutto + Arbeitgeberbeiträge",
+      "formula": {
+        "gross": "Brutto-Formel",
+        "grossCalc": "Grundgehalt + Boni + Überstunden",
+        "incomeTax": "Einkommensteuer",
+        "incomeTaxProgressive": "Progressive Stufen auf das zu versteuernde Einkommen angewendet",
+        "net": "Netto-Formel"
+      },
+      "healthInsuranceNote": "Die Krankenversicherung ist für angemeldete Mitarbeiter verpflichtend. Der Betrag hängt von der Bruttogehaltsspanne ab.",
+      "status": "Status"
     },
     "details": "Details",
     "actions": "Aktionen",
@@ -502,11 +514,14 @@
       "noteHourly": "Multiplizieren Sie mit den gearbeiteten Stunden, um das Bruttogehalt für partielle Tage zu erhalten.",
       "noteVacation": "Jährlicher, Studium und Familienurlaub werden zu 100% Ihres täglichen Lohns bezahlt.",
       "noteSick": "Krankengeld ist durch den Sozialversicherungsfonds begrenzt; der Arbeitgeber stockt nach den ersten 5 Tagen auf Ihren Tageslohn auf.",
-      "noteOvertime": "Nachtschichten und Feiertage werden mit 2×, reguläre Überstunden mit 1,5× bezahlt."
+      "noteOvertime": "Nachtschichten und Feiertage werden mit 2×, reguläre Überstunden mit 1,5× bezahlt.",
+      "net": "Netto",
+      "other": "Andere"
     },
     "runExistsDesc": "Eine Gehaltsabrechnung für {{period}} existiert bereits. Öffnen Sie sie, um zu berechnen, genehmigen oder bezahlen.",
     "openRun": "Öffnen",
     "permissionDenied": "Sie haben keine Berechtigung, eine Gehaltsabrechnung zu erstellen.",
-    "quotaExceeded": "Monatliche Abrechnungsquote überschritten — aktualisieren Sie Ihren Plan oder kündigen Sie eine bestehende Abrechnung."
+    "quotaExceeded": "Monatliche Abrechnungsquote überschritten — aktualisieren Sie Ihren Plan oder kündigen Sie eine bestehende Abrechnung.",
+    "hourlyRate": "Stundensatz"
   }
 }
