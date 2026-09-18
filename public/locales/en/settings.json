@@ -89,7 +89,65 @@
     "syncEmployees": "Sync Employees",
     "syncFailed": "Sync failed",
     "failedToSave": "Failed to save",
-    "resetToDefault": "Settings reset to default"
+    "resetToDefault": "Settings reset to default",
+    "inbound": {
+      "tab": "Incoming",
+      "tabDesc": "Device punches and inbound webhooks",
+      "tokensTitle": "Inbound tokens",
+      "tokensDesc": "One URL per device or service. Tokens are shown once and can be revoked at any time.",
+      "copyNow": "Copy this URL now — it is not shown again",
+      "copied": "URL copied",
+      "create": "Add token",
+      "created": "Token created",
+      "createError": "Could not create the token",
+      "noTokens": "No inbound tokens yet.",
+      "delete": "Delete",
+      "deleteTitle": "Delete this token?",
+      "deleteDesc": "The URL stops working immediately. Punches already received stay in the journal.",
+      "deleted": "Token deleted",
+      "lastError": "Last error: {{error}}",
+      "received": "{{count}} payload(s) received",
+      "providers": {
+        "device": "Attendance device",
+        "jira": "Jira",
+        "generic": "Generic webhook"
+      },
+      "providerHints": {
+        "device": "ZKTeco / Suprema-style push. Punches land in the journal below and reach payroll only after you confirm them.",
+        "jira": "Jira sends issue events here and they become tasks for the assignee you choose.",
+        "generic": "Accepts anything and only counts it — no mapping is guessed."
+      },
+      "labelPlaceholder": "Name, e.g. Turnstile — head office",
+      "assignee": "Default assignee",
+      "assigneePlaceholder": "Choose an employee",
+      "assigneeHint": "Every task created from this token is assigned to them.",
+      "punchesTitle": "Punch journal",
+      "punchesDesc": "Raw punches from devices. Import the real ones; nothing touches attendance until you do.",
+      "noPunches": "Nothing here.",
+      "noEmployee": "Not matched",
+      "promote": "Import",
+      "imported": "Imported into attendance",
+      "importError": "Could not import this punch",
+      "ignore": "Ignore",
+      "match": "Match employee",
+      "matchTitle": "Match the punch to an employee",
+      "matchDesc": "Set the employee number on the employee — their unmatched punches are matched automatically.",
+      "numberPlaceholder": "Employee number",
+      "saveNumber": "Save number",
+      "rematched": "{{count}} punch(es) matched",
+      "direction": {
+        "in": "In",
+        "out": "Out",
+        "unknown": "Unknown"
+      },
+      "status": {
+        "pending": "Waiting",
+        "unmatched": "No employee",
+        "imported": "Imported",
+        "ignored": "Ignored",
+        "duplicate": "Duplicate"
+      }
+    }
   },
   "settingsExtended": {
     "appearance": "Appearance",

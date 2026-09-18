@@ -26,6 +26,7 @@ import {
   FileBadge,
   Users,
   Code2,
+  Inbox,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -69,6 +70,13 @@ const SamlSettings = dynamic(
 const WebhooksSettings = dynamic(
   () =>
     import('@/components/settings/WebhooksSettings').then((m) => ({ default: m.WebhooksSettings })),
+  { ssr: false },
+);
+const InboundIntegrationsSettings = dynamic(
+  () =>
+    import('@/components/settings/InboundIntegrationsSettings').then((m) => ({
+      default: m.InboundIntegrationsSettings,
+    })),
   { ssr: false },
 );
 const ScimSettings = dynamic(
@@ -351,6 +359,12 @@ export default function SettingsPage() {
             description: t('settingsWebhooks.tabDesc', 'Outbound event deliveries'),
           },
           {
+            value: 'incoming',
+            label: t('settings.inbound.tab', 'Incoming'),
+            icon: Inbox,
+            description: t('settings.inbound.tabDesc', 'Device punches and inbound webhooks'),
+          },
+          {
             value: 'scim',
             label: t('settingsScim.tab', 'SCIM'),
             icon: Users,
@@ -504,6 +518,12 @@ export default function SettingsPage() {
           {canManageIntegrations && (
             <TabsContent value="webhooks" className="space-y-6 mt-0">
               <WebhooksSettings />
+            </TabsContent>
+          )}
+
+          {canManageIntegrations && (
+            <TabsContent value="incoming" className="space-y-6 mt-0">
+              <InboundIntegrationsSettings />
             </TabsContent>
           )}
 

@@ -89,7 +89,65 @@
     "syncEmployees": "Mitarbeiter synchronisieren",
     "syncFailed": "Synchronisierung fehlgeschlagen",
     "failedToSave": "Speichern fehlgeschlagen",
-    "resetToDefault": "Einstellungen auf Standard zurückgesetzt"
+    "resetToDefault": "Einstellungen auf Standard zurückgesetzt",
+    "inbound": {
+      "tab": "Eingehend",
+      "tabDesc": "Stempelungen von Geräten und eingehende Webhooks",
+      "tokensTitle": "Eingehende Token",
+      "tokensDesc": "Eine URL pro Gerät oder Dienst. Das Token wird einmal angezeigt und kann jederzeit widerrufen werden.",
+      "copyNow": "URL jetzt kopieren — sie wird nicht erneut angezeigt",
+      "copied": "URL kopiert",
+      "create": "Token hinzufügen",
+      "created": "Token erstellt",
+      "createError": "Token konnte nicht erstellt werden",
+      "noTokens": "Noch keine eingehenden Token.",
+      "delete": "Löschen",
+      "deleteTitle": "Dieses Token löschen?",
+      "deleteDesc": "Die URL funktioniert sofort nicht mehr. Bereits erhaltene Stempelungen bleiben im Journal.",
+      "deleted": "Token gelöscht",
+      "lastError": "Letzter Fehler: {{error}}",
+      "received": "{{count}} Paket(e) empfangen",
+      "providers": {
+        "device": "Zeiterfassungsgerät",
+        "jira": "Jira",
+        "generic": "Generischer Webhook"
+      },
+      "providerHints": {
+        "device": "Push im Stil von ZKTeco / Suprema. Stempelungen landen im Journal und erreichen die Lohnabrechnung erst nach Ihrer Bestätigung.",
+        "jira": "Jira sendet Issue-Ereignisse, die zu Aufgaben für die gewählte Person werden.",
+        "generic": "Nimmt alles an und zählt es nur — es wird keine Zuordnung geraten."
+      },
+      "labelPlaceholder": "Name, z. B. Drehkreuz — Hauptbüro",
+      "assignee": "Standardzuweisung",
+      "assigneePlaceholder": "Mitarbeiter wählen",
+      "assigneeHint": "Alle aus diesem Token erstellten Aufgaben werden dieser Person zugewiesen.",
+      "punchesTitle": "Stempelungsjournal",
+      "punchesDesc": "Rohstempelungen der Geräte. Übernehmen Sie die echten — vorher ändert sich die Anwesenheit nicht.",
+      "noPunches": "Hier ist nichts.",
+      "noEmployee": "Nicht zugeordnet",
+      "promote": "Übernehmen",
+      "imported": "In die Anwesenheit übernommen",
+      "importError": "Stempelung konnte nicht übernommen werden",
+      "ignore": "Ignorieren",
+      "match": "Mitarbeiter zuordnen",
+      "matchTitle": "Stempelung einem Mitarbeiter zuordnen",
+      "matchDesc": "Tragen Sie die Personalnummer am Mitarbeiter ein — seine nicht zugeordneten Stempelungen werden automatisch zugeordnet.",
+      "numberPlaceholder": "Personalnummer",
+      "saveNumber": "Nummer speichern",
+      "rematched": "{{count}} Stempelung(en) zugeordnet",
+      "direction": {
+        "in": "Kommen",
+        "out": "Gehen",
+        "unknown": "Unbekannt"
+      },
+      "status": {
+        "pending": "Wartet",
+        "unmatched": "Kein Mitarbeiter",
+        "imported": "Übernommen",
+        "ignored": "Ignoriert",
+        "duplicate": "Duplikat"
+      }
+    }
   },
   "settingsExtended": {
     "appearance": "Erscheinungsbild",
