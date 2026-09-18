@@ -1,5 +1,13 @@
 /**
- * Automation - Actions (for operations with delays, external APIs, etc.)
+ * Automation — actions (operations with delays or external calls).
+ *
+ * NOTE: this run is still a placeholder. It marks a task running, waits, and
+ * marks it complete — no workflow `config` is read or executed anywhere in the
+ * codebase. That is why the dashboard is not tenant-facing: exposing a builder
+ * whose output never runs would be a worse experience than not showing it.
+ *
+ * What the action does get right is authorisation, which it previously skipped
+ * entirely: it was callable by any signed-in user and wrote a platform-level row.
  */
 
 import { action } from './_generated/server';
@@ -17,15 +25,29 @@ interface RunAutomationResult {
 export const runAutomation = action({
   args: {},
   handler: async (ctx): Promise<RunAutomationResult> => {
-    // Create a new automation task via internal mutation
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.email) {
+      throw new Error('Not authenticated');
+    }
+
+    const actor = await ctx.runQuery(internalAutomation.getAutomationActor, {
+      email: identity.email,
+    });
+    if (!actor) {
+      throw new Error('Only administrators can run automations');
+    }
+
+    // Create the task in the caller's organisation (null = platform-level for a
+    // superadmin without an organisation), so the run is visible to the same
+    // scope the dashboard reads from.
     const taskId: string = await ctx.runMutation(internalAutomation.createAutomationTask, {
       name: 'Manual automation run',
+      organizationId: actor.organizationId ?? undefined,
     });
 
-    // Simulate automation execution with delay
+    // Placeholder execution — see the module note above.
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    // Update task status via internal mutation
     await ctx.runMutation(internalAutomation.completeAutomationTask, {
       taskId: taskId as Id<'automationTasks'>,
     });

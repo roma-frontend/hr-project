@@ -20,8 +20,20 @@
 > en/ru/hy/de, and covered by `src/__tests__/talent-modules.test.ts`.
 >
 > Also shipped since the last pass: the **integration marketplace** (self-serve connections
-> on the outbound webhook engine + the public `/integrations` directory). The competitor
-> table's TOTAL row was recomputed mechanically from the ✅ marks below.
+> on the outbound webhook engine + the public `/integrations` directory) and the **Trust
+> Center** (`/subprocessors`, `/dpa`, `/sla`). The competitor table's TOTAL row was
+> recomputed mechanically from the ✅ marks below.
+>
+> ### ⚠️ Correction: the workflow builder (3.5)
+>
+> This file described 3.5 as "built but superadmin-only". Reading the code, the dashboard and
+> the visual builder exist but **nothing executes** — `runAutomation` is a simulated delay and
+> no code reads a workflow's `config`. Worse, the handlers had no authorisation beyond the
+> plan gate, and the tables carried no organisation, so any signed-in user could list and
+> delete workflows belonging to every tenant. Authorisation and per-organisation scoping are
+> now enforced; the engine is not written, and the tenant-facing builder is deliberately not
+> exposed until it is. The table now marks this row ❌ for us, because a builder that does not
+> run is not the capability the row claims.
 > **Stack:** Next.js 16 (App Router) + Convex + Shadcn/ui + Tailwind CSS
 > **i18n:** EN / RU / HY (Armenian) / DE
 > **Auth:** Convex Auth (session-based)
@@ -644,23 +656,43 @@
 
 ### 3.5 Custom Workflow Builder (Visual)
 
-**Status:** ⚠️ Built, but gated to the platform operator (superadmin) — not sold to customers yet
+**Status:** ⚠️ Shell only — the dashboard and the visual builder exist, but **nothing
+runs**. `runAutomation` creates a task, waits two seconds and marks it complete; no code
+anywhere reads a workflow's `config`. This is a demo, not a feature, and it is deliberately
+not tenant-facing.
 
 **Existing:**
 
 - Schema: `convex/schema/automation.ts`
-- Backend: `convex/automation.ts`, `convex/automationActions.ts`, `convex/automationMutations.ts`, `convex/automationTest.ts`
+- Backend: `convex/automation.ts`, `convex/automationActions.ts`, `convex/automationMutations.ts`
 - UI: `src/components/automation/AutomationClient.tsx`
 - **Visual drag-and-drop builder: `src/components/workflow/WorkflowBuilderClient.tsx`** (React Flow)
 - Route: `src/app/(dashboard)/superadmin/automation/page.tsx`, lazily mounted from `SuperadminHubClient.tsx`
 
+**Safety fixes applied 2026-09-18** (these had to land before the module could be shown to
+anyone, tenant or operator):
+
+- [x] Org-scoped rows — `organizationId` on `automationWorkflows` / `automationTasks`, with
+      `undefined` reserved for platform-level rows. Previously every row was global, so one
+      tenant could list and delete another's workflows.
+- [x] Real authorisation — reads require an authenticated admin and filter by organisation;
+      writes require an org admin and verify ownership. `deleteWorkflow` previously deleted
+      any id it was handed.
+- [x] The `runAutomation` action authenticates via `getAutomationActor` — it was callable by
+      any signed-in user and wrote a platform-level row.
+
 **TODO (this is the real gap):**
 
-- [ ] Expose the builder to org admins at `src/app/(dashboard)/automation/page.tsx`
-- [ ] Org-scoped workflows (today the console is platform-level)
+- [ ] **An execution engine.** `config` is `v.any()` and nothing consumes it: to make this a
+      product it needs a typed step schema, triggers wired to real module events (leave,
+      onboarding, expenses, tickets already emit through `convex/webhooks`), an execution log
+      with per-step results, and dry-run
+- [ ] Expose the builder to org admins at `src/app/(dashboard)/automation/page.tsx` (only
+      after the engine exists — a builder whose output never runs is worse than no builder)
 - [ ] Workflow templates for customers
 - [ ] Execution logging UI for the tenant
-- [ ] Entitlement gate (`automation` module exists in the billing catalog)
+- [x] Entitlement gate (`automation` module exists in the billing catalog; enforced on read
+      and write)
 
 ---
 
@@ -1012,7 +1044,7 @@ PHASE 3 (Differentiation):
   3.2 Compliance & Audit Trail ....... ⚠️ MOSTLY DONE (module + audit UI + one-click undo; write coverage uneven)
   3.3 Asset Management ............... ✅ DONE (catalog, assignments, maintenance, requests, history)
   3.4 Company News Feed .............. ✅ DONE (feed, reactions, comments, scheduling)
-  3.5 Custom Workflow Builder ........ ⚠️ BUILT BUT SUPERADMIN-ONLY (visual builder exists; not sold to tenants)
+  3.5 Custom Workflow Builder ........ ⚠️ STUB (dashboard + visual builder; no execution engine — a run is a simulated delay)
   3.7 PDF Reports / Export ........... ⚠️ MOSTLY DONE (per-module exporters; no unified builder)
   3.8 Career Development ............. ✅ DONE (skill matrix, tracks, gap analysis, mentorship)
   3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
@@ -1033,7 +1065,10 @@ REAL REMAINING PRODUCT WORK (after re-verification — this is the honest list):
   - Integration marketplace (catalogue + self-serve install) ...... ✅ DONE
                                         (webhook-class apps install through the existing
                                         delivery engine; OAuth apps deep-link to settings)
-  - Workflow builder for TENANTS, not just superadmin ............. ⚠️ ~5-7 days
+  - Workflow EXECUTION ENGINE then tenant exposure ................ ⚠️ ~2-3 weeks
+                                        (typed step schema, triggers on real module
+                                        events, execution log, dry-run; the tenant UI is
+                                        the small part — see 3.5)
   - Mobile: store-ready build OR global service-worker registration  ⚠️ ~5-7 days
   - Unified report builder + scheduled exports .................... ⚠️ ~2-3 days
   - Public API + webhooks for customers ......................... ✅ DONE (REST /api/v1,
@@ -1164,7 +1199,7 @@ export default function ModulePage() {
 | **Succession**                                  |      ✅      |    ❌    |   ❌   |    ❌    |    ✅    |   ❌   |
 | **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
 | **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
-| **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
+| **Workflow builder for tenants**                |      ❌      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
 | **Public API + webhooks for customers**         |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
 | **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
 | **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |

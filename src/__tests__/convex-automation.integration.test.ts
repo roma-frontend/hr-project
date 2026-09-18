@@ -20,7 +20,81 @@ const modules = {
   './automation.ts': () => import('../../convex/automation'),
   './automationMutations.ts': () => import('../../convex/automationMutations'),
   './lib/limits.ts': () => import('../../convex/lib/limits'),
+  // Real auth resolution: every automation handler now authenticates its caller.
+  './lib/getAuthCaller.ts': () => import('../../convex/lib/getAuthCaller'),
+  './lib/auth.ts': () => import('../../convex/lib/auth'),
+  // The plan gate is stubbed — it drags in the whole billing catalogue, and what
+  // these tests cover is authorisation and tenancy, not entitlements.
+  './lib/entitlements.ts': () => Promise.resolve({ assertModuleAccess: async () => ({}) }),
 } as unknown as Record<string, () => Promise<unknown>>;
+
+const SUPERADMIN_EMAIL = 'root@strata.test';
+const ORG_ADMIN_EMAIL = 'admin@strata.test';
+
+/**
+ * Seed the organisation + user a handler will resolve the caller to.
+ *
+ * `convexTest`'s identity carries only an email; `getAuthCaller` looks the user
+ * up by it, so the row has to exist before the call.
+ */
+async function seedActor(
+  t: ReturnType<typeof convexTest>,
+  opts: { email: string; role: 'superadmin' | 'admin'; withOrganization: boolean },
+): Promise<Id<'organizations'> | undefined> {
+  return await t.run(async (ctx) => {
+    let organizationId: Id<'organizations'> | undefined;
+    if (opts.withOrganization) {
+      organizationId = await ctx.db.insert('organizations', {
+        name: 'Test Org',
+        slug: 'test-org',
+        plan: 'professional',
+        isActive: true,
+        createdBySuperadmin: false,
+        employeeLimit: 50,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+    await ctx.db.insert('users', {
+      organizationId,
+      name: 'Automation Test Actor',
+      email: opts.email,
+      passwordHash: 'not-a-real-hash',
+      role: opts.role,
+      employeeType: 'staff',
+      isActive: true,
+      isApproved: true,
+      paidLeaveBalance: 0,
+      sickLeaveBalance: 0,
+      familyLeaveBalance: 0,
+      createdAt: Date.now(),
+    });
+    return organizationId;
+  });
+}
+
+/**
+ * A superadmin without an organisation: platform-level rows (no
+ * `organizationId`) stay reachable, which is what the original cases assert.
+ */
+async function asSuperadmin(t: ReturnType<typeof convexTest>) {
+  await seedActor(t, {
+    email: SUPERADMIN_EMAIL,
+    role: 'superadmin',
+    withOrganization: false,
+  });
+  return t.withIdentity({ email: SUPERADMIN_EMAIL });
+}
+
+/** An org admin bound to a fresh organisation, for the tenancy cases. */
+async function asOrgAdmin(t: ReturnType<typeof convexTest>) {
+  const organizationId = await seedActor(t, {
+    email: ORG_ADMIN_EMAIL,
+    role: 'admin',
+    withOrganization: true,
+  });
+  return { client: t.withIdentity({ email: ORG_ADMIN_EMAIL }), organizationId: organizationId! };
+}
 
 type TaskStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -62,7 +136,7 @@ const HOUR = 60 * 60 * 1000;
 // ── getStats ─────────────────────────────────────────────────────────────────
 describe('getStats', () => {
   it('returns zeroed stats when the database is empty', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) => ctx.runQuery(api.automation.getStats));
     expect(res).toEqual({
       totalTasks: 0,
@@ -78,7 +152,7 @@ describe('getStats', () => {
   });
 
   it('counts tasks by status and active workflows', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       await insertTask(ctx, 'a', 'completed', now);
@@ -98,7 +172,7 @@ describe('getStats', () => {
   });
 
   it('computes a 100% trend when previous period is empty but current is not', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       // Only tasks created within the last 24h.
@@ -111,7 +185,7 @@ describe('getStats', () => {
   });
 
   it('returns 0 trend when both periods are empty', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       // Older than 7 days → outside both windows.
@@ -125,7 +199,7 @@ describe('getStats', () => {
   });
 
   it('computes a rounded percentage trend between 24h and previous 7d periods', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       // Previous period: 2 completed tasks (7d..24h ago).
@@ -147,7 +221,7 @@ describe('getStats', () => {
 // ── getRecentTasks ───────────────────────────────────────────────────────────
 describe('getRecentTasks', () => {
   it('returns the most recent tasks by default limit of 10', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       for (let i = 0; i < 15; i++) await insertTask(ctx, `task-${i}`, 'pending', now + i);
@@ -161,7 +235,7 @@ describe('getRecentTasks', () => {
   });
 
   it('honors a custom limit', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const now = Date.now();
     await t.run(async (ctx) => {
       for (let i = 0; i < 5; i++) await insertTask(ctx, `task-${i}`, 'completed', now + i);
@@ -172,7 +246,7 @@ describe('getRecentTasks', () => {
   });
 
   it('returns an empty array when no tasks exist', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) => ctx.runQuery(api.automation.getRecentTasks, {}));
     expect(res).toEqual([]);
   });
@@ -181,7 +255,7 @@ describe('getRecentTasks', () => {
 // ── getActiveWorkflows ───────────────────────────────────────────────────────
 describe('getActiveWorkflows', () => {
   it('returns all workflows regardless of active state', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     await t.run(async (ctx) => {
       await insertWorkflow(ctx, 'enabled', true);
       await insertWorkflow(ctx, 'disabled', false);
@@ -196,7 +270,7 @@ describe('getActiveWorkflows', () => {
 // ── runAutomation ────────────────────────────────────────────────────────────
 describe('runAutomation (mutation)', () => {
   it('creates a running automation task and returns its id', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) => ctx.runMutation(api.automationMutations.runAutomation, {}));
 
     expect(res.success).toBe(true);
@@ -215,7 +289,7 @@ describe('runAutomation (mutation)', () => {
 // ── internal task lifecycle ──────────────────────────────────────────────────
 describe('internal automation task mutations', () => {
   it('createAutomationTask inserts a running task and returns its id', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) =>
       ctx.runMutation(api.automationMutations.createAutomationTask, { name: 'Scheduled sync' }),
     );
@@ -228,7 +302,7 @@ describe('internal automation task mutations', () => {
   });
 
   it('completeAutomationTask flips status to completed', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const id = await t.run(async (ctx) => insertTask(ctx, 'job', 'running', Date.now()));
 
     const res = await t.run((ctx) =>
@@ -247,7 +321,7 @@ describe('internal automation task mutations', () => {
 // ── toggleWorkflow ───────────────────────────────────────────────────────────
 describe('toggleWorkflow', () => {
   it('disables an active workflow and reports the new state', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const id = await t.run(async (ctx) => insertWorkflow(ctx, 'wf', true));
 
     const res = await t.run((ctx) =>
@@ -262,7 +336,7 @@ describe('toggleWorkflow', () => {
   });
 
   it('re-enables a disabled workflow', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const id = await t.run(async (ctx) => insertWorkflow(ctx, 'wf', false));
 
     const res = await t.run((ctx) =>
@@ -277,7 +351,7 @@ describe('toggleWorkflow', () => {
   });
 
   it('throws for a missing workflow', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const ghostId = await t.run(async (ctx) => {
       const id = await insertWorkflow(ctx, 'temp', true);
       await ctx.db.delete(id);
@@ -295,7 +369,7 @@ describe('toggleWorkflow', () => {
 // ── createWorkflow / deleteWorkflow ──────────────────────────────────────────
 describe('createWorkflow / deleteWorkflow', () => {
   it('creates an active workflow with defaults', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) =>
       ctx.runMutation(api.automationMutations.createWorkflow, {
         name: 'Onboarding flow',
@@ -314,7 +388,7 @@ describe('createWorkflow / deleteWorkflow', () => {
   });
 
   it('persists an explicit description', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const res = await t.run((ctx) =>
       ctx.runMutation(api.automationMutations.createWorkflow, {
         name: 'Flow',
@@ -330,7 +404,7 @@ describe('createWorkflow / deleteWorkflow', () => {
   });
 
   it('deletes a workflow', async () => {
-    const t = convexTest(schema, modules);
+    const t = await asSuperadmin(convexTest(schema, modules));
     const id = await t.run(async (ctx) => insertWorkflow(ctx, 'to-delete', true));
 
     const res = await t.run((ctx) =>
@@ -340,6 +414,162 @@ describe('createWorkflow / deleteWorkflow', () => {
 
     await t.run(async (ctx) => {
       expect(await ctx.db.get(id)).toBeNull();
+    });
+  });
+});
+
+// ── Authorisation and tenancy ────────────────────────────────────────────────
+// These cases exist because the handlers previously had none: reads were
+// unauthenticated, writes checked only the plan gate (which passes without an
+// identity), and the tables had no organisation — so one tenant could list and
+// delete another's workflows.
+describe('authorisation and tenancy', () => {
+  it('refuses unauthenticated reads', async () => {
+    const t = convexTest(schema, modules);
+
+    await expect(t.run((ctx) => ctx.runQuery(api.automation.getStats))).rejects.toThrow(
+      'Not authenticated',
+    );
+    await expect(t.run((ctx) => ctx.runQuery(api.automation.getActiveWorkflows))).rejects.toThrow(
+      'Not authenticated',
+    );
+    await expect(
+      t.run((ctx) => ctx.runQuery(api.automation.getRecentTasks, { limit: 5 })),
+    ).rejects.toThrow('Not authenticated');
+  });
+
+  it('refuses writes from a non-admin employee', async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const organizationId = await ctx.db.insert('organizations', {
+        name: 'Test Org',
+        slug: 'test-org',
+        plan: 'professional',
+        isActive: true,
+        createdBySuperadmin: false,
+        employeeLimit: 50,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert('users', {
+        organizationId,
+        name: 'Employee',
+        email: 'employee@strata.test',
+        passwordHash: 'not-a-real-hash',
+        role: 'employee',
+        employeeType: 'staff',
+        isActive: true,
+        isApproved: true,
+        paidLeaveBalance: 0,
+        sickLeaveBalance: 0,
+        familyLeaveBalance: 0,
+        createdAt: Date.now(),
+      });
+    });
+    const employee = t.withIdentity({ email: 'employee@strata.test' });
+
+    await expect(
+      employee.run((ctx) =>
+        ctx.runMutation(api.automationMutations.createWorkflow, { name: 'x', config: {} }),
+      ),
+    ).rejects.toThrow('Only administrators can manage automations');
+    await expect(employee.run((ctx) => ctx.runQuery(api.automation.getStats))).rejects.toThrow(
+      'Access denied',
+    );
+  });
+
+  it('stamps a new workflow with the creating organisation', async () => {
+    const { client, organizationId } = await asOrgAdmin(convexTest(schema, modules));
+
+    const res = await client.run((ctx) =>
+      ctx.runMutation(api.automationMutations.createWorkflow, { name: 'Org flow', config: {} }),
+    );
+
+    await client.run(async (ctx) => {
+      const wf = await ctx.db.get(res.workflowId as Id<'automationWorkflows'>);
+      expect(wf?.organizationId).toBe(organizationId);
+      expect(wf?.createdBy).toBeDefined();
+    });
+  });
+
+  it("hides another organisation's workflows from an org admin", async () => {
+    const t = convexTest(schema, modules);
+
+    // A workflow owned by a different organisation, plus a platform-level row.
+    await t.run(async (ctx) => {
+      const otherOrgId = await ctx.db.insert('organizations', {
+        name: 'Other Org',
+        slug: 'other-org',
+        plan: 'professional',
+        isActive: true,
+        createdBySuperadmin: false,
+        employeeLimit: 50,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert('automationWorkflows', {
+        organizationId: otherOrgId,
+        name: 'Other tenant flow',
+        description: '',
+        config: {},
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert('automationWorkflows', {
+        name: 'Platform flow',
+        description: '',
+        config: {},
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const { client } = await asOrgAdmin(t);
+    const visible = await client.run((ctx) => ctx.runQuery(api.automation.getActiveWorkflows));
+
+    expect(visible).toHaveLength(0);
+  });
+
+  it("refuses an org admin deleting another organisation's workflow", async () => {
+    const t = convexTest(schema, modules);
+
+    const otherOrgWorkflowId = await t.run(async (ctx) => {
+      const otherOrgId = await ctx.db.insert('organizations', {
+        name: 'Other Org',
+        slug: 'other-org',
+        plan: 'professional',
+        isActive: true,
+        createdBySuperadmin: false,
+        employeeLimit: 50,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      return await ctx.db.insert('automationWorkflows', {
+        organizationId: otherOrgId,
+        name: 'Other tenant flow',
+        description: '',
+        config: {},
+        isActive: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+    const { client } = await asOrgAdmin(t);
+
+    await expect(
+      client.run((ctx) =>
+        ctx.runMutation(api.automationMutations.deleteWorkflow, {
+          workflowId: otherOrgWorkflowId,
+        }),
+      ),
+    ).rejects.toThrow('Access denied');
+
+    // The row survives — the refusal must not be a silent no-op either.
+    await t.run(async (ctx) => {
+      expect(await ctx.db.get(otherOrgWorkflowId)).not.toBeNull();
     });
   });
 });
