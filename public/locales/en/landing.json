@@ -1170,6 +1170,10 @@
       "no": "Not offered by the vendor",
       "us": "Strata's column"
     },
+    "notes": {
+      "armsoft": "Armsoft sync writes into an HTTP API your own ՀԾ installation has to expose, plus a key you configure. We do not ship a certified Armsoft connector — confirm the endpoint with your accountant before you depend on it.",
+      "localPay": "Idram and ArCa are the payment methods you can pay Strata with from Armenia. Salaries are not paid out through them: payroll leaves as a bank payment file (CSV/XLSX) in your bank's format."
+    },
     "index": {
       "badge": "Comparison",
       "heroTitle": "Strata vs the platforms on your shortlist",

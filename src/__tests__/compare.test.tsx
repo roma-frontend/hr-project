@@ -28,6 +28,7 @@ import {
   COMPARE_SLUGS,
   GLOBAL_COMPARE_SLUGS,
   LOCAL_COMPARE_SLUGS,
+  ROWS_WITH_OUR_NOTE,
   compareScore,
   competitorsByRegion,
   groupedRows,
@@ -192,9 +193,34 @@ describe('competitor matrix', () => {
     expect(soc2?.category).toBe('gaps');
   });
 
+  it('keeps the Armsoft row at partial while the sync needs a customer endpoint', () => {
+    // `syncArmsoft` (convex/integrations.ts) refuses to run without both an API
+    // endpoint and a key that the customer supplies — the customer's own ՀԾ has
+    // to expose that API. `yes` would read as "certified connector", which is
+    // not what is shipped; the footnote is what makes the half-dot legible.
+    const armsoft = COMPARE_ROWS.find((row) => row.key === 'armsoft');
+    expect(armsoft?.us).toBe('partial');
+    expect(ROWS_WITH_OUR_NOTE).toContain('armsoft');
+    // Armsoft still gets full credit on its own row and on SRC filing — the
+    // page must not read as if we were the only ones who can file Armenian taxes.
+    expect(armsoft?.vendors.armsoft).toBe('yes');
+  });
+
+  it('explains every qualified mark it prints a footnote for', () => {
+    for (const locale of LOCALES) {
+      const compare = loadCompare(locale);
+      for (const key of ROWS_WITH_OUR_NOTE) {
+        const note = leaf(compare, `notes.${key}`);
+        expect(typeof note).toBe('string');
+        expect((note as string).length).toBeGreaterThan(40);
+      }
+    }
+  });
+
   it('marks the Armenian-market rows as ours only against the global vendors', () => {
     // Against the six global platforms every local row is a clean exclusive.
-    const exclusive = ['srcExport', 'armenianUi', 'armsoft', 'imid', 'localPay'];
+    // `armsoft` is deliberately absent: our mark there is qualified, not clean.
+    const exclusive = ['srcExport', 'armenianUi', 'imid', 'localPay'];
     for (const key of exclusive) {
       const row = COMPARE_ROWS.find((r) => r.key === key);
       expect(row?.us).toBe('yes');
@@ -285,6 +311,16 @@ describe('CompareTable', () => {
     for (const competitor of COMPETITORS) {
       expect(screen.getByTitle(competitor.name)).toBeInTheDocument();
     }
+  });
+
+  it('prints the footnote that explains our qualified marks', () => {
+    render(<CompareTable initialLanguage="en" />);
+
+    // A half-dot on "Armsoft integration" does not say *why* — the footnote does,
+    // and it is real text (a phone has nothing to hover).
+    const note = screen.getByText(/certified Armsoft connector/i);
+    expect(note).toBeInTheDocument();
+    expect(screen.getByTitle(/certified Armsoft connector/i)).toBeInTheDocument();
   });
 
   it('narrows to one vendor on a head-to-head page', () => {

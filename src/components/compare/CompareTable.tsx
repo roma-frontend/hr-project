@@ -3,6 +3,7 @@
 import {
   COMPETITORS,
   COMPARE_ROWS,
+  ROWS_WITH_OUR_NOTE,
   competitorsByRegion,
   groupedRows,
   type CompetitorRegion,
@@ -38,6 +39,11 @@ export default function CompareTable({
       ? competitorsByRegion(region)
       : COMPETITORS;
   const groups = groupedRows();
+  // Footnotes only for rows that survived into this render — the detail page
+  // narrows columns, never rows, but computing it from the rendered set means
+  // a future row filter can never print a caveat about a row nobody can see.
+  const renderedKeys = new Set(groups.flatMap((group) => group.rows.map((row) => row.key)));
+  const noted = ROWS_WITH_OUR_NOTE.filter((key) => renderedKeys.has(key));
 
   return (
     <div
@@ -91,6 +97,7 @@ export default function CompareTable({
                 key={group.category}
                 category={group.category}
                 initialLanguage={initialLanguage}
+                noted={noted}
                 vendorColumns={columns.map((c) => c.slug)}
                 rows={group.rows.map((row) => ({
                   key: row.key,
@@ -103,6 +110,25 @@ export default function CompareTable({
         </table>
       </div>
 
+      {noted.length > 0 ? (
+        <div
+          className="px-4 py-3 text-xs space-y-1.5"
+          style={{
+            borderTop: '1px solid var(--landing-card-border)',
+            color: 'var(--landing-text-muted)',
+          }}
+        >
+          {noted.map((key) => (
+            <p key={key} className="leading-relaxed">
+              <span className="font-semibold" style={{ color: 'var(--landing-text-secondary)' }}>
+                *
+              </span>{' '}
+              {t(`compare.notes.${key}`)}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
       <Legend initialLanguage={initialLanguage} />
     </div>
   );
@@ -111,11 +137,14 @@ export default function CompareTable({
 function CategoryRows({
   category,
   initialLanguage,
+  noted,
   vendorColumns,
   rows,
 }: {
   category: RowCategory;
   initialLanguage: string;
+  /** Row keys that carry a footnote under the matrix. */
+  noted: readonly string[];
   vendorColumns: CompetitorSlug[];
   rows: { key: string; us: Support; vendors: Support[] }[];
 }) {
@@ -142,7 +171,12 @@ function CategoryRows({
           >
             {t(`compare.rows.${row.key}`)}
           </th>
-          <SupportCell support={row.us} emphasis initialLanguage={initialLanguage} />
+          <SupportCell
+            support={row.us}
+            emphasis
+            initialLanguage={initialLanguage}
+            note={noted.includes(row.key) ? t(`compare.notes.${row.key}`) : undefined}
+          />
           {row.vendors.map((support, i) => (
             <SupportCell
               key={vendorColumns[i]}
@@ -159,10 +193,13 @@ function CategoryRows({
 function SupportCell({
   support,
   emphasis,
+  note,
   initialLanguage,
 }: {
   support: Support;
   emphasis?: boolean;
+  /** Our own column only: the caveat that makes a qualified mark readable. */
+  note?: string;
   initialLanguage: string;
 }) {
   const { t } = useLandingTranslation(initialLanguage);
@@ -173,13 +210,18 @@ function SupportCell({
   return (
     <td
       className="text-center px-3 py-3"
-      title={label}
-      aria-label={label}
+      title={note ? `${label} — ${note}` : label}
+      aria-label={note ? `${label}. ${note}` : label}
       style={emphasis ? { background: 'var(--brand-quiet)' } : undefined}
     >
       {support === 'yes' ? <CheckDot color={color} /> : null}
       {support === 'partial' ? <HalfDot color={color} /> : null}
       {support === 'no' ? <Dash color={color} /> : null}
+      {note ? (
+        <span aria-hidden className="align-super text-[9px] ml-0.5">
+          *
+        </span>
+      ) : null}
     </td>
   );
 }

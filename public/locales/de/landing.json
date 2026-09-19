@@ -1170,6 +1170,10 @@
       "no": "Beim Anbieter nicht vorhanden",
       "us": "Spalte Strata"
     },
+    "notes": {
+      "armsoft": "Die Armsoft-Synchronisierung schreibt in eine HTTP-API, die Ihre eigene ՀԾ-Installation bereitstellen muss, plus einen Schlüssel, den Sie konfigurieren. Einen zertifizierten Armsoft-Konnektor liefern wir nicht — klären Sie den Endpunkt mit Ihrer Buchhaltung, bevor Sie sich darauf verlassen.",
+      "localPay": "Idram und ArCa sind die Zahlungsmethoden, mit denen Sie Strata aus Armenien bezahlen können. Löhne laufen nicht darüber: die Auszahlung geht als Bankdatei (CSV/XLSX) im Format Ihrer Bank heraus."
+    },
     "index": {
       "badge": "Vergleich",
       "heroTitle": "Strata vs. die Plattformen auf Ihrer Shortlist",

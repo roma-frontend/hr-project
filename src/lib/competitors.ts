@@ -214,6 +214,19 @@ export function competitorsByRegion(region: CompetitorRegion): readonly Competit
   return COMPETITORS.filter((c) => c.region === region);
 }
 
+/**
+ * Rows where our own mark alone would be read as a bigger claim than it is.
+ *
+ * The mark is the honest one; the footnote exists because a half-dot next to
+ * "Armsoft integration" does not say *why*. Rendered as a footnote under the
+ * matrix (i18n: `compare.notes.<rowKey>`), not only as a hover title — a good
+ * share of `/compare` traffic reads it on a phone, where nothing hovers.
+ *
+ * Keep this list short: a page where every row needs a caveat reads as one
+ * where nothing is true.
+ */
+export const ROWS_WITH_OUR_NOTE: readonly string[] = ['armsoft', 'localPay'];
+
 export type RowCategory = 'people' | 'time' | 'talent' | 'ops' | 'platform' | 'local' | 'gaps';
 
 /** Table section order — local-market rows and honest gaps come last on purpose. */
@@ -537,9 +550,15 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
     },
   },
   {
+    // `partial`, not `yes`: what we ship is a configured sync against an HTTP
+    // API the customer's own ՀԾ installation has to expose (`syncArmsoft` in
+    // `convex/integrations.ts` requires an endpoint AND a key). A chief
+    // accountant reads "yes" as "certified connector" and finds out on the
+    // first call that it is not — see `ROWS_WITH_OUR_NOTE` for the footnote
+    // the page prints next to it.
     key: 'armsoft',
     category: 'local',
-    us: 'yes',
+    us: 'partial',
     vendors: {
       personio: 'no',
       bamboohr: 'no',
