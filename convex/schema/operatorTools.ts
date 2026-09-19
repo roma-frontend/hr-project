@@ -47,6 +47,11 @@ export const operatorTools = {
     lastRunAt: v.optional(v.number()),
     lastRunOutcome: v.optional(v.string()), // ok | error | skipped
     lastRunError: v.optional(v.string()),
+    /**
+     * When operators were last paged about this job failing. Kept so a job that
+     * fails every ten minutes alerts once, not 144 times a day.
+     */
+    lastAlertAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index('by_job', ['jobKey']),
 

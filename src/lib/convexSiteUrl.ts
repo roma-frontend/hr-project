@@ -11,9 +11,25 @@
  * plausible and fails opaquely, so both places that display such a URL derive it
  * from here rather than each re-deriving it.
  */
+
+/**
+ * Deployment origin, normalised: `https://<deployment>.convex.cloud`.
+ *
+ * `NEXT_PUBLIC_CONVEX_URL` is written two ways in the wild — with and without
+ * the client's `/api` path (`convex/_generated` and the client SDK accept
+ * either). For building another host out of it, and for probing the deployment
+ * itself, the suffix has to go: `.convex.site/api` is not a host we serve.
+ */
+export function convexDeploymentUrl(): string {
+  return (process.env.NEXT_PUBLIC_CONVEX_URL ?? '')
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/api$/, '')
+    .replace(/\/+$/, '');
+}
+
 export function convexSiteUrl(): string {
-  const cloud = process.env.NEXT_PUBLIC_CONVEX_URL ?? '';
-  return cloud.replace(/\.convex\.cloud\/?$/, '.convex.site').replace(/\/$/, '');
+  return convexDeploymentUrl().replace(/\.convex\.cloud$/, '.convex.site');
 }
 
 /** Base URL of the public API v1 surface. */

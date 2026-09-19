@@ -22,6 +22,7 @@ jest.mock('../../convex/lib/getAuthCaller', () => ({
 }));
 
 let tools: any;
+let toolsInternal: any;
 let mockGetAuthCaller: jest.Mock;
 let mockGet: jest.Mock;
 let mockPatch: jest.Mock;
@@ -91,6 +92,7 @@ function makeCtx(tableRows: Record<string, unknown[]> = {}) {
 
 beforeAll(async () => {
   tools = await import('../../convex/superadmin/operatorTools');
+  toolsInternal = await import('../../convex/superadmin/operatorToolsInternal');
 });
 
 beforeEach(() => {
@@ -293,5 +295,171 @@ describe('maintenance windows', () => {
     ctx.db.query = () => ({ withIndex: () => ({ take: () => Promise.resolve([active]) }) });
     const res = await tools.getActiveMaintenanceWindow.handler(ctx, {});
     expect(res?.title).toBe('Maintenance');
+  });
+});
+
+/**
+ * A failing cron job used to be recorded and nowhere else: `lastRunOutcome:
+ * 'error'` on a console row nobody had a reason to open. The backup jobs that
+ * never fired and the deadline job that threw every morning were both found by
+ * reading source, not by anyone being told. So a failure now pages the people
+ * who can fix it — once when it breaks, once a day while it stays broken.
+ */
+describe('recordCronRun — failure alerting', () => {
+  const root = { _id: 'u-root', name: 'Root', email: 'root@x.com', role: 'superadmin' };
+  const second = { _id: 'u-two', name: 'Ops', email: 'ops@x.com', role: 'superadmin' };
+
+  function ctxWith(options: {
+    existing?: Record<string, unknown> | null;
+    users?: Record<string, unknown>[];
+  }) {
+    const ctx = makeCtx();
+    ctx.db.query = (table: string) =>
+      table === 'users'
+        ? {
+            withIndex: () => ({
+              take: (n: number) => Promise.resolve((options.users ?? []).slice(0, n)),
+            }),
+          }
+        : {
+            withIndex: () => ({
+              first: () =>
+                Promise.resolve(options.existing === undefined ? null : options.existing),
+            }),
+          };
+    return ctx;
+  }
+
+  it('pages every superadmin when a job starts failing', async () => {
+    const ctx = ctxWith({
+      existing: { _id: 'so-1', jobKey: 'backup-all-enterprise-orgs', lastRunOutcome: 'ok' },
+      users: [root, second],
+    });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'backup-all-enterprise-orgs',
+      outcome: 'error',
+      error: 'Unknown cron job key: backup-all-enterprise-orgs',
+    });
+
+    expect(mockRunMutation).toHaveBeenCalledTimes(2);
+    expect(mockRunMutation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        intendedTo: 'root@x.com',
+        source: 'ops.cron_failure',
+        subject: expect.stringContaining('backup-all-enterprise-orgs'),
+        body: expect.stringContaining('Unknown cron job key'),
+      }),
+    );
+    expect(mockRunMutation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ intendedTo: 'ops@x.com' }),
+    );
+    // The alert timestamp is what keeps the next tick quiet.
+    expect(mockPatch).toHaveBeenCalledWith(
+      'so-1',
+      expect.objectContaining({ lastRunOutcome: 'error', lastAlertAt: expect.any(Number) }),
+    );
+  });
+
+  it('stays quiet while the same job keeps failing within a day', async () => {
+    const ctx = ctxWith({
+      existing: {
+        _id: 'so-1',
+        jobKey: 'room-meeting-reminders',
+        lastRunOutcome: 'error',
+        lastAlertAt: Date.now() - 60_000,
+      },
+      users: [root],
+    });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'room-meeting-reminders',
+      outcome: 'error',
+      error: 'boom',
+    });
+
+    // A job failing every 10 minutes must not send 144 emails a day; the first
+    // one is the only one anyone reads.
+    expect(mockRunMutation).not.toHaveBeenCalled();
+    expect(mockPatch).toHaveBeenCalledWith(
+      'so-1',
+      expect.not.objectContaining({ lastAlertAt: expect.anything() }),
+    );
+  });
+
+  it('re-alerts when a failure has lasted more than a day', async () => {
+    const ctx = ctxWith({
+      existing: {
+        _id: 'so-1',
+        jobKey: 'room-meeting-reminders',
+        lastRunOutcome: 'error',
+        lastAlertAt: Date.now() - 25 * 60 * 60 * 1000,
+      },
+      users: [root],
+    });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'room-meeting-reminders',
+      outcome: 'error',
+      error: 'boom',
+    });
+
+    // …and a week-long outage must not go quiet after one lost mail.
+    expect(mockRunMutation).toHaveBeenCalledTimes(1);
+  });
+
+  it('never pages on a successful run', async () => {
+    const ctx = ctxWith({
+      existing: { _id: 'so-1', jobKey: 'news-schedule-publish', lastRunOutcome: 'error' },
+      users: [root],
+    });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'news-schedule-publish',
+      outcome: 'ok',
+    });
+
+    expect(mockRunMutation).not.toHaveBeenCalled();
+    expect(mockPatch).toHaveBeenCalledWith(
+      'so-1',
+      expect.objectContaining({ lastRunOutcome: 'ok' }),
+    );
+  });
+
+  it('still records the run when there is nobody to page', async () => {
+    const ctx = ctxWith({ existing: null, users: [] });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'a-brand-new-job',
+      outcome: 'error',
+      error: 'boom',
+    });
+
+    expect(mockRunMutation).not.toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalledWith(
+      'scheduledOps',
+      expect.objectContaining({ jobKey: 'a-brand-new-job', lastRunOutcome: 'error' }),
+    );
+  });
+
+  it('skips superadmins without an address', async () => {
+    const ctx = ctxWith({
+      existing: { _id: 'so-1', jobKey: 'x', lastRunOutcome: 'ok' },
+      users: [root, { _id: 'u-3', name: 'No mail', email: '', role: 'superadmin' }],
+    });
+
+    await toolsInternal.recordCronRun.handler(ctx, {
+      jobKey: 'x',
+      outcome: 'error',
+      error: 'boom',
+    });
+
+    expect(mockRunMutation).toHaveBeenCalledTimes(1);
+    expect(mockRunMutation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ intendedTo: 'root@x.com' }),
+    );
   });
 });

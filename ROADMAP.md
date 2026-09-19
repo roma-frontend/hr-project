@@ -603,7 +603,9 @@
 - Route + UI: `src/app/(dashboard)/compliance/page.tsx`, `src/components/compliance/ComplianceClient.tsx`
 - Audit UI: `src/app/(dashboard)/audit/page.tsx` — `AuditLogClient`, `AuditFilters`, `AuditDetailSheet`
 - Data Browser with before/after JSON + one-click undo: `adminDbChanges`, `src/components/superadmin/DataBrowserClient.tsx`
-- Backups: `convex/backups.ts`, `convex/backups.cron.ts`, `convex/schema/backups.ts`
+- Backups: `convex/backups.ts`, `convex/schema/backups.ts`, registered in `convex/crons.ts` (`backup-all-enterprise-orgs` / `cleanup-expired-backups`) — flat 48h retention, same as the product copy
+
+> **Исправлено 19.09:** оба бэкап-задания жили в `convex/backups.cron.ts`, а `cronJobs()` из файла, отличного от `convex/crons.ts`, не регистрируется никогда — то есть «автоматические бэкапы» не запускались ни разу, а просроченные снапшоты никто не удалял. Файл удалён, задания переведены в `convex/crons.ts` через общий диспетчер (пауза из консоли Scheduled Ops, `lastRunAt` и исход пишутся в реестр). Появился тест `cronRegistration.test.ts`: задание из `CRON_REGISTRY` без регистрации в `crons.ts` или без ветки в диспетчере теперь валит CI — раньше такая дыра не была видна ни в тестах, ни в интерфейсе.
 
 **TODO:**
 

@@ -1,14 +1,23 @@
 /**
- * Scheduled jobs for HR modules:
- * - Performance review deadline notifications
- * - OKR weekly check-in reminders
- * - Survey auto-activation/closure
+ * Staging area for HR module cron jobs.
  *
- * ⚠️ Nothing in this file runs: Convex only registers the `cronJobs()` object
- * exported from `convex/crons.ts`. Treat these as a staging area — to switch one
- * on, move it into `crons.ts`. The two onboarding jobs that used to live here
- * are now registered there, so they were removed to avoid a duplicate
- * definition drifting out of sync.
+ * ⚠️ **Nothing in this file runs.** Convex only registers the `cronJobs()`
+ * object exported from `convex/crons.ts`; a `cronJobs()` object exported from
+ * any other module is never scheduled. To switch a job on, move it into
+ * `crons.ts` (through the shared dispatcher, so the Scheduled Ops console can
+ * pause it) and delete it from here.
+ *
+ * The jobs that used to sit here are now registered, and were removed from this
+ * file so a second definition cannot drift out of sync with the live one:
+ * performance-deadline-checks, okr-checkin-reminders, survey-auto-activation,
+ * survey-auto-closure, asset-warranty-reminders, asset-maintenance-reminders,
+ * onboarding-task-activation and onboarding-overdue-reminders.
+ *
+ * The same trap caught the backup jobs, which lived in a `backups.cron.ts` and
+ * therefore never fired at all — see the header of `convex/crons.ts`.
+ * `src/__tests__/cronRegistration.test.ts` now fails if a job listed in
+ * `CRON_REGISTRY` is not registered in `crons.ts`, and if a key defined here is
+ * also registered there.
  */
 
 import { cronJobs } from 'convex/server';
@@ -16,50 +25,15 @@ import { internal } from './_generated/api';
 
 const crons = cronJobs();
 
-// Check for performance review deadlines approaching (daily at 9 AM)
-crons.daily(
-  'performance-deadline-checks',
-  { hourUTC: 9, minuteUTC: 0 },
-  internal.performance.checkDeadlineNotifications,
-);
-
-// OKR weekly check-in reminders (Monday at 10 AM)
-crons.weekly(
-  'okr-checkin-reminders',
-  { dayOfWeek: 'monday', hourUTC: 10, minuteUTC: 0 },
-  internal.goals.sendWeeklyCheckinReminders,
-);
-
-// Survey auto-activation (every hour)
-crons.interval('survey-auto-activation', { hours: 1 }, internal.surveys.activateScheduledSurveys);
-
-// Survey auto-closure (every hour)
-crons.interval('survey-auto-closure', { hours: 1 }, internal.surveys.closeExpiredSurveys);
-
-// Weekly newsletter (Monday at 9 AM UTC)
+// Weekly newsletter (Monday at 9 AM UTC) — dormant: not registered in
+// `crons.ts`, so no digest is sent until it is moved there.
 crons.weekly(
   'weekly-newsletter',
   { dayOfWeek: 'monday', hourUTC: 9, minuteUTC: 0 },
   internal.newsletter.sendWeeklyDigest,
 );
 
-// Newsletter drip campaign (every 12 hours)
+// Newsletter drip campaign (every 12 hours) — dormant for the same reason.
 crons.interval('newsletter-drip', { hours: 12 }, internal.newsletter.processDripCampaign);
-
-// ── Asset Management Reminders ────────────────────────────
-
-// Check for assets with warranty expiring in the next 30 days (daily at 8 AM)
-crons.daily(
-  'asset-warranty-reminders',
-  { hourUTC: 8, minuteUTC: 0 },
-  internal.assets.checkWarrantyReminders,
-);
-
-// Check for scheduled maintenance due today (daily at 8 AM)
-crons.daily(
-  'asset-maintenance-reminders',
-  { hourUTC: 8, minuteUTC: 30 },
-  internal.assets.checkMaintenanceReminders,
-);
 
 export default crons;

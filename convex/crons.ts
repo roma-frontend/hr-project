@@ -3,8 +3,15 @@
  *
  * Convex only picks up scheduled jobs from `convex/crons.ts` — a `cronJobs()`
  * object exported from any other module is never registered. Jobs defined
- * elsewhere in this directory (see `hrCronJobs.ts`, `backups.cron.ts`) are
- * therefore dormant until they are wired in here.
+ * elsewhere in this directory (see `hrCronJobs.ts`) are therefore dormant until
+ * they are wired in here.
+ *
+ * That trap used to catch the backup jobs: they lived in a `backups.cron.ts`
+ * whose `cronJobs()` object was never registered, so "automated employee
+ * backups" was a control the product copy advertised and the scheduler never
+ * ran — no snapshot created, no expired snapshot purged. `cronRegistration.test.ts`
+ * now fails when a job in `CRON_REGISTRY` is not registered here, so a job the
+ * console lists can no longer be one that never fires.
  *
  * Every job runs through `operatorTools.dispatchCron`, the single gate that
  * honours the operator's pause flag (Scheduled Ops console) and records
@@ -134,11 +141,13 @@ crons.interval('room-meeting-reminders', { minutes: 10 }, dispatch, {
 // the pre-window broadcast once. Was every 5 minutes (288 function calls/day);
 // while the project is pre-revenue a ±30 min activation window is acceptable —
 // tighten back to { minutes: 5 } when maintenance windows are actively used.
-crons.interval(
-  'operator-maintenance-sweep',
-  { minutes: 30 },
-  internal.superadmin.operatorToolsInternal.maintenanceSweep,
-);
+// Dispatched like every other job rather than calling the action directly: a
+// job that bypasses the dispatcher never reaches `CRON_REGISTRY`, so it is
+// invisible in the Scheduled Ops console and cannot be paused there — the one
+// job an operator would most want to stop mid-incident.
+crons.interval('operator-maintenance-sweep', { minutes: 30 }, dispatch, {
+  jobKey: 'operator-maintenance-sweep',
+});
 
 // Task deadline reminders — daily at 9:10 UTC, notify assignees of tasks due tomorrow.
 crons.daily('task-deadline-reminders', { hourUTC: 9, minuteUTC: 10 }, dispatch, {
@@ -170,6 +179,22 @@ crons.interval('task-comment-count-backfill', { hours: 1 }, dispatch, {
 // so the audit table (and its indexes) stay bounded. Nightly, off-peak.
 crons.daily('webhook-delivery-maintenance', { hourUTC: 3, minuteUTC: 45 }, dispatch, {
   jobKey: 'webhook-delivery-maintenance',
+});
+
+// Employee-data snapshots for Enterprise organizations. Every 6 hours against
+// the 48h retention the product copy states, so an org holds ~8 restorable
+// points in time. Backup runs are scheduled one tick at a time (see
+// `backupAllEnterpriseOrgs`) rather than inline: a payroll-sized org would not
+// fit in one mutation.
+crons.interval('backup-all-enterprise-orgs', { hours: 6 }, dispatch, {
+  jobKey: 'backup-all-enterprise-orgs',
+});
+
+// The other half of the same promise. Without this the retention window in the
+// UI is a claim: expired snapshots would accumulate forever, and the ones a
+// restore would offer would be older than the copy says.
+crons.interval('cleanup-expired-backups', { hours: 1 }, dispatch, {
+  jobKey: 'cleanup-expired-backups',
 });
 
 export default crons;

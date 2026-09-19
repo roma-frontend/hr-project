@@ -129,15 +129,21 @@
 
 ## 5. System operations (CC7) — availability & monitoring
 
-- [x] Error tracking: Sentry (client+server configs) with release health.
+- [x] Error tracking: Sentry (client+server configs) with release health. **Caveat:** `sentry.server.config.ts` sets `enabled: !!process.env.NEXT_PUBLIC_SENTRY_DSN`, so a production deploy without the DSN tracks nothing — silently. `/api/health` now reports `checks.errorTracking: on|off` so "are errors actually captured?" is answerable from monitoring tooling instead of by reading the config.
 - [x] Tracing: OpenTelemetry auto-instrumentation (`opentelemetry.server.config.ts`, `instrumentation.ts`).
 - [x] Performance: Vercel Analytics + Speed Insights; bundle-size guardrails in CI (`check-bundle-guardrails`).
-- [x] Backups: `convex/backups.ts` + nightly `backups.cron.ts`; retention by plan (30/365 days).
+- [x] Backups: `convex/backups.ts`, registered in `convex/crons.ts` (`backup-all-enterprise-orgs`, every 6h; `cleanup-expired-backups`, hourly) and pausable from the Scheduled Ops console. Retention is a **flat 48h for every plan** (`BACKUP_RETENTION_HOURS`), which is also what the product copy says ("Automated employee backups (48h retention)") — there is no per-plan retention table.
+
+  **Найдено и исправлено 19.09.** До этой правки оба задания лежали в отдельном `backups.cron.ts`, а `cronJobs()` из файла, отличного от `convex/crons.ts`, Convex **не регистрирует**: «автоматические бэкапы» существовали в копирайте и в этом чек-листе, но не запускались ни разу, а просроченные снапшоты никто не удалял. Теперь задание в реестре крон можно считать существующим только если оно зарегистрировано — это проверяет `src/__tests__/cronRegistration.test.ts`.
+
+- [x] Health endpoint (`/api/health`) probes what the product cannot run without: it calls the Convex deployment's `/version` (no table read, no auth) and answers **503 / `status: degraded`** when the deployment is unreachable. Before this it returned `ok` unconditionally — a monitor pointed at it stayed green through the exact outage it exists to catch.
+- [x] Cron failure paging: `recordCronRun` emails every superadmin when a job transitions into `error`, and re-alerts at most once a day while it keeps failing (`scheduledOps.lastAlertAt`). Without it a broken job's only trace was a console row nobody opens — how the deadline-reminder job threw daily and the backup jobs never ran at all.
+- [ ] **Not ours, and must be said out loud:** the `employeeBackups` table is not a database backup. It is per-employee JSON snapshots the product offers customers; there is no restore of the whole deployment under our control. Deployment-level recovery is Convex Cloud's backup feature (a vendor control to be cited under CC9.1 and tested in the restore drill below).
 - [x] Load testing exists (`k6` — `tests/performance/load-test.js`).
 - [ ] **Backup restore test** — quarterly, documented (restore to a staging Convex deployment, record row counts + time). An untested backup is not a control.
 - [ ] **Uptime monitoring** external to Vercel (e.g. BetterStack/Checkly free tier) probing `/` + `/api/health`; keep 90 days of status for the window.
 - [ ] Documented **RTO/RPO**: state them (e.g. RTO 4h, RPO 24h = nightly backup) and confirm backup cadence matches.
-- [ ] Alert routing: Sentry alerts → on-call person (email/Slack); define on-call for a small team as "the founder, checked daily" and write it down.
+- [ ] Alert routing: Sentry alerts → on-call person (email/Slack); define on-call for a small team as "the founder, checked daily" and write it down. Cron failures now email superadmins automatically; Sentry alert _rules_ (which issues page, at what threshold) are still unset — a DSN with no rule catches errors nobody reads.
 
 ---
 
@@ -199,7 +205,7 @@ the TSC reference:
 | Webhook signing                                  | CC6.7 | `convex/lib/paymentSignature.ts`, `convex/webhooks/protocol.ts`                                                          |
 | Credential hashing at rest                       | CC6.5 | SCIM token / API key storage paths                                                                                       |
 | Scheduled operations                             | CC7.2 | `convex/crons.ts` + pause-aware dispatcher                                                                               |
-| Backups                                          | A1.2  | `convex/schema/backups.ts`, `convex/backups.cron.ts`, retention config                                                   |
+| Backups                                          | A1.2  | `convex/schema/backups.ts`, `convex/backups.ts`, registration in `convex/crons.ts`, `BACKUP_RETENTION_HOURS`             |
 | Privileged access                                | CC6.3 | impersonation sessions, time-boxed tokens, lockout tracking                                                              |
 
 **What it deliberately does NOT do:** pass judgement on the ten human controls

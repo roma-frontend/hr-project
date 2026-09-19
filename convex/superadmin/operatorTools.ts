@@ -308,6 +308,40 @@ export const CRON_REGISTRY: Array<{
       'Nightly purge of webhook delivery rows past the 30-day retention window; keeps the delivery audit table and its indexes bounded.',
     schedule: 'daily 03:45 UTC',
   },
+  {
+    jobKey: 'operator-maintenance-sweep',
+    label: 'Maintenance window sweep',
+    description:
+      'Opens maintenance windows on their start, closes them past their end, and fires the pre-window broadcast once.',
+    schedule: 'every 30 minutes',
+  },
+  {
+    jobKey: 'room-meeting-reminders',
+    label: 'Room booking reminders',
+    description:
+      'Notifies organisers and attendees about bookings starting within 15 minutes, including the conference link when there is one.',
+    schedule: 'every 10 minutes',
+  },
+  {
+    jobKey: 'task-deadline-reminders',
+    label: 'Task deadline reminders',
+    description: 'Notifies assignees about tasks due tomorrow.',
+    schedule: 'daily 09:10 UTC',
+  },
+  {
+    jobKey: 'backup-all-enterprise-orgs',
+    label: 'Enterprise employee backups',
+    description:
+      'Snapshots employee data for every Enterprise organization (scheduled per org, one tick at a time). Retention is the flat 48h the product copy states.',
+    schedule: 'every 6 hours',
+  },
+  {
+    jobKey: 'cleanup-expired-backups',
+    label: 'Expired backup cleanup',
+    description:
+      'Deletes employee snapshots past their expiry so the 48h retention window is true rather than only advertised.',
+    schedule: 'hourly',
+  },
 ];
 
 export const listScheduledOps = query({
@@ -472,6 +506,21 @@ export const dispatchCron = internalAction({
         }
         case 'webhook-delivery-maintenance':
           await ctx.runMutation(internal.webhooks.main.purgeOldDeliveries, {});
+          break;
+        case 'backup-all-enterprise-orgs':
+          await ctx.runMutation(internal.backups.backupAllEnterpriseOrgs, {});
+          break;
+        case 'cleanup-expired-backups':
+          await ctx.runMutation(internal.backups.cleanupExpiredBackupsInternal, {});
+          break;
+        case 'operator-maintenance-sweep':
+          await ctx.runAction(internal.superadmin.operatorToolsInternal.maintenanceSweep, {});
+          break;
+        case 'task-deadline-reminders':
+          // Registered in `crons.ts` since the dispatcher was introduced, but the
+          // case was missing — the daily tick threw "Unknown cron job key" and no
+          // assignee was ever reminded. Found by cronRegistration.test.ts.
+          await ctx.runMutation(internal.tasks.sendDeadlineReminders, {});
           break;
         default:
           throw new Error(`Unknown cron job key: ${args.jobKey}`);

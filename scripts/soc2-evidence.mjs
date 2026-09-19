@@ -67,9 +67,13 @@ function collectChangeManagement() {
   const gates = ['lint', 'type-check', 'test', 'build'].filter((s) => scripts[s]);
 
   const evidence = [
-    ci ? `.github/workflows/ci.yml present with ${jobs.length} job(s): ${jobs.join(', ')}` : 'CI workflow MISSING',
+    ci
+      ? `.github/workflows/ci.yml present with ${jobs.length} job(s): ${jobs.join(', ')}`
+      : 'CI workflow MISSING',
     `package.json quality gates: ${gates.join(', ') || 'none'}`,
-    existsSync(join(ROOT, 'commitlint.config.js')) ? 'commitlint config present' : 'commitlint config missing',
+    existsSync(join(ROOT, 'commitlint.config.js'))
+      ? 'commitlint config present'
+      : 'commitlint config missing',
     existsSync(join(ROOT, '.husky')) ? 'husky hooks installed' : 'husky hooks missing',
   ];
 
@@ -101,7 +105,9 @@ function collectCoverageGate() {
     'Test coverage gate enforced in CI',
     thresholds.length >= 4 ? 'pass' : 'partial',
     [
-      thresholds.length ? `jest thresholds: ${thresholds.join(', ')}` : 'no coverage thresholds found',
+      thresholds.length
+        ? `jest thresholds: ${thresholds.join(', ')}`
+        : 'no coverage thresholds found',
       published ? `published badge: ${published.message}` : `no ${badgePath}`,
     ],
     'A ratcheting floor means coverage cannot silently fall; the badge is published from CI on every merge.',
@@ -138,7 +144,9 @@ function collectDependencyRisk() {
 function collectSecretsInventory() {
   const example = read('.env.example');
   if (!example) {
-    return finding('secrets-inventory', 'CC6.5', 'Secrets inventory', 'fail', ['.env.example missing']);
+    return finding('secrets-inventory', 'CC6.5', 'Secrets inventory', 'fail', [
+      '.env.example missing',
+    ]);
   }
 
   const keys = [...example.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]);
@@ -183,7 +191,7 @@ function collectSecretsInventory() {
     'Microsoft 365': keys.filter((k) => /MICROSOFT|SHAREPOINT/.test(k)),
     Billing: keys.filter((k) => /STRIPE|IDRAM|ARCA/.test(k)),
     'Email / media / cache': keys.filter((k) => /RESEND|CLOUDINARY|UPSTASH/.test(k)),
-    'Observability': keys.filter((k) => /SENTRY/.test(k)),
+    Observability: keys.filter((k) => /SENTRY/.test(k)),
   };
 
   return finding(
@@ -256,13 +264,19 @@ function collectAccessControl() {
 
 /** CC6.7 — transmitted data is protected, including inbound webhooks. */
 function collectWebhookSigning() {
-  const files = ['convex/lib/paymentSignature.ts', 'convex/webhooks/protocol.ts', 'convex/integrations.ts'];
+  const files = [
+    'convex/lib/paymentSignature.ts',
+    'convex/webhooks/protocol.ts',
+    'convex/integrations.ts',
+  ];
   const present = files.filter((f) => existsSync(join(ROOT, f)));
   const paymentSig = read('convex/lib/paymentSignature.ts') ?? '';
 
   const evidence = [
     `signature modules present: ${present.join(', ') || 'none'}`,
-    /hmacSha256Hex/.test(paymentSig) ? 'HMAC-SHA256 implementation (RFC 2104)' : 'no HMAC implementation found',
+    /hmacSha256Hex/.test(paymentSig)
+      ? 'HMAC-SHA256 implementation (RFC 2104)'
+      : 'no HMAC implementation found',
     /safeEqual/.test(paymentSig) ? 'constant-time comparison' : 'no constant-time comparison found',
   ];
 
@@ -299,45 +313,90 @@ function collectCredentialStorage() {
   );
 }
 
+/**
+ * Every job key registered in `convex/crons.ts`, and the ones that bypass the
+ * pause-aware dispatcher.
+ *
+ * The dispatcher is not merely "it appears somewhere in the file": a job that
+ * calls its mutation directly is registered, runs, and never reaches
+ * `CRON_REGISTRY` — so the console cannot show it and an operator cannot pause
+ * it. Checking per job, not per file, is what makes that visible.
+ */
+function registeredCronJobs() {
+  const crons = read('convex/crons.ts') ?? '';
+  const names = [
+    ...crons.matchAll(/crons\.(?:interval|daily|hourly|weekly)\(\s*['"]([^'"]+)['"]/g),
+  ].map((m) => m[1]);
+  const dispatched = [...crons.matchAll(/jobKey:\s*['"]([a-z0-9-]+)['"]/g)].map((m) => m[1]);
+  return { names, dispatched, undispatched: names.filter((n) => !dispatched.includes(n)) };
+}
+
 /** CC7.2 — scheduled jobs that keep the system healthy are registered and visible. */
 function collectScheduledJobs() {
-  const crons = read('convex/crons.ts') ?? '';
-  const names = [...crons.matchAll(/crons\.(?:interval|daily|hourly|weekly)\(\s*['"]([^'"]+)['"]/g)].map(
-    (m) => m[1],
-  );
-  const paused = /dispatchCron/.test(crons);
+  const { names, undispatched } = registeredCronJobs();
 
   return finding(
     'scheduled-jobs',
     'CC7.2',
     'Scheduled operations registered and pausable',
-    names.length > 0 ? 'pass' : 'fail',
+    names.length === 0 ? 'fail' : undispatched.length === 0 ? 'pass' : 'partial',
     [
-      `${names.length} cron job(s): ${names.join(', ') || 'none'}`,
-      paused ? 'all jobs route through the pause-aware dispatcher' : 'jobs bypass the operator pause gate',
+      `${names.length} cron job(s) in convex/crons.ts: ${names.join(', ') || 'none'}`,
+      undispatched.length === 0
+        ? 'every job routes through the pause-aware dispatcher'
+        : `bypass the operator pause gate (no jobKey): ${undispatched.join(', ')}`,
     ],
     'Registry rows carry lastRunAt and outcome, which is the runtime evidence an auditor asks for.',
   );
 }
 
-/** A1.2 / CC7.5 — data is backed up and recoverable. */
+/**
+ * A1.2 / CC7.5 — data is backed up and recoverable.
+ *
+ * This check used to read `convex/backups.cron.ts` and pass on its existence.
+ * That file was never registered — Convex schedules only the `cronJobs()` object
+ * exported from `convex/crons.ts` — so the collector was green on a backup job
+ * that had never run once, while the product copy advertised automated backups
+ * with a 48h retention. A collector that reads configuration instead of
+ * *registration* manufactures exactly the false assurance a Type II window is
+ * supposed to exclude.
+ *
+ * So the evidence is now the three things that have to hold together: the jobs
+ * are registered in `crons.ts`, `convex/backups.ts` still implements them, and
+ * the retention window the copy states is the one the code enforces.
+ */
 function collectBackups() {
   const schema = read('convex/schema/backups.ts') ?? '';
-  const cron = read('convex/backups.cron.ts');
-  const retention = /retention/i.test(schema) || /retention/i.test(read('convex/billing/modules.ts') ?? '');
+  const impl = read('convex/backups.ts') ?? '';
+  const { dispatched } = registeredCronJobs();
+  const required = ['backup-all-enterprise-orgs', 'cleanup-expired-backups'];
+  const missing = required.filter((job) => !dispatched.includes(job));
+  const retention = /BACKUP_RETENTION_HOURS\s*=\s*\d+/.exec(impl)?.[0];
+  const orphanCronFiles = readdirSync(join(ROOT, 'convex')).filter(
+    (name) => name.endsWith('.ts') && name !== 'crons.ts' && name.endsWith('.cron.ts'),
+  );
 
   const evidence = [
     schema ? 'backups schema present' : 'backups schema missing',
-    cron ? 'backups cron present' : 'no backups cron',
-    retention ? 'retention configuration present' : 'no retention configuration found',
+    /export const backupAllEnterpriseOrgs/.test(impl)
+      ? 'internal backup mutation present (convex/backups.ts)'
+      : 'backup mutation missing',
+    missing.length === 0
+      ? 'both backup jobs registered in convex/crons.ts: ' + required.join(', ')
+      : `backup job(s) NOT registered in convex/crons.ts: ${missing.join(', ')}`,
+    retention ? `retention enforced in code: ${retention}` : 'retention constant not found',
+    orphanCronFiles.length === 0
+      ? 'no unregistered *.cron.ts files (a cronJobs() elsewhere is never scheduled)'
+      : `unregistered cron file(s) present: ${orphanCronFiles.join(', ')}`,
   ];
-  const ok = Boolean(schema) && Boolean(cron);
+
+  const failed = missing.length > 0 || orphanCronFiles.length > 0 || !schema || !retention;
 
   return finding(
     'backups',
     'A1.2',
     'Backups scheduled with retention',
-    ok ? 'pass' : schema || cron ? 'partial' : 'fail',
+    failed ? (schema ? 'partial' : 'fail') : 'pass',
     evidence,
     'A restore test is still required and cannot be inferred from configuration — see MANUAL.',
   );
@@ -353,7 +412,10 @@ function collectPrivilegedAccess() {
     ['impersonation sessions recorded', /impersonationSessions/.test(source)],
     ['time-boxed superadmin tokens', /superadminAccessTokens/.test(source)],
     ['session revocation supported', /sessionToken|sessionExpiry/.test(source)],
-    ['login lockout tracked', /loginLockedUntil|loginFailedAttempts/.test(read('convex/schema/users.ts') ?? '')],
+    [
+      'login lockout tracked',
+      /loginLockedUntil|loginFailedAttempts/.test(read('convex/schema/users.ts') ?? ''),
+    ],
   ];
   const passed = checks.filter(([, ok]) => ok);
 
@@ -431,10 +493,11 @@ const findings = COLLECTORS.map((collect) => collect());
 const generatedAt = new Date();
 const dateSlug = generatedAt.toISOString().slice(0, 10);
 
-const counts = findings.reduce(
-  (acc, f) => ({ ...acc, [f.status]: (acc[f.status] ?? 0) + 1 }),
-  { pass: 0, partial: 0, fail: 0 },
-);
+const counts = findings.reduce((acc, f) => ({ ...acc, [f.status]: (acc[f.status] ?? 0) + 1 }), {
+  pass: 0,
+  partial: 0,
+  fail: 0,
+});
 
 const lines = [
   `# SOC 2 evidence — ${dateSlug}`,
