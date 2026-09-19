@@ -151,7 +151,18 @@ describe('competitor matrix', () => {
     expect(COMPETITORS.map((c) => c.slug)).toEqual([...COMPARE_SLUGS]);
     for (const competitor of COMPETITORS) {
       expect(competitor.monogram).toHaveLength(2);
-      expect(competitor.site.startsWith('https://')).toBe(true);
+      // `site` is optional: several Armenian vendors have no URL we could
+      // verify, and a guessed link on a page about checkability is worse than
+      // none. When a site IS published it must be https and actually parse.
+      if (competitor.site !== undefined) {
+        expect(competitor.site.startsWith('https://')).toBe(true);
+        expect(() => new URL(competitor.site!)).not.toThrow();
+      }
+    }
+    // Every global vendor publishes one — guards against the field silently
+    // being dropped everywhere.
+    for (const competitor of competitorsByRegion('global')) {
+      expect(competitor.site).toBeTruthy();
     }
   });
 

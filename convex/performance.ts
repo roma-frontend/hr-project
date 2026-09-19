@@ -7,6 +7,7 @@ import { isSuperadmin } from './lib/auth';
 import { getProfile } from './lib/userProfile';
 import { notify } from './lib/notify';
 import { assertModuleAccess } from './lib/entitlements';
+import { triggerWorkflows } from './lib/webhookEvents';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -802,6 +803,24 @@ export const checkDeadlineNotifications = internalMutation({
                 relatedId: assignment._id,
                 route: '/performance',
                 createdAt: now,
+              });
+
+              // Automation trigger, fired inside the same "no notification in the
+              // last 24h" guard that protects the reminder above. Reusing that
+              // guard is what stops `performance_review_due` from firing on every
+              // sweep: the reviewer gets a deadline nudge once a day, and their
+              // org's workflows get the same nudge once a day, not once an hour.
+              await triggerWorkflows(ctx, 'performance_review_due', org._id, {
+                assignmentId: assignment._id,
+                cycleId: cycle._id,
+                cycleTitle: cycle.title,
+                reviewerId: assignment.reviewerId,
+                revieweeId: assignment.revieweeId,
+                // The numeric deadline, so a workflow condition can compare it;
+                // the label is for a message body.
+                dueDate: assignment.dueDate,
+                dueDateLabel: dueDate,
+                daysLeft,
               });
             }
           }

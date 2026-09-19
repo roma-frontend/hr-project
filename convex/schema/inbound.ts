@@ -29,6 +29,16 @@ export const inbound = {
     /** Last 4 characters, so an admin can tell two tokens apart. */
     tokenHint: v.string(),
     enabled: v.boolean(),
+    /**
+     * Serial number of a physical terminal, uppercased (`normalizeSerial`).
+     *
+     * A ZKTeco terminal speaks ADMS, not JSON: it cannot be given a secret URL,
+     * it identifies itself by SN on every `/iclock/*` request. Setting this on a
+     * `device` token is what makes the hardware connectable — the SN is the
+     * credential the device was configured with, and it resolves an org for the
+     * push. Tokens without a serial keep working over the secret URL.
+     */
+    deviceSerial: v.optional(v.string()),
     /** Tasks created from this token are assigned here (Jira provider). */
     defaultAssigneeId: v.optional(v.id('users')),
     createdAt: v.number(),
@@ -39,7 +49,8 @@ export const inbound = {
     receivedCount: v.number(),
   })
     .index('by_org', ['organizationId'])
-    .index('by_hash', ['tokenHash']),
+    .index('by_hash', ['tokenHash'])
+    .index('by_device_serial', ['deviceSerial']),
 
   /**
    * Raw punches from attendance hardware, before anyone vouches for them.

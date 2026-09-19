@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmployeePaymentDetailsCard } from '@/components/payroll/EmployeePaymentDetailsCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -840,6 +841,18 @@ export default function EmployeeProfileDetail({
                   {t('employeeProfile.noSalaryData', 'No salary information available')}
                 </p>
               )}
+
+              {/* Where the salary is actually transferred. Calculating a run does
+                  not need it; paying it through the bank does. Editable by the
+                  same people who may set compensation, and never by the employee
+                  themselves — `updatePaymentDetails` rejects self-edit. */}
+              <div className="mt-4">
+                <EmployeePaymentDetailsCard
+                  userId={employeeId}
+                  organizationId={employee?.organizationId as Id<'organizations'> | undefined}
+                  canEdit={canEdit && currentUser?.id !== employeeId}
+                />
+              </div>
             </CardContent>
           </Card>
 

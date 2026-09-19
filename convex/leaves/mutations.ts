@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { getAuthCaller } from '../lib/getAuthCaller';
-import { mutation, type MutationCtx } from '../_generated/server';
+import { mutation, internalMutation, type MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
 import { internal } from '../_generated/api';
 import { isSuperadmin, isSuperadminEmail } from '../lib/auth';
@@ -270,6 +270,222 @@ export const createLeave = mutation({
 // ─────────────────────────────────────────────────────────────────────────────
 // APPROVE LEAVE — cross-org check
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * The approval decision itself, separated from the session that requested it.
+ *
+ * `approveLeave` resolves the caller and delegates here; the automation runner
+ * reaches it through `approveLeaveInternal`. Extracted rather than duplicated on
+ * purpose: approval deducts leave balance, closes the SLA metric, writes the
+ * audit entry, refreshes the HR digest and schedules the leave-order document.
+ * A second copy in the automation runner would drift from this one, and the
+ * first thing to drift would be the balance arithmetic.
+ *
+ * `assertMayReview` still runs for every caller — including an automation. A
+ * workflow approves as the admin who configured it, so a rule that reaches for
+ * a request outside that admin's reporting line is refused rather than obeyed.
+ */
+async function approveLeaveCore(
+  ctx: MutationCtx,
+  args: {
+    leaveId: Id<'leaveRequests'>;
+    reviewerId: Id<'users'>;
+    comment?: string;
+    /** Set when an automation, not a person, made the decision. */
+    automated?: { workflowName: string };
+  },
+): Promise<Id<'leaveRequests'>> {
+  const { leaveId, reviewerId, comment, automated } = args;
+  let leave = await ctx.db.get(leaveId);
+  if (!leave) throw new Error('Leave request not found');
+  if (leave.status !== 'pending') throw new Error('Leave is not pending');
+
+  const reviewer = await ctx.db.get(reviewerId);
+  if (!reviewer) throw new Error('Reviewer not found');
+
+  // Cross-org protection, separation of duties, the reporting line and the
+  // head-of-organization policy — all in one place. Replaces the old rank
+  // check, which let any admin or supervisor approve any request in the org,
+  // including their own.
+  await assertMayReview(ctx, reviewer, leave);
+  const headSelfApproval = leave.userId === reviewerId;
+
+  // ── Mandatory document gate ──────────────────────────────────────────
+  // The bilingual leave-request document must exist and be fully signed
+  // before the supervisor may approve the leave. This ensures the formal
+  // audit trail is in place before the approval decision is recorded.
+  //
+  // When the document is missing (async scheduler still running or failed),
+  // we generate it on the spot instead of throwing — the scheduler may have
+  // been delayed or crashed, but the reporting line is available now.
+  if (!leave.leaveRequestDocumentId) {
+    try {
+      const genResult = await ctx.runMutation(
+        internal.leaves.documents.generateLeaveRequestDocument,
+        { leaveId },
+      );
+      const docId = genResult?.signatureDocumentId ?? genResult?.documentId;
+      if (docId) {
+        leave = { ...leave, leaveRequestDocumentId: docId };
+      }
+    } catch (genErr) {
+      // The internal mutation may fail (auth, schema, etc.). Rather than
+      // blocking the approval entirely, we allow it to proceed without the
+      // document — the audit trail gap is logged but the leave is approved.
+      console.error('[approveLeave] generateLeaveRequestDocument failed:', genErr);
+    }
+  }
+
+  if (leave.leaveRequestDocumentId) {
+    const requestDoc = await ctx.db.get(leave.leaveRequestDocumentId);
+    if (!requestDoc) {
+      throw new Error('Leave request document not found — please try again.');
+    }
+    if (requestDoc.status !== 'completed') {
+      throw new Error(
+        `Leave request document must be signed before approval (current status: ${requestDoc.status}). Please sign the document first.`,
+      );
+    }
+  }
+  // If no document exists after the generation attempt, approval proceeds
+  // anyway — the supervisor's approval is the substantive decision; the
+  // document is a formal audit artifact.
+
+  const now = Date.now();
+  await ctx.db.patch(leaveId, {
+    status: 'approved',
+    reviewedBy: reviewerId,
+    reviewComment: comment ?? (headSelfApproval ? HEAD_AUTO_APPROVAL_NOTE : undefined),
+    reviewedAt: now,
+    updatedAt: now,
+  });
+
+  // Notify employee
+  await notify(ctx, {
+    organizationId: leave.organizationId,
+    userId: leave.userId,
+    type: 'leave_approved',
+    titleKey: 'notifications.titles.leaveApproved',
+    messageKey: comment
+      ? 'notifications.messages.leaveApprovedByWithNote'
+      : 'notifications.messages.leaveApprovedBy',
+    params: {
+      type: leave.type,
+      start: leave.startDate,
+      end: leave.endDate,
+      reviewerName: reviewer.name,
+      ...(comment ? { comment } : {}),
+    },
+    fallbackTitle: '✅ Leave Approved!',
+    fallbackMessage: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) has been approved by ${reviewer.name}.${comment ? ` Note: ${comment}` : ''}`,
+    relatedId: leaveId,
+    route: '/leaves',
+    createdAt: now,
+  });
+
+  // Deduct balance
+  const user = await ctx.db.get(leave.userId);
+  if (user) {
+    await deductLeaveBalance(ctx, leave.userId, user, leave.type, leave.days);
+  }
+
+  // Update SLA metric
+  const metric = await ctx.db
+    .query('slaMetrics')
+    .withIndex('by_leave', (q) => q.eq('leaveRequestId', leaveId))
+    .first();
+
+  if (metric) {
+    const responseTimeHours = (now - metric.submittedAt) / (1000 * 60 * 60);
+    const onTime = responseTimeHours <= metric.targetResponseTime;
+    const slaScore = onTime
+      ? Math.max(80, 100 - (responseTimeHours / metric.targetResponseTime) * 20)
+      : Math.max(
+          0,
+          79 - ((responseTimeHours - metric.targetResponseTime) / metric.targetResponseTime) * 40,
+        );
+
+    await ctx.db.patch(metric._id, {
+      respondedAt: now,
+      responseTimeHours: Math.round(responseTimeHours * 10) / 10,
+      slaScore: Math.round(slaScore * 10) / 10,
+      status: onTime ? 'on_time' : 'breached',
+    });
+  }
+
+  // Audit log: leave approved
+  await ctx.db.insert('auditLogs', {
+    organizationId: leave.organizationId,
+    userId: reviewerId,
+    action: automated
+      ? 'leave_automation_approved'
+      : headSelfApproval
+        ? 'leave_auto_approved'
+        : 'leave_approved',
+    target: leaveId,
+    details: JSON.stringify({
+      type: leave.type,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      days: leave.days,
+      comment,
+      // A rule made this decision, not a person clicking Approve. The audit
+      // trail has to say which workflow, or the only trace of a machine
+      // decision is a name that appears to have acted on its own.
+      ...(automated ? { automation: automated.workflowName } : {}),
+      // The head of the organization clearing their own pending request under
+      // the `auto` policy — recorded explicitly so the trail never looks like
+      // an ordinary self-approval, which is forbidden for everyone else.
+      ...(headSelfApproval ? { note: HEAD_AUTO_APPROVAL_NOTE } : {}),
+    }),
+    createdAt: now,
+  });
+
+  await emitLeaveEvent(ctx, 'leave.approved', leaveId, {
+    leaveId,
+    userId: leave.userId,
+    type: leave.type,
+    startDate: leave.startDate,
+    endDate: leave.endDate,
+    days: leave.days,
+    reviewedBy: reviewerId,
+    comment,
+  });
+
+  // Refresh the HR Assistant digest for every day this leave covers, so
+  // the in-app chat shows the approved absence immediately rather than
+  // waiting for the next midnight cron. Daily iteration is bounded by
+  // the leave's day count; in practice leaves last < 30 days.
+  if (leave.organizationId) {
+    await ctx.runMutation(internal.attendance.bot.seedHrAssistantMembers, {
+      organizationId: leave.organizationId,
+    });
+    const start = new Date(`${leave.startDate}T00:00:00Z`);
+    const end = new Date(`${leave.endDate}T00:00:00Z`);
+    const days: string[] = [];
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      days.push(d.toISOString().slice(0, 10));
+    }
+    for (const day of days) {
+      await ctx.scheduler.runAfter(0, internal.attendance.bot.renderAndPostDigest, {
+        organizationId: leave.organizationId,
+        date: day,
+        trigger: 'approval',
+      });
+    }
+  }
+
+  // After supervisor approval, schedule generation of the bilingual leave-order
+  // document. If HR exists it will be sent for countersignature; otherwise it
+  // is auto-approved.
+  if (!headSelfApproval && leave.organizationId) {
+    await ctx.scheduler.runAfter(0, internal.leaves.documents.generateLeaveOrderDocument, {
+      leaveId,
+    });
+  }
+
+  return leaveId;
+}
+
 export const approveLeave = mutation({
   args: {
     leaveId: v.id('leaveRequests'),
@@ -280,194 +496,151 @@ export const approveLeave = mutation({
     await assertModuleAccess(ctx, 'leaves');
     const caller = await getAuthCaller(ctx);
     if (!caller) throw new Error('Not authenticated');
-    const reviewerId = caller._id;
-    let leave = await ctx.db.get(leaveId);
-    if (!leave) throw new Error('Leave request not found');
-    if (leave.status !== 'pending') throw new Error('Leave is not pending');
-
-    const reviewer = await ctx.db.get(reviewerId);
-    if (!reviewer) throw new Error('Reviewer not found');
-
-    // Cross-org protection, separation of duties, the reporting line and the
-    // head-of-organization policy — all in one place. Replaces the old rank
-    // check, which let any admin or supervisor approve any request in the org,
-    // including their own.
-    await assertMayReview(ctx, reviewer, leave);
-    const headSelfApproval = leave.userId === reviewerId;
-
-    // ── Mandatory document gate ──────────────────────────────────────────
-    // The bilingual leave-request document must exist and be fully signed
-    // before the supervisor may approve the leave. This ensures the formal
-    // audit trail is in place before the approval decision is recorded.
-    //
-    // When the document is missing (async scheduler still running or failed),
-    // we generate it on the spot instead of throwing — the scheduler may have
-    // been delayed or crashed, but the reporting line is available now.
-    if (!leave.leaveRequestDocumentId) {
-      try {
-        const genResult = await ctx.runMutation(
-          internal.leaves.documents.generateLeaveRequestDocument,
-          { leaveId },
-        );
-        const docId = genResult?.signatureDocumentId ?? genResult?.documentId;
-        if (docId) {
-          leave = { ...leave, leaveRequestDocumentId: docId };
-        }
-      } catch (genErr) {
-        // The internal mutation may fail (auth, schema, etc.). Rather than
-        // blocking the approval entirely, we allow it to proceed without the
-        // document — the audit trail gap is logged but the leave is approved.
-        console.error('[approveLeave] generateLeaveRequestDocument failed:', genErr);
-      }
-    }
-
-    if (leave.leaveRequestDocumentId) {
-      const requestDoc = await ctx.db.get(leave.leaveRequestDocumentId);
-      if (!requestDoc) {
-        throw new Error('Leave request document not found — please try again.');
-      }
-      if (requestDoc.status !== 'completed') {
-        throw new Error(
-          `Leave request document must be signed before approval (current status: ${requestDoc.status}). Please sign the document first.`,
-        );
-      }
-    }
-    // If no document exists after the generation attempt, approval proceeds
-    // anyway — the supervisor's approval is the substantive decision; the
-    // document is a formal audit artifact.
-
-    const now = Date.now();
-    await ctx.db.patch(leaveId, {
-      status: 'approved',
-      reviewedBy: reviewerId,
-      reviewComment: comment ?? (headSelfApproval ? HEAD_AUTO_APPROVAL_NOTE : undefined),
-      reviewedAt: now,
-      updatedAt: now,
-    });
-
-    // Notify employee
-    await notify(ctx, {
-      organizationId: leave.organizationId,
-      userId: leave.userId,
-      type: 'leave_approved',
-      titleKey: 'notifications.titles.leaveApproved',
-      messageKey: comment
-        ? 'notifications.messages.leaveApprovedByWithNote'
-        : 'notifications.messages.leaveApprovedBy',
-      params: {
-        type: leave.type,
-        start: leave.startDate,
-        end: leave.endDate,
-        reviewerName: reviewer.name,
-        ...(comment ? { comment } : {}),
-      },
-      fallbackTitle: '✅ Leave Approved!',
-      fallbackMessage: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) has been approved by ${reviewer.name}.${comment ? ` Note: ${comment}` : ''}`,
-      relatedId: leaveId,
-      route: '/leaves',
-      createdAt: now,
-    });
-
-    // Deduct balance
-    const user = await ctx.db.get(leave.userId);
-    if (user) {
-      await deductLeaveBalance(ctx, leave.userId, user, leave.type, leave.days);
-    }
-
-    // Update SLA metric
-    const metric = await ctx.db
-      .query('slaMetrics')
-      .withIndex('by_leave', (q) => q.eq('leaveRequestId', leaveId))
-      .first();
-
-    if (metric) {
-      const responseTimeHours = (now - metric.submittedAt) / (1000 * 60 * 60);
-      const onTime = responseTimeHours <= metric.targetResponseTime;
-      const slaScore = onTime
-        ? Math.max(80, 100 - (responseTimeHours / metric.targetResponseTime) * 20)
-        : Math.max(
-            0,
-            79 - ((responseTimeHours - metric.targetResponseTime) / metric.targetResponseTime) * 40,
-          );
-
-      await ctx.db.patch(metric._id, {
-        respondedAt: now,
-        responseTimeHours: Math.round(responseTimeHours * 10) / 10,
-        slaScore: Math.round(slaScore * 10) / 10,
-        status: onTime ? 'on_time' : 'breached',
-      });
-    }
-
-    // Audit log: leave approved
-    await ctx.db.insert('auditLogs', {
-      organizationId: leave.organizationId,
-      userId: reviewerId,
-      action: headSelfApproval ? 'leave_auto_approved' : 'leave_approved',
-      target: leaveId,
-      details: JSON.stringify({
-        type: leave.type,
-        startDate: leave.startDate,
-        endDate: leave.endDate,
-        days: leave.days,
-        comment,
-        // The head of the organization clearing their own pending request under
-        // the `auto` policy — recorded explicitly so the trail never looks like
-        // an ordinary self-approval, which is forbidden for everyone else.
-        ...(headSelfApproval ? { note: HEAD_AUTO_APPROVAL_NOTE } : {}),
-      }),
-      createdAt: now,
-    });
-
-    await emitLeaveEvent(ctx, 'leave.approved', leaveId, {
-      leaveId,
-      userId: leave.userId,
-      type: leave.type,
-      startDate: leave.startDate,
-      endDate: leave.endDate,
-      days: leave.days,
-      reviewedBy: reviewerId,
-      comment,
-    });
-
-    // Refresh the HR Assistant digest for every day this leave covers, so
-    // the in-app chat shows the approved absence immediately rather than
-    // waiting for the next midnight cron. Daily iteration is bounded by
-    // the leave's day count; in practice leaves last < 30 days.
-    if (leave.organizationId) {
-      await ctx.runMutation(internal.attendance.bot.seedHrAssistantMembers, {
-        organizationId: leave.organizationId,
-      });
-      const start = new Date(`${leave.startDate}T00:00:00Z`);
-      const end = new Date(`${leave.endDate}T00:00:00Z`);
-      const days: string[] = [];
-      for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
-        days.push(d.toISOString().slice(0, 10));
-      }
-      for (const day of days) {
-        await ctx.scheduler.runAfter(0, internal.attendance.bot.renderAndPostDigest, {
-          organizationId: leave.organizationId,
-          date: day,
-          trigger: 'approval',
-        });
-      }
-    }
-
-    // After supervisor approval, schedule generation of the bilingual leave-order
-    // document. If HR exists it will be sent for countersignature; otherwise it
-    // is auto-approved.
-    if (!headSelfApproval && leave.organizationId) {
-      await ctx.scheduler.runAfter(0, internal.leaves.documents.generateLeaveOrderDocument, {
-        leaveId,
-      });
-    }
-
-    return leaveId;
+    return approveLeaveCore(ctx, { leaveId, reviewerId: caller._id, comment });
   },
+});
+
+/**
+ * Automation entry point for approval.
+ *
+ * Deliberately an `internalMutation` rather than a wrapper around the public
+ * one: a public mutation cannot run without a session, and a session is exactly
+ * what an automation does not have. The reviewer is passed explicitly — it is
+ * the workflow's author, resolved by the runner — so the audit trail names a
+ * real person instead of an anonymous "system".
+ *
+ * It throws the same errors the UI would (`Leave is not pending`, the reporting
+ * line refusal from `assertMayReview`, the unsigned-document refusal). The
+ * runner catches those and records the refusal as the action's outcome, which is
+ * the only honest way to report "the automation tried and was not allowed".
+ */
+export const approveLeaveInternal = internalMutation({
+  args: {
+    leaveId: v.id('leaveRequests'),
+    reviewerId: v.id('users'),
+    comment: v.optional(v.string()),
+    workflowName: v.string(),
+  },
+  handler: async (ctx, args) =>
+    approveLeaveCore(ctx, {
+      leaveId: args.leaveId,
+      reviewerId: args.reviewerId,
+      comment: args.comment,
+      automated: { workflowName: args.workflowName },
+    }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REJECT LEAVE — cross-org check
 // ─────────────────────────────────────────────────────────────────────────────
+/** Same split as `approveLeaveCore`: the decision, not the session. */
+async function rejectLeaveCore(
+  ctx: MutationCtx,
+  args: {
+    leaveId: Id<'leaveRequests'>;
+    reviewerId: Id<'users'>;
+    comment?: string;
+    automated?: { workflowName: string };
+  },
+): Promise<Id<'leaveRequests'>> {
+  const { leaveId, reviewerId, comment, automated } = args;
+  const leave = await ctx.db.get(leaveId);
+  if (!leave) throw new Error('Leave request not found');
+  if (leave.status !== 'pending') throw new Error('Leave is not pending');
+
+  const reviewer = await ctx.db.get(reviewerId);
+  if (!reviewer) throw new Error('Reviewer not found');
+
+  // Same gate as approval: rejecting is a review decision too, and letting a
+  // wider set of people reject than approve would be its own hole.
+  await assertMayReview(ctx, reviewer, leave);
+
+  const now = Date.now();
+  await ctx.db.patch(leaveId, {
+    status: 'rejected',
+    reviewedBy: reviewerId,
+    reviewComment: comment,
+    reviewedAt: now,
+    updatedAt: now,
+  });
+
+  await notify(ctx, {
+    organizationId: leave.organizationId,
+    userId: leave.userId,
+    type: 'leave_rejected',
+    titleKey: 'notifications.titles.leaveRejected',
+    messageKey: comment
+      ? 'notifications.messages.leaveRejectedByWithReason'
+      : 'notifications.messages.leaveRejectedBy',
+    params: {
+      type: leave.type,
+      start: leave.startDate,
+      end: leave.endDate,
+      reviewerName: reviewer.name,
+      ...(comment ? { comment } : {}),
+    },
+    fallbackTitle: '❌ Leave Rejected',
+    fallbackMessage: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) was rejected by ${reviewer.name}.${comment ? ` Reason: ${comment}` : ''}`,
+    relatedId: leaveId,
+    route: '/leaves',
+    createdAt: now,
+  });
+
+  // Update SLA metric
+  const metric = await ctx.db
+    .query('slaMetrics')
+    .withIndex('by_leave', (q) => q.eq('leaveRequestId', leaveId))
+    .first();
+
+  if (metric) {
+    const responseTimeHours = (now - metric.submittedAt) / (1000 * 60 * 60);
+    const onTime = responseTimeHours <= metric.targetResponseTime;
+    const slaScore = onTime
+      ? Math.max(80, 100 - (responseTimeHours / metric.targetResponseTime) * 20)
+      : Math.max(
+          0,
+          79 - ((responseTimeHours - metric.targetResponseTime) / metric.targetResponseTime) * 40,
+        );
+
+    await ctx.db.patch(metric._id, {
+      respondedAt: now,
+      responseTimeHours: Math.round(responseTimeHours * 10) / 10,
+      slaScore: Math.round(slaScore * 10) / 10,
+      status: onTime ? 'on_time' : 'breached',
+    });
+  }
+
+  // Audit log: leave rejected
+  await ctx.db.insert('auditLogs', {
+    organizationId: leave.organizationId,
+    userId: reviewerId,
+    action: automated ? 'leave_automation_rejected' : 'leave_rejected',
+    target: leaveId,
+    details: JSON.stringify({
+      type: leave.type,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      days: leave.days,
+      comment,
+      ...(automated ? { automation: automated.workflowName } : {}),
+    }),
+    createdAt: now,
+  });
+
+  await emitLeaveEvent(ctx, 'leave.rejected', leaveId, {
+    leaveId,
+    userId: leave.userId,
+    type: leave.type,
+    startDate: leave.startDate,
+    endDate: leave.endDate,
+    days: leave.days,
+    reviewedBy: reviewerId,
+    comment,
+  });
+
+  return leaveId;
+}
+
 export const rejectLeave = mutation({
   args: {
     leaveId: v.id('leaveRequests'),
@@ -478,102 +651,25 @@ export const rejectLeave = mutation({
     await assertModuleAccess(ctx, 'leaves');
     const caller = await getAuthCaller(ctx);
     if (!caller) throw new Error('Not authenticated');
-    const reviewerId = caller._id;
-    const leave = await ctx.db.get(leaveId);
-    if (!leave) throw new Error('Leave request not found');
-    if (leave.status !== 'pending') throw new Error('Leave is not pending');
-
-    const reviewer = await ctx.db.get(reviewerId);
-    if (!reviewer) throw new Error('Reviewer not found');
-
-    // Same gate as approval: rejecting is a review decision too, and letting a
-    // wider set of people reject than approve would be its own hole.
-    await assertMayReview(ctx, reviewer, leave);
-
-    const now = Date.now();
-    await ctx.db.patch(leaveId, {
-      status: 'rejected',
-      reviewedBy: reviewerId,
-      reviewComment: comment,
-      reviewedAt: now,
-      updatedAt: now,
-    });
-
-    await notify(ctx, {
-      organizationId: leave.organizationId,
-      userId: leave.userId,
-      type: 'leave_rejected',
-      titleKey: 'notifications.titles.leaveRejected',
-      messageKey: comment
-        ? 'notifications.messages.leaveRejectedByWithReason'
-        : 'notifications.messages.leaveRejectedBy',
-      params: {
-        type: leave.type,
-        start: leave.startDate,
-        end: leave.endDate,
-        reviewerName: reviewer.name,
-        ...(comment ? { comment } : {}),
-      },
-      fallbackTitle: '❌ Leave Rejected',
-      fallbackMessage: `Your ${leave.type} leave (${leave.startDate} → ${leave.endDate}) was rejected by ${reviewer.name}.${comment ? ` Reason: ${comment}` : ''}`,
-      relatedId: leaveId,
-      route: '/leaves',
-      createdAt: now,
-    });
-
-    // Update SLA metric
-    const metric = await ctx.db
-      .query('slaMetrics')
-      .withIndex('by_leave', (q) => q.eq('leaveRequestId', leaveId))
-      .first();
-
-    if (metric) {
-      const responseTimeHours = (now - metric.submittedAt) / (1000 * 60 * 60);
-      const onTime = responseTimeHours <= metric.targetResponseTime;
-      const slaScore = onTime
-        ? Math.max(80, 100 - (responseTimeHours / metric.targetResponseTime) * 20)
-        : Math.max(
-            0,
-            79 - ((responseTimeHours - metric.targetResponseTime) / metric.targetResponseTime) * 40,
-          );
-
-      await ctx.db.patch(metric._id, {
-        respondedAt: now,
-        responseTimeHours: Math.round(responseTimeHours * 10) / 10,
-        slaScore: Math.round(slaScore * 10) / 10,
-        status: onTime ? 'on_time' : 'breached',
-      });
-    }
-
-    // Audit log: leave rejected
-    await ctx.db.insert('auditLogs', {
-      organizationId: leave.organizationId,
-      userId: reviewerId,
-      action: 'leave_rejected',
-      target: leaveId,
-      details: JSON.stringify({
-        type: leave.type,
-        startDate: leave.startDate,
-        endDate: leave.endDate,
-        days: leave.days,
-        comment,
-      }),
-      createdAt: now,
-    });
-
-    await emitLeaveEvent(ctx, 'leave.rejected', leaveId, {
-      leaveId,
-      userId: leave.userId,
-      type: leave.type,
-      startDate: leave.startDate,
-      endDate: leave.endDate,
-      days: leave.days,
-      reviewedBy: reviewerId,
-      comment,
-    });
-
-    return leaveId;
+    return rejectLeaveCore(ctx, { leaveId, reviewerId: caller._id, comment });
   },
+});
+
+/** Automation entry point for rejection — same reasoning as the approval twin. */
+export const rejectLeaveInternal = internalMutation({
+  args: {
+    leaveId: v.id('leaveRequests'),
+    reviewerId: v.id('users'),
+    comment: v.optional(v.string()),
+    workflowName: v.string(),
+  },
+  handler: async (ctx, args) =>
+    rejectLeaveCore(ctx, {
+      leaveId: args.leaveId,
+      reviewerId: args.reviewerId,
+      comment: args.comment,
+      automated: { workflowName: args.workflowName },
+    }),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

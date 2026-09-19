@@ -12,7 +12,7 @@
  * checked against this repository.
  */
 
-export const COMPARE_VERIFIED = '2026-09-16';
+export const COMPARE_VERIFIED = '2026-09-19';
 
 export const GLOBAL_COMPARE_SLUGS = [
   'personio',
@@ -23,8 +23,29 @@ export const GLOBAL_COMPARE_SLUGS = [
   'deel',
 ] as const;
 
-/** Armenian and CIS vendors buyers actually shortlist in this market. */
-export const LOCAL_COMPARE_SLUGS = ['armsoft', 'onec', 'staffam', 'peopleforce', 'odoo'] as const;
+/**
+ * Armenian and CIS vendors buyers actually shortlist in this market.
+ *
+ * `hirebee`, `listwork`, `resalt`, `sparkwork` and `ontime` were added on
+ * 2026-09-19: the previous revision of this file assumed Armenia had no local
+ * integrated HR platform beyond Armsoft/1C, which is not true in 2026 — these
+ * four ship HR + payroll or attendance and are met in real shortlists, and
+ * OnTime owns biometric *hardware* (ZKTeco) that we do not integrate with.
+ * Their marks come from the vendors' own public product descriptions, and the
+ * usual rule applies: re-verify per deal before quoting them to a customer.
+ */
+export const LOCAL_COMPARE_SLUGS = [
+  'armsoft',
+  'onec',
+  'staffam',
+  'peopleforce',
+  'odoo',
+  'hirebee',
+  'listwork',
+  'resalt',
+  'sparkwork',
+  'ontime',
+] as const;
 
 export const COMPARE_SLUGS = [...GLOBAL_COMPARE_SLUGS, ...LOCAL_COMPARE_SLUGS] as const;
 
@@ -45,8 +66,14 @@ export interface Competitor {
   color: string;
   /** Two-letter monogram for the comparison column header. */
   monogram: string;
-  /** Public marketing site, shown as a link on the detail page. */
-  site: string;
+  /**
+   * Public marketing site, shown as a link on the detail page.
+   *
+   * Optional on purpose: several Armenian vendors have no site we could
+   * verify, and inventing a URL on a page that claims to be checkable is worse
+   * than omitting the link.
+   */
+  site?: string;
   /** Global platform vs Armenian/CIS local vendor. */
   region: CompetitorRegion;
 }
@@ -139,6 +166,45 @@ export const COMPETITORS: readonly Competitor[] = [
     color: '#714b67',
     monogram: 'OD',
     site: 'https://www.odoo.com',
+    region: 'local',
+  },
+  // Added 2026-09-19 — local integrated platforms met in Armenian shortlists.
+  {
+    slug: 'hirebee',
+    name: 'Hirebee',
+    color: '#e0a80d',
+    monogram: 'HI',
+    site: 'https://hirebee.ai',
+    region: 'local',
+  },
+  {
+    // No verified public site — deliberately no link rather than a guessed one.
+    slug: 'listwork',
+    name: 'List Work',
+    color: '#0f766e',
+    monogram: 'LW',
+    region: 'local',
+  },
+  {
+    slug: 'resalt',
+    name: 'Resalt',
+    color: '#7c3aed',
+    monogram: 'RE',
+    region: 'local',
+  },
+  {
+    slug: 'sparkwork',
+    name: 'Spark.work',
+    color: '#ea580c',
+    monogram: 'SP',
+    site: 'https://spark.work',
+    region: 'local',
+  },
+  {
+    slug: 'ontime',
+    name: 'OnTime',
+    color: '#475569',
+    monogram: 'OT',
     region: 'local',
   },
 ];
@@ -569,26 +635,150 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
  * row is treated as `no`, so the table below only lists where they actually
  * ship something. Sources: public vendor material, to be re-verified per deal
  * like every other vendor mark.
+ *
+ * `no` here means "no public evidence", not "proven absent" — the distinction is
+ * why the local section is labelled as indicative on the page. Payroll depth is
+ * deliberately conservative for the local platforms: Hirebee, List Work and
+ * Resalt all advertise payroll, but none publishes Armenian tax handling, so
+ * they get `payroll: yes` without any of the `srcExport`/`localPay` credit.
  */
 const LOCAL_MARKS: Record<string, Partial<Record<CompetitorSlug, Support>>> = {
-  employees: { armsoft: 'yes', onec: 'yes', staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
-  leave: { armsoft: 'partial', onec: 'yes', peopleforce: 'yes', odoo: 'yes' },
-  attendance: { armsoft: 'partial', onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
-  shifts: { armsoft: 'partial', onec: 'yes', peopleforce: 'yes', odoo: 'yes' },
-  recruitment: { onec: 'partial', staffam: 'yes', peopleforce: 'yes', odoo: 'yes' },
-  onboarding: { onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
-  performance: { onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
-  learning: { peopleforce: 'partial', odoo: 'partial' },
-  recognition: { peopleforce: 'yes', odoo: 'partial' },
-  payroll: { armsoft: 'yes', onec: 'yes', peopleforce: 'partial', odoo: 'partial' },
-  expenses: { armsoft: 'partial', onec: 'partial', peopleforce: 'partial', odoo: 'yes' },
-  documents: { armsoft: 'partial', onec: 'partial', peopleforce: 'partial', odoo: 'yes' },
-  assets: { onec: 'partial', odoo: 'partial' },
-  projects: { odoo: 'yes' },
-  analytics: { armsoft: 'yes', onec: 'yes', staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
-  chat: { staffam: 'partial', peopleforce: 'partial', odoo: 'partial' },
+  employees: {
+    armsoft: 'yes',
+    onec: 'yes',
+    staffam: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+    ontime: 'partial',
+  },
+  leave: {
+    armsoft: 'partial',
+    onec: 'yes',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+    // Absence tracking and request approvals, not a leave-management module.
+    ontime: 'partial',
+  },
+  attendance: {
+    armsoft: 'partial',
+    onec: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'partial',
+    sparkwork: 'yes',
+    ontime: 'yes',
+  },
+  shifts: {
+    armsoft: 'partial',
+    onec: 'yes',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    listwork: 'yes',
+    ontime: 'yes',
+  },
+  recruitment: {
+    onec: 'partial',
+    staffam: 'yes',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+  },
+  onboarding: {
+    onec: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+  },
+  performance: {
+    onec: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+  },
+  learning: {
+    peopleforce: 'partial',
+    odoo: 'partial',
+    hirebee: 'yes',
+    listwork: 'partial',
+    resalt: 'partial',
+    sparkwork: 'partial',
+  },
+  recognition: {
+    peopleforce: 'yes',
+    odoo: 'partial',
+    listwork: 'yes',
+    resalt: 'partial',
+    sparkwork: 'yes',
+  },
+  payroll: {
+    armsoft: 'yes',
+    onec: 'yes',
+    peopleforce: 'partial',
+    odoo: 'partial',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+  },
+  expenses: {
+    armsoft: 'partial',
+    onec: 'partial',
+    peopleforce: 'partial',
+    odoo: 'yes',
+    listwork: 'partial',
+  },
+  documents: {
+    armsoft: 'partial',
+    onec: 'partial',
+    peopleforce: 'partial',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'partial',
+    resalt: 'partial',
+    sparkwork: 'yes',
+  },
+  assets: { onec: 'partial', odoo: 'partial', listwork: 'yes' },
+  projects: { odoo: 'yes', listwork: 'yes', sparkwork: 'yes' },
+  analytics: {
+    armsoft: 'yes',
+    onec: 'yes',
+    staffam: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'partial',
+    resalt: 'yes',
+    sparkwork: 'yes',
+    ontime: 'partial',
+  },
+  chat: { staffam: 'partial', peopleforce: 'partial', odoo: 'partial', listwork: 'yes' },
   sso: { peopleforce: 'yes', odoo: 'partial' },
-  publicApi: { armsoft: 'partial', onec: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  publicApi: {
+    armsoft: 'partial',
+    onec: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    // Power BI integration is real but it is not a documented customer API.
+    sparkwork: 'partial',
+  },
   srcExport: { armsoft: 'yes', onec: 'yes', odoo: 'partial' },
   armenianUi: {
     armsoft: 'yes',
@@ -596,10 +786,34 @@ const LOCAL_MARKS: Record<string, Partial<Record<CompetitorSlug, Support>>> = {
     staffam: 'yes',
     peopleforce: 'partial',
     odoo: 'partial',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+    ontime: 'yes',
   },
-  armsoft: { armsoft: 'yes', onec: 'partial' },
-  supportLanguage: { armsoft: 'yes', onec: 'yes', staffam: 'yes', peopleforce: 'partial' },
-  mobileApp: { staffam: 'partial', peopleforce: 'yes', odoo: 'yes' },
+  armsoft: { armsoft: 'yes', onec: 'partial', ontime: 'partial' },
+  supportLanguage: {
+    armsoft: 'yes',
+    onec: 'yes',
+    staffam: 'yes',
+    peopleforce: 'partial',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+    ontime: 'yes',
+  },
+  mobileApp: {
+    staffam: 'partial',
+    peopleforce: 'yes',
+    odoo: 'yes',
+    hirebee: 'yes',
+    listwork: 'yes',
+    resalt: 'yes',
+    sparkwork: 'yes',
+  },
+  faceKiosk: { ontime: 'yes' },
 };
 
 export const COMPARE_ROWS: readonly CompareRow[] = BASE_ROWS.map((row) => {

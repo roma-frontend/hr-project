@@ -28,6 +28,7 @@ import type { Id } from './_generated/dataModel';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { sha256Hex } from './lib/sha256';
 import { normalizeJiraEvent } from './lib/inboundPayload';
+import { normalizeSerial } from './lib/zkteco';
 
 const TOKEN_PREFIX = 'inb_';
 /** Newest punches the review queue returns in one page. */
@@ -151,6 +152,75 @@ export const deleteInboundToken = mutation({
     }
     await ctx.db.delete(args.tokenId);
     return { ok: true };
+  },
+});
+
+/**
+ * Point a physical terminal at this token by serial number.
+ *
+ * The SN is what a ZKTeco device was configured with in its own menu; it cannot
+ * be rotated from our side, so the checks matter:
+ *   - only `device` tokens may carry one (a Jira token with a serial is a
+ *     configuration mistake, not a feature),
+ *   - a serial belongs to exactly one token across the whole platform — a typo
+ *     would otherwise let one tenant's terminal write into another tenant's
+ *     journal, which is the one failure mode this must never allow.
+ * Pass an empty string to detach a device (e.g. before decommissioning it).
+ */
+export const setDeviceSerial = mutation({
+  args: { tokenId: v.id('inboundTokens'), deviceSerial: v.string() },
+  handler: async (ctx, args) => {
+    const { organizationId } = await assertOrgManager(ctx, 'configure device serials');
+    const token = await ctx.db.get(args.tokenId);
+    if (!token || token.organizationId !== organizationId) {
+      throw new Error('Token not found');
+    }
+    if (token.provider !== 'device') {
+      throw new Error('Only device tokens can be bound to a terminal serial number');
+    }
+
+    const serial = normalizeSerial(args.deviceSerial);
+    if (!serial) {
+      await ctx.db.patch(args.tokenId, { deviceSerial: undefined });
+      return { ok: true, deviceSerial: null };
+    }
+
+    const existing = await ctx.db
+      .query('inboundTokens')
+      .withIndex('by_device_serial', (q) => q.eq('deviceSerial', serial))
+      .first();
+    if (existing && existing._id !== args.tokenId) {
+      throw new Error(`Serial ${serial} is already bound to another integration`);
+    }
+
+    await ctx.db.patch(args.tokenId, { deviceSerial: serial });
+    return { ok: true, deviceSerial: serial };
+  },
+});
+
+/**
+ * Which tenant does this terminal belong to? Used by the `/iclock/*` routes,
+ * which receive a serial number and nothing else — the device has no secret URL
+ * and no headers we may trust.
+ */
+export const resolveTokenByDeviceSerial = internalQuery({
+  args: { deviceSerial: v.string() },
+  handler: async (ctx, args) => {
+    const serial = normalizeSerial(args.deviceSerial);
+    if (!serial) return null;
+    const token = await ctx.db
+      .query('inboundTokens')
+      .withIndex('by_device_serial', (q) => q.eq('deviceSerial', serial))
+      .first();
+    if (!token) return null;
+    return {
+      tokenId: token._id,
+      organizationId: token.organizationId,
+      provider: token.provider,
+      enabled: token.enabled,
+      label: token.label,
+      deviceSerial: token.deviceSerial ?? serial,
+    };
   },
 });
 

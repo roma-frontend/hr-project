@@ -82,15 +82,22 @@ export default function CompareDetailClient({
               {t(`compare.competitors.${slug}.tagline`)}
             </p>
             <p className="mt-3 text-sm" style={{ color: 'var(--landing-text-muted)' }}>
-              {t('compare.detail.hqLabel')}: {t(`compare.competitors.${slug}.hq`)} ·{' '}
-              <a
-                href={competitor.site}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="underline"
-              >
-                {competitor.site.replace('https://', '')}
-              </a>
+              {t('compare.detail.hqLabel')}: {t(`compare.competitors.${slug}.hq`)}
+              {/* Several local vendors have no verifiable site — omit the link
+                  rather than print a guessed URL on a page about checkability. */}
+              {competitor.site ? (
+                <>
+                  {' · '}
+                  <a
+                    href={competitor.site}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="underline"
+                  >
+                    {competitor.site.replace('https://', '')}
+                  </a>
+                </>
+              ) : null}
             </p>
 
             <div className="flex flex-wrap gap-2 mt-6">

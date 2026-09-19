@@ -68,6 +68,7 @@ import { scim } from './scim';
 import { benefits } from './benefits';
 import { apiKeys } from './apiKeys';
 import { inbound } from './inbound';
+import { email } from './email';
 
 export default defineSchema({
   ...organizations,
@@ -139,6 +140,7 @@ export default defineSchema({
   ...benefits,
   ...apiKeys,
   ...inbound,
+  ...email,
 });
 
 export {
@@ -210,4 +212,5 @@ export {
   benefits,
   apiKeys,
   inbound,
+  email,
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n/config';
 import { useMutation, useQuery } from 'convex/react';
@@ -37,6 +37,8 @@ import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/useAuthStore';
 import { EditPayrollRecordDialog } from '@/components/payroll/EditPayrollRecordDialog';
 import type { SrcEmployeeIdentity } from '@/lib/payroll/srcExport';
+import type { PaymentEmployeeDetails } from '@/lib/payroll/paymentRegister';
+import { BANK_PROFILES, DEFAULT_BANK_PROFILE_ID, getBankProfile } from '@/lib/payroll/bankProfile';
 
 type PayrollRunDetail = NonNullable<
   FunctionReturnType<typeof api.payroll.queries.getPayrollRunById>
@@ -46,6 +48,10 @@ type PayrollRecordItem = PayrollRunDetail['records'][number] & {
   taxId?: string | null;
   /** ՀԾՀ from the user row — present when the org collected it. */
   nationalId?: string | null;
+  /** Bank account for the salary transfer — absent until HR fills it in. */
+  bankAccountNumber?: string | null;
+  /** Beneficiary bank name, printed in the payment register. */
+  bankName?: string | null;
 };
 
 function formatCurrency(amount: number, currency = 'AMD'): string {
@@ -106,6 +112,33 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
   const [editingRecord, setEditingRecord] = useState<PayrollRecordItem | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [srcExporting, setSrcExporting] = useState(false);
+  const [paymentExporting, setPaymentExporting] = useState(false);
+  /**
+   * Which bank portal the CSV is being prepared for.
+   *
+   * The organisation's saved layout (`/settings?tab=payroll-file`) decides this,
+   * not the browser: the employer's bank template is the same for everyone, and
+   * it used to live in `localStorage` where a second accountant's machine
+   * exported a differently shaped file from the same run. The dropdown remains
+   * as a per-export override; the default falls back to the neutral layout,
+   * which is the one every portal accepts.
+   */
+  const savedLayout = useQuery(api.payrollFile.getPayrollFileLayout);
+  const [bankProfileId, setBankProfileId] = useState<string>(DEFAULT_BANK_PROFILE_ID);
+  const bankProfile = getBankProfile(bankProfileId);
+
+  // The query resolves a tick after mount, so the saved choice is applied when
+  // it arrives rather than only at first render.
+  useEffect(() => {
+    if (savedLayout?.profileId) setBankProfileId(savedLayout.profileId);
+  }, [savedLayout]);
+
+  /**
+   * The stored layout, but only for the profile currently selected — otherwise
+   * a column order saved for Ameriabank would be applied to Ardshinbank's
+   * preset and quietly produce a file nobody chose.
+   */
+  const layoutForProfile = savedLayout?.profileId === bankProfileId ? savedLayout : null;
 
   const runAction = async (fn: () => Promise<unknown>, successKey: string) => {
     if (!user?.id) {
@@ -218,6 +251,105 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
     }
   };
 
+  // ── Bank payment register ─────────────────────────────────────────────
+  // The step after the SRC filing: who gets how much, to which account. The
+  // xlsx is the accountant's working file; the CSV is what the bank portal
+  // imports and contains payable rows only (see paymentRegister.ts).
+  const exportPaymentRegister = async (format: 'xlsx' | 'csv' = 'xlsx', profileId?: string) => {
+    if (!run.records || run.records.length === 0) return;
+    setPaymentExporting(true);
+    try {
+      const details: Record<string, PaymentEmployeeDetails> = {};
+      for (const record of run.records) {
+        details[record.userId] = {
+          userId: record.userId,
+          name: record.user?.name ?? record.userId,
+          bankAccountNumber: record.bankAccountNumber ?? null,
+          bankName: record.bankName ?? null,
+        };
+      }
+      const csrfRes = await fetch('/api/csrf-token', { method: 'GET' });
+      const csrfData = csrfRes.ok
+        ? ((await csrfRes.json()) as { token?: string; signature?: string })
+        : {};
+      const res = await fetch('/api/payroll/payment-register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfData.token ?? '',
+          'X-CSRF-Token-Signature': csrfData.signature ?? '',
+        },
+        body: JSON.stringify({
+          records: run.records.map((record) => ({
+            userId: record.userId,
+            period: record.period,
+            netSalary: record.netSalary,
+            // What is actually transferred (salary + reimbursed benefit claims).
+            netPayout: record.netPayout ?? null,
+            status: record.status,
+            currency: record.currency ?? 'AMD',
+          })),
+          details,
+          currency: run.records[0]?.currency ?? 'AMD',
+          lang: i18n.language,
+          format,
+          // Only sent for the portal file: the accountant's xlsx is a working
+          // document and has one shape. The saved layout travels with the
+          // request so the export renders the same columns the settings screen
+          // previewed.
+          ...(profileId
+            ? {
+                profile: profileId,
+                ...(layoutForProfile
+                  ? {
+                      columns: layoutForProfile.columns.join(','),
+                      delimiter: layoutForProfile.delimiter,
+                      header: layoutForProfile.header,
+                      purpose: layoutForProfile.purpose,
+                      payerAccount: layoutForProfile.payerAccount,
+                    }
+                  : {}),
+              }
+            : {}),
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download =
+        format === 'csv'
+          ? `salary-payments-${run.period}.csv`
+          : `salary-payments-${run.period}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // The layout is a preset nobody has checked against the bank's current
+      // specification, and the accountant is about to move a month of salaries
+      // with it. Say so every time rather than once in a doc nobody reads.
+      const verified = res.headers.get('X-Payment-Profile-Verified') === 'true';
+      const excluded = Number(res.headers.get('X-Payment-Rows-Excluded') ?? '0');
+      if (format === 'csv' && profileId && !verified) {
+        toast.warning(
+          t('payroll.bankProfileUnverified', {
+            profile: t(getBankProfile(profileId).labelKey, ''),
+          }),
+        );
+      } else {
+        toast.success(t('payroll.paymentRegisterExported', 'Payment register exported'));
+      }
+      if (excluded > 0) {
+        toast.warning(t('payroll.paymentRegisterExcluded', { count: excluded }));
+      }
+    } catch (e) {
+      logger.error('[Payment register]', e);
+      toast.error(t('payroll.paymentRegisterFailed', 'Payment register export failed'));
+    } finally {
+      setPaymentExporting(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -310,6 +442,54 @@ export default function PayrollRunDetailClient({ params }: { params: Promise<{ i
               <Landmark className="w-4 h-4 mr-2" />
               {srcExporting ? t('common.loading', '…') : t('payroll.srcExport', 'SRC Filing')}
             </Button>
+          )}
+          {isAdmin && run.status !== 'cancelled' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => exportPaymentRegister('xlsx')}
+              disabled={actionLoading || paymentExporting || !run.records?.length}
+              title={t('payroll.paymentRegisterHint', '')}
+            >
+              <Landmark className="w-4 h-4 mr-2" />
+              {paymentExporting
+                ? t('common.loading', '…')
+                : t('payroll.paymentRegister', 'Payment register')}
+            </Button>
+          )}
+          {isAdmin && run.status !== 'cancelled' && (
+            <div className="flex items-center gap-2">
+              <select
+                aria-label={t('payroll.bankProfile', 'Bank profile')}
+                className="h-8 rounded-md border border-(--border) bg-(--background) px-2 text-xs"
+                value={bankProfileId}
+                onChange={(e) => setBankProfileId(e.target.value)}
+                title={t('payroll.bankProfileHint', '')}
+              >
+                {BANK_PROFILES.map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {t(profile.labelKey, profile.id)}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => exportPaymentRegister('csv', bankProfile.id)}
+                disabled={actionLoading || paymentExporting || !run.records?.length}
+                title={t('payroll.paymentRegisterCsvHint', '')}
+              >
+                {t('payroll.paymentRegisterCsv', 'Payment CSV')}
+              </Button>
+              {!bankProfile.verified && (
+                <span
+                  className="text-[11px] text-(--warning-text)"
+                  title={t(bankProfile.noteKey, '')}
+                >
+                  {t('payroll.bankProfileUnverifiedShort', 'unverified layout')}
+                </span>
+              )}
+            </div>
           )}
           {isAdmin && run.status !== 'paid' && run.status !== 'cancelled' && (
             <Button

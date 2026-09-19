@@ -4,7 +4,7 @@
  */
 
 import { v } from 'convex/values';
-import { query, mutation } from './_generated/server';
+import { query, mutation, internalMutation } from './_generated/server';
 import { Id, type Doc } from './_generated/dataModel';
 import { encodeSystemMessage } from './lib/systemMessage';
 import { ticketCategoryValidator, ticketPriorityValidator } from './lib/ticketFields';
@@ -15,6 +15,7 @@ import { logger } from '../src/lib/logger';
 import { assertModuleAccess } from './lib/entitlements';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { isSuperadmin } from './lib/auth';
+import { triggerWorkflows } from './lib/webhookEvents';
 
 // ─── CREATE TICKET ───────────────────────────────────────────────────────────
 export const createTicket = mutation({
@@ -130,6 +131,21 @@ export const createTicket = mutation({
       }),
       createdAt: now,
     });
+
+    // Automation trigger: an org's workflows can react to a new ticket (route it
+    // to a queue, notify a lead, open a follow-up task). No webhook event is
+    // emitted — ticket events are internal triggers, see `lib/webhookEvents.ts`.
+    if (args.organizationId) {
+      await triggerWorkflows(ctx, 'ticket_created', args.organizationId, {
+        ticketId,
+        ticketNumber,
+        title: args.title,
+        priority: args.priority,
+        category: args.category,
+        createdBy: args.createdBy,
+        slaDeadline,
+      });
+    }
 
     return { ticketId, ticketNumber };
   },
@@ -985,5 +1001,75 @@ export const getTicketChatStatus = query({
       chatActivated: ticket.chatActivated || false,
       hasChat: !!ticket.chatId,
     };
+  },
+});
+
+// ─── SLA ESCALATION SWEEP ────────────────────────────────────────────────────
+
+/** A ticket this old past its deadline is escalated rather than left to rot. */
+export const SLA_ESCALATION_BATCH = 200;
+
+export const escalateSlaBreachedTickets = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    // Only tickets somebody is still expected to act on. A resolved or closed
+    // ticket past its deadline is history, not a breach to chase.
+    const open = await ctx.db
+      .query('supportTickets')
+      .withIndex('by_status', (q) => q.eq('status', 'open'))
+      .take(SLA_ESCALATION_BATCH);
+    const inProgress = await ctx.db
+      .query('supportTickets')
+      .withIndex('by_status', (q) => q.eq('status', 'in_progress'))
+      .take(SLA_ESCALATION_BATCH);
+
+    let escalated = 0;
+    for (const ticket of [...open, ...inProgress]) {
+      if (ticket.escalatedAt !== undefined) continue;
+      if (ticket.slaDeadline === undefined || ticket.slaDeadline > now) continue;
+
+      const previousPriority = ticket.priority;
+      await ctx.db.patch(ticket._id, {
+        // Escalation is a priority change, not a status change: the ticket is
+        // still open work, it is just no longer allowed to be ignored.
+        priority: 'critical',
+        escalatedAt: now,
+        updatedAt: now,
+      });
+
+      await ctx.db.insert('auditLogs', {
+        organizationId: ticket.organizationId,
+        userId: ticket.createdBy,
+        action: 'ticket_sla_escalated',
+        target: ticket._id,
+        details: JSON.stringify({
+          ticketNumber: ticket.ticketNumber,
+          previousPriority,
+          slaDeadline: ticket.slaDeadline,
+        }),
+        createdAt: now,
+      });
+
+      // Workflows are org-scoped, so a ticket with no organization has nobody
+      // whose automations could run. It is still escalated — the sweep is
+      // global — the trigger is just skipped rather than guessed at.
+      if (ticket.organizationId) {
+        await triggerWorkflows(ctx, 'ticket_escalated', ticket.organizationId, {
+          ticketId: ticket._id,
+          ticketNumber: ticket.ticketNumber,
+          title: ticket.title,
+          priority: 'critical',
+          previousPriority,
+          slaDeadline: ticket.slaDeadline,
+          minutesLate: Math.round((now - ticket.slaDeadline) / 60_000),
+        });
+      }
+
+      escalated += 1;
+    }
+
+    return { scanned: open.length + inProgress.length, escalated };
   },
 });

@@ -68,6 +68,8 @@ export const NAV_HREF_TO_MODULE: Record<string, string> = {
   '/admin/holidays': 'calendar',
   '/admin/ai-governance': 'aiAssistant',
   '/analytics/reports': 'analytics',
+  // Platform
+  '/automation': 'automation',
   // AI
   '/ai-chat': 'aiAssistant',
   '/ai-site-editor': 'aiSiteEditor',

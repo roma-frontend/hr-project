@@ -1,25 +1,26 @@
 /**
- * Automation — actions (operations with delays or external calls).
+ * Automation — the "run now" entry point (actions with external calls).
  *
- * NOTE: this run is still a placeholder. It marks a task running, waits, and
- * marks it complete — no workflow `config` is read or executed anywhere in the
- * codebase. That is why the dashboard is not tenant-facing: exposing a builder
- * whose output never runs would be a worse experience than not showing it.
+ * History worth keeping: this used to be a placeholder. It created a task row,
+ * slept two seconds and marked it complete without ever reading a workflow's
+ * `config` — which is why the builder was kept out of tenant hands. It now
+ * delegates to `automationRunner.runWorkflowNow`, which plans the workflow with
+ * `lib/workflowEngine.ts` and performs the real actions.
  *
- * What the action does get right is authorisation, which it previously skipped
- * entirely: it was callable by any signed-in user and wrote a platform-level row.
+ * What has NOT changed: authorisation. Every call still resolves the caller to an
+ * admin of their own organisation through the runtime `getAuthCaller` path, so a
+ * signed-in user cannot run another tenant's workflows.
  */
 
 import { action } from './_generated/server';
-import { internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
-
-// Isolate internal API reference at module level to avoid deep type instantiation
-const internalAutomation = internal.automationMutations;
+import { api } from './_generated/api';
 
 interface RunAutomationResult {
   success: boolean;
-  taskId: string;
+  /** Workflows that were executed, in order. */
+  ran: number;
+  /** Workflows that refused at runtime (paused, wrong org, bad config). */
+  failed: number;
 }
 
 export const runAutomation = action({
@@ -30,28 +31,30 @@ export const runAutomation = action({
       throw new Error('Not authenticated');
     }
 
-    const actor = await ctx.runQuery(internalAutomation.getAutomationActor, {
-      email: identity.email,
-    });
-    if (!actor) {
-      throw new Error('Only administrators can run automations');
+    // The query applies both the org scope and the `automation` entitlement, so
+    // this call is the authorisation gate for the whole action.
+    const workflows = await ctx.runQuery(api.automation.getActiveWorkflows, {});
+    if (workflows.length === 0) {
+      return { success: true, ran: 0, failed: 0 };
     }
 
-    // Create the task in the caller's organisation (null = platform-level for a
-    // superadmin without an organisation), so the run is visible to the same
-    // scope the dashboard reads from.
-    const taskId: string = await ctx.runMutation(internalAutomation.createAutomationTask, {
-      name: 'Manual automation run',
-      organizationId: actor.organizationId ?? undefined,
-    });
+    let ran = 0;
+    let failed = 0;
+    for (const workflow of workflows) {
+      if (!workflow.isActive) continue;
+      try {
+        const result = await ctx.runMutation(api.automationRunner.runWorkflowNow, {
+          workflowId: workflow._id,
+        });
+        if (result.matched) ran += 1;
+        else failed += 1;
+      } catch {
+        // One misconfigured workflow must not abort the batch — the run history
+        // shows which ones did nothing and why.
+        failed += 1;
+      }
+    }
 
-    // Placeholder execution — see the module note above.
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    await ctx.runMutation(internalAutomation.completeAutomationTask, {
-      taskId: taskId as Id<'automationTasks'>,
-    });
-
-    return { success: true, taskId };
+    return { success: true, ran, failed };
   },
 });

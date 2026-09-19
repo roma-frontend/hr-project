@@ -15,6 +15,7 @@ import { requireRole, requireOrgAdmin, requireUser } from '../lib/rbac';
  */
 import { isSuperadmin as hasSuperadminPowers } from '../lib/auth';
 import { getOrCreateSettings } from '../settings';
+import { emitUserEvent } from '../lib/webhookEvents';
 import { assertAssignable } from '../lib/reportingLine';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from '../lib/limits';
 import { notify } from '../lib/notify';
@@ -285,6 +286,11 @@ export const createUser = mutation({
       employeeId: userId,
       createdBy: adminId,
     });
+
+    // A hire is a business event: webhook subscribers want it, and a tenant
+    // workflow triggered on `user_onboarded` ("give the new hire a buddy task in
+    // their first week") is how onboarding stops being a manual checklist.
+    await emitUserEvent(ctx, 'employee.created', userId, { createdBy: adminId });
 
     // Atomically persist salary / passport into employeeProfiles when provided.
     const hasSalary =
@@ -598,6 +604,10 @@ export const deleteUser = mutation({
       details: JSON.stringify({ name: user.name, email: user.email, role: user.role }),
       createdAt: Date.now(),
     });
+
+    // Offboarding is a business event: external systems subscribe to it and a
+    // tenant may have a workflow that revokes access or hands assets over.
+    await emitUserEvent(ctx, 'employee.deactivated', userId, { deactivatedBy: adminId });
 
     return userId;
   },
@@ -1039,6 +1049,8 @@ export const secureDeleteUser = mutation({
       details: JSON.stringify({ name: user.name, email: user.email, role: user.role }),
       createdAt: Date.now(),
     });
+
+    await emitUserEvent(ctx, 'employee.deactivated', userId, { deactivatedBy: caller._id });
 
     return userId;
   },

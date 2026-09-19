@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Building2,
   Bot,
+  Banknote,
   Clock,
   KeyRound,
   Webhook,
@@ -134,6 +135,13 @@ const SLASettings = dynamic(() => import('@/components/admin/SLASettings'), { ss
 const BrandingSettings = dynamic(() => import('@/components/settings/BrandingSettings'), {
   ssr: false,
 });
+const PayrollFileSettings = dynamic(
+  () =>
+    import('@/components/settings/PayrollFileSettings').then((m) => ({
+      default: m.PayrollFileSettings,
+    })),
+  { ssr: false },
+);
 const AIGovernancePanel = dynamic(() => import('@/components/ai/AIGovernancePanel'), {
   ssr: false,
 });
@@ -323,6 +331,15 @@ export default function SettingsPage() {
             label: t('settings.branding', 'Branding'),
             icon: Building2,
             description: t('settings.brandingDesc', 'White-label & branding'),
+          },
+          {
+            value: 'payroll-file',
+            label: t('settings.payrollFile', 'Salary bank file'),
+            icon: Banknote,
+            description: t(
+              'settings.payrollFileDesc',
+              'Column layout for the bank payment register',
+            ),
           },
           {
             value: 'ai-governance',
@@ -555,6 +572,12 @@ export default function SettingsPage() {
           {user?.role === 'admin' && (
             <TabsContent value="branding" className="space-y-6 mt-0">
               <BrandingSettings />
+            </TabsContent>
+          )}
+
+          {user?.role === 'admin' && (
+            <TabsContent value="payroll-file" className="space-y-6 mt-0">
+              <PayrollFileSettings />
             </TabsContent>
           )}
 

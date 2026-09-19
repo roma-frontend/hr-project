@@ -556,21 +556,30 @@
 
 ### 3.1 Mobile App (PWA)
 
-**Status:** ⚠️ Partially implemented (installable assets exist, offline/push not wired globally)
+**Status:** ✅ PWA done for the zero-install case; ❌ native store app still missing
 
 **Existing:**
 
 - `public/manifest.json` + `public/site.webmanifest` — linked from `src/app/layout.tsx`
-- `public/sw.js` (service worker) + `public/offline.html`
+- `public/sw.js` (service worker, v3) + `public/offline.html`
 - `src/app/offline/page.tsx`
-- Push notification helper: `src/lib/pushNotifications.ts` (registers the SW)
+- `src/components/providers/ServiceWorkerProvider.tsx` — **registers `/sw.js` globally** (scope
+  `/`), mounted from `AppProviders`, so offline support no longer depends on the push helper
+- Offline strategy: navigations are network-first → cached page → `/offline`; `/_next/static`,
+  fonts and icons are cache-first with revalidation; Convex queries and API routes are **never**
+  cached (stale HR data is worse than none)
+- `src/components/pwa/OfflineQuickActionsBar.tsx` + `src/lib/offlineQueue.ts` — queued punches:
+  the time is captured when the button is pressed offline and replayed on reconnect
+- Push notification helper: `src/lib/pushNotifications.ts`
 
 **TODO:**
 
-- [ ] Register the service worker globally (today only `pushNotifications.ts` does)
-- [ ] Offline caching strategy for dashboard routes
-- [ ] Store-ready wrapper (React Native or Capacitor) if the stores are required
-- [ ] Quick actions: approve leave, mark attendance
+- [x] Register the service worker globally
+- [x] Offline caching strategy for dashboard routes
+- [x] Quick actions: mark attendance offline (approve leave lives in the approvals queue)
+- [ ] Store-ready wrapper (React Native or Capacitor) if the stores are required — **now the
+      market-driven item**: every Armenian competitor ships a mobile app (see
+      `docs/competitive-analysis-2026-09.md` §6 п.1)
 
 **Features to implement:**
 
@@ -656,10 +665,67 @@
 
 ### 3.5 Custom Workflow Builder (Visual)
 
-**Status:** ⚠️ Shell only — the dashboard and the visual builder exist, but **nothing
-runs**. `runAutomation` creates a task, waits two seconds and marks it complete; no code
-anywhere reads a workflow's `config`. This is a demo, not a feature, and it is deliberately
-not tenant-facing.
+**Status:** ✅ Implemented — engine, event triggers, delays, nine of ten actions and nine of ten
+triggers. One action (`update_record`) and one trigger (`contract_expiring`) are parked with a
+visible reason (see below). Full reference: `docs/automation.md`.
+
+A saved workflow's `config` is read and executed:
+
+- **`convex/lib/workflowActions.ts`** — the catalogue of actions and triggers, and the single
+  source of truth for both the runner and the builder. This is what removed the old failure
+  mode: the builder used to offer ten actions and ten triggers from its own list while the
+  runner implemented two actions and no automatic triggers, so a saved workflow could never
+  fire and nothing said so. `src/__tests__/workflowCatalogue.test.ts` fails if the two lists
+  drift or a label/reason is missing in any of the four languages.
+- **`convex/lib/workflowEngine.ts`** (pure, 37 tests) — normalises the builder's step list
+  (and the legacy `{ trigger, action }` pair), matches the trigger's event type, evaluates
+  trigger and mid-flow conditions (failing closed on an unknown operator), splits the run into
+  **stages** around delays (capped at 30 days) and returns an execution plan plus a readable
+  trace.
+- **`convex/automationRunner.ts`** — `runWorkflowsForEvent` evaluates every active workflow of
+  an organisation against one event; `runWorkflowNow` runs one workflow on demand from the UI.
+  Both record an `automationTasks` row containing the plan trace and a per-action result.
+- **Implemented actions (9): `send_notification`, `create_task`, `escalate`, `assign_user`,
+  `approve_request`, `reject_request`, `block_user`, `webhook`, `send_email`.** Approvals go through the real
+  leave pipeline (`approveLeaveInternal` / `rejectLeaveInternal`, extracted from the UI's
+  mutations), so balance deduction, the SLA metric, the reporting-line check and the
+  countersignature document are not reimplemented — and the audit log records an automated
+  decision as `leave_automation_approved` with the workflow name on it. Email goes through the
+  existing Resend integration (`convex/emails.ts` + `emailDeliveries`); see `docs/email.md`.
+- **Action parameters are a form, not JSON.** The builder renders a person picker for `userId`, a list of pending leave requests for `requestId`, a task list for `taskId`, a priority select
+  and text/textarea/number/URL inputs, with an Advanced JSON escape hatch for anything else.
+  Selects `send_email` on a deployment without mail shows the reason inline instead of failing
+  at run time. `/automation` shows the mail status and offers a test send.
+- **Event triggers are wired (9 of 10):** `leave_created` / `leave_approved` / `leave_rejected`
+  (via `convex/lib/webhookEvents.ts`), `user_onboarded` / `user_offboarded` (employee create and
+  deactivate paths — which also fixed `employee.created` / `employee.deactivated` being
+  declared and documented while nothing ever fired them), `ticket_created` and
+  `ticket_escalated` (ticket create, plus the SLA sweep), `performance_review_due` (the review
+  cron) and `probation_ending` (the probation reminder sweep), plus `manual`.
+- **`probation_ending` replaced the invented `contract_expiring`.** The platform has probation
+  end dates and a sweep that already reminds about them; it has no contract-expiry sweep, and a
+  trigger named after a scan nobody runs would have been a promise the engine could not keep.
+  `contract_expiring` stays in the catalogue marked unwired so the gap is visible in the builder
+  rather than deleted from it.
+- **Delays are honoured.** `planRun` groups actions into stages; the runner executes the first
+  and parks the rest in `automationPendingRuns`, scheduling itself to resume. A trailing delay
+  schedules no stage (nothing follows it). On resume the run is dropped if the workflow was
+  paused or deleted meanwhile.
+- **Tenant-facing:** `src/app/(dashboard)/automation/page.tsx` (admins of an organisation),
+  gated by the `automation` billing module; platform-level workflows stay superadmin-only.
+  The operator copy remains at `/superadmin/automation`.
+
+**Deliberately not implemented (surfaced in the UI, not silently broken):**
+
+- **`update_record`** — the builder cannot express _which record and which field_, so
+  implementing it would mean guessing a target from the event and writing to customer data on
+  an instruction nobody gave.
+
+**Correction.** `send_email` was previously recorded here as impossible because "the platform
+has no mail transport at all". That was wrong: Resend was already sending the password-reset
+and subscription mail and is already a declared subprocessor. The conclusion came from a search
+that returned zero matches because the search tool itself was broken, and was written down
+without being verified. It is implemented now, and a test asserts it stays that way.
 
 **Existing:**
 
@@ -667,7 +733,9 @@ not tenant-facing.
 - Backend: `convex/automation.ts`, `convex/automationActions.ts`, `convex/automationMutations.ts`
 - UI: `src/components/automation/AutomationClient.tsx`
 - **Visual drag-and-drop builder: `src/components/workflow/WorkflowBuilderClient.tsx`** (React Flow)
-- Route: `src/app/(dashboard)/superadmin/automation/page.tsx`, lazily mounted from `SuperadminHubClient.tsx`
+- Routes: `src/app/(dashboard)/automation/page.tsx` (tenants) and
+  `src/app/(dashboard)/superadmin/automation/page.tsx` (operator), the latter lazily mounted
+  from `SuperadminHubClient.tsx`
 
 **Safety fixes applied 2026-09-18** (these had to land before the module could be shown to
 anyone, tenant or operator):
@@ -681,18 +749,26 @@ anyone, tenant or operator):
 - [x] The `runAutomation` action authenticates via `getAutomationActor` — it was callable by
       any signed-in user and wrote a platform-level row.
 
-**TODO (this is the real gap):**
+**Closed 2026-09-19 (this was the real gap):**
 
-- [ ] **An execution engine.** `config` is `v.any()` and nothing consumes it: to make this a
-      product it needs a typed step schema, triggers wired to real module events (leave,
-      onboarding, expenses, tickets already emit through `convex/webhooks`), an execution log
-      with per-step results, and dry-run
-- [ ] Expose the builder to org admins at `src/app/(dashboard)/automation/page.tsx` (only
-      after the engine exists — a builder whose output never runs is worse than no builder)
-- [ ] Workflow templates for customers
-- [ ] Execution logging UI for the tenant
+- [x] **An execution engine.** `convex/lib/workflowEngine.ts` consumes the saved `config`
+      (typed step schema with a normaliser that also reads the legacy `{ trigger, action }`
+      pair), `convex/automationRunner.ts` performs the actions, and every run writes an
+      `automationTasks` row carrying the plan trace and a per-action result — so a step that did
+      nothing says why instead of failing silently. Dry-run is not shipped.
+- [x] Expose the builder to org admins at `src/app/(dashboard)/automation/page.tsx`, gated by
+      the `automation` billing module; platform-level workflows stay superadmin-only.
+- [x] Execution history for the tenant — the same `AutomationClient` renders the builder and the
+      recorded runs.
 - [x] Entitlement gate (`automation` module exists in the billing catalog; enforced on read
       and write)
+
+**TODO:**
+
+- [ ] Workflow templates for customers
+- [ ] Dry-run: preview a plan without writing rows
+- [ ] `update_record` — the builder cannot express _which record and which field_ (see above)
+- [ ] `contract_expiring` — needs a contract-expiry sweep to fire from
 
 ---
 
@@ -941,6 +1017,25 @@ UTF-8 encoding. Now verified against `crypto.createHmac` (short key, long key, e
 - Schema: `convex/schema/payroll.ts`
 - Components: PayrollDashboard, PayrollRecordsTable, PayrollCalculator, PayrollRunDialogs, EditPayrollRecordDialog, PayrollRunDetailClient
 
+#### Payroll → the bank file (the “last mile”)
+
+- **The numbers:** `src/lib/payroll/paymentRegister.ts` (pure) — one row per beneficiary, three
+  outputs from the same rows: the accountant's XLSX, the neutral CSV, and the bank portal file.
+  Rows with no account, a non-20-digit account, no name or a zero amount are **excluded and
+  reported**, never written into a file that instructs a bank to move money.
+- **The layout:** `src/lib/payroll/bankProfile.ts` — a neutral format plus
+  Ameriabank/ACBA/Ardshinbank/Fast Bank presets. Every preset is `verified: false`: none has been
+  checked against a bank's current specification, and the export says so in its own headers.
+- **Where the layout lives:** `orgPayrollFile` (organisation, not browser) edited at
+  `/settings?tab=payroll-file`. It used to be a `localStorage` preference, which meant a second
+  accountant exported a differently shaped file from the same payroll run.
+- **Specification by import, not by assertion:** `src/lib/payroll/templateImport.ts` reads the
+  bank's own template and recovers the column order from it, and the settings screen previews the
+  **real payroll rows** of a chosen run (`buildPaymentRows`, the same assembler the export route
+  uses). So the answer to “which columns does this bank want?” is the file the bank sent, rather
+  than a table of formats we would have to certify ourselves. See `docs/competitive-analysis-2026-09.md` §6.
+- Routes: `src/app/api/payroll/payment-register/route.ts`, `src/app/api/payroll/src-export/route.ts`
+
 ### Drivers
 
 **Status:** ✅ Fully implemented (unique feature)
@@ -1040,11 +1135,18 @@ PHASE 2 (Competitive Edge):
   3.6 Employee Directory ............. ✅ DONE (full CRUD, departments, positions)
 
 PHASE 3 (Differentiation):
-  3.1 Mobile App (PWA) ............... ⚠️ PARTIAL (manifest + SW + offline.html; SW registered only by the push helper)
+  3.1 Mobile App (PWA) ............... ✅ MOSTLY DONE (global SW registration via
+                                        ServiceWorkerProvider, network-first navigations
+                                        with offline fallback, offline punch queue,
+                                        quick actions; native store wrapper pending)
   3.2 Compliance & Audit Trail ....... ⚠️ MOSTLY DONE (module + audit UI + one-click undo; write coverage uneven)
   3.3 Asset Management ............... ✅ DONE (catalog, assignments, maintenance, requests, history)
   3.4 Company News Feed .............. ✅ DONE (feed, reactions, comments, scheduling)
-  3.5 Custom Workflow Builder ........ ⚠️ STUB (dashboard + visual builder; no execution engine — a run is a simulated delay)
+  3.5 Custom Workflow Builder ........ ⚠️ PARTIAL DONE (real engine: lib/workflowEngine.ts
+                                        plans a saved config, automationRunner.ts executes
+                                        it; tenant page /automation, plan-gated; 2 of 10
+                                        action types implemented, others reported as
+                                        unsupported; no event triggers yet)
   3.7 PDF Reports / Export ........... ⚠️ MOSTLY DONE (per-module exporters; no unified builder)
   3.8 Career Development ............. ✅ DONE (skill matrix, tracks, gap analysis, mentorship)
   3.9 Shift Scheduling ............... ✅ DONE (week roster, templates, swaps, i18n ×4)
@@ -1065,11 +1167,13 @@ REAL REMAINING PRODUCT WORK (after re-verification — this is the honest list):
   - Integration marketplace (catalogue + self-serve install) ...... ✅ DONE
                                         (webhook-class apps install through the existing
                                         delivery engine; OAuth apps deep-link to settings)
-  - Workflow EXECUTION ENGINE then tenant exposure ................ ⚠️ ~2-3 weeks
-                                        (typed step schema, triggers on real module
-                                        events, execution log, dry-run; the tenant UI is
-                                        the small part — see 3.5)
-  - Mobile: store-ready build OR global service-worker registration  ⚠️ ~5-7 days
+  - Workflow EXECUTION ENGINE then tenant exposure ................ ✅ DONE (9 of 10 triggers
+                                        wired, 9 of 10 actions implemented, delay stages
+                                        executed through `automationPendingRuns`; the tenth
+                                        of each is parked with a visible reason — see 3.5)
+  - Mobile: store-ready build ..................................... ⚠️ in progress (the PWA
+                                        half — global service-worker registration — is done;
+                                        the store-ready build is being written)
   - Unified report builder + scheduled exports .................... ⚠️ ~2-3 days
   - Public API + webhooks for customers ......................... ✅ DONE (REST /api/v1,
                                         HMAC-signed webhooks, API keys, plan quotas)
@@ -1197,9 +1301,9 @@ export default function ModulePage() {
 | **Local PSP (Idram/ArCa)**                      |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
 | **Armenian localization (hy + imID + Armsoft)** |      ✅      |    ❌    |   ❌   |    ❌    |    ❌    |   ❌   |
 | **Succession**                                  |      ✅      |    ❌    |   ❌   |    ❌    |    ✅    |   ❌   |
-| **PWA / installable mobile**                    |      ⚠️      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
+| **PWA / installable mobile**                    |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
 | **Native mobile app (iOS + Android)**           |      🔲      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
-| **Workflow builder for tenants**                |      ❌      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
+| **Workflow builder for tenants**                |      ⚠️      |    ✅    |   ❌   |    ✅    |    ❌    |   ❌   |
 | **Public API + webhooks for customers**         |      ✅      |    ✅    |   ✅   |    ✅    |    ✅    |   ✅   |
 | **Global payroll (100+ countries)**             |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
 | **Benefits brokerage / EOR / entity**           |      🔲      |    ✅    |   ❌   |    ❌    |    ❌    |   ✅   |
@@ -1215,7 +1319,20 @@ export default function ModulePage() {
 > ground already scored here. Inventing a row would mean asserting vendor marks nobody verified,
 > which is exactly what breaks the mechanical-count guarantee above.
 
-**Shipped and re-verified since the last audit:** Shift Scheduling, SRC-ready payroll export
+**Shipped and re-verified since the last audit:** **PWA (global service-worker registration,
+network-first navigations with an offline fallback, offline punch queue and quick actions) — the
+PWA row moved to ✅ and needs no asterisk; what remains is the native store wrapper**, **the bank salary-payment register
+(`lib/payroll/paymentRegister.ts` — XLSX for the accountant, CSV for the bank portal, and
+unroutable rows are excluded and reported rather than written into a payment file), with the
+column layout itself stored per organisation (`orgPayrollFile`, edited on
+`/settings?tab=payroll-file` with a byte-level preview, on **that run's real rows** rather than
+sample employees, and importable from the bank's own CSV template) instead of in one accountant's
+browser**,
+**the ZKTeco/Suprema ADMS push receiver (`lib/zkteco.ts` + `/iclock/*`, so a terminal on the
+premises can be pointed at us and identified by its serial number)**, **the workflow execution
+engine (`lib/workflowEngine.ts` + `automationRunner.ts`) with the tenant-facing `/automation`
+page**, and **five more local vendors on `/compare`** (Hirebee, List Work, Resalt, Spark.work,
+OnTime), Shift Scheduling, SRC-ready payroll export
 (Armenia Tax Service), **local payments (Idram/ArCa) end to end** — checkout handoff, HMAC-signed
 webhooks, superadmin configuration, return pages, **public API + signed webhooks with plan quotas**,
 automated SOC 2 evidence collection, public comparison pages in four languages, **Succession
@@ -1241,6 +1358,14 @@ finance infrastructure. What still separates it from the market leaders is **not
 **Therefore the winnable position is not "beat Workday everywhere" — it is "be the only correct
 answer in Armenia and the Armenian/Russian-speaking diaspora",** where SRC filing, Idram/ArCa,
 imID, Armsoft and a native Armenian locale are things no global vendor will build.
+
+> ⚠️ **Correction (2026-09-19).** The sentence above compares us to **global** vendors, and that
+> part holds. It must not be repeated as "we are the only integrated HR platform in Armenia" — we
+> are not. As of September 2026 the local market has at least four integrated platforms
+> (Hirebee, List Work, Resalt, Spark.work), Armsoft owns payroll accounting, and OnTime owns
+> biometric **hardware**. Our differentiation is Armenian **fiscal depth + payments rails +
+> enterprise platform (SSO/SCIM/API/audit/GDPR)**, not being first. See
+> `docs/competitive-analysis-2026-09.md` §2.1 and `docs/battlecards.md` cards 12–16.
 
 ---
 

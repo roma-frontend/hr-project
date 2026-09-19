@@ -55,6 +55,8 @@
     "brandingDesc": "White-Label & Branding",
     "aiGovernance": "KI-Governance",
     "aiGovernanceDesc": "KI-Agentenaufsicht & Leitplanken",
+    "payrollFile": "Gehaltsbankdatei",
+    "payrollFileDesc": "Spaltenlayout für das Bankzahlungsregister",
     "saved": "Gespeichert!",
     "localizationSaved": "Lokalisierungseinstellungen aktualisiert",
     "saveFailed": "Speichern fehlgeschlagen",
@@ -133,6 +135,64 @@
       "matchTitle": "Stempelung einem Mitarbeiter zuordnen",
       "matchDesc": "Tragen Sie die Personalnummer am Mitarbeiter ein — seine nicht zugeordneten Stempelungen werden automatisch zugeordnet.",
       "numberPlaceholder": "Personalnummer",
+      "deviceSerial": "Seriennummer des Terminals",
+      "deviceSerialPlaceholder": "z. B. 4520181170",
+      "deviceSerialSave": "Terminal binden",
+      "deviceSerialSaved": "Terminal gebunden",
+      "deviceSerialSaveError": "Terminal konnte nicht gebunden werden",
+      "deviceSerialBound": "SN {{serial}}",
+      "deviceSerialHint": "Richten Sie das ZKTeco/Suprema-Terminal auf diese Adresse (ADMS-Push). Keine geheime URL nötig — die Seriennummer ist die Kennung.",
+      "zkteco": {
+        "title": "ZKTeco-Terminal verbinden",
+        "intro": "Ein ZKTeco-Terminal mit Push-Protokoll (ADMS) spricht direkt mit dieser Installation — kein Zwischen-PC und kein Abfrage-Agent. Das Gerät einmal einrichten, danach kommen die Stempelungen von selbst.",
+        "requirements": "Was das Terminal unterstützen muss",
+        "stepsTitle": "Einrichtung, in dieser Reihenfolge",
+        "serverAddress": "Serveradresse",
+        "serverPath": "Pfad",
+        "timeZone": "Zeitzone des Geräts",
+        "poll": "Abfrageintervall",
+        "familiesTitle": "Nach diesen Menüpunkten suchen",
+        "genericEndpoint": "über den generischen Webhook",
+        "verificationNote": "Wir veröffentlichen keine zertifizierte Modellliste: Selbst innerhalb einer Reihe unterscheiden sich die Firmware-Menüs, deshalb ist die verlässliche Prüfung, ob das eigene Gerät die Einstellung anbietet. Wenn ja, nimmt dieser Endpunkt es an.",
+        "copyInstructions": "Anleitung kopieren",
+        "copied": "Anleitung kopiert",
+        "capabilities": {
+          "push": "Push-/ADMS-/Cloud-Server-Modus in der Firmware",
+          "serverAddress": "Konfigurierbare Serveradresse und Pfad",
+          "serial": "Eine ablesbare Seriennummer"
+        },
+        "capabilityDetails": {
+          "push": "Das Gerät baut die Verbindung auf. Terminals, die nur mit ZKAccess auf einem lokalen PC arbeiten, können sich nicht mit einem gehosteten Dienst verbinden.",
+          "serverAddress": "Nicht nur eine LAN-IP — das Terminal muss einen öffentlichen Host per HTTPS (oder HTTP auf einer festen Adresse) erreichen können.",
+          "serial": "Die Seriennummer ist die Kennung: Sie bindet das Gerät an Ihre Organisation, deshalb muss sie im Menü oder auf dem Aufkleber ablesbar sein."
+        },
+        "steps": {
+          "mint": "Inbound-Token für ein Anwesenheitsterminal anlegen",
+          "serial": "Seriennummer vom Terminal ablesen",
+          "bind": "Diese Seriennummer mit dem Token verbinden",
+          "server": "Das Terminal auf diese Installation richten",
+          "clock": "Geräteuhr und Zeitzone setzen",
+          "review": "Die ersten Stempelungen bestätigen"
+        },
+        "stepDetails": {
+          "mint": "Anbieter: Anwesenheitsterminal. Die Token-URL wird einmal angezeigt — kopieren, falls sie auch für den generischen Webhook gebraucht wird.",
+          "serial": "Menü → Kommunikation → Ethernet / Cloud Server, oder der Aufkleber auf der Rückseite. Die Nummer wird ohne Beachtung der Groß-/Kleinschreibung verglichen.",
+          "bind": "Seriennummer im Feld neben dem Token eintragen. Solange keine gebunden ist, antwortet der Dienst dem Gerät, ordnet seine Stempelungen aber niemandem zu.",
+          "server": "Serveradresse und Pfad wie unten angegeben eintragen, Port 443 falls im Menü vorhanden, Verbindungsmodus auf TCP/HTTPS lassen.",
+          "clock": "Die Stempelzeit kommt als lokale Uhrzeit des Geräts und wird gegen UTC+4 aufgelöst. Ein Gerät im Werkszustand verbucht jede Stempelung zur falschen Stunde.",
+          "review": "Stempelungen landen in der Prüfliste unten — in die Anwesenheit gelangt nichts, bis eine HR-Person bestätigt. Diese Sperre ist Absicht: eine vertippte Personalnummer oder eine falsche Uhr darf keine Löhne bewegen."
+        },
+        "families": {
+          "face": "Gesichtserkennungs-Terminals (Klasse SpeedFace / FaceDepot)",
+          "fingerprint": "Fingerabdruck- und Karten-Terminals (K-/MB-Klasse)",
+          "suprema": "Suprema-BioStar-Geräte"
+        },
+        "familyNotes": {
+          "face": "Für einen Werkseingang sind Gesichtsterminals die übliche Wahl. Fingerabdruck-Vorlagen bleiben im Gerät — nichts Biometrisches wird hochgeladen.",
+          "fingerprint": "Ältere Firmware bezeichnet dieselbe Einstellung teils als Ethernet → Cloud Server statt ADMS.",
+          "suprema": "BioStar verwendet ein eigenes Nachrichtenformat, nutzen Sie deshalb den generischen Webhook-Token: die Annahme bildet seine Feldnamen (PIN / emp_code / employeeNumber) bereits ab."
+        }
+      },
       "saveNumber": "Nummer speichern",
       "rematched": "{{count}} Stempelung(en) zugeordnet",
       "direction": {

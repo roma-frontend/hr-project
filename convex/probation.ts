@@ -8,6 +8,7 @@ import { notify } from './lib/notify';
 import { assertOrgScope, resolveOrgScope, scopeOwnsRecord, type OrgScope } from './lib/orgAccess';
 import { resolveServiceAssignee } from './lib/resolveServiceAssignee';
 import { assertModuleAccess } from './lib/entitlements';
+import { triggerWorkflows } from './lib/webhookEvents';
 
 // Statutory-flavoured defaults: a standard 3-month term, and a hard 6-month
 // cap measured from the start date — extensions included. Organizations can
@@ -528,6 +529,20 @@ export const sendProbationReminders = internalMutation({
           relatedId: period._id,
           route: profileRoute(period.employeeId, true),
           createdAt: now,
+        });
+
+        // Automation trigger, inside the same `remindersSent` guard as the
+        // notification. That guard is what makes it fire once per threshold
+        // rather than once per sweep: without it an admin's "probation ending"
+        // workflow would give the manager five identical nudges per day.
+        await triggerWorkflows(ctx, 'probation_ending', period.organizationId, {
+          periodId: period._id,
+          employeeId: period.employeeId,
+          employeeName: employee.name,
+          department: employee.department,
+          supervisorId: employee.supervisorId,
+          daysRemaining,
+          endDate: period.endDate,
         });
       }
     }

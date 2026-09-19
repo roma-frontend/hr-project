@@ -25,6 +25,13 @@ export const WEBHOOK_EVENT_TYPES = [
   'expense.approved',
   'expense.rejected',
   'document.signed',
+  /**
+   * Emitted by a workflow's `webhook` action — "an automation I configured
+   * fired". Lets a tenant pipe any of their workflows into Zapier/Make/n8n
+   * through the same registered endpoints, with the same signing and retries,
+   * instead of the automation holding an arbitrary URL and POSTing to it.
+   */
+  'workflow.triggered',
 ] as const;
 
 export type WebhookEventType = (typeof WEBHOOK_EVENT_TYPES)[number];

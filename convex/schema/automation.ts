@@ -83,4 +83,39 @@ export const automation = {
     .index('by_status', ['status'])
     .index('by_org', ['organizationId'])
     .index('by_created', ['createdAt']),
+
+  /**
+   * A workflow run that is waiting out a `delay` step.
+   *
+   * `planRun` splits a workflow into stages — `action, delay 1h, action` is two
+   * stages — and the runner executes the first immediately, then parks the rest
+   * here with the remaining stages verbatim. Storing the resolved stages rather
+   * than re-planning from the config later is deliberate: the event payload is
+   * gone by then, and conditions that were evaluated against it must not be
+   * re-decided against a re-read of live data.
+   *
+   * One row per waiting run; deleted when it resumes. A row whose workflow was
+   * paused or deleted in the meantime is dropped on resume rather than run: a
+   * delay is not a licence to execute a workflow somebody has since switched off.
+   */
+  automationPendingRuns: defineTable({
+    organizationId: v.id('organizations'),
+    workflowId: v.id('automationWorkflows'),
+    workflowName: v.string(),
+    /** Who the run is attributed to (the admin who configured it). */
+    actorId: v.id('users'),
+    /** Run record this continuation appends its results to. */
+    taskId: v.id('automationTasks'),
+    /** Remaining stages, exactly as `planRun` produced them. */
+    remaining: v.any(),
+    /** Already-completed actions, carried forward into the run record. */
+    done: v.any(),
+    /** Trace of the steps already considered, carried forward for the audit. */
+    trace: v.any(),
+    /** When the next stage becomes due. */
+    resumeAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index('by_resume', ['resumeAt'])
+    .index('by_workflow', ['workflowId']),
 };

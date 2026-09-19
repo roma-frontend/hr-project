@@ -3187,8 +3187,15 @@
         "ticket_created": "Ticket Created",
         "ticket_escalated": "Ticket Escalated",
         "performance_review_due": "Performance Review Due",
+        "probation_ending": "Probation Ending",
         "contract_expiring": "Contract Expiring",
-        "custom": "Custom Event"
+        "manual": "Run manually"
+      },
+      "needs": {
+        "contract_expiring": "needs employment-contract dates, which this product does not store — use Probation Ending instead"
+      },
+      "unavailable": {
+        "update_record": "unavailable — choose the record in the step first"
       },
       "actionTypes": {
         "send_email": "Send Email",
@@ -3216,6 +3223,54 @@
         "hours": "Hours",
         "days": "Days"
       }
+    },
+    "params": {
+      "userId": "Person",
+      "userIdHint": "Leave empty to use the person the event is about.",
+      "blockUserHint": "Required: this deactivates the account, so it never follows the event.",
+      "email": "Send to (address)",
+      "emailHint": "Optional when a person is chosen — their work email is used.",
+      "subject": "Subject",
+      "body": "Message",
+      "actionUrl": "Button link",
+      "actionLabel": "Button label",
+      "title": "Title",
+      "message": "Message",
+      "description": "Description",
+      "priority": "Priority",
+      "dueInDays": "Due in (days)",
+      "taskId": "Task",
+      "requestId": "Leave request",
+      "requestIdHint": "Leave empty to act on the request the event is about.",
+      "comment": "Comment (optional)",
+      "selectRequest": "Choose a pending request",
+      "selectTask": "Choose a task",
+      "advanced": "Advanced parameters (JSON)",
+      "advancedHint": "Replaces every parameter above. For keys the form does not cover.",
+      "jsonMustBeObject": "Parameters must be a JSON object",
+      "emailNotConfigured": "Email is not configured on this deployment ({{reason}}). The step will be skipped and the run will say so.",
+      "emailRedirected": "The sending domain is not verified yet, so Resend will deliver this to {{to}} and mark the subject with the real address.",
+      "webhookNotice": "This sends to the endpoints registered under Settings → Webhooks, with the usual signature and retries. There are no parameters to fill in.",
+      "priorities": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "urgent": "Urgent"
+      }
+    },
+    "tenant": {
+      "title": "Workflow automation",
+      "supportedHint": "Runs are real: workflows are planned from your steps and executed, and every run records why each step did or did not happen. Supported actions:",
+      "unsupportedHint": "Anything the builder does not offer is not implemented — it is shown disabled with the reason rather than silently doing nothing.",
+      "emailReady": "Email delivery is configured",
+      "emailNotReady": "Email delivery is not configured",
+      "emailSendsFrom": "Messages are sent from {{from}}.",
+      "emailRedirectedTo": "The sending domain is not verified yet, so every message goes to {{to}} with the real address on the subject line.",
+      "emailProblem": "Reason: {{reason}}. The send-email action will be skipped and the run will record that.",
+      "emailTest": "Send test email",
+      "emailTestSent": "Test email queued to {{to}}",
+      "emailTestRedirected": "Test email queued, but redirected to {{to}} — the sending domain is not verified",
+      "emailTestFailed": "Test email not sent: {{reason}}"
     }
   },
   "help": {

@@ -99,7 +99,7 @@ module.exports = {
         list: true,
         required: false,
         helpText:
-          'Leave empty to receive every event type. Available: leave.requested, leave.approved, leave.rejected, leave.cancelled, employee.created, employee.updated, employee.deactivated, attendance.clock_in, attendance.clock_out, task.created, task.completed, expense.submitted, expense.approved, expense.rejected, document.signed.',
+          'Leave empty to receive every event type. Available: leave.requested, leave.approved, leave.rejected, leave.cancelled, employee.created, employee.updated, employee.deactivated, attendance.clock_in, attendance.clock_out, task.created, task.completed, expense.submitted, expense.approved, expense.rejected, document.signed, workflow.triggered.',
       },
     ],
     outputFields: [

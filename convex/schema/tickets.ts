@@ -27,6 +27,14 @@ export const tickets = {
     resolvedBy: v.optional(v.id('users')),
     closedAt: v.optional(v.number()),
     slaDeadline: v.optional(v.number()),
+    /**
+     * When the SLA sweep escalated this ticket for missing its deadline.
+     *
+     * The flag is what makes escalation idempotent: without it every sweep would
+     * re-escalate the same ticket and fire the `ticket_escalated` trigger again,
+     * so an admin's workflow would email somebody every single day forever.
+     */
+    escalatedAt: v.optional(v.number()),
     firstResponseAt: v.optional(v.number()),
     chatId: v.optional(v.id('chatConversations')),
     chatActivated: v.optional(v.boolean()),

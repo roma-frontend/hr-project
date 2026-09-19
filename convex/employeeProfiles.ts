@@ -374,6 +374,51 @@ export const updateSalary = mutation({
   },
 });
 
+// ── Update Salary Payment Details (bank transfer) ───────────────────
+//
+// Where the monthly net payout is transferred. Guarded like compensation
+// (`assertCanSetCompensation`, not `assertCanManageEmployee`): bank details
+// redirect money, so an employee must not be able to change their own account
+// silently — HR/a manager in the reporting line does it.
+export const updatePaymentDetails = mutation({
+  args: {
+    userId: v.id('users'),
+    organizationId: v.optional(v.id('organizations')),
+    /** 20-digit Armenian account, stored as typed; normalised at export. */
+    bankAccountNumber: v.optional(v.string()),
+    bankName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await assertCanSetCompensation(ctx, args.userId);
+
+    const existing = await ctx.db
+      .query('employeeProfiles')
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
+      .first();
+
+    const now = Date.now();
+    const patch: Record<string, unknown> = { updatedAt: now };
+    if (args.bankAccountNumber !== undefined) {
+      patch.bankAccountNumber = args.bankAccountNumber.trim();
+    }
+    if (args.bankName !== undefined) patch.bankName = args.bankName.trim();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, patch);
+      return existing._id;
+    }
+
+    return await ctx.db.insert('employeeProfiles', {
+      userId: args.userId,
+      organizationId: args.organizationId,
+      bankAccountNumber: args.bankAccountNumber?.trim(),
+      bankName: args.bankName?.trim(),
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
 // ── Update Passport / Identity ──────────────────────────────────────
 export const updatePassport = mutation({
   args: {
@@ -499,6 +544,12 @@ export const getSalary = query({
       hourlyRate: profile.hourlyRate ?? 0,
       salaryCurrency: profile.salaryCurrency,
       salaryUpdatedAt: profile.salaryUpdatedAt,
+      // Salary payment details: where the net payout is transferred. Read by the
+      // same audience that may see compensation (same-org staff, superadmin, or
+      // the employee themselves), and editable only through
+      // `updatePaymentDetails`, which is compensation-guarded.
+      bankAccountNumber: profile.bankAccountNumber,
+      bankName: profile.bankName,
     };
   },
 });

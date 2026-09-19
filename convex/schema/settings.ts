@@ -206,4 +206,36 @@ export const settings = {
     .index('by_order', ['orderId'])
     .index('by_org', ['organizationId'])
     .index('by_status', ['status']),
+
+  /**
+   * Per-organization salary bank-file layout.
+   *
+   * One row per org, upserted by `savePayrollFileLayout`. It exists because the
+   * column order is the employer's fact, not the accountant's: it comes from the
+   * template their bank gave them, it is the same for every payroll run, and it
+   * should not be re-picked in a dropdown on each export (which is where it lived
+   * before, as a localStorage preference on one browser).
+   *
+   * `profileId` names a preset from `src/lib/payroll/bankProfile.ts` as a
+   * starting point; `columns` is the order actually rendered, validated against
+   * the shared field list in `convex/lib/paymentFields.ts`.
+   */
+  orgPayrollFile: defineTable({
+    organizationId: v.id('organizations'),
+    /** Preset the layout started from — kept for the filename and the audit trail. */
+    profileId: v.string(),
+    /** Column order actually written; empty means "use the preset as-is". */
+    columns: v.array(v.string()),
+    /** Cell separator. Optional: unset keeps the preset's own. */
+    delimiter: v.optional(v.string()),
+    /** Whether the file starts with a header line. Unset keeps the preset's. */
+    header: v.optional(v.boolean()),
+    /** Payment description the portal asks for on every line (նշանակություն). */
+    purpose: v.optional(v.string()),
+    /** The employer's paying account, when the template includes it. */
+    payerAccount: v.optional(v.string()),
+    updatedBy: v.optional(v.id('users')),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_org', ['organizationId']),
 };

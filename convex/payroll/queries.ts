@@ -236,6 +236,12 @@ export const getPayrollRunById = query({
             : null,
           taxId: employeeProfile?.socialCardNumber ?? null,
           nationalId: user?.nationalId ?? null,
+          // Bank payment register needs where the net payout goes. Kept in the
+          // same enriched payload as the tax identifiers so both deliverables
+          // (SRC filing, payment register) read one query; absent values flow
+          // through as null and the export flags the row rather than failing.
+          bankAccountNumber: employeeProfile?.bankAccountNumber ?? null,
+          bankName: employeeProfile?.bankName ?? null,
         };
       }),
     );

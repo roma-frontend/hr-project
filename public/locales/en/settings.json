@@ -55,6 +55,8 @@
     "brandingDesc": "White-label & branding",
     "aiGovernance": "AI Governance",
     "aiGovernanceDesc": "AI agent oversight & guardrails",
+    "payrollFile": "Salary bank file",
+    "payrollFileDesc": "Column layout for the bank payment register",
     "saved": "Saved!",
     "localizationSaved": "Localization settings updated",
     "saveFailed": "Failed to save",
@@ -133,6 +135,64 @@
       "matchTitle": "Match the punch to an employee",
       "matchDesc": "Set the employee number on the employee — their unmatched punches are matched automatically.",
       "numberPlaceholder": "Employee number",
+      "deviceSerial": "Terminal serial number",
+      "deviceSerialPlaceholder": "e.g. 4520181170",
+      "deviceSerialSave": "Bind terminal",
+      "deviceSerialSaved": "Terminal bound",
+      "deviceSerialSaveError": "Could not bind the terminal",
+      "deviceSerialBound": "SN {{serial}}",
+      "deviceSerialHint": "Point the ZKTeco/Suprema terminal at this deployment (ADMS push). No secret URL needed — the serial is the credential.",
+      "zkteco": {
+        "title": "Connecting a ZKTeco terminal",
+        "intro": "A ZKTeco terminal with the push (ADMS) protocol talks to this deployment directly — no middleware PC and no polling agent. Configure the device once and punches arrive on their own.",
+        "requirements": "What the terminal must support",
+        "stepsTitle": "Setup, in order",
+        "serverAddress": "Server address",
+        "serverPath": "Path",
+        "timeZone": "Device time zone",
+        "poll": "Polling interval",
+        "familiesTitle": "Look for these menu labels",
+        "genericEndpoint": "via the generic webhook",
+        "verificationNote": "We do not publish a certified model list: firmware menus differ even within one family, so the reliable check is whether your device's own menu offers the setting above. If it does, this endpoint will accept it.",
+        "copyInstructions": "Copy instructions",
+        "copied": "Instructions copied",
+        "capabilities": {
+          "push": "Push / ADMS / Cloud Server mode in the firmware",
+          "serverAddress": "A configurable server address and path",
+          "serial": "A readable serial number"
+        },
+        "capabilityDetails": {
+          "push": "The device initiates the connection. Terminals that only work with ZKAccess on a local PC cannot connect to a hosted service.",
+          "serverAddress": "Not only an IP address inside the LAN — the terminal must be able to reach a public host over HTTPS (or HTTP on a fixed address).",
+          "serial": "The serial is the credential: it is what binds this device to your organization, so it must be readable from the device menu or its sticker."
+        },
+        "steps": {
+          "mint": "Create an inbound token for an attendance terminal",
+          "serial": "Read the serial number off the terminal",
+          "bind": "Bind that serial to the token",
+          "server": "Point the terminal at this deployment",
+          "clock": "Set the device clock and time zone",
+          "review": "Confirm the first punches"
+        },
+        "stepDetails": {
+          "mint": "Provider: attendance terminal. The token URL is shown once — copy it if you also need the generic webhook.",
+          "serial": "Menu → Comm → Ethernet / Cloud Server, or the sticker on the back of the device. Hand-typed serials are compared loosely, so a lowercase entry still binds.",
+          "bind": "Enter the serial in the field next to the token. Until a serial is bound, the device is answered but its punches are not attributed to anyone.",
+          "server": "Set the server address and path shown below, port 443 if the menu offers it, and leave the connection mode on TCP/HTTPS.",
+          "clock": "Punch times are sent as the device's local wall clock and resolved against UTC+4. A device still on its factory default will file every punch at the wrong hour.",
+          "review": "Punches land in the review list below — nothing reaches attendance until an HR user confirms it. That gate is deliberate: a mistyped staff number or a wrong clock must not move payroll."
+        },
+        "families": {
+          "face": "Face-recognition terminals (SpeedFace / FaceDepot class)",
+          "fingerprint": "Fingerprint and badge terminals (K-series / MB-series class)",
+          "suprema": "Suprema BioStar devices"
+        },
+        "familyNotes": {
+          "face": "Face terminals are the usual choice for a production entrance. Fingerprint templates stay on the device — nothing biometric is uploaded.",
+          "fingerprint": "Older firmware sometimes labels the same setting as Ethernet → Cloud Server rather than ADMS.",
+          "suprema": "BioStar pushes its own message format, so use the generic webhook token instead: the same ingestion already maps its field spellings (PIN / emp_code / employeeNumber)."
+        }
+      },
       "saveNumber": "Save number",
       "rematched": "{{count}} punch(es) matched",
       "direction": {

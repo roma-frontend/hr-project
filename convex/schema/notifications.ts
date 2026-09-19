@@ -46,6 +46,10 @@ export const notifications = {
       v.literal('shift_swap_requested'),
       v.literal('shift_swap_accepted'),
       v.literal('shift_swap_decided'),
+      // Raised by a tenant-configured workflow (see convex/automationRunner.ts).
+      // Kept as its own literal rather than reusing 'system' so a reader can tell
+      // "the platform told me" apart from "an automation my admin wrote told me".
+      v.literal('automation'),
     ),
     title: v.string(),
     message: v.string(),

@@ -72,6 +72,12 @@ export const NOTIFICATION_TYPES = [
   'shift_swap_requested',
   'shift_swap_accepted',
   'shift_swap_decided',
+  /**
+   * Written by a tenant-configured workflow (convex/automationRunner.ts).
+   * Separate from 'system' so a reader can tell "the platform told me" from "an
+   * automation my admin wrote told me".
+   */
+  'automation',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

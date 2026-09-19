@@ -17,10 +17,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Plus, Trash2, Copy, Fingerprint, Inbox, Check, Ban } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Copy,
+  Fingerprint,
+  Inbox,
+  Check,
+  Ban,
+  ChevronDown,
+  ChevronRight,
+  Server,
+} from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { convexSiteUrl } from '@/lib/convexSiteUrl';
+import {
+  ZK_DEVICE_FAMILIES,
+  ZK_HANDSHAKE_SETTINGS,
+  ZK_REQUIRED_CAPABILITIES,
+  ZK_SERVER_PATH,
+  ZK_SETUP_STEPS,
+  describeZkSetup,
+} from '../../../convex/lib/zkteco';
 
 /**
  * Inbound integrations — the reverse of Settings → Webhooks.
@@ -51,6 +70,7 @@ export function InboundIntegrationsSettings() {
   const mint = useMutation(api.inbound.mintInboundToken);
   const setEnabled = useMutation(api.inbound.setInboundTokenEnabled);
   const removeToken = useMutation(api.inbound.deleteInboundToken);
+  const setSerial = useMutation(api.inbound.setDeviceSerial);
   const setEmployeeNumber = useMutation(api.inbound.setEmployeeNumber);
   const ignorePunch = useMutation(api.inbound.ignorePunch);
   const markImported = useMutation(api.inbound.markPunchImported);
@@ -65,6 +85,12 @@ export function InboundIntegrationsSettings() {
   const [mintedUrl, setMintedUrl] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Id<'inboundTokens'> | null>(null);
   const [busyPunch, setBusyPunch] = useState<string | null>(null);
+  // Terminal serial drafts, keyed by token id — a ZKTeco device authenticates by
+  // SN, so binding one is the whole "connect the hardware" step.
+  const [serialDrafts, setSerialDrafts] = useState<Record<string, string>>({});
+  /** Terminal onboarding guide — collapsed by default; it is long and read once. */
+  const [showGuide, setShowGuide] = useState(false);
+  const [savingSerial, setSavingSerial] = useState<string | null>(null);
 
   const [punchStatus, setPunchStatus] = useState<PunchStatus>('pending');
   const [matchFor, setMatchFor] = useState<string | null>(null);
@@ -86,6 +112,46 @@ export function InboundIntegrationsSettings() {
   }, [employees]);
 
   const urlFor = (token: string) => `${convexSiteUrl()}/api/in/${token}`;
+
+  /**
+   * Where a terminal has to be pointed.
+   *
+   * Not the token URL: an ADMS device is configured with a host and a path, and
+   * it authenticates by serial number against a bound token — it never sees the
+   * token secret. Showing `/api/in/<token>` for a device would be actively
+   * misleading, which is why the guide below uses the site origin instead.
+   */
+  const admsHost = useMemo(() => {
+    try {
+      return new URL(convexSiteUrl()).host;
+    } catch {
+      return convexSiteUrl().replace(/^https?:\/\//, '');
+    }
+  }, []);
+
+  /**
+   * Bind a terminal to this token by serial number.
+   *
+   * The device cannot use a secret URL — a ZKTeco terminal is configured with a
+   * server address and identifies itself by SN on every request. The mutation
+   * rejects a serial already bound elsewhere, so a typo cannot route one tenant's
+   * terminal into another tenant's punch journal.
+   */
+  const bindSerial = async (tokenId: Id<'inboundTokens'>) => {
+    const draft = serialDrafts[tokenId];
+    if (draft === undefined) return;
+    setSavingSerial(tokenId);
+    try {
+      await setSerial({ tokenId, deviceSerial: draft.trim() });
+      toast.success(t('settings.inbound.deviceSerialSaved'));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('settings.inbound.deviceSerialSaveError'),
+      );
+    } finally {
+      setSavingSerial(null);
+    }
+  };
 
   const copy = (text: string, message: string) => {
     void navigator.clipboard.writeText(text);
@@ -256,7 +322,13 @@ export function InboundIntegrationsSettings() {
                   <Badge variant="outline">
                     {t(`settings.inbound.providers.${token.provider}`)}
                   </Badge>
-                  <span className="text-muted-foreground">••••{token.tokenHint}</span>
+                  {token.provider === 'device' && token.deviceSerial ? (
+                    <Badge variant="secondary" className="font-mono">
+                      {t('settings.inbound.deviceSerialBound', { serial: token.deviceSerial })}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">••••{token.tokenHint}</span>
+                  )}
                   <span className="flex-1 text-xs text-muted-foreground">
                     {token.lastError
                       ? t('settings.inbound.lastError', { error: token.lastError })
@@ -276,10 +348,162 @@ export function InboundIntegrationsSettings() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+
+                  {/* ZKTeco / Suprema: the terminal is pointed at this deployment
+                      and identified by its serial number (ADMS push protocol).
+                      Without a bound SN the device has no way to authenticate. */}
+                  {token.provider === 'device' && (
+                    <div className="flex w-full flex-wrap items-center gap-2">
+                      <Input
+                        value={serialDrafts[token._id] ?? token.deviceSerial ?? ''}
+                        onChange={(e) =>
+                          setSerialDrafts((prev) => ({ ...prev, [token._id]: e.target.value }))
+                        }
+                        placeholder={t('settings.inbound.deviceSerialPlaceholder')}
+                        className="h-8 max-w-[220px] font-mono"
+                        aria-label={t('settings.inbound.deviceSerial')}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void bindSerial(token._id)}
+                        disabled={
+                          savingSerial === token._id || serialDrafts[token._id] === undefined
+                        }
+                      >
+                        {t('settings.inbound.deviceSerialSave')}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {t('settings.inbound.deviceSerialHint')}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
+
+          {/*
+            Terminal onboarding, rendered from `convex/lib/zkteco.ts` rather than
+            written here: the steps describe the same handshake the HTTP layer
+            implements, and the capability list is a check the admin can perform
+            on their own device instead of a compatibility matrix nobody tested.
+          */}
+          <div className="rounded-lg border border-(--border)">
+            <button
+              type="button"
+              onClick={() => setShowGuide((prev) => !prev)}
+              className="flex w-full items-center gap-2 px-4 py-3 text-left"
+              aria-expanded={showGuide}
+            >
+              {showGuide ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              <Server className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {t('settings.inbound.zkteco.title', 'Connecting a ZKTeco terminal')}
+              </span>
+              <Badge variant="secondary" className="text-[10px]">
+                {ZK_SERVER_PATH}
+              </Badge>
+            </button>
+
+            {showGuide && (
+              <div className="space-y-4 border-t border-(--border) px-4 py-4 text-sm">
+                <p className="text-muted-foreground">{t('settings.inbound.zkteco.intro')}</p>
+
+                <div>
+                  <p className="mb-1 font-medium">{t('settings.inbound.zkteco.requirements')}</p>
+                  <ul className="ml-4 list-disc space-y-1 text-muted-foreground">
+                    {ZK_REQUIRED_CAPABILITIES.map((capability) => (
+                      <li key={capability.id}>
+                        <span className="text-foreground">{t(capability.labelKey)}</span> —{' '}
+                        {t(capability.detailKey)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="mb-1 font-medium">{t('settings.inbound.zkteco.stepsTitle')}</p>
+                  <ol className="ml-4 list-decimal space-y-2 text-muted-foreground">
+                    {ZK_SETUP_STEPS.map((step) => (
+                      <li key={step.id}>
+                        <span className="text-foreground">{t(step.labelKey)}</span>
+                        <br />
+                        {t(step.detailKey)}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="rounded-md bg-(--background-subtle) p-3 font-mono text-xs">
+                  <div>
+                    {t('settings.inbound.zkteco.serverAddress')}: <strong>{admsHost}</strong>
+                  </div>
+                  <div>
+                    {t('settings.inbound.zkteco.serverPath')}: <strong>{ZK_SERVER_PATH}</strong>
+                  </div>
+                  <div>
+                    {t('settings.inbound.zkteco.timeZone')}:{' '}
+                    <strong>UTC+{ZK_HANDSHAKE_SETTINGS.timeZone}</strong>
+                  </div>
+                  <div>
+                    {t('settings.inbound.zkteco.poll')}:{' '}
+                    <strong>{ZK_HANDSHAKE_SETTINGS.pollSeconds}s</strong>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1 font-medium">{t('settings.inbound.zkteco.familiesTitle')}</p>
+                  <ul className="space-y-2 text-muted-foreground">
+                    {ZK_DEVICE_FAMILIES.map((family) => (
+                      <li key={family.id}>
+                        <span className="text-foreground">{t(family.labelKey)}</span>
+                        {family.endpoint === 'generic' && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">
+                            {t(
+                              'settings.inbound.zkteco.genericEndpoint',
+                              'via the generic webhook',
+                            )}
+                          </Badge>
+                        )}
+                        <br />
+                        <span className="font-mono text-xs">{family.menuHints.join(' · ')}</span>
+                        <br />
+                        {t(family.noteKey)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.inbound.zkteco.verificationNote')}
+                </p>
+
+                {/*
+                  The step list as plain text, for the person who is going to walk
+                  to the entrance with a phone. Same data, no JSX — see
+                  `describeZkSetup`.
+                */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    copy(
+                      describeZkSetup((key) => t(key)),
+                      t('settings.inbound.zkteco.copied'),
+                    )
+                  }
+                >
+                  <Copy className="h-4 w-4" />
+                  {t('settings.inbound.zkteco.copyInstructions')}
+                </Button>
+              </div>
+            )}
+          </div>
 
           <Button onClick={() => setCreating(true)}>
             <Plus className="h-4 w-4" />

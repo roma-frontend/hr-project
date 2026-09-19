@@ -24,6 +24,15 @@ import {
 import { bearerToken, type ApiScope } from './lib/apiKey';
 import { WEBHOOK_EVENT_TYPES, isValidEndpointUrl, isWebhookEventType } from './webhooks/protocol';
 import { normalizePunches, truncateRaw } from './lib/inboundPayload';
+import {
+  ZK_OK,
+  buildAttlogAck,
+  buildHandshakeResponse,
+  isAcknowledgedOnlyPush,
+  isAttlogPush,
+  parseAttlogBody,
+  parseZkQuery,
+} from './lib/zkteco';
 
 const http = httpRouter();
 
@@ -827,6 +836,155 @@ http.route({
       stored: 0,
       note: 'Generic token accepted the payload; no mapping is configured for it',
     });
+  }),
+});
+
+// ── ZKTeco / Suprema ADMS push (the device speaks first) ─────────────────────
+/**
+ * The push-SDK protocol a ZKTeco terminal uses out of the box.
+ *
+ * A terminal is configured with this deployment's host and then addresses us as
+ * its "server": it handshakes on `/iclock/cdata`, pushes batches to the same
+ * path with `table=ATTLOG`, and polls `/iclock/getrequest` for commands. It
+ * cannot send a JSON webhook, so without these routes the hardware cannot be
+ * pointed at Strata at all — which is exactly how an ARM/HR team with existing
+ * terminals ends up keeping a middleware box.
+ *
+ * Authentication is the serial number, not a secret URL: the SN is what was typed
+ * into the terminal's own menu and `setDeviceSerial` bound it to a `device`
+ * token of one organization. An unregistered SN is answered 404 — never a 200
+ * with an empty handshake, which would look like a successful link to an admin
+ * staring at the comm log.
+ *
+ * Parsing lives in `lib/zkteco.ts` (pure, unit-tested). Punches land in the same
+ * `devicePunches` journal as the JSON webhook path and go through the identical
+ * HR review queue — hardware does not get a shortcut around the promotion step
+ * into payroll.
+ */
+
+/** ADMS understands plain text only — JSON is silently ignored by the firmware. */
+function zkText(body: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
+
+/** Resolve the terminal behind an `/iclock/*` request, or the refusal to send back. */
+async function resolveTerminal(
+  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
+  request: Request,
+): Promise<
+  | {
+      ok: true;
+      query: ReturnType<typeof parseZkQuery>;
+      token: { tokenId: Id<'inboundTokens'>; organizationId: Id<'organizations'> };
+    }
+  | { ok: false; response: Response }
+> {
+  const query = parseZkQuery(new URL(request.url).search);
+  if (!query.serial) {
+    return { ok: false, response: zkText('ERROR: missing SN', 400) };
+  }
+  const token = await ctx.runQuery(internal.inbound.resolveTokenByDeviceSerial, {
+    deviceSerial: query.serial,
+  });
+  if (!token || token.provider !== 'device') {
+    return { ok: false, response: zkText(`ERROR: unknown terminal ${query.serial}`, 404) };
+  }
+  if (!token.enabled) {
+    return { ok: false, response: zkText('ERROR: integration disabled', 403) };
+  }
+  return { ok: true, query, token };
+}
+
+http.route({
+  path: '/iclock/cdata',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const resolved = await resolveTerminal(ctx, request);
+    if (!resolved.ok) return resolved.response;
+    // Handshake: the terminal applies this config and starts pushing.
+    return zkText(buildHandshakeResponse(resolved.query.serial));
+  }),
+});
+
+http.route({
+  path: '/iclock/cdata',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const resolved = await resolveTerminal(ctx, request);
+    if (!resolved.ok) return resolved.response;
+    const { query, token } = resolved;
+
+    // OPERLOG / ATTPHOTO / USERINFO: acknowledge so the device clears its queue,
+    // ingest nothing (see `isAcknowledgedOnlyPush`).
+    if (!isAttlogPush(query)) {
+      return zkText(isAcknowledgedOnlyPush(query) ? ZK_OK : 'OK: 0');
+    }
+
+    const body = await request.text();
+    if (body.length > WEBHOOK_MAX_BODY_BYTES) {
+      return zkText('ERROR: payload too large', 413);
+    }
+
+    const { punches, skipped, lines } = parseAttlogBody(body);
+    if (lines === 0) {
+      // Empty batch is normal after a full sync.
+      return zkText(buildAttlogAck(0));
+    }
+
+    // Malformed lines are acknowledged, not retried: a terminal that gets an
+    // error repeats the same batch forever and fills its own storage. The count
+    // of what was dropped goes into the journal's raw field below.
+    const raw =
+      skipped > 0
+        ? `[${skipped}/${lines} lines skipped: no usable PIN or time]\n${body}`.slice(0, 2000)
+        : body.slice(0, 2000);
+
+    if (punches.length > 0) {
+      await ctx.runMutation(internal.inbound.ingestDevicePunches, {
+        tokenId: token.tokenId,
+        organizationId: token.organizationId,
+        punches,
+        raw,
+      });
+    }
+
+    return zkText(buildAttlogAck(punches.length));
+  }),
+});
+
+/** The terminal polls for remote commands. We issue none, so `OK` is the reply. */
+http.route({
+  path: '/iclock/getrequest',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const resolved = await resolveTerminal(ctx, request);
+    if (!resolved.ok) return resolved.response;
+    return zkText(ZK_OK);
+  }),
+});
+
+/** Command results the terminal reports back. Nothing is queued, so accept them. */
+http.route({
+  path: '/iclock/devicecmd',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const resolved = await resolveTerminal(ctx, request);
+    if (!resolved.ok) return resolved.response;
+    return zkText(ZK_OK);
+  }),
+});
+
+/** Reachability probe some firmware builds send before the handshake. */
+http.route({
+  path: '/iclock/ping',
+  method: 'GET',
+  handler: httpAction(async (ctx, request) => {
+    const resolved = await resolveTerminal(ctx, request);
+    if (!resolved.ok) return resolved.response;
+    return zkText(ZK_OK);
   }),
 });
 

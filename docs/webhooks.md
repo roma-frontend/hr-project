@@ -120,9 +120,21 @@ the same signing, retry and logging path with `x-webhook-event: webhook.test`.
 `leave.requested`, `leave.approved`, `leave.rejected`, `leave.cancelled`,
 `employee.created`, `employee.updated`, `employee.deactivated`,
 `attendance.clock_in`, `attendance.clock_out`, `task.created`, `task.completed`,
-`expense.submitted`, `expense.approved`, `expense.rejected`, `document.signed`.
+`expense.submitted`, `expense.approved`, `expense.rejected`, `document.signed`,
+`workflow.triggered`.
 
 An endpoint with an empty subscription list receives every event type.
+
+`workflow.triggered` is raised by a workflow's **webhook** action (see
+`docs/automation.md`). A workflow cannot POST to an arbitrary URL — it emits this
+event into the registered-endpoint pipeline, so deliveries keep the same
+signature, backoff, dead-lettering and audit trail as every other event, and an
+automation never becomes a way to make the server call an attacker's host.
+
+`employee.created` and `employee.deactivated` are emitted from the employee
+create / deactivate paths (`convex/users/mutations.ts`) — they were declared and
+documented before anything actually fired them, which is how a customer could
+subscribe to an event that never arrived.
 
 ---
 

@@ -53,8 +53,11 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { UserPicker } from '@/components/ui/UserPicker';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { logger } from '@/lib/logger';
+import { WORKFLOW_ACTIONS, WORKFLOW_TRIGGERS } from '../../../convex/lib/workflowActions';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,34 +117,150 @@ const STEP_PALETTE: StepPaletteItem[] = [
   },
 ];
 
-const TRIGGER_TYPES = [
-  { value: 'leave_created', label: 'automation.builder.triggerTypes.leave_created' },
-  { value: 'leave_approved', label: 'automation.builder.triggerTypes.leave_approved' },
-  { value: 'leave_rejected', label: 'automation.builder.triggerTypes.leave_rejected' },
-  { value: 'user_onboarded', label: 'automation.builder.triggerTypes.user_onboarded' },
-  { value: 'user_offboarded', label: 'automation.builder.triggerTypes.user_offboarded' },
-  { value: 'ticket_created', label: 'automation.builder.triggerTypes.ticket_created' },
-  { value: 'ticket_escalated', label: 'automation.builder.triggerTypes.ticket_escalated' },
-  {
-    value: 'performance_review_due',
-    label: 'automation.builder.triggerTypes.performance_review_due',
-  },
-  { value: 'contract_expiring', label: 'automation.builder.triggerTypes.contract_expiring' },
-  { value: 'custom', label: 'automation.builder.triggerTypes.custom' },
-];
+/**
+ * Trigger and action options come from the shared catalogue in
+ * `convex/lib/workflowActions.ts`, not from a list kept here.
+ *
+ * That is the whole point of the catalogue: this file used to offer ten actions
+ * and ten triggers while the runner implemented two actions and no automatic
+ * triggers, so a saved workflow could never fire and the admin had no way to
+ * tell. Reading the same source as the runner means the dropdown cannot promise
+ * something the engine will not do.
+ *
+ * A trigger with no emitter behind it is not hidden — it is listed disabled with
+ * the reason, because "why can't I pick this?" deserves an answer in the UI
+ * rather than a silent absence.
+ */
+const TRIGGER_TYPES = WORKFLOW_TRIGGERS.map((trigger) => ({
+  value: trigger.id,
+  label: trigger.labelKey,
+  wired: trigger.wired,
+  needs: trigger.needsKey,
+}));
 
-const ACTION_TYPES = [
-  { value: 'send_email', label: 'automation.builder.actionTypes.send_email' },
-  { value: 'send_notification', label: 'automation.builder.actionTypes.send_notification' },
-  { value: 'create_task', label: 'automation.builder.actionTypes.create_task' },
-  { value: 'update_record', label: 'automation.builder.actionTypes.update_record' },
-  { value: 'approve_request', label: 'automation.builder.actionTypes.approve_request' },
-  { value: 'reject_request', label: 'automation.builder.actionTypes.reject_request' },
-  { value: 'escalate', label: 'automation.builder.actionTypes.escalate' },
-  { value: 'assign_user', label: 'automation.builder.actionTypes.assign_user' },
-  { value: 'block_user', label: 'automation.builder.actionTypes.block_user' },
-  { value: 'webhook', label: 'automation.builder.actionTypes.webhook' },
-];
+const ACTION_TYPES = WORKFLOW_ACTIONS.map((action) => ({
+  value: action.id,
+  label: action.labelKey,
+  implemented: action.implemented,
+  unavailableReason: action.unavailableReasonKey,
+}));
+
+// ── Action parameters ────────────────────────────────────────────────────────
+
+type ParamFieldKind =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'priority'
+  | 'user'
+  | 'leave'
+  | 'task'
+  | 'url';
+
+interface ParamField {
+  key: string;
+  labelKey: string;
+  kind: ParamFieldKind;
+  /** Shown in the input; explains what happens when it is left empty. */
+  hintKey?: string;
+}
+
+/**
+ * What each action actually reads.
+ *
+ * This is the difference between a builder and a JSON editor. The runner reads
+ * named parameters (`userId`, `requestId`, `subject`, …) and an admin cannot be
+ * expected to know those names, let alone the id format of a leave request — so
+ * the fields below render a person picker, a list of the pending requests, a
+ * list of open tasks, and so on.
+ *
+ * The keys here mirror `reads` in `convex/lib/workflowActions.ts`; a parameter
+ * with no field still works through the Advanced JSON escape hatch, which stays
+ * available precisely so nothing becomes unreachable.
+ */
+const ACTION_PARAM_FIELDS: Record<string, ParamField[]> = {
+  send_email: [
+    {
+      key: 'userId',
+      labelKey: 'automation.params.userId',
+      kind: 'user',
+      hintKey: 'automation.params.userIdHint',
+    },
+    {
+      key: 'email',
+      labelKey: 'automation.params.email',
+      kind: 'text',
+      hintKey: 'automation.params.emailHint',
+    },
+    { key: 'subject', labelKey: 'automation.params.subject', kind: 'text' },
+    { key: 'body', labelKey: 'automation.params.body', kind: 'textarea' },
+    { key: 'actionUrl', labelKey: 'automation.params.actionUrl', kind: 'url' },
+    { key: 'actionLabel', labelKey: 'automation.params.actionLabel', kind: 'text' },
+  ],
+  send_notification: [
+    {
+      key: 'userId',
+      labelKey: 'automation.params.userId',
+      kind: 'user',
+      hintKey: 'automation.params.userIdHint',
+    },
+    { key: 'title', labelKey: 'automation.params.title', kind: 'text' },
+    { key: 'message', labelKey: 'automation.params.message', kind: 'textarea' },
+  ],
+  create_task: [
+    {
+      key: 'userId',
+      labelKey: 'automation.params.userId',
+      kind: 'user',
+      hintKey: 'automation.params.userIdHint',
+    },
+    { key: 'title', labelKey: 'automation.params.title', kind: 'text' },
+    { key: 'description', labelKey: 'automation.params.description', kind: 'textarea' },
+    { key: 'priority', labelKey: 'automation.params.priority', kind: 'priority' },
+    { key: 'dueInDays', labelKey: 'automation.params.dueInDays', kind: 'number' },
+  ],
+  escalate: [
+    { key: 'title', labelKey: 'automation.params.title', kind: 'text' },
+    { key: 'message', labelKey: 'automation.params.message', kind: 'textarea' },
+  ],
+  assign_user: [
+    { key: 'taskId', labelKey: 'automation.params.taskId', kind: 'task' },
+    { key: 'userId', labelKey: 'automation.params.userId', kind: 'user' },
+  ],
+  approve_request: [
+    {
+      key: 'requestId',
+      labelKey: 'automation.params.requestId',
+      kind: 'leave',
+      hintKey: 'automation.params.requestIdHint',
+    },
+    { key: 'comment', labelKey: 'automation.params.comment', kind: 'textarea' },
+  ],
+  reject_request: [
+    {
+      key: 'requestId',
+      labelKey: 'automation.params.requestId',
+      kind: 'leave',
+      hintKey: 'automation.params.requestIdHint',
+    },
+    { key: 'comment', labelKey: 'automation.params.comment', kind: 'textarea' },
+  ],
+  block_user: [
+    {
+      key: 'userId',
+      labelKey: 'automation.params.userId',
+      kind: 'user',
+      hintKey: 'automation.params.blockUserHint',
+    },
+  ],
+  webhook: [],
+};
+
+/** Leave requests the admin may act on — a select beats pasting an id. */
+const PENDING_LEAVE_OPTION_CAP = 50;
+
+/** Open tasks offered for `assign_user`. */
+const TASK_OPTION_CAP = 50;
 
 const CONDITION_OPERATORS = [
   { value: 'equals', label: 'automation.builder.conditionOperators.equals' },
@@ -284,11 +403,52 @@ function StepConfigDialog({
   const { t } = useTranslation();
   const [localConfig, setLocalConfig] = useState<Record<string, unknown>>({});
   const [localLabel, setLocalLabel] = useState('');
+  /** Raw JSON for parameters the field list does not cover. */
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedDraft, setAdvancedDraft] = useState('');
+  const [advancedError, setAdvancedError] = useState<string | null>(null);
+
+  const actionType = (localConfig.actionType as string) || '';
+  const fields = ACTION_PARAM_FIELDS[actionType] ?? [];
+  const needsLeaveList = fields.some((f) => f.kind === 'leave');
+  const needsTaskList = fields.some((f) => f.kind === 'task');
+
+  // Pickers need the caller's organisation; the leave and task lists are the
+  // organisation's own. All three queries are skipped when no field needs them,
+  // so opening a delay or a condition step costs nothing.
+  const me = useQuery(api.users.queries.getCurrentUser, {});
+  const organizationId = me?.organizationId as Id<'organizations'> | undefined;
+  const pendingLeaves = useQuery(
+    api.leaves.queries.getPendingLeaves,
+    needsLeaveList ? {} : 'skip',
+  ) as
+    | Array<{
+        _id: string;
+        userId?: string;
+        user?: { name?: string } | null;
+        type?: string;
+        startDate?: string;
+        endDate?: string;
+        days?: number;
+      }>
+    | undefined;
+  const tasks = useQuery(api.tasks.getAllTasks, needsTaskList ? {} : 'skip') as
+    | Array<{ _id: string; title?: string }>
+    | undefined;
+
+  // Mail is optional infrastructure: a deployment without a Resend key can still
+  // build workflows, so the step says so plainly instead of failing at run time.
+  const emailConfig = useQuery(
+    api.emails.getEmailConfiguration,
+    actionType === 'send_email' ? {} : 'skip',
+  );
 
   React.useEffect(() => {
     if (step) {
       setLocalConfig(step.config);
       setLocalLabel(step.label);
+      setAdvancedOpen(false);
+      setAdvancedError(null);
     }
   }, [step]);
 
@@ -307,6 +467,44 @@ function StepConfigDialog({
 
   const updateConfig = (key: string, value: unknown) => {
     setLocalConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const parameters = (localConfig.parameters as Record<string, unknown>) ?? {};
+
+  /** Write one action parameter, removing it when the field is cleared. */
+  const updateParameter = (key: string, value: string) => {
+    setLocalConfig((prev) => {
+      const current = (prev.parameters as Record<string, unknown>) ?? {};
+      const next = { ...current };
+      if (value === '') delete next[key];
+      else next[key] = value;
+      return { ...prev, parameters: next };
+    });
+  };
+
+  /**
+   * Apply the Advanced JSON box.
+   *
+   * Errors are shown rather than swallowed: silently discarding a half-typed
+   * object is how an admin loses work without knowing it.
+   */
+  const applyAdvanced = () => {
+    const raw = advancedDraft.trim();
+    if (!raw) {
+      setAdvancedError(null);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        setAdvancedError(t('automation.params.jsonMustBeObject'));
+        return;
+      }
+      setLocalConfig((prev) => ({ ...prev, parameters: parsed as Record<string, unknown> }));
+      setAdvancedError(null);
+    } catch (error) {
+      setAdvancedError(error instanceof Error ? error.message : 'Invalid JSON');
+    }
   };
 
   return (
@@ -343,8 +541,9 @@ function StepConfigDialog({
               >
                 <option value="">{t('automation.builder.selectEvent')}</option>
                 {TRIGGER_TYPES.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
+                  <option key={opt.value} value={opt.value} disabled={!opt.wired}>
                     {t(opt.label)}
+                    {!opt.wired && opt.needs ? ` — ${t(opt.needs)}` : ''}
                   </option>
                 ))}
               </select>
@@ -364,25 +563,181 @@ function StepConfigDialog({
                 >
                   <option value="">{t('automation.builder.selectAction')}</option>
                   {ACTION_TYPES.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
+                    <option key={opt.value} value={opt.value} disabled={!opt.implemented}>
                       {t(opt.label)}
+                      {!opt.implemented && opt.unavailableReason
+                        ? ` — ${t(opt.unavailableReason)}`
+                        : ''}
                     </option>
                   ))}
                 </select>
               </div>
-              {(localConfig.actionType === 'send_email' ||
-                localConfig.actionType === 'send_notification') && (
-                <div>
+              {/*
+                One renderer for every action's parameters. Before this, the
+                only field any action had was a free-text "recipient", and
+                everything else (which leave, which task, the mail subject) had
+                to be typed as raw JSON by hand.
+              */}
+              {fields.map((field) => (
+                <div key={field.key}>
                   <label className="text-sm font-medium text-(--text-primary) mb-1 block">
-                    {t('automation.builder.recipient')}
+                    {t(field.labelKey, field.key)}
                   </label>
-                  <Input
-                    value={(localConfig.recipient as string) || ''}
-                    onChange={(e) => updateConfig('recipient', e.target.value)}
-                    placeholder={t('automation.builder.recipientPlaceholder')}
-                  />
+
+                  {field.kind === 'user' && (
+                    <UserPicker
+                      organizationId={organizationId}
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(userId) => updateParameter(field.key, userId)}
+                      allowClear
+                    />
+                  )}
+
+                  {field.kind === 'leave' && (
+                    <select
+                      className="w-full rounded-md border border-(--border) bg-(--background) px-3 py-2 text-sm"
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                    >
+                      <option value="">{t('automation.params.selectRequest')}</option>
+                      {(pendingLeaves ?? []).slice(0, PENDING_LEAVE_OPTION_CAP).map((leave) => (
+                        <option key={leave._id} value={leave._id}>
+                          {[leave.user?.name ?? leave.userId, leave.type, leave.startDate]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {field.kind === 'task' && (
+                    <select
+                      className="w-full rounded-md border border-(--border) bg-(--background) px-3 py-2 text-sm"
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                    >
+                      <option value="">{t('automation.params.selectTask')}</option>
+                      {(tasks ?? []).slice(0, TASK_OPTION_CAP).map((task) => (
+                        <option key={task._id} value={task._id}>
+                          {task.title ?? task._id}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {field.kind === 'priority' && (
+                    <select
+                      className="w-full rounded-md border border-(--border) bg-(--background) px-3 py-2 text-sm"
+                      value={(parameters[field.key] as string) || 'medium'}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                    >
+                      {['low', 'medium', 'high', 'urgent'].map((priority) => (
+                        <option key={priority} value={priority}>
+                          {t(`automation.params.priorities.${priority}`, priority)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {field.kind === 'textarea' && (
+                    <Textarea
+                      rows={4}
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                    />
+                  )}
+
+                  {(field.kind === 'text' || field.kind === 'url') && (
+                    <Input
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                      placeholder={field.kind === 'url' ? 'https://' : undefined}
+                    />
+                  )}
+
+                  {field.kind === 'number' && (
+                    <Input
+                      type="number"
+                      min="0"
+                      value={(parameters[field.key] as string) || ''}
+                      onChange={(e) => updateParameter(field.key, e.target.value)}
+                    />
+                  )}
+
+                  {field.hintKey && (
+                    <p className="mt-1 text-xs text-(--text-muted)">{t(field.hintKey)}</p>
+                  )}
+                </div>
+              ))}
+
+              {/*
+                `webhook` deliberately reads no parameters: it delivers to the
+                endpoints the organisation already registered under Settings →
+                Webhooks, with the signature and retries that go with them. An
+                empty field list here is the design, not an unfinished form — so
+                it says so, instead of looking like something failed to load.
+              */}
+              {actionType === 'webhook' && (
+                <p className="text-xs text-(--text-muted)">
+                  {t('automation.params.webhookNotice')}
+                </p>
+              )}
+
+              {actionType === 'send_email' && emailConfig && !emailConfig.configured && (
+                <div
+                  className="flex items-start gap-2 rounded-md border border-(--warning-outline) bg-(--warning-quiet) p-3 text-xs"
+                  role="status"
+                >
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-(--warning-text)" />
+                  <span className="text-(--warning-text)">
+                    {t('automation.params.emailNotConfigured', {
+                      reason: emailConfig.problem ?? 'unknown',
+                    })}
+                  </span>
                 </div>
               )}
+
+              {actionType === 'send_email' &&
+                emailConfig?.configured &&
+                !emailConfig.domainVerified && (
+                  <p className="text-xs text-(--text-muted)">
+                    {t('automation.params.emailRedirected', {
+                      to: emailConfig.redirectTo ?? '',
+                    })}
+                  </p>
+                )}
+
+              {/* Escape hatch: a parameter with no field is still reachable. */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdvancedOpen((prev) => !prev);
+                    setAdvancedDraft(JSON.stringify(parameters, null, 2));
+                    setAdvancedError(null);
+                  }}
+                  className="text-xs text-(--text-muted) underline"
+                >
+                  {t('automation.params.advanced')}
+                </button>
+                {advancedOpen && (
+                  <div className="mt-2 space-y-2">
+                    <Textarea
+                      rows={6}
+                      className="font-mono text-xs"
+                      value={advancedDraft}
+                      onChange={(e) => setAdvancedDraft(e.target.value)}
+                      onBlur={applyAdvanced}
+                    />
+                    {advancedError && (
+                      <p className="text-xs text-(--danger-text)">{advancedError}</p>
+                    )}
+                    <p className="text-xs text-(--text-muted)">
+                      {t('automation.params.advancedHint')}
+                    </p>
+                  </div>
+                )}
+              </div>
             </>
           )}
 

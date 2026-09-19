@@ -367,6 +367,17 @@ export const navItems: NavEntry[] = [
         roles: ['superadmin', 'admin'],
       },
       {
+        // Tenant-facing workflow automation. The builder used to be reachable
+        // only at /superadmin/automation, which meant the feature existed in the
+        // catalogue but no customer could configure it. Plan-gated through the
+        // `automation` module (see planGating.ts); platform-level workflows stay
+        // superadmin-only inside the component itself.
+        href: '/automation',
+        labelKey: 'nav.automation',
+        icon: Cpu,
+        roles: ['superadmin', 'admin'],
+      },
+      {
         href: '/compliance',
         labelKey: 'nav.compliance',
         icon: ClipboardCheck,

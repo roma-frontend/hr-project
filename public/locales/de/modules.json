@@ -3187,8 +3187,15 @@
         "ticket_created": "Ticket erstellt",
         "ticket_escalated": "Ticket eskaliert",
         "performance_review_due": "Leistungsbewertung fällig",
+        "probation_ending": "Probezeit endet",
         "contract_expiring": "Vertrag läuft ab",
-        "custom": "Benutzerdefiniertes Ereignis"
+        "manual": "Manuell starten"
+      },
+      "needs": {
+        "contract_expiring": "benötigt Vertragsdaten, die dieses Produkt nicht speichert — nutzen Sie „Probezeit endet“"
+      },
+      "unavailable": {
+        "update_record": "nicht verfügbar — Datensatz zuerst im Schritt wählen"
       },
       "actionTypes": {
         "send_email": "E-Mail senden",
@@ -3216,6 +3223,54 @@
         "hours": "Stunden",
         "days": "Tage"
       }
+    },
+    "params": {
+      "userId": "Person",
+      "userIdHint": "Leer lassen, um die Person des Ereignisses zu verwenden.",
+      "blockUserHint": "Erforderlich: Dies deaktiviert das Konto, deshalb folgt es nie dem Ereignis.",
+      "email": "An (Adresse)",
+      "emailHint": "Optional, wenn eine Person gewählt ist — deren Arbeitsadresse wird verwendet.",
+      "subject": "Betreff",
+      "body": "Nachricht",
+      "actionUrl": "Link des Buttons",
+      "actionLabel": "Beschriftung des Buttons",
+      "title": "Titel",
+      "message": "Nachricht",
+      "description": "Beschreibung",
+      "priority": "Priorität",
+      "dueInDays": "Fällig in (Tagen)",
+      "taskId": "Aufgabe",
+      "requestId": "Abwesenheitsantrag",
+      "requestIdHint": "Leer lassen, um auf den Antrag aus dem Ereignis zu wirken.",
+      "comment": "Kommentar (optional)",
+      "selectRequest": "Offenen Antrag wählen",
+      "selectTask": "Aufgabe wählen",
+      "advanced": "Erweiterte Parameter (JSON)",
+      "advancedHint": "Ersetzt alle Parameter oben. Für Schlüssel, die das Formular nicht abdeckt.",
+      "jsonMustBeObject": "Parameter müssen ein JSON-Objekt sein",
+      "emailNotConfigured": "E-Mail ist auf dieser Installation nicht eingerichtet ({{reason}}). Der Schritt wird übersprungen und der Lauf vermerkt es.",
+      "emailRedirected": "Die Sendeadresse ist noch nicht verifiziert, daher stellt Resend an {{to}} zu und vermerkt die echte Adresse im Betreff.",
+      "webhookNotice": "Sendet an die unter Einstellungen → Webhooks registrierten Endpunkte, mit der üblichen Signatur und Wiederholungen. Es sind keine Parameter auszufüllen.",
+      "priorities": {
+        "low": "Niedrig",
+        "medium": "Mittel",
+        "high": "Hoch",
+        "urgent": "Dringend"
+      }
+    },
+    "tenant": {
+      "title": "Workflow-Automatisierung",
+      "supportedHint": "Läufe sind echt: Workflows werden aus Ihren Schritten geplant und ausgeführt, und jeder Lauf hält fest, warum ein Schritt geschah oder nicht. Unterstützte Aktionen:",
+      "unsupportedHint": "Was der Builder nicht anbietet, ist nicht implementiert — solche Optionen erscheinen deaktiviert mit Begründung, statt still nichts zu tun.",
+      "emailReady": "E-Mail-Versand ist eingerichtet",
+      "emailNotReady": "E-Mail-Versand ist nicht eingerichtet",
+      "emailSendsFrom": "Nachrichten werden von {{from}} gesendet.",
+      "emailRedirectedTo": "Die Sendeadresse ist noch nicht verifiziert, daher gehen alle Nachrichten an {{to}} und die echte Adresse steht im Betreff.",
+      "emailProblem": "Grund: {{reason}}. Der E-Mail-Schritt wird übersprungen und der Lauf vermerkt es.",
+      "emailTest": "Test-E-Mail senden",
+      "emailTestSent": "Test-E-Mail an {{to}} eingereiht",
+      "emailTestRedirected": "Test-E-Mail eingereiht, aber an {{to}} umgeleitet — die Sendeadresse ist nicht verifiziert",
+      "emailTestFailed": "Test-E-Mail nicht gesendet: {{reason}}"
     }
   },
   "help": {

@@ -20,6 +20,16 @@ export const employees = {
     hourlyRate: v.optional(v.number()),
     salaryCurrency: v.optional(v.string()),
     salaryUpdatedAt: v.optional(v.number()),
+    // ── Salary payment details (bank transfer) ────────────────────────────
+    // Where the net payout is actually sent. Used by the bank payment
+    // register (`src/lib/payroll/paymentRegister.ts`) and deliberately NOT by
+    // the SRC filing — the tax service needs the ՀՎՀՀ, the bank needs the
+    // account. Armenian account numbers are 20 digits, but the value is stored
+    // as typed (spaces/dashes included) and normalised at export time, so a
+    // half-entered number still saves and is reported as an issue instead of
+    // silently producing a broken payment file.
+    bankAccountNumber: v.optional(v.string()),
+    bankName: v.optional(v.string()),
     // Identity / passport document data (all optional — sensitive PII)
     passportNumber: v.optional(v.string()),
     passportIssuedBy: v.optional(v.string()),
