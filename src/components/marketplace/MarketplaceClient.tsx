@@ -25,7 +25,6 @@ import {
 import {
   MARKETPLACE_APPS,
   appStatus,
-  isSelfInstallable,
   matchesQuery,
   populatedCategories,
   type MarketplaceApp,
@@ -68,6 +67,23 @@ export default function MarketplaceClient() {
   const [url, setUrl] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [installing, setInstalling] = useState(false);
+
+  /** Every event the endpoint could subscribe to — the checkbox list's contents. */
+  const allEventTypes = useMemo(() => (eventTypes ?? []) as string[], [eventTypes]);
+
+  /**
+   * Only the chosen events the backend actually emits.
+   *
+   * An app's `defaultEvents` is catalog data and can name an event type the
+   * deployment no longer exposes. Counting and submitting those would show "5 of
+   * 4 selected" and create a subscription nothing can ever deliver — and because
+   * an empty list means *every* event type, a stale name being filtered out at
+   * submit time must not be confused with "the admin chose nothing".
+   */
+  const knownSelected = useMemo(
+    () => selectedEvents.filter((event) => allEventTypes.includes(event)),
+    [selectedEvents, allEventTypes],
+  );
 
   const endpointsList = useMemo(
     () =>
@@ -136,7 +152,7 @@ export default function MarketplaceClient() {
         label: labelFor(pending),
         appId: pending.id,
         url: url.trim(),
-        events: selectedEvents,
+        events: knownSelected,
         enabled: true,
       });
       toast.success(t('marketplace.installSuccess', { name: pending.name }));
@@ -314,22 +330,60 @@ export default function MarketplaceClient() {
             </div>
 
             <div className="space-y-2">
-              <Label>{t('marketplace.eventsLabel')}</Label>
-              {(eventTypes ?? []).map((eventType) => (
-                <label key={eventType} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={selectedEvents.includes(eventType)}
-                    onCheckedChange={(checked) =>
-                      setSelectedEvents((current) =>
-                        checked === true
-                          ? [...current, eventType]
-                          : current.filter((item) => item !== eventType),
-                      )
-                    }
-                  />
-                  <span className="font-mono text-xs">{eventType}</span>
-                </label>
-              ))}
+              <div className="flex items-baseline justify-between gap-3">
+                <Label>{t('marketplace.eventsLabel')}</Label>
+                {/* "None selected" means every event type, which is a rule the
+                    flat list only stated in the fine print. Saying it here, at
+                    the point of the decision, is what makes clearing the list
+                    a choice rather than a mistake. */}
+                <span className="text-xs text-muted-foreground">
+                  {knownSelected.length === 0
+                    ? t('marketplace.eventsAllSelected')
+                    : t('marketplace.eventsSelectedCount', {
+                        selected: knownSelected.length,
+                        total: allEventTypes.length,
+                      })}
+                </span>
+              </div>
+
+              <div className="flex gap-3 text-xs">
+                <button
+                  type="button"
+                  className="text-(--brand-text) hover:underline"
+                  onClick={() => setSelectedEvents([...allEventTypes])}
+                >
+                  {t('marketplace.eventsSelectAll')}
+                </button>
+                <button
+                  type="button"
+                  className="text-(--brand-text) hover:underline"
+                  onClick={() => setSelectedEvents([])}
+                >
+                  {t('marketplace.eventsClear')}
+                </button>
+              </div>
+
+              {/* Scrollable on purpose. Seventeen event types in a flat column
+                  made this dialog taller than the viewport, so the URL field and
+                  the Connect button — the two things the admin came for — were
+                  pushed off screen by a list they mostly do not change. */}
+              <div className="max-h-56 space-y-1 overflow-y-auto rounded-lg border border-(--border) p-2">
+                {allEventTypes.map((eventType) => (
+                  <label key={eventType} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={selectedEvents.includes(eventType)}
+                      onCheckedChange={(checked) =>
+                        setSelectedEvents((current) =>
+                          checked === true
+                            ? [...current, eventType]
+                            : current.filter((item) => item !== eventType),
+                        )
+                      }
+                    />
+                    <span className="font-mono text-xs">{eventType}</span>
+                  </label>
+                ))}
+              </div>
               <p className="text-xs text-muted-foreground">{t('marketplace.eventsHint')}</p>
             </div>
           </div>
@@ -338,7 +392,10 @@ export default function MarketplaceClient() {
             <Button variant="outline" onClick={() => setPending(null)} disabled={installing}>
               {t('common.cancel')}
             </Button>
-            <Button onClick={submitInstall} disabled={installing}>
+            {/* Disabled until the event list arrives: submitting before it does
+                would send an empty list, which the engine reads as "every event
+                type" — the opposite of a deliberate choice. */}
+            <Button onClick={submitInstall} disabled={installing || eventTypes === undefined}>
               {installing ? t('marketplace.installing') : t('marketplace.installSubmit')}
             </Button>
           </DialogFooter>
