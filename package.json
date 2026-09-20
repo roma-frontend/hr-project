@@ -69,6 +69,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:perf": "k6 run tests/performance/load-test.js",
     "test:all": "npm run lint && npm run type-check && npm run test:coverage && npm run test:e2e",
+    "sentry:rules": "node scripts/sentry-alert-rules.mjs",
     "soc2:evidence": "node scripts/soc2-evidence.mjs",
     "soc2:evidence:stdout": "node scripts/soc2-evidence.mjs --stdout",
     "audit:gate": "node scripts/audit-gate.mjs",

@@ -200,7 +200,14 @@ async function flush() {
 }
 
 function renderComponent(onSuccess?: () => void, onCancel?: () => void) {
-  return render(<FaceRegistration userId="user-1" onSuccess={onSuccess} onCancel={onCancel} />);
+  const result = render(
+    <FaceRegistration userId="user-1" onSuccess={onSuccess} onCancel={onCancel} />,
+  );
+  // Face data is biometric: the widget captures nothing until the enrollee
+  // agrees. Every test that renders the widget accepts it here; the refusal path
+  // has its own test, which renders directly.
+  fireEvent.click(screen.getByRole('checkbox'));
+  return result;
 }
 
 /**
@@ -255,6 +262,16 @@ describe('FaceRegistration — mount and models', () => {
     expect(screen.getByText('Camera not active')).toBeInTheDocument();
     expect(screen.getByText('Start Camera')).toBeInTheDocument();
     expect(loadFaceApiModels).toHaveBeenCalled();
+  });
+
+  it('gates the camera behind an explicit biometric-consent checkbox', async () => {
+    // Rendered directly (the helper above auto-accepts): nothing is captured
+    // until the enrollee agrees, which is a legal requirement, not a nicety.
+    render(<FaceRegistration userId="user-1" />);
+    await flush();
+
+    expect(screen.getByText('Consent to facial data processing')).toBeInTheDocument();
+    expect(screen.getByText('Start Camera').closest('button')).toBeDisabled();
   });
 
   it('reports when face models fail to load', async () => {
@@ -532,12 +549,38 @@ describe('FaceRegistration — capture and register', () => {
       [0.1, 0.2, 0.3],
     );
     expect(arg.faceImageUrl).toBe('https://cdn.example/face.jpg');
+    // Consent travels with the descriptor — the server refuses without it.
+    expect(arg.consentGranted).toBe(true);
+    expect(arg.consentVersion).toBe('2026-09-20');
     expect(toast.success).toHaveBeenCalledWith(
       'Face registered successfully! You can now use Face ID to login.',
     );
     expect(onSuccess).toHaveBeenCalled();
     // Webcam stopped and the captured image replaces the live view.
     await waitFor(() => expect(screen.getByAltText('Captured face')).toBeInTheDocument());
+  });
+
+  it('refuses to register once consent is withdrawn before capture', async () => {
+    mockDetectBox = { x: 1, y: 1 };
+    mockDetectResult = { descriptor: new Float32Array([0.1, 0.2, 0.3]) };
+    renderComponent();
+    await startWebcam();
+    await tick();
+
+    // The enrollee unchecks consent after the camera is already running.
+    fireEvent.click(screen.getByRole('checkbox'));
+
+    // The handler is defensive even though the button is disabled: invoking it
+    // directly refuses and says why, rather than sending a descriptor the
+    // server is required to reject.
+    const handler = getClickHandler('Capture & Register');
+    await act(async () => {
+      await handler();
+    });
+    expect(toast.error).toHaveBeenCalledWith(
+      'Please agree to biometric data processing before registering Face ID.',
+    );
+    expect(mockMutation).not.toHaveBeenCalled();
   });
 
   it('shows the captured image after registration', async () => {

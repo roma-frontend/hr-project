@@ -612,7 +612,14 @@
 - [ ] Full audit logging for ALL actions (who, what, when, IP, before/after) — rows exist, coverage is uneven
 - [ ] GDPR self-service data export + right to erasure
 - [ ] Data retention policies
-- [ ] SOC 2 evidence automation — see `docs/soc2-type2-readiness.md` (203-line control map, mostly `[ ]`)
+- [~] SOC 2 Type II readiness — control map `docs/soc2-type2-readiness.md` + automated evidence (`npm run soc2:evidence`).
+
+> **Закрыто 20.09:**
+>
+> - **Биометрия (бывш. P0):** явное согласие при зачислении (чекбокс + серверный отказ без `consentGranted`), версионированные записи согласия (`convex/lib/biometricConsent.ts`), зачисление только за себя, стирание дескриптора и фото с отзывом согласия при удалении Face ID и при завершении офбординга. Политика: `docs/legal/biometric-policy.md`.
+> - План реагирования на инциденты (`docs/incident-response.md`), политика изменений + `.github/CODEOWNERS` (`docs/change-management-policy.md`), инвентарь секретов (`docs/secret-inventory.md`), реестр вендоров + AI-потоки (`docs/vendor-register.md`), RTO/RPO и прогон восстановления (`docs/runbooks/backup-restore.md`), наблюдаемость и правила Sentry (`docs/observability.md` + `scripts/sentry-alert-rules.mjs`).
+>
+> **Осталось (нельзя закрыть кодом):** Branch protection в GitHub, первый прогон восстановления, ротация всех секретов, сбор отчётов/DPA вендоров, создание правил Sentry (токен), внешний uptime-монитор. И этап Liveness-проверки — см. §9 доки SOC 2.
 
 ---
 

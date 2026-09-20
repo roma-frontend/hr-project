@@ -22,6 +22,12 @@ interface FaceRegistrationProps {
   onCancel?: () => void;
 }
 
+/**
+ * Must match `BIOMETRIC_CONSENT_VERSION` in `convex/lib/biometricConsent.ts`.
+ * The stored consent record says which version of the text below was shown.
+ */
+const BIOMETRIC_CONSENT_VERSION = '2026-09-20';
+
 export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrationProps) {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,6 +38,9 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  // Face data is special-category personal data: nothing is captured until the
+  // person enrolling has explicitly agreed, and the server refuses without it.
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const registerFace = useMutation(api.faceRecognition.registerFace);
 
@@ -276,6 +285,15 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
 
   const captureFace = async () => {
     if (!videoRef.current) return;
+    if (!consentAccepted) {
+      toast.error(
+        t(
+          'faceRegistration.consentRequired',
+          'Please agree to biometric data processing before registering Face ID.',
+        ),
+      );
+      return;
+    }
 
     setIsProcessing(true);
 
@@ -309,6 +327,8 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
         userId,
         faceDescriptor: descriptor,
         faceImageUrl: imageUrl,
+        consentGranted: true,
+        consentVersion: BIOMETRIC_CONSENT_VERSION,
       });
 
       setCapturedImage(canvas.toDataURL());
@@ -421,10 +441,39 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
           </div>
         )}
 
+        {/* Biometric consent — required before anything is captured */}
+        {!capturedImage && (
+          <label className="flex items-start gap-3 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-base)] p-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={(e) => setConsentAccepted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span className="text-xs text-[var(--text-secondary)] space-y-1">
+              <span className="block font-medium text-(--text-primary)">
+                {t('faceRegistration.consentTitle', 'Consent to facial data processing')}
+              </span>
+              <span className="block">
+                {t(
+                  'faceRegistration.consentBody',
+                  'I agree to the processing of my facial data (a numeric face descriptor and the photo taken now) for the sole purpose of logging in to this account. I understand this is biometric data, that it is stored with my employee record and deleted when I remove Face ID or leave the organization.',
+                )}
+              </span>
+              <span className="block">
+                {t(
+                  'faceRegistration.consentWithdraw',
+                  'You can withdraw this at any time by removing Face ID in Settings → Security.',
+                )}
+              </span>
+            </span>
+          </label>
+        )}
+
         {/* Controls */}
         <div className="flex gap-3">
           {!isWebcamActive && !capturedImage && (
-            <Button onClick={startWebcam} className="flex-1">
+            <Button onClick={startWebcam} disabled={!consentAccepted} className="flex-1">
               <Camera className="w-4 h-4 mr-2" />
               {t('faceRegistration.startCamera', 'Start Camera')}
             </Button>
@@ -434,7 +483,7 @@ export function FaceRegistration({ userId, onSuccess, onCancel }: FaceRegistrati
             <>
               <Button
                 onClick={captureFace}
-                disabled={!faceDetected || isProcessing}
+                disabled={!faceDetected || isProcessing || !consentAccepted}
                 className="flex-1"
               >
                 {isProcessing ? (

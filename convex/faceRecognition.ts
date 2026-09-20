@@ -4,6 +4,11 @@ import { assertFeatureEnabled } from './superadmin/featureToggles';
 import type { Id } from './_generated/dataModel';
 import { DEFAULT_LIST_CAP } from './lib/limits';
 import { getAuthCaller } from './lib/getAuthCaller';
+import {
+  BIOMETRIC_CONSENT_VERSION,
+  grantBiometricConsent,
+  withdrawBiometricConsent,
+} from './lib/biometricConsent';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -54,13 +59,30 @@ function generateToken(): string {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Register face descriptor for a user.
+ * Register a face descriptor for a user.
+ *
+ * A descriptor and the enrolment photo are biometric data (GDPR Art. 9), so
+ * this mutation is deliberately strict about two things the old version did not
+ * check at all:
+ *
+ *   1. **Who** is enrolling. `userId` used to be trusted as given, so any
+ *      authenticated caller could write a descriptor — their own face — onto
+ *      somebody else's account, which is both an account-takeover and a
+ *      consent problem. Now it is self-enrolment (or a superadmin acting under
+ *      the audited impersonation flow).
+ *   2. **That consent was actually given.** `consentGranted` must be true; the
+ *      record is written to `consentRecords` alongside the descriptor, with the
+ *      version of the enrolment text that was on screen.
  */
 export const registerFace = mutation({
   args: {
     userId: v.id('users'),
     faceDescriptor: v.array(v.number()),
     faceImageUrl: v.string(),
+    /** The enrollee's own consent to store biometric data. */
+    consentGranted: v.boolean(),
+    /** Enrolment-text version the UI showed; defaults to the current one. */
+    consentVersion: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await assertFeatureEnabled(ctx, 'face.recognition');
@@ -68,8 +90,22 @@ export const registerFace = mutation({
       throw new Error(`Face descriptor must be ${FACE_DESCRIPTOR_LENGTH}-dim`);
     }
 
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    const isSelf = caller._id === args.userId;
+    if (!isSelf && caller.role !== 'superadmin') {
+      throw new Error('Cannot register Face ID for another user');
+    }
+
     const user = await ctx.db.get(args.userId);
     if (!user) throw new Error('User not found');
+
+    if (!args.consentGranted) {
+      throw new Error('Biometric consent is required to register Face ID');
+    }
+    if (!user.organizationId) {
+      throw new Error('Face ID requires an account that belongs to an organization');
+    }
 
     const patch: Record<string, unknown> = {
       faceDescriptor: args.faceDescriptor,
@@ -80,10 +116,19 @@ export const registerFace = mutation({
 
     await ctx.db.patch(args.userId, patch);
 
+    await grantBiometricConsent(ctx, {
+      userId: args.userId,
+      organizationId: user.organizationId,
+      version: args.consentVersion ?? BIOMETRIC_CONSENT_VERSION,
+      metadata: JSON.stringify({ source: 'face_registration' }),
+    });
+
     await ctx.db.insert('auditLogs', {
       organizationId: user.organizationId,
       userId: args.userId,
       action: 'face_registered',
+      target: args.userId,
+      details: `Face ID enrolled with consent v${args.consentVersion ?? BIOMETRIC_CONSENT_VERSION}`,
       createdAt: Date.now(),
     });
 
@@ -155,15 +200,21 @@ export const removeFaceRegistration = mutation({
       faceRegisteredAt: undefined,
     });
 
+    // Removing Face ID is a withdrawal of consent, not just a cleanup: without
+    // this the register would keep showing an active biometric consent for a
+    // person who no longer has any biometric data stored.
+    const consentWithdrawn = await withdrawBiometricConsent(ctx, { userId });
+
     await ctx.db.insert('auditLogs', {
       organizationId: target.organizationId,
       userId: requesterId,
       action: 'face_removed',
       target: userId,
+      details: `Face ID removed; ${consentWithdrawn} biometric consent record(s) withdrawn`,
       createdAt: Date.now(),
     });
 
-    return { success: true };
+    return { success: true, consentWithdrawn };
   },
 });
 

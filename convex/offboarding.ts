@@ -21,6 +21,7 @@ import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
 import { notify } from './lib/notify';
+import { withdrawBiometricConsent } from './lib/biometricConsent';
 import {
   assertOrgScope,
   assertOrgStaff,
@@ -660,6 +661,30 @@ export const completeProgram = mutation({
       deactivated = true;
     }
 
+    // ── Erase biometric data (GDPR Art. 9) ──────────────────────
+    // A face descriptor and the enrolment photo are special-category data.
+    // Leaving them on a deactivated account is retention without a purpose: the
+    // person can no longer log in, so nothing needs their face. The consent rows
+    // go with them — the register should not show an active biometric consent
+    // for somebody whose data is gone.
+    let biometricCleared = false;
+    if (employee?.faceDescriptor || employee?.faceImageUrl) {
+      await ctx.db.patch(program.employeeId, {
+        faceDescriptor: undefined,
+        faceImageUrl: undefined,
+        faceRegisteredAt: undefined,
+        faceIdBlocked: undefined,
+        faceIdBlockedAt: undefined,
+        faceIdFailedAttempts: undefined,
+        faceIdLastAttempt: undefined,
+      });
+      biometricCleared = true;
+    }
+    const biometricConsentsWithdrawn = await withdrawBiometricConsent(ctx, {
+      userId: program.employeeId,
+      organizationId: program.organizationId,
+    });
+
     // ── Re-point direct reports ─────────────────────────────────
     const reports = await ctx.db
       .query('users')
@@ -742,6 +767,8 @@ export const completeProgram = mutation({
         tasksCancelled,
         leavesRejected,
         approvedFutureLeaves,
+        biometricCleared,
+        biometricConsentsWithdrawn,
         forced: args.force === true,
       }),
       createdAt: now,
@@ -774,6 +801,8 @@ export const completeProgram = mutation({
       tasksCancelled,
       leavesRejected,
       approvedFutureLeaves,
+      biometricCleared,
+      biometricConsentsWithdrawn,
     };
   },
 });

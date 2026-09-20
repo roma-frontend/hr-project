@@ -37,14 +37,14 @@ vendor register in `docs/soc2-type2-readiness.md` §2.4 — all eight are live d
 ## Change process
 
 1. Adding or replacing a subprocessor requires a 30-day notice to customers (`SUBPROCESSOR_CHANGE_NOTICE_DAYS`).
-2. Collect the vendor's SOC 2 / ISO report and record the report date
-   (see `docs/soc2-type2-readiness.md` §2.4 — **still open**: the reports are published by
-   all eight vendors but have not been collected into a vendor file).
+2. Collect the vendor's SOC 2 / ISO report and record the report date — and the
+   signed DPA. Tracked per vendor in `docs/vendor-register.md` (**still open**: the
+   reports are published by all vendors but none has been collected into a file).
 3. Update `src/lib/subprocessors.ts` — the public page and the DPA annex follow from it.
 
 ## Open items
 
-- Vendor SOC 2/ISO reports collected and dated (not yet done).
+- Vendor SOC 2/ISO reports and DPAs collected and dated — see `docs/vendor-register.md` (not yet done).
 - Regions for Cloudinary, Resend and Stripe confirmed in writing for this deployment
   (currently the vendors' published defaults).
 - A data residency statement for customers who require processing confined to Armenia or

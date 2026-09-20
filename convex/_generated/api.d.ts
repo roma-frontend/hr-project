@@ -107,6 +107,7 @@ import type * as lib_appErrors from "../lib/appErrors.js";
 import type * as lib_attritionScoring from "../lib/attritionScoring.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_benefitEligibility from "../lib/benefitEligibility.js";
+import type * as lib_biometricConsent from "../lib/biometricConsent.js";
 import type * as lib_capabilities from "../lib/capabilities.js";
 import type * as lib_careers from "../lib/careers.js";
 import type * as lib_date from "../lib/date.js";
@@ -449,6 +450,7 @@ declare const fullApi: ApiFromModules<{
   "lib/attritionScoring": typeof lib_attritionScoring;
   "lib/auth": typeof lib_auth;
   "lib/benefitEligibility": typeof lib_benefitEligibility;
+  "lib/biometricConsent": typeof lib_biometricConsent;
   "lib/capabilities": typeof lib_capabilities;
   "lib/careers": typeof lib_careers;
   "lib/date": typeof lib_date;

@@ -1,4 +1,10 @@
 {
+  "faceRegistration": {
+    "consentTitle": "Consent to facial data processing",
+    "consentBody": "I agree to the processing of my facial data (a numeric face descriptor and the photo taken now) for the sole purpose of logging in to this account. I understand this is biometric data, that it is stored with my employee record and deleted when I remove Face ID or leave the organization.",
+    "consentWithdraw": "You can withdraw this at any time by removing Face ID in Settings → Security.",
+    "consentRequired": "Please agree to biometric data processing before registering Face ID."
+  },
   "common": {
     "confirmDelete": "Confirm Deletion",
     "daysShort": "days",

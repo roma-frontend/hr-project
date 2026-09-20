@@ -1,0 +1,49 @@
+# CODEOWNERS — who is asked to review what.
+#
+# Branch protection on `main` should require a code-owner review for the paths
+# below. The sensitive set is here for a reason (SOC 2 CC8.1): a change to how
+# access, money or entitlements work must not merge on the author's own say-so.
+#
+# On a one-person project the owner is the founder, so what this actually buys
+# is (a) a recorded requirement that review happens, and (b) a working gate the
+# day a second engineer joins — not a pretend second reviewer today.
+
+# Everything, as the baseline.
+*                           @roma-frontend
+
+# Authentication, sessions, SSO and anything that decides *who you are*.
+/convex/auth.ts             @roma-frontend
+/convex/auth.config.ts      @roma-frontend
+/convex/auth_module/        @roma-frontend
+/convex/sso/                @roma-frontend
+/convex/lib/getAuthCaller.ts @roma-frontend
+/convex/lib/rbac.ts         @roma-frontend
+/src/app/api/auth/          @roma-frontend
+
+# Authorization and plan gating — what a caller is *allowed to do*.
+/convex/lib/entitlements.ts @roma-frontend
+/convex/lib/orgAccess.ts    @roma-frontend
+/convex/billing/            @roma-frontend
+/convex/superadmin/         @roma-frontend
+/src/lib/planGating.ts      @roma-frontend
+
+# Money: payouts, payroll, payment webhooks.
+/convex/payments.ts         @roma-frontend
+/convex/payroll/            @roma-frontend
+/convex/lib/paymentSignature.ts @roma-frontend
+/src/app/api/payroll/       @roma-frontend
+
+# Biometric data (special category) and its consent records.
+/convex/faceRecognition.ts  @roma-frontend
+/convex/lib/biometricConsent.ts @roma-frontend
+/src/app/api/auth/face-login/ @roma-frontend
+
+# The data model itself: a schema change can invalidate migrations.
+/convex/schema/             @roma-frontend
+/convex/schema.ts           @roma-frontend
+/convex/migrations.ts       @roma-frontend
+
+# CI, deploy and the guardrails that enforce everything above.
+/.github/workflows/         @roma-frontend
+/vercel.json                @roma-frontend
+/jest.config.js             @roma-frontend

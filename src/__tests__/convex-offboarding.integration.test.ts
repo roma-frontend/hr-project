@@ -667,6 +667,58 @@ describe('offboarding.completeProgram edge cases', () => {
     const report = await c.t.run(async (ctx) => await ctx.db.get(c.reportId));
     expect(report?.supervisorId).toBeUndefined();
   });
+
+  it('erases biometric data and withdraws consent when a departure completes', async () => {
+    const c = await seed();
+    const programId = await startOffboarding(c);
+    await clearEquipment(c, programId);
+
+    // The leaver had enrolled Face ID with consent before resigning.
+    await c.t.run(async (ctx) => {
+      await ctx.db.patch(c.employeeId, {
+        faceDescriptor: [0.1, 0.2],
+        faceImageUrl: 'https://cdn.example/face.jpg',
+        faceRegisteredAt: Date.now(),
+      });
+      await ctx.db.insert('consentRecords', {
+        organizationId: c.organizationId,
+        userId: c.employeeId,
+        consentType: 'biometric_face_id',
+        granted: true,
+        grantedAt: Date.now(),
+      } as never);
+    });
+
+    const result = await asAdmin(c).mutation(api.offboarding.completeProgram, { programId });
+
+    expect(result.biometricCleared).toBe(true);
+    expect(result.biometricConsentsWithdrawn).toBe(1);
+
+    const state = await c.t.run(async (ctx) => {
+      const user = await ctx.db.get(c.employeeId);
+      const consents = await ctx.db.query('consentRecords').collect();
+      return { user, consents };
+    });
+
+    // A deactivated account has no reason to hold a face — retention without
+    // purpose, and the register must not claim a live consent for it.
+    expect(state.user?.faceDescriptor).toBeUndefined();
+    expect(state.user?.faceImageUrl).toBeUndefined();
+    expect(state.user?.faceRegisteredAt).toBeUndefined();
+    expect(state.consents[0].granted).toBe(false);
+    expect(state.consents[0].withdrawnAt).toEqual(expect.any(Number));
+  });
+
+  it('reports no biometric work when the leaver never used Face ID', async () => {
+    const c = await seed();
+    const programId = await startOffboarding(c);
+    await clearEquipment(c, programId);
+
+    const result = await asAdmin(c).mutation(api.offboarding.completeProgram, { programId });
+
+    expect(result.biometricCleared).toBe(false);
+    expect(result.biometricConsentsWithdrawn).toBe(0);
+  });
 });
 
 describe('offboarding.listPrograms', () => {

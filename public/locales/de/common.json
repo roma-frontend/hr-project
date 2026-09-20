@@ -1,4 +1,10 @@
 {
+  "faceRegistration": {
+    "consentTitle": "Einwilligung zur Verarbeitung von Gesichtsdaten",
+    "consentBody": "Ich willige in die Verarbeitung meiner Gesichtsdaten (ein numerischer Gesichtsdeskriptor und das soeben aufgenommene Foto) ausschließlich zum Zweck der Anmeldung an diesem Konto ein. Mir ist bewusst, dass dies biometrische Daten sind, dass sie mit meinem Mitarbeitereintrag gespeichert und beim Entfernen von Face ID oder beim Austritt gelöscht werden.",
+    "consentWithdraw": "Sie können diese Einwilligung jederzeit widerrufen, indem Sie Face ID unter Einstellungen → Sicherheit entfernen.",
+    "consentRequired": "Bitte stimmen Sie der Verarbeitung biometrischer Daten zu, bevor Sie Face ID registrieren."
+  },
   "common": {
     "confirmDelete": "Löschen bestätigen",
     "daysShort": "Tage",

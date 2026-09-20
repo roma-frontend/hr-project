@@ -45,7 +45,7 @@
 - [ ] Written **information security policy** signed by the founder (1 page is fine; auditors want it dated and acknowledged by everyone).
 - [ ] Named **security officer** (can be the founder) with a documented role description.
 - [ ] Annual (first: initial) **security awareness training** — a recorded session + attendance list is acceptable at this size.
-- [ ] Documented **incident response plan** with severity levels — `emergencyIncidents` table + Superadmin Emergency page is the tooling; the _written process_ (who declares, who communicates, SLAs) is the gap.
+- [x] Documented **incident response plan** with severity levels — written in `docs/incident-response.md`: severity ladder, declaration, operator-tool levers, the 72h customer-notification commitment and emergency-change rules. Tooling: `emergencyIncidents` + Superadmin Emergency page.
 
 ### 2.2 Code of behavior `[~]`
 
@@ -59,7 +59,7 @@
 
 ### 2.4 Vendor/process discipline `[ ]`
 
-- [ ] Vendor register: Stripe, Resend, Cloudinary, LiveKit, Sentry, Upstash, Convex, Vercel — with SOC 2/ISO report on file (all eight publish them; collect the PDFs, note report dates).
+- [~] Vendor register: the list is written in `docs/vendor-register.md` (core + optional vendors, AI data flows, DPAs). **No report and no DPA has been collected into a file yet** — every row is a to-do.
 - [ ] Annual review of each vendor's report date.
 
 ### 2.5 Communication `[ ]`
@@ -107,7 +107,7 @@
 - [x] TLS everywhere; HSTS configured at platform level.
 - [x] Webhook signing: HMAC-SHA256, timing-safe compares (outbound `convex/webhooks/emit.ts`, inbound Lucky Carrot scheme, local PSP webhooks `convex/payments.ts`).
 - [x] SCIM tokens stored as SHA-256 hashes only.
-- [ ] Secret inventory: where does each secret live (Convex env, Vercel env, GitHub Actions secrets), who can read each store, rotation dates. **Rotate everything once before the window starts** so rotation is demonstrably possible.
+- [~] Secret inventory is written in `docs/secret-inventory.md` (three stores, who can read each, `NEXT_PUBLIC_*` exclusion explained, rotation procedure). **Rotation has never been recorded and everything still needs rotating once before the window starts** — the inventory does not substitute for doing it.
 
 ### 3.6 Physical `[x]`
 
@@ -121,8 +121,8 @@
 - [x] Preview deploys per PR on Vercel; production deploys only from `main`.
 - [x] Conventional Commits enforced (commitlint) → auditable history.
 - [x] DB changes are additive-first, versioned, with `convex/migrations.ts` infra.
-- [ ] **Written change policy** (1 page): what requires review (everything), who reviews (code owner), what requires a second approver (schema migrations, auth, billing, entitlements — suggest CODEOWNERS entries).
-- [ ] Enable **branch protection**: required reviews ≥1 on `main`, required CI checks (lint, type-check, unit-tests, build, e2e). If already on, screenshot it — that's evidence.
+- [x] **Written change policy** — `docs/change-management-policy.md`, with `.github/CODEOWNERS` routing review for auth, authorization/entitlements, billing, payments, payroll, biometrics, the schema and CI.
+- [ ] Enable **branch protection**: required reviews ≥1 on `main`, required CI checks (lint, type-check, unit-tests, build, e2e). `.github/CODEOWNERS` is in place, but a GitHub setting is not a file — verify it in repository settings and screenshot it; this cannot be proven from the repository.
 - [ ] Emergency-change procedure: what's allowed without review during an incident, and the mandatory retro-review within 24h (pair with incident plan §2.1).
 
 ---
@@ -140,10 +140,10 @@
 - [x] Cron failure paging: `recordCronRun` emails every superadmin when a job transitions into `error`, and re-alerts at most once a day while it keeps failing (`scheduledOps.lastAlertAt`). Without it a broken job's only trace was a console row nobody opens — how the deadline-reminder job threw daily and the backup jobs never ran at all.
 - [ ] **Not ours, and must be said out loud:** the `employeeBackups` table is not a database backup. It is per-employee JSON snapshots the product offers customers; there is no restore of the whole deployment under our control. Deployment-level recovery is Convex Cloud's backup feature (a vendor control to be cited under CC9.1 and tested in the restore drill below).
 - [x] Load testing exists (`k6` — `tests/performance/load-test.js`).
-- [ ] **Backup restore test** — quarterly, documented (restore to a staging Convex deployment, record row counts + time). An untested backup is not a control.
-- [ ] **Uptime monitoring** external to Vercel (e.g. BetterStack/Checkly free tier) probing `/` + `/api/health`; keep 90 days of status for the window.
-- [ ] Documented **RTO/RPO**: state them (e.g. RTO 4h, RPO 24h = nightly backup) and confirm backup cadence matches.
-- [ ] Alert routing: Sentry alerts → on-call person (email/Slack); define on-call for a small team as "the founder, checked daily" and write it down. Cron failures now email superadmins automatically; Sentry alert _rules_ (which issues page, at what threshold) are still unset — a DSN with no rule catches errors nobody reads.
+- [~] **Backup restore test** — procedure written in `docs/runbooks/backup-restore.md` (staging restore, row counts, elapsed time, snapshot timestamp). **Not performed once yet**; the first drill is what turns the vendor checkbox into a control.
+- [~] **Uptime monitoring** external to Vercel — specified in `docs/observability.md` (UptimeRobot, `/` + `/api/health` with a _200-status_ rule, since health answers 503 when Convex is down). Needs the account created and 90 days of history kept.
+- [x] Documented **RTO/RPO**: RTO 4h / RPO 24h in `docs/runbooks/backup-restore.md`, with the caveat attached — they hold only if the Convex plan includes automated backups. Verify the plan; the target is a claim until it matches.
+- [~] Alert routing: `docs/observability.md` defines on-call ("business-hours response, alerts checked at least daily") and the two Sentry rules; `scripts/sentry-alert-rules.mjs` provisions them idempotently. **The rules still need to be created** (run the script) — a DSN with no rule catches errors nobody reads.
 
 ---
 
@@ -152,9 +152,9 @@
 - [x] Rate limiting: Upstash Redis on sensitive endpoints.
 - [x] CSP/XSS headers, i18n-driven static content, React (no raw HTML injection surfaces except reviewed markdown).
 - [x] Local PSP webhook idempotency (HMAC verify + idempotent ledger `localPayments`).
-- [ ] **DPAs** signed with each sub-processor (Vercel, Convex, Upstash, Stripe, Resend, Cloudinary, LiveKit, Sentry, OpenAI/Google/Groq for AI features). Most accept click-through DPAs — save the PDFs.
-- [ ] **Biometric special-category handling**: face recognition descriptors are biometric data under GDPR _and_ Armenian law. Needed: explicit consent flow at enrollment, retention policy for descriptors, deletion on offboarding. This is the single biggest privacy exposure of the product — treat as P0.
-- [ ] **AI data-flow note**: document what employee data is sent to OpenAI/Google/Groq via the AI assistant, and check providers' no-training terms; `aiGovernance` module suggests guardrails exist — write the policy down.
+- [ ] **DPAs** signed with each sub-processor — tracked in `docs/vendor-register.md`. Most accept click-through DPAs; none has been saved yet.
+- [x] **Biometric special-category handling** — explicit consent at enrolment (checkbox gates the camera, and `registerFace` refuses without `consentGranted`), versioned consent records (`convex/lib/biometricConsent.ts`), self-enrolment-only authorization (`Cannot register Face ID for another user`), and descriptor + photo erased with consent withdrawn on both Face-ID removal and offboarding. Policy: `docs/legal/biometric-policy.md`. **Still open:** Cloudinary (US) hosts the enrolment photo — a residency gap for AM/EU-only customers.
+- [~] **AI data-flow note**: providers and what is sent are tabulated in `docs/vendor-register.md` §AI data flows. **The per-provider no-training terms are not yet confirmed** — that check is a to-do, not a checkbox.
 - [ ] Annual **penetration test** — one external test before Type II window closes; budget ~$3–8k (or start with CodeQL + npm audit + a bug-bounty-style private disclosure program and document findings).
 
 ---
@@ -241,9 +241,10 @@ native connectors) they cover §3, §4, §5, §6 monitoring almost fully.
 
 ## 9. Immediate P0 list (do these first)
 
-1. **Biometric consent + retention policy** (GDPR/AM law special category) — §6.
-2. **Incident response plan** written down — §2.1.
-3. **Branch protection + CODEOWNERS** for auth/billing/schema — §4.
-4. **Secret inventory + rotation** — §3.5.
-5. **External uptime monitoring + backup restore test** — §5.
-6. Vendor report collection + DPAs — §2.4/§6.
+1. ~~**Biometric consent + retention policy**~~ — done 2026-09-20 (§6, `docs/legal/biometric-policy.md`). Remaining sub-item: the Cloudinary photo residency.
+2. ~~**Incident response plan**~~ — done 2026-09-20 (`docs/incident-response.md`).
+3. **Branch protection** — CODEOWNERS is in place; enabling protection on `main` is a GitHub setting and still to do (§4).
+4. **Secret rotation** — inventory written; rotate everything once and record dates (§3.5, `docs/secret-inventory.md`).
+5. **Uptime monitor account + first backup restore drill** — both specified, neither performed (§5).
+6. **Vendor report collection + DPAs** — register written, PDFs not collected (§2.4/§6, `docs/vendor-register.md`).
+7. **Sentry alert rules** — run `scripts/sentry-alert-rules.mjs` (§5).
