@@ -11,8 +11,10 @@
  *   SENTRY_AUTH_TOKEN=… SENTRY_ORG=… SENTRY_PROJECT=… node scripts/sentry-alert-rules.mjs
  *   node scripts/sentry-alert-rules.mjs --strict   # exit 1 when unconfigured (CI)
  *
- * Requires a token with `project:write`. Any existing rule with the same name is
- * left untouched — edit it in the UI and this script will not fight you.
+ * Requires a token with `project:read` **and** `project:write` (the first GET
+ * lists existing rules to stay idempotent; `project:write` alone answers 403).
+ * Any existing rule with the same name is left untouched — edit it in the UI and
+ * this script will not fight you.
  */
 
 const API = 'https://sentry.io/api/0';
@@ -97,7 +99,15 @@ async function main() {
 
   const listResponse = await fetch(`${base}/rules/`, { headers });
   if (!listResponse.ok) {
-    throw new Error(`GET rules failed: ${listResponse.status} ${await listResponse.text()}`);
+    const detail = await listResponse.text();
+    if (listResponse.status === 403 || listResponse.status === 401) {
+      throw new Error(
+        `GET rules failed: ${listResponse.status} ${detail}\n` +
+          'The token is missing read access. This script needs both `project:read` and ' +
+          '`project:write` on the Sentry token — `project:write` alone cannot list rules.',
+      );
+    }
+    throw new Error(`GET rules failed: ${listResponse.status} ${detail}`);
   }
   const existing = new Set((await listResponse.json()).map((rule) => rule.name));
 

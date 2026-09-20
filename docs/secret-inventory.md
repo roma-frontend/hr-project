@@ -45,12 +45,12 @@ behind that prefix is the mistake this note exists to prevent.
 
 ### GitHub Actions
 
-| Key                                                 | Used for                              |
-| --------------------------------------------------- | ------------------------------------- |
-| `VERCEL_TOKEN`                                      | deploy                                |
-| `CONVEX_DEPLOY_KEY`, `CONVEX_DEPLOYMENT`            | `npx convex deploy`                   |
-| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | source maps + alert-rule provisioning |
-| `CODECOV_TOKEN`                                     | coverage upload                       |
+| Key                                                 | Used for                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `VERCEL_TOKEN`                                      | deploy                                                                                     |
+| `CONVEX_DEPLOY_KEY`, `CONVEX_DEPLOYMENT`            | `npx convex deploy`                                                                        |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | source maps + alert-rule provisioning (token needs `project:read` **and** `project:write`) |
+| `CODECOV_TOKEN`                                     | coverage upload                                                                            |
 
 ## Rotation
 

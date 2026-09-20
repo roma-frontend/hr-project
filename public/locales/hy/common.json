@@ -3163,18 +3163,18 @@
     }
   },
   "employeeHover": {
-    "viewProfile": "Դիտօրել պուձուլ"
+    "viewProfile": "Դիտել պրոֆիլը"
   },
   "settings": {
     "meetingRooms": {
-      "tab": "Խores",
-      "tabDesc": "Խores",
-      "title": "Օdelays",
-      "description": "Կdelays",
-      "leadTime": "Օdelays",
+      "tab": "Հանդիպումների սենյակներ",
+      "tabDesc": "Հանդիպումների սենյակների կարգավորումներ",
+      "title": "Հանդիպումների սենյակների կարգավորումներ",
+      "description": "Կարգավորեք հանդիպումների սենյակների կարգավորումները",
+      "leadTime": "Նախազգուշացման ժամանակը",
       "leadTimeHint": "Մասնակիցները ծանուցում կստանան հանդիպումից {{minutes}} րոպե առաջ։",
-      "leadTimeSaved": "Խdelays",
-      "leadTimeError": "Խdelays"
+      "leadTimeSaved": "Նախազգուշացման ժամանակը պահպանվել է",
+      "leadTimeError": "Նախազգուշացման ժամանակի սխալ"
     }
   },
   "employeeSheet": {

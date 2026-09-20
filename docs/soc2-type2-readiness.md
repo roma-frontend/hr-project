@@ -122,8 +122,8 @@
 - [x] Conventional Commits enforced (commitlint) → auditable history.
 - [x] DB changes are additive-first, versioned, with `convex/migrations.ts` infra.
 - [x] **Written change policy** — `docs/change-management-policy.md`, with `.github/CODEOWNERS` routing review for auth, authorization/entitlements, billing, payments, payroll, biometrics, the schema and CI.
-- [ ] Enable **branch protection**: required reviews ≥1 on `main`, required CI checks (lint, type-check, unit-tests, build, e2e). `.github/CODEOWNERS` is in place, but a GitHub setting is not a file — verify it in repository settings and screenshot it; this cannot be proven from the repository.
-- [ ] Emergency-change procedure: what's allowed without review during an incident, and the mandatory retro-review within 24h (pair with incident plan §2.1).
+- [x] **Branch protection** on `main` — enabled 2026-09-20 and confirmed through the API, not assumed: 1 required approving review with **code-owner review**, the six CI checks (Lint strict, Type Check, Unit Tests, Build, E2E Tests, Security Audit) required and up to date, force-pushes and branch deletion blocked. **`enforce_admins` is off**, so the sole maintainer can still push straight to `main` (as the 2026-09-20 commit did) — the gate binds the next contributor, not today's admin; turn it on when a second engineer joins. Keep a screenshot of the settings page as the artifact.
+- [x] Emergency-change procedure: `docs/change-management-policy.md` §"Emergency changes" — smallest safe change, retroactive review within 24h, recorded in the incident log (`emergencyIncidents`); referenced from `docs/incident-response.md`.
 
 ---
 
@@ -243,7 +243,7 @@ native connectors) they cover §3, §4, §5, §6 monitoring almost fully.
 
 1. ~~**Biometric consent + retention policy**~~ — done 2026-09-20 (§6, `docs/legal/biometric-policy.md`). Remaining sub-item: the Cloudinary photo residency.
 2. ~~**Incident response plan**~~ — done 2026-09-20 (`docs/incident-response.md`).
-3. **Branch protection** — CODEOWNERS is in place; enabling protection on `main` is a GitHub setting and still to do (§4).
+3. ~~**Branch protection**~~ — enabled 2026-09-20: 1 required review, code-owner reviews, the six CI checks, force-push/deletion blocked (§4). Only `enforce_admins` is off; flip it when a second maintainer exists.
 4. **Secret rotation** — inventory written; rotate everything once and record dates (§3.5, `docs/secret-inventory.md`).
 5. **Uptime monitor account + first backup restore drill** — both specified, neither performed (§5).
 6. **Vendor report collection + DPAs** — register written, PDFs not collected (§2.4/§6, `docs/vendor-register.md`).

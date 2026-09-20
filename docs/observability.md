@@ -38,6 +38,12 @@ pick one:
 SENTRY_AUTH_TOKEN=… SENTRY_ORG=… SENTRY_PROJECT=… npm run sentry:rules
 ```
 
+The token needs **both** `project:read` and `project:write`. The script lists
+rules first (to stay idempotent) and `project:write` on its own answers **403**
+on that listing — so a write-only token makes the command fail before it can
+create anything. The DSN being live is not the same as the rules existing: check
+`checks.errorTracking` at `/api/health` for the DSN, and the Sentry UI for the rules.
+
 (`npm run sentry:rules -- --strict` exits 1 when unconfigured, for CI.)
 
 It is idempotent: an existing rule with the same name is left alone. Run it
