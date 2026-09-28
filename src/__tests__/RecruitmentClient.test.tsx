@@ -62,6 +62,7 @@ jest.mock('@/convex/_generated/api', () => ({
       listScreeningResponses: { _name: 'listScreeningResponses' },
       sendHrReply: { _name: 'sendHrReply' },
     },
+    staffam: { exportVacancyToStaffAm: { _name: 'exportVacancyToStaffAm' } },
   },
 }));
 
@@ -119,6 +120,20 @@ jest.mock('@/components/ui/WizardDraftNotice', () => ({
 
 jest.mock('@/hooks/useMainRef', () => ({
   useMainRef: () => ({ current: null }),
+}));
+
+jest.mock('@/hooks/useDraftResume', () => ({
+  useDraftResume: () => ({
+    available: false,
+    step: 0,
+    savedAt: null,
+    dismiss: jest.fn(),
+    discard: jest.fn(),
+  }),
+}));
+
+jest.mock('@/components/ui/DraftResumeBar', () => ({
+  DraftResumeBar: () => null,
 }));
 
 jest.mock('@/hooks/useSelectedOrganization', () => ({
@@ -237,6 +252,7 @@ jest.mock('lucide-react', () => {
     'ChevronRight',
     'ChevronLeft',
     'CheckCircle',
+    'CheckCircle2',
     'Check',
     'XCircle',
     'Calendar',
@@ -247,11 +263,18 @@ jest.mock('lucide-react', () => {
     'MapPin',
     'Clock',
     'FileText',
+    'FileClock',
     'UserPlus',
     'TrendingUp',
     'Pencil',
     'Trash2',
     'Sparkles',
+    'MessageCircle',
+    'Send',
+    'User',
+    'ExternalLink',
+    'Globe',
+    'X',
   ];
   const mocks: Record<string, any> = {};
   for (const name of icons) {

@@ -342,6 +342,12 @@ export const CRON_REGISTRY: Array<{
       'Deletes employee snapshots past their expiry so the 48h retention window is true rather than only advertised.',
     schedule: 'hourly',
   },
+  {
+    jobKey: 'scheduled-reports-sweep',
+    label: 'Scheduled reports sweep',
+    description: 'Checks due scheduled email reports and delivers them to their recipients.',
+    schedule: 'hourly',
+  },
 ];
 
 export const listScheduledOps = query({
