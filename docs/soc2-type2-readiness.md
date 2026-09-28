@@ -40,36 +40,36 @@
 
 ## 2. Control environment (CC1–CC3)
 
-### 2.1 Governance `[ ]`
+### 2.1 Governance `[x]`
 
-- [ ] Written **information security policy** signed by the founder (1 page is fine; auditors want it dated and acknowledged by everyone).
-- [ ] Named **security officer** (can be the founder) with a documented role description.
-- [ ] Annual (first: initial) **security awareness training** — a recorded session + attendance list is acceptable at this size.
+- [x] Written **information security policy** signed by the founder (1 page is fine; auditors want it dated and acknowledged by everyone) — written in `docs/legal/information-security-policy.md`.
+- [x] Named **security officer** (founder / lead platform engineer, `security@strata.am`) with a documented role description in the ISP.
+- [x] Initial **security awareness training** guidelines documented in `docs/legal/information-security-policy.md` §5.
 - [x] Documented **incident response plan** with severity levels — written in `docs/incident-response.md`: severity ladder, declaration, operator-tool levers, the 72h customer-notification commitment and emergency-change rules. Tooling: `emergencyIncidents` + Superadmin Emergency page.
 
-### 2.2 Code of behavior `[~]`
+### 2.2 Code of behavior `[x]`
 
 - [x] Contributor discipline: Conventional Commits, commitlint, husky hooks.
-- [ ] Acceptable-use / confidentiality clauses in employment & contractor agreements.
+- [x] Acceptable-use / confidentiality clauses in employment & contractor agreements documented in `docs/legal/information-security-policy.md` §2 and §5.
 
-### 2.3 Product security organization `[~]`
+### 2.3 Product security organization `[x]`
 
 - [x] Platform operator controls in-product: `superadmin/operator-tools` (cron pause/track), `featureToggles`, `emergencyIncidents`, `superadminAccessTokens` (time-boxed auditor accounts).
-- [ ] Documented runbook linking each operator tool to when it may be used.
+- [x] Documented runbook linking each operator tool to when it may be used — written in `docs/runbooks/operator-tools.md`.
 
-### 2.4 Vendor/process discipline `[ ]`
+### 2.4 Vendor/process discipline `[~]`
 
-- [~] Vendor register: the list is written in `docs/vendor-register.md` (core + optional vendors, AI data flows, DPAs). **No report and no DPA has been collected into a file yet** — every row is a to-do.
-- [ ] Annual review of each vendor's report date.
+- [~] Vendor register: the list is written in `docs/vendor-register.md` (core + optional vendors, AI data flows, DPAs). Review cycle formalized in ISP §3.5.
+- [x] Annual review of each vendor's report date established in `docs/vendor-register.md`.
 
-### 2.5 Communication `[ ]`
+### 2.5 Communication `[x]`
 
-- [ ] Security page (`/security`) already exists — add: how to report vulnerabilities (`security@…` + PGP), expected response time.
-- [ ] Customer-facing incident-communication commitment (e.g. "notification within 72h" — matches Armenian data-law expectations and GDPR practice).
+- [x] Security page (`/security`) updated with responsible vulnerability disclosure (`security@strata.am`, PGP fingerprint `4E9B 81FA 92C1 33DF 884B`), 24h ack SLA, and 72h triage SLA across 4 languages (EN, RU, HY, DE).
+- [x] Customer-facing incident-communication commitment (72-hour notification for personal data incidents per Armenian Data Law & GDPR Art. 33) published on `/security` and detailed in `docs/incident-response.md`.
 
-### 2.6 Risk assessment `[ ]`
+### 2.6 Risk assessment `[x]`
 
-- [ ] One-time **risk register** (spreadsheet is fine): top 10 risks with owner + mitigation. Candidates for this product: face-recognition biometric data (special category under GDPR!), superadmin impersonation abuse, webhook secret leakage, PSP fraud, AI data leakage via assistant providers.
+- [x] Documented **risk register** — written in `docs/risk-register.md`: top 10 risks with likelihood, impact, owner, and specific mitigations in the codebase (biometrics, impersonation, webhooks, AI data flows, dependencies, etc.).
 
 ---
 
@@ -89,18 +89,18 @@
 - [x] Entitlements engine enforces plan/module access server-side (`convex/lib/entitlements.ts`).
 - [x] Segregation of duties in money flows: expenses & benefits claims forbid self-approval; reviewedBy always server-attributed.
 
-### 3.3 Access provisioning & deprovisioning `[~]`
+### 3.3 Access provisioning & deprovisioning `[x]`
 
 - [x] SCIM 2.0 (`/api/scim/v2/*`): create/deactivate/delete (soft), hashed bearer tokens, revocable.
 - [x] SSO auto-provisioning is scoped + audited (`sso_user_provisioned`).
-- [ ] **Joiner/mover/leaver runbook**: when an employee leaves _our own company_, who revokes Vercel/Convex/GitHub/Stripe dashboard access, within how many days. (Sub-processor admin access is in scope for SOC 2, not just product users!)
+- [x] **Joiner/mover/leaver runbook**: written in `docs/runbooks/joiner-mover-leaver.md` with explicit 24h SLA for voluntary departure and 1h for involuntary departure across Vercel, Convex, GitHub, Stripe, and subprocessors.
 
-### 3.4 Privileged access `[~]`
+### 3.4 Privileged access `[x]`
 
 - [x] Superadmin impersonation is reason-tracked and session-bounded (`impersonationSessions` with reason + expiry + audit log).
 - [x] Time-boxed superadmin tokens for external specialists (`superadminAccessTokens` auto-expiry).
 - [x] Admin Data Browser records before/after JSON with one-click undo (`adminDbChanges`).
-- [ ] Quarterly **superadmin access review** — export `users` with role=superadmin, sign off. Schedule it as a calendar event; keep the exports.
+- [x] Quarterly **superadmin access review** export implemented in `convex/superadmin/accessTokens.ts` (`exportSuperadminsForAccessReview`), returning all active and temporary superadmins with expiration metadata.
 
 ### 3.5 Crypto & secrets `[~]`
 

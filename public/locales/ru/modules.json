@@ -1432,7 +1432,11 @@
       "status": "Статус скрининга",
       "strengths": "Сильные стороны"
     },
-    "candidatesLabel": "кандидатов"
+    "candidatesLabel": "кандидатов",
+    "exportToStaffAm": "Опубликовать на Staff.am",
+    "publishingStaffAm": "Публикация...",
+    "staffAmPublished": "Вакансия успешно опубликована на Staff.am!",
+    "staffAmExportFailed": "Не удалось опубликовать вакансию на Staff.am"
   },
   "careers": {
     "loading": "",

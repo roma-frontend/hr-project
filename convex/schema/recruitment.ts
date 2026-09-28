@@ -34,6 +34,21 @@ export const recruitment = {
     createdAt: v.number(),
     updatedAt: v.number(),
     closedAt: v.optional(v.number()),
+    /** Staff.am integration state — set when vacancy is exported to Staff.am */
+    staffAm: v.optional(
+      v.object({
+        jobId: v.optional(v.string()),
+        status: v.union(
+          v.literal('draft'),
+          v.literal('published'),
+          v.literal('expired'),
+          v.literal('error'),
+        ),
+        url: v.optional(v.string()),
+        lastSyncedAt: v.number(),
+        lastError: v.optional(v.string()),
+      }),
+    ),
   })
     .index('by_org', ['organizationId'])
     .index('by_org_status', ['organizationId', 'status'])

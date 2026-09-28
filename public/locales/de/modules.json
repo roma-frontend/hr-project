@@ -1408,7 +1408,11 @@
       "status": "Screening-Status",
       "strengths": "Stärken"
     },
-    "candidatesLabel": "Kandidaten"
+    "candidatesLabel": "Kandidaten",
+    "exportToStaffAm": "Auf Staff.am veröffentlichen",
+    "publishingStaffAm": "Veröffentlichung...",
+    "staffAmPublished": "Stellenanzeige erfolgreich auf Staff.am veröffentlicht!",
+    "staffAmExportFailed": "Veröffentlichung auf Staff.am fehlgeschlagen"
   },
   "careers": {
     "loading": "",

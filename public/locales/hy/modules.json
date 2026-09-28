@@ -1408,7 +1408,11 @@
       "status": "Սկրինինգի կարգավիճակ",
       "strengths": "Ուժեղ կողմեր"
     },
-    "candidatesLabel": "թեկնածու"
+    "candidatesLabel": "թեկնածու",
+    "exportToStaffAm": "Հրապարակել Staff.am-ում",
+    "publishingStaffAm": "Հրապարակվում է...",
+    "staffAmPublished": "Թափուր աշխատատեղը հաջողությամբ հրապարակվեց Staff.am-ում:",
+    "staffAmExportFailed": "Չհաջողվեց հրապարակել Staff.am-ում"
   },
   "careers": {
     "loading": "Բեռնվում է...",

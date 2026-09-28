@@ -33,6 +33,8 @@ import {
   MessageCircle,
   Send,
   User,
+  ExternalLink,
+  Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useAction } from '@/lib/convex-typed';
@@ -1333,6 +1335,7 @@ export default function RecruitmentClient() {
     applicationId: Id<'applications'>;
     interviewType?: 'phone' | 'video' | 'onsite' | 'technical' | 'hr';
   } | null>(null);
+  const [exportingStaffAmId, setExportingStaffAmId] = useState<Id<'vacancies'> | null>(null);
 
   const isAdmin = userRole === 'admin' || userRole === 'superadmin' || userRole === 'supervisor';
 
@@ -1353,6 +1356,26 @@ export default function RecruitmentClient() {
 
   const deleteVacancyMut = useMutation(api.recruitment.deleteVacancy);
   const deleteCandidateMainMut = useMutation(api.recruitment.deleteCandidate);
+  const exportToStaffAm = useAction(api.staffam.exportVacancyToStaffAm);
+
+  const handleExportStaffAm = async (vacId: Id<'vacancies'>) => {
+    setExportingStaffAmId(vacId);
+    try {
+      const res = await exportToStaffAm({ vacancyId: vacId });
+      if (res.success) {
+        toast.success(t('recruitment.staffAmPublished', 'Vacancy published to Staff.am!'));
+        if (res.url) {
+          window.open(res.url, '_blank');
+        }
+      } else {
+        toast.error(res.error || t('recruitment.staffAmExportFailed', 'Staff.am export failed'));
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setExportingStaffAmId(null);
+    }
+  };
 
   if (!user || !organizationId) return <ShieldLoader />;
 
@@ -1573,6 +1596,22 @@ export default function RecruitmentClient() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        {isAdmin && vac.status === 'open' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={exportingStaffAmId === vac._id}
+                            title={t('recruitment.exportToStaffAm', 'Publish to Staff.am')}
+                            onClick={() => handleExportStaffAm(vac._id)}
+                          >
+                            <Globe className="h-4 w-4 mr-1 text-primary" />
+                            <span className="hidden sm:inline">
+                              {exportingStaffAmId === vac._id
+                                ? t('recruitment.publishingStaffAm', 'Publishing...')
+                                : 'Staff.am'}
+                            </span>
+                          </Button>
+                        )}
                         {isAdmin && vac.status === 'open' && (
                           <Button
                             size="sm"

@@ -1408,7 +1408,11 @@
       "status": "Screening Status",
       "strengths": "Strengths"
     },
-    "candidatesLabel": "candidates"
+    "candidatesLabel": "candidates",
+    "exportToStaffAm": "Publish to Staff.am",
+    "publishingStaffAm": "Publishing...",
+    "staffAmPublished": "Vacancy published to Staff.am successfully!",
+    "staffAmExportFailed": "Failed to publish vacancy to Staff.am"
   },
   "careers": {
     "loading": "Loading...",

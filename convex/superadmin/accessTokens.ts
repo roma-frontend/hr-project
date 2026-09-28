@@ -213,3 +213,61 @@ export async function checkTempAccessStillValid(
   await ctx.db.patch(token._id, { lastUsedAt: now });
   return { valid: true };
 }
+
+/**
+ * Quarterly Superadmin Access Review export (SOC 2 CC6.3 evidence).
+ *
+ * Restricts to callers with role='superadmin'.
+ * Returns all users with role='superadmin', along with any
+ * active temporary access tokens and metadata needed to sign off on privileged access.
+ */
+export const exportSuperadminsForAccessReview = query({
+  args: {},
+  handler: async (ctx) => {
+    const caller = await requireAuthUserOrThrow(ctx);
+    if (caller.role !== 'superadmin') throw new Error('Unauthorized');
+
+    const superadmins = await ctx.db
+      .query('users')
+      .withIndex('by_role', (q) => q.eq('role', 'superadmin'))
+      .collect();
+
+    const tempTokens = await ctx.db.query('superadminAccessTokens').collect();
+
+    const now = Date.now();
+    const tokenMap = new Map(tempTokens.map((t) => [t.tempUserId, t]));
+
+    return {
+      exportedAt: new Date(now).toISOString(),
+      exportedBy: {
+        userId: caller._id,
+        email: caller.email,
+        name: caller.name,
+      },
+      count: superadmins.length,
+      superadmins: superadmins.map((u) => {
+        const token = tokenMap.get(u._id);
+        return {
+          userId: u._id,
+          name: u.name,
+          email: u.email,
+          organizationId: u.organizationId,
+          isActive: u.isActive,
+          createdAt: u.createdAt,
+          lastLogin: u.lastLogin,
+          isTemporary: Boolean(token),
+          temporaryDetails: token
+            ? {
+                tokenId: token._id,
+                createdBy: token.createdBy,
+                reason: token.reason,
+                expiresAt: token.expiresAt,
+                isRevoked: token.isRevoked,
+                isExpired: now > token.expiresAt,
+              }
+            : null,
+        };
+      }),
+    };
+  },
+});

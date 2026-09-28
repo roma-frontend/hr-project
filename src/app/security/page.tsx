@@ -200,12 +200,27 @@ export default async function SecurityPage() {
           <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--landing-text-primary)' }}>
             {t('security.disclosureTitle')}
           </h2>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--landing-text-muted)' }}>
+          <p
+            className="text-sm leading-relaxed mb-4"
+            style={{ color: 'var(--landing-text-muted)' }}
+          >
             {t('security.disclosureBody')}{' '}
             <Link href="/contact" className="underline" style={{ color: 'var(--primary)' }}>
               {t('security.disclosureLink')}
             </Link>
           </p>
+
+          <div className="pt-3 border-t" style={{ borderColor: 'var(--landing-card-border)' }}>
+            <h3
+              className="text-sm font-semibold mb-1"
+              style={{ color: 'var(--landing-text-primary)' }}
+            >
+              {t('security.incidentCommitmentTitle')}
+            </h3>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--landing-text-muted)' }}>
+              {t('security.incidentCommitmentBody')}
+            </p>
+          </div>
         </div>
 
         {/*
