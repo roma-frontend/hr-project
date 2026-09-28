@@ -1797,7 +1797,34 @@
     "failedToUpload": "Չհաջողվեց վերբեռնել {{name}}"
   },
   "reports": {
-    "exportCsv": "Արտահանել CSV"
+    "exportCsv": "Արտահանել CSV",
+    "scheduledReports": "Ավտոմատացված պլանավորված զեկույցներ",
+    "scheduledReportsDesc": "Ստացեք էլ.փոստի ամփոփագրեր և ցուցանիշներ ավտոմատ կերպով Resend-ի միջոցով",
+    "newSchedule": "Նոր ժամանակացույց",
+    "noScheduledReports": "Դեռևս պլանավորված զեկույցներ չկան:",
+    "createFirstSchedule": "Կարգավորեք պարբերական զեկույց՝ ղեկավարներին տեղեկացված պահելու համար:",
+    "nameRequired": "Զեկույցի անվանումը պարտադիր է",
+    "recipientRequired": "Առնվազն մեկ ստացողի էլ.փոստ պարտադիր է",
+    "scheduleCreated": "Զեկույցի ժամանակացույցը հաջողությամբ ստեղծվեց",
+    "recipientsCount": "ստացող",
+    "createReportSchedule": "Ստեղծել պլանավորված զեկույց",
+    "reportName": "Զեկույցի անվանում",
+    "type": "Զեկույցի տեսակ",
+    "frequency": "Հաճախականություն",
+    "dayOfWeek": "Շաբաթվա օր",
+    "timeUTC": "Առաքման ժամ (UTC)",
+    "recipients": "Ստացողներ (Email)",
+    "types": {
+      "leaves_summary": "Արձակուրդների ամփոփում",
+      "headcount_analytics": "Աշխատակիցների վերլուծություն",
+      "attendance_digest": "Հաճախելիության ամփոփագիր",
+      "tasks_overview": "Առաջադրանքների ակնարկ"
+    },
+    "frequencies": {
+      "daily": "Օրական",
+      "weekly": "Շաբաթական",
+      "monthly": "Ամսական"
+    }
   },
   "profile": {
     "failedToSave": "Չհաջողվեց պահպանել",

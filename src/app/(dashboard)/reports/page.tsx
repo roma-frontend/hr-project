@@ -35,6 +35,7 @@ import { format } from 'date-fns';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
 import { ShieldLoader } from '@/components/ui/ShieldLoader';
+import { ScheduledReportsSection } from '@/components/reports/ScheduledReportsSection';
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -641,6 +642,19 @@ export default function ReportsPage() {
               </TabsContent>
             </Tabs>
           </motion.div>
+
+          {/* Automated Scheduled Reports Section */}
+          {(selectedOrgId || user?.organizationId) && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8"
+            >
+              <ScheduledReportsSection
+                organizationId={(selectedOrgId || user?.organizationId) as Id<'organizations'>}
+              />
+            </motion.div>
+          )}
         </motion.div>
       </WidgetErrorBoundary>
     </PlanGate>

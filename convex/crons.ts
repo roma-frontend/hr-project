@@ -197,4 +197,9 @@ crons.interval('cleanup-expired-backups', { hours: 1 }, dispatch, {
   jobKey: 'cleanup-expired-backups',
 });
 
+// Scheduled email reports sweep — hourly, checks due reports and delivers to recipients.
+crons.interval('scheduled-reports-sweep', { hours: 1 }, dispatch, {
+  jobKey: 'scheduled-reports-sweep',
+});
+
 export default crons;

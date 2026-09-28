@@ -254,7 +254,7 @@ export const exportSuperadminsForAccessReview = query({
           organizationId: u.organizationId,
           isActive: u.isActive,
           createdAt: u.createdAt,
-          lastLogin: u.lastLogin,
+          lastLogin: u.lastLoginAt,
           isTemporary: Boolean(token),
           temporaryDetails: token
             ? {

@@ -1815,7 +1815,34 @@
     "failedToUpload": "Не удалось загрузить {{name}}"
   },
   "reports": {
-    "exportCsv": "Экспорт CSV"
+    "exportCsv": "Экспорт CSV",
+    "scheduledReports": "Автоматические запланированные отчеты",
+    "scheduledReportsDesc": "Получайте регулярные сводки и метрики на email через Resend",
+    "newSchedule": "Новое расписание",
+    "noScheduledReports": "Запланированных отчетов пока нет.",
+    "createFirstSchedule": "Настройте периодический отчет, чтобы руководители всегда были в курсе.",
+    "nameRequired": "Название отчета обязательно",
+    "recipientRequired": "Требуется как минимум один email получателя",
+    "scheduleCreated": "Расписание отчета успешно создано",
+    "recipientsCount": "получател(ей)",
+    "createReportSchedule": "Создать запланированный отчет",
+    "reportName": "Название отчета",
+    "type": "Тип отчета",
+    "frequency": "Периодичность",
+    "dayOfWeek": "День недели",
+    "timeUTC": "Время отправки (UTC)",
+    "recipients": "Получатели (Email)",
+    "types": {
+      "leaves_summary": "Сводка по отпускам",
+      "headcount_analytics": "Аналитика численности",
+      "attendance_digest": "Дайджест посещаемости",
+      "tasks_overview": "Обзор задач"
+    },
+    "frequencies": {
+      "daily": "Ежедневно",
+      "weekly": "Еженедельно",
+      "monthly": "Ежемесячно"
+    }
   },
   "profile": {
     "failedToSave": "Не удалось сохранить профиль",

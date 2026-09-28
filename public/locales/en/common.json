@@ -1797,7 +1797,34 @@
     "failedToUpload": "Failed to upload {{name}}"
   },
   "reports": {
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "scheduledReports": "Automated Scheduled Reports",
+    "scheduledReportsDesc": "Receive email digests and metrics automatically via Resend",
+    "newSchedule": "New Schedule",
+    "noScheduledReports": "No automated reports scheduled yet.",
+    "createFirstSchedule": "Configure a recurring report to keep managers and executives in the loop.",
+    "nameRequired": "Report name is required",
+    "recipientRequired": "At least one recipient email is required",
+    "scheduleCreated": "Scheduled report created successfully",
+    "recipientsCount": "recipient(s)",
+    "createReportSchedule": "Create Scheduled Report",
+    "reportName": "Report Name",
+    "type": "Report Type",
+    "frequency": "Frequency",
+    "dayOfWeek": "Day of Week",
+    "timeUTC": "Delivery Time (UTC)",
+    "recipients": "Recipients (Email)",
+    "types": {
+      "leaves_summary": "Leaves Summary",
+      "headcount_analytics": "Headcount Analytics",
+      "attendance_digest": "Attendance Digest",
+      "tasks_overview": "Tasks Overview"
+    },
+    "frequencies": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    }
   },
   "profile": {
     "failedToSave": "Failed to save profile",

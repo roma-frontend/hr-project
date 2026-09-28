@@ -69,6 +69,7 @@ import { benefits } from './benefits';
 import { apiKeys } from './apiKeys';
 import { inbound } from './inbound';
 import { email } from './email';
+import { scheduledReports } from './scheduledReports';
 
 export default defineSchema({
   ...organizations,
@@ -141,6 +142,7 @@ export default defineSchema({
   ...apiKeys,
   ...inbound,
   ...email,
+  ...scheduledReports,
 });
 
 export {

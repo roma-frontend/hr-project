@@ -513,6 +513,9 @@ export const dispatchCron = internalAction({
         case 'cleanup-expired-backups':
           await ctx.runMutation(internal.backups.cleanupExpiredBackupsInternal, {});
           break;
+        case 'scheduled-reports-sweep':
+          await ctx.runAction(internal.scheduledReports.sweepDueScheduledReports, {});
+          break;
         case 'operator-maintenance-sweep':
           await ctx.runAction(internal.superadmin.operatorToolsInternal.maintenanceSweep, {});
           break;

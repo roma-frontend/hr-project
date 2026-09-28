@@ -1797,7 +1797,34 @@
     "failedToUpload": "{{name}} konnte nicht hochgeladen werden"
   },
   "reports": {
-    "exportCsv": "CSV exportieren"
+    "exportCsv": "CSV exportieren",
+    "scheduledReports": "Automatisierte geplante Berichte",
+    "scheduledReportsDesc": "Erhalten Sie E-Mail-Zusammenfassungen und Kennzahlen automatisch über Resend",
+    "newSchedule": "Neuer Zeitplan",
+    "noScheduledReports": "Noch keine automatisierten Berichte geplant.",
+    "createFirstSchedule": "Konfigurieren Sie regelmäßige Berichte für Führungskräfte.",
+    "nameRequired": "Berichtsname ist erforderlich",
+    "recipientRequired": "Mindestens eine Empfänger-E-Mail ist erforderlich",
+    "scheduleCreated": "Berichtszeitplan erfolgreich erstellt",
+    "recipientsCount": "Empfänger",
+    "createReportSchedule": "Geplanten Bericht erstellen",
+    "reportName": "Berichtsname",
+    "type": "Berichtstyp",
+    "frequency": "Häufigkeit",
+    "dayOfWeek": "Wochentag",
+    "timeUTC": "Lieferzeit (UTC)",
+    "recipients": "Empfänger (E-Mail)",
+    "types": {
+      "leaves_summary": "Urlaubsübersicht",
+      "headcount_analytics": "Personalanalysen",
+      "attendance_digest": "Anwesenheits-Digest",
+      "tasks_overview": "Aufgabenübersicht"
+    },
+    "frequencies": {
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich"
+    }
   },
   "profile": {
     "failedToSave": "Profil konnte nicht gespeichert werden",
