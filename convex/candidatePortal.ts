@@ -161,7 +161,7 @@ export const generateToken = mutation({
   handler: async (ctx, args) => {
     const app = await ctx.db.get(args.applicationId);
     if (!app) throw new Error('Application not found');
-    if (ctx.auth?.getUserIdentity) {
+    if (typeof ctx.auth?.getUserIdentity === 'function') {
       const { getAuthCaller } = await import('./lib/getAuthCaller');
       const { isSuperadmin } = await import('./lib/auth');
       const caller = await getAuthCaller(ctx);
