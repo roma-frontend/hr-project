@@ -66,8 +66,33 @@
 
 ## Ход исправлений — текущий прогон (непрерывная сборка)
 
-- **Typecheck:** `npx tsc --noEmit -p tsconfig.verify.json` — EXIT:0. Фиксы: `convex/http.ts:564` (`listEmployees` теперь `{data,nextCursor}` — `data.length` → `list.length`), `convex/lib/taskAccess.ts` добавлен `assertCanReadTask`, `src/app/api/chat/context` `teamCalendar`/`userLeaves` unwrap (`{data,isCapped}`), `tsconfig.verify.json` — исключены `.next/**`.
-- **Build:** `npm run build` (фон) — `✓ Compiled successfully`, `Generating static pages (170/170)`, `bundle guardrails passed`. Typecheck часть build заняла 9.6 мин (filesystem cache compaction 17.8s).
+- **Typecheck:** `npx tsc --noEmit -p tsconfig.verify.json` — EXIT:0. Фиксы: `convex/http.ts:564` (`listEmployees` теперь `{data,nextCursor}` — `data.length` → `list.length`), `convex/lib/taskAccess.ts` добавлен `assertCanReadTask`, `src/app/api/chat/context` `teamCalendar`/`userLeaves` unwrap (`{data,isCapped}`), `tsconfig.verify.json` — исключены `.next/**`, `convex/candidatePortal.ts` `ctx.auth?.getUserIdentity` → `typeof ... === 'function'`.
+- **Build:** `npm run build` — `✓ Compiled successfully`, `Generating static pages (170/170)`, `bundle guardrails passed`. Typecheck часть build в локальном прогоне ~9.6 мин; CI `Type Check` отдельно (см. ниже).
+
+## CI — 30.09.2026 12:58 UTC (push `e724a7a9`)
+
+- **Type Check:** ❌ `error TS2774` в `convex/candidatePortal.ts:164` — исправлено коммитом `851c0073` (пуш `851c0073` ждет очереди).
+- **Security Audit:** ❌ `npm audit` — 7 NEW `high` (6× `brace-expansion` DoS + 1× `webpack-dev-middleware` path traversal) не в `audit-baseline.json`. Не связано с изменениями P0 — транзитивные зависимости.
+- **Unit Tests / Lint / CodeQL:** в процессе на момент фиксации отчета; локально `656/656` suites, `14232/14232` tests (node-xmllint воркер — pre-existing).
+
+## Закрытые задачи аудита (кодовые P0/P1 — фиксация)
+
+- **SEC-01..07:** `analytics` whitelist, `security` email↔userId, `backups` superadmin-only+expiry, `aiGovernance` `requireGovernanceAdmin`, `faceRecognition` rollback `throw→{error,blocked}`, `surveys` 12 ф-й.
+- **AUTH-WIDE:** ~50 функций: `users/mutations` 6, `users/auth` 2, `users/queries` 5, `tasks` 9, `admin` 4, `subscriptions` 4, `ai*` 5, `leaves` 1, `candidatePortal` 1.
+- **Bootstrap lifecycle:** `SUPERADMIN_EMAIL` только если нет superadmin (предотвращен capture).
+- **DATA-01:** `isCapped` в `analytics/surveys/compensation/backups/payroll`, `apiV1` курсор.
+- **Pricing:** `monthlyTotal` монотонен (устранение cliff 49×$8 vs 50×$7).
+- **Infra/P1:** `proxy.ts` `PROTECTED_PREFIXES` +6, `isBlocked` pre-check, `redis` fixed-window+warning, `sw.js` private-cache guard, `proxy.ts` CSP без wildcard, `taxRules` Russia `approximate:true`, `healthInsured` only Armenia.
+- **Tests/build:** `convex-auth-register` 9/9, `travel-allowance` 16/16, `proxy-middleware` 36/36, `users-queries` 65/65, `tasks.test` 60/60 — локально зеленые после фиксов.
+
+## Незакрытые задачи (осталось до Gate B)
+
+1. **`npm audit` baseline** — добавить `brace-expansion`/`webpack-dev-middleware` в `audit-baseline.json` с `reason` или `npm audit fix`.
+2. **`DATA-01` систематически** — 30+ `take(2000/8000)` в `learning/admin` без курсора (только `isCapped` warning).
+3. **Полный реестр** — ~350 public функций, проверено ~60; `billing/*`, `compliance`, часть `attendance`, `http.ts` webhooks без HMAC.
+4. **Юридические** — DPA/vendor register/residency/Biometrics DPIA/AI Act, `competitors.ts` source log, SOC2 `no` требует внешний юрист.
+5. **Инфраструктурные** — `UPSTASH_REDIS` в prod, `Sentry` DSN pin, backup restore drill, ротация секретов.
+6. **Продуктовые** — `SRC/bank` acceptance, `careers/succession/marketplace` completeness check.
 
 ## 1. Главный вывод
 
