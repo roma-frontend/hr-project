@@ -14,7 +14,14 @@ jest.mock('../../convex/_generated/server', () => ({
   internalAction: ({ handler, args }: any) => ({ handler, args }),
 }));
 
-jest.mock('../../convex/lib/getAuthCaller', () => ({ getAuthCaller: jest.fn() }));
+jest.mock('../../convex/lib/getAuthCaller', () => ({
+  getAuthCaller: jest.fn(async () => ({
+    _id: 'user-1',
+    role: 'employee',
+    organizationId: 'org-1',
+    email: 'user@example.com',
+  })),
+}));
 jest.mock('../../convex/lib/auth', () => ({
   isSuperadmin: jest.fn(),
   SUPERADMIN_EMAIL: 'boss@example.com',
@@ -97,6 +104,13 @@ describe('tasks deep coverage wave 2', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const ga = jest.requireMock('../../convex/lib/getAuthCaller') as any;
+    ga.getAuthCaller.mockResolvedValue({
+      _id: 'u1',
+      role: 'employee',
+      organizationId: 'org-1',
+      email: 'u1@example.com',
+    });
     jest.isolateModules(() => {
       const mod = require('../../convex/tasks');
       for (const [name, def] of Object.entries(mod)) {
@@ -104,6 +118,12 @@ describe('tasks deep coverage wave 2', () => {
           handlers[name] = (def as any).handler;
         }
       }
+    });
+    ga.getAuthCaller.mockResolvedValue({
+      _id: 'u1',
+      role: 'employee',
+      organizationId: 'org-1',
+      email: 'u1@example.com',
     });
   });
 

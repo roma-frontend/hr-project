@@ -109,8 +109,13 @@ export const evaluateLeaveRequest = query({
     leaveRequestId: v.id('leaveRequests'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+      return null;
     const leave = await ctx.db.get(args.leaveRequestId);
     if (!leave) return null;
+    if (!isSuperadmin(caller) && leave.organizationId !== caller.organizationId) return null;
 
     const user = await ctx.db.get(leave.userId);
     if (!user) return null;

@@ -384,6 +384,17 @@ export const getUsersByRole = query({
     ),
   },
   handler: async (ctx, { organizationId, role }) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (!isSuperadmin(caller) && organizationId && caller.organizationId !== organizationId)
+      return [];
+    if (
+      !isSuperadmin(caller) &&
+      !organizationId &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      return [];
     let users;
     if (organizationId) {
       users = await ctx.db
@@ -527,6 +538,8 @@ export const getAuditLogs = query({
 export const getEffectivePresenceStatus = query({
   args: { userId: v.id('users') },
   handler: async (ctx, { userId }) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const user = await ctx.db.get(userId);
     if (!user) throw new Error('User not found');
 
@@ -562,6 +575,9 @@ export const getEffectivePresenceStatus = query({
 export const getWebauthnCredentials = query({
   args: { userId: v.id('users') },
   handler: async (ctx, { userId }) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (caller._id !== userId && !isSuperadmin(caller) && caller.role !== 'admin') return [];
     return await ctx.db
       .query('webauthnCredentials')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -575,10 +591,14 @@ export const getWebauthnCredentials = query({
 export const getWebauthnCredential = query({
   args: { credentialId: v.string() },
   handler: async (ctx, { credentialId }) => {
-    return await ctx.db
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    const cred = await ctx.db
       .query('webauthnCredentials')
       .withIndex('by_credential_id', (q) => q.eq('credentialId', credentialId))
       .unique();
+    if (cred && cred.userId !== caller._id && !isSuperadmin(caller)) return null;
+    return cred;
   },
 });
 
@@ -588,6 +608,10 @@ export const getWebauthnCredential = query({
 export const checkFaceIdStatus = query({
   args: { email: v.string() },
   handler: async (ctx, { email }) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return { blocked: false, attempts: 0 };
+    if (!isSuperadmin(caller) && caller.email !== email.toLowerCase())
+      return { blocked: false, attempts: 0 };
     const user = await ctx.db
       .query('users')
       .withIndex('by_email', (q) => q.eq('email', email.toLowerCase()))

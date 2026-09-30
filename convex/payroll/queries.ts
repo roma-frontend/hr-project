@@ -57,12 +57,14 @@ export const getDashboardStats = query({
     ).length;
 
     const recentRuns = runs.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+    const isCapped = runs.length >= DEFAULT_LIST_CAP || records.length >= DEFAULT_LIST_CAP;
 
     return {
       totalGross,
       totalNet,
       totalDeductions,
       paidRuns,
+      isCapped,
       pendingRuns,
       totalRuns: runs.length,
       totalRecords: records.length,

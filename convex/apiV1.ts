@@ -94,28 +94,27 @@ export const listEmployees = internalQuery({
   args: {
     organizationId: v.id('organizations'),
     limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
     /** Only active employees — the common case for an integration. */
     activeOnly: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<EmployeeDto[]> => {
+  handler: async (ctx, args): Promise<{ data: EmployeeDto[]; nextCursor: string | null }> => {
     const take = clampLimit(args.limit);
-    // take() one extra than requested would be needed for a real cursor; this
-    // endpoint is offset-free by design, so the caller pages by raising `limit`
-    // or filters. A cursor is the next iteration.
-    const rows = await ctx.db
+    const result = await ctx.db
       .query('users')
       .withIndex('by_org_created', (q) => q.eq('organizationId', args.organizationId))
-      .take(Math.min(take + 20, MAX_LIMIT + 20));
+      .paginate({ numItems: take, cursor: args.cursor ?? null });
 
-    return (
-      rows
-        // The platform operator is not an employee of the tenant and must never
-        // appear in a customer's roster — the same rule every in-app list follows.
-        .filter((u) => u.role !== 'superadmin')
-        .filter((u) => (args.activeOnly ? u.isActive : true))
-        .slice(0, take)
-        .map(toEmployeeDto)
-    );
+    const filtered = result.page
+      .filter((u) => u.role !== 'superadmin')
+      .filter((u) => (args.activeOnly ? u.isActive : true))
+      .map(toEmployeeDto);
+
+    return {
+      data: filtered,
+      nextCursor: result.continueCursor || null,
+      isDone: result.isDone,
+    } as unknown as { data: EmployeeDto[]; nextCursor: string | null };
   },
 });
 

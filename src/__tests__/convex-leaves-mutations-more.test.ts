@@ -526,23 +526,24 @@ describe('requestLeaveCancellation — HR cancelling their own leave', () => {
 
 // ── markAllLeavesAsRead ──────────────────────────────────────────────────────
 describe('markAllLeavesAsRead extra branches', () => {
-  it('throws for a user without an organization who is not a superadmin email', async () => {
+  it('returns 0 for a user without an organization who is not a superadmin email', async () => {
     mockGetAuthCaller.mockResolvedValue(callerWithoutOrg('employee', USER_ID));
     mockIsSuperadminEmail.mockReturnValue(false);
+    mockIsSuperadmin.mockReturnValue(false);
     const { ctx, get } = makeCtx();
     // The requester row also has no organization.
     get.mockResolvedValueOnce(callerWithoutOrg('employee', USER_ID));
 
-    await expect(handlers.markAllLeavesAsRead(ctx, {})).rejects.toThrow(
-      'User does not belong to an organization',
-    );
+    const result = (await handlers.markAllLeavesAsRead(ctx, {})) as any;
+    expect(result).toBe(0);
   });
 
   it('lets a superadmin email user without an org mark leaves read', async () => {
-    mockGetAuthCaller.mockResolvedValue(callerWithoutOrg('employee', USER_ID));
+    mockGetAuthCaller.mockResolvedValue(callerWithoutOrg('superadmin', USER_ID));
+    mockIsSuperadmin.mockReturnValue(true);
     mockIsSuperadminEmail.mockReturnValue(true);
     const { ctx, get, patch, chains } = makeCtx();
-    get.mockResolvedValueOnce(callerWithoutOrg('employee', USER_ID));
+    get.mockResolvedValueOnce({ ...callerWithoutOrg('superadmin', USER_ID), role: 'superadmin' });
     const lCh = chain(chains, 'leaveRequests');
     lCh.take.mockResolvedValue([leaveDoc({ isRead: false })]);
 

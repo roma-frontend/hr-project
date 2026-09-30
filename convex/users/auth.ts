@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { getAuthCaller } from '../lib/getAuthCaller';
 import { mutation } from '../_generated/server';
 import type { Id } from '../_generated/dataModel';
 import { isSuperadmin, SUPERADMIN_EMAIL } from '../lib/auth';
@@ -58,8 +59,15 @@ export const createOAuthUser = mutation({
       return existing._id;
     }
 
-    // For new OAuth users, check if they are superadmin
-    const isSuperAdmin = emailLower === SUPERADMIN_EMAIL;
+    // For new OAuth users, check if they are superadmin (bootstrap only if none exists)
+    const existingSuperadminOAuth = await ctx.db
+      .query('users')
+      .withIndex('by_email', (q) => q.eq('email', (SUPERADMIN_EMAIL ?? '').toLowerCase()))
+      .unique();
+    const canBootstrapOAuth =
+      !existingSuperadminOAuth || existingSuperadminOAuth.role !== 'superadmin';
+    const isSuperAdmin =
+      !!SUPERADMIN_EMAIL && emailLower === SUPERADMIN_EMAIL.toLowerCase() && canBootstrapOAuth;
 
     // Get first organization or create error
     const allOrgs = await ctx.db.query('organizations').take(SMALL_LIST_CAP);
@@ -218,6 +226,13 @@ export const recordFaceIdAttempt = mutation({
       throw new Error('User not found');
     }
 
+    // Validate email matches user when both supplied (anti-spoofing)
+    if (email && userId) {
+      if (user.email.toLowerCase() !== email.toLowerCase().trim()) {
+        throw new Error('Email does not match userId');
+      }
+    }
+
     if (success) {
       // Successful login - reset failed attempts
       await ctx.db.patch(user._id, {
@@ -276,6 +291,9 @@ export const unblockFaceId = mutation({
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.adminId) throw new Error('Caller mismatch');
     const { adminId, userId } = args;
     const admin = await ctx.db.get(adminId);
     if (!admin || (admin.role !== 'admin' && admin.role !== 'superadmin')) {
@@ -331,6 +349,9 @@ export const unblockFaceId = mutation({
 export const autoUnblockFaceId = mutation({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId && !isSuperadmin(caller)) throw new Error('Caller mismatch');
     const { userId } = args;
     const user = await ctx.db.get(userId);
 

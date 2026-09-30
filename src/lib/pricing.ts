@@ -111,14 +111,19 @@ export function perSeatPrice(
   return round2(tier.pricePerSeatMonthly * (1 - discount));
 }
 
-/** Total monthly (monthly-equivalent) cost for a team size. */
+/** Total monthly (monthly-equivalent) cost for a team size. Monotonic: adding an employee never reduces total. */
 export function monthlyTotal(
   planKey: PlanKey,
   seats: number,
   period: BillingPeriod = 'monthly',
 ): number {
   const billable = normalizeSeats(planKey, seats);
-  return Math.round(perSeatPrice(planKey, seats, period) * billable);
+  const raw = Math.round(perSeatPrice(planKey, seats, period) * billable);
+  // Enforce monotonicity across tier boundaries (e.g. 49×$8=$392 vs 50×$7=$350).
+  // The total for N seats must be at least the total for N-1.
+  if (seats <= PLAN_SEAT_PRICING[planKey].minSeats) return raw;
+  const prev = monthlyTotal(planKey, seats - 1, period);
+  return Math.max(raw, prev);
 }
 
 /** Total charged per year for a team size, given the billing period. */

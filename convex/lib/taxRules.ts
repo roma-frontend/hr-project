@@ -126,12 +126,15 @@ export const TAX_RULES: Record<CountryCode, CountryTaxRule> = {
     employerContributions: [],
   },
 
-  // ── Russia — reproduces previous hardcoded constants exactly ───────────────
+  // ── Russia — OUTDATED single-threshold model kept under approximate:true guard ──
+  // Previous constants (13%/15% at 5M) are stale vs 2025+ 5-bracket law; do not use
+  // without taxRuleOverride verified by accountant.
   russia: {
     code: 'russia',
     label: 'Russia',
     currency: 'RUB',
     locale: 'ru-RU',
+    approximate: true,
     incomeTaxBrackets: [
       { min: 0, max: 5000000, rate: 0.13 },
       { min: 5000000, rate: 0.15 },

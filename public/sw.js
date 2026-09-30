@@ -70,18 +70,28 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // ── Navigations: network-first with an offline page fallback ──────────────
+  // Do NOT cache private authenticated pages — they would leak cross-user on shared devices.
   if (request.mode === 'navigate') {
+    const isPrivateNavigation = request.headers.has('authorization') || request.headers.has('cookie') ||
+      ['/dashboard','/payroll','/employees','/me','/succession','/admin','/superadmin','/attendance'].some(p => url.pathname.startsWith(p));
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches
-            .open(PAGE_CACHE)
-            .then((cache) => cache.put(request, copy))
-            .catch(() => undefined);
+          if (!isPrivateNavigation && response && response.status === 200) {
+            const ct = response.headers.get('content-type') || '';
+            if (!ct.includes('private') && !response.headers.get('cache-control')?.includes('private')) {
+              const copy = response.clone();
+              caches.open(PAGE_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+            }
+          }
           return response;
         })
         .catch(async () => {
+          if (isPrivateNavigation) {
+            const offline = await caches.match(OFFLINE_URL);
+            if (offline) return offline;
+            return Response.error();
+          }
           const cached = await caches.match(request);
           if (cached) return cached;
           const offline = await caches.match(OFFLINE_URL);
@@ -96,9 +106,11 @@ self.addEventListener('fetch', (event) => {
   if (isCacheableAsset(url)) {
     event.respondWith(
       caches.match(request).then((cached) => {
+        const requiresAuth = request.headers.has('authorization') || request.headers.has('cookie');
+        if (requiresAuth) return fetch(request).catch(() => cached);
         const network = fetch(request)
           .then((response) => {
-            if (response && response.status === 200) {
+            if (response && response.status === 200 && !requiresAuth) {
               const copy = response.clone();
               caches
                 .open(STATIC_CACHE)
@@ -117,6 +129,9 @@ self.addEventListener('fetch', (event) => {
 // ── Messages from the app (e.g. activate an updated worker immediately) ──────
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data && event.data.type === 'CLEAR_PAGES') {
+    event.waitUntil(caches.delete(PAGE_CACHE).catch(() => undefined));
+  }
 });
 
 // ── Push notifications ──────────────────────────────────────────────────────

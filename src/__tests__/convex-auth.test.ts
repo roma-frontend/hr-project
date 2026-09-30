@@ -2,8 +2,8 @@
  * Unit tests for the superadmin bootstrap checks in convex/lib/auth.ts.
  *
  * Pins the contract that createRating / getEmployeesNeedingRating /
- * documents.ts rely on: `isSuperadmin(user)` is role-first, with an
- * env-pinned bootstrap-email fallback — never a hardcoded account.
+ * documents.ts rely on: `isSuperadmin(user)` uses the DB role only.
+ * Bootstrap email matching never grants runtime privileges.
  */
 
 import { describe, it, expect, afterEach } from '@jest/globals';
@@ -54,13 +54,10 @@ describe('isSuperadmin', () => {
     expect(isSuperadmin({ role: 'superadmin', email: 'someone@else.com' })).toBe(true);
   });
 
-  it('falls back to the env-pinned bootstrap email when no superadmin role exists', () => {
-    // This is the branch createRating now honors: a bootstrap-phase admin
-    // whose email matches the env is treated as superadmin, mirroring
-    // getEmployeesNeedingRating and documents.ts.
+  it('does not grant runtime privileges to the bootstrap email', () => {
     process.env.BOOTSTRAP_SUPERADMIN_EMAIL = 'Bootstrap@Example.com';
     const isSuperadmin = realIsSuperadmin();
-    expect(isSuperadmin({ role: 'admin', email: 'bootstrap@example.com' })).toBe(true);
+    expect(isSuperadmin({ role: 'admin', email: 'bootstrap@example.com' })).toBe(false);
   });
 
   it('returns false for a non-matching email (no hardcoded accounts)', () => {
@@ -76,10 +73,10 @@ describe('isSuperadmin', () => {
     expect(isSuperadmin({ role: 'admin', email: 'bootstrap@example.com' })).toBe(false);
   });
 
-  it('supports the legacy SUPERADMIN_EMAIL env var', () => {
+  it('does not grant runtime privileges through the legacy email env var', () => {
     delete process.env.BOOTSTRAP_SUPERADMIN_EMAIL;
     process.env.SUPERADMIN_EMAIL = 'legacy@example.com';
     const isSuperadmin = realIsSuperadmin();
-    expect(isSuperadmin({ role: 'admin', email: 'legacy@example.com' })).toBe(true);
+    expect(isSuperadmin({ role: 'admin', email: 'legacy@example.com' })).toBe(false);
   });
 });

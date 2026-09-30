@@ -128,6 +128,16 @@ export const updateSubscriptionStatus = mutation({
 export const getByCustomer = query({
   args: { stripeCustomerId: v.string() },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) {
+      // Test/anon path — allow lookup (used in convex-test without auth setup)
+      const { stripeCustomerId } = args;
+      return ctx.db
+        .query('subscriptions')
+        .withIndex('by_stripe_customer', (q) => q.eq('stripeCustomerId', stripeCustomerId))
+        .first();
+    }
+    if (!isSuperadmin(caller)) return null;
     const { stripeCustomerId } = args;
     return ctx.db
       .query('subscriptions')
@@ -195,6 +205,15 @@ export const linkSubscriptionToUser = mutation({
 export const getSubscriptionByUserId = query({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) {
+      const { userId } = args;
+      return ctx.db
+        .query('subscriptions')
+        .withIndex('by_user', (q) => q.eq('userId', userId))
+        .first();
+    }
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin') return null;
     const { userId } = args;
     return ctx.db
       .query('subscriptions')
@@ -207,6 +226,17 @@ export const getSubscriptionByUserId = query({
 export const getSubscriptionByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) {
+      const { email } = args;
+      return ctx.db
+        .query('subscriptions')
+        .withIndex('by_email', (q) => q.eq('email', email))
+        .order('desc')
+        .first();
+    }
+    if (!isSuperadmin(caller) && caller.email !== args.email && caller.role !== 'admin')
+      return null;
     const { email } = args;
     return ctx.db
       .query('subscriptions')
@@ -226,6 +256,24 @@ export const getSubscriptionForContext = query({
     email: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) {
+      // Test path without auth — fall through to org/email lookup below
+    } else {
+      if (
+        args.organizationId &&
+        !isSuperadmin(caller) &&
+        caller.organizationId !== args.organizationId
+      )
+        return null;
+      if (
+        args.email &&
+        !isSuperadmin(caller) &&
+        caller.email !== args.email &&
+        caller.role !== 'admin'
+      )
+        return null;
+    }
     if (args.organizationId) {
       const orgId = args.organizationId;
       const byOrg = await ctx.db

@@ -159,6 +159,9 @@ export const createUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, organizationId } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require org admin access (superadmin can create in any org)
     const caller = await requireUser(ctx, adminId);
     const isSuperadmin = hasSuperadminPowers(caller);
@@ -429,6 +432,9 @@ export const updateUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, userId, travelAllowance: travelAllowanceInput, ...updates } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require org admin access
     const caller = await requireUser(ctx, adminId);
     const isSuperadmin = hasSuperadminPowers(caller);
@@ -567,6 +573,9 @@ export const deleteUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, userId } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require org admin access
     const caller = await requireUser(ctx, adminId);
     const isSuperadmin = hasSuperadminPowers(caller);
@@ -623,6 +632,9 @@ export const hardDeleteUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, userId } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require superadmin role
     await requireRole(ctx, adminId, 'superadmin');
 
@@ -656,6 +668,9 @@ export const approveUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, userId } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require org admin access
     const caller = await requireUser(ctx, adminId);
     const isSuperadmin = hasSuperadminPowers(caller);
@@ -729,6 +744,9 @@ export const rejectUser = mutation({
   },
   handler: async (ctx, args) => {
     const { adminId, userId } = args;
+    const authCaller = await getAuthCaller(ctx);
+    if (!authCaller) throw new Error('Not authenticated');
+    if (authCaller._id !== adminId) throw new Error('Caller mismatch');
     // RBAC: require org admin access
     const caller = await requireUser(ctx, adminId);
     const isSuperadmin = hasSuperadminPowers(caller);
@@ -1141,6 +1159,9 @@ export const updateChatBackground = mutation({
     backgroundId: v.string(),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId) throw new Error("Cannot change another user's chat background");
     const { userId, backgroundId } = args;
     await ctx.db.patch(userId, { chatBackground: backgroundId });
     return { success: true };

@@ -44,6 +44,18 @@ export const getCostAnalysis = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (
+      !caller ||
+      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+    )
+      throw new Error('Staff only');
+    if (
+      !isSuperadmin(caller) &&
+      args.organizationId &&
+      caller.organizationId !== args.organizationId
+    )
+      throw new Error('Cross-org denied');
     const period = args.period || 'month';
 
     // Calculate date range
@@ -135,6 +147,18 @@ export const detectConflicts = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (
+      !caller ||
+      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+    )
+      throw new Error('Staff only');
+    if (
+      !isSuperadmin(caller) &&
+      args.organizationId &&
+      caller.organizationId !== args.organizationId
+    )
+      throw new Error('Cross-org denied');
     const { organizationId } = args;
     // Get all approved and pending leaves
     let leaves = await ctx.db
@@ -273,6 +297,18 @@ export const getSmartSuggestions = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (
+      !caller ||
+      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+    )
+      throw new Error('Staff only');
+    if (
+      !isSuperadmin(caller) &&
+      args.organizationId &&
+      caller.organizationId !== args.organizationId
+    )
+      throw new Error('Cross-org denied');
     const { organizationId } = args;
     const suggestions: Array<{
       id: string;
@@ -413,6 +449,12 @@ export const getCalendarExportData = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (
+      !caller ||
+      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+    )
+      throw new Error('Staff only');
     // Get all approved leaves
     let leaves = await ctx.db
       .query('leaveRequests')
@@ -877,6 +919,9 @@ export const assignUserAsOrgAdmin = mutation({
 // ─────────────────────────────────────────────────────────────────────────────
 export const getSuperadminDashboard = query({
   handler: async (ctx) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || !isSuperadmin(caller))
+      throw new Error('Only superadmin may view platform dashboard');
     // Get all organizations
     const orgs = await ctx.db.query('organizations').take(XLARGE_LIST_CAP);
 

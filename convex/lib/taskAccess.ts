@@ -166,3 +166,14 @@ export async function assertCanWriteTask(
   if (refusal === 'cross_org') throw new Error('Task belongs to another organization');
   if (refusal === 'not_yours') throw new Error(denied);
 }
+
+export async function assertCanReadTask(
+  ctx: QueryCtx,
+  caller: AuthenticatedCaller,
+  task: TaskLike,
+): Promise<void> {
+  if (!canReadTask(caller, task)) throw new Error('Task belongs to another organization');
+  // Enforce visibility (org boundary + assignee/creator/supervisor/staff)
+  const visible = await isTaskVisibleToUser(ctx, caller, task);
+  if (!visible) throw new Error('Not authorized to view this task');
+}

@@ -49,7 +49,11 @@ jest.mock('next/server', () => {
 
 jest.mock('jose', () => ({ jwtVerify: jest.fn() }));
 jest.mock('next-auth/jwt', () => ({ getToken: jest.fn() }));
-jest.mock('@/lib/redis', () => ({ checkRateLimit: jest.fn(), blockKey: jest.fn() }));
+jest.mock('@/lib/redis', () => ({
+  checkRateLimit: jest.fn(),
+  blockKey: jest.fn(),
+  isBlocked: jest.fn(async () => false),
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { NextResponse } = require('next/server') as {
@@ -61,7 +65,11 @@ const { jwtVerify } = require('jose') as { jwtVerify: jest.Mock };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { getToken } = require('next-auth/jwt') as { getToken: jest.Mock };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const redis = require('@/lib/redis') as { checkRateLimit: jest.Mock; blockKey: jest.Mock };
+const redis = require('@/lib/redis') as {
+  checkRateLimit: jest.Mock;
+  blockKey: jest.Mock;
+  isBlocked: jest.Mock;
+};
 
 const originalEnv = { ...process.env };
 
@@ -302,7 +310,7 @@ describe('security headers and nonce', () => {
     expect(csp).toContain("'nonce-");
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).toContain('upgrade-insecure-requests');
-    expect(csp).toContain('report-uri');
+    expect(csp).not.toContain('report-uri');
   });
 
   it('uses unsafe-inline script-src in development', async () => {
@@ -337,7 +345,7 @@ describe('rate limiting', () => {
   it('blocks an IP after repeated violations', async () => {
     redis.checkRateLimit.mockResolvedValue({
       allowed: false,
-      remaining: -20,
+      remaining: 0,
       resetAt: Date.now() + 60000,
     });
     await proxy(makeRequest('/api/auth/login', { headers: { 'x-real-ip': '9.9.9.9' } }));

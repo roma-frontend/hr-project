@@ -17,6 +17,12 @@
     "src/__tests__",
     "tests",
     "**/*.stories.tsx",
-    ".next"
-  ]
+    ".next",
+    ".build-check",
+    ".next/types",
+    ".next/dev",
+    ".build-check/types",
+    ".build-check/dev"
+  ],
+  "include": ["next-env.d.ts", "convex/**/*.ts", "src/**/*.ts", "src/**/*.tsx"]
 }

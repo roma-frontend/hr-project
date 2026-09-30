@@ -170,12 +170,15 @@ beforeEach(() => {
   mockGetAuthCaller.mockReset();
   mockIsSuperadmin.mockReset();
   mockIsSuperadmin.mockReturnValue(false);
+  // Most queries now require a caller — default to adminA so existing assertions
+  // still exercise the row filters rather than the auth gate.
+  mockGetAuthCaller.mockResolvedValue(adminA);
 });
 
 // ── getAllUsers ──────────────────────────────────────────────────────────────
 describe('getAllUsers', () => {
   it('returns [] when unauthenticated', async () => {
-    mockGetAuthCaller.mockResolvedValue(null);
+    mockGetAuthCaller.mockResolvedValueOnce(null);
     const h = makeCtx();
     expect(await queries.getAllUsers.handler(h.ctx, {})).toEqual([]);
   });
@@ -523,6 +526,8 @@ describe('getUsersByRole', () => {
   });
 
   it('filters by role alone when no org is given', async () => {
+    mockGetAuthCaller.mockResolvedValue(superadminInA);
+    mockIsSuperadmin.mockReturnValue(true);
     const h = makeCtx({ rows: { users: [employeeA] } });
     const result = await queries.getUsersByRole.handler(h.ctx, { role: 'employee' });
     expect(result[0]._id).toBe(employeeA._id);
@@ -607,7 +612,7 @@ describe('getEffectivePresenceStatus', () => {
   it('throws when the user is missing', async () => {
     const h = makeCtx();
     await expect(
-      queries.getEffectivePresenceStatus.handler(h.ctx, { userId: 'ghost' }),
+      queries.getEffectivePresenceStatus.handler(h.ctx, { userId: 'ghost' as any }),
     ).rejects.toThrow('User not found');
   });
 
@@ -660,9 +665,12 @@ describe('getEffectivePresenceStatus', () => {
 // ── WebAuthn ─────────────────────────────────────────────────────────────────
 describe('webauthn queries', () => {
   it('getWebauthnCredentials returns the credentials for a user', async () => {
-    const h = makeCtx({ rows: { webauthnCredentials: [{ _id: 'c1', credentialId: 'x' }] } });
+    mockIsSuperadmin.mockReturnValue(true);
+    const h = makeCtx({
+      rows: { webauthnCredentials: [{ _id: 'c1', userId: employeeA._id, credentialId: 'x' }] },
+    });
     const result = await queries.getWebauthnCredentials.handler(h.ctx, { userId: employeeA._id });
-    expect(result).toEqual([{ _id: 'c1', credentialId: 'x' }]);
+    expect(result).toEqual([{ _id: 'c1', userId: employeeA._id, credentialId: 'x' }]);
     expect(h.chain('webauthnCredentials').withIndex).toHaveBeenCalledWith(
       'by_user',
       expect.any(Function),
@@ -670,10 +678,15 @@ describe('webauthn queries', () => {
   });
 
   it('getWebauthnCredential returns a single credential by id', async () => {
+    mockIsSuperadmin.mockReturnValue(true);
     const h = makeCtx();
-    h.chain('webauthnCredentials').unique.mockResolvedValue({ _id: 'c1', credentialId: 'cred-1' });
+    h.chain('webauthnCredentials').unique.mockResolvedValue({
+      _id: 'c1',
+      userId: employeeA._id,
+      credentialId: 'cred-1',
+    });
     const result = await queries.getWebauthnCredential.handler(h.ctx, { credentialId: 'cred-1' });
-    expect(result).toEqual({ _id: 'c1', credentialId: 'cred-1' });
+    expect(result).toEqual({ _id: 'c1', userId: employeeA._id, credentialId: 'cred-1' });
   });
 });
 
@@ -688,11 +701,13 @@ describe('checkFaceIdStatus', () => {
   });
 
   it('reports the face id lock state of the user', async () => {
+    mockGetAuthCaller.mockResolvedValue({ ...adminA, email: employeeA.email });
     const h = makeCtx({
       rows: {
         users: [
           {
             _id: employeeA._id,
+            email: employeeA.email,
             faceIdBlocked: true,
             faceIdFailedAttempts: 3,
             faceIdBlockedAt: 123,

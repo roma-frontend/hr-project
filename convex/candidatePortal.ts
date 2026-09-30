@@ -154,12 +154,23 @@ export const getCandidatePortal = query({
 
 /**
  * Generate a candidate token for an existing application (for migrations).
+ * Requires org admin/supervisor or superadmin (caller-bound).
  */
 export const generateToken = mutation({
   args: { applicationId: v.id('applications') },
   handler: async (ctx, args) => {
     const app = await ctx.db.get(args.applicationId);
     if (!app) throw new Error('Application not found');
+    if (ctx.auth?.getUserIdentity) {
+      const { getAuthCaller } = await import('./lib/getAuthCaller');
+      const { isSuperadmin } = await import('./lib/auth');
+      const caller = await getAuthCaller(ctx);
+      if (!caller) throw new Error('Not authenticated');
+      if (!isSuperadmin(caller) && caller.organizationId !== app.organizationId)
+        throw new Error('Cross-org denied');
+      if (!isSuperadmin(caller) && caller.role !== 'admin' && caller.role !== 'supervisor')
+        throw new Error('Only admin/supervisor may issue candidate tokens');
+    }
     if (app.candidateToken) return app.candidateToken;
 
     const token = generateCandidateToken();

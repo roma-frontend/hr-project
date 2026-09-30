@@ -263,9 +263,15 @@ export const loginWithFace = mutation({
     if (user.faceIdBlocked) {
       const blockedAt = user.faceIdBlockedAt ?? 0;
       if (Date.now() - blockedAt < FACE_LOGIN_COOLDOWN_MS) {
-        throw new Error(
-          'Face ID is temporarily blocked due to failed attempts. Please use password login.',
-        );
+        return {
+          error:
+            'Face ID is temporarily blocked due to failed attempts. Please use password login.',
+          blocked: true,
+        } as unknown as {
+          faceVerificationToken: string;
+          expiresAt: number;
+          email: string;
+        };
       }
       // Cooldown passed — unblock
       await ctx.db.patch(user._id, {
@@ -311,7 +317,14 @@ export const loginWithFace = mutation({
         createdAt: Date.now(),
       });
 
-      throw new Error(genericError);
+      // Do NOT throw after writing — the mutation would roll back the counter,
+      // the audit row and the loginAttempts entry (SEC-06). Return an error
+      // payload instead and let the HTTP route turn it into a 401.
+      return { error: genericError, blocked: shouldBlock } as unknown as {
+        faceVerificationToken: string;
+        expiresAt: number;
+        email: string;
+      };
     }
 
     // Match succeeded — reset counters

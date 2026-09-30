@@ -3,7 +3,7 @@ import { getAuthCaller } from '../lib/getAuthCaller';
 import { mutation, internalMutation, type MutationCtx } from '../_generated/server';
 import type { Doc, Id } from '../_generated/dataModel';
 import { internal } from '../_generated/api';
-import { isSuperadmin, isSuperadminEmail } from '../lib/auth';
+import { isSuperadmin } from '../lib/auth';
 import { MAX_PAGE_SIZE } from '../pagination';
 import { DEFAULT_LIST_CAP } from '../lib/limits';
 import { notify } from '../lib/notify';
@@ -1275,8 +1275,10 @@ export const markAllLeavesAsRead = mutation({
     const requesterId = caller._id;
     const requester = await ctx.db.get(requesterId);
     if (!requester) throw new Error('Requester not found');
-    if (!requester.organizationId && !isSuperadminEmail(requester.email)) {
-      throw new Error('User does not belong to an organization');
+    if (!requester.organizationId && !isSuperadmin(requester)) {
+      // Non-superadmin without org — nothing to mark, return 0 instead of hard fail
+      // (superadmin case already skips this gate; keep explicit for future role changes)
+      return 0;
     }
 
     // Superadmin can mark all as read

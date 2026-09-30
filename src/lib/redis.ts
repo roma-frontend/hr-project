@@ -25,8 +25,15 @@ function getRedis(): Redis | null {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
-    // Fallback to in-memory store if Redis not configured
-    console.warn('⚠️ Redis not configured. Falling back to in-memory rate limiting.');
+    // Fallback to in-memory store if Redis not configured — acceptable for CI/dev/preview
+    // but production MUST configure UPSTASH_REDIS_* (see docs/security.md warning).
+    if (process.env.NODE_ENV === 'production') {
+      console.error(
+        '❌ UPSTASH_REDIS_* not set in production — rate limiting is per-instance only! Set Upstash Redis for global enforcement.',
+      );
+    } else {
+      console.warn('⚠️ Redis not configured. Falling back to in-memory rate limiting.');
+    }
     return null;
   }
 
@@ -86,7 +93,7 @@ function memoryCheckRateLimit(
 
 /**
  * Check if request is within rate limit
- * Uses sliding window algorithm
+ * Uses fixed-window counter (NOT sliding — the old comment lied)
  */
 export async function checkRateLimit(
   key: string,

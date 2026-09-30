@@ -12,7 +12,7 @@
  * checked against this repository.
  */
 
-export const COMPARE_VERIFIED = '2026-09-19';
+export const COMPARE_VERIFIED = '2026-09-30';
 
 export const GLOBAL_COMPARE_SLUGS = [
   'personio',
@@ -298,6 +298,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
       deel: 'no',
     },
   },
+  // NOTE: verified 2026-09-30: BambooHR shifts/payroll appear as add-ons; mark 'partial' not 'no'.
   {
     key: 'faceKiosk',
     category: 'time',
@@ -317,7 +318,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
     us: 'yes',
     vendors: {
       personio: 'yes',
-      bamboohr: 'no',
+      bamboohr: 'partial',
       hibob: 'yes',
       rippling: 'yes',
       leapsome: 'no',
@@ -370,7 +371,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
     us: 'yes',
     vendors: {
       personio: 'partial',
-      bamboohr: 'no',
+      bamboohr: 'partial',
       hibob: 'no',
       rippling: 'partial',
       leapsome: 'yes',
@@ -398,7 +399,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
     vendors: {
       personio: 'partial',
       bamboohr: 'partial',
-      hibob: 'no',
+      hibob: 'partial',
       rippling: 'yes',
       leapsome: 'no',
       deel: 'yes',
@@ -512,7 +513,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
   {
     key: 'publicApi',
     category: 'platform',
-    us: 'yes',
+    us: 'partial',
     vendors: {
       personio: 'yes',
       bamboohr: 'yes',
@@ -637,7 +638,7 @@ const BASE_ROWS: readonly BaseCompareRow[] = [
   {
     key: 'soc2',
     category: 'gaps',
-    us: 'partial',
+    us: 'no',
     vendors: {
       personio: 'yes',
       bamboohr: 'yes',

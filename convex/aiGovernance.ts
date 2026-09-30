@@ -9,7 +9,18 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { DEFAULT_LIST_CAP } from './lib/limits';
-import { requireOrgAdmin } from './lib/rbac';
+import { assertOrgStaff, assertOrgScope } from './lib/orgAccess';
+import type { QueryCtx, MutationCtx } from './_generated/server';
+import type { Id } from './_generated/dataModel';
+
+async function requireGovernanceAdmin(
+  ctx: QueryCtx | MutationCtx,
+  args: { organizationId: Id<'organizations'>; userId: Id<'users'> },
+) {
+  const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
+  if (args.userId !== scope.caller._id) throw new Error('Not authorized: caller mismatch');
+  return scope.caller;
+}
 
 /** Guardrail toggles the panel exposes, with their shipped defaults. */
 export const GUARDRAIL_DEFAULTS: Record<string, boolean> = {
@@ -26,7 +37,7 @@ export const GUARDRAIL_DEFAULTS: Record<string, boolean> = {
 export const getStats = query({
   args: { organizationId: v.id('organizations'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
     const logs = await ctx.db
       .query('aiRequestLogs')
@@ -47,7 +58,7 @@ export const getStats = query({
 export const getRecentActivity = query({
   args: { organizationId: v.id('organizations'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
     const logs = await ctx.db
       .query('aiRequestLogs')
@@ -70,7 +81,7 @@ export const getRecentActivity = query({
 export const getAgentHealth = query({
   args: { organizationId: v.id('organizations'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
     const logs = await ctx.db
       .query('aiRequestLogs')
@@ -109,7 +120,7 @@ export const getAuditLog = query({
     agent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
     const logs = args.agent
       ? await ctx.db
@@ -142,7 +153,7 @@ export const getAuditLog = query({
 export const getGuardrails = query({
   args: { organizationId: v.id('organizations'), userId: v.id('users') },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
     const rows = await ctx.db
       .query('aiGuardrailSettings')
@@ -160,9 +171,9 @@ export const getGuardrails = query({
 // ── Mutations ────────────────────────────────────────────────────────────────
 
 /**
- * Record one AI request. Called server-to-server from the chat API route, so
- * it is intentionally unauthenticated (trusted caller) — mirrors
- * `security:logLoginAttempt`. Never throws for missing optional fields.
+ * Record identity-bound AI telemetry. The chat route must forward its Convex JWT.
+ * This public mutation is NOT trusted proof of model execution: authenticated
+ * clients can submit telemetry, but cannot impersonate another user or tenant.
  */
 export const logRequest = mutation({
   args: {
@@ -177,10 +188,22 @@ export const logRequest = mutation({
     latencyMs: v.number(),
   },
   handler: async (ctx, args) => {
+    const scope = await assertOrgScope(ctx, args.organizationId);
+    if (args.userId && args.userId !== scope.caller._id) {
+      throw new Error('Not authorized: caller mismatch');
+    }
+    if (
+      !Number.isFinite(args.tokens) ||
+      args.tokens < 0 ||
+      !Number.isFinite(args.latencyMs) ||
+      args.latencyMs < 0
+    ) {
+      throw new Error('Invalid telemetry values');
+    }
     const id = await ctx.db.insert('aiRequestLogs', {
       organizationId: args.organizationId,
-      userId: args.userId,
-      userName: args.userName,
+      userId: scope.caller._id,
+      userName: scope.caller.name,
       agent: args.agent,
       action: args.action,
       status: args.status,
@@ -202,9 +225,9 @@ export const updateGuardrail = mutation({
     enabled: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.userId, args.organizationId);
+    await requireGovernanceAdmin(ctx, args);
 
-    if (!(args.key in GUARDRAIL_DEFAULTS)) {
+    if (!Object.prototype.hasOwnProperty.call(GUARDRAIL_DEFAULTS, args.key)) {
       throw new Error(`Unknown guardrail key: ${args.key}`);
     }
 

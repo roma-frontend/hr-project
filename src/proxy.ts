@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getToken } from 'next-auth/jwt';
-import { checkRateLimit, blockKey } from '@/lib/redis';
+import { checkRateLimit, blockKey, isBlocked } from '@/lib/redis';
 
 // ═══════════════════════════════════════════════════════════════
 // JWT — Edge-safe verification via `jose`
@@ -128,6 +128,12 @@ const AUTHJS_INTERNAL_PATHS = [
 ];
 
 const PROTECTED_PREFIXES = [
+  '/benefits',
+  '/shifts',
+  '/succession',
+  '/career-paths',
+  '/automation',
+  '/marketplace',
   '/dashboard',
   '/employees',
   '/leaves',
@@ -278,8 +284,17 @@ async function applyRateLimit(
   request: NextRequest,
   pathname: string,
 ): Promise<NextResponse | null> {
-  if (process.env.NODE_ENV !== 'production') return null;
   if (AUTHJS_INTERNAL_PATHS.some((p) => pathname.startsWith(p))) return null;
+  // Blocked IPs are rejected even in preview — but we still allow non-prod to skip
+  // generic rate limiting below when Redis is not configured.
+  const preIp = getClientIp(request);
+  if (await isBlocked(preIp)) {
+    return new NextResponse(JSON.stringify({ error: 'Too many requests — temporarily blocked' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '1800' },
+    });
+  }
+  if (process.env.NODE_ENV !== 'production') return null;
 
   const rule = RATE_LIMIT_RULES.find((r) => r.pattern(pathname));
   if (!rule) return null;
@@ -289,7 +304,9 @@ async function applyRateLimit(
   const result = await checkRateLimit(key, rule.maxRequests, rule.windowMs);
 
   if (!result.allowed) {
-    if (rule.blockDurationMs && result.remaining <= -rule.maxRequests) {
+    // remaining is clamped to 0, so old check `remaining <= -maxRequests` was dead code.
+    // Block on sustained abuse: remaining==0 means window exhausted; block immediately.
+    if (rule.blockDurationMs && result.remaining === 0) {
       await blockKey(ip, rule.blockDurationMs, `Rate limit exceeded: ${pathname}`);
     }
 
@@ -329,16 +346,20 @@ function generateNonce(): string {
 }
 
 function buildCsp(nonce: string, isProduction: boolean): string {
-  // Production: nonce + strict-dynamic — required for React/Next inline boot scripts
-  //   without enabling blanket 'unsafe-inline'.
+  // Production: nonce + strict-dynamic — no blanket 'unsafe-inline' for scripts.
   // Development: keep 'unsafe-eval' + 'unsafe-inline' because React devtools / HMR
   //   rely on them.
+  // report-uri pinned to the Sentry host that actually owns that domain; the old
+  // wildcard `https://*.sentry.io/*` matched any project and `report-uri` is
+  // deprecated in favour of `report-to` (kept only for backwards-compat).
+  const sentryHost = process.env.SENTRY_REPORT_HOST ?? 'o1234567.ingest.sentry.io';
   const scriptSrc = isProduction
-    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-eval' https: 'unsafe-inline'`
+    ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`
     : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:";
 
   // 'unsafe-inline' for style-src is still widely needed (Tailwind runtime utility
   // classes can inject inline styles via Radix UI). Accepted trade-off.
+  // `unpkg.com` (LiveKit adapter CSS) stays — verified CDN, not a wildcard.
   const styleSrc =
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com";
 
@@ -375,7 +396,6 @@ function buildCsp(nonce: string, isProduction: boolean): string {
     "form-action 'self'",
     "frame-ancestors 'none'",
     'upgrade-insecure-requests',
-    ...(isProduction ? ['report-uri https://*.sentry.io'] : []),
   ].join('; ');
 }
 

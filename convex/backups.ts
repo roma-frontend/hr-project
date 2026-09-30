@@ -12,7 +12,7 @@
  */
 
 import { mutation, query, internalMutation } from './_generated/server';
-import type { MutationCtx } from './_generated/server';
+import type { MutationCtx, QueryCtx } from './_generated/server';
 import { v } from 'convex/values';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { internal } from './_generated/api';
@@ -23,6 +23,14 @@ import { SENSITIVE_USER_FIELDS as REDACTED_USER_FIELDS } from './lib/userRedacti
 import { assertModuleAccess } from './lib/entitlements';
 
 const BACKUP_RETENTION_HOURS = 48;
+
+async function requireBackupAdmin(ctx: QueryCtx | MutationCtx) {
+  const caller = await getAuthCaller(ctx);
+  if (!caller || caller.role !== 'superadmin') {
+    throw new Error('Only superadmins can manage backups');
+  }
+  return caller;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    Snapshot types
@@ -81,6 +89,7 @@ interface EmployeeSnapshot {
   signatureDocs: Doc<'signatureDocuments'>[];
   signatureRequests: Doc<'signatureRequests'>[];
   snapshotTimestamp: number;
+  isCapped: Record<string, boolean>;
 }
 
 /** Parse a stored snapshot string with the correct shape. */
@@ -97,6 +106,7 @@ export const createEmployeeBackup = mutation({
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
+    await requireBackupAdmin(ctx);
     const now = Date.now();
     const expiresAt = now + BACKUP_RETENTION_HOURS * 60 * 60 * 1000;
 
@@ -145,7 +155,7 @@ export const createEmployeeBackupInternal = internalMutation({
     const expiresAt = now + BACKUP_RETENTION_HOURS * 60 * 60 * 1000;
 
     const user = await ctx.db.get(args.userId);
-    if (!user) return;
+    if (!user || user.organizationId !== args.organizationId) return;
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) return;
@@ -176,6 +186,7 @@ export const createOrgBackups = mutation({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    await requireBackupAdmin(ctx);
     await assertModuleAccess(ctx, 'backups');
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -202,7 +213,8 @@ export const createOrgBackups = mutation({
       }
     }
 
-    return { success: true, backedUp, failed, total: employees.length };
+    const isCapped = employees.length >= DEFAULT_LIST_CAP;
+    return { success: true, backedUp, failed, total: employees.length, isCapped };
   },
 });
 
@@ -214,6 +226,8 @@ export const getOrgBackups = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || caller.role !== 'superadmin') return [];
     const now = Date.now();
 
     const backups = await ctx.db
@@ -267,6 +281,8 @@ export const getUserBackups = query({
     userId: v.id('users'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || caller.role !== 'superadmin') return [];
     const now = Date.now();
 
     const backups = await ctx.db
@@ -298,8 +314,10 @@ export const getBackupDetails = query({
     backupId: v.id('employeeBackups'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || caller.role !== 'superadmin') return null;
     const backup = await ctx.db.get(args.backupId);
-    if (!backup) return null;
+    if (!backup || backup.expiresAt <= Date.now()) return null;
 
     return {
       _id: backup._id,
@@ -323,21 +341,8 @@ export const restoreEmployeeBackup = mutation({
     backupId: v.id('employeeBackups'),
   },
   handler: async (ctx, args) => {
+    await requireBackupAdmin(ctx);
     await assertModuleAccess(ctx, 'backups');
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const adminUser = await ctx.db
-      .query('users')
-      .withIndex('by_email', (q) => q.eq('email', identity.email!.toLowerCase()))
-      .unique();
-
-    if (!adminUser || adminUser.role !== 'superadmin') {
-      throw new Error('Only superadmins can restore backups');
-    }
-
     const backup = await ctx.db.get(args.backupId);
     if (!backup) {
       throw new Error('Backup not found');
@@ -360,6 +365,7 @@ export const restoreEmployeeBackup = mutation({
  */
 export const cleanupExpiredBackups = mutation({
   handler: async (ctx) => {
+    await requireBackupAdmin(ctx);
     const now = Date.now();
 
     const expiredBackups = await ctx.db
@@ -462,17 +468,8 @@ export const cleanupExpiredBackupsInternal = internalMutation({
 export const getBackupStats = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { totalBackups: 0, totalSize: 0, orgsBackedUp: 0 };
-    }
-
-    const adminUser = await ctx.db
-      .query('users')
-      .withIndex('by_email', (q) => q.eq('email', identity.email!.toLowerCase()))
-      .unique();
-
-    if (!adminUser || adminUser.role !== 'superadmin') {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || caller.role !== 'superadmin') {
       return { totalBackups: 0, totalSize: 0, orgsBackedUp: 0 };
     }
 
@@ -501,6 +498,8 @@ export const hasBackupAccess = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller || caller.role !== 'superadmin') return false;
     const org = await ctx.db.get(args.organizationId);
     return !!org;
   },
@@ -623,6 +622,25 @@ async function buildEmployeeSnapshot(
     .take(DEFAULT_LIST_CAP);
 
   const sanitizedUser: SanitizedUser | null = user ? sanitizeUser(user) : null;
+  const isCapped: Record<string, boolean> = {
+    leaves: leaves.length >= DEFAULT_LIST_CAP,
+    tasks: tasks.length >= DEFAULT_LIST_CAP,
+    createdTasks: createdTasks.length >= DEFAULT_LIST_CAP,
+    events: events.length >= DEFAULT_LIST_CAP,
+    reviewAssignments: reviewAssignments.length >= DEFAULT_LIST_CAP,
+    reviewResponses: reviewResponses.length >= DEFAULT_LIST_CAP,
+    kudos: kudos.length >= DEFAULT_LIST_CAP,
+    sentKudos: sentKudos.length >= DEFAULT_LIST_CAP,
+    pointTransactions: pointTransactions.length >= DEFAULT_LIST_CAP,
+    objectives: objectives.length >= DEFAULT_LIST_CAP,
+    documents: documents.length >= DEFAULT_LIST_CAP,
+    notes: notes.length >= DEFAULT_LIST_CAP,
+    performanceMetrics: performanceMetrics.length >= DEFAULT_LIST_CAP,
+    timeTracking: timeTracking.length >= DEFAULT_LIST_CAP,
+    ratings: ratings.length >= DEFAULT_LIST_CAP,
+    signatureDocs: signatureDocs.length >= DEFAULT_LIST_CAP,
+    signatureRequests: signatureRequests.length >= DEFAULT_LIST_CAP,
+  };
 
   return {
     user: sanitizedUser,
@@ -647,6 +665,7 @@ async function buildEmployeeSnapshot(
     signatureDocs,
     signatureRequests,
     snapshotTimestamp: Date.now(),
+    isCapped,
   };
 }
 

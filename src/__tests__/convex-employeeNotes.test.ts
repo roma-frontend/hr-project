@@ -9,7 +9,7 @@ jest.mock('../../convex/lib/getAuthCaller', () => ({
   getAuthCaller: jest.fn(),
 }));
 jest.mock('../../convex/lib/auth', () => ({
-  isSuperadminEmail: jest.fn(() => false),
+  isSuperadmin: jest.fn(() => false),
 }));
 
 jest.mock('../../convex/_generated/server', () => ({
@@ -23,25 +23,33 @@ let updateNoteHandler: (ctx: any, args: any) => Promise<unknown>;
 let deleteNoteHandler: (ctx: any, args: any) => Promise<unknown>;
 let getNotesSummaryHandler: (ctx: any, args: any) => Promise<unknown>;
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks();
-  jest.isolateModules(() => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require('../../convex/employeeNotes');
-    addNoteHandler = mod.addNote.handler;
-    getNotesHandler = mod.getNotes.handler;
-    updateNoteHandler = mod.updateNote.handler;
-    deleteNoteHandler = mod.deleteNote.handler;
-    getNotesSummaryHandler = mod.getNotesSummary.handler;
-  });
+  // Re-require after mock setup so handlers capture the mocked auth module
+  jest.resetModules();
+  jest.mock('../../convex/lib/getAuthCaller', () => ({
+    getAuthCaller: jest
+      .fn()
+      .mockResolvedValue({ _id: 'user_admin', role: 'admin', organizationId: 'org_1' }),
+  }));
+  jest.mock('../../convex/lib/auth', () => ({
+    isSuperadmin: jest.fn(() => false),
+  }));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = await import('../../convex/employeeNotes');
+  addNoteHandler = mod.addNote.handler as unknown as typeof addNoteHandler;
+  getNotesHandler = mod.getNotes.handler as unknown as typeof getNotesHandler;
+  updateNoteHandler = mod.updateNote.handler as unknown as typeof updateNoteHandler;
+  deleteNoteHandler = mod.deleteNote.handler as unknown as typeof deleteNoteHandler;
+  getNotesSummaryHandler = mod.getNotesSummary.handler as unknown as typeof getNotesSummaryHandler;
 });
 
 function makeInsertCtx(callerOverride?: any) {
   const { getAuthCaller } = require('../../convex/lib/getAuthCaller');
   const caller = callerOverride ?? { _id: 'user_admin', role: 'admin', organizationId: 'org_1' };
   getAuthCaller.mockResolvedValue(caller);
-  const { isSuperadminEmail } = require('../../convex/lib/auth');
-  isSuperadminEmail.mockReturnValue(caller?.role === 'superadmin');
+  const { isSuperadmin } = require('../../convex/lib/auth');
+  isSuperadmin.mockReturnValue(caller?.role === 'superadmin');
 
   const insert = jest.fn();
   const patch = jest.fn();
@@ -158,8 +166,8 @@ describe('getNotes visibility filtering', () => {
   function makeNotesCtx(notes: Record<string, unknown>[], viewer: any) {
     const { getAuthCaller } = require('../../convex/lib/getAuthCaller');
     getAuthCaller.mockResolvedValue(viewer);
-    const { isSuperadminEmail } = require('../../convex/lib/auth');
-    isSuperadminEmail.mockReturnValue(viewer?.role === 'superadmin');
+    const { isSuperadmin } = require('../../convex/lib/auth');
+    isSuperadmin.mockReturnValue(viewer?.role === 'superadmin');
 
     const get = jest.fn();
     const take = jest.fn().mockResolvedValue(notes);

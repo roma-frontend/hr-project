@@ -165,7 +165,6 @@ export const register = mutation({
   handler: async (ctx, args) => {
     return wrapConvexError(async () => {
       const email = args.email.toLowerCase().trim();
-      const userIsSuperadmin = email === SUPERADMIN_EMAIL;
 
       // ── 1. Check email not already registered ──────────────────────────────
       const existing = await ctx.db
@@ -173,6 +172,15 @@ export const register = mutation({
         .withIndex('by_email', (q) => q.eq('email', email))
         .unique();
       if (existing) throw new Error('Email already registered');
+
+      // Bootstrap gate: allow BOOTSTRAP_SUPERADMIN_EMAIL only if no superadmin exists yet
+      const existingSuperadmin = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', (SUPERADMIN_EMAIL ?? '').toLowerCase()))
+        .unique();
+      const canBootstrap = !existingSuperadmin || existingSuperadmin.role !== 'superadmin';
+      const userIsSuperadmin =
+        !!SUPERADMIN_EMAIL && email === SUPERADMIN_EMAIL.toLowerCase() && canBootstrap;
 
       // ── 2. Resolve organization ────────────────────────────────────────────
       let organizationId = args.organizationId;

@@ -6,7 +6,7 @@ import { getProfile } from './lib/userProfile';
 import { notify } from './lib/notify';
 import { assertModuleAccess } from './lib/entitlements';
 import { getAuthCaller } from './lib/getAuthCaller';
-import { isSuperadminEmail } from './lib/auth';
+import { isSuperadmin } from './lib/auth';
 
 // Helper: compute KR completion percentage respecting direction
 function computeKRProgress(
@@ -168,7 +168,7 @@ export const getMyObjectives = query({
     const caller = await getAuthCaller(ctx);
     if (!caller) return [];
     const isSelf = caller._id === args.userId;
-    const isSuper = isSuperadminEmail(caller.email) || caller.role === 'superadmin';
+    const isSuper = isSuperadmin(caller);
     const isStaff =
       (caller.role === 'admin' || caller.role === 'supervisor') &&
       caller.organizationId === args.organizationId;
@@ -724,7 +724,7 @@ export const getRevieweeObjectivesWithReviews = query({
     const caller = await getAuthCaller(ctx);
     if (!caller) return null;
     const isSelf = caller._id === args.userId;
-    const isSuper = isSuperadminEmail(caller.email) || caller.role === 'superadmin';
+    const isSuper = isSuperadmin(caller);
     const isStaff =
       (caller.role === 'admin' || caller.role === 'supervisor') &&
       caller.organizationId === args.organizationId;

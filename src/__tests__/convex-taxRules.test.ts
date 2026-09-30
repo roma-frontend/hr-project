@@ -33,7 +33,7 @@ describe('tax rules data', () => {
     const approximate = Object.entries(TAX_RULES)
       .filter(([, r]) => r.approximate)
       .map(([code]) => code);
-    expect(approximate.sort()).toEqual(['germany', 'poland', 'uk', 'usa']);
+    expect(approximate.sort()).toEqual(['germany', 'poland', 'russia', 'uk', 'usa']);
   });
 
   it('has verified Armenia rates (flat 20% income tax)', () => {

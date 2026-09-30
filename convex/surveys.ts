@@ -24,15 +24,25 @@ export const listSurveys = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return [];
     const { organizationId, status, limit } = args;
+    // Non-privileged callers should not enumerate drafts
+    const effectiveStatus =
+      status ??
+      (caller.role === 'admin' || caller.role === 'supervisor' || isSuperadmin(caller)
+        ? undefined
+        : ('active' as const));
+    const queryStatus = effectiveStatus as typeof status;
     const pageSize = Math.min(limit ?? 50, MAX_PAGE_SIZE);
 
     let surveyQuery;
-    if (status) {
+    if (queryStatus) {
       surveyQuery = ctx.db
         .query('surveys')
         .withIndex('by_org_status', (q) =>
-          q.eq('organizationId', organizationId).eq('status', status),
+          q.eq('organizationId', organizationId).eq('status', queryStatus),
         );
     } else {
       surveyQuery = ctx.db
@@ -71,9 +81,20 @@ export const getSurveyWithQuestions = query({
     surveyId: v.id('surveys'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
     const { surveyId } = args;
     const survey = await ctx.db.get(surveyId);
     if (!survey) return null;
+    // Tenant isolation: caller must belong to same org (or be superadmin)
+    if (!isSuperadmin(caller) && caller.organizationId !== survey.organizationId) return null;
+    // Draft surveys: only creator, org admin/supervisor or superadmin may view
+    if (survey.status === 'draft') {
+      const isCreator = caller._id === survey.createdBy;
+      const isPrivileged =
+        caller.role === 'admin' || caller.role === 'supervisor' || isSuperadmin(caller);
+      if (!isCreator && !isPrivileged) return null;
+    }
 
     const questions = await ctx.db
       .query('surveyQuestions')
@@ -105,6 +126,19 @@ export const getSurveyResults = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return null;
+    // Results: only admin/supervisor or superadmin (or creator)
+    const surveyForAcl = await ctx.db.get(args.surveyId);
+    if (
+      surveyForAcl &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyForAcl.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      return null;
     const { surveyId, organizationId } = args;
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
@@ -186,10 +220,15 @@ export const getSurveyResults = query({
       };
     });
 
+    const isCapped =
+      responses.length >= DEFAULT_LIST_CAP ||
+      answers.length >= DEFAULT_LIST_CAP ||
+      questions.length >= DEFAULT_LIST_CAP;
     return {
       survey,
       totalResponses: responses.length,
       questionResults,
+      isCapped,
     };
   },
 });
@@ -206,6 +245,14 @@ export const hasUserResponded = query({
     const caller = await getAuthCaller(ctx);
     if (!caller) return false;
     if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin')
+      return false;
+    // Cross-org check: surveyed org must match caller org unless superadmin
+    const surveyCheck = await ctx.db.get(args.surveyId);
+    if (
+      surveyCheck &&
+      !isSuperadmin(caller) &&
+      caller.organizationId !== surveyCheck.organizationId
+    )
       return false;
     const { surveyId, userId } = args;
     const existing = await ctx.db
@@ -262,6 +309,14 @@ export const createSurvey = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-organization survey creation denied');
+    if (caller._id !== args.createdBy && !isSuperadmin(caller))
+      throw new Error('Caller mismatch for survey creator');
+    if (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
+      throw new Error('Only admin/supervisor may create surveys');
     await assertModuleAccess(ctx, 'surveys');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const now = Date.now();
@@ -311,6 +366,19 @@ export const publishSurvey = mutation({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-organization publish denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may publish');
     await assertModuleAccess(ctx, 'surveys');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId } = args;
@@ -339,6 +407,19 @@ export const closeSurvey = mutation({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-organization close denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may close');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId } = args;
     const survey = await ctx.db.get(surveyId);
@@ -366,6 +447,19 @@ export const deleteSurvey = mutation({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-organization delete denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may delete');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId } = args;
     const survey = await ctx.db.get(surveyId);
@@ -408,6 +502,12 @@ export const submitResponse = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (args.respondentId && caller._id !== args.respondentId && !isSuperadmin(caller))
+      throw new Error('Cannot submit for another user');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-organization response denied');
     await assertModuleAccess(ctx, 'surveys');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const survey = await ctx.db.get(args.surveyId);
@@ -479,6 +579,19 @@ export const reorderQuestions = mutation({
     questionIds: v.array(v.id('surveyQuestions')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may reorder');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId, questionIds } = args;
     const survey = await ctx.db.get(surveyId);
@@ -516,6 +629,10 @@ export const updateQuestion = mutation({
     options: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { questionId, organizationId, ...updates } = args;
     const question = await ctx.db.get(questionId);
@@ -527,6 +644,13 @@ export const updateQuestion = mutation({
     if (!survey || survey.status !== 'draft') {
       throw new Error('Can only edit questions in draft surveys');
     }
+    if (
+      !isSuperadmin(caller) &&
+      caller._id !== survey.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may edit question');
 
     const patch = {
       ...(updates.text !== undefined ? { text: updates.text } : {}),
@@ -550,6 +674,10 @@ export const deleteQuestion = mutation({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { questionId, organizationId } = args;
     const question = await ctx.db.get(questionId);
@@ -561,6 +689,13 @@ export const deleteQuestion = mutation({
     if (!survey || survey.status !== 'draft') {
       throw new Error('Can only delete questions from draft surveys');
     }
+    if (
+      !isSuperadmin(caller) &&
+      caller._id !== survey.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may delete question');
 
     // Reorder remaining questions
     const remainingQuestions = await ctx.db
@@ -604,6 +739,19 @@ export const updateSurvey = mutation({
     endsAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may update');
     await assertModuleAccess(ctx, 'surveys');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId, ...updates } = args;
@@ -657,6 +805,19 @@ export const updateSurveyQuestions = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
+    const surveyPre = await ctx.db.get(args.surveyId);
+    if (
+      surveyPre &&
+      !isSuperadmin(caller) &&
+      caller._id !== surveyPre.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      throw new Error('Only creator/admin may update questions');
     await assertFeatureEnabled(ctx, 'surveys.module');
     const { surveyId, organizationId, questions } = args;
     const survey = await ctx.db.get(surveyId);
@@ -795,6 +956,18 @@ export const getSurveyResultsByDepartment = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return null;
+    const sAcl = await ctx.db.get(args.surveyId);
+    if (
+      sAcl &&
+      !isSuperadmin(caller) &&
+      caller._id !== sAcl.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      return null;
     const { surveyId, organizationId } = args;
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
@@ -881,10 +1054,13 @@ export const getSurveyResultsByDepartment = query({
       };
     });
 
+    const deptIsCapped =
+      responses.length >= DEFAULT_LIST_CAP || allAnswers.length >= DEFAULT_LIST_CAP;
     return {
       survey,
       totalResponses: responses.length,
       departmentResults,
+      isCapped: deptIsCapped,
     };
   },
 });
@@ -898,6 +1074,10 @@ export const getSurveyTrends = query({
     months: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return { trends: [], totalSurveys: 0, totalResponses: 0, avgResponseRate: 0 };
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      return { trends: [], totalSurveys: 0, totalResponses: 0, avgResponseRate: 0 };
     const { organizationId, months = 6 } = args;
     const cutoffDate = Date.now() - months * 30 * 24 * 60 * 60 * 1000;
 
@@ -924,6 +1104,7 @@ export const getSurveyTrends = query({
       totalSurveys: trends.length,
       totalResponses,
       avgResponseRate,
+      isCapped: surveys.length >= DEFAULT_LIST_CAP,
     };
   },
 });
@@ -938,6 +1119,18 @@ export const getSurveyResponses = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return null;
+    const sAcl2 = await ctx.db.get(args.surveyId);
+    if (
+      sAcl2 &&
+      !isSuperadmin(caller) &&
+      caller._id !== sAcl2.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      return null;
     const { surveyId, organizationId, limit = 50 } = args;
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
@@ -978,6 +1171,7 @@ export const getSurveyResponses = query({
       survey,
       responses: responseDetails,
       totalResponses: responses.length,
+      isCapped: responses.length >= limit,
     };
   },
 });
@@ -991,6 +1185,18 @@ export const getSurveyExportData = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return null;
+    const sAcl3 = await ctx.db.get(args.surveyId);
+    if (
+      sAcl3 &&
+      !isSuperadmin(caller) &&
+      caller._id !== sAcl3.createdBy &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor'
+    )
+      return null;
     const { surveyId, organizationId } = args;
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
@@ -1040,6 +1246,7 @@ export const getSurveyExportData = query({
       survey: { title: survey.title, status: survey.status, isAnonymous: survey.isAnonymous },
       questions: questions.map((q) => q.text),
       exportData,
+      isCapped: responses.length >= DEFAULT_LIST_CAP,
     };
   },
 });

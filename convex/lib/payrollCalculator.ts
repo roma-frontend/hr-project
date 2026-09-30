@@ -136,8 +136,8 @@ function computeDeductions(
     ? rule.employeeContributions.filter((c) => !c.pensionExemptible)
     : rule.employeeContributions;
 
-  // Filter out health insurance contributions when employee is not enrolled
-  if (!healthInsured) {
+  // Armenia health flag only gates Armenia's health tier — other countries always apply theirs.
+  if (!healthInsured && rule.code === 'armenia') {
     applicable = applicable.filter((c) => c.field !== 'healthInsurance');
   }
 

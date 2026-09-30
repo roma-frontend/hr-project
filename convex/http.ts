@@ -556,12 +556,14 @@ http.route({
             if (!employee) return apiJson(404, { error: 'Employee not found' }, usage);
             return apiJson(200, { data: employee }, usage);
           }
-          const data = await ctx.runQuery(internal.apiV1.listEmployees, {
+          const data = (await ctx.runQuery(internal.apiV1.listEmployees, {
             organizationId: auth.organizationId,
             limit: limitArg,
             activeOnly,
-          });
-          return apiJson(200, { data, count: data.length }, usage);
+          })) as unknown as { data: { id: string }[]; nextCursor: string | null; isDone?: boolean };
+          const list = (data as { data: unknown[] }).data ?? (data as unknown as unknown[]);
+          const count = Array.isArray(list) ? list.length : 0;
+          return apiJson(200, { data, count }, usage);
         }
         case 'departments': {
           const data = await ctx.runQuery(internal.apiV1.listDepartments, {

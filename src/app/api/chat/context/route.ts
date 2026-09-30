@@ -38,8 +38,14 @@ export async function GET(req: NextRequest) {
       role: session.role as JWTPayload['role'],
       organizationId: session.organizationId,
     });
-    const _userLeaves = await fetchQuery(api.leaves.getUserLeaves, { userId });
-    const analytics = await fetchQuery(api.analytics.getUserAnalytics, { userId });
+    const analytics = await fetchQuery(
+      api.analytics.getUserAnalytics,
+      { userId },
+      { token: convexToken },
+    );
+    if (!analytics) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
     const teamCalendar = await fetchQuery(
       api.analytics.getTeamCalendar,
       {},
@@ -65,21 +71,42 @@ export async function GET(req: NextRequest) {
         totalDaysTaken: analytics.totalDaysTaken,
         pendingDays: analytics.pendingDays,
       },
-      recentLeaves:
-        analytics.userLeaves?.slice(0, 5).map((l) => ({
-          type: l.type,
-          startDate: l.startDate,
-          endDate: l.endDate,
-          status: l.status,
-          days: l.days,
-        })) || [],
-      teamAvailability:
-        teamCalendar?.slice(0, 10).map((l) => ({
-          userName: l.userName,
-          department: l.userDepartment,
-          startDate: l.startDate,
-          endDate: l.endDate,
-        })) || [],
+      recentLeaves: ((analytics as { userLeaves?: unknown[] }).userLeaves ?? [])
+        .slice(0, 5)
+        .map((l: unknown) => {
+          const x = l as {
+            type: string;
+            startDate: string;
+            endDate: string;
+            status: string;
+            days: number;
+          };
+          return {
+            type: x.type,
+            startDate: x.startDate,
+            endDate: x.endDate,
+            status: x.status,
+            days: x.days,
+          };
+        }),
+      teamAvailability: (() => {
+        const cal: unknown = teamCalendar;
+        const arr = Array.isArray(cal) ? cal : ((cal as { data?: unknown[] })?.data ?? []);
+        return arr.slice(0, 10).map((l: unknown) => {
+          const x = l as {
+            userName?: string;
+            userDepartment?: string;
+            startDate: string;
+            endDate: string;
+          };
+          return {
+            userName: x.userName,
+            department: x.userDepartment,
+            startDate: x.startDate,
+            endDate: x.endDate,
+          };
+        });
+      })(),
     };
 
     return NextResponse.json(context);

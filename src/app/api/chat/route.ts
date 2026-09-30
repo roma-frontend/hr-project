@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { fetchAllContexts } from '@/lib/chat-context';
 import { logger } from '@/lib/logger';
 import { verifyChatAuth } from '@/lib/chat-auth';
+import { getServerConvexAuth } from '@/lib/server-convex-auth';
 import { retrieveDocs, formatKnowledgeSection, sourceLabels } from '@/lib/ai/rag';
 import { buildPromptExtensions } from '@/lib/ai/promptExtensions';
 import {
@@ -67,23 +68,23 @@ const AGENT_ACTION_LABEL: Record<AgentType, string> = {
  * awaited by the request path and never throws outward — telemetry must not
  * break or slow down chat. Skips silently if the org is unknown.
  */
-function logAiRequest(args: {
+async function logAiRequest(args: {
   organizationId: string;
   userId?: string;
   userName: string;
   agent: AgentType;
   tokens: number;
   latencyMs: number;
-}): void {
+}): Promise<void> {
   if (!CONVEX_URL || !args.organizationId) return;
-  void fetch(`${CONVEX_URL}/api/mutation`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      path: 'aiGovernance:logRequest',
-      args: {
-        organizationId: args.organizationId,
-        userId: args.userId || undefined,
+  try {
+    const auth = await getServerConvexAuth();
+    if (!auth) return;
+    await fetchMutation(
+      api.aiGovernance.logRequest,
+      {
+        organizationId: args.organizationId as Id<'organizations'>,
+        userId: auth.payload.userId as Id<'users'>,
         userName: args.userName || 'Unknown',
         agent: args.agent,
         action: AGENT_ACTION_LABEL[args.agent],
@@ -91,8 +92,11 @@ function logAiRequest(args: {
         tokens: args.tokens,
         latencyMs: args.latencyMs,
       },
-    }),
-  }).catch((err) => logger.log('AI governance log failed (non-fatal):', String(err)));
+      { token: auth.token },
+    );
+  } catch (err) {
+    logger.log('AI governance log failed (non-fatal):', String(err));
+  }
 }
 
 /**
@@ -576,7 +580,7 @@ ${extensions}
         logger.log(`🚀 Trying ${attempt.label}…`);
         const primed = await attempt.open();
         logger.log(`✅ ${attempt.label} streamed in ${Date.now() - startTime}ms`);
-        logAiRequest({
+        void logAiRequest({
           organizationId: authOrgId,
           userId: userId || auth.userId,
           userName: contexts.userName,

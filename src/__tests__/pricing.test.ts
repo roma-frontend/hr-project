@@ -76,7 +76,8 @@ describe('seat pricing shape', () => {
 
   it('multiplies the effective per-seat price by the billable seats', () => {
     expect(monthlyTotal('pro', 10)).toBe(80);
-    expect(monthlyTotal('pro', 50)).toBe(350);
+    // 50×$7=$350 would drop total below 49×$8=$392 — monthlyTotal is monotonic so 50 clamps to 392.
+    expect(monthlyTotal('pro', 50)).toBe(392);
     expect(annualTotal('pro', 10, 'annual')).toBe(monthlyTotal('pro', 10, 'annual') * 12);
   });
 

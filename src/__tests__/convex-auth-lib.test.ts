@@ -3,7 +3,7 @@
  *
  * The module reads env at load time for SUPERADMIN_EMAIL, so env-dependent
  * cases use jest.isolateModules to re-require with a controlled environment.
- * Runtime checks (isSuperadmin / isSuperadminEmail) re-read env per call.
+ * Only bootstrap email matching re-reads env; runtime privileges use the DB role.
  */
 
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
@@ -86,9 +86,9 @@ describe('isSuperadmin', () => {
     expect(isSuperadmin({ role: 'admin', email: 'admin@example.com' })).toBe(false);
   });
 
-  it('falls back to the bootstrap email when the role is missing', () => {
+  it('rejects the bootstrap email when the role is missing', () => {
     process.env.BOOTSTRAP_SUPERADMIN_EMAIL = 'boss@example.com';
-    expect(isSuperadmin({ email: 'boss@example.com' })).toBe(true);
+    expect(isSuperadmin({ email: 'boss@example.com' })).toBe(false);
     expect(isSuperadmin({ email: 'nobody@example.com' })).toBe(false);
   });
 });

@@ -1,15 +1,60 @@
 import { query } from './_generated/server';
 import { v } from 'convex/values';
-import { isSuperadminEmail } from './lib/auth';
+import { resolveOrgScope, resolveOrgStaff } from './lib/orgAccess';
+import type { Doc } from './_generated/dataModel';
+
+// Explicit output contracts: never return raw HR/user documents from analytics.
+// DATA-01: add isCapped + source counts so clients can warn about truncated data.
+function analyticsUser(user: Doc<'users'>) {
+  return {
+    _id: user._id,
+    name: user.name,
+    role: user.role,
+    department: user.department,
+    isActive: user.isActive,
+    isApproved: user.isApproved,
+    paidLeaveBalance: user.paidLeaveBalance,
+    sickLeaveBalance: user.sickLeaveBalance,
+    familyLeaveBalance: user.familyLeaveBalance,
+  };
+}
+function analyticsLeave(leave: Doc<'leaveRequests'>) {
+  return {
+    _id: leave._id,
+    userId: leave.userId,
+    startDate: leave.startDate,
+    endDate: leave.endDate,
+    days: leave.days,
+    status: leave.status,
+    type: leave.type,
+    createdAt: leave.createdAt,
+  };
+}
+function capped(total: number, cap: number) {
+  return total >= cap;
+}
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
 import { getProfile, type UserProfile } from './lib/userProfile';
-import { getAuthCaller } from './lib/getAuthCaller';
 import { isSystemAccountEmail } from './lib/systemAccounts';
 
 // ── Get analytics overview ─────────────────────────────────────────────────
 export const getAnalyticsOverview = query({
   args: { organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, { organizationId }) => {
+    const scope = await resolveOrgStaff(ctx, organizationId);
+    if (!scope)
+      return {
+        totalEmployees: 0,
+        pendingApprovals: 0,
+        totalLeaves: 0,
+        pendingLeaves: 0,
+        approvedLeaves: 0,
+        avgApprovalTime: 0,
+        departments: {},
+        users: [],
+        leaves: [],
+      };
+    organizationId = scope.organizationId;
     let users, leaves;
 
     if (organizationId) {
@@ -74,8 +119,12 @@ export const getAnalyticsOverview = query({
       approvedLeaves,
       avgApprovalTime: Math.round(avgApprovalTime * 10) / 10,
       departments,
-      users,
-      leaves,
+      isCapped: capped(users.length, organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP),
+      users: filteredUsers.map((u) => ({
+        ...analyticsUser(u),
+        department: aoProfileMap.get(u._id)?.department ?? u.department,
+      })),
+      leaves: leaves.map(analyticsLeave),
     };
   },
 });
@@ -84,20 +133,15 @@ export const getAnalyticsOverview = query({
 export const getDepartmentStats = query({
   args: {},
   handler: async (ctx) => {
-    const requester = await getAuthCaller(ctx);
-    let users = await ctx.db.query('users').take(XLARGE_LIST_CAP);
-
-    if (requester) {
-      if (!isSuperadminEmail(requester.email)) {
-        if (!requester.organizationId) {
-          throw new Error('User does not belong to an organization');
-        }
-        users = await ctx.db
+    const scope = await resolveOrgStaff(ctx);
+    if (!scope) return [];
+    const usersInScope = scope.organizationId
+      ? await ctx.db
           .query('users')
-          .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
-          .take(DEFAULT_LIST_CAP);
-      }
-    }
+          .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
+          .take(DEFAULT_LIST_CAP)
+      : await ctx.db.query('users').take(XLARGE_LIST_CAP);
+    let users = usersInScope;
 
     // Exclude superadmin from employee count
     users = users.filter((u) => u.role !== 'superadmin');
@@ -151,7 +195,13 @@ export const getDepartmentStats = query({
       dept.avgFamilyLeave = count > 0 ? Math.round(dept.totalFamilyLeave / count) : 0;
     });
 
-    return Object.values(stats);
+    return {
+      data: Object.values(stats),
+      isCapped: capped(
+        usersInScope.length,
+        scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP,
+      ),
+    };
   },
 });
 
@@ -159,33 +209,22 @@ export const getDepartmentStats = query({
 export const getLeaveTrends = query({
   args: {},
   handler: async (ctx) => {
-    const requester = await getAuthCaller(ctx);
-
-    let leaves;
-    if (requester) {
-      if (!isSuperadminEmail(requester.email)) {
-        if (!requester.organizationId) {
-          throw new Error('User does not belong to an organization');
-        }
-        // Use by_org index for efficiency
-        leaves = await ctx.db
+    const scope = await resolveOrgStaff(ctx);
+    if (!scope) return { data: [], isCapped: false };
+    const cap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const leaves = scope.organizationId
+      ? await ctx.db
           .query('leaveRequests')
-          .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
-          .take(DEFAULT_LIST_CAP);
-      } else {
-        // Superadmin: capped full-table read
-        leaves = await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP);
-      }
-    } else {
-      leaves = await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP);
-    }
+          .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
+          .take(cap)
+      : await ctx.db.query('leaveRequests').take(cap);
 
     const now = Date.now();
     const sixMonthsAgo = now - 6 * 30 * 24 * 60 * 60 * 1000;
 
     const recentLeaves = leaves.filter((l) => l.createdAt >= sixMonthsAgo);
 
-    return recentLeaves;
+    return { data: recentLeaves.map(analyticsLeave), isCapped: capped(leaves.length, cap) };
   },
 });
 
@@ -193,8 +232,15 @@ export const getLeaveTrends = query({
 export const getUserAnalytics = query({
   args: { userId: v.id('users') },
   handler: async (ctx, { userId }) => {
+    const scope = await resolveOrgScope(ctx);
+    if (!scope) return null;
     const user = await ctx.db.get(userId);
-    if (!user) throw new Error('User not found');
+    if (
+      !user ||
+      (!scope.isSuper && user.organizationId !== scope.organizationId) ||
+      (!scope.isStaff && userId !== scope.caller._id)
+    )
+      return null;
 
     const userLeaves = await ctx.db
       .query('leaveRequests')
@@ -218,11 +264,12 @@ export const getUserAnalytics = query({
     );
 
     return {
-      user,
+      user: analyticsUser(user),
       totalDaysTaken,
       pendingDays,
       leavesByType,
-      userLeaves,
+      userLeaves: userLeaves.map(analyticsLeave),
+      isCapped: capped(userLeaves.length, DEFAULT_LIST_CAP),
       balances: {
         paid: user.paidLeaveBalance,
         sick: user.sickLeaveBalance,
@@ -236,20 +283,18 @@ export const getUserAnalytics = query({
 export const getTeamCalendar = query({
   args: {},
   handler: async (ctx) => {
-    const requester = await getAuthCaller(ctx);
-    let leaves = await ctx.db
-      .query('leaveRequests')
-      .withIndex('by_status', (q) => q.eq('status', 'approved'))
-      .take(XLARGE_LIST_CAP);
-
-    if (requester) {
-      if (!isSuperadminEmail(requester.email)) {
-        if (!requester.organizationId) {
-          throw new Error('User does not belong to an organization');
-        }
-        leaves = leaves.filter((l) => l.organizationId === requester.organizationId);
-      }
-    }
+    const scope = await resolveOrgScope(ctx);
+    if (!scope) return [];
+    const leaves = scope.organizationId
+      ? await ctx.db
+          .query('leaveRequests')
+          .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
+          .filter((q) => q.eq(q.field('status'), 'approved'))
+          .take(DEFAULT_LIST_CAP)
+      : await ctx.db
+          .query('leaveRequests')
+          .withIndex('by_status', (q) => q.eq('status', 'approved'))
+          .take(XLARGE_LIST_CAP);
 
     const now = Date.now();
     const thirtyDaysFromNow = now + 30 * 24 * 60 * 60 * 1000;
@@ -266,14 +311,17 @@ export const getTeamCalendar = query({
         const user = await ctx.db.get(leave.userId);
         const profile = await getProfile(ctx, leave.userId);
         return {
-          ...leave,
+          ...analyticsLeave(leave),
           userName: user?.name || 'Unknown',
           userDepartment: profile?.department ?? user?.department,
         };
       }),
     );
 
-    return enrichedLeaves;
+    return {
+      data: enrichedLeaves,
+      isCapped: capped(leaves.length, scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP),
+    };
   },
 });
 
@@ -281,8 +329,8 @@ export const getTeamCalendar = query({
 export const getDashboardStats = query({
   args: { organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, { organizationId }) => {
-    const requester = await getAuthCaller(ctx);
-    if (!requester)
+    const scope = await resolveOrgScope(ctx, organizationId);
+    if (!scope)
       return {
         totalEmployees: 0,
         pendingRequests: 0,
@@ -292,8 +340,8 @@ export const getDashboardStats = query({
         monthlyTrend: [],
       };
 
-    const isSuperadminUser = requester.role === 'superadmin';
-    const orgId = isSuperadminUser ? organizationId : (organizationId ?? requester.organizationId);
+    const isSuperadminUser = scope.isSuper;
+    const orgId = scope.organizationId;
 
     if (!isSuperadminUser && !orgId) {
       return {
@@ -361,6 +409,9 @@ export const getDashboardStats = query({
       }
     }
 
+    const isCapped =
+      capped(users.length, isSuperadminUser ? XLARGE_LIST_CAP : DEFAULT_LIST_CAP) ||
+      capped(leaves.length, isSuperadminUser ? XLARGE_LIST_CAP : DEFAULT_LIST_CAP);
     return {
       totalEmployees,
       pendingRequests,
@@ -368,6 +419,7 @@ export const getDashboardStats = query({
       approvedThisMonth,
       pieData,
       monthlyTrend,
+      isCapped,
     };
   },
 });
@@ -376,11 +428,11 @@ export const getDashboardStats = query({
 export const getRecentLeaves = query({
   args: { organizationId: v.optional(v.id('organizations')) },
   handler: async (ctx, { organizationId }) => {
-    const requester = await getAuthCaller(ctx);
-    if (!requester) return [];
+    const scope = await resolveOrgStaff(ctx, organizationId);
+    if (!scope) return [];
 
-    const isSuperadminUser = requester.role === 'superadmin';
-    const orgId = isSuperadminUser ? organizationId : (organizationId ?? requester.organizationId);
+    const isSuperadminUser = scope.isSuper;
+    const orgId = scope.organizationId;
 
     if (!isSuperadminUser && !orgId) return [];
 
@@ -414,7 +466,7 @@ export const getRecentLeaves = query({
         endDate: l.endDate,
         days: l.days,
         status: l.status,
-        reason: l.reason,
+
         createdAt: l.createdAt,
         updatedAt: l.updatedAt,
         organizationId: l.organizationId,
@@ -428,7 +480,8 @@ export const getRecentLeaves = query({
 
 // ── Report Builder: aggregate any metric by any dimension ───────────────────
 // Powers the custom widgets on /analytics/reports. Returns a normalized
-// `{ series, total, unit }` shape that every chart type can render.
+// `{ series, total, unit, isCapped }` shape that every chart type can render.
+// `isCapped` signals the underlying take() hit its cap — totals may under-count.
 const REPORT_METRIC = v.union(
   v.literal('employees'),
   v.literal('leaves'),
@@ -454,12 +507,10 @@ export const getReportData = query({
     rangeDays: v.optional(v.number()), // time window; omit for all-time
   },
   handler: async (ctx, { organizationId, metric, groupBy, rangeDays }) => {
-    const requester = await getAuthCaller(ctx);
-    const isSuperadminUser = requester ? isSuperadminEmail(requester.email) : false;
-    const orgId = isSuperadminUser ? organizationId : (organizationId ?? requester?.organizationId);
+    const scope = await resolveOrgStaff(ctx, organizationId, { adminOnly: metric === 'payroll' });
+    const orgId = scope?.organizationId;
 
-    // Non-superadmins must be scoped to an org.
-    if (!isSuperadminUser && !orgId) {
+    if (!scope) {
       return { series: [], total: 0, unit: 'count' as const };
     }
 
@@ -467,16 +518,19 @@ export const getReportData = query({
 
     // Fetch rows for `table`, org-scoped when possible, capped for safety.
     // Generic over the table name so callers get the concrete document type.
+    let reportIsCapped = false;
     async function fetchByOrg<T extends 'users' | 'leaveRequests' | 'tasks' | 'payrollRecords'>(
       table: T,
     ) {
-      if (orgId) {
-        return ctx.db
-          .query(table)
-          .withIndex('by_org', (q) => q.eq('organizationId', orgId as never))
-          .take(DEFAULT_LIST_CAP);
-      }
-      return ctx.db.query(table).take(XLARGE_LIST_CAP);
+      const cap = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+      const rows = orgId
+        ? await ctx.db
+            .query(table)
+            .withIndex('by_org', (q) => q.eq('organizationId', orgId as never))
+            .take(cap)
+        : await ctx.db.query(table).take(cap);
+      if (capped(rows.length, cap)) reportIsCapped = true;
+      return rows;
     }
 
     // Resolve the grouping key for a user (via profile, falling back to the
@@ -507,7 +561,7 @@ export const getReportData = query({
         .map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 }))
         .sort((a, b) => b.value - a.value);
       const total = series.reduce((s, x) => s + x.value, 0);
-      return { series, total: Math.round(total * 100) / 100 };
+      return { series, total: Math.round(total * 100) / 100, isCapped: reportIsCapped } as const;
     };
 
     switch (metric) {

@@ -98,11 +98,6 @@ export function isSuperadmin(
     | null
     | undefined,
 ): boolean {
-  if (!user) return false;
-  // Primary: role in DB is the source of truth
-  if (user.role === 'superadmin') return true;
-  // Fallback ONLY for bootstrap: if no superadmin exists yet, the env-pinned
-  // email is allowed. This is used only by the register flow, not in runtime
-  // permission checks on other mutations.
-  return isSuperadminEmail(user.email);
+  // Bootstrap email matching belongs only in initial registration, never here.
+  return user?.role === 'superadmin';
 }

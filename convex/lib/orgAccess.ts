@@ -9,7 +9,7 @@
  *   `ctx.auth` instead, which the client cannot forge.
  *
  * Rules implemented:
- *   - superadmin (DB role, or the env-pinned bootstrap email) may act in any org;
+ *   - superadmin (DB role only) may act in any org;
  *   - everyone else is pinned to `caller.organizationId`, whatever
  *     `organizationId` the client asked for — a mismatch is a denial, not a
  *     silent widening;

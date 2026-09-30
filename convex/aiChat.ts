@@ -7,7 +7,7 @@ import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import { getAuthCaller } from './lib/getAuthCaller';
-import { isSuperadminEmail } from './lib/auth';
+import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
 
@@ -16,8 +16,7 @@ export const getConversations = query({
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
     if (!caller) return [];
-    if (caller._id !== args.userId && !isSuperadminEmail(caller.email) && caller.role !== 'admin')
-      return [];
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin') return [];
     const conversations = await ctx.db
       .query('aiConversations')
       .withIndex('by_user', (q) => q.eq('userId', args.userId))
@@ -37,7 +36,7 @@ export const listConversationsPaginated = query({
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
     if (!caller) return { page: [], isDone: true, continueCursor: '' };
-    if (caller._id !== args.userId && !isSuperadminEmail(caller.email) && caller.role !== 'admin')
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin')
       return { page: [], isDone: true, continueCursor: '' };
     return await ctx.db
       .query('aiConversations')
@@ -50,8 +49,12 @@ export const listConversationsPaginated = query({
 export const getConversation = query({
   args: { conversationId: v.id('aiConversations') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) return null;
+    if (conversation.userId !== caller._id && caller.role !== 'admin' && !isSuperadmin(caller))
+      return null;
 
     const messages = await ctx.db
       .query('aiMessages')
@@ -69,6 +72,18 @@ export const getConversation = query({
 export const getMessages = query({
   args: { conversationId: v.id('aiConversations') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    const conversation = await ctx.db.get(args.conversationId as unknown as string as never);
+    // ACL mirrors getConversation: conversation owner, admin or superadmin
+    if (
+      conversation &&
+      typeof conversation === 'object' &&
+      'userId' in (conversation as Record<string, unknown>)
+    ) {
+      const ownerId = (conversation as { userId: unknown }).userId;
+      if (ownerId !== caller._id && caller.role !== 'admin' && !isSuperadmin(caller)) return [];
+    }
     const messages = await ctx.db
       .query('aiMessages')
       .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
@@ -120,8 +135,7 @@ export const getFullContext = query({
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
     if (!caller) return null;
-    if (caller._id !== args.userId && !isSuperadminEmail(caller.email) && caller.role !== 'admin')
-      return null;
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin') return null;
     // Get user data
     const user = await ctx.db.get(args.userId);
     if (!user) throw new Error('User not found');

@@ -64,6 +64,13 @@ beforeEach(() => {
       }
     }
   });
+  mockGetAuthCaller.mockResolvedValue({
+    _id: USER_ID,
+    email: 'anna@example.com',
+    role: 'employee',
+    organizationId: ORG_A,
+  });
+  mockIsSuperadmin.mockReturnValue(false);
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -79,6 +86,10 @@ function makeCaller(
   id: string = USER_ID,
 ) {
   return { _id: id, role, email: 'caller@example.com', organizationId: org, name: 'Caller' };
+}
+function asAdmin(get: jest.Mock) {
+  mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_A, ADMIN_ID));
+  mockIsSuperadmin.mockReturnValueOnce(false);
 }
 
 function taskDoc(overrides: Record<string, unknown> = {}) {
@@ -202,7 +213,7 @@ describe('createTask', () => {
 
   it('rejects an unauthenticated caller', async () => {
     const { ctx } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(null);
+    mockGetAuthCaller.mockResolvedValueOnce(null);
 
     await expect(
       handlers.createTask(ctx, { title: 'T', assignedTo: USER_ID, priority: 'low' }),
@@ -210,8 +221,11 @@ describe('createTask', () => {
   });
 
   it('rejects an employee assigning to someone else: only self-assignment is theirs to do', async () => {
-    const { ctx } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('employee', ORG_A, USER_ID));
+    const { ctx, get } = makeCtx();
+    get.mockResolvedValueOnce(
+      userDoc({ _id: 'someone', organizationId: ORG_A, supervisorId: 'other' }),
+    );
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('employee', ORG_A, USER_ID));
 
     await expect(
       handlers.createTask(ctx, { title: 'T', assignedTo: 'someone', priority: 'low' }),
@@ -220,7 +234,7 @@ describe('createTask', () => {
 
   it('lets an employee create a task assigned to themselves', async () => {
     const { ctx, get, insert } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('employee', ORG_A, USER_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('employee', ORG_A, USER_ID));
     // Assignee lookup: the caller themselves, same org.
     get.mockResolvedValueOnce(userDoc({ _id: USER_ID, organizationId: ORG_A }));
     insert.mockResolvedValueOnce(TASK_ID);
@@ -235,7 +249,7 @@ describe('createTask', () => {
 
   it('rejects an assignee from another organization', async () => {
     const { ctx, get } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_A, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_A, ADMIN_ID));
     get.mockResolvedValueOnce(userDoc({ _id: USER_ID, organizationId: ORG_B }));
 
     await expect(
@@ -245,7 +259,7 @@ describe('createTask', () => {
 
   it('lets a supervisor assign to someone in their subtree', async () => {
     const { ctx, get, take, insert } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('supervisor', ORG_A, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('supervisor', ORG_A, ADMIN_ID));
     get.mockResolvedValueOnce(userDoc({ _id: USER_ID, organizationId: ORG_A }));
     take.mockResolvedValueOnce([userDoc({ _id: USER_ID })]);
     take.mockResolvedValue([]);
@@ -257,7 +271,7 @@ describe('createTask', () => {
 
   it('stops a supervisor assigning outside their team', async () => {
     const { ctx, get, take } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('supervisor', ORG_A, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('supervisor', ORG_A, ADMIN_ID));
     get.mockResolvedValueOnce(userDoc({ _id: 'stranger', organizationId: ORG_A }));
     take.mockResolvedValueOnce([userDoc({ _id: 'my_report' })]);
     take.mockResolvedValue([]);
@@ -269,8 +283,8 @@ describe('createTask', () => {
 
   it('skips the assigner notification for a superadmin assigner but still audits', async () => {
     const { ctx, get, insert } = makeCtx();
-    mockGetAuthCaller.mockResolvedValue(makeCaller('superadmin', ORG_A, ADMIN_ID));
-    mockIsSuperadmin.mockReturnValue(true);
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('superadmin', ORG_A, ADMIN_ID));
+    mockIsSuperadmin.mockReturnValueOnce(true);
     get.mockResolvedValueOnce(userDoc({ _id: USER_ID, organizationId: ORG_A }));
 
     await handlers.createTask(ctx, {
@@ -544,13 +558,12 @@ describe('addComment', () => {
 });
 
 describe('getTasksForEmployee', () => {
-  it('throws for a missing employee', async () => {
+  it('returns empty for a missing employee', async () => {
     const { ctx, get } = makeCtx();
     get.mockResolvedValueOnce(null);
 
-    await expect(handlers.getTasksForEmployee(ctx, { userId: USER_ID })).rejects.toThrow(
-      'Employee not found',
-    );
+    const res = await handlers.getTasksForEmployee(ctx, { userId: 'nonexist' });
+    expect(res).toEqual([]);
   });
 
   it('returns enriched tasks for a regular employee (org-filtered)', async () => {
@@ -923,6 +936,13 @@ describe('getTaskComments / listCommentsPaginated', () => {
 
 describe('backfillTaskOrg / getAllTasksRaw', () => {
   it('patches the organizationId', async () => {
+    mockIsSuperadmin.mockReturnValueOnce(true);
+    mockGetAuthCaller.mockResolvedValueOnce({
+      _id: ADMIN_ID,
+      email: 'admin@example.com',
+      role: 'superadmin',
+      organizationId: ORG_A,
+    } as any);
     const { ctx, patch } = makeCtx();
 
     await handlers.backfillTaskOrg(ctx, { taskId: TASK_ID, organizationId: ORG_A });
@@ -931,6 +951,13 @@ describe('backfillTaskOrg / getAllTasksRaw', () => {
   });
 
   it('returns raw tasks', async () => {
+    mockIsSuperadmin.mockReturnValueOnce(true);
+    mockGetAuthCaller.mockResolvedValueOnce({
+      _id: ADMIN_ID,
+      email: 'admin@example.com',
+      role: 'superadmin',
+      organizationId: ORG_A,
+    } as any);
     const { ctx, take } = makeCtx();
     take.mockResolvedValueOnce([taskDoc()]);
 
@@ -980,7 +1007,7 @@ describe('secureDeleteTask', () => {
   });
 
   it('rejects cross-organization deletions', async () => {
-    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_B, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_B, ADMIN_ID));
     const { ctx, get, remove } = makeCtx();
     get.mockResolvedValueOnce(taskDoc({ organizationId: ORG_A }));
 
@@ -991,7 +1018,7 @@ describe('secureDeleteTask', () => {
   });
 
   it('soft-deletes the task for an authorized caller', async () => {
-    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_A, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_A, ADMIN_ID));
     const { ctx, get, patch, insert } = makeCtx();
     get.mockResolvedValueOnce(taskDoc());
 
@@ -1010,7 +1037,7 @@ describe('secureDeleteTask', () => {
 
 describe('secureReassignTask', () => {
   it('rejects unauthenticated callers', async () => {
-    mockGetAuthCaller.mockResolvedValue(null);
+    mockGetAuthCaller.mockResolvedValueOnce(null);
     const { ctx } = makeCtx();
 
     await expect(
@@ -1019,7 +1046,7 @@ describe('secureReassignTask', () => {
   });
 
   it('rejects cross-organization reassignments', async () => {
-    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_B, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_B, ADMIN_ID));
     const { ctx, get, patch } = makeCtx();
     get.mockResolvedValueOnce(taskDoc({ organizationId: ORG_A }));
 
@@ -1030,7 +1057,7 @@ describe('secureReassignTask', () => {
   });
 
   it('reassigns, notifies the new assignee and audits', async () => {
-    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_A, ADMIN_ID));
+    mockGetAuthCaller.mockResolvedValueOnce(makeCaller('admin', ORG_A, ADMIN_ID));
     const { ctx, get, patch, insert } = makeCtx();
     get.mockResolvedValueOnce(taskDoc());
 

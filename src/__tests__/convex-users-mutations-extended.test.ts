@@ -12,7 +12,14 @@ jest.mock('../../convex/_generated/server', () => ({
   internalAction: ({ handler, args }: any) => ({ handler, args }),
 }));
 
-jest.mock('../../convex/lib/getAuthCaller', () => ({ getAuthCaller: jest.fn() }));
+jest.mock('../../convex/lib/getAuthCaller', () => ({
+  getAuthCaller: jest.fn(async () => ({
+    _id: 'admin-1',
+    role: 'admin',
+    organizationId: 'org-1',
+    email: 'admin@example.com',
+  })),
+}));
 jest.mock('../../convex/lib/auth', () => ({
   isSuperadmin: jest.fn(),
   SUPERADMIN_EMAIL: 'boss@example.com',
@@ -59,6 +66,13 @@ beforeEach(() => {
   mockIsSuperadmin = jest.requireMock('../../convex/lib/auth').isSuperadmin;
   mockRequireUser.mockReset();
   mockIsSuperadmin.mockReset();
+  const ga = jest.requireMock('../../convex/lib/getAuthCaller') as any;
+  ga.getAuthCaller.mockResolvedValue({
+    _id: ADMIN_ID,
+    email: 'admin@example.com',
+    role: 'admin',
+    organizationId: ORG_A,
+  });
   jest.isolateModules(() => {
     const mod = require('../../convex/users/mutations');
     for (const [name, def] of Object.entries(mod)) {
@@ -273,9 +287,16 @@ describe('resetFromCallStatus', () => {
 // ── updateChatBackground ─────────────────────────────────────────────────────
 describe('updateChatBackground', () => {
   it('handles valid input for existing user', async () => {
+    const ga = jest.requireMock('../../convex/lib/getAuthCaller') as any;
+    ga.getAuthCaller.mockResolvedValue({
+      _id: USER_ID,
+      email: 'anna@example.com',
+      role: 'employee',
+      organizationId: ORG_A,
+    });
     const { ctx, get, patch } = makeCtx();
     get.mockResolvedValueOnce(userDoc());
-    await handlers.updateChatBackground(ctx, { userId: USER_ID, background: 'sunset' });
+    await handlers.updateChatBackground(ctx, { userId: USER_ID, backgroundId: 'sunset' } as any);
     expect(patch).toHaveBeenCalled();
   });
 });

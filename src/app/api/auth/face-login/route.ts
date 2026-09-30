@@ -110,16 +110,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1 — server-side face matching → issues short-lived verification token
-    let verification: FaceVerificationResult;
+    let verification: FaceVerificationResult & { error?: string };
     try {
-      verification = await convexMutation<FaceVerificationResult>('faceRecognition:loginWithFace', {
-        email,
-        faceDescriptor,
-        ip,
-        userAgent,
-      });
+      verification = await convexMutation<FaceVerificationResult & { error?: string }>(
+        'faceRecognition:loginWithFace',
+        {
+          email,
+          faceDescriptor,
+          ip,
+          userAgent,
+        },
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Face verification failed';
+      log.warn('Face verification failed', { email, ip });
+      return NextResponse.json({ error: msg }, { status: 401 });
+    }
+    if ((verification as unknown as { error?: string }).error) {
+      const msg = (verification as unknown as { error: string }).error;
       log.warn('Face verification failed', { email, ip });
       return NextResponse.json({ error: msg }, { status: 401 });
     }

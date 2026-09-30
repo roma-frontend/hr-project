@@ -27,7 +27,14 @@ jest.mock('../../convex/_generated/server', () => ({
   internalMutation: ({ handler, args }: any) => ({ handler, args }),
 }));
 
-jest.mock('../../convex/lib/getAuthCaller', () => ({ getAuthCaller: jest.fn() }));
+jest.mock('../../convex/lib/getAuthCaller', () => ({
+  getAuthCaller: jest.fn(async () => ({
+    _id: 'admin-1',
+    role: 'admin',
+    organizationId: 'org-1',
+    email: 'admin@example.com',
+  })),
+}));
 
 jest.mock('../../convex/lib/rbac', () => ({
   requireUser: jest.fn(),
@@ -70,6 +77,13 @@ beforeEach(() => {
     organizationId: ORG,
   });
   rbac.requireOrgAdmin.mockResolvedValue(undefined);
+  const ga = jest.requireMock('../../convex/lib/getAuthCaller') as any;
+  ga.getAuthCaller.mockResolvedValue({
+    _id: ADMIN_ID,
+    role: 'admin',
+    organizationId: ORG,
+    email: 'hr@example.com',
+  });
 
   jest.isolateModules(() => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -137,7 +151,18 @@ function makeCreateCtx(opts: { policy?: unknown } = {}) {
   };
   // Only the org doc is fetched by id here; the email-uniqueness check goes
   // through `query`, not `get`.
-  const get = jest.fn().mockResolvedValue({ _id: ORG, employeeLimit: 100 });
+  const get = jest.fn().mockImplementation(async (id: string) => {
+    if (id === ORG)
+      return { _id: ORG, employeeLimit: 100, name: 'Acme' } as unknown as Record<string, unknown>;
+    if (id === ADMIN_ID)
+      return {
+        _id: ADMIN_ID,
+        email: 'hr@example.com',
+        role: 'admin',
+        organizationId: ORG,
+      } as unknown as Record<string, unknown>;
+    return null;
+  });
   const patch = jest.fn().mockResolvedValue(undefined);
   const insert = jest.fn().mockResolvedValue('new_user_id');
   const q: any = { eq: () => q, and: () => q, neq: () => q, field: () => q };

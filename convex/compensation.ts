@@ -310,6 +310,7 @@ export const getCompensationSummary = query({
       totalBonus,
       byType,
       byStatus,
+      isCapped: records.length >= DEFAULT_LIST_CAP,
     };
   },
 });

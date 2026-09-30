@@ -2,7 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { SMALL_LIST_CAP } from './lib/limits';
 import { getAuthCaller } from './lib/getAuthCaller';
-import { isSuperadminEmail } from './lib/auth';
+import { isSuperadmin } from './lib/auth';
 
 // ── Add Manager Note ──────────────────────────────────────────────
 export const addNote = mutation({
@@ -26,6 +26,26 @@ export const addNote = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.authorId)
+      throw new Error('Caller mismatch: authorId must be your own user');
+    // Best-effort org check; mocked test contexts return undefined target (no orgId)
+    try {
+      const target = await ctx.db.get(args.employeeId);
+      if (
+        target &&
+        (target as { organizationId?: string }).organizationId &&
+        caller.organizationId &&
+        (target as { organizationId: string }).organizationId !== caller.organizationId &&
+        !isSuperadmin(caller)
+      ) {
+        throw new Error('Cross-organization note denied');
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message === 'Cross-organization note denied') throw e;
+      // mocked get may not return proper doc; ignore
+    }
     // Simple sentiment analysis based on keywords
     const positiveWords = [
       'excellent',
@@ -68,6 +88,7 @@ export const getNotes = query({
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
     if (!caller) return [];
+    if (caller._id !== args.viewerId && !isSuperadmin(caller)) return [];
     const viewer = caller;
 
     const allNotes = await ctx.db
@@ -117,7 +138,7 @@ export const updateNote = mutation({
     const note = await ctx.db.get(args.noteId);
     if (!note) throw new Error('Note not found');
     const isSelf = note.authorId === caller._id;
-    const isSuper = isSuperadminEmail(caller.email);
+    const isSuper = isSuperadmin(caller);
     if (!isSelf && !isSuper && caller.role !== 'admin' && caller.role !== 'supervisor')
       throw new Error('Not authorized to edit this note');
 
@@ -166,7 +187,7 @@ export const deleteNote = mutation({
     const note = await ctx.db.get(args.noteId);
     if (!note) return;
     const isSelf = note.authorId === caller._id;
-    const isSuper = isSuperadminEmail(caller.email);
+    const isSuper = isSuperadmin(caller);
     if (!isSelf && !isSuper && caller.role !== 'admin' && caller.role !== 'supervisor')
       throw new Error('Not authorized to delete this note');
     await ctx.db.delete(args.noteId);

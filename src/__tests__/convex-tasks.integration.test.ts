@@ -166,14 +166,14 @@ function createTaskAs(c: Ctx, email: string, overrides: Record<string, unknown> 
 
 async function createTaskWithComment(c: Ctx, overrides: Record<string, unknown> = {}) {
   const taskId = await createTaskAs(c, 'manager@acme.test', overrides);
-  await c.t.run((ctx) =>
+  await c.t.withIdentity({ email: 'employee@acme.test' }).run((ctx) =>
     ctx.runMutation(api.tasks.addComment, {
       taskId,
       authorId: c.employeeId,
       content: 'First comment',
     }),
   );
-  await c.t.run((ctx) =>
+  await c.t.withIdentity({ email: 'peer@acme.test' }).run((ctx) =>
     ctx.runMutation(api.tasks.addComment, {
       taskId,
       authorId: c.peerId,
@@ -189,9 +189,9 @@ describe('employee task queries', () => {
     const c = await seed();
     await createTaskWithComment(c);
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getTasksForEmployee, { userId: c.employeeId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'employee@acme.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getTasksForEmployee, { userId: c.employeeId }));
     expect(res).toHaveLength(1);
     const task = res[0]!;
     expect(task.title).toBe('Ship onboarding checklist');
@@ -214,9 +214,9 @@ describe('employee task queries', () => {
       title: 'Foreign task',
     });
     // The foreign user sees only their own org's task.
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getTasksForEmployee, { userId: c.foreignId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'foreign@other.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getTasksForEmployee, { userId: c.foreignId }));
     expect(res).toHaveLength(1);
     expect(res[0]?._id).toBe(foreignTaskId);
     expect(res[0]?.title).toBe('Foreign task');
@@ -233,9 +233,9 @@ describe('employee task queries', () => {
   it('getTasksAssignedBy returns tasks the supervisor created', async () => {
     const c = await seed();
     const taskId = await createTaskWithComment(c);
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getTasksAssignedBy, { supervisorId: c.supervisorId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'manager@acme.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getTasksAssignedBy, { supervisorId: c.supervisorId }));
     expect(res).toHaveLength(1);
     expect(res[0]?._id).toBe(taskId);
     expect(res[0]?.assignedToUser?.name).toBe('Employee');
@@ -259,9 +259,9 @@ describe('employee task queries', () => {
     });
 
     // The supervisor sees it: it was created inside their reporting subtree.
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getTasksAssignedBy, { supervisorId: c.supervisorId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'manager@acme.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getTasksAssignedBy, { supervisorId: c.supervisorId }));
     expect(res.some((t) => t._id === selfTaskId)).toBe(true);
     expect(res.find((t) => t._id === selfTaskId)?.title).toBe('My own task');
 
@@ -550,9 +550,9 @@ describe('team queries', () => {
       assignedTo: c.peerId,
       title: 'Peer task',
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getTeamTasks, { supervisorId: c.supervisorId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'manager@acme.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getTeamTasks, { supervisorId: c.supervisorId }));
     const ids = res.map((x) => x._id).sort();
     expect(ids).toEqual([t1, t2].sort());
   });
@@ -573,9 +573,9 @@ describe('team queries', () => {
         avatarUrl: 'https://example.com/avatar.png',
       } as never);
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.tasks.getMyEmployees, { supervisorId: c.supervisorId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'manager@acme.test' })
+      .run((ctx) => ctx.runQuery(api.tasks.getMyEmployees, { supervisorId: c.supervisorId }));
     const names = res.map((e) => e.name).sort();
     expect(names).toEqual(['Employee', 'Peer']);
     const emp = res.find((e) => e.name === 'Employee');
@@ -847,7 +847,7 @@ describe('commentCount denormalization', () => {
         updatedAt: Date.now(),
       } as never),
     );
-    await c.t.run((ctx) =>
+    await c.t.withIdentity({ email: 'employee@acme.test' }).run((ctx) =>
       ctx.runMutation(api.tasks.addComment, {
         taskId: legacyId,
         authorId: c.employeeId,

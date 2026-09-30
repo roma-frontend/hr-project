@@ -155,6 +155,10 @@ export const incrementUsage = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin')
+      throw new Error('Not authorized');
     const { userId, organizationId, editType } = args;
     const org = await ctx.db.get(organizationId);
     if (!org) throw new Error('Organization not found');
@@ -282,6 +286,9 @@ export const getHistory = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin') return [];
     const { userId, limit = 50 } = args;
     return await ctx.db
       .query('aiSiteEditorSessions')
@@ -319,6 +326,10 @@ export const getOrganizationStats = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId)
+      throw new Error('Cross-org denied');
     const { organizationId } = args;
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;

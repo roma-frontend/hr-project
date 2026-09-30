@@ -139,12 +139,13 @@ export const getRoster = query({
     const isManager = caller.role === 'admin' || caller.role === 'supervisor';
     const isSuperadmin = caller.role === 'superadmin';
 
-    // Day-indexed scan between the bounds; per-day index keeps it cheap.
-    const all = await ctx.db
+    // Use date-indexed range query to avoid truncating large datasets before filtering
+    const inRange = await ctx.db
       .query('shifts')
-      .withIndex('by_org', (q) => q.eq('organizationId', orgId))
+      .withIndex('by_org_date', (q) =>
+        q.eq('organizationId', orgId).gte('date', args.from).lte('date', args.to),
+      )
       .take(DEFAULT_LIST_CAP);
-    const inRange = all.filter((s) => s.date >= args.from && s.date <= args.to);
     const visible = inRange.filter((s) => {
       if (isManager || isSuperadmin) return true;
       return s.userId === caller._id && s.status === 'published';

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { getAuthCaller } from './lib/getAuthCaller';
+import { assertOrgStaff } from './lib/orgAccess';
 import { mutation, query, type QueryCtx, type MutationCtx } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import type { Doc, Id } from './_generated/dataModel';
@@ -37,6 +38,7 @@ async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   }
 
   const isSuper = isSuperadmin(user);
+  if (!isSuper && !user.organizationId) throw new Error('Not authorized for this organization');
   return { user, orgId: isSuper ? undefined : user.organizationId };
 }
 
@@ -76,6 +78,8 @@ export const SECURITY_FEATURES = [
 export const getAllSettings = query({
   args: {},
   handler: async (ctx) => {
+    const caller = await getAuthCaller(ctx);
+    if (!isSuperadmin(caller)) return [];
     const settings = await ctx.db.query('securitySettings').take(SMALL_LIST_CAP);
 
     // Merge with defaults so all features are always present
@@ -114,7 +118,15 @@ export const toggleSetting = mutation({
     updatedBy: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const { key, enabled, updatedBy } = args;
+    const caller = await getAuthCaller(ctx);
+    if (!caller || !isSuperadmin(caller))
+      throw new Error('Only superadmins can change security settings');
+    if (args.updatedBy !== caller._id) throw new Error('Not authorized: caller mismatch');
+    if (!SECURITY_FEATURES.some((feature) => feature.key === args.key)) {
+      throw new Error('Unknown security setting');
+    }
+    const { key, enabled } = args;
+    const updatedBy = caller._id;
     const existing = await ctx.db
       .query('securitySettings')
       .withIndex('by_key', (q) => q.eq('key', key))
@@ -169,18 +181,58 @@ export const logLoginAttempt = mutation({
     blockedReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Derive canonical user from email to prevent arbitrary userId spoofing.
+    // The caller may supply userId/organizationId, but it must match the email owner.
+    let derivedUserId: typeof args.userId = args.userId;
+    let derivedOrgId: typeof args.organizationId = args.organizationId;
+    if (args.email) {
+      const emailLower = args.email.toLowerCase().trim();
+      const byEmail = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', emailLower))
+        .unique();
+      if (byEmail) {
+        if (args.userId && args.userId !== byEmail._id) {
+          throw new Error('User ID does not match email');
+        }
+        if (
+          args.organizationId &&
+          byEmail.organizationId &&
+          args.organizationId !== byEmail.organizationId
+        ) {
+          throw new Error('Organization mismatch for login attempt');
+        }
+        derivedUserId = byEmail._id;
+        derivedOrgId = byEmail.organizationId ?? args.organizationId;
+      } else {
+        // Unknown email — no user to lock, clear derived IDs
+        derivedUserId = undefined;
+        derivedOrgId = undefined;
+      }
+    }
+
     await ctx.db.insert('loginAttempts', {
-      ...args,
+      email: args.email,
+      userId: derivedUserId,
+      organizationId: derivedOrgId,
+      success: args.success,
+      method: args.method,
+      ip: args.ip,
+      userAgent: args.userAgent,
+      deviceFingerprint: args.deviceFingerprint,
+      riskScore: args.riskScore,
+      riskFactors: args.riskFactors,
+      blockedReason: args.blockedReason,
       createdAt: Date.now(),
     });
 
-    // If failed, check if we need to lock the account
-    if (!args.success && args.userId) {
+    // If failed, check if we need to lock the account (only for known users)
+    if (!args.success && derivedUserId) {
       // Check failed attempts in last 15 minutes
       const fifteenMinAgo = Date.now() - 15 * 60 * 1000;
       const recentFails = await ctx.db
         .query('loginAttempts')
-        .withIndex('by_user', (q) => q.eq('userId', args.userId!))
+        .withIndex('by_user', (q) => q.eq('userId', derivedUserId!))
         .filter((q) =>
           q.and(q.eq(q.field('success'), false), q.gte(q.field('createdAt'), fifteenMinAgo)),
         )
@@ -194,12 +246,12 @@ export const logLoginAttempt = mutation({
           .unique();
 
         if (!lockoutSetting || lockoutSetting.enabled) {
-          await ctx.db.patch(args.userId, {
+          await ctx.db.patch(derivedUserId, {
             faceIdBlocked: true,
             faceIdBlockedAt: Date.now(),
           });
           // Notify org admins
-          const user = await ctx.db.get(args.userId);
+          const user = await ctx.db.get(derivedUserId);
           if (user?.organizationId) {
             const admins = await ctx.db
               .query('users')
@@ -241,6 +293,11 @@ export const registerDevice = mutation({
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId && !isSuperadmin(caller)) {
+      throw new Error('Not authorized to register device for another user');
+    }
     const { userId, fingerprint, userAgent } = args;
     const existing = await ctx.db
       .query('deviceFingerprints')
@@ -278,6 +335,9 @@ export const checkDevice = query({
     fingerprint: v.string(),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (caller._id !== args.userId && !isSuperadmin(caller)) return null;
     const { userId, fingerprint } = args;
     const device = await ctx.db
       .query('deviceFingerprints')
@@ -293,6 +353,9 @@ export const checkDevice = query({
 export const getUserDevices = query({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (caller._id !== args.userId && !isSuperadmin(caller)) return [];
     const { userId } = args;
     return await ctx.db
       .query('deviceFingerprints')
@@ -313,6 +376,11 @@ export const saveKeystrokeProfile = mutation({
     sampleCount: v.number(),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId && !isSuperadmin(caller)) {
+      throw new Error('Not authorized to save keystroke profile for another user');
+    }
     const existing = await ctx.db
       .query('keystrokeProfiles')
       .withIndex('by_user', (q) => q.eq('userId', args.userId))
@@ -346,6 +414,9 @@ export const saveKeystrokeProfile = mutation({
 export const getKeystrokeProfile = query({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return null;
+    if (caller._id !== args.userId && !isSuperadmin(caller)) return null;
     const { userId } = args;
     return await ctx.db
       .query('keystrokeProfiles')
@@ -361,7 +432,11 @@ export const getLoginStats = query({
     hours: v.optional(v.number()), // last N hours, default 24
   },
   handler: async (ctx, args) => {
-    const { organizationId, hours = 24 } = args;
+    const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
+    const organizationId = scope.organizationId;
+    const hours = args.hours ?? 24;
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 24 * 90)
+      throw new Error('Invalid hours range');
     const since = Date.now() - hours * 60 * 60 * 1000;
 
     let attempts = await ctx.db
@@ -475,20 +550,28 @@ export const unlockAccount = mutation({
     unlockedBy: v.id('users'),
   },
   handler: async (ctx, args) => {
-    const { userId, unlockedBy } = args;
-    await ctx.db.patch(userId, {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.unlockedBy) throw new Error('Caller mismatch');
+    if (caller._id !== args.userId && caller.role !== 'admin' && caller.role !== 'superadmin') {
+      throw new Error('Only admins can unlock accounts');
+    }
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error('User not found');
+    if (caller.role !== 'superadmin' && user.organizationId !== caller.organizationId) {
+      throw new Error('Cross-organization unlock denied');
+    }
+    await ctx.db.patch(args.userId, {
       faceIdBlocked: false,
       faceIdBlockedAt: undefined,
       faceIdFailedAttempts: 0,
     });
-    const user = await ctx.db.get(userId);
-    const unlocker = await ctx.db.get(unlockedBy);
     await ctx.db.insert('auditLogs', {
-      organizationId: user?.organizationId,
-      userId: unlockedBy,
+      organizationId: user.organizationId,
+      userId: caller._id,
       action: 'account_unlocked',
-      target: userId,
-      details: `Account of ${user?.name} unlocked by ${unlocker?.name}`,
+      target: args.userId,
+      details: `Account of ${user.name} unlocked by ${caller.name}`,
       createdAt: Date.now(),
     });
     return { success: true };
@@ -513,6 +596,21 @@ export const notifySuperadminSuspiciousActivity = mutation({
     autoBlock: v.optional(v.boolean()), // if true, automatically suspend the user
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    // Pre-auth contexts (login route) have no session yet: allow without caller, but validate email↔userId binding
+    if (caller) {
+      // Authenticated path: caller must be same org admin/superadmin or the user themselves during pre-auth
+      const isSelf = caller._id === args.userId;
+      const isAdmin = caller.role === 'admin' || caller.role === 'superadmin';
+      if (!isSelf && !isAdmin)
+        throw new Error('Not authorized to trigger suspicious activity notification');
+    } else {
+      // Unauthenticated pre-auth path: verify the email matches the target userId to prevent arbitrary suspension
+      const claimed = await ctx.db.get(args.userId);
+      if (!claimed || claimed.email.toLowerCase() !== args.email.toLowerCase().trim()) {
+        throw new Error('Email does not match user for suspicious activity report');
+      }
+    }
     // Find superadmin
     const superadmin = await ctx.db
       .query('users')
@@ -642,6 +740,13 @@ export const getLoginAttemptsByUser = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (caller._id !== args.userId && caller.role !== 'admin' && caller.role !== 'superadmin')
+      return [];
+    const target = await ctx.db.get(args.userId);
+    if (!target) return [];
+    if (caller.role !== 'superadmin' && caller.organizationId !== target.organizationId) return [];
     const { userId, limit = 10 } = args;
     return await ctx.db
       .query('loginAttempts')
@@ -657,13 +762,24 @@ export const getLoginAttemptsByUser = query({
 export const getSuspendedUsers = query({
   args: {},
   handler: async (ctx) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) return [];
+    if (caller.role !== 'superadmin' && caller.role !== 'admin') return [];
     // Suspensions are rare; reading the whole users table to find them wastes
     // the read budget on every dashboard open. The `by_org_active` composite
     // index is no help for a cross-org superadmin view, so this stays a bounded
     // scan — but of a narrow projection: the index over `_creationTime`-ordered
     // rows capped at XLARGE, filtered in one pass. Same bound as before, one
     // filter pass instead of two.
-    const allUsers = await ctx.db.query('users').take(XLARGE_LIST_CAP);
+    const allUsers =
+      caller.role === 'superadmin'
+        ? await ctx.db.query('users').take(XLARGE_LIST_CAP)
+        : caller.organizationId
+          ? await ctx.db
+              .query('users')
+              .withIndex('by_org', (q) => q.eq('organizationId', caller.organizationId!))
+              .collect()
+          : [];
 
     // Filter only suspended users (superadmins are excluded from the view)
     const suspendedUsers = allUsers.filter(

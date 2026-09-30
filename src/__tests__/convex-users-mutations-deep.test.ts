@@ -74,6 +74,7 @@ beforeEach(() => {
   rbac.requireOrgAdmin.mockResolvedValue(undefined);
   rbac.requireRole.mockResolvedValue(undefined);
   auth.isSuperadmin.mockReturnValue(false);
+  getAuthCaller.mockResolvedValue(adminDoc());
   travel.resolveTravelAllowanceForUser.mockResolvedValue(0);
   travel.validateTravelAllowanceOverride.mockReturnValue(undefined);
   entitlements.getOrgEntitlements.mockResolvedValue({ source: 'defaults' });
@@ -812,6 +813,7 @@ describe('presence and avatar', () => {
   });
 
   it('updates the chat background', async () => {
+    getAuthCaller.mockResolvedValue({ _id: USER_ID, role: 'employee', organizationId: ORG });
     const { ctx, patch } = makeCtx();
     const result = await handlers.updateChatBackground(ctx, {
       userId: USER_ID,
