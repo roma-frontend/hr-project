@@ -52,6 +52,7 @@ type Lesson = {
 
 type CourseWithLessonsDetail = CourseWithLessons & {
   lessons: Lesson[];
+  lessonsIsCapped?: boolean;
 };
 
 interface CourseDetailDialogProps {
@@ -59,6 +60,9 @@ interface CourseDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   course: CourseWithLessons | null;
   courseWithLessons: CourseWithLessonsDetail | undefined;
+  paginatedCourseLessons?: Lesson[];
+  paginatedCourseLessonsStatus?: 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted';
+  onLoadMorePaginatedCourseLessons?: () => void;
   isAdmin: boolean;
   isEnrolled: boolean;
   onEnroll: (courseId: Id<'courses'>) => void;
@@ -91,6 +95,9 @@ export function CourseDetailDialog({
   onOpenChange,
   course,
   courseWithLessons,
+  paginatedCourseLessons,
+  paginatedCourseLessonsStatus,
+  onLoadMorePaginatedCourseLessons,
   isAdmin,
   isEnrolled,
   onEnroll,
@@ -151,7 +158,10 @@ export function CourseDetailDialog({
               </div>
               <div>
                 <p className="font-medium">{t('learning.lessons', 'Lessons')}</p>
-                <p className="text-muted-foreground">{course.lessonCount}</p>
+                <p className="text-muted-foreground">
+                  {course.lessonCount}
+                  {courseWithLessons?.lessonsIsCapped ? '+' : ''}
+                </p>
               </div>
               {course.estimatedHours && (
                 <div>
@@ -174,95 +184,119 @@ export function CourseDetailDialog({
               </div>
 
               {courseWithLessons?.lessons && courseWithLessons.lessons.length > 0 ? (
-                courseWithLessons.lessons.map((lesson, index: number) => {
-                  const ContentTypeIcon = contentTypeIcons[lesson.contentType] || FileText;
-                  const isPreviewing = previewLesson?._id === lesson._id;
-                  return (
-                    <div key={lesson._id}>
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                        <div
-                          className="flex items-center gap-3 flex-1 cursor-pointer"
-                          onClick={() =>
-                            onOpenLessonPlayer(course, courseWithLessons.lessons, index)
-                          }
-                        >
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{lesson.title}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <ContentTypeIcon className="h-3 w-3" />
-                              <span>{lesson.contentType}</span>
-                              {lesson.durationMinutes && (
-                                <>
-                                  <span>•</span>
-                                  <span>{lesson.durationMinutes} min</span>
-                                </>
-                              )}
+                (paginatedCourseLessons ?? courseWithLessons.lessons).map(
+                  (lesson, index: number) => {
+                    const ContentTypeIcon = contentTypeIcons[lesson.contentType] || FileText;
+                    const isPreviewing = previewLesson?._id === lesson._id;
+                    return (
+                      <div key={lesson._id}>
+                        <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                          <div
+                            className="flex items-center gap-3 flex-1 cursor-pointer"
+                            onClick={() =>
+                              onOpenLessonPlayer(
+                                course,
+                                paginatedCourseLessons ?? courseWithLessons.lessons,
+                                index,
+                              )
+                            }
+                          >
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{lesson.title}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <ContentTypeIcon className="h-3 w-3" />
+                                <span>{lesson.contentType}</span>
+                                {lesson.durationMinutes && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{lesson.durationMinutes} min</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {lesson.contentType === 'video' && lesson.videoUrl && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="gap-1 text-(--brand-text)"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPreviewLesson(isPreviewing ? null : lesson);
-                              }}
-                            >
-                              <Play className="h-3 w-3" />
-                              {isPreviewing
-                                ? t('learning.hidePreview', 'Hide')
-                                : t('learning.preview', 'Preview')}
-                            </Button>
-                          )}
-                          {isAdmin ? (
-                            <>
+                          <div className="flex items-center gap-1">
+                            {lesson.contentType === 'video' && lesson.videoUrl && (
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => onOpenEditLesson(lesson)}
+                                className="gap-1 text-(--brand-text)"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewLesson(isPreviewing ? null : lesson);
+                                }}
                               >
-                                {t('common.edit', 'Edit')}
+                                <Play className="h-3 w-3" />
+                                {isPreviewing
+                                  ? t('learning.hidePreview', 'Hide')
+                                  : t('learning.preview', 'Preview')}
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => onDeleteLesson(lesson._id)}
-                              >
-                                {t('common.delete', 'Delete')}
-                              </Button>
-                            </>
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      </div>
-                      {/* Inline video preview */}
-                      {isPreviewing && lesson.videoUrl && (
-                        <div className="mt-1 rounded-lg border overflow-hidden">
-                          <div className="aspect-video bg-black">
-                            <iframe
-                              src={getEmbedUrl(lesson.videoUrl)}
-                              className="w-full h-full"
-                              allow="autoplay; encrypted-media"
-                              allowFullScreen
-                              title={lesson.title}
-                            />
+                            )}
+                            {isAdmin ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => onOpenEditLesson(lesson)}
+                                >
+                                  {t('common.edit', 'Edit')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => onDeleteLesson(lesson._id)}
+                                >
+                                  {t('common.delete', 'Delete')}
+                                </Button>
+                              </>
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })
+                        {/* Inline video preview */}
+                        {isPreviewing && lesson.videoUrl && (
+                          <div className="mt-1 rounded-lg border overflow-hidden">
+                            <div className="aspect-video bg-black">
+                              <iframe
+                                src={getEmbedUrl(lesson.videoUrl)}
+                                className="w-full h-full"
+                                allow="autoplay; encrypted-media"
+                                allowFullScreen
+                                title={lesson.title}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  },
+                )
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   {t('learning.noLessons', 'No lessons added yet')}
+                </p>
+              )}
+              {paginatedCourseLessons &&
+                paginatedCourseLessonsStatus !== 'Exhausted' &&
+                paginatedCourseLessonsStatus !== 'LoadingFirstPage' &&
+                onLoadMorePaginatedCourseLessons && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={paginatedCourseLessonsStatus !== 'CanLoadMore'}
+                    onClick={onLoadMorePaginatedCourseLessons}
+                  >
+                    {t('common.loadMore', 'Load more')}
+                  </Button>
+                )}
+              {courseWithLessons?.lessonsIsCapped && (
+                <p className="text-xs text-(--warning-text)">
+                  {t('learning.lessonsCapped', 'Lesson list is capped; use Load more to see all.')}
                 </p>
               )}
             </div>

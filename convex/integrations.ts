@@ -1355,6 +1355,30 @@ export const normalizeOrganizationId = internalQuery({
   },
 });
 
+export const verifyImidWebhookSignature = internalQuery({
+  args: {
+    organizationIdRaw: v.string(),
+    body: v.string(),
+    signature: v.string(),
+  },
+  handler: async (ctx, { organizationIdRaw, body, signature }) => {
+    const organizationId = ctx.db.normalizeId('organizations', organizationIdRaw);
+    if (!organizationId) return false;
+    const doc = await ctx.db
+      .query('integrationConfigs')
+      .withIndex('by_org_provider', (q) =>
+        q.eq('organizationId', organizationId).eq('provider', 'imid'),
+      )
+      .first();
+    const secret = (doc?.config as Record<string, unknown> | undefined)?.webhookSecret as
+      | string
+      | undefined;
+    if (!secret) return false;
+    const { verifyPaymentSignature } = await import('./lib/paymentSignature');
+    return verifyPaymentSignature(secret, body, signature);
+  },
+});
+
 /**
  * A webhook may carry a whole directory or a single employee event. `extractList`
  * covers the collection shapes; fall back to the common single-record envelopes

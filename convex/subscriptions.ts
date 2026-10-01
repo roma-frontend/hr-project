@@ -5,7 +5,9 @@ import { getAuthCaller } from './lib/getAuthCaller';
 import { DEFAULT_LIST_CAP, PLAN_EMPLOYEE_LIMITS } from './lib/limits';
 import { resolveBillingPlanLink } from './billing/plans';
 
-// ── Upsert subscription after checkout.session.completed ─────────────────────
+// Webhook entry-point — called by the Stripe webhook handler after signature
+// verification. Must remain a plain mutation (not internal) so the Next-geo
+// Stripe route can call it via fetch without an internal API token.
 export const upsertSubscription = mutation({
   args: {
     organizationId: v.optional(v.id('organizations')),
@@ -88,7 +90,7 @@ export const upsertSubscription = mutation({
   },
 });
 
-// ── Update status (for subscription.updated / deleted events) ─────────────────
+// Webhook entry-point — see upsertSubscription comment.
 export const updateSubscriptionStatus = mutation({
   args: {
     stripeSubscriptionId: v.string(),
@@ -129,19 +131,11 @@ export const getByCustomer = query({
   args: { stripeCustomerId: v.string() },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
-    if (!caller) {
-      // Test/anon path — allow lookup (used in convex-test without auth setup)
-      const { stripeCustomerId } = args;
-      return ctx.db
-        .query('subscriptions')
-        .withIndex('by_stripe_customer', (q) => q.eq('stripeCustomerId', stripeCustomerId))
-        .first();
-    }
+    if (!caller) throw new Error('Not authenticated');
     if (!isSuperadmin(caller)) return null;
-    const { stripeCustomerId } = args;
     return ctx.db
       .query('subscriptions')
-      .withIndex('by_stripe_customer', (q) => q.eq('stripeCustomerId', stripeCustomerId))
+      .withIndex('by_stripe_customer', (q) => q.eq('stripeCustomerId', args.stripeCustomerId))
       .first();
   },
 });
@@ -206,18 +200,11 @@ export const getSubscriptionByUserId = query({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
-    if (!caller) {
-      const { userId } = args;
-      return ctx.db
-        .query('subscriptions')
-        .withIndex('by_user', (q) => q.eq('userId', userId))
-        .first();
-    }
+    if (!caller) throw new Error('Not authenticated');
     if (caller._id !== args.userId && !isSuperadmin(caller) && caller.role !== 'admin') return null;
-    const { userId } = args;
     return ctx.db
       .query('subscriptions')
-      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .withIndex('by_user', (q) => q.eq('userId', args.userId))
       .first();
   },
 });
@@ -227,20 +214,12 @@ export const getSubscriptionByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
-    if (!caller) {
-      const { email } = args;
-      return ctx.db
-        .query('subscriptions')
-        .withIndex('by_email', (q) => q.eq('email', email))
-        .order('desc')
-        .first();
-    }
+    if (!caller) throw new Error('Not authenticated');
     if (!isSuperadmin(caller) && caller.email !== args.email && caller.role !== 'admin')
       return null;
-    const { email } = args;
     return ctx.db
       .query('subscriptions')
-      .withIndex('by_email', (q) => q.eq('email', email))
+      .withIndex('by_email', (q) => q.eq('email', args.email))
       .order('desc')
       .first();
   },
@@ -257,23 +236,20 @@ export const getSubscriptionForContext = query({
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
-    if (!caller) {
-      // Test path without auth — fall through to org/email lookup below
-    } else {
-      if (
-        args.organizationId &&
-        !isSuperadmin(caller) &&
-        caller.organizationId !== args.organizationId
-      )
-        return null;
-      if (
-        args.email &&
-        !isSuperadmin(caller) &&
-        caller.email !== args.email &&
-        caller.role !== 'admin'
-      )
-        return null;
-    }
+    if (!caller) throw new Error('Not authenticated');
+    if (
+      args.organizationId &&
+      !isSuperadmin(caller) &&
+      caller.organizationId !== args.organizationId
+    )
+      return null;
+    if (
+      args.email &&
+      !isSuperadmin(caller) &&
+      caller.email !== args.email &&
+      caller.role !== 'admin'
+    )
+      return null;
     if (args.organizationId) {
       const orgId = args.organizationId;
       const byOrg = await ctx.db

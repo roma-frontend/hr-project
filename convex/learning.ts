@@ -195,10 +195,64 @@ export const getCourseWithLessons = query({
     return {
       course,
       lessons,
+      lessonsIsCapped: lessons.length === DEFAULT_LIST_CAP,
       myEnrollment: myEnrollment
         ? { status: myEnrollment.status, progress: myEnrollment.progress ?? 0 }
         : null,
     };
+  },
+});
+
+/** Paginated lessons for a course. Legacy getCourseWithLessons remains for short courses. */
+export const getCourseLessonsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    courseId: v.id('courses'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId);
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
+    const result = await ctx.db
+      .query('lessons')
+      .withIndex('by_course', (q) =>
+        q.eq('organizationId', args.organizationId).eq('courseId', args.courseId),
+      )
+      .order('asc')
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    return result;
+  },
+});
+
+/** Paginated quizzes for a course. */
+export const getCourseQuizzesPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    courseId: v.id('courses'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId);
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
+    const result = await ctx.db
+      .query('quizzes')
+      .withIndex('by_course', (q) =>
+        q.eq('organizationId', args.organizationId).eq('courseId', args.courseId),
+      )
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    return result;
   },
 });
 
@@ -488,6 +542,45 @@ export const getCourseEnrollments = query({
     );
 
     return enriched;
+  },
+});
+
+/** Cursor-based course enrollment list. Legacy getCourseEnrollments remains available. */
+export const getCourseEnrollmentsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    courseId: v.id('courses'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can view course enrollments');
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
+    const result = await ctx.db
+      .query('enrollments')
+      .withIndex('by_course', (q) =>
+        q.eq('organizationId', args.organizationId).eq('courseId', args.courseId),
+      )
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const page = await Promise.all(
+      result.page.map(async (enrollment) => {
+        const user = await ctx.db.get(enrollment.userId);
+        return {
+          ...enrollment,
+          userName: user?.organizationId === args.organizationId ? user.name : 'Unknown',
+          userEmail: user?.organizationId === args.organizationId ? user.email : '',
+          userDepartment:
+            user?.organizationId === args.organizationId ? user.department : undefined,
+        };
+      }),
+    );
+    return { ...result, page };
   },
 });
 
@@ -1334,7 +1427,7 @@ export const getEnrollmentDetails = query({
   },
 });
 
-/** Course list with enrollment counts. */
+/** Course list with enrollment counts. Counts are capped; see isCapped. */
 export const getCoursesWithCounts = query({
   args: {
     organizationId: v.id('organizations'),
@@ -1346,25 +1439,73 @@ export const getCoursesWithCounts = query({
     const courses = await ctx.db
       .query('courses')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
-
+      .take(DEFAULT_LIST_CAP + 1);
     const allEnrollments = await ctx.db
       .query('enrollments')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = courses.length > DEFAULT_LIST_CAP || allEnrollments.length > DEFAULT_LIST_CAP;
+    const courseSample = courses.slice(0, DEFAULT_LIST_CAP);
+    const enrollmentSample = allEnrollments.slice(0, DEFAULT_LIST_CAP);
 
-    return courses.map((course) => {
-      const courseEnrollments = allEnrollments.filter((e) => e.courseId === course._id);
-      return {
-        _id: course._id,
-        title: course.title,
-        category: course.category,
-        isMandatory: course.isMandatory,
-        isPublished: course.isPublished,
-        enrollmentCount: courseEnrollments.length,
-        completedCount: courseEnrollments.filter((e) => e.status === 'completed').length,
-        inProgressCount: courseEnrollments.filter((e) => e.status === 'in_progress').length,
-      };
-    });
+    return {
+      isCapped,
+      courses: courseSample.map((course) => {
+        const courseEnrollments = enrollmentSample.filter((e) => e.courseId === course._id);
+        return {
+          _id: course._id,
+          title: course.title,
+          category: course.category,
+          isMandatory: course.isMandatory,
+          isPublished: course.isPublished,
+          enrollmentCount: courseEnrollments.length,
+          completedCount: courseEnrollments.filter((e) => e.status === 'completed').length,
+          inProgressCount: courseEnrollments.filter((e) => e.status === 'in_progress').length,
+        };
+      }),
+    };
+  },
+});
+
+/** Paginated course list with enrollment counts. */
+export const getCoursesWithCountsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can view course details');
+    const result = await ctx.db
+      .query('courses')
+      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const page = await Promise.all(
+      result.page.map(async (course) => {
+        const enrollments = await ctx.db
+          .query('enrollments')
+          .withIndex('by_course', (q) =>
+            q.eq('organizationId', args.organizationId).eq('courseId', course._id),
+          )
+          .take(DEFAULT_LIST_CAP + 1);
+        const isCapped = enrollments.length > DEFAULT_LIST_CAP;
+        const sample = enrollments.slice(0, DEFAULT_LIST_CAP);
+        return {
+          _id: course._id,
+          title: course.title,
+          category: course.category,
+          isMandatory: course.isMandatory,
+          isPublished: course.isPublished,
+          enrollmentCount: sample.length,
+          completedCount: sample.filter((e) => e.status === 'completed').length,
+          inProgressCount: sample.filter((e) => e.status === 'in_progress').length,
+          isCapped,
+        };
+      }),
+    );
+    return { ...result, page };
   },
 });

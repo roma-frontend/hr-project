@@ -240,24 +240,30 @@ describe('updateSubscriptionStatus', () => {
 
 // ── lookups ──────────────────────────────────────────────────────────────────
 describe('subscription lookups', () => {
-  it('getByCustomer finds by stripe customer id', async () => {
+  it('getByCustomer finds by stripe customer id (superadmin only)', async () => {
     const c = await seed();
     await c.t.run((ctx) => ctx.runMutation(api.subscriptions.upsertSubscription, subArgs(c)));
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getByCustomer, { stripeCustomerId: 'cus_123' }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'super@acme.test' })
+      .query(api.subscriptions.getByCustomer, { stripeCustomerId: 'cus_123' });
     expect(res?.stripeSubscriptionId).toBe('sub_123');
   });
 
-  it('getByCustomer returns null for an unknown customer', async () => {
+  it('getByCustomer rejects without auth and for non-superadmin', async () => {
     const c = await seed();
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getByCustomer, { stripeCustomerId: 'cus_nope' }),
-    );
+    await c.t.run((ctx) => ctx.runMutation(api.subscriptions.upsertSubscription, subArgs(c)));
+    await expect(
+      c.t.run((ctx) =>
+        ctx.runQuery(api.subscriptions.getByCustomer, { stripeCustomerId: 'cus_nope' }),
+      ),
+    ).rejects.toThrow('Not authenticated');
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getByCustomer, { stripeCustomerId: 'cus_123' });
     expect(res).toBeNull();
   });
 
-  it('getSubscriptionByEmail returns the newest match', async () => {
+  it('getSubscriptionByEmail returns the newest match for owner/superadmin', async () => {
     const c = await seed();
     await c.t.run((ctx) => ctx.runMutation(api.subscriptions.upsertSubscription, subArgs(c)));
     await c.t.run((ctx) =>
@@ -285,13 +291,13 @@ describe('subscription lookups', () => {
       } as never);
     });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionByEmail, { email: 'billing@acme.test' }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'super@acme.test' })
+      .query(api.subscriptions.getSubscriptionByEmail, { email: 'billing@acme.test' });
     expect(res?.stripeSubscriptionId).toBe('sub_789');
   });
 
-  it('getSubscriptionByUserId finds a linked subscription', async () => {
+  it('getSubscriptionByUserId finds a linked subscription for owner', async () => {
     const c = await seed();
     await c.t.run((ctx) => ctx.runMutation(api.subscriptions.upsertSubscription, subArgs(c)));
     await c.t.run((ctx) =>
@@ -300,9 +306,9 @@ describe('subscription lookups', () => {
         userId: c.adminId,
       }),
     );
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionByUserId, { userId: c.adminId }),
-    );
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getSubscriptionByUserId, { userId: c.adminId });
     expect(res?.stripeSubscriptionId).toBe('sub_123');
     expect(res?.userId).toBe(c.adminId);
   });
@@ -379,12 +385,12 @@ describe('getSubscriptionForContext', () => {
       ),
     );
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionForContext, {
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getSubscriptionForContext, {
         organizationId: c.organizationId,
         email: 'owner@acme.test',
-      }),
-    );
+      });
     expect(res?.stripeSubscriptionId).toBe('sub_org');
   });
 
@@ -402,23 +408,23 @@ describe('getSubscriptionForContext', () => {
       ),
     );
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionForContext, {
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getSubscriptionForContext, {
         organizationId: c.organizationId,
         email: 'owner@acme.test',
-      }),
-    );
+      });
     expect(res?.stripeSubscriptionId).toBe('sub_email');
   });
 
   it('synthesizes a subscription from the organization plan as a last resort', async () => {
     const c = await seed();
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionForContext, {
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getSubscriptionForContext, {
         organizationId: c.organizationId,
-        email: 'billing@acme.test',
-      }),
-    );
+        email: 'admin@acme.test',
+      });
 
     expect(res?.plan).toBe('starter');
     expect(res?.status).toBe('active');
@@ -426,11 +432,14 @@ describe('getSubscriptionForContext', () => {
     expect(res?.stripeSubscriptionId).toBeNull();
   });
 
-  it('returns null when nothing can be resolved', async () => {
+  it('rejects without auth and returns null when nothing can be resolved', async () => {
     const c = await seed();
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.subscriptions.getSubscriptionForContext, {}),
-    );
+    await expect(
+      c.t.run((ctx) => ctx.runQuery(api.subscriptions.getSubscriptionForContext, {})),
+    ).rejects.toThrow('Not authenticated');
+    const res = await c.t
+      .withIdentity({ email: 'admin@acme.test' })
+      .query(api.subscriptions.getSubscriptionForContext, { email: 'nobody@acme.test' });
     expect(res).toBeNull();
   });
 });

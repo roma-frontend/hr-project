@@ -90,6 +90,7 @@ type QuizResult = {
 
 type CourseWithLessonsDetail = CourseWithLessons & {
   lessons: Lesson[];
+  lessonsIsCapped?: boolean;
 };
 
 export default function LearningClient() {
@@ -221,6 +222,21 @@ export default function LearningClient() {
           courseId: selectedCourse._id,
         }
       : 'skip',
+  );
+
+  const {
+    results: paginatedCourseLessons,
+    status: paginatedCourseLessonsStatus,
+    loadMore: loadMorePaginatedCourseLessons,
+  } = usePaginatedQuery(
+    api.learning.getCourseLessonsPaginated,
+    showCourseDetail && selectedCourse && effectiveOrgId && user?.id
+      ? {
+          organizationId: effectiveOrgId as Id<'organizations'>,
+          courseId: selectedCourse._id,
+        }
+      : 'skip',
+    { initialNumItems: 50 },
   );
 
   // Fetch lesson progress for the active lesson in the player
@@ -898,6 +914,11 @@ export default function LearningClient() {
         onOpenChange={setShowCourseDetail}
         course={selectedCourse}
         courseWithLessons={courseWithLessons as CourseWithLessonsDetail | undefined}
+        paginatedCourseLessons={
+          paginatedCourseLessonsStatus === 'LoadingFirstPage' ? undefined : paginatedCourseLessons
+        }
+        paginatedCourseLessonsStatus={paginatedCourseLessonsStatus}
+        onLoadMorePaginatedCourseLessons={() => loadMorePaginatedCourseLessons(50)}
         isAdmin={isAdmin}
         isEnrolled={
           courseWithLessons?.myEnrollment !== undefined

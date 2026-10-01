@@ -57,23 +57,35 @@ interface TelegramUpdate {
  *
  * Set the webhook URL in Telegram BotFather:
  *   https://api.telegram.org/bot<TOKEN>/setWebhook?url=<CONVEX_SITE>/api/telegram
+ *
+ * Auth: when TELEGRAM_WEBHOOK_SECRET is set, Telegram sends it as
+ * X-Telegram-Bot-Api-Secret-Token header (preferred) and also as
+ * body.secret_token. Both are checked.
  */
 http.route({
   path: '/api/telegram',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
+    const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (secret) {
+      const headerSecret = request.headers.get('x-telegram-bot-api-secret-token') ?? '';
+      const rawBody = await request.clone().text();
+      let bodySecret = '';
+      try {
+        bodySecret = (JSON.parse(rawBody) as TelegramUpdate).secret_token ?? '';
+      } catch {
+        // not JSON — will fail later
+      }
+      if (headerSecret !== secret && bodySecret !== secret) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+    }
     const body = (await request.json()) as TelegramUpdate;
 
     // Handle inline keyboard callbacks (button presses)
     if (body.callback_query) {
       const cb = body.callback_query;
       const data: string = cb.data ?? '';
-
-      // Validate the webhook secret
-      const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-      if (secret && body.secret_token !== secret) {
-        return new Response('Unauthorized', { status: 401 });
-      }
 
       // Handle screening completion callback: screening_done:<applicationId>
       if (data.startsWith('screening_done:')) {
@@ -1083,7 +1095,9 @@ http.route({
  * Receive signing callbacks from imID.
  *
  * When a user completes or declines a signing request in the imID app, imID
- * sends a POST to this endpoint with the outcome.
+ * sends a POST to this endpoint with the outcome. Auth: HMAC header
+ * `x-imid-signature` over the raw body with the org's stored imID secret
+ * (paymentProviderConfigs / imid config). Without the header the call is 401.
  */
 http.route({
   pathPrefix: '/webhooks/imid/sign/',
@@ -1095,6 +1109,24 @@ http.route({
     if (body.length > 1_000_000) {
       return new Response(JSON.stringify({ error: 'Payload too large' }), {
         status: 413,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const signature = request.headers.get('x-imid-signature') ?? '';
+    if (!signature) {
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
+      organizationIdRaw,
+      body,
+      signature,
+    });
+    if (!verified) {
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
@@ -1116,6 +1148,7 @@ http.route({
  * Receive verification callbacks from imID.
  *
  * Delegates to `ingestImidVerifyCallback` because `httpAction` has no `ctx.db`.
+ * Auth: HMAC header `x-imid-signature` (same secret as sign).
  */
 http.route({
   pathPrefix: '/webhooks/imid/verify/',
@@ -1130,6 +1163,24 @@ http.route({
     }
 
     const organizationIdRaw = new URL(request.url).pathname.split('/').filter(Boolean).pop() ?? '';
+    const signature = request.headers.get('x-imid-signature') ?? '';
+    if (!signature) {
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
+      organizationIdRaw,
+      body,
+      signature,
+    });
+    if (!verified) {
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     await ctx.runAction(internal.integrations.ingestImidVerifyCallback, {
       organizationIdRaw,
