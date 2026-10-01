@@ -12,7 +12,7 @@
  * checked against this repository.
  */
 
-export const COMPARE_VERIFIED = '2026-09-30';
+export const COMPARE_VERIFIED = '2026-10-01';
 
 export const GLOBAL_COMPARE_SLUGS = [
   'personio',

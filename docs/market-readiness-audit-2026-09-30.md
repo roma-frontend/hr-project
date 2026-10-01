@@ -146,8 +146,8 @@
 ## Незакрытые задачи (осталось до Gate B)
 
 1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.
-2. **`DATA-01` систематически — частично:** LMS enrollment drill-down, course catalog (Learning/onboarding), «Мои курсы» и личная история сертификатов используют cursor pagination; certificate/enrollment state определяются точечно. Team overview и capped lesson counts помечают неполноту в UI. Остальные capped lists/aggregates в `learning/admin` требуют следующих блоков (см. выше).
-3. **Полный реестр** — ~350 public функций, проверено ~60; `billing/*`, `compliance`, часть `attendance`, `http.ts` webhooks без HMAC.
+2. **`DATA-01` систематически — частично:** LMS enrollment drill-down, course catalog (Learning/onboarding), «Мои курсы» и личная история сертификатов используют cursor pagination; certificate/enrollment state определяются точечно. Team overview и capped lesson counts помечают неполноту в UI. Дополнительно: `learning` course-enrollment list + course lessons/quizzes + course counts now `isCapped`/paginated (see § ход исправлений — 1 октября 2026, DATA-01 course catalog/enrollments).
+3. **Полный реестр** — ~350 public функций, проверено ~60; `billing/*` anon fallbacks closed (`subscriptions.getByCustomer`/…), `http.ts` imID/Telegram webhooks now HMAC-gated, `compliance`/`attendance`/`shifts` already scoped (see ход исправлений — 1 октября 2026, AUTH-WIDE).
 4. **Юридические** — DPA/vendor register/residency/Biometrics DPIA/AI Act, `competitors.ts` source log, SOC2 `no` требует внешний юрист.
 5. **Инфраструктурные** — `UPSTASH_REDIS` в prod, `Sentry` DSN pin, backup restore drill, ротация секретов.
 6. **Продуктовые** — `SRC/bank` acceptance, `careers/succession/marketplace` completeness check.

@@ -17,7 +17,9 @@ import type { Id } from './_generated/dataModel';
 import { getAuthCaller } from './lib/getAuthCaller';
 import { isSuperadmin } from './lib/auth';
 import { assertModuleAccess } from './lib/entitlements';
+import { paginationOptsValidator } from 'convex/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { MAX_PAGE_SIZE } from './pagination';
 import {
   assessPositionRisk,
   nineBoxCell,
@@ -193,6 +195,8 @@ export const getSuccessionOverview = query({
       .query('successors')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
       .take(SMALL_LIST_CAP);
+    const positionsIsCapped = positions.length === SMALL_LIST_CAP;
+    const successorsIsCapped = allSuccessors.length === SMALL_LIST_CAP;
 
     const positionRows = await Promise.all(
       positions.map(async (p) => {
@@ -237,7 +241,75 @@ export const getSuccessionOverview = query({
       })),
     );
 
-    return { positions: positionRows, summary };
+    return {
+      positions: positionRows,
+      summary,
+      isCapped: positionsIsCapped || successorsIsCapped,
+    };
+  },
+});
+
+/** Paginated active key positions. Legacy getSuccessionOverview remains for small orgs. */
+export const getSuccessionOverviewPaginated = query({
+  args: { organizationId: v.id('organizations'), paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    await assertModuleAccess(ctx, 'succession');
+    await checkAccess(ctx, args.organizationId);
+    const positionsResult = await ctx.db
+      .query('keyPositions')
+      .withIndex('by_org_archived', (q) =>
+        q.eq('organizationId', args.organizationId).eq('isArchived', false),
+      )
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const bench = await Promise.all(
+      positionsResult.page.map(async (p) => {
+        const rows = await ctx.db
+          .query('successors')
+          .withIndex('by_position', (q) => q.eq('keyPositionId', p._id))
+          .take(SMALL_LIST_CAP);
+        return { positionId: p._id, rows };
+      }),
+    );
+    const benchMap = new Map(bench.map((b) => [String(b.positionId), b.rows] as const));
+    const positions = await Promise.all(
+      positionsResult.page.map(async (p) => {
+        const benchRows = benchMap.get(String(p._id)) ?? [];
+        const successorRows = await Promise.all(
+          benchRows.map(async (s) => {
+            const person = await ctx.db.get(s.successorId);
+            return {
+              successorId: s._id,
+              employeeId: s.successorId,
+              employeeName: person?.name ?? '—',
+              position: person?.position ?? null,
+              readiness: s.readiness as Readiness,
+              notes: s.notes ?? null,
+            };
+          }),
+        );
+        const risk = assessPositionRisk({
+          criticality: p.criticality,
+          vacancyRisk: p.vacancyRisk,
+          successors: benchRows.map((s) => ({ readiness: s.readiness as Readiness })),
+        });
+        const incumbent = p.incumbentId ? await ctx.db.get(p.incumbentId) : null;
+        return {
+          positionId: p._id,
+          positionTitle: p.positionTitle,
+          department: p.department ?? null,
+          criticality: p.criticality,
+          vacancyRisk: p.vacancyRisk,
+          incumbent: incumbent ? { id: incumbent._id, name: incumbent.name } : null,
+          notes: p.notes ?? null,
+          bench: successorRows,
+          risk,
+        };
+      }),
+    );
+    return { ...positionsResult, page: positions };
   },
 });
 

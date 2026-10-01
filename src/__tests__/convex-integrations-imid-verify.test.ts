@@ -14,14 +14,18 @@ if (!globalThis.crypto?.subtle) {
 // Node.js 18+ has these globally, but Jest's test runner may not expose them.
 if (typeof globalThis.Request === 'undefined' || typeof globalThis.Response === 'undefined') {
   // Minimal implementation sufficient for the HTTP handler's needs:
-  //   request.url, request.text()
+  //   request.url, request.headers.get(), request.text()
   //   new Response(body, { status, headers })
   class MinimalRequest {
     url: string;
+    headers: { get: (k: string) => string | null };
     private _body: string;
-    constructor(input: string | URL, init?: { body?: string }) {
+    constructor(input: string | URL, init?: { body?: string; headers?: Record<string, string> }) {
       this.url = typeof input === 'string' ? input : input.toString();
       this._body = init?.body ?? '';
+      const h = new Map<string, string>();
+      for (const [k, v] of Object.entries(init?.headers ?? {})) h.set(k.toLowerCase(), v);
+      this.headers = { get: (k: string) => h.get(k.toLowerCase()) ?? null };
     }
     async text() {
       return this._body;
@@ -45,6 +49,16 @@ if (typeof globalThis.Request === 'undefined' || typeof globalThis.Response === 
   }
   if (typeof globalThis.Request === 'undefined') (globalThis as any).Request = MinimalRequest;
   if (typeof globalThis.Response === 'undefined') (globalThis as any).Response = MinimalResponse;
+} else {
+  // Existing Request lacks headers in some jsdom polyfills — patch get().
+  const OrigRequest = globalThis.Request as unknown as { prototype: { headers?: unknown } };
+  const sample = new (globalThis.Request as unknown as new (
+    u: string,
+    i?: unknown,
+  ) => { headers?: unknown })('http://x', {});
+  if (!sample.headers || typeof (sample.headers as { get?: unknown }).get !== 'function') {
+    OrigRequest.prototype.headers = { get: () => null } as unknown as Headers;
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -212,6 +226,7 @@ describe('/webhooks/imid/verify/ HTTP route', () => {
   it('returns 200 { ok: true } for a valid verified payload', async () => {
     const mockCtx = {
       runAction: jest.fn().mockResolvedValue({ status: 'ok', message: 'Verified' }),
+      runQuery: jest.fn().mockResolvedValue(false),
     };
     const request = new Request(`https://project.convex.site/webhooks/imid/verify/${ORG_ID}`, {
       method: 'POST',
@@ -246,6 +261,7 @@ describe('/webhooks/imid/verify/ HTTP route', () => {
   it('delegates the parsed orgId and body to ingestImidVerifyCallback', async () => {
     const mockCtx = {
       runAction: jest.fn().mockResolvedValue({ status: 'ok', message: 'Verified' }),
+      runQuery: jest.fn().mockResolvedValue(false),
     };
     const body = JSON.stringify({ verified: true });
     const request = new Request(`https://project.convex.site/webhooks/imid/verify/${ORG_ID}`, {
@@ -269,6 +285,7 @@ describe('/webhooks/imid/verify/ HTTP route', () => {
       runAction: jest
         .fn()
         .mockResolvedValue({ status: 'invalid', message: 'Unknown organization' }),
+      runQuery: jest.fn().mockResolvedValue(false),
     };
     const request = new Request('https://project.convex.site/webhooks/imid/verify/org-unknown', {
       method: 'POST',

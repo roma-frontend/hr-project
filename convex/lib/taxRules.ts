@@ -4,9 +4,11 @@
  * Adding a new country = adding an entry to TAX_RULES (no engine code changes).
  * Keep CountryCode in sync with the TAX_COUNTRY union in convex/schema/payroll.ts.
  *
- * ⚠️ Armenia & Russia reproduce the previously hardcoded constants EXACTLY and must
- * not be changed without updating the regression tests. Germany / UK / Poland / USA
- * are APPROXIMATE reference values — verify with an accountant before production use.
+ * ⚠️ Armenia reproduces the previously hardcoded constants EXACTLY and must not be
+ * changed without updating the regression tests. Russia and Germany / UK / Poland /
+ * USA are APPROXIMATE reference values — verify with an accountant before
+ * production use. Russia currently carries the pre-2025 13%/15% bracket only
+ * (approximate:true) — do not quote it as statutory without a taxRuleOverride.
  */
 
 export type CountryCode = 'armenia' | 'russia' | 'germany' | 'uk' | 'poland' | 'usa';

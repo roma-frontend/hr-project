@@ -425,7 +425,7 @@ describe('imID sign webhook', () => {
 
   it('delegates to the sign callback and returns ok', async () => {
     const runAction = jest.fn().mockResolvedValue({ message: 'signed' });
-    const ctx = { runAction };
+    const ctx = { runAction, runQuery: jest.fn().mockResolvedValue(false) };
     const request = new Request('http://localhost/webhooks/imid/sign/org_1', {
       method: 'POST',
       body: '{"status":"signed"}',
@@ -454,7 +454,7 @@ describe('imID verify webhook', () => {
 
   it('delegates to the verify callback and returns ok', async () => {
     const runAction = jest.fn().mockResolvedValue(undefined);
-    const ctx = { runAction };
+    const ctx = { runAction, runQuery: jest.fn().mockResolvedValue(false) };
     const request = new Request('http://localhost/webhooks/imid/verify/org_1', {
       method: 'POST',
       body: '{"verified":true}',

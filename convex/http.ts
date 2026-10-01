@@ -67,9 +67,11 @@ http.route({
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    let rawBodyForJson: string | null = null;
     if (secret) {
       const headerSecret = request.headers.get('x-telegram-bot-api-secret-token') ?? '';
-      const rawBody = await request.clone().text();
+      const rawBody = await request.text();
+      rawBodyForJson = rawBody;
       let bodySecret = '';
       try {
         bodySecret = (JSON.parse(rawBody) as TelegramUpdate).secret_token ?? '';
@@ -80,7 +82,10 @@ http.route({
         return new Response('Unauthorized', { status: 401 });
       }
     }
-    const body = (await request.json()) as TelegramUpdate;
+    const body =
+      rawBodyForJson !== null
+        ? (JSON.parse(rawBodyForJson) as TelegramUpdate)
+        : ((await request.json()) as TelegramUpdate);
 
     // Handle inline keyboard callbacks (button presses)
     if (body.callback_query) {
@@ -1112,23 +1117,30 @@ http.route({
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    // CSP-gated: verify HMAC if a per-org webhook secret is configured; otherwise allow unsigned (legacy imID sender).
     const signature = request.headers.get('x-imid-signature') ?? '';
-    if (!signature) {
-      return new Response(JSON.stringify({ error: 'Missing signature' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+    if (signature) {
+      const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
+        organizationIdRaw,
+        body,
+        signature,
       });
-    }
-    const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
-      organizationIdRaw,
-      body,
-      signature,
-    });
-    if (!verified) {
-      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+      if (!verified) {
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      const hasSecret = await ctx.runQuery(internal.integrations.hasImidWebhookSecret, {
+        organizationIdRaw,
       });
+      if (hasSecret) {
+        return new Response(JSON.stringify({ error: 'Missing signature' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     const outcome = await ctx.runAction(internal.integrations.ingestImidSignCallback, {
@@ -1164,22 +1176,28 @@ http.route({
 
     const organizationIdRaw = new URL(request.url).pathname.split('/').filter(Boolean).pop() ?? '';
     const signature = request.headers.get('x-imid-signature') ?? '';
-    if (!signature) {
-      return new Response(JSON.stringify({ error: 'Missing signature' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+    if (signature) {
+      const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
+        organizationIdRaw,
+        body,
+        signature,
       });
-    }
-    const verified = await ctx.runQuery(internal.integrations.verifyImidWebhookSignature, {
-      organizationIdRaw,
-      body,
-      signature,
-    });
-    if (!verified) {
-      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
+      if (!verified) {
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      const hasSecret = await ctx.runQuery(internal.integrations.hasImidWebhookSecret, {
+        organizationIdRaw,
       });
+      if (hasSecret) {
+        return new Response(JSON.stringify({ error: 'Missing signature' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     await ctx.runAction(internal.integrations.ingestImidVerifyCallback, {

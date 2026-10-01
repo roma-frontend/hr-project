@@ -66,8 +66,13 @@ the **contract** with the provider, which no code can assert.
 
 ## Honest status
 
-As of 2026-09-20 **no report and no DPA has been collected into a file** for any
-vendor in this table. Every row above is a to-do, not a record. That is the one
-part of vendor management that cannot be automated and should not be papered
-over: the work is opening ~15 trust portals and saving ~30 PDFs. Until it is
-done, the vendor-management control is not in place.
+As of 2026-10-01 **no report and no DPA has been collected into a file** for any
+vendor in this table (unchanged since 2026-09-20). Every row above is a to-do,
+not a record. That is the one part of vendor management that cannot be automated
+and should not be papered over: the work is opening ~15 trust portals and saving
+~30 PDFs. Until it is done, the vendor-management control is not in place.
+
+> `convex/http.ts:86` now HMAC-verifies imID sign/verify webhooks
+> (`verifyImidWebhookSignature`) and `convex/subscriptions` no longer serves
+> tenant data anonymously — but the per-vendor report/DPA rows above remain
+> ☐ until dated PDFs are saved outside git.

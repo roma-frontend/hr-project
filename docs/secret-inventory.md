@@ -67,11 +67,13 @@ Rotating a secret is a deploy; do it deliberately:
 
 ## Open items — and the honest status
 
-- **No rotation has ever been recorded.** Before the SOC 2 observation window
-  starts, rotate everything once and fill the "Rotated" column. Until that
-  happens, "we can rotate" is an untested claim.
+- **No rotation has ever been recorded as of 2026-10-01** (unchanged since
+  2026-09-20). Before the SOC 2 observation window starts, rotate everything
+  once and fill the "Rotated" column. Until that happens, "we can rotate" is
+  an untested claim.
 - **Two people reading the same store** is the moment to move to per-person
   access; today there is one.
 - Webhook signing secrets for local PSPs (Idram/ArCa) and Lucky Carrot are
   configured per integration and stored with the integration record, not in the
-  environment — see `docs/webhooks.md`.
+  environment — see `docs/webhooks.md`. imID webhooks are now also
+  HMAC-verified (`convex/http.ts:86` + `convex/integrations:verifyImidWebhookSignature`).

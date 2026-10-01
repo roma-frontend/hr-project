@@ -1,6 +1,8 @@
 import { query, mutation } from './_generated/server';
 import { v } from 'convex/values';
-import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
+import { paginationOptsValidator } from 'convex/server';
+import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { MAX_PAGE_SIZE } from './pagination';
 import { notify } from './lib/notify';
 import { generateCandidateToken } from './candidatePortal';
 
@@ -46,6 +48,49 @@ export const listAllOpenVacancies = query({
           },
         };
       });
+  },
+});
+
+/** Paginated public vacancies. Legacy listAllOpenVacancies remains for older clients. */
+export const listAllOpenVacanciesPaginated = query({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
+    const result = await ctx.db
+      .query('vacancies')
+      .withIndex('by_status', (q) => q.eq('status', 'open'))
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const orgIds = [...new Set(result.page.map((v) => v.organizationId))];
+    const orgs = await Promise.all(orgIds.map((id) => ctx.db.get(id)));
+    const orgMap = Object.fromEntries(orgs.filter(Boolean).map((o) => [o!._id, o!]));
+    const page = result.page
+      .filter((v) => {
+        const org = orgMap[v.organizationId];
+        return Boolean(org && org.isActive);
+      })
+      .map((v) => {
+        const org = orgMap[v.organizationId]!;
+        return {
+          _id: v._id,
+          title: v.title,
+          department: v.department,
+          location: v.location,
+          employmentType: v.employmentType,
+          salary: v.salary,
+          createdAt: v.createdAt,
+          excerpt: v.description.length > 200 ? v.description.slice(0, 200) + '...' : v.description,
+          org: {
+            _id: org._id,
+            name: org.name,
+            slug: org.slug,
+            logoUrl: org.logoUrl,
+            industry: org.industry,
+          },
+        };
+      });
+    return { ...result, page };
   },
 });
 

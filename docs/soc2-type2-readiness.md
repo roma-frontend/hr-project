@@ -244,7 +244,7 @@ native connectors) they cover §3, §4, §5, §6 monitoring almost fully.
 1. ~~**Biometric consent + retention policy**~~ — done 2026-09-20 (§6, `docs/legal/biometric-policy.md`). Remaining sub-item: the Cloudinary photo residency.
 2. ~~**Incident response plan**~~ — done 2026-09-20 (`docs/incident-response.md`).
 3. ~~**Branch protection**~~ — enabled 2026-09-20: 1 required review, code-owner reviews, the six CI checks, force-push/deletion blocked (§4). Only `enforce_admins` is off; flip it when a second maintainer exists.
-4. **Secret rotation** — inventory written; rotate everything once and record dates (§3.5, `docs/secret-inventory.md`).
-5. **Uptime monitor account + first backup restore drill** — both specified, neither performed (§5).
-6. **Vendor report collection + DPAs** — register written, PDFs not collected (§2.4/§6, `docs/vendor-register.md`).
-7. **Sentry alert rules** — run `scripts/sentry-alert-rules.mjs` (§5).
+4. **Secret rotation** — inventory written; rotate everything once and record dates (§3.5, `docs/secret-inventory.md`) — honest status re-confirmed 2026-10-01.
+5. **Uptime monitor account + first backup restore drill** — both specified, neither performed (§5) — re-confirmed 2026-10-01.
+6. **Vendor report collection + DPAs** — register written, PDFs not collected (§2.4/§6, `docs/vendor-register.md`) — re-confirmed 2026-10-01.
+7. **Sentry alert rules** — run `scripts/sentry-alert-rules.mjs` (§5) — re-confirmed 2026-10-01.

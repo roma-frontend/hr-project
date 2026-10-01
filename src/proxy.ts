@@ -352,7 +352,10 @@ function buildCsp(nonce: string, isProduction: boolean): string {
   // report-uri pinned to the Sentry host that actually owns that domain; the old
   // wildcard `https://*.sentry.io/*` matched any project and `report-uri` is
   // deprecated in favour of `report-to` (kept only for backwards-compat).
-  const sentryHost = process.env.SENTRY_REPORT_HOST ?? 'o1234567.ingest.sentry.io';
+  const sentryHost =
+    process.env.SENTRY_REPORT_HOST ??
+    process.env.NEXT_PUBLIC_SENTRY_DSN?.match(/https:\/\/[^@]+@([^/]+)/)?.[1] ??
+    'o1234567.ingest.sentry.io';
   const scriptSrc = isProduction
     ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:`
     : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:";
