@@ -489,8 +489,8 @@ export default function OrgChartClient() {
     }
   };
 
-  const handleNodeDrag = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
+  const handleNodeDrag: import('@xyflow/react').OnNodeDrag<Node> = useCallback(
+    (_event: React.MouseEvent | React.TouchEvent, node: Node) => {
       if (!isAdmin) return;
 
       setNodes((nds) =>

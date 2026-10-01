@@ -161,6 +161,7 @@ eslint_report*.json
 eslint_check*.json
 eslint_fix*.json
 eslint-ci-errors.json
+eslint-report.json
 
 # Reports and analysis directories
 /reports/

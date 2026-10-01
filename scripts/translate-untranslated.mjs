@@ -84,7 +84,10 @@ async function translateBatch(entries, lang) {
       const provider = createGoogleGenerativeAI({ apiKey: geminiKey });
       // gemini-3.6-flash carries a 20 req/day free-tier quota; 2.5-flash has
       // its own, so prefer it for bulk work and only fall back on error.
-      for (const modelName of ['gemini-2.5-flash', process.env.GEMINI_MODEL || 'gemini-3.6-flash']) {
+      for (const modelName of [
+        'gemini-2.5-flash',
+        process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+      ]) {
         try {
           const model = provider(modelName);
           result = await generateText({
@@ -97,7 +100,9 @@ async function translateBatch(entries, lang) {
           });
           break;
         } catch (err) {
-          const limited = JSON.stringify(err).includes('429') || JSON.stringify(err).includes('RESOURCE_EXHAUSTED');
+          const limited =
+            JSON.stringify(err).includes('429') ||
+            JSON.stringify(err).includes('RESOURCE_EXHAUSTED');
           console.log(`  Gemini ${modelName} ${limited ? 'rate-limited' : 'failed'}, trying next…`);
           if (!limited) break;
         }
@@ -126,7 +131,8 @@ async function translateBatch(entries, lang) {
   const parsed = JSON.parse(text.slice(start, end + 1));
   // Keep only keys we asked for (the model sometimes renames or adds keys).
   const cleaned = {};
-  for (const e of entries) if (typeof parsed[e.dotted] === 'string') cleaned[e.dotted] = parsed[e.dotted];
+  for (const e of entries)
+    if (typeof parsed[e.dotted] === 'string') cleaned[e.dotted] = parsed[e.dotted];
   return cleaned;
 }
 
@@ -180,7 +186,9 @@ async function main() {
           if (translated !== undefined) applyTranslations(targetTree, e.keyPath, translated);
         }
         totalTranslated += Object.keys(result).length;
-        console.log(`  batch ${i / BATCH + 1}/${Math.ceil(todo.length / BATCH)} done (${Object.keys(result).length}/${batch.length})`);
+        console.log(
+          `  batch ${i / BATCH + 1}/${Math.ceil(todo.length / BATCH)} done (${Object.keys(result).length}/${batch.length})`,
+        );
         if (i + BATCH < todo.length) await new Promise((r) => setTimeout(r, PAUSE_MS));
       }
 

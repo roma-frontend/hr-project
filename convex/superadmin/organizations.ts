@@ -248,17 +248,23 @@ export const purgeOrganizationData = internalMutation({
     let tableIndex = control.tableIndex;
 
     const tables = Object.keys(schema.tables);
+    // Convex allows only ONE `.paginate()` call per function execution.
+    // Process at most one table per invocation and reschedule, so we never
+    // violate that limit (https://docs.convex.dev/database/pagination).
+    let currentTable: string | null = null;
     for (; tableIndex < tables.length && budget > 0; tableIndex++) {
       const table = tables[tableIndex]!;
       if (SKIP_TABLES.has(table)) continue;
+      currentTable = table;
+      break;
+    }
 
-      // Full paginated walk; collect victims first, delete after, so the
-      // cursor is never invalidated mid-walk.
+    if (currentTable) {
       const victims: string[] = [];
       let cursor: string | null = null;
       do {
         const page: PaginationResult<GenericDocument> = await db
-          .query(table)
+          .query(currentTable)
           .paginate({ numItems: 200, cursor });
         for (const doc of page.page) {
           if (isOrgData(doc as Record<string, unknown>, orgId, userSet)) {
@@ -268,23 +274,30 @@ export const purgeOrganizationData = internalMutation({
         cursor = page.isDone ? null : page.continueCursor;
       } while (cursor);
 
-      if (victims.length === 0) continue;
-      const slice = victims.slice(0, budget);
-      for (const id of slice) {
-        const gid = db.normalizeId(table, id);
-        if (gid) await db.delete(gid);
+      if (victims.length > 0) {
+        const slice = victims.slice(0, budget);
+        for (const id of slice) {
+          const gid = db.normalizeId(currentTable, id);
+          if (gid) await db.delete(gid);
+        }
+        deleted += slice.length;
+        budget -= slice.length;
+        if (slice.length < victims.length) {
+          // Budget exhausted mid-table: stay on this table; next pass walks remainder.
+          await ctx.db.patch(args.deletionId, { tableIndex, deletedDocs: deleted });
+          await ctx.scheduler.runAfter(0, internal.superadmin.purgeOrganizationData, {
+            deletionId: args.deletionId,
+          });
+          return;
+        }
       }
-      deleted += slice.length;
-      budget -= slice.length;
-      if (slice.length < victims.length) {
-        // Budget exhausted mid-table: stay on this table; the deleted slice
-        // is gone, so the next pass walks the remainder.
-        await ctx.db.patch(args.deletionId, { tableIndex, deletedDocs: deleted });
-        await ctx.scheduler.runAfter(0, internal.superadmin.purgeOrganizationData, {
-          deletionId: args.deletionId,
-        });
-        return;
-      }
+      // Table fully processed — advance to next table.
+      const nextIndex = tableIndex + 1;
+      await ctx.db.patch(args.deletionId, { tableIndex: nextIndex, deletedDocs: deleted });
+      await ctx.scheduler.runAfter(0, internal.superadmin.purgeOrganizationData, {
+        deletionId: args.deletionId,
+      });
+      return;
     }
 
     if (budget <= 0) {

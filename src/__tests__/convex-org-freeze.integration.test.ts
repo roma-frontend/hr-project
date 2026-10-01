@@ -201,8 +201,10 @@ describe('organization hard delete', () => {
     });
     expect(state.frozen).toBe(true);
 
-    // Drive the batched purge until it reports done.
-    for (let i = 0; i < 10; i++) {
+    // Drive the batched purge until it reports done. purgeOrganizationData
+    // processes at most one table per invocation (Convex allows only one
+    // `.paginate()` per function), so a full sweep needs O(tableCount) runs (~150+).
+    for (let i = 0; i < 300; i++) {
       const control = await c.t.run(async (ctx) => await ctx.db.get(deletionId));
       if (control?.status === 'done') break;
       await c.t.mutation(internal.superadmin.purgeOrganizationData, { deletionId });
