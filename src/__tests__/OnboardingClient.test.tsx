@@ -19,8 +19,15 @@ jest.mock('react-i18next', () => ({
 
 let queryResults: Record<string, unknown> = {};
 const mutationCalls: Array<{ name?: string; args: any[] }> = [];
+const mockLoadMoreCourses = jest.fn();
+let mockCourseStatus = 'Exhausted';
 
 jest.mock('convex/react', () => ({
+  usePaginatedQuery: (ref: { _name?: string }) => ({
+    results: queryResults[ref?._name ?? ''] ?? [],
+    status: mockCourseStatus,
+    loadMore: mockLoadMoreCourses,
+  }),
   useQuery: (ref: { _name?: string }, args?: any) =>
     args === 'skip' ? undefined : queryResults[ref?._name ?? ''],
   useMutation:
@@ -48,6 +55,7 @@ jest.mock('@/convex/_generated/api', () => ({
     },
     learning: {
       listCourses: { _name: 'listCourses' },
+      listCoursesPaginated: { _name: 'listCourses' },
     },
     users: {
       queries: {
@@ -273,6 +281,8 @@ const PROGRAM_DETAIL = {
 
 describe('OnboardingClient', () => {
   beforeEach(() => {
+    mockCourseStatus = 'Exhausted';
+    mockLoadMoreCourses.mockClear();
     jest.clearAllMocks();
     mutationCalls.length = 0;
     mockUser = { id: 'user-1', organizationId: 'org-1', role: 'admin' };
@@ -362,6 +372,18 @@ describe('OnboardingClient', () => {
 
     expect(screen.getByText('Edit Template')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Engineering Onboarding')).toBeInTheDocument();
+  });
+
+  it('allows loading more courses from an empty onboarding page', () => {
+    mockCourseStatus = 'CanLoadMore';
+    queryResults.listCourses = [];
+    render(<OnboardingClient />);
+    fireEvent.click(screen.getByText('Start Onboarding'));
+    fireEvent.click(screen.getAllByTestId('user-picker')[0]);
+    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByText('Next'));
+    fireEvent.click(screen.getByText('Load more'));
+    expect(mockLoadMoreCourses).toHaveBeenCalledWith(20);
   });
 
   it('starts onboarding through the wizard', async () => {

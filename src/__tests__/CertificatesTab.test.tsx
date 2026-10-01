@@ -42,6 +42,10 @@ jest.mock('@/components/ui/badge', () => ({
   ),
 }));
 
+jest.mock('@/components/ui/ShieldLoader', () => ({
+  ShieldLoader: () => <div data-testid="shield-loader" />,
+}));
+
 jest.mock('lucide-react', () => ({
   Award: (props: any) => <span data-testid="icon-award" {...props} />,
   Download: (props: any) => <span data-testid="icon-download" {...props} />,
@@ -83,12 +87,10 @@ describe('CertificatesTab', () => {
     mockNow = Date.now();
   });
 
-  it('shows the empty state when certificates is undefined', () => {
+  it('shows loading rather than an empty history before the first page arrives', () => {
     render(<CertificatesTab certificates={undefined} />);
-    expect(screen.getByText('No certificates yet')).toBeInTheDocument();
-    expect(
-      screen.getByText('Complete a course to earn your first certificate'),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('shield-loader')).toBeInTheDocument();
+    expect(screen.queryByText('No certificates yet')).not.toBeInTheDocument();
   });
 
   it('shows the empty state when the list is empty', () => {

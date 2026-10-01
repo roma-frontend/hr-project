@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMainRef } from '@/hooks/useMainRef';
 import { useSelectedOrganization } from '@/hooks/useSelectedOrganization';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Id } from '../../convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
@@ -714,9 +714,14 @@ function StartOnboardingWizard({
   const startOnboarding = useMutation(api.onboarding.startOnboarding);
 
   // Fetch available courses for onboarding
-  const courses = useQuery(
-    api.learning.listCourses,
-    orgId ? { organizationId: orgId, includeUnpublished: false } : 'skip',
+  const {
+    results: courses,
+    status: courseStatus,
+    loadMore: loadMoreCourses,
+  } = usePaginatedQuery(
+    api.learning.listCoursesPaginated,
+    open && orgId ? { organizationId: orgId, includeUnpublished: false } : 'skip',
+    { initialNumItems: 20 },
   );
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
@@ -844,7 +849,7 @@ function StartOnboardingWizard({
                   'Select courses that the new hire must complete during onboarding.',
                 )}
               </p>
-              {!courses ? (
+              {courseStatus === 'LoadingFirstPage' ? (
                 <p className="text-sm text-muted-foreground">Loading courses...</p>
               ) : courses.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
@@ -892,6 +897,15 @@ function StartOnboardingWizard({
                     </label>
                   ))}
                 </div>
+              )}
+              {courseStatus !== 'Exhausted' && courseStatus !== 'LoadingFirstPage' && (
+                <Button
+                  variant="outline"
+                  disabled={courseStatus !== 'CanLoadMore'}
+                  onClick={() => loadMoreCourses(20)}
+                >
+                  {t('common.loadMore', 'Load more')}
+                </Button>
               )}
               {selectedCourseIds.length > 0 && (
                 <p className="text-xs text-(--brand-text)">

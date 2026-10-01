@@ -7,6 +7,7 @@ import { MAX_PAGE_SIZE } from './pagination';
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
 import { getProfile } from './lib/userProfile';
 import { isSuperadmin } from './lib/auth';
+import { assertOrgStaff } from './lib/orgAccess';
 
 /**
  * Non-superadmin users, org-scoped when possible.
@@ -44,18 +45,7 @@ export const getCostAnalysis = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
-    const caller = await getAuthCaller(ctx);
-    if (
-      !caller ||
-      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
-    )
-      throw new Error('Staff only');
-    if (
-      !isSuperadmin(caller) &&
-      args.organizationId &&
-      caller.organizationId !== args.organizationId
-    )
-      throw new Error('Cross-org denied');
+    const { organizationId } = await assertOrgStaff(ctx, args.organizationId);
     const period = args.period || 'month';
 
     // Calculate date range
@@ -74,21 +64,19 @@ export const getCostAnalysis = query({
     const startTimestamp = startDate.getTime();
 
     // Get all approved leave requests in the period
-    let leaves = await ctx.db
-      .query('leaveRequests')
+    const leaveQuery = ctx.db.query('leaveRequests');
+    const scopedLeaves = organizationId
+      ? leaveQuery.withIndex('by_org', (q) => q.eq('organizationId', organizationId))
+      : leaveQuery;
+    const leaves = await scopedLeaves
       .filter((q) =>
         q.and(q.eq(q.field('status'), 'approved'), q.gte(q.field('createdAt'), startTimestamp)),
       )
       .order('desc')
       .take(MAX_PAGE_SIZE);
 
-    // Filter by organization if provided
-    if (args.organizationId) {
-      leaves = leaves.filter((l) => l.organizationId === args.organizationId);
-    }
-
     // Get all users (org-scoped via index when the caller's scope is known)
-    const { users, userMap } = await loadStaffUserMap(ctx, args.organizationId);
+    const { users, userMap } = await loadStaffUserMap(ctx, organizationId);
 
     // Load profiles in parallel
     const profiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
@@ -147,35 +135,19 @@ export const detectConflicts = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
-    const caller = await getAuthCaller(ctx);
-    if (
-      !caller ||
-      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
-    )
-      throw new Error('Staff only');
-    if (
-      !isSuperadmin(caller) &&
-      args.organizationId &&
-      caller.organizationId !== args.organizationId
-    )
-      throw new Error('Cross-org denied');
-    const { organizationId } = args;
+    const { organizationId } = await assertOrgStaff(ctx, args.organizationId);
     // Get all approved and pending leaves
-    let leaves = await ctx.db
-      .query('leaveRequests')
+    const leaveQuery = ctx.db.query('leaveRequests');
+    const scopedLeaves = organizationId
+      ? leaveQuery.withIndex('by_org', (q) => q.eq('organizationId', organizationId))
+      : leaveQuery;
+    const leaves = await scopedLeaves
       .filter((q) => q.or(q.eq(q.field('status'), 'approved'), q.eq(q.field('status'), 'pending')))
       .order('desc')
       .take(MAX_PAGE_SIZE);
 
-    // Filter by organization if provided
-    if (organizationId) {
-      leaves = leaves.filter((l) => l.organizationId === organizationId);
-    }
-
     // Get all users
-    const users = (await ctx.db.query('users').order('desc').take(MAX_PAGE_SIZE)).filter(
-      (u) => u.role !== 'superadmin',
-    );
+    const users = await loadStaffUsers(ctx, organizationId);
     const userMap = new Map(users.map((u) => [u._id, u]));
 
     // Load profiles in parallel
@@ -297,19 +269,7 @@ export const getSmartSuggestions = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
-    const caller = await getAuthCaller(ctx);
-    if (
-      !caller ||
-      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
-    )
-      throw new Error('Staff only');
-    if (
-      !isSuperadmin(caller) &&
-      args.organizationId &&
-      caller.organizationId !== args.organizationId
-    )
-      throw new Error('Cross-org denied');
-    const { organizationId } = args;
+    const { organizationId } = await assertOrgStaff(ctx, args.organizationId);
     const suggestions: Array<{
       id: string;
       titleKey: string;
@@ -321,16 +281,14 @@ export const getSmartSuggestions = query({
 
     // Get all users (org-scoped via index when the caller's scope is known) and leaves
     const { users } = await loadStaffUserMap(ctx, organizationId);
-    let leaves = await ctx.db
-      .query('leaveRequests')
+    const leaveQuery = ctx.db.query('leaveRequests');
+    const scopedLeaves = organizationId
+      ? leaveQuery.withIndex('by_org', (q) => q.eq('organizationId', organizationId))
+      : leaveQuery;
+    const leaves = await scopedLeaves
       .filter((q) => q.eq(q.field('status'), 'approved'))
       .order('desc')
       .take(MAX_PAGE_SIZE);
-
-    // Filter by organization if provided
-    if (organizationId) {
-      leaves = leaves.filter((l) => l.organizationId === organizationId);
-    }
 
     // Load profiles in parallel
     const ssProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));
@@ -449,26 +407,19 @@ export const getCalendarExportData = query({
     organizationId: v.optional(v.id('organizations')),
   },
   handler: async (ctx, args) => {
-    const caller = await getAuthCaller(ctx);
-    if (
-      !caller ||
-      (caller.role !== 'admin' && caller.role !== 'supervisor' && !isSuperadmin(caller))
-    )
-      throw new Error('Staff only');
+    const { organizationId } = await assertOrgStaff(ctx, args.organizationId);
     // Get all approved leaves
-    let leaves = await ctx.db
-      .query('leaveRequests')
+    const leaveQuery = ctx.db.query('leaveRequests');
+    const scopedLeaves = organizationId
+      ? leaveQuery.withIndex('by_org', (q) => q.eq('organizationId', organizationId))
+      : leaveQuery;
+    const leaves = await scopedLeaves
       .filter((q) => q.eq(q.field('status'), 'approved'))
       .order('desc')
       .take(MAX_PAGE_SIZE);
 
-    // Filter by organization if provided
-    if (args.organizationId) {
-      leaves = leaves.filter((l) => l.organizationId === args.organizationId);
-    }
-
     // Get all users (org-scoped via index when the caller's scope is known)
-    const { users, userMap } = await loadStaffUserMap(ctx, args.organizationId);
+    const { users, userMap } = await loadStaffUserMap(ctx, organizationId);
 
     // Load profiles in parallel
     const ceProfiles = await Promise.all(users.map((u) => getProfile(ctx, u._id)));

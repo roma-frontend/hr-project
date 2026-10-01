@@ -13,6 +13,8 @@ const modules = {
   './_generated/api.ts': () => import('../../convex/_generated/api'),
   './security.ts': () => import('../../convex/security'),
   './analytics.ts': () => import('../../convex/analytics'),
+  './admin.ts': () => import('../../convex/admin'),
+  './learning.ts': () => import('../../convex/learning'),
   './surveys.ts': () => import('../../convex/surveys'),
   './shifts.ts': () => import('../../convex/shifts'),
   './backups.ts': () => import('../../convex/backups'),
@@ -53,7 +55,608 @@ async function seed() {
   return { t, ...ids };
 }
 
+async function seedLearning() {
+  const fixture = await seed();
+  const records = await fixture.t.run(async (ctx) => {
+    const admin = (await ctx.db.get(fixture.adminId))!;
+    const { _id, _creationTime, ...fields } = admin;
+    const employeeId = await ctx.db.insert('users', {
+      ...fields,
+      role: 'employee',
+      email: 'learner@example.test',
+    });
+    const otherOrgId = await ctx.db.insert('organizations', {
+      name: 'Other tenant',
+      slug: 'other-learning',
+      plan: 'professional',
+      isActive: true,
+      createdBySuperadmin: false,
+      employeeLimit: 50,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    const otherUserId = await ctx.db.insert('users', {
+      ...fields,
+      organizationId: otherOrgId,
+      email: 'other-learner@example.test',
+    });
+    const courseFields = {
+      title: 'Course',
+      category: 'onboarding',
+      difficulty: 'beginner' as const,
+      createdBy: fixture.adminId,
+      isPublished: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    const courseId = await ctx.db.insert('courses', {
+      ...courseFields,
+      organizationId: fixture.orgId,
+    });
+    const otherCourseId = await ctx.db.insert('courses', {
+      ...courseFields,
+      organizationId: otherOrgId,
+    });
+    const lessonId = await ctx.db.insert('lessons', {
+      organizationId: fixture.orgId,
+      courseId,
+      title: 'Lesson',
+      order: 1,
+      contentType: 'text',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    const enrollmentId = await ctx.db.insert('enrollments', {
+      organizationId: fixture.orgId,
+      courseId,
+      userId: fixture.adminId,
+      status: 'not_started',
+      progress: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    return { employeeId, otherOrgId, otherUserId, courseId, otherCourseId, lessonId, enrollmentId };
+  });
+  return { ...fixture, ...records };
+}
+
 describe('launch audit: security regressions and remaining unsafe characterizations', () => {
+  it('admin reports default to the caller tenant and reject a requested foreign tenant', async () => {
+    const { t, orgId, adminId, otherOrgId, otherUserId } = await seedLearning();
+    await t.run(async (ctx) => {
+      for (const [organizationId, userId, days] of [
+        [orgId, adminId, 2],
+        [otherOrgId, otherUserId, 20],
+      ] as const) {
+        await ctx.db.insert('leaveRequests', {
+          organizationId,
+          userId,
+          type: 'paid',
+          status: 'approved',
+          days,
+          startDate: '2026-10-01',
+          endDate: '2026-10-02',
+          reason: 'Private reason',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    });
+    const caller = t.withIdentity({ email: 'audit-admin@example.test' });
+    expect((await caller.query(api.admin.getCostAnalysis, {})).totalDays).toBe(2);
+    const calendar = await caller.query(api.admin.getCalendarExportData, {});
+    expect(calendar).toHaveLength(1);
+    expect(calendar[0].userName).toBe('Fixture admin');
+    const suggestions = await caller.query(api.admin.getSmartSuggestions, {});
+    expect(suggestions.find((s) => s.id === 'low-balance')?.descriptionParams.count).toBe(2);
+    for (const fn of [
+      api.admin.getCostAnalysis,
+      api.admin.detectConflicts,
+      api.admin.getSmartSuggestions,
+      api.admin.getCalendarExportData,
+    ]) {
+      await expect(caller.query(fn, { organizationId: otherOrgId })).rejects.toThrow(
+        'Not authorized',
+      );
+      await expect(t.query(fn, {})).rejects.toThrow('Not authorized');
+    }
+    await t.run((ctx) => ctx.db.patch(adminId, { isActive: false }));
+    await expect(caller.query(api.admin.getCalendarExportData, {})).rejects.toThrow(
+      'Not authorized',
+    );
+  });
+
+  it('employees cannot manage learning content or enumerate course enrollments', async () => {
+    const { t, orgId, courseId, lessonId } = await seedLearning();
+    const caller = t.withIdentity({ email: 'learner@example.test' });
+    await expect(caller.mutation(api.learning.deleteCourse, { courseId })).rejects.toThrow(
+      'Only admins',
+    );
+    await expect(
+      caller.mutation(api.learning.updateLesson, { lessonId, title: 'Forged' }),
+    ).rejects.toThrow('Only admins');
+    await expect(caller.mutation(api.learning.deleteLesson, { lessonId })).rejects.toThrow(
+      'Only admins',
+    );
+    await expect(
+      caller.query(api.learning.getCourseEnrollments, { organizationId: orgId, courseId }),
+    ).rejects.toThrow('Only admins');
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    await admin.mutation(api.learning.updateLesson, { lessonId, title: 'Allowed' });
+    expect(
+      await admin.query(api.learning.getCourseEnrollments, { organizationId: orgId, courseId }),
+    ).toHaveLength(1);
+    expect(await t.run((ctx) => ctx.db.get(lessonId))).toMatchObject({ title: 'Allowed' });
+  });
+
+  it('enrollment updates require ownership or admin and validate progress', async () => {
+    const { t, enrollmentId, employeeId } = await seedLearning();
+    const caller = t.withIdentity({ email: 'learner@example.test' });
+    await expect(
+      caller.mutation(api.learning.updateEnrollmentStatus, { enrollmentId, status: 'completed' }),
+    ).rejects.toThrow('Access denied');
+    await t.run((ctx) => ctx.db.patch(enrollmentId, { userId: employeeId }));
+    await expect(
+      caller.mutation(api.learning.updateEnrollmentStatus, {
+        enrollmentId,
+        status: 'in_progress',
+        progress: 101,
+      }),
+    ).rejects.toThrow('Progress');
+    await caller.mutation(api.learning.updateEnrollmentStatus, {
+      enrollmentId,
+      status: 'in_progress',
+      progress: 25,
+    });
+    expect(await t.run((ctx) => ctx.db.get(enrollmentId))).toMatchObject({ progress: 25 });
+  });
+
+  it('learning writes reject foreign parent records and foreign enrollment targets atomically', async () => {
+    const { t, orgId, courseId, otherCourseId, otherUserId, employeeId, lessonId } =
+      await seedLearning();
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    await expect(
+      admin.mutation(api.learning.createLesson, {
+        organizationId: orgId,
+        courseId: otherCourseId,
+        title: 'Injected',
+        order: 1,
+        contentType: 'text',
+      }),
+    ).rejects.toThrow('Course not found');
+    await expect(
+      admin.mutation(api.learning.bulkEnrollUsers, {
+        organizationId: orgId,
+        courseId,
+        userIds: [employeeId, otherUserId],
+      }),
+    ).rejects.toThrow('User not found in organization');
+    expect(await t.run((ctx) => ctx.db.query('enrollments').collect())).toHaveLength(1);
+    const employee = t.withIdentity({ email: 'learner@example.test' });
+    await expect(
+      employee.mutation(api.learning.updateLessonProgress, {
+        organizationId: orgId,
+        lessonId,
+        courseId: otherCourseId,
+        isCompleted: true,
+      }),
+    ).rejects.toThrow('Lesson not found');
+    expect(await t.run((ctx) => ctx.db.query('lessonProgress').collect())).toHaveLength(0);
+    await expect(
+      admin.mutation(api.learning.createQuiz, {
+        organizationId: orgId,
+        courseId: otherCourseId,
+        title: 'Injected',
+        passingScore: 70,
+      }),
+    ).rejects.toThrow('Course not found');
+    await expect(
+      admin.mutation(api.learning.issueCertificate, {
+        organizationId: orgId,
+        courseId,
+        userId: otherUserId,
+      }),
+    ).rejects.toThrow('User not found in organization');
+    await expect(
+      employee.mutation(api.learning.enrollInCourse, {
+        organizationId: orgId,
+        courseId: otherCourseId,
+      }),
+    ).rejects.toThrow('Course not found');
+    await admin.mutation(api.learning.createLesson, {
+      organizationId: orgId,
+      courseId,
+      title: 'Allowed',
+      order: 2,
+      contentType: 'text',
+    });
+    await admin.mutation(api.learning.bulkEnrollUsers, {
+      organizationId: orgId,
+      courseId,
+      userIds: [employeeId],
+    });
+    expect(await t.run((ctx) => ctx.db.query('enrollments').collect())).toHaveLength(2);
+  });
+  it('LMS pagination reaches enrollments beyond 2000 and filters status before paging', async () => {
+    const { t, orgId, adminId, courseId, enrollmentId, otherOrgId, otherUserId, otherCourseId } =
+      await seedLearning();
+    const lastId = await t.run(async (ctx) => {
+      for (let i = 0; i < 2000; i++) {
+        await ctx.db.insert('enrollments', {
+          organizationId: orgId,
+          userId: adminId,
+          courseId,
+          status: 'not_started',
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+      await ctx.db.insert('enrollments', {
+        organizationId: otherOrgId,
+        userId: otherUserId,
+        courseId: otherCourseId,
+        status: 'completed',
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return ctx.db.insert('enrollments', {
+        organizationId: orgId,
+        userId: adminId,
+        courseId,
+        status: 'completed',
+        createdAt: 3000,
+        updatedAt: 3000,
+      });
+    });
+    const caller = t.withIdentity({ email: 'audit-admin@example.test' });
+    const stats = await caller.query(api.learning.getTeamLearningOverview, {
+      organizationId: orgId,
+    });
+    expect(stats.isCapped).toBe(true);
+    expect(stats.totalEnrollments).toBe(2000);
+    const completed = await caller.query(api.learning.getEnrollmentDetails, {
+      organizationId: orgId,
+      filter: 'completed',
+      paginationOpts: { cursor: null, numItems: 50 },
+    });
+    expect(completed.page.map((row) => row._id)).toEqual([lastId]);
+    expect(completed.isDone).toBe(true);
+    const ids = new Set<string>();
+    let cursor: string | null = null;
+    let isDone = false;
+    for (let i = 0; i < 30 && !isDone; i++) {
+      const result = await caller.query(api.learning.getEnrollmentDetails, {
+        organizationId: orgId,
+        filter: 'all',
+        paginationOpts: { cursor, numItems: 100 },
+      });
+      result.page.forEach((row) => {
+        expect(ids.has(row._id)).toBe(false);
+        ids.add(row._id);
+      });
+      cursor = result.continueCursor;
+      isDone = result.isDone;
+    }
+    expect(isDone).toBe(true);
+    expect(ids.size).toBe(2002);
+    expect(ids.has(lastId)).toBe(true);
+    expect(ids.has(enrollmentId)).toBe(true);
+    await t.run(async (ctx) => {
+      await ctx.db.delete(lastId);
+      await ctx.db.delete(enrollmentId);
+    });
+    const exactLimit = await caller.query(api.learning.getTeamLearningOverview, {
+      organizationId: orgId,
+    });
+    expect(exactLimit.totalEnrollments).toBe(2000);
+    expect(exactLimit.isCapped).toBe(false);
+  });
+
+  it('mandatory pages advance through empty pages and preserve tenant/role ACL', async () => {
+    const { t, orgId, courseId, otherOrgId, employeeId } = await seedLearning();
+    const caller = t.withIdentity({ email: 'audit-admin@example.test' });
+    const args = {
+      organizationId: orgId,
+      filter: 'mandatory' as const,
+      paginationOpts: { cursor: null, numItems: 1 },
+    };
+    await t.run(async (ctx) => {
+      const course = (await ctx.db.get(courseId))!;
+      const { _id, _creationTime, ...fields } = course;
+      const mandatoryCourseId = await ctx.db.insert('courses', { ...fields, isMandatory: true });
+      await ctx.db.insert('enrollments', {
+        organizationId: orgId,
+        userId: employeeId,
+        courseId: mandatoryCourseId,
+        status: 'in_progress',
+        createdAt: 2,
+        updatedAt: 2,
+      });
+    });
+    const first = await caller.query(api.learning.getEnrollmentDetails, args);
+    expect(first.page).toEqual([]);
+    expect(first.isDone).toBe(false);
+    expect(
+      (await caller.query(api.learning.getTeamLearningOverview, { organizationId: orgId }))
+        .isCapped,
+    ).toBe(false);
+    const next = await caller.query(api.learning.getEnrollmentDetails, {
+      ...args,
+      paginationOpts: { cursor: first.continueCursor, numItems: 1 },
+    });
+    expect(next.page).toHaveLength(1);
+    expect(next.page[0].courseIsMandatory).toBe(true);
+    await expect(t.query(api.learning.getEnrollmentDetails, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+    await expect(
+      t
+        .withIdentity({ email: 'learner@example.test' })
+        .query(api.learning.getEnrollmentDetails, args),
+    ).rejects.toThrow('Only admins');
+    await expect(
+      caller.query(api.learning.getEnrollmentDetails, { ...args, organizationId: otherOrgId }),
+    ).rejects.toThrow('Access denied');
+  });
+
+  it('course catalog pages beyond 100 with publication, category, difficulty and search filters', async () => {
+    const { t, orgId, adminId, otherOrgId } = await seedLearning();
+    const { targetId, draftId } = await t.run(async (ctx) => {
+      const fields = {
+        organizationId: orgId,
+        category: 'general',
+        difficulty: 'beginner' as const,
+        createdBy: adminId,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      for (let i = 0; i < 105; i++) {
+        await ctx.db.insert('courses', { ...fields, title: `History ${i}` });
+      }
+      const draftId = await ctx.db.insert('courses', {
+        ...fields,
+        title: 'Private',
+        isPublished: false,
+      });
+      const targetId = await ctx.db.insert('courses', {
+        ...fields,
+        title: 'Late TARGET',
+        category: 'special',
+        difficulty: 'advanced',
+      });
+      return { targetId, draftId };
+    });
+    const employee = t.withIdentity({ email: 'learner@example.test' });
+    const args = {
+      organizationId: orgId,
+      includeUnpublished: true,
+      paginationOpts: { cursor: null, numItems: 20 },
+    };
+    const filtered = await employee.query(api.learning.listCoursesPaginated, {
+      ...args,
+      category: 'special',
+      difficulty: 'advanced',
+    });
+    expect(filtered.page.map((course) => course._id)).toEqual([targetId]);
+    const seen = new Set<string>();
+    let cursor: string | null = null;
+    let done = false;
+    for (let i = 0; i < 10 && !done; i++) {
+      const result = await employee.query(api.learning.listCoursesPaginated, {
+        ...args,
+        paginationOpts: { cursor, numItems: 20 },
+      });
+      result.page.forEach((course) => {
+        expect(seen.has(course._id)).toBe(false);
+        seen.add(course._id);
+      });
+      cursor = result.continueCursor;
+      done = result.isDone;
+    }
+    expect(done).toBe(true);
+    expect(seen.size).toBe(107);
+    expect(seen.has(targetId)).toBe(true);
+    expect(seen.has(draftId)).toBe(false);
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const drafts = await admin.query(api.learning.listCoursesPaginated, {
+      ...args,
+      search: 'Private',
+      paginationOpts: { cursor: null, numItems: 100 },
+    });
+    expect(drafts.page).toEqual([]);
+    expect(drafts.isDone).toBe(false);
+    const lateDraft = await admin.query(api.learning.listCoursesPaginated, {
+      ...args,
+      search: 'Private',
+      paginationOpts: { cursor: drafts.continueCursor, numItems: 100 },
+    });
+    expect(lateDraft.page.map((course) => course._id)).toEqual([draftId]);
+    const searched = await employee.query(api.learning.listCoursesPaginated, {
+      ...args,
+      search: ' target ',
+      category: 'special',
+    });
+    expect(searched.page.map((course) => course._id)).toEqual([targetId]);
+    await expect(
+      employee.query(api.learning.listCoursesPaginated, { ...args, organizationId: otherOrgId }),
+    ).rejects.toThrow('Access denied');
+    await expect(t.query(api.learning.listCoursesPaginated, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+  });
+
+  it('personal certificate pages reach beyond 2000 and enrollment certificate state is exact', async () => {
+    const { t, orgId, employeeId, adminId, courseId, otherCourseId, otherOrgId, otherUserId } =
+      await seedLearning();
+    const lastId = await t.run(async (ctx) => {
+      const fields = {
+        organizationId: orgId,
+        userId: employeeId,
+        courseId,
+        issuedAt: 1,
+        createdAt: 1,
+      };
+      for (let i = 0; i < 2000; i++) {
+        await ctx.db.insert('certificates', { ...fields, certificateId: `CERT-${i}` });
+      }
+      // This employee/course certificate lies beyond the old organization list cap.
+      const lastId = await ctx.db.insert('certificates', {
+        ...fields,
+        userId: adminId,
+        certificateId: 'ADMIN-LATE',
+      });
+      await ctx.db.insert('certificates', {
+        ...fields,
+        courseId: otherCourseId,
+        certificateId: 'LEGACY-FOREIGN-LINK',
+      });
+      await ctx.db.insert('certificates', {
+        ...fields,
+        organizationId: otherOrgId,
+        userId: otherUserId,
+        certificateId: 'FOREIGN',
+      });
+      return lastId;
+    });
+    const caller = t.withIdentity({ email: 'learner@example.test' });
+    const ids = new Set<string>();
+    let cursor: string | null = null;
+    let done = false;
+    for (let i = 0; i < 25 && !done; i++) {
+      const result = await caller.query(api.learning.getMyCertificatesPaginated, {
+        organizationId: orgId,
+        paginationOpts: { cursor, numItems: 100 },
+      });
+      result.page.forEach((cert) => {
+        expect(cert.userId).toBe(employeeId);
+        expect(ids.has(cert._id)).toBe(false);
+        ids.add(cert._id);
+        if (cert.certificateId === 'LEGACY-FOREIGN-LINK')
+          expect(cert.courseTitle).toBe('Unknown Course');
+      });
+      cursor = result.continueCursor;
+      done = result.isDone;
+    }
+    expect(done).toBe(true);
+    expect(ids.size).toBe(2001);
+    expect(ids.has(lastId)).toBe(false);
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const details = await admin.query(api.learning.getEnrollmentDetails, {
+      organizationId: orgId,
+      filter: 'all',
+      paginationOpts: { cursor: null, numItems: 50 },
+    });
+    expect(details.page[0].hasCertificate).toBe(true);
+    await t.run((ctx) => ctx.db.delete(lastId));
+    expect(
+      (
+        await admin.query(api.learning.getEnrollmentDetails, {
+          organizationId: orgId,
+          filter: 'all',
+          paginationOpts: { cursor: null, numItems: 50 },
+        })
+      ).page[0].hasCertificate,
+    ).toBe(false);
+    const args = { organizationId: orgId, paginationOpts: { cursor: null, numItems: 20 } };
+    await expect(t.query(api.learning.getMyCertificatesPaginated, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+    await expect(
+      caller.query(api.learning.getMyCertificatesPaginated, {
+        ...args,
+        organizationId: otherOrgId,
+      }),
+    ).rejects.toThrow('Access denied');
+    await t.run((ctx) => ctx.db.patch(employeeId, { isActive: false }));
+    await expect(caller.query(api.learning.getMyCertificatesPaginated, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+  });
+
+  it('personal enrollment pages and catalog/detail state stay exact beyond 2000', async () => {
+    const { t, orgId, employeeId, courseId, otherCourseId, otherOrgId } = await seedLearning();
+    const targetCourseId = await t.run(async (ctx) => {
+      const fields = {
+        organizationId: orgId,
+        userId: employeeId,
+        courseId,
+        status: 'not_started' as const,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      for (let i = 0; i < 2000; i++) await ctx.db.insert('enrollments', fields);
+      const source = (await ctx.db.get(courseId))!;
+      const { _id, _creationTime, ...courseFields } = source;
+      const targetCourseId = await ctx.db.insert('courses', {
+        ...courseFields,
+        title: 'Late enrolled course',
+      });
+      await ctx.db.insert('enrollments', {
+        ...fields,
+        courseId: targetCourseId,
+        status: 'in_progress',
+        progress: 75,
+      });
+      await ctx.db.insert('enrollments', { ...fields, courseId: otherCourseId });
+      return targetCourseId;
+    });
+    const caller = t.withIdentity({ email: 'learner@example.test' });
+    const catalog = await caller.query(api.learning.listCoursesPaginated, {
+      organizationId: orgId,
+      paginationOpts: { cursor: null, numItems: 100 },
+    });
+    expect(catalog.page.find((c) => c._id === targetCourseId)?.myEnrollment).toEqual({
+      status: 'in_progress',
+      progress: 75,
+    });
+    const details = await caller.query(api.learning.getCourseWithLessons, {
+      organizationId: orgId,
+      courseId: targetCourseId,
+    });
+    expect(details.myEnrollment).toEqual({ status: 'in_progress', progress: 75 });
+    const adminCatalog = await t
+      .withIdentity({ email: 'audit-admin@example.test' })
+      .query(api.learning.listCoursesPaginated, {
+        organizationId: orgId,
+        paginationOpts: { cursor: null, numItems: 100 },
+      });
+    expect(adminCatalog.page.find((c) => c._id === targetCourseId)?.myEnrollment).toBeNull();
+    const seen = new Set<string>();
+    let cursor: string | null = null;
+    let done = false;
+    for (let i = 0; i < 25 && !done; i++) {
+      const result = await caller.query(api.learning.getMyEnrollmentsPaginated, {
+        organizationId: orgId,
+        paginationOpts: { cursor, numItems: 100 },
+      });
+      result.page.forEach((row) => {
+        expect(row.userId).toBe(employeeId);
+        expect(seen.has(row._id)).toBe(false);
+        seen.add(row._id);
+        if (row.courseId === otherCourseId) {
+          expect(row.course).toBeNull();
+          expect(row.courseTitle).toBe('Unknown Course');
+        }
+      });
+      cursor = result.continueCursor;
+      done = result.isDone;
+    }
+    expect(done).toBe(true);
+    expect(seen.size).toBe(2002);
+    const args = { organizationId: orgId, paginationOpts: { cursor: null, numItems: 20 } };
+    await expect(t.query(api.learning.getMyEnrollmentsPaginated, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+    await expect(
+      caller.query(api.learning.getMyEnrollmentsPaginated, { ...args, organizationId: otherOrgId }),
+    ).rejects.toThrow('Access denied');
+    await t.run((ctx) => ctx.db.patch(employeeId, { isActive: false }));
+    await expect(caller.query(api.learning.getMyEnrollmentsPaginated, args)).rejects.toThrow(
+      'Not authenticated',
+    );
+  });
+
   it('anonymous caller cannot disable a global security setting', async () => {
     const { t, adminId } = await seed();
     await expect(

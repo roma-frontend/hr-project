@@ -85,10 +85,68 @@
 - **Infra/P1:** `proxy.ts` `PROTECTED_PREFIXES` +6, `isBlocked` pre-check, `redis` fixed-window+warning, `sw.js` private-cache guard, `proxy.ts` CSP без wildcard, `taxRules` Russia `approximate:true`, `healthInsured` only Armenia.
 - **Tests/build:** `convex-auth-register` 9/9, `travel-allowance` 16/16, `proxy-middleware` 36/36, `users-queries` 65/65, `tasks.test` 60/60 — локально зеленые после фиксов.
 
+## Ход исправлений — 1 октября 2026, admin/LMS ACL
+
+Исправлено локально, **не развернуто в production**:
+
+- **Admin tenant ACL:** `getCostAnalysis`, `detectConflicts`, `getSmartSuggestions`, `getCalendarExportData` используют существующий `assertOrgStaff`: без `organizationId` читают tenant caller, чужой tenant отклоняется; глобальное чтение сохранено только для DB-superadmin. Leaves выбираются через `by_org` **до** `take`, users в conflicts также org-scoped. Предыдущая проверка роли сама по себе не закрывала доступ между tenant.
+- **LMS role/owner ACL:** `deleteCourse`, `updateLesson`, `deleteLesson`, `getCourseEnrollments` требуют admin/superadmin. `updateEnrollmentStatus` допускает владельца или admin, progress ограничен 0–100.
+- **LMS record ACL:** `createLesson`, `enrollInCourse`, `bulkEnrollUsers`, `updateLessonProgress`, `createQuiz`, `createQuizQuestion`, `submitQuizAttempt`, `issueCertificate` проверяют принадлежность связанных course/lesson/quiz/user к организации; lesson↔course сверяется. Bulk-enroll проверяет всех targets до записей. Self-enrollment не допускает неопубликованный курс и поддельный `enrolledBy`. Пересчет прогресса выбирает записи по полному `by_user_course`, не по всем курсам пользователя.
+- **Dependency audit:** текущий `npm audit --json` — 0 high / 0 critical; 6 low + 1 moderate остаются. Изменения overrides/lockfile уже были в рабочем дереве до этого блока; новых baseline-исключений не добавлено.
+- **Проверка:** `type-check:ci` прошел; ESLint `convex/admin.ts` и `convex/learning.ts` без ошибок; 5 релевантных suites / 72 теста прошли. В audit suite добавлены четыре regression-сценария с локальной БД: tenant-default/foreign/anonymous/inactive, employee content ACL, enrollment ownership/progress, foreign linked records и atomic bulk-enroll.
+
+**Не закрыто этим блоком:** полная пагинация LMS/admin; ACL неопубликованного контента и выдача quiz answer keys требуют отдельного review; полный реестр billing/compliance/attendance/HTTP, полный suite/build/E2E и production acceptance. Gate B и NO-GO остаются в силе.
+
+## Ход исправлений — 1 октября 2026, DATA-01 LMS enrollment drill-down
+
+Исправлено локально, **не развернуто в production**:
+
+- `learning.getEnrollmentDetails` использует native Convex `paginationOpts` / `paginate`, страницы до 100 строк; UI `LearningClient` использует `usePaginatedQuery` с загрузкой по 50 строк. Число загруженных записей помечается `+`, пока страницы не исчерпаны.
+- Фильтры `completed/in_progress/not_started` используют `by_status` до пагинации: нужная запись после первых 2000 не теряется. `mandatory` проверяет курс каждой записи текущей страницы без ограниченного списка course IDs; пустая отфильтрованная страница сохраняет cursor и кнопку продолжения. Foreign linked user/course не раскрываются при legacy-неконсистентных связях.
+- `getTeamLearningOverview` читает cap+1 и возвращает точный `isCapped`; при ровно 2000 записей флаг false. Верхние карточки и TeamOverview показывают локализованное предупреждение (EN/RU/HY/DE): totals/completion rate при превышении cap — показатели выборки, не всего tenant.
+- Проверено: `type-check:ci`; ESLint трех измененных production TS/TSX файлов; 3 suites / 78 тестов. Regression: проход 2002 enrollments без пропусков/дубликатов, поздняя completed-запись, граница 2000, пустая mandatory-страница с продолжением, anonymous/employee/foreign ACL, UI load-more и exhausted state.
+- **Изменение контракта:** `getEnrollmentDetails` теперь требует `paginationOpts` и возвращает pagination result вместо массива. Найденный production consumer обновлен; при выпуске согласовать frontend/backend, старый клиент не совместим с новым контрактом.
+
+**Осталось DATA-01:** каталог `listCourses` (cap 100), personal/course enrollment lists, certificates, lesson/quiz lists, `getCoursesWithCounts`, admin reports/exports, полные aggregate totals за пределами cap. Предупреждение — не замена точным totals; весь DATA-01 не закрыт. ACL unpublished/answer keys, остальные endpoint reviews и Gate B по-прежнему открыты.
+
+## Ход исправлений — 1 октября 2026, DATA-01 course catalog
+
+Исправлено локально, **не развернуто в production**:
+
+- Добавлен `learning.listCoursesPaginated`: native Convex cursor, до 100 courses на страницу. Learning catalog и onboarding course picker используют `usePaginatedQuery`, загрузка по 20 записей. Старый `listCourses` сохранен для совместимости со старыми клиентами; новый endpoint доступен до переключения frontend.
+- Publication ACL задается индексом `by_org_published`; `includeUnpublished` работает только для admin/superadmin. Category/difficulty применяются до `paginate`, поэтому поздние совпадения не исчезают после первых 100 courses. Tenant/anonymous ACL сохранен.
+- Текстовый поиск case-insensitive по title/description, trim, выполняется по текущей странице; пустая страница сохраняет cursor и доступ к следующей. Это **не global search index**: чтобы исчерпать результаты текстового поиска, пользователь должен загрузить страницы до конца. Category dropdown содержит категории загруженных результатов и сохраняет выбранную категорию; полный каталог категорий отдельно не реализован.
+- Lesson count в paginated catalog ограничен 100 с `lessonCountIsCapped`; карточка показывает `100+`, не точное число. Это ограничивает N+1 read budget (максимум 100×101 lesson rows на страницу), но не закрывает полноту lesson lists.
+- Regression: 107 опубликованных courses через страницы без пропусков/дубликатов; поздние category/difficulty/search совпадения; draft только admin; пустая поисковая страница с продолжением; foreign/anonymous denial; load-more Learning/onboarding. Проверено `type-check:ci`, ESLint четырех production файлов, 4 suites / 94 теста.
+
+**Осталось:** legacy `listCourses` cap, personal/course enrollment lists, certificates, lesson/quiz lists, course counts и admin reports; точные aggregate totals, полный поиск/категории. Полный suite/build/E2E и production acceptance этим блоком не проверены; DATA-01 и Gate B остаются частично открытыми.
+
+## Ход исправлений — 1 октября 2026, DATA-01 certificates
+
+Исправлено локально, **не развернуто в production**:
+
+- Добавлен `getMyCertificatesPaginated` с native cursor, индексом `by_user` и caller-bound owner. UI Learning загружает личную историю по 20 записей без старого общего предела 2000. До первой страницы показывается loader, не ложное отсутствие сертификатов. Legacy `getMyCertificates` сохранен для совместимости.
+- Enrollment drill-down возвращает `hasCertificate` из точечного запроса `by_user_course` (tenant/user/course); UI больше не загружает capped `getOrgCertificates` и не делает ложный вывод об отсутствии сертификата после первых 2000. Статус доступен и superadmin, поскольку не зависит от прежней admin-only frontend-подписки.
+- В paginated certificate history название курса раскрывается только при совпадении tenant; legacy foreign course link дает `Unknown Course`.
+- Проверено: `type-check:ci`, ESLint трех измененных production файлов, 3 suites / 72 теста. Regression проходит 2001 личный сертификат без дубликатов, исключает чужого владельца/tenant, проверяет late certificate state и его удаление, anonymous/foreign/inactive denial, UI load-more и loading state.
+
+**Следующий DATA-01 блок:** `getMyEnrollments` / «Мои курсы» вместе с точным enrollment status для каталога (нельзя использовать только загруженную страницу для вывода «не записан»). Остались course enrollments, legacy certificate APIs, lessons/quizzes, counts/aggregates и admin reports. Gate B не закрыт; deploy/build/full suite/E2E этим блоком не проверены.
+
+## Ход исправлений — 1 октября 2026, DATA-01 personal enrollments
+
+Исправлено локально, **не развернуто в production**:
+
+- Добавлен caller-bound `getMyEnrollmentsPaginated` через `by_user` / native cursor; «Мои курсы» загружаются по 20 записей, legacy `getMyEnrollments` сохранен. Loading отличается от empty; недоступный linked course не открывается.
+- Paginated course catalog возвращает точный `myEnrollment` через `by_user_course` для caller/course, а `getCourseWithLessons` добавляет тот же статус. Карточки и detail dialog больше не делают вывод «не записан» по неполной personal history. Поля additive; старый API не удален.
+- Legacy foreign course link в personal page дает `course:null` / `Unknown Course`, без раскрытия чужого course document.
+- Проверено `type-check:ci`, ESLint четырех production файлов; 5 suites / 91 тест. Regression: 2002 personal enrollments без пропусков/дубликатов, late enrolled course и progress 75 в catalog/detail, изоляция разных владельцев, anonymous/foreign/inactive denial, точный статус карточки при пустой history, UI load-more.
+
+**Осталось DATA-01:** course enrollment list, lessons/quizzes, course counts, точные aggregates/admin reports, legacy capped APIs и полноценный поиск/категории. ACL unpublished content / quiz answer keys остаются отдельным review. Full suite/build/E2E/deploy не проверены; Gate B остается открытым.
+
 ## Незакрытые задачи (осталось до Gate B)
 
-1. **`npm audit` baseline** — добавить `brace-expansion`/`webpack-dev-middleware` в `audit-baseline.json` с `reason` или `npm audit fix`.
-2. **`DATA-01` систематически** — 30+ `take(2000/8000)` в `learning/admin` без курсора (только `isCapped` warning).
+1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.
+2. **`DATA-01` систематически — частично:** LMS enrollment drill-down, course catalog (Learning/onboarding), «Мои курсы» и личная история сертификатов используют cursor pagination; certificate/enrollment state определяются точечно. Team overview и capped lesson counts помечают неполноту в UI. Остальные capped lists/aggregates в `learning/admin` требуют следующих блоков (см. выше).
 3. **Полный реестр** — ~350 public функций, проверено ~60; `billing/*`, `compliance`, часть `attendance`, `http.ts` webhooks без HMAC.
 4. **Юридические** — DPA/vendor register/residency/Biometrics DPIA/AI Act, `competitors.ts` source log, SOC2 `no` требует внешний юрист.
 5. **Инфраструктурные** — `UPSTASH_REDIS` в prod, `Sentry` DSN pin, backup restore drill, ротация секретов.

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { BookOpen, Users, TrendingUp, Award, BarChart3 } from 'lucide-react';
 
 type TeamOverviewData = {
+  isCapped?: boolean;
   totalCourses: number;
   totalEnrollments: number;
   completionRate: number;
@@ -31,6 +32,14 @@ export function TeamOverview({ teamOverview }: TeamOverviewProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {teamOverview?.isCapped && (
+            <p role="status" className="mb-4 text-sm text-(--warning-text)">
+              {t(
+                'learning.partialOverview',
+                'These statistics cover only part of the data; use enrollment details to load all records.',
+              )}
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="flex items-center justify-center gap-3 mb-2">

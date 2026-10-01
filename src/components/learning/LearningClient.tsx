@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +42,7 @@ type CourseWithLessons = {
   updatedAt: number;
   creatorName: string;
   lessonCount: number;
+  myEnrollment?: { status: string; progress: number } | null;
 };
 
 type _EnrollmentWithCourse = {
@@ -155,23 +156,36 @@ export default function LearningClient() {
   >('all');
 
   // Fetch data
-  const courses = useQuery(
-    api.learning.listCourses,
+  const {
+    results: courses,
+    status: courseStatus,
+    loadMore: loadMoreCourses,
+  } = usePaginatedQuery(
+    api.learning.listCoursesPaginated,
     effectiveOrgId && user?.id
       ? {
           organizationId: effectiveOrgId as Id<'organizations'>,
           includeUnpublished: isAdmin,
+          category: categoryFilter === 'all' ? undefined : categoryFilter,
+          difficulty: difficultyFilter === 'all' ? undefined : difficultyFilter,
+          search: searchQuery || undefined,
         }
       : 'skip',
+    { initialNumItems: 20 },
   );
 
-  const myEnrollments = useQuery(
-    api.learning.getMyEnrollments,
+  const {
+    results: myEnrollments,
+    status: myEnrollmentStatus,
+    loadMore: loadMoreMyEnrollments,
+  } = usePaginatedQuery(
+    api.learning.getMyEnrollmentsPaginated,
     effectiveOrgId && user?.id
       ? {
           organizationId: effectiveOrgId as Id<'organizations'>,
         }
       : 'skip',
+    { initialNumItems: 20 },
   );
 
   const teamOverview = useQuery(
@@ -183,7 +197,11 @@ export default function LearningClient() {
       : 'skip',
   );
 
-  const enrollmentDetails = useQuery(
+  const {
+    results: enrollmentDetails,
+    status: enrollmentStatus,
+    loadMore: loadMoreEnrollments,
+  } = usePaginatedQuery(
     api.learning.getEnrollmentDetails,
     showStatsDetail && effectiveOrgId && user?.id && isAdmin
       ? {
@@ -191,6 +209,7 @@ export default function LearningClient() {
           filter: statsFilter,
         }
       : 'skip',
+    { initialNumItems: 50 },
   );
 
   // Fetch lessons when course detail is open
@@ -268,25 +287,19 @@ export default function LearningClient() {
   );
 
   // Fetch certificates
-  const myCertificates = useQuery(
-    api.learning.getMyCertificates,
+  const {
+    results: myCertificates,
+    status: certificateStatus,
+    loadMore: loadMoreCertificates,
+  } = usePaginatedQuery(
+    api.learning.getMyCertificatesPaginated,
     effectiveOrgId && user?.id
       ? {
           organizationId: effectiveOrgId as Id<'organizations'>,
         }
       : 'skip',
+    { initialNumItems: 20 },
   );
-
-  const orgCertificates = useQuery(
-    api.learning.getOrgCertificates,
-    effectiveOrgId && user?.role === 'admin'
-      ? {
-          organizationId: effectiveOrgId as Id<'organizations'>,
-        }
-      : 'skip',
-  );
-
-  const issuedCertSet = new Set((orgCertificates ?? []).map((c) => `${c.userId}-${c.courseId}`));
 
   const handleEnroll = async (courseId: Id<'courses'>) => {
     if (!effectiveOrgId || !user?.id) return;
@@ -629,12 +642,13 @@ export default function LearningClient() {
     }
   };
 
-  const isEnrolled = (courseId: Id<'courses'>) => {
-    return myEnrollments?.some((e) => e.courseId === courseId);
-  };
-
   // Loading state
-  if (courses === undefined) {
+  if (
+    courseStatus === 'LoadingFirstPage' &&
+    !searchQuery &&
+    categoryFilter === 'all' &&
+    difficultyFilter === 'all'
+  ) {
     return (
       <div className="flex items-center justify-center h-96">
         <ShieldLoader message={t('learning.loading', 'Loading courses...')} />
@@ -670,6 +684,15 @@ export default function LearningClient() {
           )}
         </div>
       </div>
+
+      {isAdmin && teamOverview?.isCapped && (
+        <p role="status" className="mb-4 text-sm text-(--warning-text)">
+          {t(
+            'learning.partialOverview',
+            'These statistics cover only part of the data; use enrollment details to load all records.',
+          )}
+        </p>
+      )}
 
       {/* Stats Cards */}
       {isAdmin && teamOverview && (
@@ -793,7 +816,7 @@ export default function LearningClient() {
         {/* Course Catalog Tab */}
         <TabsContent value="catalog" className="space-y-6">
           <CourseCatalog
-            courses={courses}
+            courses={courseStatus === 'LoadingFirstPage' ? undefined : courses}
             myEnrollments={myEnrollments}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -807,18 +830,42 @@ export default function LearningClient() {
               setShowCourseDetail(true);
             }}
           />
+          {courseStatus !== 'Exhausted' && courseStatus !== 'LoadingFirstPage' && (
+            <Button
+              variant="outline"
+              disabled={courseStatus !== 'CanLoadMore'}
+              onClick={() => loadMoreCourses(20)}
+            >
+              {t('common.loadMore', 'Load more')}
+            </Button>
+          )}
         </TabsContent>
 
         {/* My Courses Tab */}
         <TabsContent value="my-courses" className="space-y-6">
           <MyCourses
-            myEnrollments={myEnrollments}
+            myEnrollments={myEnrollmentStatus === 'LoadingFirstPage' ? undefined : myEnrollments}
             onOpenCourse={(course) => {
-              setSelectedCourse(course as CourseWithLessons | null);
+              const enrollment = myEnrollments.find((e) => e.courseId === course._id);
+              setSelectedCourse({
+                ...course,
+                myEnrollment: enrollment
+                  ? { status: enrollment.status, progress: enrollment.progress ?? 0 }
+                  : null,
+              } as CourseWithLessons);
               setShowCourseDetail(true);
             }}
             onGoToCatalog={() => setActiveTab('catalog')}
           />
+          {myEnrollmentStatus !== 'Exhausted' && myEnrollmentStatus !== 'LoadingFirstPage' && (
+            <Button
+              variant="outline"
+              disabled={myEnrollmentStatus !== 'CanLoadMore'}
+              onClick={() => loadMoreMyEnrollments(20)}
+            >
+              {t('common.loadMore', 'Load more')}
+            </Button>
+          )}
         </TabsContent>
 
         {/* Team Overview Tab (Admin Only) */}
@@ -830,7 +877,18 @@ export default function LearningClient() {
 
         {/* Certificates Tab */}
         <TabsContent value="certificates" className="space-y-6">
-          <CertificatesTab certificates={myCertificates} />
+          <CertificatesTab
+            certificates={certificateStatus === 'LoadingFirstPage' ? undefined : myCertificates}
+          />
+          {certificateStatus !== 'Exhausted' && certificateStatus !== 'LoadingFirstPage' && (
+            <Button
+              variant="outline"
+              disabled={certificateStatus !== 'CanLoadMore'}
+              onClick={() => loadMoreCertificates(20)}
+            >
+              {t('common.loadMore', 'Load more')}
+            </Button>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -841,7 +899,14 @@ export default function LearningClient() {
         course={selectedCourse}
         courseWithLessons={courseWithLessons as CourseWithLessonsDetail | undefined}
         isAdmin={isAdmin}
-        isEnrolled={selectedCourse ? !!isEnrolled(selectedCourse._id) : false}
+        isEnrolled={
+          courseWithLessons?.myEnrollment !== undefined
+            ? courseWithLessons.myEnrollment !== null
+            : !!(
+                courses.find((c) => c._id === selectedCourse?._id)?.myEnrollment ??
+                selectedCourse?.myEnrollment
+              )
+        }
         onEnroll={handleEnroll}
         onPublishCourse={handlePublishCourse}
         onOpenLessonPlayer={openLessonPlayer}
@@ -952,7 +1017,8 @@ export default function LearningClient() {
                       : t('learning.allEnrollments', 'All Enrollments')}
                 </h2>
                 <p className="text-sm text-(--text-muted)">
-                  {enrollmentDetails?.length ?? 0} {t('learning.records', 'records')}
+                  {enrollmentDetails.length}
+                  {enrollmentStatus !== 'Exhausted' ? '+' : ''} {t('learning.records', 'records')}
                 </p>
               </div>
               <button
@@ -995,9 +1061,20 @@ export default function LearningClient() {
               ))}
             </div>
 
+            {enrollmentStatus !== 'Exhausted' && enrollmentStatus !== 'LoadingFirstPage' && (
+              <Button
+                className="mx-5 mt-4"
+                variant="outline"
+                disabled={enrollmentStatus !== 'CanLoadMore'}
+                onClick={() => loadMoreEnrollments(50)}
+              >
+                {t('common.loadMore', 'Load more')}
+              </Button>
+            )}
+
             {/* Table */}
             <div className="flex-1 overflow-auto p-5">
-              {!enrollmentDetails ? (
+              {enrollmentStatus === 'LoadingFirstPage' ? (
                 <ShieldLoader size="md" />
               ) : enrollmentDetails.length === 0 ? (
                 <div className="text-center py-12 text-(--text-muted)">
@@ -1084,7 +1161,7 @@ export default function LearningClient() {
                         </td>
                         <td className="py-2.5 px-3">
                           {row.status === 'completed' &&
-                            (issuedCertSet.has(`${row.userId}-${row.courseId}`) ? (
+                            (row.hasCertificate ? (
                               <span className="text-xs text-(--success-text) font-medium">
                                 {t('learning.certified', '✓ Certified')}
                               </span>

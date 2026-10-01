@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import { GraduationCap, Clock, Play } from 'lucide-react';
 
 type CourseWithLessons = {
@@ -69,7 +70,9 @@ const statusColors: Record<string, string> = {
 export function MyCourses({ myEnrollments, onOpenCourse, onGoToCatalog }: MyCoursesProps) {
   const { t } = useTranslation();
 
-  if (!myEnrollments || myEnrollments.length === 0) {
+  if (!myEnrollments) return <ShieldLoader size="md" />;
+
+  if (myEnrollments.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -120,6 +123,7 @@ export function MyCourses({ myEnrollments, onOpenCourse, onGoToCatalog }: MyCour
                 </div>
                 <Button
                   variant="outline"
+                  disabled={!enrollment.course}
                   onClick={() => enrollment.course && onOpenCourse(enrollment.course)}
                 >
                   <Play className="h-4 w-4 mr-2" />

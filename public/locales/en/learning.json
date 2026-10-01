@@ -138,6 +138,7 @@
     "noEnrollmentsDesc": "Browse the course catalog to get started",
     "browseCatalog": "Browse Catalog",
     "teamProgressDesc": "Overview of team learning activity",
+    "partialOverview": "These statistics cover only part of the data; use enrollment details to load all records.",
     "createCourseDesc": "Course creation form will be implemented here",
     "not_started": "Not Started",
     "in_progress": "In Progress",

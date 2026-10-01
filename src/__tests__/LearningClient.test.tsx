@@ -76,7 +76,21 @@ jest.mock('react-i18next', () => ({
 // ── Convex ───────────────────────────────────────────────────────────────────
 const mockMutations: Record<string, jest.Mock> = {};
 const mockQueries: Record<string, any> = {};
+const mockLoadMore = jest.fn();
+let mockEnrollmentStatus = 'CanLoadMore';
 jest.mock('convex/react', () => ({
+  usePaginatedQuery: (q: any) => ({
+    results: mockQueries[q?._name] ?? [],
+    status:
+      q?._name === 'listCourses'
+        ? mockQueries.listCourses === undefined
+          ? 'LoadingFirstPage'
+          : 'CanLoadMore'
+        : q?._name === 'getMyCertificates'
+          ? 'CanLoadMore'
+          : mockEnrollmentStatus,
+    loadMore: mockLoadMore,
+  }),
   useMutation: (m: any) => mockMutations[m?._name] ?? jest.fn(),
   useQuery: (q: any) => (q?._name in mockQueries ? mockQueries[q._name] : undefined),
 }));
@@ -85,12 +99,16 @@ jest.mock('@/convex/_generated/api', () => ({
   api: {
     learning: {
       listCourses: { _name: 'listCourses' },
+      listCoursesPaginated: { _name: 'listCourses' },
       getMyEnrollments: { _name: 'getMyEnrollments' },
+      getMyEnrollmentsPaginated: { _name: 'getMyEnrollments' },
       getTeamLearningOverview: { _name: 'getTeamLearningOverview' },
+      getEnrollmentDetails: { _name: 'getEnrollmentDetails' },
       getCourseWithLessons: { _name: 'getCourseWithLessons' },
       getLessonProgress: { _name: 'getLessonProgress' },
       getQuizByLesson: { _name: 'getQuizByLesson' },
       getMyCertificates: { _name: 'getMyCertificates' },
+      getMyCertificatesPaginated: { _name: 'getMyCertificates' },
       enrollInCourse: { _name: 'enrollInCourse' },
       createCourse: { _name: 'createCourse' },
       updateLessonProgress: { _name: 'updateLessonProgress' },
@@ -136,7 +154,7 @@ jest.mock('@/components/ui/button', () => ({
 }));
 
 jest.mock('@/components/ui/card', () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
+  Card: ({ children, onClick }: any) => <div onClick={onClick}>{children}</div>,
   CardContent: ({ children }: any) => <div>{children}</div>,
 }));
 
@@ -399,6 +417,8 @@ const openPlayer = () => {
 };
 
 beforeEach(() => {
+  mockEnrollmentStatus = 'CanLoadMore';
+  mockLoadMore.mockClear();
   jest.clearAllMocks();
   mockUser = { id: 'user-1', role: 'employee', organizationId: 'org-1' };
   mockOrg = 'org-1';
@@ -421,7 +441,11 @@ beforeEach(() => {
     completionRate: 43,
     mandatoryCourses: 2,
   };
-  mockQueries.getCourseWithLessons = { ...mockCourse, lessons: mockLessons };
+  mockQueries.getCourseWithLessons = {
+    ...mockCourse,
+    lessons: mockLessons,
+    myEnrollment: { status: 'in_progress', progress: 50 },
+  };
   mockQueries.getQuizByLesson = {
     quiz: { _id: 'quiz-1', lessonId: 'lesson-1' },
     questions: [{ _id: 'q1', text: 'What is React?' }],
@@ -446,6 +470,56 @@ afterEach(() => {
 });
 
 describe('LearningClient', () => {
+  it('labels partial statistics and offers more pages even when the filtered page is empty', () => {
+    mockUser = { id: 'user-1', role: 'admin', organizationId: 'org-1' };
+    mockQueries.getTeamLearningOverview.isCapped = true;
+    mockQueries.getEnrollmentDetails = [];
+    mockEnrollmentStatus = 'CanLoadMore';
+    render(<LearningClient />);
+    expect(screen.getByRole('status')).toHaveTextContent('only part of the data');
+    fireEvent.click(screen.getByText('Total Enrollments'));
+    expect(screen.getByText('0+ records')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByText('Load more').at(-1)!);
+    expect(mockLoadMore).toHaveBeenCalledWith(50);
+  });
+
+  it('removes the partial page marker and load button once pagination is exhausted', () => {
+    mockUser = { id: 'user-1', role: 'admin', organizationId: 'org-1' };
+    mockEnrollmentStatus = 'Exhausted';
+    render(<LearningClient />);
+    fireEvent.click(screen.getByText('Total Enrollments'));
+    expect(screen.getByText('0 records')).toBeInTheDocument();
+    // The catalog can still load pages; the exhausted enrollment modal cannot.
+    expect(screen.getAllByText('Load more')).toHaveLength(1);
+  });
+  it('loads the next personal enrollment page', () => {
+    render(<LearningClient />);
+    fireEvent.click(screen.getByText('My Courses'));
+    fireEvent.click(screen.getByText('Load more'));
+    expect(mockLoadMore).toHaveBeenCalledWith(20);
+  });
+
+  it('uses exact detail enrollment state even when personal enrollment pages are not loaded', () => {
+    mockQueries.getMyEnrollments = [];
+    mockQueries.getCourseWithLessons.myEnrollment = { status: 'in_progress', progress: 75 };
+    render(<LearningClient />);
+    fireEvent.click(screen.getByText('select course'));
+    expect(screen.getByTestId('course-detail')).toHaveAttribute('data-enrolled', 'true');
+  });
+
+  it('loads the next personal certificate page', () => {
+    render(<LearningClient />);
+    fireEvent.click(screen.getByText('Certificates'));
+    fireEvent.click(screen.getByText('Load more'));
+    expect(mockLoadMore).toHaveBeenCalledWith(20);
+  });
+
+  it('loads the next catalog page', () => {
+    render(<LearningClient />);
+    fireEvent.click(screen.getByText('Load more'));
+    expect(mockLoadMore).toHaveBeenCalledWith(20);
+  });
+
   // ── Rendering & chrome ──────────────────────────────────────────────────
 
   it('shows the loader while courses are still loading', () => {
@@ -605,8 +679,9 @@ describe('LearningClient', () => {
     expect(screen.getByTestId('detail-title')).toHaveTextContent('React Fundamentals');
   });
 
-  it('marks the detail as not enrolled when there are no enrollments', () => {
+  it('marks the detail as not enrolled when the server returns no enrollment', () => {
     mockQueries.getMyEnrollments = [];
+    mockQueries.getCourseWithLessons.myEnrollment = null;
     render(<LearningClient />);
     fireEvent.click(screen.getByText('select course'));
     expect(screen.getByTestId('course-detail')).toHaveAttribute('data-enrolled', 'false');

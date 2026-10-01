@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { paginationOptsValidator } from 'convex/server';
 import { query, mutation, type QueryCtx, type MutationCtx } from './_generated/server';
 import type { Id, Doc } from './_generated/dataModel';
 import { MAX_PAGE_SIZE } from './pagination';
@@ -78,6 +79,76 @@ export const listCourses = query({
   },
 });
 
+/** Native cursor catalog. Legacy listCourses remains available for older clients. */
+export const listCoursesPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    paginationOpts: paginationOptsValidator,
+    category: v.optional(v.string()),
+    difficulty: v.optional(v.string()),
+    search: v.optional(v.string()),
+    includeUnpublished: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    const courses = ctx.db.query('courses');
+    let scoped =
+      args.includeUnpublished && isSuperadmin
+        ? courses.withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+        : courses.withIndex('by_org_published', (q) =>
+            q.eq('organizationId', args.organizationId).eq('isPublished', true),
+          );
+    if (args.category) {
+      scoped = scoped.filter((q) => q.eq(q.field('category'), args.category));
+    }
+    if (args.difficulty) {
+      scoped = scoped.filter((q) => q.eq(q.field('difficulty'), args.difficulty));
+    }
+    const result = await scoped.paginate({
+      ...args.paginationOpts,
+      numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+    });
+    const search = args.search?.trim().toLowerCase();
+    const page = search
+      ? result.page.filter(
+          (course) =>
+            course.title.toLowerCase().includes(search) ||
+            course.description?.toLowerCase().includes(search),
+        )
+      : result.page;
+    const enriched = await Promise.all(
+      page.map(async (course) => {
+        const lessons = await ctx.db
+          .query('lessons')
+          .withIndex('by_course', (q) =>
+            q.eq('organizationId', args.organizationId).eq('courseId', course._id),
+          )
+          .take(MAX_PAGE_SIZE + 1);
+        const creator = await ctx.db.get(course.createdBy);
+        const enrollment = await ctx.db
+          .query('enrollments')
+          .withIndex('by_user_course', (q) =>
+            q
+              .eq('organizationId', args.organizationId)
+              .eq('userId', requesterId)
+              .eq('courseId', course._id),
+          )
+          .first();
+        return {
+          ...course,
+          myEnrollment: enrollment
+            ? { status: enrollment.status, progress: enrollment.progress ?? 0 }
+            : null,
+          creatorName: creator?.organizationId === args.organizationId ? creator.name : 'Unknown',
+          lessonCount: Math.min(lessons.length, MAX_PAGE_SIZE),
+          lessonCountIsCapped: lessons.length > MAX_PAGE_SIZE,
+        };
+      }),
+    );
+    return { ...result, page: enriched };
+  },
+});
+
 export const getCourse = query({
   args: {
     organizationId: v.id('organizations'),
@@ -99,11 +170,20 @@ export const getCourseWithLessons = query({
     courseId: v.id('courses'),
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { requesterId } = await checkAccess(ctx, args.organizationId);
     const course = await ctx.db.get(args.courseId);
     if (!course || course.organizationId !== args.organizationId) {
       throw new Error('Course not found');
     }
+    const myEnrollment = await ctx.db
+      .query('enrollments')
+      .withIndex('by_user_course', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', requesterId)
+          .eq('courseId', course._id),
+      )
+      .first();
     const lessons = await ctx.db
       .query('lessons')
       .withIndex('by_course', (q) =>
@@ -112,7 +192,13 @@ export const getCourseWithLessons = query({
       .order('asc')
       .take(DEFAULT_LIST_CAP);
 
-    return { course, lessons };
+    return {
+      course,
+      lessons,
+      myEnrollment: myEnrollment
+        ? { status: myEnrollment.status, progress: myEnrollment.progress ?? 0 }
+        : null,
+    };
   },
 });
 
@@ -197,7 +283,8 @@ export const deleteCourse = mutation({
   handler: async (ctx, args) => {
     const course = await ctx.db.get(args.courseId);
     if (!course) throw new Error('Course not found');
-    await checkAccess(ctx, course.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, course.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can delete courses');
 
     const lessons = await ctx.db
       .query('lessons')
@@ -243,6 +330,10 @@ export const createLesson = mutation({
   handler: async (ctx, args) => {
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can create lessons');
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
 
     const now = Date.now();
     return await ctx.db.insert('lessons', {
@@ -279,7 +370,8 @@ export const updateLesson = mutation({
   handler: async (ctx, args) => {
     const lesson = await ctx.db.get(args.lessonId);
     if (!lesson) throw new Error('Lesson not found');
-    await checkAccess(ctx, lesson.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, lesson.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can update lessons');
 
     const patch: Partial<Doc<'lessons'>> = { updatedAt: Date.now() };
     if (args.title !== undefined) patch.title = args.title;
@@ -303,7 +395,8 @@ export const deleteLesson = mutation({
   handler: async (ctx, args) => {
     const lesson = await ctx.db.get(args.lessonId);
     if (!lesson) throw new Error('Lesson not found');
-    await checkAccess(ctx, lesson.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, lesson.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can delete lessons');
 
     const progress = await ctx.db
       .query('lessonProgress')
@@ -343,13 +436,43 @@ export const getMyEnrollments = query({
   },
 });
 
+/** Personal course history without the legacy array cap. */
+export const getMyEnrollmentsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const result = await ctx.db
+      .query('enrollments')
+      .withIndex('by_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', requesterId),
+      )
+      .order('desc')
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const page = await Promise.all(
+      result.page.map(async (enrollment) => {
+        const linkedCourse = await ctx.db.get(enrollment.courseId);
+        const course = linkedCourse?.organizationId === args.organizationId ? linkedCourse : null;
+        return { ...enrollment, courseTitle: course?.title ?? 'Unknown Course', course };
+      }),
+    );
+    return { ...result, page };
+  },
+});
+
 export const getCourseEnrollments = query({
   args: {
     organizationId: v.id('organizations'),
     courseId: v.id('courses'),
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can view course enrollments');
     const enrollments = await ctx.db
       .query('enrollments')
       .withIndex('by_course', (q) =>
@@ -376,7 +499,18 @@ export const enrollInCourse = mutation({
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'learning');
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    const course = await ctx.db.get(args.courseId);
+    if (
+      !course ||
+      course.organizationId !== args.organizationId ||
+      (!isSuperadmin && !course.isPublished)
+    ) {
+      throw new Error('Course not found');
+    }
+    if (args.enrolledBy && args.enrolledBy !== requesterId) {
+      throw new Error('Caller mismatch');
+    }
 
     const existing = await ctx.db
       .query('enrollments')
@@ -420,6 +554,16 @@ export const bulkEnrollUsers = mutation({
   handler: async (ctx, args) => {
     const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can bulk enroll users');
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
+    for (const userId of args.userIds) {
+      const user = await ctx.db.get(userId);
+      if (!user || user.organizationId !== args.organizationId) {
+        throw new Error('User not found in organization');
+      }
+    }
 
     const now = Date.now();
     let enrolledCount = 0;
@@ -468,7 +612,13 @@ export const updateEnrollmentStatus = mutation({
   handler: async (ctx, args) => {
     const enrollment = await ctx.db.get(args.enrollmentId);
     if (!enrollment) throw new Error('Enrollment not found');
-    await checkAccess(ctx, enrollment.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, enrollment.organizationId);
+    if (!isSuperadmin && enrollment.userId !== requesterId) {
+      throw new Error('Access denied');
+    }
+    if (args.progress !== undefined && (args.progress < 0 || args.progress > 100)) {
+      throw new Error('Progress must be between 0 and 100');
+    }
 
     const patch: Partial<Doc<'enrollments'>> = { status: args.status, updatedAt: Date.now() };
     if (args.progress !== undefined) patch.progress = args.progress;
@@ -515,6 +665,17 @@ export const updateLessonProgress = mutation({
   },
   handler: async (ctx, args) => {
     const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const course = await ctx.db.get(args.courseId);
+    const lesson = await ctx.db.get(args.lessonId);
+    if (
+      !course ||
+      course.organizationId !== args.organizationId ||
+      !lesson ||
+      lesson.organizationId !== args.organizationId ||
+      lesson.courseId !== course._id
+    ) {
+      throw new Error('Lesson not found');
+    }
 
     const existing = await ctx.db
       .query('lessonProgress')
@@ -566,7 +727,10 @@ export const updateLessonProgress = mutation({
     const allProgress = await ctx.db
       .query('lessonProgress')
       .withIndex('by_user_course', (q) =>
-        q.eq('organizationId', args.organizationId).eq('userId', requesterId),
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', requesterId)
+          .eq('courseId', args.courseId),
       )
       .take(DEFAULT_LIST_CAP);
 
@@ -729,6 +893,22 @@ export const createQuiz = mutation({
   handler: async (ctx, args) => {
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can create quizzes');
+    if (args.courseId) {
+      const course = await ctx.db.get(args.courseId);
+      if (!course || course.organizationId !== args.organizationId) {
+        throw new Error('Course not found');
+      }
+    }
+    if (args.lessonId) {
+      const lesson = await ctx.db.get(args.lessonId);
+      if (
+        !lesson ||
+        lesson.organizationId !== args.organizationId ||
+        (args.courseId && lesson.courseId !== args.courseId)
+      ) {
+        throw new Error('Lesson not found');
+      }
+    }
 
     const now = Date.now();
     return await ctx.db.insert('quizzes', {
@@ -766,6 +946,8 @@ export const createQuizQuestion = mutation({
   handler: async (ctx, args) => {
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can create quiz questions');
+    const quiz = await ctx.db.get(args.quizId);
+    if (!quiz || quiz.organizationId !== args.organizationId) throw new Error('Quiz not found');
 
     const now = Date.now();
     return await ctx.db.insert('quizQuestions', {
@@ -795,7 +977,7 @@ export const submitQuizAttempt = mutation({
     const { requesterId } = await checkAccess(ctx, args.organizationId);
 
     const quiz = await ctx.db.get(args.quizId);
-    if (!quiz) throw new Error('Quiz not found');
+    if (!quiz || quiz.organizationId !== args.organizationId) throw new Error('Quiz not found');
 
     const questions = await ctx.db
       .query('quizQuestions')
@@ -885,6 +1067,38 @@ export const getMyCertificates = query({
   },
 });
 
+/** Cursor-based personal certificate history; legacy array API stays compatible. */
+export const getMyCertificatesPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const result = await ctx.db
+      .query('certificates')
+      .withIndex('by_user', (q) =>
+        q.eq('organizationId', args.organizationId).eq('userId', requesterId),
+      )
+      .order('desc')
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    const page = await Promise.all(
+      result.page.map(async (cert) => {
+        const course = await ctx.db.get(cert.courseId);
+        return {
+          ...cert,
+          courseTitle:
+            course?.organizationId === args.organizationId ? course.title : 'Unknown Course',
+        };
+      }),
+    );
+    return { ...result, page };
+  },
+});
+
 export const getOrgCertificates = query({
   args: {
     organizationId: v.id('organizations'),
@@ -915,6 +1129,14 @@ export const issueCertificate = mutation({
     await assertModuleAccess(ctx, 'learning');
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can issue certificates');
+    const course = await ctx.db.get(args.courseId);
+    const user = await ctx.db.get(args.userId);
+    if (!course || course.organizationId !== args.organizationId) {
+      throw new Error('Course not found');
+    }
+    if (!user || user.organizationId !== args.organizationId) {
+      throw new Error('User not found in organization');
+    }
 
     const existing = await ctx.db
       .query('certificates')
@@ -1005,23 +1227,27 @@ export const getTeamLearningOverview = query({
     const enrollments = await ctx.db
       .query('enrollments')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
 
     const courses = await ctx.db
       .query('courses')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
 
-    const totalEnrollments = enrollments.length;
-    const completedEnrollments = enrollments.filter((e) => e.status === 'completed').length;
-    const inProgressEnrollments = enrollments.filter((e) => e.status === 'in_progress').length;
-    const totalCourses = courses.length;
-    const mandatoryCourses = courses.filter((c) => c.isMandatory).length;
+    const isCapped = enrollments.length > DEFAULT_LIST_CAP || courses.length > DEFAULT_LIST_CAP;
+    const enrollmentSample = enrollments.slice(0, DEFAULT_LIST_CAP);
+    const courseSample = courses.slice(0, DEFAULT_LIST_CAP);
+    const totalEnrollments = enrollmentSample.length;
+    const completedEnrollments = enrollmentSample.filter((e) => e.status === 'completed').length;
+    const inProgressEnrollments = enrollmentSample.filter((e) => e.status === 'in_progress').length;
+    const totalCourses = courseSample.length;
+    const mandatoryCourses = courseSample.filter((c) => c.isMandatory).length;
 
     const completionRate =
       totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0;
 
     return {
+      isCapped,
       totalEnrollments,
       completedEnrollments,
       inProgressEnrollments,
@@ -1034,10 +1260,11 @@ export const getTeamLearningOverview = query({
 
 // ─── ENROLLMENT DETAILS (for stat card drills) ──────────────────────────────
 
-/** Detailed enrollment list for a stat card drill-down. */
+/** Cursor-paginated enrollment list for a stat card drill-down. */
 export const getEnrollmentDetails = query({
   args: {
     organizationId: v.id('organizations'),
+    paginationOpts: paginationOptsValidator,
     filter: v.union(
       v.literal('all'),
       v.literal('completed'),
@@ -1050,42 +1277,45 @@ export const getEnrollmentDetails = query({
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can view enrollment details');
 
-    let enrollments = await ctx.db
-      .query('enrollments')
-      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
-
-    if (args.filter === 'completed') {
-      enrollments = enrollments.filter((e) => e.status === 'completed');
-    } else if (args.filter === 'in_progress') {
-      enrollments = enrollments.filter((e) => e.status === 'in_progress');
-    } else if (args.filter === 'not_started') {
-      enrollments = enrollments.filter((e) => e.status === 'not_started');
-    } else if (args.filter === 'mandatory') {
-      const mandatoryCourseIds = (
-        await ctx.db
-          .query('courses')
-          .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-          .take(DEFAULT_LIST_CAP)
-      )
-        .filter((c) => c.isMandatory)
-        .map((c) => c._id);
-      enrollments = enrollments.filter((e) => mandatoryCourseIds.includes(e.courseId));
-    }
+    const enrollmentQuery = ctx.db.query('enrollments');
+    const statusFilter = args.filter;
+    const scopedQuery =
+      statusFilter === 'completed' ||
+      statusFilter === 'in_progress' ||
+      statusFilter === 'not_started'
+        ? enrollmentQuery.withIndex('by_status', (q) =>
+            q.eq('organizationId', args.organizationId).eq('status', statusFilter),
+          )
+        : enrollmentQuery.withIndex('by_org', (q) => q.eq('organizationId', args.organizationId));
+    const result = await scopedQuery.paginate({
+      ...args.paginationOpts,
+      numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+    });
 
     const enriched = await Promise.all(
-      enrollments.map(async (enrollment) => {
+      result.page.map(async (enrollment) => {
         const user = await ctx.db.get(enrollment.userId);
         const course = await ctx.db.get(enrollment.courseId);
+        const certificate = await ctx.db
+          .query('certificates')
+          .withIndex('by_user_course', (q) =>
+            q
+              .eq('organizationId', args.organizationId)
+              .eq('userId', enrollment.userId)
+              .eq('courseId', enrollment.courseId),
+          )
+          .first();
         return {
+          hasCertificate: certificate !== null,
           _id: enrollment._id,
           userId: enrollment.userId,
           courseId: enrollment.courseId,
-          userName: user?.name ?? 'Unknown',
-          userEmail: user?.email ?? '',
-          userDepartment: user?.department,
-          courseTitle: course?.title ?? 'Unknown',
-          courseIsMandatory: course?.isMandatory ?? false,
+          userName: user?.organizationId === args.organizationId ? user.name : 'Unknown',
+          userEmail: user?.organizationId === args.organizationId ? user.email : '',
+          userDepartment:
+            user?.organizationId === args.organizationId ? user.department : undefined,
+          courseTitle: course?.organizationId === args.organizationId ? course.title : 'Unknown',
+          courseIsMandatory: course?.organizationId === args.organizationId && !!course.isMandatory,
           status: enrollment.status,
           progress: enrollment.progress ?? 0,
           enrolledAt: enrollment.createdAt,
@@ -1095,7 +1325,12 @@ export const getEnrollmentDetails = query({
       }),
     );
 
-    return enriched;
+    // Mandatory is a course property: pages may be empty, but their cursor still advances.
+    return {
+      ...result,
+      page:
+        args.filter === 'mandatory' ? enriched.filter((row) => row.courseIsMandatory) : enriched,
+    };
   },
 });
 

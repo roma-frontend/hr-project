@@ -72,16 +72,33 @@ self.addEventListener('fetch', (event) => {
   // ── Navigations: network-first with an offline page fallback ──────────────
   // Do NOT cache private authenticated pages — they would leak cross-user on shared devices.
   if (request.mode === 'navigate') {
-    const isPrivateNavigation = request.headers.has('authorization') || request.headers.has('cookie') ||
-      ['/dashboard','/payroll','/employees','/me','/succession','/admin','/superadmin','/attendance'].some(p => url.pathname.startsWith(p));
+    const isPrivateNavigation =
+      request.headers.has('authorization') ||
+      request.headers.has('cookie') ||
+      [
+        '/dashboard',
+        '/payroll',
+        '/employees',
+        '/me',
+        '/succession',
+        '/admin',
+        '/superadmin',
+        '/attendance',
+      ].some((p) => url.pathname.startsWith(p));
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (!isPrivateNavigation && response && response.status === 200) {
             const ct = response.headers.get('content-type') || '';
-            if (!ct.includes('private') && !response.headers.get('cache-control')?.includes('private')) {
+            if (
+              !ct.includes('private') &&
+              !response.headers.get('cache-control')?.includes('private')
+            ) {
               const copy = response.clone();
-              caches.open(PAGE_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
+              caches
+                .open(PAGE_CACHE)
+                .then((cache) => cache.put(request, copy))
+                .catch(() => undefined);
             }
           }
           return response;

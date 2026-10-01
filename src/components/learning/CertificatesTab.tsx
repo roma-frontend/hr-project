@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Award, Download } from 'lucide-react';
 import { CertificateRenderer } from './CertificateRenderer';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 
 type Certificate = {
   _id: Id<'certificates'>;
@@ -75,7 +76,9 @@ function CertificateCard({ cert }: { cert: Certificate }) {
 export function CertificatesTab({ certificates }: CertificatesTabProps) {
   const { t } = useTranslation();
 
-  if (!certificates || certificates.length === 0) {
+  if (!certificates) return <ShieldLoader size="md" />;
+
+  if (certificates.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">

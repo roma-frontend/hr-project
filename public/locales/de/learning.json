@@ -138,6 +138,7 @@
     "noEnrollmentsDesc": "Durchsuchen Sie den Kurskatalog, um zu beginnen",
     "browseCatalog": "Katalog durchsuchen",
     "teamProgressDesc": "Übersicht über die Lernaktivitäten des Teams",
+    "partialOverview": "Diese Statistik berücksichtigt nur einen Teil der Daten. Laden Sie in den Anmeldungsdetails weitere Seiten, um alle Einträge zu sehen.",
     "createCourseDesc": "Das Formular zur Kurserstellung wird hier implementiert",
     "not_started": "Nicht gestartet",
     "in_progress": "In Bearbeitung",

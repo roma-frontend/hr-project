@@ -20,3 +20,32 @@ coverage/
 # Public assets (no need to format binaries)
 public/models/
 public/*.png
+
+# Local tooling / worktrees / caches (not part of CI prettier check)
+.kilo/
+badges/
+reports/
+playwright-report/
+test-results/
+.next/
+out/
+build/
+junit.xml
+*.log
+*.txt
+eslint-report*.json
+
+# One-off / untracked scripts and generated files not enforced on CI
+AGENTS.md
+next-env.d.ts
+public/sw.js
+scripts/add-test-stripe-data.ts
+scripts/check-trial-reminders.ts
+scripts/export-stripe-to-excel.ts
+scripts/export-stripe-to-pdf.ts
+scripts/optimize-convex.ts
+scripts/stripe-growth-chart.ts
+scripts/sync-stripe-data.ts
+scripts/view-stripe-transactions.ts
+tests/payrollCalculator.test.ts
+tests/performance/load-test.js

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardDescription, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { ShieldLoader } from '@/components/ui/ShieldLoader';
 import {
   Select,
   SelectContent,
@@ -36,6 +37,8 @@ type CourseWithLessons = {
   updatedAt: number;
   creatorName: string;
   lessonCount: number;
+  lessonCountIsCapped?: boolean;
+  myEnrollment?: { status: string; progress: number } | null;
 };
 
 type EnrollmentWithCourse = {
@@ -102,7 +105,7 @@ export function CourseCatalog({
     let result = courses;
 
     if (searchQuery) {
-      const lower = searchQuery.toLowerCase();
+      const lower = searchQuery.trim().toLowerCase();
       result = result.filter(
         (c) =>
           c.title.toLowerCase().includes(lower) || c.description?.toLowerCase().includes(lower),
@@ -121,34 +124,28 @@ export function CourseCatalog({
   }, [courses, searchQuery, categoryFilter, difficultyFilter]);
 
   const categories = useMemo(() => {
-    if (!courses) return [];
-    return [...new Set(courses.map((c) => c.category))];
-  }, [courses]);
+    return [
+      ...new Set([
+        ...(courses ?? []).map((c) => c.category),
+        ...(categoryFilter === 'all' ? [] : [categoryFilter]),
+      ]),
+    ];
+  }, [courses, categoryFilter]);
 
   const isEnrolled = (courseId: Id<'courses'>) => {
-    return myEnrollments?.some((e) => e.courseId === courseId);
+    const course = courses?.find((c) => c._id === courseId);
+    // Older callers may still supply the legacy enrollment array.
+    return course?.myEnrollment !== undefined
+      ? course.myEnrollment !== null
+      : myEnrollments?.some((e) => e.courseId === courseId);
   };
 
   const getEnrollmentProgress = (courseId: Id<'courses'>) => {
-    const enrollment = myEnrollments?.find((e) => e.courseId === courseId);
-    return enrollment?.progress ?? 0;
+    const course = courses?.find((c) => c._id === courseId);
+    return course?.myEnrollment !== undefined
+      ? (course.myEnrollment?.progress ?? 0)
+      : (myEnrollments?.find((e) => e.courseId === courseId)?.progress ?? 0);
   };
-
-  if (!courses || courses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">
-            {t('learning.noCourses', 'No courses available')}
-          </h3>
-          <p className="text-muted-foreground">
-            {t('learning.noCoursesDesc', 'Check back later or contact your admin')}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -203,7 +200,9 @@ export function CourseCatalog({
       </Card>
 
       {/* Course Grid */}
-      {filteredCourses.length === 0 ? (
+      {!courses ? (
+        <ShieldLoader size="md" />
+      ) : filteredCourses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookOpen className="h-16 w-16 text-muted-foreground mb-4" />
@@ -240,7 +239,8 @@ export function CourseCatalog({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <BookOpen className="h-4 w-4" />
-                    {course.lessonCount} {t('learning.lessons', 'lessons')}
+                    {course.lessonCount}
+                    {course.lessonCountIsCapped ? '+' : ''} {t('learning.lessons', 'lessons')}
                   </span>
                   {course.estimatedHours && (
                     <span className="flex items-center gap-1">
