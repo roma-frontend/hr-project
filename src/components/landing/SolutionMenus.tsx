@@ -182,7 +182,7 @@ function CanvasByIndustry({ color }: { color: string }) {
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="640" height="160" rx="20" fill="url(#csol-ind)" />
-      <g fill="white" stroke={color} strokeWidth="1.1" opacity="0.92">
+      <g fill="var(--surface-1)" stroke={color} strokeWidth="1.1" opacity="0.92">
         <rect x="60" y="34" width="120" height="92" rx="14" />
         <rect x="220" y="34" width="120" height="92" rx="14" />
         <rect x="380" y="34" width="120" height="92" rx="14" />
@@ -236,7 +236,7 @@ function CanvasResources({ color }: { color: string }) {
         </linearGradient>
       </defs>
       <rect x="0" y="0" width="640" height="160" rx="20" fill="url(#cres)" />
-      <g fill="white" stroke={color} strokeWidth="1.1" opacity="0.92">
+      <g fill="var(--surface-1)" stroke={color} strokeWidth="1.1" opacity="0.92">
         <rect x="48" y="28" width="150" height="104" rx="12" />
         <rect x="220" y="28" width="150" height="104" rx="12" />
         <rect x="392" y="28" width="150" height="104" rx="12" />
@@ -453,7 +453,7 @@ export function SolutionsMenu() {
                   {tGroup(active.key)}
                 </p>
               </div>
-              <div className="flex-1 max-w-[520px] rounded-2xl overflow-hidden border border-[var(--border)] bg-white shadow-sm">
+              <div className="flex-1 max-w-[520px] rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--surface-1)] shadow-sm">
                 <div
                   key={active.key}
                   className="animate-[fade-up_0.45s_cubic-bezier(0.22,1,0.36,1)]"
@@ -507,7 +507,7 @@ export function SolutionsMenu() {
               <Link
                 key={item.key}
                 href={item.href}
-                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex items-start gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--border-strong)] hover:bg-white"
+                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex items-start gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--border-strong)] hover:bg-[var(--card-hover)]"
                 style={{
                   animation: open
                     ? `fade-up 0.42s cubic-bezier(0.22,1,0.36,1) ${idx * 55}ms both`
@@ -676,7 +676,7 @@ export function WhyMenu() {
               <Link
                 key={item.key}
                 href={item.href}
-                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--border-strong)] hover:bg-white"
+                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--border-strong)] hover:bg-[var(--card-hover)]"
                 style={{
                   animation: open
                     ? `fade-up 0.42s cubic-bezier(0.22,1,0.36,1) ${idx * 50}ms both`
@@ -861,7 +861,7 @@ export function ResourcesMenu({ activeSection = null }: { activeSection?: string
                 <Link
                   key={item.key}
                   href={item.href}
-                  className="group/item relative text-left rounded-2xl border bg-[var(--surface-1)] p-4 flex gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:bg-white"
+                  className="group/item relative text-left rounded-2xl border bg-[var(--surface-1)] p-4 flex gap-3 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:bg-[var(--card-hover)]"
                   style={{
                     borderColor: isActive ? item.color : 'var(--border)',
                     background: isActive ? `${item.color}0d` : 'var(--surface-1)',
