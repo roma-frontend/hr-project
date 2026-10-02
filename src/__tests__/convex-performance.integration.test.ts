@@ -208,9 +208,13 @@ describe('createTemplate', () => {
       return orgId;
     });
     // Superadmin can query any org; Acme admin would get cross-org error for otherOrg.
-    const list = await asSuperadmin(c).query(api.performance.listTemplates, { organizationId: otherOrg });
+    const list = await asSuperadmin(c).query(api.performance.listTemplates, {
+      organizationId: otherOrg,
+    });
     expect(list).toHaveLength(0);
-    const ownList = await asAdmin(c).query(api.performance.listTemplates, { organizationId: c.organizationId });
+    const ownList = await asAdmin(c).query(api.performance.listTemplates, {
+      organizationId: c.organizationId,
+    });
     expect(ownList).toHaveLength(1);
   });
 });
@@ -277,7 +281,9 @@ describe('createCycle', () => {
   it('listCycles returns all cycles when no status is given', async () => {
     const c = await seed();
     await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
-    const all = await asAdmin(c).query(api.performance.listCycles, { organizationId: c.organizationId });
+    const all = await asAdmin(c).query(api.performance.listCycles, {
+      organizationId: c.organizationId,
+    });
     expect(all).toHaveLength(1);
   });
 
@@ -483,7 +489,10 @@ describe('addPeerAssignment', () => {
 // ── submitReview ─────────────────────────────────────────────────────────────
 describe('submitReview', () => {
   async function selfAssignment(c: Ctx) {
-    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c, { includesPeer: false }));
+    const cycleId = await asAdmin(c).mutation(
+      api.performance.createCycle,
+      cycleArgs(c, { includesPeer: false }),
+    );
     await c.t.run((ctx) =>
       ctx.runMutation(api.performance.launchCycle, {
         cycleId,
@@ -782,7 +791,10 @@ describe('getRevieweeResults', () => {
   it('aggregates overall and per-competency averages', async () => {
     const c = await seed();
     const { cycleId } = await submitAll(c);
-    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId });
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, {
+      cycleId,
+      revieweeId: c.employeeId,
+    });
     // self + manager + 1 peer = 3 responses, all with overallScore 4
     expect(res?.overallScore).toBe(4);
     expect(res?.totalResponses).toBe(3);
@@ -818,7 +830,10 @@ describe('getRevieweeResults', () => {
         ratings: [{ competencyId: 'quality', competencyName: 'Quality', score: 5 }],
       }),
     );
-    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.managerId });
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, {
+      cycleId,
+      revieweeId: c.managerId,
+    });
     expect(res?.directReportReviews).toHaveLength(1);
     expect(res?.directReportReviews[0]?.overallScore).toBe(5);
   });
@@ -851,7 +866,10 @@ describe('getRevieweeResults', () => {
         );
       }
     }
-    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId });
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, {
+      cycleId,
+      revieweeId: c.employeeId,
+    });
     expect(res?.peerCount).toBe(2);
     expect(res?.peerReviews).toHaveLength(2);
   });
@@ -859,7 +877,10 @@ describe('getRevieweeResults', () => {
   it('returns zeroed averages when no responses exist', async () => {
     const c = await seed();
     const cycleId = await createAndLaunch(c);
-    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.peerId });
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, {
+      cycleId,
+      revieweeId: c.peerId,
+    });
     expect(res?.totalResponses).toBe(0);
     expect(res?.overallScore).toBe(0);
     expect(res?.competencyAverages.every((x) => x.average === 0 && x.count === 0)).toBe(true);

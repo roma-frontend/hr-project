@@ -452,7 +452,9 @@ describe('key result mutations', () => {
     });
     const before = await c.t.run((ctx) => ctx.db.get(id));
 
-    await asManager(c).mutation(api.goals.deleteKeyResult, { keyResultId: krs[0]?._id as Id<'keyResults'> });
+    await asManager(c).mutation(api.goals.deleteKeyResult, {
+      keyResultId: krs[0]?._id as Id<'keyResults'>,
+    });
 
     await c.t.run(async (ctx) => {
       const after = await ctx.db.get(id);
