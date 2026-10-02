@@ -89,6 +89,9 @@ export default function Navbar({
   const [scrollProgress, setScrollProgress] = useState(0);
   const hideAccum = useRef(0);
   const showAccum = useRef(0);
+  // dirDown gates the island: true while scrolling down, so the compact
+  // pill never flashes as full→island→hide in one gesture. It flips at the
+  // first downward pixel and clears only after a sustained upward drag.
   const [dirDown, setDirDown] = useState(false);
 
   const pathname = usePathname();
@@ -131,6 +134,20 @@ export default function Navbar({
 
   useEffect(() => {
     let ticking = false;
+    // Use refs so the handler never reads stale closure values after a re-render
+    // mid-momentum scroll (prevents "hidden flickers" when setState batches lag).
+    const hiddenRef = { current: false } as { current: boolean };
+    const dirDownRef = { current: false } as { current: boolean };
+    const syncHidden = (v: boolean) => {
+      if (v === hiddenRef.current) return;
+      hiddenRef.current = v;
+      setHidden(v);
+    };
+    const syncDirDown = (v: boolean) => {
+      if (v === dirDownRef.current) return;
+      dirDownRef.current = v;
+      setDirDown(v);
+    };
     const handleScroll = () => {
       if (ticking) return;
       ticking = true;
@@ -143,38 +160,40 @@ export default function Navbar({
             ? document.documentElement.scrollHeight - window.innerHeight
             : (container as HTMLElement).scrollHeight - (container as HTMLElement).clientHeight;
         setScrollProgress(max > 0 ? Math.min(100, (top / max) * 100) : 0);
-        // dirDown gates the compact "island" — it flips to true at the very first
-        // downward pixel so the island can't flash and then hide.
-        // hidden uses accumulators (hysteresis) so it needs ~40px sustained down.
+        // Direction gate + hysteresis hide. Never hide while a mega menu is open
+        // (scroll is locked, but wheel still fires — ignore it).
         const megaOpen = document.body.style.overflow === 'hidden';
         if (!embedded && window.innerWidth >= 1024 && !megaOpen) {
           const delta = top - lastY.current;
           if (Math.abs(delta) < 1) {
-            // hold
+            // sub-pixel drift — hold
           } else if (delta > 0) {
-            setDirDown(true);
+            // Scrolling DOWN: immediately mark direction down so the island pill
+            // never gets a chance to morph before we hide (no flash).
+            syncDirDown(true);
             showAccum.current = 0;
             if (top > 120 && Math.abs(delta) >= 2) {
               hideAccum.current += delta;
               if (hideAccum.current > 40) {
                 hideAccum.current = 0;
-                setHidden(true);
+                syncHidden(true);
               }
             }
           } else {
+            // Scrolling UP — still need hysteresis before revealing
             hideAccum.current = 0;
             showAccum.current += Math.abs(delta);
             if (showAccum.current > 16) {
               showAccum.current = 0;
-              setHidden(false);
-              setDirDown(false);
+              syncHidden(false);
+              syncDirDown(false);
             }
           }
         } else if (top <= 8) {
           hideAccum.current = 0;
           showAccum.current = 0;
-          setHidden(false);
-          setDirDown(false);
+          syncHidden(false);
+          syncDirDown(false);
         }
         lastY.current = top;
         ticking = false;
@@ -213,21 +232,23 @@ export default function Navbar({
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  // Island (compact pill) only on scroll-UP or when still near the top.
-  // On scroll-DOWN we never morph to island — we stay full-bleed and just
-  // translate the whole nav away. Requirement: "not appear after disappearance,
-  // only on reverse scroll" — so dirDown gates the island.
+  // Compact island pill: only while visible and scrolling UP.
+  // On scroll-down we stay full-bleed and just translate the nav off-screen.
+  // The compact pill never appears during the down→hide gesture; it only
+  // appears on reverse (up) scroll as part of the reveal.
   const isIsland = !embedded && scrolled && !hidden && !dirDown;
 
   return (
     <>
       <nav
         ref={navRef}
-        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} ${hidden ? '-translate-y-[calc(100%+14px)]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
+        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} ${hidden ? '-translate-y-[calc(100%+20px)]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
         style={{
           willChange: 'transform',
-          // symmetric premium spring — same curve both ways, no snap on either edge
-          transition: 'transform 620ms cubic-bezier(0.32,0.72,0,1)',
+          // Single stable transition for both directions — changing the
+          // transition string at the same time as transform causes the
+          // browser to snap (no animation) on some engines.
+          transition: 'transform 620ms cubic-bezier(0.32, 0.72, 0, 1)',
           pointerEvents: hidden ? 'none' : 'auto',
         }}
         role="navigation"
@@ -239,14 +260,12 @@ export default function Navbar({
           style={{
             padding: isIsland ? '10px 14px' : embedded ? '12px 16px' : '14px 20px',
             overflow: 'visible' as const,
-            ...(hidden
-              ? ({
-                  transition: 'none' as const,
-                } as const)
-              : ({
-                  transition:
-                    'padding 520ms cubic-bezier(0.22,1,0.36,1), background-color 360ms ease, backdrop-filter 360ms ease, border-radius 420ms cubic-bezier(0.22,1,0.36,1), max-width 520ms cubic-bezier(0.22,1,0.36,1)',
-                } as const)),
+            // While hidden the nav is off-screen — freeze the card's morph
+            // so it doesn't animate full→pill mid-flight (the "flash").
+            // While visible the card animates smoothly between full and pill.
+            transition: hidden
+              ? ('none' as const)
+              : ('padding 520ms cubic-bezier(0.22,1,0.36,1), background-color 360ms ease, backdrop-filter 360ms ease, border-radius 420ms cubic-bezier(0.22,1,0.36,1), max-width 520ms cubic-bezier(0.22,1,0.36,1), box-shadow 360ms ease' as const),
             // Keep clip inside the card so the progress hairline respects the
             // pill rounding — but use background-clip/border rounding, NOT
             // overflow:hidden on the card itself (that would clip the hover
@@ -288,28 +307,32 @@ export default function Navbar({
             />
           )}
 
-          {/* progress hairline — clipped to the CARD, not the viewport.
-              Card must stay overflow:visible for fixed mega-panels, so we
-              can't use overflow:hidden on the card. Instead the track itself
-              is inset + rounded to the pill so the fill never leaks outside
-              even on full-bleed it stays flush to the bottom edge. */}
+          {/* progress hairline — 2px bar that fills with scroll.
+              Clipped строго внутри карточки (pill: inset 1px + radius 20,
+              full-bleed: flush к нижнему краю). Родитель-карточка
+              overflow:visible (чтобы мега-меню не обрезались), поэтому
+              клип делаем на отдельном треке с overflow:hidden. */}
           <div
             className="pointer-events-none absolute h-[2px] overflow-hidden"
             style={{
-              left: isIsland ? '1px' : 0,
-              right: isIsland ? '1px' : 0,
-              bottom: isIsland ? '1px' : 0,
+              left: isIsland ? 1 : 0,
+              right: isIsland ? 1 : 0,
+              bottom: isIsland ? 1 : 0,
               borderBottomLeftRadius: isIsland ? 20 : 0,
               borderBottomRightRadius: isIsland ? 20 : 0,
               opacity: scrolled ? 1 : 0,
               zIndex: 2,
+              // страховка от вылезания за радиус/границу при любых ресайзах
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
             aria-hidden="true"
           >
             <div
               className="h-full"
               style={{
-                width: `${scrollProgress}%`,
+                width: `${Math.min(100, scrollProgress)}%`,
+                maxWidth: '100%',
                 background:
                   'linear-gradient(90deg, var(--brand), var(--brand-hover), var(--violet-500))',
                 boxShadow: '0 0 10px rgba(44,140,213,0.45)',
