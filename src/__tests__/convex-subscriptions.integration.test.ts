@@ -128,7 +128,7 @@ describe('upsertSubscription', () => {
     await c.t.run(async (ctx) => {
       const org = await ctx.db.get(c.organizationId);
       expect(org?.plan).toBe('professional');
-      expect(org?.employeeLimit).toBe(50);
+      expect(org?.employeeLimit).toBe(300);
     });
   });
 

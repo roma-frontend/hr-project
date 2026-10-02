@@ -31,7 +31,7 @@ export const XLARGE_LIST_CAP = 8000;
  * from this map so plan and seat-limit never drift apart.
  */
 export const PLAN_EMPLOYEE_LIMITS: Record<'starter' | 'professional' | 'enterprise', number> = {
-  starter: 10,
-  professional: 50,
+  starter: 25,
+  professional: 300,
   enterprise: 999999,
 };

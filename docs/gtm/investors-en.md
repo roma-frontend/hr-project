@@ -65,10 +65,10 @@ references. These are capital and time problems, not product-architecture proble
 
 ## 5. Business model
 
-- **Per-employee SaaS** in three published tiers: Starter (≤10 seats), Pro (≤50, includes
+- **Per-employee SaaS** in three published tiers: Starter (≤25 seats), Pro (≤300, includes
   the public API), Enterprise (unlimited, custom terms).
 - **Enforced limits, not brochure limits:** every plan limit is checked server-side;
-  upsell is triggered by real quota events (a 51st employee on Pro is an upgrade screen,
+  upsell is triggered by real quota events (a 301st employee on Pro is an upgrade screen,
   not an invoice dispute).
 - **Local payment rails reduce churn friction:** renewals can be paid with Idram/ArCa by
   companies without international cards.

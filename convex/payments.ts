@@ -28,7 +28,7 @@ import { getAuthCaller } from './lib/getAuthCaller';
 import { isSuperadmin } from './lib/auth';
 import { requireOrgAdmin } from './lib/rbac';
 import { buildHandshake, type PaymentProvider } from './lib/paymentSignature';
-import { entrySeatsFor, perSeatUsdFor } from './billing/defaults';
+import { entrySeatsFor, monthlyTotalUsdFor } from './billing/defaults';
 
 /** Sanity cap on a manual order, mirroring the Stripe lane's clamp. */
 const MAX_PAYMENT_SEATS = 10_000;
@@ -241,7 +241,7 @@ export const createLocalPayment = mutation({
       1,
       Math.min(Math.floor(args.seats ?? entrySeatsFor(seatingKey)), MAX_PAYMENT_SEATS),
     );
-    const usd = perSeatUsdFor(seatingKey, seats) * seats * months;
+    const usd = monthlyTotalUsdFor(seatingKey, seats) * months;
 
     const now = Date.now();
     // Provider-agnostic order id: short, unique, traceable in both systems.
@@ -385,11 +385,11 @@ export const ingestWebhook = internalMutation({
     });
 
     // Keep the org plan/limits in sync (same as upsertSubscription does).
-    const PLAN_EMPLOYEE_LIMITS = { starter: 10, professional: 50, enterprise: 999999 } as const;
+    const { PLAN_EMPLOYEE_LIMITS } = await import('./lib/limits');
     if (payment.organizationId) {
       await ctx.db.patch(payment.organizationId, {
         plan: payment.plan,
-        employeeLimit: PLAN_EMPLOYEE_LIMITS[payment.plan],
+        employeeLimit: PLAN_EMPLOYEE_LIMITS[payment.plan as keyof typeof PLAN_EMPLOYEE_LIMITS],
       });
       // Notify org admins that the plan went live.
       const admins = await ctx.db

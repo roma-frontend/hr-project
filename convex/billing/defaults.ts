@@ -83,6 +83,46 @@ export function entrySeatsFor(planKey: string): number {
   return seatTiersFor(planKey)[0]?.fromSeats ?? 1;
 }
 
+/** Max self-serve seats per plan — mirrors `PLAN_SEAT_PRICING` in `src/lib/pricing.ts`. */
+const PLAN_MAX_SEATS: Record<string, number | null> = {
+  starter: 25,
+  pro: 300,
+  enterprise: null,
+};
+
+/** Clamp a requested seat count to the plan's billable range (mirrors `normalizeSeats`). */
+export function normalizeSeatsFor(planKey: string, seats: number): number {
+  const tiers = seatTiersFor(planKey);
+  if (tiers.length === 0) return Math.max(1, Math.round(seats || 1));
+  const minSeats = tiers[0]!.fromSeats;
+  const maxSeats = PLAN_MAX_SEATS[planKey] ?? null;
+  const rounded = Math.max(minSeats, Math.round(seats || minSeats));
+  return maxSeats === null ? rounded : Math.min(maxSeats, rounded);
+}
+
+/**
+ * Total monthly cost (USD, billed monthly) for a team size — monotonic so
+ * adding an employee never reduces total (mirrors `monthlyTotal` in
+ * `src/lib/pricing.ts`). Used by the PSP lane; the test
+ * `pricing.test.ts` asserts parity between `perSeatUsdFor`/`perSeatPrice`.
+ */
+export function monthlyTotalUsdFor(planKey: string, seats: number): number {
+  const tiers = seatTiersFor(planKey);
+  if (tiers.length === 0) return 0;
+  const minSeats = tiers[0]!.fromSeats;
+  const billable = normalizeSeatsFor(planKey, seats);
+  const raw = Math.round(perSeatUsdFor(planKey, seats) * billable);
+  if (seats <= minSeats) return raw;
+  // Iterative monotonic guard (avoids deep recursion for 300 seats).
+  let prev = Math.round(perSeatUsdFor(planKey, minSeats) * minSeats);
+  for (let s = minSeats + 1; s <= billable; s++) {
+    const r = Math.round(perSeatUsdFor(planKey, s) * s);
+    prev = Math.max(r, prev);
+    if (s === billable) return prev;
+  }
+  return Math.max(raw, prev);
+}
+
 export const DEFAULT_PLANS: DefaultPlanDef[] = [
   {
     key: 'starter',
