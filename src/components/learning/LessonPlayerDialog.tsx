@@ -67,7 +67,10 @@ interface LessonPlayerDialogProps {
   onCompleteLesson: () => void;
   onNextLesson: () => void;
   onPrevLesson: () => void;
-  quizData: QuizData | null | undefined;
+  quizData: (QuizData & { isCapped?: boolean }) | null | undefined;
+  quizIsCapped?: boolean;
+  quizStatus?: 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted';
+  onLoadMoreQuiz?: () => void;
   showQuiz: boolean;
   setShowQuiz: (show: boolean) => void;
   quizSubmitted: boolean;
@@ -89,6 +92,9 @@ export function LessonPlayerDialog({
   onNextLesson,
   onPrevLesson,
   quizData,
+  quizIsCapped,
+  quizStatus,
+  onLoadMoreQuiz,
   showQuiz,
   setShowQuiz,
   quizSubmitted,
@@ -278,6 +284,26 @@ export function LessonPlayerDialog({
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {quizIsCapped && (
+                      <p className="text-xs text-(--warning-text)">
+                        {quizStatus !== 'Exhausted'
+                          ? 'More questions available — use Load more.'
+                          : 'Question list was capped; not all questions may be shown.'}
+                      </p>
+                    )}
+                    {quizIsCapped &&
+                      quizStatus !== 'Exhausted' &&
+                      quizStatus !== 'LoadingFirstPage' &&
+                      onLoadMoreQuiz && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={quizStatus !== 'CanLoadMore'}
+                          onClick={onLoadMoreQuiz}
+                        >
+                          Load more questions
+                        </Button>
+                      )}
                     {/* Question Header */}
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">

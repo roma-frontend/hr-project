@@ -89,11 +89,13 @@ export default function CareersClient({ initialLanguage = 'en' }: { initialLangu
   // not flash English and the SSR HTML is indexable in the visitor's language.
   const { t } = useLandingTranslation(initialLanguage);
   const { user } = useAuthStore();
+  const legacyVacancies = useQuery(api.careers.listAllOpenVacancies);
   const {
-    results: vacancies,
+    results: paginatedVacancies,
     status: vacanciesStatus,
     loadMore: loadMoreVacancies,
   } = usePaginatedQuery(api.careers.listAllOpenVacanciesPaginated, {}, { initialNumItems: 20 });
+  const vacancies = paginatedVacancies.length > 0 ? paginatedVacancies : legacyVacancies;
   const allOrgs = useQuery(api.careers.listActiveOrganizations);
   const isMounted = useHydrated();
 

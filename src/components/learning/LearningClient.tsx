@@ -250,6 +250,8 @@ export default function LearningClient() {
       : 'skip',
   );
 
+  const _quizIsCapped = (quizDataForPlayer as unknown as { isCapped?: boolean })?.isCapped ?? false;
+
   // Mutations
   const enrollMutation = useMutation(api.learning.enrollInCourse);
   const createCourseMutation = useMutation(api.learning.createCourse);
@@ -286,7 +288,8 @@ export default function LearningClient() {
   };
   const submitQuizAttemptMutation = useMutation(api.learning.submitQuizAttempt);
 
-  // Fetch quiz data when viewing a quiz lesson
+  // Paginated quiz questions — legacy getQuizByLesson kept for small quizzes.
+  // When isCapped, the player pages through getQuizByLessonQuestionsPaginated.
   const currentLesson = courseLessons[activeLessonIndex];
   const quizDataResult = useQuery(
     api.learning.getQuizByLesson,
@@ -301,6 +304,37 @@ export default function LearningClient() {
         }
       : 'skip',
   );
+
+  const {
+    results: quizQuestionsPaginated,
+    status: quizQuestionsStatus,
+    loadMore: loadMoreQuizQuestions,
+  } = usePaginatedQuery(
+    api.learning.getQuizByLessonQuestionsPaginated,
+    showLessonPlayer &&
+      currentLesson &&
+      currentLesson?.contentType === 'quiz' &&
+      effectiveOrgId &&
+      user?.id &&
+      (quizDataResult as unknown as { isCapped?: boolean })?.isCapped
+      ? {
+          organizationId: effectiveOrgId as Id<'organizations'>,
+          lessonId: currentLesson._id as Id<'lessons'>,
+        }
+      : 'skip',
+    { initialNumItems: 50 },
+  );
+
+  const quizDataForPlayer =
+    quizQuestionsPaginated.length > 0 &&
+    (quizDataResult as unknown as { isCapped?: boolean })?.isCapped
+      ? ({
+          quiz: (quizDataResult as unknown as { quiz: NonNullable<typeof quizDataResult>['quiz'] })
+            .quiz,
+          questions: quizQuestionsPaginated,
+          isCapped: quizQuestionsStatus !== 'Exhausted',
+        } as unknown as typeof quizDataResult)
+      : quizDataResult;
 
   // Fetch certificates
   const {
@@ -954,7 +988,10 @@ export default function LearningClient() {
         onCompleteLesson={handleCompleteLesson}
         onNextLesson={handleNextLesson}
         onPrevLesson={handlePrevLesson}
-        quizData={quizDataResult}
+        quizData={quizDataForPlayer}
+        quizIsCapped={_quizIsCapped}
+        quizStatus={quizQuestionsStatus}
+        onLoadMoreQuiz={() => loadMoreQuizQuestions(50)}
         showQuiz={showQuiz}
         setShowQuiz={setShowQuiz}
         quizSubmitted={quizSubmitted}

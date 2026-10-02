@@ -56,14 +56,16 @@ function makeCtx() {
   });
   const patch = jest.fn();
   const del = jest.fn();
+  const get = jest.fn().mockResolvedValue({ _id: 'n1', userId: 'user_1' });
   const ctx = {
     db: {
       query: jest.fn().mockReturnValue({ withIndex, order }),
+      get,
       patch,
       delete: del,
     },
   };
-  return { ctx, withIndex, order, take, paginate, patch, del, eq };
+  return { ctx, withIndex, order, take, paginate, patch, del, eq, get };
 }
 
 describe('listPaginated', () => {

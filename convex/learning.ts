@@ -974,7 +974,37 @@ export const getQuizByLesson = query({
       .order('asc')
       .take(DEFAULT_LIST_CAP);
 
-    return { quiz, questions };
+    return { quiz, questions, isCapped: questions.length === DEFAULT_LIST_CAP };
+  },
+});
+
+/** Paginated quiz questions by lesson quiz. */
+export const getQuizByLessonQuestionsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    lessonId: v.id('lessons'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId);
+    const quiz = await ctx.db
+      .query('quizzes')
+      .withIndex('by_lesson', (q) =>
+        q.eq('organizationId', args.organizationId).eq('lessonId', args.lessonId),
+      )
+      .first();
+    if (!quiz) return null;
+    const result = await ctx.db
+      .query('quizQuestions')
+      .withIndex('by_quiz', (q) =>
+        q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
+      )
+      .order('asc')
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    return { quiz, questions: result };
   },
 });
 

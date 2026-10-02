@@ -36,6 +36,11 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('convex/react', () => ({
   useQuery: (ref: { _name?: string }) => queryResults[ref?._name ?? ''],
+  usePaginatedQuery: (ref: { _name?: string }) => ({
+    results: queryResults[ref?._name ?? ''] ?? [],
+    status: 'Exhausted',
+    loadMore: jest.fn(),
+  }),
   useMutation: (ref: { _name?: string }) => {
     const name = ref?._name ?? '';
     mutationFns[name] = mutationFns[name] ?? jest.fn().mockResolvedValue(undefined);
@@ -52,6 +57,7 @@ jest.mock('@/convex/_generated/api', () => ({
   api: {
     careers: {
       listAllOpenVacancies: { _name: 'listAllOpenVacancies' },
+      listAllOpenVacanciesPaginated: { _name: 'listAllOpenVacanciesPaginated' },
       listActiveOrganizations: { _name: 'listActiveOrganizations' },
       getVacancyDetails: { _name: 'getVacancyDetails' },
       applyToVacancy: { _name: 'applyToVacancy' },
