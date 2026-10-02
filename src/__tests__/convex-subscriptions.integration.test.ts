@@ -432,11 +432,12 @@ describe('getSubscriptionForContext', () => {
     expect(res?.stripeSubscriptionId).toBeNull();
   });
 
-  it('rejects without auth and returns null when nothing can be resolved', async () => {
+  it('returns null for anonymous callers and for emails with no subscription', async () => {
     const c = await seed();
-    await expect(
-      c.t.run((ctx) => ctx.runQuery(api.subscriptions.getSubscriptionForContext, {})),
-    ).rejects.toThrow('Not authenticated');
+    const anon = await c.t.run((ctx) =>
+      ctx.runQuery(api.subscriptions.getSubscriptionForContext, {}),
+    );
+    expect(anon).toBeNull();
     const res = await c.t
       .withIdentity({ email: 'admin@acme.test' })
       .query(api.subscriptions.getSubscriptionForContext, { email: 'nobody@acme.test' });

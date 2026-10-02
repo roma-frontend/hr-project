@@ -236,7 +236,7 @@ export const getSubscriptionForContext = query({
   },
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
-    if (!caller) throw new Error('Not authenticated');
+    if (!caller) return null;
     if (
       args.organizationId &&
       !isSuperadmin(caller) &&

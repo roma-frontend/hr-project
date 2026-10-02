@@ -36,6 +36,7 @@ export function useSubscription(): { subscription: SubscriptionData; loading: bo
   );
 
   // loading state — raw is undefined while Convex is fetching
+  // null means "no subscription" (including unauthenticated — backend returns null).
   const loading = raw === undefined && !!(user?.email || organizationId);
 
   if (!raw) {
@@ -64,15 +65,15 @@ export function useSubscription(): { subscription: SubscriptionData; loading: bo
     subscription: {
       plan: raw.plan as Plan,
       status: raw.status as SubscriptionStatus,
-      trialEnd: raw.trialEnd ?? null,
-      currentPeriodEnd: raw.currentPeriodEnd ?? null,
-      cancelAtPeriodEnd: raw.cancelAtPeriodEnd,
+      trialEnd: (raw.trialEnd as number | undefined) ?? null,
+      currentPeriodEnd: (raw.currentPeriodEnd as number | undefined) ?? null,
+      cancelAtPeriodEnd: raw.cancelAtPeriodEnd as boolean,
       isActive,
       isTrial: raw.status === 'trialing',
       isPastDue: raw.status === 'past_due',
       isCanceled: raw.status === 'canceled',
-      stripeCustomerId: raw.stripeCustomerId ?? null,
-      stripeSubscriptionId: raw.stripeSubscriptionId ?? null,
+      stripeCustomerId: (raw.stripeCustomerId as string | null | undefined) ?? null,
+      stripeSubscriptionId: (raw.stripeSubscriptionId as string | null | undefined) ?? null,
     },
   };
 }
