@@ -51,8 +51,12 @@ export const getUnreadCount = query({
 export const markAsRead = mutation({
   args: { notificationId: v.id('notifications') },
   handler: async (ctx, args) => {
-    const { notificationId } = args;
-    await ctx.db.patch(notificationId, { isRead: true });
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    const row = await ctx.db.get(args.notificationId);
+    if (!row) throw new Error('Notification not found');
+    if (row.userId !== caller._id) throw new Error('Not authorized for this notification');
+    await ctx.db.patch(args.notificationId, { isRead: true });
   },
 });
 
@@ -60,11 +64,12 @@ export const markAsRead = mutation({
 export const markAllAsRead = mutation({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
-    const { userId } = args;
-    // Mark all unread notifications as read (capped for safety)
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId) throw new Error('Caller mismatch');
     const unread = await ctx.db
       .query('notifications')
-      .withIndex('by_user_unread', (q) => q.eq('userId', userId).eq('isRead', false))
+      .withIndex('by_user_unread', (q) => q.eq('userId', args.userId).eq('isRead', false))
       .take(DEFAULT_LIST_CAP);
     for (const n of unread) {
       await ctx.db.patch(n._id, { isRead: true });
@@ -77,7 +82,11 @@ export const markAllAsRead = mutation({
 export const deleteNotification = mutation({
   args: { notificationId: v.id('notifications') },
   handler: async (ctx, args) => {
-    const { notificationId } = args;
-    await ctx.db.delete(notificationId);
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    const row = await ctx.db.get(args.notificationId);
+    if (!row) throw new Error('Notification not found');
+    if (row.userId !== caller._id) throw new Error('Not authorized for this notification');
+    await ctx.db.delete(args.notificationId);
   },
 });
