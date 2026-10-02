@@ -64,6 +64,10 @@ export const listObjectives = query({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const { organizationId, periodYear, periodType, level, ownerId, status } = args;
     let objectives = await ctx.db
       .query('objectives')
@@ -110,9 +114,13 @@ export const listObjectives = query({
 export const getObjective = query({
   args: { objectiveId: v.id('objectives') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const { objectiveId } = args;
     const obj = await ctx.db.get(objectiveId);
     if (!obj) return null;
+    if (caller.role !== 'superadmin' && caller.organizationId !== obj.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const owner = await ctx.db.get(obj.ownerId);
     const ownerProfile = await getProfile(ctx, obj.ownerId);
@@ -202,6 +210,10 @@ export const getTeamProgress = query({
     periodType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const { organizationId, periodYear, periodType } = args;
     let objectives = await ctx.db
       .query('objectives')
@@ -242,6 +254,12 @@ export const getTeamProgress = query({
 export const getCheckinHistory = query({
   args: { keyResultId: v.id('keyResults') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    const kr = await ctx.db.get(args.keyResultId);
+    if (!kr) throw new Error('Key Result not found');
+    if (caller.role !== 'superadmin' && caller.organizationId !== kr.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const { keyResultId } = args;
     const checkins = await ctx.db
       .query('goalCheckins')
@@ -504,9 +522,13 @@ export const updateKeyResult = mutation({
     weight: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const { keyResultId, ...updates } = args;
     const kr = await ctx.db.get(keyResultId);
     if (!kr) throw new Error('Key Result not found');
+    if (caller.role !== 'superadmin' && caller.organizationId !== kr.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (updates.title !== undefined) patch.title = updates.title;
@@ -521,9 +543,13 @@ export const updateKeyResult = mutation({
 export const deleteKeyResult = mutation({
   args: { keyResultId: v.id('keyResults') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const { keyResultId } = args;
     const kr = await ctx.db.get(keyResultId);
     if (!kr) throw new Error('Key Result not found');
+    if (caller.role !== 'superadmin' && caller.organizationId !== kr.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     // Delete check-ins (cascade)
     const checkins = await ctx.db
@@ -555,9 +581,14 @@ export const checkin = mutation({
     confidence: v.union(v.literal('high'), v.literal('medium'), v.literal('low')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller._id !== args.userId) throw new Error('Caller mismatch');
     const { keyResultId, userId, newValue, note, confidence } = args;
     const kr = await ctx.db.get(keyResultId);
     if (!kr) throw new Error('Key Result not found');
+    if (caller.role !== 'superadmin' && caller.organizationId !== kr.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const obj = await ctx.db.get(kr.objectiveId);
     if (!obj) throw new Error('Objective not found');
@@ -626,9 +657,13 @@ export const completeObjective = mutation({
 export const cancelObjective = mutation({
   args: { objectiveId: v.id('objectives') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const { objectiveId } = args;
     const obj = await ctx.db.get(objectiveId);
     if (!obj) throw new Error('Objective not found');
+    if (caller.role !== 'superadmin' && caller.organizationId !== obj.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     if (obj.status === 'completed') throw new Error('Cannot cancel a completed objective');
 
     await ctx.db.patch(objectiveId, { status: 'cancelled', updatedAt: Date.now() });
@@ -642,6 +677,10 @@ export const getObjectiveTaskStats = query({
     periodYear: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const { organizationId, periodYear } = args;
 
     let objectives = await ctx.db
@@ -685,6 +724,11 @@ export const getObjectiveTaskStats = query({
 export const getTasksByObjective = query({
   args: { objectiveId: v.id('objectives') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    const obj = await ctx.db.get(args.objectiveId);
+    if (obj && caller.role !== 'superadmin' && caller.organizationId !== obj.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const tasks = await ctx.db
       .query('tasks')
       .withIndex('by_objective', (q) => q.eq('objectiveId', args.objectiveId))
@@ -837,6 +881,10 @@ export const getObjectivesForTaskCreation = query({
     userId: v.optional(v.id('users')),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const { organizationId, userId } = args;
     let objectives = await ctx.db
       .query('objectives')

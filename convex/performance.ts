@@ -62,6 +62,10 @@ export const listCycles = query({
     ),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     const q = ctx.db
       .query('reviewCycles')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId));
@@ -79,8 +83,12 @@ export const listCycles = query({
 export const getCycleDetails = query({
   args: { cycleId: v.id('reviewCycles') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const cycle = await ctx.db.get(args.cycleId);
     if (!cycle) return null;
+    if (caller.role !== 'superadmin' && caller.organizationId !== cycle.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const assignments = await ctx.db
       .query('reviewAssignments')
@@ -159,6 +167,10 @@ export const getRevieweeResults = query({
   handler: async (ctx, args) => {
     const cycle = await ctx.db.get(args.cycleId);
     if (!cycle) return null;
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== cycle.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const responses = await ctx.db
       .query('reviewResponses')
@@ -258,8 +270,12 @@ export const getRevieweeResults = query({
 export const getCycleSummary = query({
   args: { cycleId: v.id('reviewCycles') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const cycle = await ctx.db.get(args.cycleId);
     if (!cycle) return null;
+    if (caller.role !== 'superadmin' && caller.organizationId !== cycle.organizationId)
+      throw new Error('Access denied: cross-organization operation');
 
     const responses = await ctx.db
       .query('reviewResponses')
@@ -309,6 +325,10 @@ export const getCycleSummary = query({
 export const listTemplates = query({
   args: { organizationId: v.id('organizations') },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
     return ctx.db
       .query('reviewTemplates')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
@@ -338,6 +358,11 @@ export const createTemplate = mutation({
     createdBy: v.id('users'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
+    if (args.createdBy !== caller._id) throw new Error('Caller mismatch');
     // If setting as default, unset others
     if (args.isDefault) {
       const existing = await ctx.db
@@ -398,11 +423,19 @@ export const createCycle = mutation({
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'performance');
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (caller.role !== 'superadmin' && caller.organizationId !== args.organizationId)
+      throw new Error('Access denied: cross-organization operation');
+    if (args.createdBy !== caller._id) throw new Error('Caller mismatch');
     // Resolve competencies from template or args or defaults
     let competencies = args.competencies || DEFAULT_COMPETENCIES;
     if (args.templateId) {
       const template = await ctx.db.get(args.templateId);
       if (template) {
+        // Guard: template must belong to caller's org
+        if (template.organizationId !== args.organizationId)
+          throw new Error('Access denied: cross-organization operation');
         competencies = template.competencies;
       }
     }
