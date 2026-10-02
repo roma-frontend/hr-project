@@ -182,12 +182,10 @@ export function SolutionsMenu() {
     >
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 focus:outline-none border"
+        className="relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors duration-200 focus:outline-none"
         style={{
           color: open ? 'var(--text-primary)' : 'var(--text-secondary)',
           background: open ? 'var(--surface-2)' : 'transparent',
-          borderColor: open ? 'var(--border-default)' : 'transparent',
-          boxShadow: open ? '0 1px 6px rgba(0,0,0,0.06)' : 'none',
         }}
         aria-expanded={open}
         aria-haspopup="true"
@@ -419,12 +417,10 @@ export function WhyMenu() {
     >
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 focus:outline-none border"
+        className="relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors duration-200 focus:outline-none"
         style={{
           color: open ? 'var(--text-primary)' : 'var(--text-secondary)',
           background: open ? 'var(--surface-2)' : 'transparent',
-          borderColor: open ? 'var(--border-default)' : 'transparent',
-          boxShadow: open ? '0 1px 6px rgba(0,0,0,0.06)' : 'none',
         }}
         aria-expanded={open}
         aria-haspopup="true"
@@ -591,12 +587,10 @@ export function ResourcesMenu({ activeSection = null }: { activeSection?: string
     >
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 focus:outline-none border"
+        className="relative inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors duration-200 focus:outline-none"
         style={{
           color: open ? 'var(--text-primary)' : 'var(--text-secondary)',
           background: open ? 'var(--surface-2)' : 'transparent',
-          borderColor: open ? 'var(--border-default)' : 'transparent',
-          boxShadow: open ? '0 1px 6px rgba(0,0,0,0.06)' : 'none',
         }}
         aria-expanded={open}
         aria-haspopup="true"
