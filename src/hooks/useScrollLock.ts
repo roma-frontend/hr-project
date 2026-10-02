@@ -35,7 +35,7 @@ interface LockState {
 const locks = new WeakMap<HTMLElement, LockState>();
 
 function lockTargets(): HTMLElement[] {
-  const targets: HTMLElement[] = [document.body];
+  const targets: HTMLElement[] = [document.documentElement, document.body];
   const scroller =
     document.querySelector<HTMLElement>('main.main-scrollable') ??
     document.querySelector<HTMLElement>('main');

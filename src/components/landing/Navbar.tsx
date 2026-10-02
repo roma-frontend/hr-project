@@ -25,6 +25,7 @@ import dynamic from 'next/dynamic';
 import { useActiveSection } from '@/hooks/useActiveSection';
 import { useHydrated } from '@/hooks/useHydrated';
 import { useCommandPaletteStore } from '@/store/useCommandPaletteStore';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 const MobileMenu = dynamic(() => import('./MobileMenu'), {
   ssr: false,
@@ -87,6 +88,8 @@ export default function Navbar({
   const [hidden, setHidden] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const hideAccum = useRef(0);
+  const showAccum = useRef(0);
 
   const pathname = usePathname();
   const sectionIds = useMemo(
@@ -95,6 +98,25 @@ export default function Navbar({
   );
 
   const activeSection = useActiveSection(sectionIds);
+
+  // ── scroll lock: any mega menu open → freeze page scroll ──
+  // COUNTED, not boolean: 4 menus race when hover moves from Platform →
+  // Solutions (Platform closes with detail:false, Solutions opens with
+  // detail:true). A boolean would see the last event's false and unlock
+  // even though Solutions is open. A counter stays >0 while any is open.
+  const megaOpenCount = useRef(0);
+  const [scrollLocked, setScrollLocked] = useState(false);
+  useEffect(() => {
+    const onMega = (e: Event) => {
+      const ce = e as CustomEvent<boolean>;
+      if (ce.detail) megaOpenCount.current += 1;
+      else megaOpenCount.current = Math.max(0, megaOpenCount.current - 1);
+      setScrollLocked(megaOpenCount.current > 0);
+    };
+    window.addEventListener('strata:mega-open', onMega as EventListener);
+    return () => window.removeEventListener('strata:mega-open', onMega as EventListener);
+  }, []);
+  useScrollLock(scrollLocked);
 
   const navRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLElement | Window | null>(null);
@@ -137,13 +159,37 @@ export default function Navbar({
             ? document.documentElement.scrollHeight - window.innerHeight
             : (container as HTMLElement).scrollHeight - (container as HTMLElement).clientHeight;
         setScrollProgress(max > 0 ? Math.min(100, (top / max) * 100) : 0);
-        // smart hide on scroll-down, reveal on scroll-up (desktop only, not embedded)
+        // ── professional scroll-hide: accumulated, hysteresis, velocity-gated ──
+        // Require ~36px of sustained motion before flipping, so a jittery trackpad
+        // or a single momentum burst doesn't flicker the bar. Velocity gate
+        // ensures a slow drift (<2px/frame) never hides the nav at all.
         if (!embedded && window.innerWidth >= 1024) {
           const delta = top - lastY.current;
-          if (top > 180 && delta > 8 && top > lastY.current) setHidden(true);
-          else if (delta < -8) setHidden(false);
-          lastY.current = top;
+          if (Math.abs(delta) < 1) {
+            // no meaningful motion — hold
+          } else if (delta > 0) {
+            showAccum.current = 0;
+            if (top > 120 && Math.abs(delta) >= 2) {
+              hideAccum.current += delta;
+              if (hideAccum.current > 40) {
+                hideAccum.current = 0;
+                setHidden(true);
+              }
+            }
+          } else {
+            hideAccum.current = 0;
+            showAccum.current += Math.abs(delta);
+            if (showAccum.current > 16) {
+              showAccum.current = 0;
+              setHidden(false);
+            }
+          }
+        } else if (top <= 8) {
+          hideAccum.current = 0;
+          showAccum.current = 0;
+          setHidden(false);
         }
+        lastY.current = top;
         ticking = false;
       });
     };
@@ -185,24 +231,36 @@ export default function Navbar({
 
   return (
     <>
-      {/* floating island wrapper */}
+      {/* floating island — choreographed hide: card collapses as nav lifts */}
       <nav
         ref={navRef}
-        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${hidden ? '-translate-y-[130%]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
+        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} ${hidden ? '-translate-y-[120%]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
+        style={{
+          willChange: 'transform',
+          transition: hidden
+            ? 'transform 560ms cubic-bezier(0.4,0,0.2,1)'
+            : 'transform 480ms cubic-bezier(0.16,1,0.3,1)',
+          pointerEvents: hidden ? 'none' : 'auto',
+        }}
         role="navigation"
         aria-label="Main navigation"
+        aria-hidden={hidden ? true : undefined}
       >
-        {/* ── island card ── */}
+        {/* ── island card — scales and fades with the nav so both move as one ── */}
         <div
-          className={`relative mx-auto flex items-center justify-between gap-3 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${embedded ? 'max-w-none rounded-none' : isIsland ? 'max-w-[1140px] rounded-[20px]' : 'max-w-none rounded-none'}`}
+          className={`relative mx-auto flex items-center justify-between gap-3 ${embedded ? 'max-w-none rounded-none' : isIsland ? 'max-w-[1140px] rounded-[20px]' : 'max-w-none rounded-none'}`}
           style={{
             padding: isIsland ? '10px 14px' : embedded ? '12px 16px' : '14px 20px',
+            willChange: 'transform, opacity',
+            transform: hidden ? 'scale(0.96)' : 'scale(1)',
+            opacity: hidden ? 0.72 : 1,
+            transition: hidden
+              ? 'transform 520ms cubic-bezier(0.22,1,0.36,1), opacity 320ms ease, padding 520ms cubic-bezier(0.22,1,0.36,1), background-color 360ms ease, backdrop-filter 360ms ease'
+              : 'transform 440ms cubic-bezier(0.16,1,0.3,1), opacity 260ms ease, padding 440ms cubic-bezier(0.16,1,0.3,1), background-color 360ms ease, backdrop-filter 360ms ease',
             ...(isIsland
               ? {
                   background: 'var(--glass-surface-strong)',
                   border: '1px solid var(--border-default)',
-                  boxShadow:
-                    'var(--elev-4), inset 0 1px 0 rgba(255,255,255,0.65), 0 0 0 1px rgba(255,255,255,0.45) inset',
                   backdropFilter: 'blur(20px) saturate(140%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(140%)',
                 }
@@ -290,16 +348,12 @@ export default function Navbar({
             </span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2">
+          <div className="hidden lg:flex items-center gap-1 xl:gap-1">
             {mounted && (
-              <span className="flex items-center gap-1 rounded-full bg-[var(--surface-2)] border border-[var(--border-default)] p-1">
+              <span className="flex items-center gap-1">
                 <span className="contents">
                   <PlatformMegaMenu />
                 </span>
-                <span
-                  className="w-px h-5 bg-[var(--border-default)] mx-1 hidden xl:block"
-                  aria-hidden="true"
-                />
                 <span className="contents">
                   <SolutionsMenu />
                 </span>

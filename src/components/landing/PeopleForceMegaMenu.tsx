@@ -464,7 +464,16 @@ function useHoverMenu() {
       document.removeEventListener('mousedown', onPointerDown);
     };
   }, [open]);
+
   useEffect(() => cancelClose, [cancelClose]);
+  // Notify Navbar (counted lock: true on open, false on close)
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current !== open) {
+      window.dispatchEvent(new CustomEvent('strata:mega-open', { detail: open }));
+      prevOpen.current = open;
+    }
+  }, [open]);
   return { open, setOpen, rootRef, cancelClose, scheduleClose };
 }
 
@@ -498,26 +507,10 @@ export function PlatformMegaMenuV2() {
   const { isAuthenticated } = useAuthStoreShallow();
   const { open, setOpen, rootRef, cancelClose, scheduleClose } = useHoverMenu();
   const [activeCategory, setActiveCategory] = useState<string>(() => CATEGORIES[0]!.key);
-  const [panelTop, setPanelTop] = useState<number>(76);
-  const measureTop = useCallback(() => {
-    const rect = rootRef.current?.getBoundingClientRect();
-    return rect ? rect.bottom + 10 : 76;
-  }, [rootRef]);
   const openMenu = useCallback(() => {
     cancelClose();
-    setPanelTop(measureTop());
     setOpen(true);
-  }, [cancelClose, measureTop, setOpen]);
-  useEffect(() => {
-    if (!open) return;
-    const sync = () => setPanelTop(measureTop());
-    window.addEventListener('resize', sync);
-    window.addEventListener('scroll', sync, true);
-    return () => {
-      window.removeEventListener('resize', sync);
-      window.removeEventListener('scroll', sync, true);
-    };
-  }, [open, measureTop]);
+  }, [cancelClose, setOpen]);
 
   const navigate = useCallback(
     (appHref: string) => {
@@ -556,19 +549,19 @@ export function PlatformMegaMenuV2() {
       </button>
 
       <div
-        className="fixed left-1/2 z-[110]"
+        className="absolute left-1/2 z-[110] -translate-x-1/2"
         style={{
-          top: panelTop,
+          top: 'calc(100% + 10px)',
           opacity: open ? 1 : 0,
-          transform: open
-            ? 'translateX(-50%) translateY(0) scale(1)'
-            : 'translateX(-50%) translateY(-8px) scale(0.98)',
+          transform: open ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.98)',
           pointerEvents: open ? 'auto' : 'none',
           transition:
-            'opacity 0.24s cubic-bezier(0.22,1,0.36,1), transform 0.34s cubic-bezier(0.22,1,0.36,1)',
+            'opacity 0.22s cubic-bezier(0.22,1,0.36,1), transform 0.32s cubic-bezier(0.22,1,0.36,1)',
+          willChange: 'transform, opacity',
         }}
         role="menu"
         aria-hidden={!open}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
           className="w-[min(1280px,calc(100vw-2rem))] rounded-[24px] border overflow-hidden bg-[var(--card)]"
@@ -653,7 +646,7 @@ export function PlatformMegaMenuV2() {
                 key={item.key}
                 type="button"
                 tabIndex={open ? 0 : -1}
-                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex flex-col gap-2 overflow-hidden transition-all duration-200 hover:border-[var(--border-strong)] hover:shadow-lg hover:-translate-y-[2px] hover:bg-white"
+                className="group/item relative text-left rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 flex flex-col gap-2 overflow-hidden will-change-transform transition-[transform,box-shadow,border-color,background-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--border-strong)] hover:bg-[var(--card-hover)]"
                 style={{
                   animation: open
                     ? `fade-up 0.4s cubic-bezier(0.22,1,0.36,1) ${idx * 60}ms both`

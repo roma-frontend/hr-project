@@ -289,6 +289,13 @@ function useHoverMenu() {
     };
   }, [open]);
   useEffect(() => cancelClose, [cancelClose]);
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current !== open) {
+      window.dispatchEvent(new CustomEvent('strata:mega-open', { detail: open }));
+      prevOpen.current = open;
+    }
+  }, [open]);
   return { open, setOpen, rootRef, cancelClose, scheduleClose };
 }
 
@@ -453,7 +460,7 @@ export function SolutionsMenu() {
                   {tGroup(active.key)}
                 </p>
               </div>
-              <div className="flex-1 max-w-[520px] rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--surface-1)] shadow-sm">
+              <div className="flex-1 max-w-[520px] rounded-2xl overflow-hidden border border-[var(--border)] bg-[var(--surface-1)] shadow-sm dark:bg-[var(--surface-2)]">
                 <div
                   key={active.key}
                   className="animate-[fade-up_0.45s_cubic-bezier(0.22,1,0.36,1)]"
@@ -474,10 +481,10 @@ export function SolutionsMenu() {
                     onClick={() => setActiveGroup(g.key)}
                     className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold whitespace-nowrap transition-all duration-200 shrink-0"
                     style={{
-                      background: isActive ? g.color : 'white',
+                      background: isActive ? g.color : 'var(--surface-1)',
                       color: isActive ? '#fff' : 'var(--text-secondary)',
-                      border: `1px solid ${isActive ? g.color : 'var(--border-default)'}`,
-                      boxShadow: isActive ? `0 4px 14px ${g.color}33` : 'none',
+                      border: `1px solid ${isActive ? g.color : 'var(--border)'}`,
+                      boxShadow: isActive ? `0 4px 14px ${g.color}33` : 'var(--elev-1)',
                     }}
                   >
                     <span
