@@ -993,7 +993,7 @@ export const getQuizByLessonQuestionsPaginated = query({
         q.eq('organizationId', args.organizationId).eq('lessonId', args.lessonId),
       )
       .first();
-    if (!quiz) return null;
+    if (!quiz) throw new Error('Quiz not found');
     const result = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
@@ -1004,7 +1004,7 @@ export const getQuizByLessonQuestionsPaginated = query({
         ...args.paginationOpts,
         numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
       });
-    return { quiz, questions: result };
+    return result;
   },
 });
 

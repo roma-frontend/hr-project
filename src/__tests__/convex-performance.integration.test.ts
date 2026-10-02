@@ -27,6 +27,9 @@ const modules = {
   './lib/limits.ts': () => import('../../convex/lib/limits'),
   './lib/userProfile.ts': () => import('../../convex/lib/userProfile'),
   './lib/notify.ts': () => import('../../convex/lib/notify'),
+  './lib/auth.ts': () => import('../../convex/lib/auth'),
+  './lib/entitlements.ts': () => import('../../convex/lib/entitlements'),
+  './lib/webhookEvents.ts': () => import('../../convex/lib/webhookEvents'),
 } as unknown as Record<string, () => Promise<unknown>>;
 
 type Ctx = Awaited<ReturnType<typeof seed>>;
@@ -104,6 +107,9 @@ async function seed() {
   return { t, ...ids };
 }
 
+const asAdmin = (c: Ctx) => c.t.withIdentity({ email: 'admin@acme.test' });
+const asSuperadmin = (c: Ctx) => c.t.withIdentity({ email: 'super@acme.test' });
+
 const DAY = 24 * 60 * 60 * 1000;
 const now = Date.now();
 
@@ -152,9 +158,7 @@ const RATINGS = [
 describe('createTemplate', () => {
   it('creates a template with the given competencies', async () => {
     const c = await seed();
-    const id = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createTemplate, templateArgs(c)),
-    );
+    const id = await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
     const tpl = await c.t.run((ctx) => ctx.db.get(id));
     expect(tpl?.name).toBe('Engineering Template');
     expect(tpl?.competencies).toHaveLength(3);
@@ -163,14 +167,10 @@ describe('createTemplate', () => {
 
   it('unsets a previous default when a new default is set', async () => {
     const c = await seed();
-    const firstId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createTemplate, templateArgs(c)),
-    );
-    const secondId = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createTemplate,
-        templateArgs(c, { name: 'Second', isDefault: true }),
-      ),
+    const firstId = await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
+    const secondId = await asAdmin(c).mutation(
+      api.performance.createTemplate,
+      templateArgs(c, { name: 'Second', isDefault: true }),
     );
     const first = await c.t.run((ctx) => ctx.db.get(firstId));
     const second = await c.t.run((ctx) => ctx.db.get(secondId));
@@ -180,14 +180,10 @@ describe('createTemplate', () => {
 
   it('keeps an existing default untouched when a non-default is created', async () => {
     const c = await seed();
-    const firstId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createTemplate, templateArgs(c)),
-    );
-    const secondId = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createTemplate,
-        templateArgs(c, { name: 'Second', isDefault: false }),
-      ),
+    const firstId = await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
+    const secondId = await asAdmin(c).mutation(
+      api.performance.createTemplate,
+      templateArgs(c, { name: 'Second', isDefault: false }),
     );
     const first = await c.t.run((ctx) => ctx.db.get(firstId));
     const second = await c.t.run((ctx) => ctx.db.get(secondId));
@@ -197,7 +193,7 @@ describe('createTemplate', () => {
 
   it('listTemplates returns only templates of the requested org', async () => {
     const c = await seed();
-    await c.t.run((ctx) => ctx.runMutation(api.performance.createTemplate, templateArgs(c)));
+    await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
     const otherOrg = await c.t.run(async (ctx) => {
       const orgId = await ctx.db.insert('organizations', {
         name: 'Other',
@@ -211,10 +207,11 @@ describe('createTemplate', () => {
       } as never);
       return orgId;
     });
-    const list = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.listTemplates, { organizationId: otherOrg }),
-    );
+    // Superadmin can query any org; Acme admin would get cross-org error for otherOrg.
+    const list = await asSuperadmin(c).query(api.performance.listTemplates, { organizationId: otherOrg });
     expect(list).toHaveLength(0);
+    const ownList = await asAdmin(c).query(api.performance.listTemplates, { organizationId: c.organizationId });
+    expect(ownList).toHaveLength(1);
   });
 });
 
@@ -222,7 +219,7 @@ describe('createTemplate', () => {
 describe('createCycle', () => {
   it('creates a draft cycle with defaults', async () => {
     const c = await seed();
-    const id = await c.t.run((ctx) => ctx.runMutation(api.performance.createCycle, cycleArgs(c)));
+    const id = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     const cycle = await c.t.run((ctx) => ctx.db.get(id));
     expect(cycle?.status).toBe('draft');
     expect(cycle?.peerAnonymityThreshold).toBe(2);
@@ -232,27 +229,19 @@ describe('createCycle', () => {
 
   it('resolves competencies from the referenced template', async () => {
     const c = await seed();
-    const templateId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createTemplate, templateArgs(c)),
-    );
-    const id = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c, { templateId })),
-    );
+    const templateId = await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
+    const id = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c, { templateId }));
     const cycle = await c.t.run((ctx) => ctx.db.get(id));
     expect(cycle?.competencies).toEqual(COMPETENCIES);
   });
 
   it('lets the referenced template override inline competencies', async () => {
     const c = await seed();
-    const templateId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createTemplate, templateArgs(c)),
-    );
+    const templateId = await asAdmin(c).mutation(api.performance.createTemplate, templateArgs(c));
     const inline = [{ id: 'custom', name: 'Custom', description: 'X', weight: 100 }];
-    const id = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createCycle,
-        cycleArgs(c, { templateId, competencies: inline }),
-      ),
+    const id = await asAdmin(c).mutation(
+      api.performance.createCycle,
+      cycleArgs(c, { templateId, competencies: inline }),
     );
     const cycle = await c.t.run((ctx) => ctx.db.get(id));
     // template competencies win over inline ones when a templateId is supplied
@@ -261,11 +250,9 @@ describe('createCycle', () => {
 
   it('applies custom anonymity settings', async () => {
     const c = await seed();
-    const id = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createCycle,
-        cycleArgs(c, { peerAnonymityThreshold: 3, showPeerIdentity: true }),
-      ),
+    const id = await asAdmin(c).mutation(
+      api.performance.createCycle,
+      cycleArgs(c, { peerAnonymityThreshold: 3, showPeerIdentity: true }),
     );
     const cycle = await c.t.run((ctx) => ctx.db.get(id));
     expect(cycle?.peerAnonymityThreshold).toBe(3);
@@ -274,39 +261,31 @@ describe('createCycle', () => {
 
   it('listCycles filters by status', async () => {
     const c = await seed();
-    await c.t.run((ctx) => ctx.runMutation(api.performance.createCycle, cycleArgs(c)));
-    const drafts = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.listCycles, {
-        organizationId: c.organizationId,
-        status: 'draft',
-      }),
-    );
-    const actives = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.listCycles, {
-        organizationId: c.organizationId,
-        status: 'active',
-      }),
-    );
+    await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
+    const drafts = await asAdmin(c).query(api.performance.listCycles, {
+      organizationId: c.organizationId,
+      status: 'draft',
+    });
+    const actives = await asAdmin(c).query(api.performance.listCycles, {
+      organizationId: c.organizationId,
+      status: 'active',
+    });
     expect(drafts).toHaveLength(1);
     expect(actives).toHaveLength(0);
   });
 
   it('listCycles returns all cycles when no status is given', async () => {
     const c = await seed();
-    await c.t.run((ctx) => ctx.runMutation(api.performance.createCycle, cycleArgs(c)));
-    const all = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.listCycles, { organizationId: c.organizationId }),
-    );
+    await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
+    const all = await asAdmin(c).query(api.performance.listCycles, { organizationId: c.organizationId });
     expect(all).toHaveLength(1);
   });
 
   it('getCycleDetails returns null for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
-    const res = await c.t.run((ctx) => ctx.runQuery(api.performance.getCycleDetails, { cycleId }));
+    const res = await asAdmin(c).query(api.performance.getCycleDetails, { cycleId });
     expect(res).toBeNull();
   });
 });
@@ -317,9 +296,7 @@ async function createAndLaunch(
   overrides: Record<string, unknown> = {},
   launchOverrides: Record<string, unknown> = {},
 ) {
-  const cycleId = await c.t.run((ctx) =>
-    ctx.runMutation(api.performance.createCycle, cycleArgs(c, overrides)),
-  );
+  const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c, overrides));
   await c.t.run((ctx) =>
     ctx.runMutation(api.performance.launchCycle, {
       cycleId,
@@ -338,9 +315,7 @@ async function createAndLaunch(
 describe('launchCycle', () => {
   it('throws for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
     await expect(
       c.t.run((ctx) =>
@@ -355,9 +330,7 @@ describe('launchCycle', () => {
 
   it('throws when the cycle is not in draft', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.closeCycle, { cycleId }));
     await expect(
       c.t.run((ctx) =>
@@ -396,11 +369,9 @@ describe('launchCycle', () => {
 
   it('skips self and manager when the cycle excludes them', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createCycle,
-        cycleArgs(c, { includesSelf: false, includesManager: false, includesPeer: true }),
-      ),
+    const cycleId = await asAdmin(c).mutation(
+      api.performance.createCycle,
+      cycleArgs(c, { includesSelf: false, includesManager: false, includesPeer: true }),
     );
     await c.t.run((ctx) =>
       ctx.runMutation(api.performance.launchCycle, {
@@ -432,9 +403,7 @@ describe('launchCycle', () => {
   it('getCycleDetails reports stats and completion rate', async () => {
     const c = await seed();
     const cycleId = await createAndLaunch(c);
-    const details = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getCycleDetails, { cycleId }),
-    );
+    const details = await asAdmin(c).query(api.performance.getCycleDetails, { cycleId });
     expect(details?.stats.total).toBe(7);
     expect(details?.stats.submitted).toBe(0);
     expect(details?.stats.pending).toBe(7);
@@ -447,9 +416,7 @@ describe('launchCycle', () => {
 describe('addPeerAssignment', () => {
   it('throws for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
     await expect(
       c.t.run((ctx) =>
@@ -464,9 +431,7 @@ describe('addPeerAssignment', () => {
 
   it('throws when the cycle is not active', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await expect(
       c.t.run((ctx) =>
         ctx.runMutation(api.performance.addPeerAssignment, {
@@ -518,9 +483,7 @@ describe('addPeerAssignment', () => {
 // ── submitReview ─────────────────────────────────────────────────────────────
 describe('submitReview', () => {
   async function selfAssignment(c: Ctx) {
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c, { includesPeer: false })),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c, { includesPeer: false }));
     await c.t.run((ctx) =>
       ctx.runMutation(api.performance.launchCycle, {
         cycleId,
@@ -540,9 +503,7 @@ describe('submitReview', () => {
 
   it('throws for a missing assignment', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     const assignmentId = await c.t.run(async (ctx) => {
       return ctx.db.insert('reviewAssignments', {
         organizationId: c.organizationId,
@@ -570,9 +531,7 @@ describe('submitReview', () => {
 
   it('throws when the cycle is not active', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     const assignmentId = await c.t.run(async (ctx) => {
       return ctx.db.insert('reviewAssignments', {
         organizationId: c.organizationId,
@@ -723,9 +682,7 @@ describe('getMyAssignments', () => {
   it('only returns assignments for active cycles', async () => {
     const c = await seed();
     // draft cycle with a manual assignment
-    const draftId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const draftId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run(async (ctx) => {
       await ctx.db.insert('reviewAssignments', {
         organizationId: c.organizationId,
@@ -813,25 +770,19 @@ describe('getRevieweeResults', () => {
 
   it('returns null for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getRevieweeResults, {
-        cycleId,
-        revieweeId: c.employeeId,
-      }),
-    );
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, {
+      cycleId,
+      revieweeId: c.employeeId,
+    });
     expect(res).toBeNull();
   });
 
   it('aggregates overall and per-competency averages', async () => {
     const c = await seed();
     const { cycleId } = await submitAll(c);
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId }),
-    );
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId });
     // self + manager + 1 peer = 3 responses, all with overallScore 4
     expect(res?.overallScore).toBe(4);
     expect(res?.totalResponses).toBe(3);
@@ -867,9 +818,7 @@ describe('getRevieweeResults', () => {
         ratings: [{ competencyId: 'quality', competencyName: 'Quality', score: 5 }],
       }),
     );
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getRevieweeResults, { cycleId, revieweeId: c.managerId }),
-    );
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.managerId });
     expect(res?.directReportReviews).toHaveLength(1);
     expect(res?.directReportReviews[0]?.overallScore).toBe(5);
   });
@@ -902,9 +851,7 @@ describe('getRevieweeResults', () => {
         );
       }
     }
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId }),
-    );
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.employeeId });
     expect(res?.peerCount).toBe(2);
     expect(res?.peerReviews).toHaveLength(2);
   });
@@ -912,9 +859,7 @@ describe('getRevieweeResults', () => {
   it('returns zeroed averages when no responses exist', async () => {
     const c = await seed();
     const cycleId = await createAndLaunch(c);
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.performance.getRevieweeResults, { cycleId, revieweeId: c.peerId }),
-    );
+    const res = await asAdmin(c).query(api.performance.getRevieweeResults, { cycleId, revieweeId: c.peerId });
     expect(res?.totalResponses).toBe(0);
     expect(res?.overallScore).toBe(0);
     expect(res?.competencyAverages.every((x) => x.average === 0 && x.count === 0)).toBe(true);
@@ -924,11 +869,9 @@ describe('getRevieweeResults', () => {
 describe('getCycleSummary', () => {
   it('returns null for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
-    const res = await c.t.run((ctx) => ctx.runQuery(api.performance.getCycleSummary, { cycleId }));
+    const res = await asAdmin(c).query(api.performance.getCycleSummary, { cycleId });
     expect(res).toBeNull();
   });
 
@@ -955,7 +898,7 @@ describe('getCycleSummary', () => {
         }),
       );
     }
-    const res = await c.t.run((ctx) => ctx.runQuery(api.performance.getCycleSummary, { cycleId }));
+    const res = await asAdmin(c).query(api.performance.getCycleSummary, { cycleId });
     expect(res?.summaries).toHaveLength(3);
     // manager (5) ranks first, employees (4) tied after
     expect(res?.summaries[0]?.revieweeId).toBe(c.managerId);
@@ -1011,9 +954,7 @@ describe('cycle transitions', () => {
 
   it('throws for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
     await expect(
       c.t.run((ctx) => ctx.runMutation(api.performance.closeCycle, { cycleId })),
@@ -1054,9 +995,7 @@ describe('cycle transitions', () => {
 
   it('deleteCycle only removes drafts', async () => {
     const c = await seed();
-    const draftId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const draftId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId: draftId }));
     const gone = await c.t.run((ctx) => ctx.db.get(draftId));
     expect(gone).toBeNull();
@@ -1072,9 +1011,7 @@ describe('cycle transitions', () => {
 
   it('deleteCycle throws for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
     await expect(
       c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId })),
@@ -1120,11 +1057,9 @@ describe('getEligibleParticipants', () => {
 // ── checkDeadlineNotifications (cron) ────────────────────────────────────────
 describe('checkDeadlineNotifications', () => {
   async function seedUrgentCycle(c: Ctx) {
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(
-        api.performance.createCycle,
-        cycleArgs(c, { endDate: now + 2 * DAY, includesSelf: false, includesManager: true }),
-      ),
+    const cycleId = await asAdmin(c).mutation(
+      api.performance.createCycle,
+      cycleArgs(c, { endDate: now + 2 * DAY, includesSelf: false, includesManager: true }),
     );
     await c.t.run((ctx) =>
       ctx.runMutation(api.performance.launchCycle, {
@@ -1158,9 +1093,7 @@ describe('checkDeadlineNotifications', () => {
 
   it('skips cycles whose deadline is further away than 3 days', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) =>
       ctx.runMutation(api.performance.launchCycle, {
         cycleId,
@@ -1194,9 +1127,7 @@ describe('checkDeadlineNotifications', () => {
 describe('secureDeleteCycle', () => {
   it('throws for unauthenticated callers', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await expect(
       c.t.run((ctx) => ctx.runMutation(api.performance.secureDeleteCycle, { cycleId })),
     ).rejects.toThrow('Not authenticated');
@@ -1204,9 +1135,7 @@ describe('secureDeleteCycle', () => {
 
   it('throws for a missing cycle', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run((ctx) => ctx.runMutation(api.performance.deleteCycle, { cycleId }));
     await expect(
       c.t.withIdentity({ email: 'admin@acme.test' }).mutation(api.performance.secureDeleteCycle, {
@@ -1217,9 +1146,7 @@ describe('secureDeleteCycle', () => {
 
   it('blocks users from other organizations', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t.run(async (ctx) => {
       const org2 = await ctx.db.insert('organizations', {
         name: 'Other',
@@ -1259,9 +1186,7 @@ describe('secureDeleteCycle', () => {
 
   it('lets a same-org admin delete and writes an audit log', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t
       .withIdentity({ email: 'admin@acme.test' })
       .mutation(api.performance.secureDeleteCycle, { cycleId });
@@ -1276,9 +1201,7 @@ describe('secureDeleteCycle', () => {
 
   it('lets a superadmin delete across organizations', async () => {
     const c = await seed();
-    const cycleId = await c.t.run((ctx) =>
-      ctx.runMutation(api.performance.createCycle, cycleArgs(c)),
-    );
+    const cycleId = await asAdmin(c).mutation(api.performance.createCycle, cycleArgs(c));
     await c.t
       .withIdentity({ email: 'super@acme.test' })
       .mutation(api.performance.secureDeleteCycle, { cycleId });

@@ -250,8 +250,6 @@ export default function LearningClient() {
       : 'skip',
   );
 
-  const _quizIsCapped = (quizDataForPlayer as unknown as { isCapped?: boolean })?.isCapped ?? false;
-
   // Mutations
   const enrollMutation = useMutation(api.learning.enrollInCourse);
   const createCourseMutation = useMutation(api.learning.createCourse);
@@ -305,6 +303,8 @@ export default function LearningClient() {
       : 'skip',
   );
 
+  const quizIsCapped = (quizDataResult as unknown as { isCapped?: boolean })?.isCapped ?? false;
+
   const {
     results: quizQuestionsPaginated,
     status: quizQuestionsStatus,
@@ -316,7 +316,7 @@ export default function LearningClient() {
       currentLesson?.contentType === 'quiz' &&
       effectiveOrgId &&
       user?.id &&
-      (quizDataResult as unknown as { isCapped?: boolean })?.isCapped
+      quizIsCapped
       ? {
           organizationId: effectiveOrgId as Id<'organizations'>,
           lessonId: currentLesson._id as Id<'lessons'>,
@@ -326,8 +326,7 @@ export default function LearningClient() {
   );
 
   const quizDataForPlayer =
-    quizQuestionsPaginated.length > 0 &&
-    (quizDataResult as unknown as { isCapped?: boolean })?.isCapped
+    quizQuestionsPaginated.length > 0 && quizIsCapped
       ? ({
           quiz: (quizDataResult as unknown as { quiz: NonNullable<typeof quizDataResult>['quiz'] })
             .quiz,
@@ -335,6 +334,7 @@ export default function LearningClient() {
           isCapped: quizQuestionsStatus !== 'Exhausted',
         } as unknown as typeof quizDataResult)
       : quizDataResult;
+  const _quizIsCapped = quizIsCapped;
 
   // Fetch certificates
   const {

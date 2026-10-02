@@ -1,4 +1,12 @@
 {
   "$schemaNote": "Accepted critical/high advisories. id = GHSA advisory URL. Each entry needs a reason; remove entries once the advisory no longer applies.",
-  "advisories": {}
+  "advisories": {
+    "https://github.com/advisories/GHSA-86w9-cpqp-85rv": {
+      "package": "node-forge",
+      "severity": "high",
+      "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
+      "reason": "No fix available (1.4.0 is latest). SAML verify path validates SP-issued signatures only via samlify-node-xmllint pinned cert; not exposed to untrusted nested DigestAlgorithm tampering.",
+      "acceptedOn": "2026-10-02"
+    }
+  }
 }

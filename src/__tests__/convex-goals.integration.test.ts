@@ -78,6 +78,9 @@ async function seed() {
   return { t, ...ids };
 }
 
+const asManager = (c: Ctx) => c.t.withIdentity({ email: 'manager@acme.test' });
+const asEmployee = (c: Ctx) => c.t.withIdentity({ email: 'employee@acme.test' });
+
 const PERIOD = {
   periodType: 'Q1' as const,
   periodYear: 2026,
@@ -221,12 +224,10 @@ describe('objective queries', () => {
     await createObjective(c, { title: 'A', keyResults: [krInput()] });
     await createObjective(c, { title: 'B', level: 'individual', ownerId: c.employeeId });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.listObjectives, {
-        organizationId: c.organizationId,
-        level: 'company',
-      }),
-    );
+    const res = await asManager(c).query(api.goals.listObjectives, {
+      organizationId: c.organizationId,
+      level: 'company',
+    });
     expect(res).toHaveLength(1);
     expect(res[0]?.title).toBe('A');
     expect(res[0]?.ownerName).toBe('Manager');
@@ -255,9 +256,7 @@ describe('objective queries', () => {
       await ctx.db.delete(id);
       return id;
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjective, { objectiveId: ghostId }),
-    );
+    const res = await asManager(c).query(api.goals.getObjective, { objectiveId: ghostId });
     expect(res).toBeNull();
   });
 
@@ -269,7 +268,7 @@ describe('objective queries', () => {
         krInput({ title: 'second', weight: 60 }),
       ],
     });
-    const res = await c.t.run((ctx) => ctx.runQuery(api.goals.getObjective, { objectiveId: id }));
+    const res = await asManager(c).query(api.goals.getObjective, { objectiveId: id });
     expect(res?.title).toBe('Grow revenue');
     expect(res?.ownerName).toBe('Manager');
     expect(res?.keyResults.map((k: { title: string }) => k.title)).toEqual(['first', 'second']);
@@ -421,13 +420,11 @@ describe('key result mutations', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.updateKeyResult, {
-        keyResultId: krId?._id as Id<'keyResults'>,
-        targetValue: 200,
-        weight: 50,
-      }),
-    );
+    await asManager(c).mutation(api.goals.updateKeyResult, {
+      keyResultId: krId?._id as Id<'keyResults'>,
+      targetValue: 200,
+      weight: 50,
+    });
     await c.t.run(async (ctx) => {
       const kr = await ctx.db.get(krId?._id as Id<'keyResults'>);
       expect(kr?.targetValue).toBe(200);
@@ -447,19 +444,15 @@ describe('key result mutations', () => {
         .collect(),
     );
     // Drive KR[0] to 100% so the objective progress is 50%.
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: krs[0]?._id as Id<'keyResults'>,
-        userId: c.managerId,
-        newValue: 100,
-        confidence: 'high',
-      }),
-    );
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: krs[0]?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 100,
+      confidence: 'high',
+    });
     const before = await c.t.run((ctx) => ctx.db.get(id));
 
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.deleteKeyResult, { keyResultId: krs[0]?._id as Id<'keyResults'> }),
-    );
+    await asManager(c).mutation(api.goals.deleteKeyResult, { keyResultId: krs[0]?._id as Id<'keyResults'> });
 
     await c.t.run(async (ctx) => {
       const after = await ctx.db.get(id);
@@ -489,14 +482,12 @@ describe('checkin and progress computation', () => {
         .collect(),
     );
     // heavy → 50%, light → 0% → weighted 40%.
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: krs[0]?._id as Id<'keyResults'>,
-        userId: c.managerId,
-        newValue: 50,
-        confidence: 'medium',
-      }),
-    );
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: krs[0]?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 50,
+      confidence: 'medium',
+    });
     const obj = await c.t.run((ctx) => ctx.db.get(id));
     expect(obj?.progress).toBe(40);
   });
@@ -514,14 +505,12 @@ describe('checkin and progress computation', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: kr?._id as Id<'keyResults'>,
-        userId: c.managerId,
-        newValue: 25, // 75% of the way from 100 → 0
-        confidence: 'high',
-      }),
-    );
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: kr?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 25, // 75% of the way from 100 → 0
+      confidence: 'high',
+    });
     const obj = await c.t.run((ctx) => ctx.db.get(id));
     expect(obj?.progress).toBe(75);
   });
@@ -537,14 +526,12 @@ describe('checkin and progress computation', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: kr?._id as Id<'keyResults'>,
-        userId: c.managerId,
-        newValue: 1,
-        confidence: 'high',
-      }),
-    );
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: kr?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 1,
+      confidence: 'high',
+    });
     const obj = await c.t.run((ctx) => ctx.db.get(id));
     expect(obj?.progress).toBe(100);
   });
@@ -561,14 +548,12 @@ describe('checkin and progress computation', () => {
         .first(),
     );
     await expect(
-      c.t.run((ctx) =>
-        ctx.runMutation(api.goals.checkin, {
-          keyResultId: kr?._id as Id<'keyResults'>,
-          userId: c.managerId,
-          newValue: 2,
-          confidence: 'high',
-        }),
-      ),
+      asManager(c).mutation(api.goals.checkin, {
+        keyResultId: kr?._id as Id<'keyResults'>,
+        userId: c.managerId,
+        newValue: 2,
+        confidence: 'high',
+      }),
     ).rejects.toThrow('Boolean KR value must be 0 or 1');
   });
 
@@ -581,20 +566,19 @@ describe('checkin and progress computation', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: kr?._id as Id<'keyResults'>,
-        userId: c.employeeId,
-        newValue: 10,
-        note: 'on track',
-        confidence: 'low',
-      }),
-    );
+    // Note: caller must match args.userId — use manager's identity for this check-in
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: kr?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 10,
+      note: 'on track',
+      confidence: 'low',
+    });
     await c.t.run(async (ctx) => {
       const checkin = await ctx.db.query('goalCheckins').first();
       expect(checkin?.previousValue).toBe(0);
       expect(checkin?.newValue).toBe(10);
-      expect(checkin?.userId).toBe(c.employeeId);
+      expect(checkin?.userId).toBe(c.managerId);
       expect(checkin?.confidence).toBe('low');
     });
   });
@@ -608,16 +592,14 @@ describe('checkin and progress computation', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) => ctx.runMutation(api.goals.cancelObjective, { objectiveId: id }));
+    await asManager(c).mutation(api.goals.cancelObjective, { objectiveId: id });
     await expect(
-      c.t.run((ctx) =>
-        ctx.runMutation(api.goals.checkin, {
-          keyResultId: kr?._id as Id<'keyResults'>,
-          userId: c.managerId,
-          newValue: 1,
-          confidence: 'high',
-        }),
-      ),
+      asManager(c).mutation(api.goals.checkin, {
+        keyResultId: kr?._id as Id<'keyResults'>,
+        userId: c.managerId,
+        newValue: 1,
+        confidence: 'high',
+      }),
     ).rejects.toThrow('Cannot check in on a closed objective');
   });
 });
@@ -638,11 +620,11 @@ describe('completeObjective / cancelObjective', () => {
     const id = await createObjective(c);
     await c.t.run((ctx) => ctx.runMutation(api.goals.completeObjective, { objectiveId: id }));
     await expect(
-      c.t.run((ctx) => ctx.runMutation(api.goals.cancelObjective, { objectiveId: id })),
+      asManager(c).mutation(api.goals.cancelObjective, { objectiveId: id }),
     ).rejects.toThrow('Cannot cancel a completed objective');
 
     const id2 = await createObjective(c);
-    await c.t.run((ctx) => ctx.runMutation(api.goals.cancelObjective, { objectiveId: id2 }));
+    await asManager(c).mutation(api.goals.cancelObjective, { objectiveId: id2 });
     const obj = await c.t.run((ctx) => ctx.db.get(id2));
     expect(obj?.status).toBe('cancelled');
   });
@@ -678,9 +660,9 @@ describe('task-related queries', () => {
       } as never);
     });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjectiveTaskStats, { organizationId: c.organizationId }),
-    );
+    const res = await asManager(c).query(api.goals.getObjectiveTaskStats, {
+      organizationId: c.organizationId,
+    });
     expect(res).toEqual({
       totalLinked: 2,
       totalCompleted: 1,
@@ -705,9 +687,7 @@ describe('task-related queries', () => {
         updatedAt: Date.now(),
       } as never);
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getTasksByObjective, { objectiveId: id }),
-    );
+    const res = await asManager(c).query(api.goals.getTasksByObjective, { objectiveId: id });
     expect(res).toHaveLength(1);
     expect(res[0]?.assignedToUser?.name).toBe('Employee');
   });
@@ -720,11 +700,9 @@ describe('task-related queries', () => {
       ctx.runMutation(api.goals.updateObjective, { objectiveId: draft, status: 'draft' }),
     );
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjectivesForTaskCreation, {
-        organizationId: c.organizationId,
-      }),
-    );
+    const res = await asManager(c).query(api.goals.getObjectivesForTaskCreation, {
+      organizationId: c.organizationId,
+    });
     expect(res.map((o: { _id: Id<'objectives'> }) => o._id)).toEqual([active]);
     expect(res[0]?.ownerName).toBe('Manager');
     expect(res[0]?.keyResults).toHaveLength(1);
@@ -741,12 +719,10 @@ describe('task-related queries', () => {
       title: 'Other',
       ownerId: c.managerId,
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjectivesForTaskCreation, {
-        organizationId: c.organizationId,
-        userId: c.employeeId,
-      }),
-    );
+    const res = await asManager(c).query(api.goals.getObjectivesForTaskCreation, {
+      organizationId: c.organizationId,
+      userId: c.employeeId,
+    });
     expect(res).toHaveLength(2);
     // The employee's objective should come first.
     expect(res[0]?.title).toBe('Mine');
@@ -769,21 +745,17 @@ describe('task-related queries', () => {
       } as never);
     });
     // Query with matching periodYear
-    const matching = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjectiveTaskStats, {
-        organizationId: c.organizationId,
-        periodYear: 2026,
-      }),
-    );
+    const matching = await asManager(c).query(api.goals.getObjectiveTaskStats, {
+      organizationId: c.organizationId,
+      periodYear: 2026,
+    });
     expect(matching.totalLinked).toBe(1);
 
     // Query with non-matching periodYear
-    const empty = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getObjectiveTaskStats, {
-        organizationId: c.organizationId,
-        periodYear: 2025,
-      }),
-    );
+    const empty = await asManager(c).query(api.goals.getObjectiveTaskStats, {
+      organizationId: c.organizationId,
+      periodYear: 2025,
+    });
     expect(empty.totalLinked).toBe(0);
   });
 });
@@ -840,12 +812,10 @@ describe('goals.getTeamProgress', () => {
       await ctx.db.patch(cancelledId, { status: 'cancelled' });
     });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getTeamProgress, {
-        organizationId: c.organizationId,
-        periodYear: 2026,
-      }),
-    );
+    const res = await asManager(c).query(api.goals.getTeamProgress, {
+      organizationId: c.organizationId,
+      periodYear: 2026,
+    });
     expect(res.total).toBe(3);
     expect(res.active).toBe(2); // active + completed
     expect(res.avgProgress).toBe(90); // (80 + 100) / 2
@@ -860,13 +830,11 @@ describe('goals.getTeamProgress', () => {
     await createObjective(c, { title: 'Q1 objective', periodType: 'Q1' });
     await createObjective(c, { title: 'Q2 objective', periodType: 'Q2' });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getTeamProgress, {
-        organizationId: c.organizationId,
-        periodYear: 2026,
-        periodType: 'Q2',
-      }),
-    );
+    const res = await asManager(c).query(api.goals.getTeamProgress, {
+      organizationId: c.organizationId,
+      periodYear: 2026,
+      periodType: 'Q2',
+    });
     expect(res.total).toBe(1);
     expect(res.byLevel.individual).toBe(0);
   });
@@ -886,14 +854,12 @@ describe('goals.getCheckinHistory', () => {
     });
     const krId = krs[0]!._id;
 
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: krId,
-        userId: c.employeeId,
-        newValue: 50,
-        confidence: 'medium',
-      }),
-    );
+    await asEmployee(c).mutation(api.goals.checkin, {
+      keyResultId: krId,
+      userId: c.employeeId,
+      newValue: 50,
+      confidence: 'medium',
+    });
     // Fast CI runners can land both check-ins in the same millisecond, which
     // makes the createdAt-desc sort a tie. Age the first one so the expected
     // order is deterministic.
@@ -906,18 +872,14 @@ describe('goals.getCheckinHistory', () => {
         await ctx.db.patch(row._id, { createdAt: Date.now() - 60000 });
       }
     });
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: krId,
-        userId: c.employeeId,
-        newValue: 75,
-        confidence: 'high',
-      }),
-    );
+    await asEmployee(c).mutation(api.goals.checkin, {
+      keyResultId: krId,
+      userId: c.employeeId,
+      newValue: 75,
+      confidence: 'high',
+    });
 
-    const history = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getCheckinHistory, { keyResultId: krId }),
-    );
+    const history = await asEmployee(c).query(api.goals.getCheckinHistory, { keyResultId: krId });
     expect(history).toHaveLength(2);
     expect(history[0]?.newValue).toBe(75);
     expect(history[1]?.newValue).toBe(50);
@@ -933,9 +895,9 @@ describe('goals.getCheckinHistory', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', objId))
         .take(10);
     });
-    const history = await c.t.run((ctx) =>
-      ctx.runQuery(api.goals.getCheckinHistory, { keyResultId: krs[0]!._id }),
-    );
+    const history = await asManager(c).query(api.goals.getCheckinHistory, {
+      keyResultId: krs[0]!._id,
+    });
     expect(history).toEqual([]);
   });
 });
@@ -1066,14 +1028,12 @@ describe('sendWeeklyCheckinReminders', () => {
         .withIndex('by_objective', (q) => q.eq('objectiveId', id))
         .first(),
     );
-    await c.t.run((ctx) =>
-      ctx.runMutation(api.goals.checkin, {
-        keyResultId: kr?._id as Id<'keyResults'>,
-        userId: c.managerId,
-        newValue: 5,
-        confidence: 'high',
-      }),
-    );
+    await asManager(c).mutation(api.goals.checkin, {
+      keyResultId: kr?._id as Id<'keyResults'>,
+      userId: c.managerId,
+      newValue: 5,
+      confidence: 'high',
+    });
 
     await c.t.run((ctx) => ctx.runMutation(api.goals.sendWeeklyCheckinReminders, {}));
     const notifications = await c.t.run((ctx) =>

@@ -609,8 +609,10 @@ describe('forceDeleteLeave', () => {
 // ── mark read ────────────────────────────────────────────────────────────────
 describe('markLeaveAsRead / markAllLeavesAsRead', () => {
   it('marks a single leave as read', async () => {
+    mockGetAuthCaller.mockResolvedValue(makeCaller('admin', ORG_A, ADMIN_ID));
     const { ctx, get, patch, insert } = makeCtx();
     get.mockResolvedValueOnce(leaveDoc());
+    get.mockResolvedValueOnce(userDoc({ _id: ADMIN_ID, role: 'admin' }));
 
     const result = await handlers.markLeaveAsRead(ctx, { leaveId: LEAVE_ID });
 
