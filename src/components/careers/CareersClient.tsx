@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { createPortal } from 'react-dom';
-import { useQuery, useMutation, useAction } from 'convex/react';
+import { useQuery, useMutation, useAction, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +89,11 @@ export default function CareersClient({ initialLanguage = 'en' }: { initialLangu
   // not flash English and the SSR HTML is indexable in the visitor's language.
   const { t } = useLandingTranslation(initialLanguage);
   const { user } = useAuthStore();
-  const vacancies = useQuery(api.careers.listAllOpenVacancies);
+  const {
+    results: vacancies,
+    status: vacanciesStatus,
+    loadMore: loadMoreVacancies,
+  } = usePaginatedQuery(api.careers.listAllOpenVacanciesPaginated, {}, { initialNumItems: 20 });
   const allOrgs = useQuery(api.careers.listActiveOrganizations);
   const isMounted = useHydrated();
 
@@ -305,6 +309,19 @@ export default function CareersClient({ initialLanguage = 'en' }: { initialLangu
                 onClick={() => setSelectedVacancy(vacancy)}
               />
             ))}
+            {vacanciesStatus !== 'Exhausted' && vacanciesStatus !== 'LoadingFirstPage' && (
+              <button
+                onClick={() => loadMoreVacancies(20)}
+                disabled={vacanciesStatus !== 'CanLoadMore'}
+                className="mx-auto mt-2 px-4 py-2 rounded-lg text-sm font-medium border hover:opacity-80 disabled:opacity-50"
+                style={{
+                  borderColor: 'var(--landing-card-border)',
+                  color: 'var(--landing-text-secondary)',
+                }}
+              >
+                {t('common.loadMore', 'Load more')}
+              </button>
+            )}
           </div>
         )}
       </section>

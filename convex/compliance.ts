@@ -686,56 +686,66 @@ export const getComplianceStats = query({
   handler: async (ctx, _args) => {
     const { orgId } = await requireAdmin(ctx);
 
-    // Scope all counts by org via by_org indexes when admin is non-superadmin;
-    // else capped full-table reads at XLARGE.
     const gdprRequests = orgId
       ? await ctx.db
           .query('gdprRequests')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('gdprRequests').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db.query('gdprRequests').take(XLARGE_LIST_CAP + 1);
     const dataAccessLogs = orgId
       ? await ctx.db
           .query('dataAccessLogs')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('dataAccessLogs').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db.query('dataAccessLogs').take(XLARGE_LIST_CAP + 1);
     const consentRecords = orgId
       ? await ctx.db
           .query('consentRecords')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('consentRecords').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db.query('consentRecords').take(XLARGE_LIST_CAP + 1);
     const policies = orgId
       ? await ctx.db
           .query('compliancePolicies')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('compliancePolicies').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db.query('compliancePolicies').take(XLARGE_LIST_CAP + 1);
+
+    const cap = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCapped =
+      gdprRequests.length > cap ||
+      dataAccessLogs.length > cap ||
+      consentRecords.length > cap ||
+      policies.length > cap;
+    const gdprSample = gdprRequests.slice(0, cap);
+    const dataSample = dataAccessLogs.slice(0, cap);
+    const consentSample = consentRecords.slice(0, cap);
+    const policySample = policies.slice(0, cap);
 
     const gdprByStatus = {
-      pending: gdprRequests.filter((r) => r.status === 'pending').length,
-      in_progress: gdprRequests.filter((r) => r.status === 'in_progress').length,
-      completed: gdprRequests.filter((r) => r.status === 'completed').length,
-      rejected: gdprRequests.filter((r) => r.status === 'rejected').length,
+      pending: gdprSample.filter((r) => r.status === 'pending').length,
+      in_progress: gdprSample.filter((r) => r.status === 'in_progress').length,
+      completed: gdprSample.filter((r) => r.status === 'completed').length,
+      rejected: gdprSample.filter((r) => r.status === 'rejected').length,
     };
 
     const consentStats = {
-      total: consentRecords.length,
-      active: consentRecords.filter((c) => c.granted && !c.withdrawnAt).length,
-      withdrawn: consentRecords.filter((c) => !c.granted || c.withdrawnAt).length,
+      total: consentSample.length,
+      active: consentSample.filter((c) => c.granted && !c.withdrawnAt).length,
+      withdrawn: consentSample.filter((c) => !c.granted || c.withdrawnAt).length,
     };
 
     const policyStats = {
-      total: policies.length,
-      active: policies.filter((p) => p.isActive).length,
-      inactive: policies.filter((p) => !p.isActive).length,
+      total: policySample.length,
+      active: policySample.filter((p) => p.isActive).length,
+      inactive: policySample.filter((p) => !p.isActive).length,
     };
 
     return {
-      gdprRequests: gdprRequests.length,
+      isCapped,
+      gdprRequests: gdprSample.length,
       gdprByStatus,
-      dataAccessLogs: dataAccessLogs.length,
+      dataAccessLogs: dataSample.length,
       consentStats,
       policyStats,
     };

@@ -1246,13 +1246,26 @@ export const forceDeleteLeave = mutation({
 export const markLeaveAsRead = mutation({
   args: { leaveId: v.id('leaveRequests') },
   handler: async (ctx, { leaveId }) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
     const leave = await ctx.db.get(leaveId);
     if (!leave) throw new Error('Leave request not found');
+    if (caller.role !== 'superadmin' && leave.organizationId !== caller.organizationId) {
+      throw new Error('Access denied: cross-organization operation');
+    }
+    if (
+      caller.role !== 'superadmin' &&
+      caller.role !== 'admin' &&
+      caller.role !== 'supervisor' &&
+      leave.userId !== caller._id
+    ) {
+      throw new Error('Not authorized to mark this request as read');
+    }
 
     // Audit log: leave marked as read
     await ctx.db.insert('auditLogs', {
       organizationId: leave.organizationId,
-      userId: leave.userId,
+      userId: caller._id,
       action: 'leave_marked_read',
       target: leaveId,
       details: 'Leave request marked as read',

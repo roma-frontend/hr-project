@@ -918,7 +918,34 @@ export const getQuiz = query({
       .order('asc')
       .take(DEFAULT_LIST_CAP);
 
-    return { quiz, questions };
+    return { quiz, questions, isCapped: questions.length === DEFAULT_LIST_CAP };
+  },
+});
+
+/** Paginated quiz questions. Legacy getQuiz remains for small quizzes. */
+export const getQuizQuestionsPaginated = query({
+  args: {
+    organizationId: v.id('organizations'),
+    quizId: v.id('quizzes'),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    await checkAccess(ctx, args.organizationId);
+    const quiz = await ctx.db.get(args.quizId);
+    if (!quiz || quiz.organizationId !== args.organizationId) {
+      throw new Error('Quiz not found');
+    }
+    const result = await ctx.db
+      .query('quizQuestions')
+      .withIndex('by_quiz', (q) =>
+        q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
+      )
+      .order('asc')
+      .paginate({
+        ...args.paginationOpts,
+        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+      });
+    return result;
   },
 });
 
