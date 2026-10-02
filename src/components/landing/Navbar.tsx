@@ -89,6 +89,7 @@ export default function Navbar({
   const [scrollProgress, setScrollProgress] = useState(0);
   const hideAccum = useRef(0);
   const showAccum = useRef(0);
+  const [dirDown, setDirDown] = useState(false);
 
   const pathname = usePathname();
   const sectionIds = useMemo(
@@ -142,15 +143,16 @@ export default function Navbar({
             ? document.documentElement.scrollHeight - window.innerHeight
             : (container as HTMLElement).scrollHeight - (container as HTMLElement).clientHeight;
         setScrollProgress(max > 0 ? Math.min(100, (top / max) * 100) : 0);
-        // ── professional scroll-hide: accumulated, hysteresis, velocity-gated ──
-        // Require ~36px of sustained motion before flipping, so a jittery trackpad
-        // or a single momentum burst doesn't flicker the bar. Velocity gate
-        // ensures a slow drift (<2px/frame) never hides the nav at all.
-        if (!embedded && window.innerWidth >= 1024) {
+        // dirDown gates the compact "island" — it flips to true at the very first
+        // downward pixel so the island can't flash and then hide.
+        // hidden uses accumulators (hysteresis) so it needs ~40px sustained down.
+        const megaOpen = document.body.style.overflow === 'hidden';
+        if (!embedded && window.innerWidth >= 1024 && !megaOpen) {
           const delta = top - lastY.current;
           if (Math.abs(delta) < 1) {
-            // no meaningful motion — hold
+            // hold
           } else if (delta > 0) {
+            setDirDown(true);
             showAccum.current = 0;
             if (top > 120 && Math.abs(delta) >= 2) {
               hideAccum.current += delta;
@@ -165,12 +167,14 @@ export default function Navbar({
             if (showAccum.current > 16) {
               showAccum.current = 0;
               setHidden(false);
+              setDirDown(false);
             }
           }
         } else if (top <= 8) {
           hideAccum.current = 0;
           showAccum.current = 0;
           setHidden(false);
+          setDirDown(false);
         }
         lastY.current = top;
         ticking = false;
@@ -209,37 +213,44 @@ export default function Navbar({
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  // island vs full bleed
-  const isIsland = scrolled && !embedded;
+  // Island (compact pill) only on scroll-UP or when still near the top.
+  // On scroll-DOWN we never morph to island — we stay full-bleed and just
+  // translate the whole nav away. Requirement: "not appear after disappearance,
+  // only on reverse scroll" — so dirDown gates the island.
+  const isIsland = !embedded && scrolled && !hidden && !dirDown;
 
   return (
     <>
-      {/* floating island — choreographed hide: card collapses as nav lifts */}
       <nav
         ref={navRef}
-        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} ${hidden ? '-translate-y-[120%]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
+        className={`${embedded ? 'sticky top-0 z-10' : 'fixed left-0 right-0 z-[100]'} ${hidden ? '-translate-y-[calc(100%+14px)]' : 'translate-y-0'} ${embedded ? 'px-0 py-0' : isIsland ? 'px-4 md:px-6 py-3 md:py-4' : 'px-0 py-0'}`}
         style={{
           willChange: 'transform',
-          transition: hidden
-            ? 'transform 560ms cubic-bezier(0.4,0,0.2,1)'
-            : 'transform 480ms cubic-bezier(0.16,1,0.3,1)',
+          // symmetric premium spring — same curve both ways, no snap on either edge
+          transition: 'transform 620ms cubic-bezier(0.32,0.72,0,1)',
           pointerEvents: hidden ? 'none' : 'auto',
         }}
         role="navigation"
         aria-label="Main navigation"
         aria-hidden={hidden ? true : undefined}
       >
-        {/* ── island card — scales and fades with the nav so both move as one ── */}
         <div
           className={`relative mx-auto flex items-center justify-between gap-3 ${embedded ? 'max-w-none rounded-none' : isIsland ? 'max-w-[1140px] rounded-[20px]' : 'max-w-none rounded-none'}`}
           style={{
             padding: isIsland ? '10px 14px' : embedded ? '12px 16px' : '14px 20px',
-            willChange: 'transform, opacity',
-            transform: hidden ? 'scale(0.96)' : 'scale(1)',
-            opacity: hidden ? 0.72 : 1,
-            transition: hidden
-              ? 'transform 520ms cubic-bezier(0.22,1,0.36,1), opacity 320ms ease, padding 520ms cubic-bezier(0.22,1,0.36,1), background-color 360ms ease, backdrop-filter 360ms ease'
-              : 'transform 440ms cubic-bezier(0.16,1,0.3,1), opacity 260ms ease, padding 440ms cubic-bezier(0.16,1,0.3,1), background-color 360ms ease, backdrop-filter 360ms ease',
+            overflow: 'visible' as const,
+            ...(hidden
+              ? ({
+                  transition: 'none' as const,
+                } as const)
+              : ({
+                  transition:
+                    'padding 520ms cubic-bezier(0.22,1,0.36,1), background-color 360ms ease, backdrop-filter 360ms ease, border-radius 420ms cubic-bezier(0.22,1,0.36,1), max-width 520ms cubic-bezier(0.22,1,0.36,1)',
+                } as const)),
+            // Keep clip inside the card so the progress hairline respects the
+            // pill rounding — but use background-clip/border rounding, NOT
+            // overflow:hidden on the card itself (that would clip the hover
+            // mega-menus on laptops where they are wide).
             ...(isIsland
               ? {
                   background: 'var(--glass-surface-strong)',
@@ -266,7 +277,6 @@ export default function Navbar({
                   }),
           }}
         >
-          {/* subtle top highlight for island */}
           {isIsland && (
             <div
               className="pointer-events-none absolute inset-x-[1px] top-[1px] h-[1px] rounded-t-[20px] opacity-60"
@@ -278,20 +288,36 @@ export default function Navbar({
             />
           )}
 
-          {/* reading progress — hairline bottom edge */}
+          {/* progress hairline — clipped to the CARD, not the viewport.
+              Card must stay overflow:visible for fixed mega-panels, so we
+              can't use overflow:hidden on the card. Instead the track itself
+              is inset + rounded to the pill so the fill never leaks outside
+              even on full-bleed it stays flush to the bottom edge. */}
           <div
-            className="pointer-events-none absolute bottom-0 left-0 h-[2px] rounded-b-[20px] overflow-hidden"
+            className="pointer-events-none absolute h-[2px] overflow-hidden"
             style={{
-              width: `${scrollProgress}%`,
-              background:
-                'linear-gradient(90deg, var(--brand), var(--brand-hover), var(--violet-500))',
-              boxShadow: '0 0 10px rgba(44,140,213,0.45)',
-              transition: 'width 0.12s linear',
+              left: isIsland ? '1px' : 0,
+              right: isIsland ? '1px' : 0,
+              bottom: isIsland ? '1px' : 0,
+              borderBottomLeftRadius: isIsland ? 20 : 0,
+              borderBottomRightRadius: isIsland ? 20 : 0,
               opacity: scrolled ? 1 : 0,
               zIndex: 2,
             }}
             aria-hidden="true"
-          />
+          >
+            <div
+              className="h-full"
+              style={{
+                width: `${scrollProgress}%`,
+                background:
+                  'linear-gradient(90deg, var(--brand), var(--brand-hover), var(--violet-500))',
+                boxShadow: '0 0 10px rgba(44,140,213,0.45)',
+                transition: 'width 0.12s linear',
+                borderRadius: isIsland ? 999 : 0,
+              }}
+            />
+          </div>
 
           <Link
             href="/"

@@ -13,6 +13,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useMegaMenuTop } from '@/hooks/useMegaMenuTop';
 import {
   Users,
   Briefcase,
@@ -290,13 +291,7 @@ function useHoverMenu() {
     };
   }, [open]);
   useEffect(() => cancelClose, [cancelClose]);
-  const prevOpen = useRef(open);
-  useEffect(() => {
-    if (prevOpen.current !== open) {
-      window.dispatchEvent(new CustomEvent('strata:mega-open', { detail: open }));
-      prevOpen.current = open;
-    }
-  }, [open]);
+  useScrollLock(open);
   return { open, setOpen, rootRef, cancelClose, scheduleClose };
 }
 
@@ -392,6 +387,7 @@ export function SolutionsMenu() {
   const ActiveCanvas = active.Canvas;
   const tGroup = (key: string) => t(`landing.solutionsMenu.${key}`, key);
   const tItem = (key: string) => t(`landing.solutionsMenu.items.${key}`, key);
+  const panelTop = useMegaMenuTop(open);
   useScrollLock(open);
   return (
     <div
@@ -423,19 +419,25 @@ export function SolutionsMenu() {
         </span>
       </button>
       <div
-        className="absolute left-1/2 -translate-x-1/2 top-full pt-3 z-[110]"
+        className="fixed left-1/2 z-[110] -translate-x-1/2"
         style={{
+          top: panelTop,
+          maxHeight: `calc(100dvh - ${panelTop}px - 16px)`,
+          overflowY: 'auto' as const,
+          overscrollBehavior: 'contain' as const,
           opacity: open ? 1 : 0,
           transform: open ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.98)',
           pointerEvents: open ? 'auto' : 'none',
           transition:
             'opacity 0.26s cubic-bezier(0.22,1,0.36,1), transform 0.36s cubic-bezier(0.22,1,0.36,1)',
+          scrollbarWidth: 'thin' as const,
         }}
         role="menu"
         aria-hidden={!open}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
-          className="w-[min(980px,calc(100vw-2rem))] rounded-[24px] border overflow-hidden bg-[var(--card)]"
+          className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] lg:w-[min(900px,calc(100vw-2rem))] xl:w-[min(980px,calc(100vw-2rem))] rounded-[20px] lg:rounded-[24px] border overflow-hidden bg-[var(--card)]"
           style={{
             borderColor: 'var(--border-default)',
             boxShadow:
@@ -614,6 +616,7 @@ export function WhyMenu() {
   const { open, setOpen, rootRef, cancelClose, scheduleClose } = useHoverMenu();
   const tItemTitle = (key: string) => t(`landing.whyMenu.items.${key}.title`, key);
   const tItemDesc = (key: string) => t(`landing.whyMenu.items.${key}.desc`, '');
+  const panelTop = useMegaMenuTop(open);
   useScrollLock(open);
   return (
     <div
@@ -645,19 +648,25 @@ export function WhyMenu() {
         </span>
       </button>
       <div
-        className="absolute left-1/2 -translate-x-1/2 top-full pt-3 z-[110]"
+        className="fixed left-1/2 z-[110] -translate-x-1/2"
         style={{
+          top: panelTop,
+          maxHeight: `calc(100dvh - ${panelTop}px - 16px)`,
+          overflowY: 'auto' as const,
+          overscrollBehavior: 'contain' as const,
           opacity: open ? 1 : 0,
           transform: open ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.98)',
           pointerEvents: open ? 'auto' : 'none',
           transition:
             'opacity 0.26s cubic-bezier(0.22,1,0.36,1), transform 0.36s cubic-bezier(0.22,1,0.36,1)',
+          scrollbarWidth: 'thin' as const,
         }}
         role="menu"
         aria-hidden={!open}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
-          className="w-[min(760px,calc(100vw-2rem))] rounded-[24px] border overflow-hidden bg-[var(--card)]"
+          className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] lg:w-[min(700px,calc(100vw-2rem))] xl:w-[min(760px,calc(100vw-2rem))] rounded-[20px] lg:rounded-[24px] border overflow-hidden bg-[var(--card)]"
           style={{
             borderColor: 'var(--border-default)',
             boxShadow:
@@ -784,6 +793,7 @@ const RESOURCE_ITEMS: ResourceItem[] = [
 export function ResourcesMenu({ activeSection = null }: { activeSection?: string | null }) {
   const { t } = useTranslation('landing');
   const { open, setOpen, rootRef, cancelClose, scheduleClose } = useHoverMenu();
+  const panelTop = useMegaMenuTop(open);
   useScrollLock(open);
   const tItemTitle = (key: string) => {
     const val = t(`landing.megaMenu.resourcesMenu.items.${key}`, '');
@@ -831,19 +841,25 @@ export function ResourcesMenu({ activeSection = null }: { activeSection?: string
         </span>
       </button>
       <div
-        className="absolute left-1/2 -translate-x-1/2 top-full pt-3 z-[110]"
+        className="fixed left-1/2 z-[110] -translate-x-1/2"
         style={{
+          top: panelTop,
+          maxHeight: `calc(100dvh - ${panelTop}px - 16px)`,
+          overflowY: 'auto' as const,
+          overscrollBehavior: 'contain' as const,
           opacity: open ? 1 : 0,
           transform: open ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.98)',
           pointerEvents: open ? 'auto' : 'none',
           transition:
             'opacity 0.26s cubic-bezier(0.22,1,0.36,1), transform 0.36s cubic-bezier(0.22,1,0.36,1)',
+          scrollbarWidth: 'thin' as const,
         }}
         role="menu"
         aria-hidden={!open}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
-          className="w-[min(820px,calc(100vw-2rem))] rounded-[24px] border overflow-hidden bg-[var(--card)]"
+          className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] lg:w-[min(760px,calc(100vw-2rem))] xl:w-[min(820px,calc(100vw-2rem))] rounded-[20px] lg:rounded-[24px] border overflow-hidden bg-[var(--card)]"
           style={{
             borderColor: 'var(--border-default)',
             boxShadow:

@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuthStoreShallow } from '@/store/useAuthStore';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useMegaMenuTop } from '@/hooks/useMegaMenuTop';
 import {
   Users,
   ClipboardList,
@@ -519,6 +520,7 @@ export function PlatformMegaMenuV2() {
 
   const activeCat = CATEGORIES.find((c) => c.key === activeCategory) ?? CATEGORIES[0]!;
   const ActiveCanvas = CANVAS_MAP[activeCat.key] ?? CanvasPeople;
+  const panelTop = useMegaMenuTop(open);
 
   return (
     <div ref={rootRef} className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
@@ -543,22 +545,26 @@ export function PlatformMegaMenuV2() {
       </button>
 
       <div
-        className="absolute left-1/2 z-[110] -translate-x-1/2"
+        className="fixed left-1/2 z-[110] -translate-x-1/2"
         style={{
-          top: 'calc(100% + 10px)',
+          top: panelTop,
+          maxHeight: `calc(100dvh - ${panelTop}px - 16px)`,
+          overflowY: 'auto' as const,
+          overscrollBehavior: 'contain' as const,
           opacity: open ? 1 : 0,
           transform: open ? 'translateY(0) scale(1)' : 'translateY(-6px) scale(0.98)',
           pointerEvents: open ? 'auto' : 'none',
           transition:
             'opacity 0.22s cubic-bezier(0.22,1,0.36,1), transform 0.32s cubic-bezier(0.22,1,0.36,1)',
           willChange: 'transform, opacity',
+          scrollbarWidth: 'thin' as const,
         }}
         role="menu"
         aria-hidden={!open}
         onWheel={(e) => e.stopPropagation()}
       >
         <div
-          className="w-[min(1280px,calc(100vw-2rem))] rounded-[24px] border overflow-hidden bg-[var(--card)]"
+          className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] lg:w-[min(1180px,calc(100vw-2rem))] xl:w-[min(1280px,calc(100vw-2rem))] rounded-[20px] lg:rounded-[24px] border overflow-hidden bg-[var(--card)]"
           style={{
             borderColor: 'var(--border-default)',
             boxShadow:
@@ -633,8 +639,8 @@ export function PlatformMegaMenuV2() {
             </div>
           </div>
 
-          {/* ── Bento grid — 2 rows, dense */}
-          <div className="p-4 grid grid-cols-3 gap-3">
+          {/* ── Bento grid — 2 cols on narrow desktop, 3 on ≥1280 */}
+          <div className="p-3 lg:p-4 grid grid-cols-2 xl:grid-cols-3 gap-2.5 lg:gap-3">
             {activeCat.items.map((item, idx) => (
               <button
                 key={item.key}
