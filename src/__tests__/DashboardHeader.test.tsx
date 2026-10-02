@@ -48,7 +48,15 @@ jest.mock('next/link', () => {
 // ── Lucide icons mock ────────────────────────────────────────────────────────
 jest.mock('lucide-react', () => {
   const Icon = (props: any) => <span data-testid="lucide-icon" {...props} />;
-  return { Building2: Icon, CreditCard: Icon, ShieldCheck: Icon, CalendarDays: Icon, Plus: Icon };
+  return {
+    Building2: Icon,
+    CreditCard: Icon,
+    ShieldCheck: Icon,
+    CalendarDays: Icon,
+    Plus: Icon,
+    Sparkles: Icon,
+    TrendingUp: Icon,
+  };
 });
 
 // ── Button mock (with asChild support) ──────────────────────────────────────────
@@ -101,8 +109,9 @@ describe('DashboardHeader', () => {
 
   it('renders dashboard title', () => {
     render(<DashboardHeader selectedOrganization={undefined} userRole="admin" />);
-    // Without an organization there is nothing to label, so the heading stands alone.
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    // Without an organization the heading stands alone; the editorial badge reuses the same label.
+    expect(screen.getAllByText('Dashboard').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Dashboard');
   });
 
   it('makes the organization the heading, with the section as its label', () => {
@@ -180,6 +189,6 @@ describe('DashboardHeader', () => {
   it('renders when organization has no name', () => {
     const orgNoName = { _id: 'org-2' };
     render(<DashboardHeader selectedOrganization={orgNoName as any} userRole="employee" />);
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument();
   });
 });
