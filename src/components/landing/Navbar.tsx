@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from '@/lib/cssMotion';
 import dynamic from 'next/dynamic';
 import { useActiveSection } from '@/hooks/useActiveSection';
 import { useHydrated } from '@/hooks/useHydrated';
+import { useCommandPaletteStore } from '@/store/useCommandPaletteStore';
 
 const MobileMenu = dynamic(() => import('./MobileMenu'), {
   ssr: false,
@@ -79,6 +80,7 @@ export default function Navbar({
   const { user, logout, beginSignOut } = useAuthStore();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const openPalette = useCommandPaletteStore((s) => s.openPalette);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mounted = useHydrated();
   const [scrolled, setScrolled] = useState(false);
@@ -312,11 +314,28 @@ export default function Navbar({
           </div>
 
           <div className="flex items-center gap-1.5 md:gap-2">
-            {/* command hint — desktop */}
-            <Link
-              href="/dashboard"
-              className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-1)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
+            {/* command palette — opens overlay, not a page (landing has no /dashboard search) */}
+            <button
+              type="button"
+              onClick={() => {
+                // Dashboard shell mounts CommandPalette; landing does not — but the
+                // store still toggles the open state, so navigating to dashboard
+                // will show it already open. Try the store first.
+                try {
+                  openPalette();
+                } catch {}
+                // If we are still on the landing (no palette mounted), go where
+                // search actually works — dashboard will open with palette open.
+                if (pathname !== '/dashboard' && !pathname.startsWith('/dashboard/')) {
+                  // Small delay so the store flag survives the navigation.
+                  setTimeout(() => {
+                    if (!document.querySelector('.command-panel')) router.push('/dashboard');
+                  }, 80);
+                }
+              }}
+              className="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-1)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] transition-colors"
               title="Search — ⌘K"
+              aria-label="Open command palette"
             >
               <svg
                 width="12"
@@ -334,7 +353,7 @@ export default function Navbar({
               <kbd className="ml-1 hidden 2xl:inline-flex items-center gap-0.5 rounded border border-[var(--border-default)] bg-[var(--surface-2)] px-1 py-0.5 text-[10px] leading-none">
                 ⌘K
               </kbd>
-            </Link>
+            </button>
 
             {mounted && (
               <span

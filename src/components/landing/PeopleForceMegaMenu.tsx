@@ -248,17 +248,27 @@ export function PlatformMegaMenuV2() {
 
   return (
     <div ref={rootRef} className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
-      {/* Trigger */}
+      {/* Trigger — pill with breathing room, animated chevron */}
       <button
         type="button"
-        className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 focus:outline-none focus:underline underline-offset-4"
-        style={{ color: open ? 'var(--landing-navbar-text-hover)' : 'var(--landing-navbar-text)' }}
+        className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 focus:outline-none border"
+        style={{
+          color: open ? 'var(--text-primary)' : 'var(--text-secondary)',
+          background: open ? 'var(--surface-2)' : 'transparent',
+          borderColor: open ? 'var(--border-default)' : 'transparent',
+          boxShadow: open ? '0 1px 6px rgba(0,0,0,0.06)' : 'none',
+        }}
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => (open ? setOpen(false) : openMenu())}
       >
         {t('landing.megaMenu.platform', 'Platform')}
-        <ChevronDownIcon open={open} />
+        <span
+          className="transition-transform duration-200"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          <ChevronDownIcon open={open} />
+        </span>
       </button>
 
       {/* Panel */}
@@ -283,78 +293,114 @@ export function PlatformMegaMenuV2() {
             boxShadow: '0 1px 2px rgba(12, 26, 46, 0.06), 0 24px 64px -12px rgba(12, 26, 46, 0.28)',
           }}
         >
-          <div className="grid grid-cols-[280px_1fr_460px] min-h-[420px]">
-            {/* ── Left: Categories ── */}
-            <div className="border-r border-(--border) p-3">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.key}
-                  type="button"
-                  tabIndex={open ? 0 : -1}
-                  className={`group/cat w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150 ${
-                    activeCategory === cat.key ? 'bg-(--background-subtle)' : ''
-                  }`}
-                  onMouseEnter={() => setActiveCategory(cat.key)}
-                  onClick={() => cat.items[0] && navigate(cat.items[0].appHref)}
-                >
-                  <span
-                    className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 transition-transform duration-200 group-hover/cat:scale-110"
-                    style={{ background: cat.bgColor, color: cat.color }}
+          <div className="grid grid-cols-[300px_1fr_460px] min-h-[420px]">
+            {/* ── Left: Categories — icon morph on active */}
+            <div className="border-r border-(--border) p-3 space-y-0.5">
+              {CATEGORIES.map((cat) => {
+                const isActive = activeCategory === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    tabIndex={open ? 0 : -1}
+                    className={`group/cat w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${isActive ? 'bg-[var(--surface-2)] shadow-sm' : 'hover:bg-[var(--surface-2)]/60'}`}
+                    onMouseEnter={() => setActiveCategory(cat.key)}
+                    onClick={() => cat.items[0] && navigate(cat.items[0].appHref)}
                   >
-                    {cat.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="text-sm font-semibold leading-tight"
+                    <span
+                      className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0 transition-all duration-300"
                       style={{
-                        color:
-                          activeCategory === cat.key
-                            ? 'var(--text-primary)'
-                            : 'var(--text-secondary)',
+                        background: isActive ? cat.color : cat.bgColor,
+                        color: isActive ? '#fff' : cat.color,
+                        transform: isActive ? 'scale(1.05) rotate(-3deg)' : 'scale(1) rotate(0deg)',
+                        boxShadow: isActive ? `0 4px 12px ${cat.color}33` : 'none',
                       }}
                     >
-                      {tCat(cat.key)}
-                    </p>
-                  </div>
-                  <ChevronRight
-                    className="w-3.5 h-3.5 shrink-0 transition-all duration-200"
-                    style={{
-                      color: 'var(--text-muted)',
-                      opacity: activeCategory === cat.key ? 1 : 0,
-                      transform: activeCategory === cat.key ? 'translateX(0)' : 'translateX(-4px)',
-                    }}
-                  />
-                </button>
-              ))}
+                      {cat.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-sm font-semibold leading-tight transition-colors duration-200"
+                        style={{
+                          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        }}
+                      >
+                        {tCat(cat.key)}
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)] leading-tight truncate">
+                        {cat.items.length} modules
+                      </p>
+                    </div>
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all duration-200"
+                      style={{
+                        background: isActive ? cat.color : 'transparent',
+                        color: isActive ? '#fff' : 'var(--text-muted)',
+                        opacity: isActive ? 1 : 0,
+                        transform: isActive
+                          ? 'translateX(0) scale(1)'
+                          : 'translateX(-6px) scale(0.85)',
+                      }}
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* ── Center: Sub-items ── */}
+            {/* ── Center: Sub-items — stagger entrance */}
             <div className="flex-1 p-5">
               <p
-                className="text-xs font-bold uppercase tracking-wider mb-4"
+                className="text-xs font-bold uppercase tracking-[0.12em] mb-4 flex items-center gap-2"
                 style={{ color: 'var(--text-muted)' }}
               >
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: activeCat.color }}
+                />
                 {tCat(activeCat.key)}
               </p>
               <div className="space-y-1">
-                {activeCat.items.map((item) => (
+                {activeCat.items.map((item, idx) => (
                   <button
                     key={item.key}
                     type="button"
                     tabIndex={open ? 0 : -1}
-                    className="group/item w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-left transition-colors duration-150 hover:bg-(--background-subtle)"
+                    className="group/item w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all duration-200 hover:bg-[var(--surface-2)] hover:translate-x-[2px]"
+                    style={{
+                      animation: open
+                        ? `fade-up 0.35s cubic-bezier(0.22,1,0.36,1) ${idx * 45}ms both`
+                        : undefined,
+                    }}
                     onClick={() => navigate(item.appHref)}
                   >
-                    <div>
-                      <p className="text-sm font-medium text-(--text-primary) leading-tight">
-                        {tItem(item.key)}
-                      </p>
-                      <p className="text-xs text-(--text-muted) mt-0.5">{tDesc(item.key)}</p>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 group-hover/item:scale-110 group-hover/item:rotate-[-4deg]"
+                        style={{ background: activeCat.bgColor, color: activeCat.color }}
+                      >
+                        <span className="w-4 h-4 flex items-center justify-center">
+                          {/* dot accent for each item */}
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ background: activeCat.color }}
+                          />
+                        </span>
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-primary)] leading-tight">
+                          {tItem(item.key)}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{tDesc(item.key)}</p>
+                      </div>
                     </div>
-                    <ArrowRight
-                      className="w-4 h-4 shrink-0 opacity-0 group-hover/item:opacity-100 transition-all duration-150 group-hover/item:translate-x-1"
-                      style={{ color: activeCat.color }}
-                    />
+                    <span
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 opacity-0 group-hover/item:opacity-100 transition-all duration-200 group-hover/item:translate-x-0 -translate-x-1"
+                      style={{ background: activeCat.color, color: '#fff' }}
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
                   </button>
                 ))}
               </div>
