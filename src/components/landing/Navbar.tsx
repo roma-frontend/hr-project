@@ -25,7 +25,6 @@ import dynamic from 'next/dynamic';
 import { useActiveSection } from '@/hooks/useActiveSection';
 import { useHydrated } from '@/hooks/useHydrated';
 import { useCommandPaletteStore } from '@/store/useCommandPaletteStore';
-import { useScrollLock } from '@/hooks/useScrollLock';
 
 const MobileMenu = dynamic(() => import('./MobileMenu'), {
   ssr: false,
@@ -99,24 +98,8 @@ export default function Navbar({
 
   const activeSection = useActiveSection(sectionIds);
 
-  // ── scroll lock: any mega menu open → freeze page scroll ──
-  // COUNTED, not boolean: 4 menus race when hover moves from Platform →
-  // Solutions (Platform closes with detail:false, Solutions opens with
-  // detail:true). A boolean would see the last event's false and unlock
-  // even though Solutions is open. A counter stays >0 while any is open.
-  const megaOpenCount = useRef(0);
-  const [scrollLocked, setScrollLocked] = useState(false);
-  useEffect(() => {
-    const onMega = (e: Event) => {
-      const ce = e as CustomEvent<boolean>;
-      if (ce.detail) megaOpenCount.current += 1;
-      else megaOpenCount.current = Math.max(0, megaOpenCount.current - 1);
-      setScrollLocked(megaOpenCount.current > 0);
-    };
-    window.addEventListener('strata:mega-open', onMega as EventListener);
-    return () => window.removeEventListener('strata:mega-open', onMega as EventListener);
-  }, []);
-  useScrollLock(scrollLocked);
+  // scroll lock is handled per-menu via useScrollLock (reference counted)
+  // in PeopleForceMegaMenu + SolutionMenus — no central lock here
 
   const navRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLElement | Window | null>(null);

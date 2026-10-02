@@ -40,8 +40,8 @@ describe('PLAN_EMPLOYEE_LIMITS', () => {
   });
 
   it('has expected values', () => {
-    expect(PLAN_EMPLOYEE_LIMITS.starter).toBe(10);
-    expect(PLAN_EMPLOYEE_LIMITS.professional).toBe(50);
+    expect(PLAN_EMPLOYEE_LIMITS.starter).toBe(25);
+    expect(PLAN_EMPLOYEE_LIMITS.professional).toBe(300);
     expect(PLAN_EMPLOYEE_LIMITS.enterprise).toBe(999999);
   });
 });

@@ -12,6 +12,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   Users,
   Briefcase,
@@ -391,6 +392,7 @@ export function SolutionsMenu() {
   const ActiveCanvas = active.Canvas;
   const tGroup = (key: string) => t(`landing.solutionsMenu.${key}`, key);
   const tItem = (key: string) => t(`landing.solutionsMenu.items.${key}`, key);
+  useScrollLock(open);
   return (
     <div
       ref={rootRef}
@@ -612,6 +614,7 @@ export function WhyMenu() {
   const { open, setOpen, rootRef, cancelClose, scheduleClose } = useHoverMenu();
   const tItemTitle = (key: string) => t(`landing.whyMenu.items.${key}.title`, key);
   const tItemDesc = (key: string) => t(`landing.whyMenu.items.${key}.desc`, '');
+  useScrollLock(open);
   return (
     <div
       ref={rootRef}
@@ -781,6 +784,7 @@ const RESOURCE_ITEMS: ResourceItem[] = [
 export function ResourcesMenu({ activeSection = null }: { activeSection?: string | null }) {
   const { t } = useTranslation('landing');
   const { open, setOpen, rootRef, cancelClose, scheduleClose } = useHoverMenu();
+  useScrollLock(open);
   const tItemTitle = (key: string) => {
     const val = t(`landing.megaMenu.resourcesMenu.items.${key}`, '');
     return val || t(`landing.${key}`, key);

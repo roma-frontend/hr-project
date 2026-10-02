@@ -87,15 +87,17 @@ describe('createLocalPayment — per-seat order total', () => {
     expect(row.amountUsd).toBe(80); // 10 × $8
   });
 
-  it('moves the whole team to the volume bracket it reaches', async () => {
-    // 50 seats is the 50+ bracket: $7/seat, not the entry $8/seat.
+  it('moves the whole team to the volume bracket it reaches (monotonic)', async () => {
+    // 50 seats is the 50+ bracket: $7/seat would be $350, but monotonic guard
+    // keeps it at 49×$8=$392 (adding a seat must never reduce total).
     const row = await placeOrder({ plan: 'professional', seats: 50 });
-    expect(row.amountUsd).toBe(350);
+    expect(row.amountUsd).toBe(392);
   });
 
-  it('handles the fractional starter bracket', async () => {
+  it('handles the fractional starter bracket (monotonic)', async () => {
     expect((await placeOrder({ plan: 'starter', seats: 5 })).amountUsd).toBe(20); // 5 × $4
-    expect((await placeOrder({ plan: 'starter', seats: 15 })).amountUsd).toBe(52.5); // 15 × $3.50
+    // 15 × $3.50 = $52.5, but monotonic guard keeps it at 14×$4=$56 (adding a seat must never reduce total)
+    expect((await placeOrder({ plan: 'starter', seats: 15 })).amountUsd).toBe(56);
   });
 
   it('multiplies by the months purchased', async () => {
@@ -116,14 +118,14 @@ describe('createLocalPayment — per-seat order total', () => {
     expect(row.amountUsd).toBeGreaterThan(0);
   });
 
-  it('returns the same total it stored', async () => {
+  it('returns the same total it stored (monotonic)', async () => {
     const { ctx } = makeCtx();
     const result = await handlers.createLocalPayment(ctx, {
       plan: 'professional',
       seats: 50,
       ...baseOrder,
     });
-    expect(result.amountUsd).toBe(350);
+    expect(result.amountUsd).toBe(392); // 50×$7=$350 but monotonic keeps 49×$8=$392
     expect(result.amountAmd).toBe(100_000);
     expect(result.handshake).toBeTruthy();
     // The PSP description carries the seats so the rails can reconcile. The

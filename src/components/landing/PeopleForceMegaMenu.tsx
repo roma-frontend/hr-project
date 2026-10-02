@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuthStoreShallow } from '@/store/useAuthStore';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   Users,
   ClipboardList,
@@ -466,14 +467,7 @@ function useHoverMenu() {
   }, [open]);
 
   useEffect(() => cancelClose, [cancelClose]);
-  // Notify Navbar (counted lock: true on open, false on close)
-  const prevOpen = useRef(open);
-  useEffect(() => {
-    if (prevOpen.current !== open) {
-      window.dispatchEvent(new CustomEvent('strata:mega-open', { detail: open }));
-      prevOpen.current = open;
-    }
-  }, [open]);
+  useScrollLock(open);
   return { open, setOpen, rootRef, cancelClose, scheduleClose };
 }
 
