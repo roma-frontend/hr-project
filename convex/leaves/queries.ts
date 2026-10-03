@@ -28,19 +28,6 @@ export const getAllLeaves = query({
     const requester = await getAuthCaller(ctx);
     const requesterId = requester?._id;
     const organizationId = args.organizationId;
-    // If organizationId is provided directly (server-side calls), use it
-    if (organizationId && !requesterId) {
-      const leavesRaw = await ctx.db
-        .query('leaveRequests')
-        .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-        .order('desc')
-        .take(MAX_PAGE_SIZE + 1);
-      const isCappedLeaves = leavesRaw.length > MAX_PAGE_SIZE;
-      void isCappedLeaves;
-      const leaves = leavesRaw.slice(0, MAX_PAGE_SIZE);
-
-      return enrichLeavesWithUserData(ctx, leaves);
-    }
 
     // Otherwise use authenticated caller
     if (!requester) return [];

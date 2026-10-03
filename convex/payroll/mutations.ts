@@ -36,10 +36,13 @@ async function recomputeBenefitTotals(
   ctx: MutationCtx,
   payrollRunId: Id<'payrollRuns'>,
 ): Promise<void> {
-  const records = await ctx.db
+  const recordsRaw = await ctx.db
     .query('payrollRecords')
     .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', payrollRunId))
-    .take(DEFAULT_LIST_CAP);
+    .take(DEFAULT_LIST_CAP + 1);
+  const isCapped = recordsRaw.length > DEFAULT_LIST_CAP;
+  void isCapped;
+  const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
   let totalBenefitsReimbursement = 0;
   let totalNetPayout = 0;
@@ -60,10 +63,13 @@ async function recomputeRunTotals(
   ctx: MutationCtx,
   payrollRunId: Id<'payrollRuns'>,
 ): Promise<RunTotals> {
-  const records = await ctx.db
+  const recordsRaw = await ctx.db
     .query('payrollRecords')
     .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', payrollRunId))
-    .take(DEFAULT_LIST_CAP);
+    .take(DEFAULT_LIST_CAP + 1);
+  const isCapped = recordsRaw.length > DEFAULT_LIST_CAP;
+  void isCapped;
+  const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
   let totalGross = 0;
   let totalNet = 0;
@@ -250,10 +256,13 @@ export const calculatePayrollRun = mutation({
       throw new Error('Can only calculate draft payroll runs');
     }
 
-    const employees = await ctx.db
+    const employeesRaw = await ctx.db
       .query('employeeProfiles')
       .withIndex('by_org', (q) => q.eq('organizationId', run.organizationId!))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedEmployees = employeesRaw.length > DEFAULT_LIST_CAP;
+    void isCappedEmployees;
+    const employees = employeesRaw.slice(0, DEFAULT_LIST_CAP);
 
     const settings = await ctx.db
       .query('salarySettings')
@@ -456,10 +465,13 @@ export const approvePayrollRun = mutation({
       updatedAt: Date.now(),
     });
 
-    const records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', args.payrollRunId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedRecords = recordsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedRecords;
+    const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     for (const record of records) {
       await ctx.db.patch(record._id, {
@@ -506,10 +518,13 @@ export const markPayrollRunAsPaid = mutation({
       updatedAt: Date.now(),
     });
 
-    const records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', args.payrollRunId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedRecords = recordsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedRecords;
+    const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     for (const record of records) {
       await ctx.db.patch(record._id, {
@@ -558,10 +573,13 @@ export const cancelPayrollRun = mutation({
       updatedAt: Date.now(),
     });
 
-    const records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', args.payrollRunId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedRecords2 = recordsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedRecords2;
+    const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     for (const record of records) {
       await ctx.db.patch(record._id, {
@@ -886,10 +904,13 @@ export const deletePayrollRecord = mutation({
 
     await ctx.db.delete(args.payrollRecordId);
 
-    const payslips = await ctx.db
+    const payslipsRaw = await ctx.db
       .query('payslips')
       .withIndex('by_payroll_record', (q) => q.eq('payrollRecordId', args.payrollRecordId))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCapped = payslipsRaw.length > SMALL_LIST_CAP;
+    void isCapped;
+    const payslips = payslipsRaw.slice(0, SMALL_LIST_CAP);
 
     for (const payslip of payslips) {
       await ctx.db.delete(payslip._id);

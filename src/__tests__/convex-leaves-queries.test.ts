@@ -212,18 +212,13 @@ describe('getAllLeaves', () => {
     await expect(handlers.getAllLeaves(ctx, {})).resolves.toEqual([]);
   });
 
-  it('server-side call with organizationId and no requester reads the org queue', async () => {
+  it('server-side call with organizationId and no requester returns [] (IDOR closed)', async () => {
     mockGetAuthCaller.mockResolvedValue(null);
-    const { ctx, chains } = makeCtx();
-    const lCh = chain(chains, 'leaveRequests');
-    lCh.take.mockResolvedValue([leaveDoc()]);
+    const { ctx } = makeCtx();
 
     const res = (await handlers.getAllLeaves(ctx, { organizationId: ORG_A })) as any[];
 
-    expect(res).toHaveLength(1);
-    expect(lCh.withIndex).toHaveBeenCalledWith('by_org', expect.any(Function));
-    expect(lCh.order).toHaveBeenCalledWith('desc');
-    expect(mockEnrich).toHaveBeenCalled();
+    expect(res).toEqual([]);
   });
 
   it('lets a superadmin see every leave across organizations', async () => {

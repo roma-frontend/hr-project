@@ -135,13 +135,20 @@ export const getGdprRequests = query({
     const { orgId } = await requireAdmin(ctx);
 
     // Scope by org via by_org index when admin is non-superadmin; else capped full-table.
-    let requests = orgId
+    const requestsRaw = orgId
       ? await ctx.db
           .query('gdprRequests')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('gdprRequests').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('gdprRequests')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const capRequests = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedRequests = requestsRaw.length > capRequests;
+    void isCappedRequests;
+    let requests = requestsRaw.slice(0, capRequests);
 
     if (args.userId) {
       requests = requests.filter((r) => r.userId === args.userId);
@@ -337,13 +344,20 @@ export const getUserConsents = query({
     const { orgId } = await requireAdmin(ctx);
 
     // Scope by org via by_org index when admin is non-superadmin; else capped full-table.
-    let consents = orgId
+    const consentsRaw = orgId
       ? await ctx.db
           .query('consentRecords')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('consentRecords').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('consentRecords')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const capConsents = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedConsents = consentsRaw.length > capConsents;
+    void isCappedConsents;
+    let consents = consentsRaw.slice(0, capConsents);
 
     if (args.userId) {
       consents = consents.filter((c) => c.userId === args.userId);
@@ -359,10 +373,13 @@ export const getOrgConsentStats = query({
     const { orgId } = await requireAdmin(ctx);
     if (!orgId) throw new Error('Admin must belong to an organization');
 
-    const allConsents = await ctx.db
+    const allConsentsRaw = await ctx.db
       .query('consentRecords')
       .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = allConsentsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    const allConsents = allConsentsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const consentTypes = new Set(allConsents.map((c) => c.consentType));
     const stats: Record<string, { granted: number; withdrawn: number }> = {};
@@ -438,13 +455,20 @@ export const getDataAccessLogs = query({
     const { orgId } = await requireAdmin(ctx);
 
     // Scope by org via by_org index when admin is non-superadmin; else capped full-table.
-    let logs = orgId
+    const logsRaw = orgId
       ? await ctx.db
           .query('dataAccessLogs')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('dataAccessLogs').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('dataAccessLogs')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const capLogs = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedLogs = logsRaw.length > capLogs;
+    void isCappedLogs;
+    let logs = logsRaw.slice(0, capLogs);
 
     if (args.userId) {
       logs = logs.filter((l) => l.userId === args.userId);
@@ -614,13 +638,20 @@ export const getPolicies = query({
     const { orgId } = await requireAdmin(ctx);
 
     // Scope by org via by_org index when admin is non-superadmin; else capped full-table.
-    let policies = orgId
+    const policiesRaw = orgId
       ? await ctx.db
           .query('compliancePolicies')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('compliancePolicies').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('compliancePolicies')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const capPolicies = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedPolicies = policiesRaw.length > capPolicies;
+    void isCappedPolicies;
+    let policies = policiesRaw.slice(0, capPolicies);
 
     if (args.policyType) {
       policies = policies.filter((p) => p.policyType === args.policyType);
