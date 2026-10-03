@@ -1,9 +1,11 @@
-import { api } from '../_generated/api';
-import { action } from '../_generated/server';
+import { api, internal } from '../_generated/api';
+import { action, internalQuery } from '../_generated/server';
 import { v } from 'convex/values';
 import { calculatePayroll, type CountryCode } from '../lib/payrollCalculator';
 import { resolvePensionExemption } from '../lib/pension';
 import { logger } from '../../src/lib/logger';
+import { getAuthCaller } from '../lib/getAuthCaller';
+import { requireOrgAdmin } from '../lib/rbac';
 
 /** Payroll-relevant fields carried by employee profile docs. */
 interface PayrollEmployee {
@@ -23,6 +25,16 @@ interface PayrollOrgSettings {
   overtimeMultiplier?: number;
 }
 
+export const checkPayrollAccess = internalQuery({
+  args: { organizationId: v.id('organizations') },
+  handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    await requireOrgAdmin(ctx, caller._id, args.organizationId);
+    return caller._id;
+  },
+});
+
 export const processScheduledPayroll = action({
   args: {
     organizationId: v.id('organizations'),
@@ -32,6 +44,10 @@ export const processScheduledPayroll = action({
     args,
   ): Promise<{ processed: number; totalGross: number; totalNet: number; message: string }> => {
     const { organizationId } = args;
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.email) throw new Error('Not authenticated');
+    await ctx.runQuery(internal.payroll.actions.checkPayrollAccess, { organizationId });
 
     const _currentMonth = new Date().toISOString().slice(0, 7);
 

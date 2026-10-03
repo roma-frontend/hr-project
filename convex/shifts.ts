@@ -191,6 +191,9 @@ export const upsertShift = mutation({
     if (!caller) throw new Error('Not authenticated');
     await requireOrgSupervisor(ctx, caller._id, caller.organizationId!);
     if (!caller.organizationId) throw new Error('No organization');
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser || targetUser.organizationId !== caller.organizationId)
+      throw new Error('User not found in organization');
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(args.date)) {
       throw new Error('Date must be YYYY-MM-DD');
@@ -285,6 +288,9 @@ export const applyTemplateWeek = mutation({
     if (!template || template.organizationId !== caller.organizationId) {
       throw new Error('Template not found');
     }
+    const targetUser = await ctx.db.get(args.userId);
+    if (!targetUser || targetUser.organizationId !== caller.organizationId)
+      throw new Error('User not found in organization');
 
     const start = args.startTime ? hhmmToMinutes(args.startTime) : template.startMinute;
     const end = args.endTime ? hhmmToMinutes(args.endTime) : template.endMinute;

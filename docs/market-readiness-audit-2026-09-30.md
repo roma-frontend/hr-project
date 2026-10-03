@@ -178,6 +178,14 @@
 
 **Ограничения:** текст/видео остаются user acknowledgement, не доказательством просмотра; существующие legacy passed attempts/progress считаются evidence и не переаттестуются; quiz/content versioning, invalidation после редактирования и отзыв исторических сертификатов не реализованы; authoritative quiz start/time limit остается открыт. Native paging/aggregate completion для очень больших courses, N+1 read budget, policy renewals/expiry, UX понятных ошибок и browser LMS E2E требуют следующего этапа. Full suite/build/deploy не проверены; Gate B/NO-GO сохраняются.
 
+## Ход исправлений — 3 октября 2026, Gate B DATA-01 caps + ACL (не развернуто)
+
+Исправлено локально, **не развернуто в production**:
+
+- **DATA-01 caps:** `learning` `listCourses`/`getCourseWithLessons`/`getQuiz`/`getQuizByLesson`/`getCourseCategories` переведены на `take(N+1)` + `slice(N)` + `isCapped = len > N` (устранен weak `===N` false-negative при ровно 2000 и silent truncation). `listCourses` ограничен `MAX_PAGE_SIZE+1` с per-row `lessonCountIsCapped`; legacy array return сохранен для совместимости, prefer `listCoursesPaginated`. `deleteCourse`/`deleteLesson` теперь batched `while(take) delete` до исчерпания — orphan-записи >cap больше не остаются.
+- **ACL:** `payroll/actions.processScheduledPayroll` теперь требует `auth + requireOrgAdmin` (internalQuery `checkPayrollAccess`); `shifts.upsertShift`/`applyTemplateWeek` проверяют `user.organizationId === caller.organizationId`; `attendance/ensureHrAssistantMembership` блокирует чужой `organizationId` кроме superadmin.
+- Проверено: `type-check:ci` (exit 0), `prettier --check` (all files), `audit-gate` (2 accepted, 0 violations), `check:locales` (23 namespaces OK). Full suite/build/E2E/deploy этим блоком не проверены; Gate B остается открытым.
+
 ## Незакрытые задачи (осталось до Gate B)
 
 1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.

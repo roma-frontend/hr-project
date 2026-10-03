@@ -8,6 +8,7 @@ import { mutation } from '../_generated/server';
 import { internal } from '../_generated/api';
 import { getAuthCaller } from '../lib/getAuthCaller';
 import { canAccessUser } from '../lib/rbac';
+import { isSuperadmin } from '../lib/auth';
 
 const VALID_TYPES = ['office', 'wfh', 'business_trip', 'sick', 'leave', 'holiday'] as const;
 
@@ -212,6 +213,12 @@ export const ensureHrAssistantMembership = mutation({
   handler: async (ctx, args) => {
     const caller = await getAuthCaller(ctx);
     if (!caller) throw new Error('Not authenticated');
+    if (
+      args.organizationId &&
+      args.organizationId !== caller.organizationId &&
+      !isSuperadmin(caller)
+    )
+      throw new Error('Access denied');
     const orgId = args.organizationId ?? caller.organizationId;
     if (!orgId) return { ok: false, reason: 'no-org' };
     const now = Date.now();

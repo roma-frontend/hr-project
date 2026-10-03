@@ -174,10 +174,13 @@ export const listCourses = query({
   handler: async (ctx, args) => {
     const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
 
-    let courses = await ctx.db
+    const rawCourses = await ctx.db
       .query('courses')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(MAX_PAGE_SIZE);
+      .take(MAX_PAGE_SIZE + 1);
+    const coursesIsCapped = rawCourses.length > MAX_PAGE_SIZE;
+    let courses = rawCourses.slice(0, MAX_PAGE_SIZE);
+    void coursesIsCapped;
 
     if (!args.includeUnpublished || !isSuperadmin) {
       courses = courses.filter((c) => c.isPublished);
@@ -195,17 +198,24 @@ export const listCourses = query({
 
     const enriched = await Promise.all(
       courses.map(async (course) => {
-        const lessons = await ctx.db
+        const lessonRows = await ctx.db
           .query('lessons')
           .withIndex('by_course', (q) =>
             q.eq('organizationId', args.organizationId).eq('courseId', course._id),
           )
-          .take(DEFAULT_LIST_CAP);
+          .take(MAX_PAGE_SIZE + 1);
         const creator = await ctx.db.get(course.createdBy);
-        return { ...course, creatorName: creator?.name ?? 'Unknown', lessonCount: lessons.length };
+        return {
+          ...course,
+          creatorName: creator?.name ?? 'Unknown',
+          lessonCount: Math.min(lessonRows.length, MAX_PAGE_SIZE),
+          lessonCountIsCapped: lessonRows.length > MAX_PAGE_SIZE,
+        };
       }),
     );
 
+    // Legacy: keeps array return for backward compat (slice prevents silent truncation).
+    // Per-row lessonCountIsCapped and coursesIsCapped (internal) make caps visible; prefer paginated variant.
     return enriched;
   },
 });
@@ -319,18 +329,20 @@ export const getCourseWithLessons = query({
           .eq('courseId', course._id),
       )
       .first();
-    const lessons = await ctx.db
+    const lessonRows = await ctx.db
       .query('lessons')
       .withIndex('by_course', (q) =>
         q.eq('organizationId', args.organizationId).eq('courseId', course._id),
       )
       .order('asc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const lessonsIsCapped = lessonRows.length > DEFAULT_LIST_CAP;
+    const lessons = lessonRows.slice(0, DEFAULT_LIST_CAP);
 
     return {
       course,
       lessons,
-      lessonsIsCapped: lessons.length === DEFAULT_LIST_CAP,
+      lessonsIsCapped,
       myEnrollment: myEnrollment
         ? { status: myEnrollment.status, progress: myEnrollment.progress ?? 0 }
         : null,
@@ -472,21 +484,29 @@ export const deleteCourse = mutation({
     const { isSuperadmin } = await checkAccess(ctx, course.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can delete courses');
 
-    const lessons = await ctx.db
-      .query('lessons')
-      .withIndex('by_course', (q) =>
-        q.eq('organizationId', course.organizationId).eq('courseId', course._id),
-      )
-      .take(SMALL_LIST_CAP);
-    for (const lesson of lessons) await ctx.db.delete(lesson._id);
+    while (true) {
+      const batch = await ctx.db
+        .query('lessons')
+        .withIndex('by_course', (q) =>
+          q.eq('organizationId', course.organizationId).eq('courseId', course._id),
+        )
+        .take(SMALL_LIST_CAP);
+      if (batch.length === 0) break;
+      for (const lesson of batch) await ctx.db.delete(lesson._id);
+      if (batch.length < SMALL_LIST_CAP) break;
+    }
 
-    const enrollments = await ctx.db
-      .query('enrollments')
-      .withIndex('by_course', (q) =>
-        q.eq('organizationId', course.organizationId).eq('courseId', course._id),
-      )
-      .take(DEFAULT_LIST_CAP);
-    for (const enrollment of enrollments) await ctx.db.delete(enrollment._id);
+    while (true) {
+      const batch = await ctx.db
+        .query('enrollments')
+        .withIndex('by_course', (q) =>
+          q.eq('organizationId', course.organizationId).eq('courseId', course._id),
+        )
+        .take(DEFAULT_LIST_CAP);
+      if (batch.length === 0) break;
+      for (const enrollment of batch) await ctx.db.delete(enrollment._id);
+      if (batch.length < DEFAULT_LIST_CAP) break;
+    }
 
     await ctx.db.delete(args.courseId);
     return { success: true };
@@ -584,12 +604,16 @@ export const deleteLesson = mutation({
     const { isSuperadmin } = await checkAccess(ctx, lesson.organizationId);
     if (!isSuperadmin) throw new Error('Only admins can delete lessons');
 
-    const progress = await ctx.db
-      .query('lessonProgress')
-      .withIndex('by_user_course', (q) => q.eq('organizationId', lesson.organizationId))
-      .filter((q) => q.eq(q.field('lessonId'), lesson._id))
-      .take(DEFAULT_LIST_CAP);
-    for (const p of progress) await ctx.db.delete(p._id);
+    while (true) {
+      const batch = await ctx.db
+        .query('lessonProgress')
+        .withIndex('by_user_course', (q) => q.eq('organizationId', lesson.organizationId))
+        .filter((q) => q.eq(q.field('lessonId'), lesson._id))
+        .take(DEFAULT_LIST_CAP);
+      if (batch.length === 0) break;
+      for (const p of batch) await ctx.db.delete(p._id);
+      if (batch.length < DEFAULT_LIST_CAP) break;
+    }
 
     await ctx.db.delete(args.lessonId);
     return { success: true };
@@ -1083,18 +1107,20 @@ export const getQuiz = query({
     }
     await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
 
-    const questions = await ctx.db
+    const questionRows = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
         q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
       )
       .order('asc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = questionRows.length > DEFAULT_LIST_CAP;
+    const questions = questionRows.slice(0, DEFAULT_LIST_CAP);
 
     return {
       quiz,
       questions: questions.map((question) => readableQuestion(question, isSuperadmin)),
-      isCapped: questions.length === DEFAULT_LIST_CAP,
+      isCapped,
     };
   },
 });
@@ -1148,18 +1174,20 @@ export const getQuizByLesson = query({
     if (!quiz || (!isSuperadmin && !quiz.isPublished)) return null;
     await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
 
-    const questions = await ctx.db
+    const questionRows = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
         q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
       )
       .order('asc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = questionRows.length > DEFAULT_LIST_CAP;
+    const questions = questionRows.slice(0, DEFAULT_LIST_CAP);
 
     return {
       quiz,
       questions: questions.map((question) => readableQuestion(question, isSuperadmin)),
-      isCapped: questions.length === DEFAULT_LIST_CAP,
+      isCapped,
     };
   },
 });
@@ -1545,11 +1573,14 @@ export const getCourseCategories = query({
   },
   handler: async (ctx, args) => {
     await checkAccess(ctx, args.organizationId);
-    return await ctx.db
+    const rows = await ctx.db
       .query('courseCategories')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
       .order('asc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = rows.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    return rows.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
