@@ -84,10 +84,13 @@ async function canReadDocument(
   if (doc.createdBy === caller._id) return true;
   if (managesOrg(caller, doc.organizationId)) return true;
 
-  const requests = await ctx.db
+  const _rawRequests = await ctx.db
     .query('signatureRequests')
     .withIndex('by_document', (q) => q.eq('documentId', doc._id))
-    .take(SMALL_LIST_CAP);
+    .take(SMALL_LIST_CAP + 1);
+  const _isCappedRequests = _rawRequests.length > SMALL_LIST_CAP;
+  void _isCappedRequests;
+  const requests = _rawRequests.slice(0, SMALL_LIST_CAP);
   return requests.some((r) => r.signerId === caller._id);
 }
 
@@ -99,11 +102,14 @@ export const listTemplates = query({
     const { organizationId } = args;
     const caller = await getAuthCaller(ctx);
     if (!caller || !managesOrg(caller, organizationId)) return [];
-    return await ctx.db
+    const _rawTemplates = await ctx.db
       .query('documentTemplates')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
       .filter((q) => q.neq(q.field('isArchived'), true))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedTemplates = _rawTemplates.length > DEFAULT_LIST_CAP;
+    void _isCappedTemplates;
+    return _rawTemplates.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
@@ -127,18 +133,24 @@ export const listDocuments = query({
     // The list is "documents I created or must sign", so the id must be mine.
     if (!(await callerAs(ctx, userId))) return [];
     // Documents where user is the creator
-    const createdDocs = await ctx.db
+    const _rawCreatedDocs = await ctx.db
       .query('signatureDocuments')
       .withIndex('by_creator', (q) => q.eq('createdBy', userId))
       .filter((q) => q.eq(q.field('organizationId'), organizationId))
       .order('desc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedCreatedDocs = _rawCreatedDocs.length > DEFAULT_LIST_CAP;
+    void _isCappedCreatedDocs;
+    const createdDocs = _rawCreatedDocs.slice(0, DEFAULT_LIST_CAP);
 
     // Documents where user is a signer
-    const myRequests = await ctx.db
+    const _rawMyRequests = await ctx.db
       .query('signatureRequests')
       .withIndex('by_signer', (q) => q.eq('signerId', userId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedMyRequests = _rawMyRequests.length > DEFAULT_LIST_CAP;
+    void _isCappedMyRequests;
+    const myRequests = _rawMyRequests.slice(0, DEFAULT_LIST_CAP);
 
     const signerDocIds = [...new Set(myRequests.map((r) => r.documentId))];
 
@@ -182,10 +194,13 @@ export const getDocument = query({
     const caller = await getAuthCaller(ctx);
     if (!caller || !(await canReadDocument(ctx, caller, doc))) return null;
 
-    const requests = await ctx.db
+    const _rawRequests = await ctx.db
       .query('signatureRequests')
       .withIndex('by_document_order', (q) => q.eq('documentId', documentId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedRequests = _rawRequests.length > DEFAULT_LIST_CAP;
+    void _isCappedRequests;
+    const requests = _rawRequests.slice(0, DEFAULT_LIST_CAP);
 
     return { ...doc, requests };
   },
@@ -211,10 +226,13 @@ export const getMyPendingSignatures = query({
     const { userId } = args;
     // "My" pending signatures — only the owner may read them.
     if (!(await callerAs(ctx, userId))) return [];
-    const requests = await ctx.db
+    const _rawRequests = await ctx.db
       .query('signatureRequests')
       .withIndex('by_signer_status', (q) => q.eq('signerId', userId).eq('status', 'pending'))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedRequests = _rawRequests.length > DEFAULT_LIST_CAP;
+    void _isCappedRequests;
+    const requests = _rawRequests.slice(0, DEFAULT_LIST_CAP);
 
     // Enrich with document info
     const enriched = await Promise.all(
@@ -225,10 +243,13 @@ export const getMyPendingSignatures = query({
         // everyone at once — so people further down the order hit a raw
         // "Previous signers have not yet signed" from the mutation. Whose turn it
         // is, and who is being waited on, is knowable here.
-        const siblings = await ctx.db
+        const _rawSiblings = await ctx.db
           .query('signatureRequests')
           .withIndex('by_document', (q) => q.eq('documentId', req.documentId))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedSiblings = _rawSiblings.length > DEFAULT_LIST_CAP;
+        void _isCappedSiblings;
+        const siblings = _rawSiblings.slice(0, DEFAULT_LIST_CAP);
 
         const waitingFor = siblings
           .filter((r) => r.order < req.order && r.status === 'pending')
@@ -251,11 +272,14 @@ export const getAuditLog = query({
     if (!doc) return [];
     const caller = await getAuthCaller(ctx);
     if (!caller || !(await canReadDocument(ctx, caller, doc))) return [];
-    return await ctx.db
+    const _rawAuditLog = await ctx.db
       .query('signatureAuditLog')
       .withIndex('by_document_time', (q) => q.eq('documentId', documentId))
       .order('desc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAuditLog = _rawAuditLog.length > DEFAULT_LIST_CAP;
+    void _isCappedAuditLog;
+    return _rawAuditLog.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
@@ -271,17 +295,23 @@ export const getStats = query({
     // The org-wide counters are management information.
     const orgVisible = managesOrg(caller, organizationId);
 
-    const pending = await ctx.db
+    const _rawPending = await ctx.db
       .query('signatureRequests')
       .withIndex('by_signer_status', (q) => q.eq('signerId', userId).eq('status', 'pending'))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedPending = _rawPending.length > DEFAULT_LIST_CAP;
+    void _isCappedPending;
+    const pending = _rawPending.slice(0, DEFAULT_LIST_CAP);
 
-    const allDocs = orgVisible
+    const _rawAllDocs = orgVisible
       ? await ctx.db
           .query('signatureDocuments')
           .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-          .take(DEFAULT_LIST_CAP)
+          .take(DEFAULT_LIST_CAP + 1)
       : [];
+    const _isCappedAllDocs = _rawAllDocs.length > DEFAULT_LIST_CAP;
+    void _isCappedAllDocs;
+    const allDocs = _rawAllDocs.slice(0, DEFAULT_LIST_CAP);
 
     const completed = allDocs.filter((d) => d.status === 'completed').length;
     const awaitingOthers = allDocs.filter(
@@ -506,10 +536,13 @@ export const signDocument = mutation({
     if (!doc || doc.status === 'cancelled') throw new Error('Document not available');
 
     // Enforce sequential signing: check that all previous orders are signed
-    const allRequests = await ctx.db
+    const _rawAllRequests = await ctx.db
       .query('signatureRequests')
       .withIndex('by_document', (q) => q.eq('documentId', request.documentId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAllRequests = _rawAllRequests.length > DEFAULT_LIST_CAP;
+    void _isCappedAllRequests;
+    const allRequests = _rawAllRequests.slice(0, DEFAULT_LIST_CAP);
 
     const previousUnsigned = allRequests.filter(
       (r) => r.order < request.order && r.status === 'pending',
@@ -743,11 +776,14 @@ export const sweepUnarchivedDocuments = internalMutation({
 
     // Newest first: a document that just failed to archive is the interesting
     // case, and it keeps already-notified old rows from crowding out the cap.
-    const completed = await ctx.db
+    const _rawCompleted = await ctx.db
       .query('signatureDocuments')
       .order('desc')
       .filter((q) => q.eq(q.field('status'), 'completed'))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedCompleted = _rawCompleted.length > DEFAULT_LIST_CAP;
+    void _isCappedCompleted;
+    const completed = _rawCompleted.slice(0, DEFAULT_LIST_CAP);
 
     let notified = 0;
     for (const doc of completed) {
@@ -901,10 +937,13 @@ export const cancelDocument = mutation({
     await ctx.db.patch(documentId, { status: 'cancelled' });
 
     // Cancel all pending requests
-    const requests = await ctx.db
+    const _rawCancelRequests = await ctx.db
       .query('signatureRequests')
       .withIndex('by_document', (q) => q.eq('documentId', documentId))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const _isCappedCancelRequests = _rawCancelRequests.length > SMALL_LIST_CAP;
+    void _isCappedCancelRequests;
+    const requests = _rawCancelRequests.slice(0, SMALL_LIST_CAP);
 
     for (const req of requests) {
       if (req.status === 'pending') {
