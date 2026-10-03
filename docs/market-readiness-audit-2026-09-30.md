@@ -192,6 +192,21 @@
 
 - **payroll/shifts caps:** `payroll/queries` 7 мест (`getDashboardStats`×2, `getPayrollRecords`, `getPayrollRuns`×2, `getPayrollRunById`, `getPayslips`, `getPayrollCalendar`×2, `getAuditLog`) и `shifts` 3 места (`listTemplates`, `getRoster`, `listSwapRequests`) переведены на `take(N+1)` + `slice(N)` + `isCapped> N` (void для backward-compat array returns; `getDashboardStats.isCapped` теперь корректен с `>`). CI: `cb4946e1` — `🏗 Build` success; `E2E Build for E2E` — Turbopack `next/font` `Noto_Sans_Armenian` transient failure (соседний `e2e0c335` прошел) — отдельный E2E next. `60f1f67e` — payroll/shifts caps push.
 
+## Ход исправлений — 3 октября 2026, Gate B recruitment caps + documents orgAccess (не развернуто)
+
+Исправлено локально, **не развернуто в production**:
+
+- **DATA-01 recruitment caps:** `recruitment.ts` 29 bare `take(N)` → `take(N+1)` + `slice(N)` + `void isCapped` non-breaking (`b4ed42d7`).
+- **documents orgAccess:** 12 handlers `checkAccess` → `lib/orgAccess` `resolveOrgScope`/`resolveOrgStaff`/`assertOrgScope`/`assertOrgStaff` (`c4159fed`); 2 теста degrade `[]` на чужой/отсутствующий scope (`d4ca9938`).
+- **Малые caps:** `payroll/queries.getMyPayslips`, `expenses` notification loops (×2), `leaves/approval`, `leaves/documents` — `take(N+1)` + `slice(N)` + `void isCapped` (`c4159fed`).
+
+## Ход исправлений — 3 октября 2026, Gate B leaves IDOR + CI snapshot (не развернуто)
+
+Исправлено локально, **не развернуто в production**:
+
+- **leaves IDOR:** `leaves/queries.getAllLeaves` удален unauth `orgId` путь — теперь только `getAuthCaller` + scoped; `leaveAccrual` policies/history gated через `orgAccess` (`b23b7628`, `a9827a79`); `leaves-rbac` test обновлен ожидать `[]` без DB touch.
+- **CI snapshot head `d4ca9938`:** preventive gates success — `Type Check`, `Lint`, `Unit Tests`, `Security Audit`, `CodeQL`, `Coverage`; `Build` just succeeded; `E2E` in_progress. Предыдущие failures `ddeaba93`/`a9827a79` — pre-fix integration expectations, now corrected (ожидали throw/данные, теперь degrade `[]`).
+
 ## Незакрытые задачи (осталось до Gate B)
 
 1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.
