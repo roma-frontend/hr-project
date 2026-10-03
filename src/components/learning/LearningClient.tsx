@@ -651,9 +651,10 @@ export default function LearningClient() {
   };
 
   const handleSubmitQuiz = async () => {
-    if (!quizDataResult || !effectiveOrgId || !user?.id) return;
+    if (!quizDataForPlayer || !effectiveOrgId || !user?.id) return;
+    if (quizIsCapped && quizQuestionsStatus !== 'Exhausted') return;
 
-    const answers = quizDataResult.questions.map((q) => ({
+    const answers = quizDataForPlayer.questions.map((q) => ({
       questionId: q._id,
       userAnswer: userAnswers[q._id] || '',
     }));
@@ -661,7 +662,7 @@ export default function LearningClient() {
     try {
       const result = await submitQuizAttemptMutation({
         organizationId: effectiveOrgId as Id<'organizations'>,
-        quizId: quizDataResult.quiz._id,
+        quizId: quizDataForPlayer.quiz._id,
         answers,
       });
 

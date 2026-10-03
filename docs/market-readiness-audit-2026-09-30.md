@@ -143,6 +143,41 @@
 
 **Осталось DATA-01:** course enrollment list, lessons/quizzes, course counts, точные aggregates/admin reports, legacy capped APIs и полноценный поиск/категории. ACL unpublished content / quiz answer keys остаются отдельным review. Full suite/build/E2E/deploy не проверены; Gate B остается открытым.
 
+## Ход исправлений — 3 октября 2026, LMS draft / quiz answer ACL
+
+Исправлено локально, **не развернуто в production**:
+
+- Общая publication/tenant policy закрывает `getCourse`, `getCourseWithLessons`, paginated lessons/quizzes и обе personal enrollment histories: draft course не раскрывается employee даже при существующем enrollment. Admin/superadmin сохраняют доступ; foreign linked course в legacy history также скрыт.
+- Четыре quiz question read endpoints исключают `correctAnswer` и `explanation` для non-admin. Admin получает поля для управления; оценка ответа остается серверной. Quiz reads/submit проверяют публикацию quiz и связанных course, tenant lesson и согласованность lesson↔course. Draft quiz по lesson возвращает null; paginated course quiz list фильтрует unpublished до paginate.
+- `updateLessonProgress` не позволяет employee записывать прогресс и автоматически выпускать сертификат для draft course.
+- Проверено: `type-check:ci`; 5 suites / 141 тест прошли, включая новые local DB regression-сценарии draft/detail/history, четыре question read пути, anonymous/foreign/inactive, inconsistent linked records, запрет draft submit без новой записи и grading 100% без передачи answer key клиенту. ESLint `convex/learning.ts --max-warnings 0` прошел после устранения двух unused-variable warning.
+
+**Не закрыто:** полнота и порядок grading для больших quizzes, доверенность completion/certificate, maxAttempts/time-limit enforcement, полноценный quiz publishing UI, полный endpoint review, full suite/build/browser E2E и production acceptance. Enrollment не используется как новое обязательное условие чтения опубликованных материалов: существующий preview/catalog workflow сохранен. Gate B и NO-GO остаются в силе.
+
+## Ход исправлений — 3 октября 2026, DATA-01 quiz grading / attempts
+
+Исправлено локально, **не развернуто в production**:
+
+- `submitQuizAttempt` принимает validated array (`questionId?`, `userAnswer:string`). Современные ответы сопоставляются по ID независимо от порядка; legacy arrays без ID сохраняют creation-order контракт существующих read endpoints. Дубликаты, mixed ID/positional и вопросы другого quiz отклоняются до записи. Неотвеченные вопросы остаются в полном знаменателе, клиент не может исключить их из оценки.
+- Grading читает cap+1: до 2000 вопросов поддерживаются целиком, 2001+ дают явный `Quiz exceeds grading limit`, без сохранения попытки по усеченной выборке. Некорректные points/passingScore отклоняются. Это bounded grading, **не неограниченное масштабирование quizzes**.
+- Attempt counting больше не застревает на 500: до 2000 existing attempts читаются полностью, превышение дает явный отказ. `maxAttempts` проверяется как положительное целое; 502-я попытка при лимите 501 отклоняется. Transaction сохраняет проверку и запись в одном mutation.
+- Learning UI отправляет вопросы фактически загруженного paginated player, а не legacy первых 2000. Submit заблокирован до `Exhausted` для capped quiz: и кнопка, и callback защищены от оценки неполностью загруженного теста.
+- Regression сначала воспроизвел score 0 вместо 100 при reordered ID answers и обход maxAttempts после 500. После исправления: 5 suites / 144 теста, `type-check:ci`, ESLint трех production-файлов с `--max-warnings 0` прошли. Local DB проверки: 501 weighted questions, полный знаменатель, legacy order, foreign/duplicate/mixed/malformed payload, 501/502 attempts, 2000/2001 question boundary; UI partial/exhausted submit.
+
+**Осталось:** authoritative quiz start/time limit, server-side completion/certificate proof (клиент по-прежнему сообщает completion), обязательная сдача quiz перед сертификатом, invalid grading-config validation при создании/редактировании, удобная диагностика oversized quiz в UI, полная пагинация остальных DATA-01 paths и endpoint review. Full suite/build/browser LMS E2E/deploy этим блоком не проверены; Gate B/NO-GO не закрыты.
+
+## Ход исправлений — 3 октября 2026, LMS completion / certificate evidence
+
+Исправлено локально, **не развернуто в production**:
+
+- По согласованной policy **admin override без завершения не сохранен**: `issueCertificate` требует активного сотрудника своего tenant, опубликованного курса, действующего enrollment и полной server evidence. `updateEnrollmentStatus` также не позволяет ни owner, ни admin выставить completed без evidence или прислать произвольный progress.
+- Общая `courseCompletion` проверяет все lesson IDs и deduplicates completed progress. 199/200 уроков и дубликат одной записи больше не превращаются в 100%; unfinished progress ограничен 99%. При превышении 2000 lessons/progress/quizzes mutation явно отклоняется, вместо сертификата по усеченной выборке.
+- Учитываются course-level quizzes и quizzes, связанные только через lessonId. Для всех связанных quizzes нужны published/consistent links и сохраненный passed attempt именно этого пользователя. Quiz-урок без quiz не завершается. `updateLessonProgress` не принимает completion quiz-урока без сдачи; чужая успешная попытка и собственная failed не подходят.
+- Запись прогресса требует действующего enrollment; отрицательные/нечисловые time/position отклоняются. Повторный completion не дублирует сертификат. Если lesson completion отменен, следующий пересчет снимает completed status. Существующий сертификат при этом **не удаляется автоматически** — historical/revocation policy отдельно.
+- Проверено: 5 suites / 147 тестов, `type-check:ci`, ESLint `convex/learning.ts --max-warnings 0`. Regression: bypass через status/manual certificate, lesson-only quiz, чужие/failed/passed attempts, повторная выдача, manual issue после удаления сертификата, missing/expired enrollment, отсутствующий quiz, пустой курс с forged completed enrollment, invalid progress input, 2001 lessons, rounding/duplicate progress и обязательный course-level quiz.
+
+**Ограничения:** текст/видео остаются user acknowledgement, не доказательством просмотра; существующие legacy passed attempts/progress считаются evidence и не переаттестуются; quiz/content versioning, invalidation после редактирования и отзыв исторических сертификатов не реализованы; authoritative quiz start/time limit остается открыт. Native paging/aggregate completion для очень больших courses, N+1 read budget, policy renewals/expiry, UX понятных ошибок и browser LMS E2E требуют следующего этапа. Full suite/build/deploy не проверены; Gate B/NO-GO сохраняются.
+
 ## Незакрытые задачи (осталось до Gate B)
 
 1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.

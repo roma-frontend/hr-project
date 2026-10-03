@@ -1,12 +1,19 @@
 {
   "$schemaNote": "Accepted critical/high advisories. id = GHSA advisory URL. Each entry needs a reason; remove entries once the advisory no longer applies.",
   "advisories": {
+    "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm": {
+      "package": "braces",
+      "severity": "high",
+      "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+      "reason": "No fix available (braces 3.0.3 is latest; transitive via micromatch/fast-glob/storybook/eslint-config-next). Dev/build tooling only — not reachable from user input at runtime. Pattern depth to trigger stack exhaustion requires attacker-controlled glob string, which the app never exposes. Tracked for removal once upstream publishes a fix.",
+      "acceptedOn": "2026-10-03"
+    },
     "https://github.com/advisories/GHSA-86w9-cpqp-85rv": {
       "package": "node-forge",
       "severity": "high",
       "title": "node-forge RSA PKCS#1 v1.5 signature verification accepts extra nested DigestAlgorithm elements",
       "reason": "No fix available (1.4.0 is latest). SAML verify path validates SP-issued signatures only via samlify-node-xmllint pinned cert; not exposed to untrusted nested DigestAlgorithm tampering.",
-      "acceptedOn": "2026-10-02"
+      "acceptedOn": "2026-10-03"
     }
   }
 }

@@ -410,7 +410,10 @@ export function LessonPlayerDialog({
                       ) : (
                         <Button
                           onClick={onSubmitQuiz}
-                          disabled={Object.keys(userAnswers).length === 0}
+                          disabled={
+                            Object.keys(userAnswers).length === 0 ||
+                            (quizIsCapped && quizStatus !== 'Exhausted')
+                          }
                         >
                           {t('learning.submitQuiz', 'Submit Quiz')}
                         </Button>

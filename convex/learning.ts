@@ -26,8 +26,139 @@ async function checkAccess(ctx: QueryCtx | MutationCtx, organizationId: Id<'orga
   };
 }
 
-interface QuizAnswerInput {
-  userAnswer: string;
+// Shared read policy also covers legacy detail/history and lesson-linked quiz paths.
+async function requireReadableCourse(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: Id<'organizations'>,
+  courseId: Id<'courses'>,
+  isAdmin: boolean,
+) {
+  const course = await ctx.db.get(courseId);
+  if (!course || course.organizationId !== organizationId || (!isAdmin && !course.isPublished)) {
+    throw new Error('Course not found');
+  }
+  return course;
+}
+
+async function assertReadableQuiz(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: Id<'organizations'>,
+  quiz: Doc<'quizzes'>,
+  isAdmin: boolean,
+) {
+  if (quiz.organizationId !== organizationId || (!isAdmin && !quiz.isPublished)) {
+    throw new Error('Quiz not found');
+  }
+  if (quiz.courseId) {
+    await requireReadableCourse(ctx, organizationId, quiz.courseId, isAdmin);
+  }
+  if (quiz.lessonId) {
+    const lesson = await ctx.db.get(quiz.lessonId);
+    if (
+      !lesson ||
+      lesson.organizationId !== organizationId ||
+      (quiz.courseId && lesson.courseId !== quiz.courseId)
+    ) {
+      throw new Error('Lesson not found');
+    }
+    await requireReadableCourse(ctx, organizationId, lesson.courseId, isAdmin);
+  }
+}
+
+function readableQuestion(question: Doc<'quizQuestions'>, isAdmin: boolean) {
+  const { correctAnswer, explanation, ...safe } = question;
+  return { ...safe, ...(isAdmin ? { correctAnswer, explanation } : {}) };
+}
+
+// Completion evidence is shared by progress, status and manual certificate paths.
+async function courseCompletion(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: Id<'organizations'>,
+  courseId: Id<'courses'>,
+  userId: Id<'users'>,
+) {
+  const course = await ctx.db.get(courseId);
+  if (!course || course.organizationId !== organizationId || !course.isPublished) {
+    throw new Error('Course not found');
+  }
+  const enrollment = await ctx.db
+    .query('enrollments')
+    .withIndex('by_user_course', (q) =>
+      q.eq('organizationId', organizationId).eq('userId', userId).eq('courseId', courseId),
+    )
+    .first();
+  if (
+    !enrollment ||
+    enrollment.status === 'expired' ||
+    (enrollment.expiresAt !== undefined && enrollment.expiresAt <= Date.now())
+  ) {
+    throw new Error('Active enrollment required');
+  }
+  const lessons = await ctx.db
+    .query('lessons')
+    .withIndex('by_course', (q) => q.eq('organizationId', organizationId).eq('courseId', courseId))
+    .take(DEFAULT_LIST_CAP + 1);
+  const progress = await ctx.db
+    .query('lessonProgress')
+    .withIndex('by_user_course', (q) =>
+      q.eq('organizationId', organizationId).eq('userId', userId).eq('courseId', courseId),
+    )
+    .take(DEFAULT_LIST_CAP + 1);
+  if (lessons.length > DEFAULT_LIST_CAP || progress.length > DEFAULT_LIST_CAP) {
+    throw new Error('Course exceeds completion limit');
+  }
+  const quizzes = await ctx.db
+    .query('quizzes')
+    .withIndex('by_course', (q) => q.eq('organizationId', organizationId).eq('courseId', courseId))
+    .take(DEFAULT_LIST_CAP + 1);
+  if (quizzes.length > DEFAULT_LIST_CAP) throw new Error('Course exceeds completion limit');
+  const byId = new Map(quizzes.map((quiz) => [quiz._id, quiz]));
+  const quizLessons = new Set<Id<'lessons'>>();
+  for (const lesson of lessons) {
+    const linked = await ctx.db
+      .query('quizzes')
+      .withIndex('by_lesson', (q) =>
+        q.eq('organizationId', organizationId).eq('lessonId', lesson._id),
+      )
+      .take(DEFAULT_LIST_CAP + 1);
+    if (linked.length) quizLessons.add(lesson._id);
+    for (const quiz of linked) byId.set(quiz._id, quiz);
+    if (byId.size > DEFAULT_LIST_CAP) throw new Error('Course exceeds completion limit');
+  }
+  const completed = new Set(progress.filter((row) => row.isCompleted).map((row) => row.lessonId));
+  const lessonIds = new Set(lessons.map((lesson) => lesson._id));
+  let quizzesPassed = true;
+  for (const quiz of byId.values()) {
+    if (
+      !quiz.isPublished ||
+      (quiz.courseId && quiz.courseId !== courseId) ||
+      (quiz.lessonId && !lessonIds.has(quiz.lessonId))
+    ) {
+      quizzesPassed = false;
+      continue;
+    }
+    const passed = await ctx.db
+      .query('quizAttempts')
+      .withIndex('by_user_quiz', (q) =>
+        q.eq('organizationId', organizationId).eq('userId', userId).eq('quizId', quiz._id),
+      )
+      .filter((q) => q.eq(q.field('passed'), true))
+      .first();
+    if (!passed) quizzesPassed = false;
+  }
+  const completedCount = lessons.filter((lesson) => completed.has(lesson._id)).length;
+  const complete =
+    lessons.length > 0 &&
+    completedCount === lessons.length &&
+    quizzesPassed &&
+    lessons.every((lesson) => lesson.contentType !== 'quiz' || quizLessons.has(lesson._id));
+  // Never round an unfinished course up to 100%.
+  const percent = complete
+    ? 100
+    : lessons.length
+      ? Math.min(99, Math.floor((completedCount / lessons.length) * 100))
+      : 0;
+  return { enrollment, complete, progress: percent };
 }
 
 // ─── COURSES ─────────────────────────────────────────────────────────────────
@@ -155,11 +286,13 @@ export const getCourse = query({
     courseId: v.id('courses'),
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.organizationId !== args.organizationId) {
-      throw new Error('Course not found');
-    }
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    const course = await requireReadableCourse(
+      ctx,
+      args.organizationId,
+      args.courseId,
+      isSuperadmin,
+    );
     return course;
   },
 });
@@ -170,11 +303,13 @@ export const getCourseWithLessons = query({
     courseId: v.id('courses'),
   },
   handler: async (ctx, args) => {
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.organizationId !== args.organizationId) {
-      throw new Error('Course not found');
-    }
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    const course = await requireReadableCourse(
+      ctx,
+      args.organizationId,
+      args.courseId,
+      isSuperadmin,
+    );
     const myEnrollment = await ctx.db
       .query('enrollments')
       .withIndex('by_user_course', (q) =>
@@ -211,11 +346,8 @@ export const getCourseLessonsPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.organizationId !== args.organizationId) {
-      throw new Error('Course not found');
-    }
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    await requireReadableCourse(ctx, args.organizationId, args.courseId, isSuperadmin);
     const result = await ctx.db
       .query('lessons')
       .withIndex('by_course', (q) =>
@@ -238,20 +370,20 @@ export const getCourseQuizzesPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.organizationId !== args.organizationId) {
-      throw new Error('Course not found');
-    }
-    const result = await ctx.db
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    await requireReadableCourse(ctx, args.organizationId, args.courseId, isSuperadmin);
+    const scoped = ctx.db
       .query('quizzes')
       .withIndex('by_course', (q) =>
         q.eq('organizationId', args.organizationId).eq('courseId', args.courseId),
-      )
-      .paginate({
-        ...args.paginationOpts,
-        numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
-      });
+      );
+    const published = isSuperadmin
+      ? scoped
+      : scoped.filter((q) => q.eq(q.field('isPublished'), true));
+    const result = await published.paginate({
+      ...args.paginationOpts,
+      numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
+    });
     return result;
   },
 });
@@ -471,7 +603,7 @@ export const getMyEnrollments = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const enrollments = await ctx.db
       .query('enrollments')
       .withIndex('by_user', (q) =>
@@ -481,7 +613,12 @@ export const getMyEnrollments = query({
 
     const enriched = await Promise.all(
       enrollments.map(async (enrollment) => {
-        const course = await ctx.db.get(enrollment.courseId);
+        const linkedCourse = await ctx.db.get(enrollment.courseId);
+        const course =
+          linkedCourse?.organizationId === args.organizationId &&
+          (isSuperadmin || linkedCourse.isPublished)
+            ? linkedCourse
+            : null;
         return { ...enrollment, courseTitle: course?.title ?? 'Unknown Course', course };
       }),
     );
@@ -497,7 +634,7 @@ export const getMyEnrollmentsPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const result = await ctx.db
       .query('enrollments')
       .withIndex('by_user', (q) =>
@@ -511,7 +648,11 @@ export const getMyEnrollmentsPaginated = query({
     const page = await Promise.all(
       result.page.map(async (enrollment) => {
         const linkedCourse = await ctx.db.get(enrollment.courseId);
-        const course = linkedCourse?.organizationId === args.organizationId ? linkedCourse : null;
+        const course =
+          linkedCourse?.organizationId === args.organizationId &&
+          (isSuperadmin || linkedCourse.isPublished)
+            ? linkedCourse
+            : null;
         return { ...enrollment, courseTitle: course?.title ?? 'Unknown Course', course };
       }),
     );
@@ -709,12 +850,28 @@ export const updateEnrollmentStatus = mutation({
     if (!isSuperadmin && enrollment.userId !== requesterId) {
       throw new Error('Access denied');
     }
-    if (args.progress !== undefined && (args.progress < 0 || args.progress > 100)) {
+    if (
+      args.progress !== undefined &&
+      (!Number.isFinite(args.progress) || args.progress < 0 || args.progress > 100)
+    ) {
       throw new Error('Progress must be between 0 and 100');
     }
 
-    const patch: Partial<Doc<'enrollments'>> = { status: args.status, updatedAt: Date.now() };
-    if (args.progress !== undefined) patch.progress = args.progress;
+    const evidence = await courseCompletion(
+      ctx,
+      enrollment.organizationId,
+      enrollment.courseId,
+      enrollment.userId,
+    );
+    if (args.status === 'completed' && !evidence.complete) throw new Error('Course not completed');
+    if (args.progress !== undefined && args.progress !== evidence.progress) {
+      throw new Error('Progress must match server evidence');
+    }
+    const patch: Partial<Doc<'enrollments'>> = {
+      status: args.status,
+      progress: evidence.progress,
+      updatedAt: Date.now(),
+    };
     if (args.status === 'in_progress' && !enrollment.startedAt) patch.startedAt = Date.now();
     if (args.status === 'completed') {
       patch.completedAt = Date.now();
@@ -757,7 +914,7 @@ export const updateLessonProgress = mutation({
     lastPosition: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const course = await ctx.db.get(args.courseId);
     const lesson = await ctx.db.get(args.lessonId);
     if (
@@ -768,6 +925,52 @@ export const updateLessonProgress = mutation({
       lesson.courseId !== course._id
     ) {
       throw new Error('Lesson not found');
+    }
+    await requireReadableCourse(ctx, args.organizationId, args.courseId, isSuperadmin);
+    const activeEnrollment = await ctx.db
+      .query('enrollments')
+      .withIndex('by_user_course', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', requesterId)
+          .eq('courseId', args.courseId),
+      )
+      .first();
+    if (
+      !activeEnrollment ||
+      activeEnrollment.status === 'expired' ||
+      (activeEnrollment.expiresAt !== undefined && activeEnrollment.expiresAt <= Date.now())
+    ) {
+      throw new Error('Active enrollment required');
+    }
+    for (const value of [args.timeSpentSeconds, args.lastPosition]) {
+      if (value !== undefined && (!Number.isFinite(value) || value < 0)) {
+        throw new Error('Invalid lesson progress');
+      }
+    }
+    if (args.isCompleted) {
+      const quizzes = await ctx.db
+        .query('quizzes')
+        .withIndex('by_lesson', (q) =>
+          q.eq('organizationId', args.organizationId).eq('lessonId', lesson._id),
+        )
+        .take(DEFAULT_LIST_CAP + 1);
+      if (quizzes.length > DEFAULT_LIST_CAP) throw new Error('Course exceeds completion limit');
+      if (lesson.contentType === 'quiz' && quizzes.length === 0) throw new Error('Quiz required');
+      for (const quiz of quizzes) {
+        await assertReadableQuiz(ctx, args.organizationId, quiz, false);
+        const passed = await ctx.db
+          .query('quizAttempts')
+          .withIndex('by_user_quiz', (q) =>
+            q
+              .eq('organizationId', args.organizationId)
+              .eq('userId', requesterId)
+              .eq('quizId', quiz._id),
+          )
+          .filter((q) => q.eq(q.field('passed'), true))
+          .first();
+        if (!passed) throw new Error('Quiz must be passed');
+      }
     }
 
     const existing = await ctx.db
@@ -807,44 +1010,9 @@ export const updateLessonProgress = mutation({
       });
     }
 
-    // ─── Recalculate enrollment progress ───────────────────────────────────
-    const allLessons = await ctx.db
-      .query('lessons')
-      .withIndex('by_course', (q) =>
-        q.eq('organizationId', args.organizationId).eq('courseId', args.courseId),
-      )
-      .take(DEFAULT_LIST_CAP);
-
-    const allLessonIds = new Set(allLessons.map((l) => l._id));
-
-    const allProgress = await ctx.db
-      .query('lessonProgress')
-      .withIndex('by_user_course', (q) =>
-        q
-          .eq('organizationId', args.organizationId)
-          .eq('userId', requesterId)
-          .eq('courseId', args.courseId),
-      )
-      .take(DEFAULT_LIST_CAP);
-
-    const completedLessons = allProgress.filter(
-      (p) => p.isCompleted && allLessonIds.has(p.lessonId),
-    ).length;
-
-    const totalLessons = allLessons.length;
-    const progressPercent =
-      totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-
-    // Update enrollment progress
-    const enrollment = await ctx.db
-      .query('enrollments')
-      .withIndex('by_user_course', (q) =>
-        q
-          .eq('organizationId', args.organizationId)
-          .eq('userId', requesterId)
-          .eq('courseId', args.courseId),
-      )
-      .first();
+    const evidence = await courseCompletion(ctx, args.organizationId, args.courseId, requesterId);
+    const progressPercent = evidence.progress;
+    const enrollment = evidence.enrollment;
 
     if (enrollment) {
       const enrollmentPatch: Partial<Doc<'enrollments'>> = {
@@ -858,8 +1026,12 @@ export const updateLessonProgress = mutation({
         enrollmentPatch.startedAt = now;
       }
 
-      // Auto-complete when all lessons done
-      if (progressPercent === 100 && enrollment.status !== 'completed') {
+      if (!evidence.complete && enrollment.status === 'completed') {
+        enrollmentPatch.status = 'in_progress';
+        enrollmentPatch.completedAt = undefined;
+      }
+      // Auto-complete only when all server evidence is present.
+      if (evidence.complete && enrollment.status !== 'completed') {
         enrollmentPatch.status = 'completed';
         enrollmentPatch.completedAt = now;
       }
@@ -867,7 +1039,7 @@ export const updateLessonProgress = mutation({
       await ctx.db.patch(enrollment._id, enrollmentPatch);
 
       // Auto-issue certificate on course completion
-      if (progressPercent === 100 && enrollment.status !== 'completed') {
+      if (evidence.complete) {
         const existingCert = await ctx.db
           .query('certificates')
           .withIndex('by_user_course', (q) =>
@@ -904,11 +1076,12 @@ export const getQuiz = query({
     quizId: v.id('quizzes'),
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const quiz = await ctx.db.get(args.quizId);
     if (!quiz || quiz.organizationId !== args.organizationId) {
       throw new Error('Quiz not found');
     }
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
 
     const questions = await ctx.db
       .query('quizQuestions')
@@ -918,7 +1091,11 @@ export const getQuiz = query({
       .order('asc')
       .take(DEFAULT_LIST_CAP);
 
-    return { quiz, questions, isCapped: questions.length === DEFAULT_LIST_CAP };
+    return {
+      quiz,
+      questions: questions.map((question) => readableQuestion(question, isSuperadmin)),
+      isCapped: questions.length === DEFAULT_LIST_CAP,
+    };
   },
 });
 
@@ -930,11 +1107,12 @@ export const getQuizQuestionsPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const quiz = await ctx.db.get(args.quizId);
     if (!quiz || quiz.organizationId !== args.organizationId) {
       throw new Error('Quiz not found');
     }
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
     const result = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
@@ -945,7 +1123,10 @@ export const getQuizQuestionsPaginated = query({
         ...args.paginationOpts,
         numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
       });
-    return result;
+    return {
+      ...result,
+      page: result.page.map((question) => readableQuestion(question, isSuperadmin)),
+    };
   },
 });
 
@@ -955,7 +1136,7 @@ export const getQuizByLesson = query({
     lessonId: v.id('lessons'),
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
 
     const quiz = await ctx.db
       .query('quizzes')
@@ -964,7 +1145,8 @@ export const getQuizByLesson = query({
       )
       .first();
 
-    if (!quiz) return null;
+    if (!quiz || (!isSuperadmin && !quiz.isPublished)) return null;
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
 
     const questions = await ctx.db
       .query('quizQuestions')
@@ -974,7 +1156,11 @@ export const getQuizByLesson = query({
       .order('asc')
       .take(DEFAULT_LIST_CAP);
 
-    return { quiz, questions, isCapped: questions.length === DEFAULT_LIST_CAP };
+    return {
+      quiz,
+      questions: questions.map((question) => readableQuestion(question, isSuperadmin)),
+      isCapped: questions.length === DEFAULT_LIST_CAP,
+    };
   },
 });
 
@@ -986,7 +1172,7 @@ export const getQuizByLessonQuestionsPaginated = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await checkAccess(ctx, args.organizationId);
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
     const quiz = await ctx.db
       .query('quizzes')
       .withIndex('by_lesson', (q) =>
@@ -994,6 +1180,7 @@ export const getQuizByLessonQuestionsPaginated = query({
       )
       .first();
     if (!quiz) throw new Error('Quiz not found');
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
     const result = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
@@ -1004,7 +1191,10 @@ export const getQuizByLessonQuestionsPaginated = query({
         ...args.paginationOpts,
         numItems: Math.min(MAX_PAGE_SIZE, Math.max(1, args.paginationOpts.numItems)),
       });
-    return result;
+    return {
+      ...result,
+      page: result.page.map((question) => readableQuestion(question, isSuperadmin)),
+    };
   },
 });
 
@@ -1120,40 +1310,57 @@ export const submitQuizAttempt = mutation({
   args: {
     organizationId: v.id('organizations'),
     quizId: v.id('quizzes'),
-    answers: v.any(),
+    answers: v.array(
+      v.object({
+        questionId: v.optional(v.id('quizQuestions')),
+        userAnswer: v.string(),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'learning');
-    const { requesterId } = await checkAccess(ctx, args.organizationId);
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
 
     const quiz = await ctx.db.get(args.quizId);
     if (!quiz || quiz.organizationId !== args.organizationId) throw new Error('Quiz not found');
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
 
     const questions = await ctx.db
       .query('quizQuestions')
       .withIndex('by_quiz', (q) =>
         q.eq('organizationId', args.organizationId).eq('quizId', quiz._id),
       )
-      .take(SMALL_LIST_CAP);
+      .order('asc')
+      .take(DEFAULT_LIST_CAP + 1);
 
     if (questions.length === 0) throw new Error('Quiz has no questions');
+    // Bounded grading must fail closed rather than certify a truncated quiz.
+    if (questions.length > DEFAULT_LIST_CAP) throw new Error('Quiz exceeds grading limit');
+    if (questions.some((q) => !Number.isFinite(q.points ?? 1) || (q.points ?? 1) <= 0)) {
+      throw new Error('Invalid quiz points');
+    }
+    if (!Number.isFinite(quiz.passingScore) || quiz.passingScore < 0 || quiz.passingScore > 100) {
+      throw new Error('Invalid passing score');
+    }
 
-    const totalPoints = questions.reduce((sum, q) => sum + (q.points ?? 1), 0);
+    const answers = args.answers;
+    const keyed = answers.some((answer) => answer.questionId !== undefined);
+    const byId = new Map(questions.map((question) => [question._id, question]));
+    const seen = new Set<Id<'quizQuestions'>>();
+    if (answers.length > questions.length) throw new Error('Too many quiz answers');
     let earnedPoints = 0;
-
-    const answers = args.answers as QuizAnswerInput[];
     const answerResults = answers.map((answer, idx) => {
-      const question = questions[idx];
-      if (!question) return { questionId: null, userAnswer: answer.userAnswer, isCorrect: false };
+      // ID-bearing submissions may be in any order. Legacy arrays retain the
+      // creation-order contract used by getQuiz/getQuizByLesson.
+      const question = keyed ? answer.questionId && byId.get(answer.questionId) : questions[idx];
+      if (!question || seen.has(question._id)) throw new Error('Invalid quiz answers');
+      seen.add(question._id);
       const isCorrect = answer.userAnswer === question.correctAnswer;
       if (isCorrect) earnedPoints += question.points ?? 1;
-      return {
-        questionId: question._id,
-        userAnswer: answer.userAnswer,
-        isCorrect,
-      };
+      return { questionId: question._id, userAnswer: answer.userAnswer, isCorrect };
     });
-
+    const totalPoints = questions.reduce((sum, q) => sum + (q.points ?? 1), 0);
+    if (!Number.isFinite(totalPoints)) throw new Error('Invalid quiz points');
     const score = Math.round((earnedPoints / totalPoints) * 100);
     const passed = score >= quiz.passingScore;
 
@@ -1165,11 +1372,17 @@ export const submitQuizAttempt = mutation({
           .eq('userId', requesterId)
           .eq('quizId', quiz._id),
       )
-      .take(SMALL_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
 
+    if (attemptCount.length > DEFAULT_LIST_CAP) throw new Error('Quiz exceeds attempt limit');
     const attemptNumber = attemptCount.length + 1;
-
-    if (quiz.maxAttempts && attemptNumber > quiz.maxAttempts) {
+    if (
+      quiz.maxAttempts !== undefined &&
+      (!Number.isInteger(quiz.maxAttempts) || quiz.maxAttempts < 1)
+    ) {
+      throw new Error('Invalid maximum attempts');
+    }
+    if (quiz.maxAttempts !== undefined && attemptNumber > quiz.maxAttempts) {
       throw new Error(`Maximum attempts (${quiz.maxAttempts}) exceeded`);
     }
 
@@ -1284,9 +1497,12 @@ export const issueCertificate = mutation({
     if (!course || course.organizationId !== args.organizationId) {
       throw new Error('Course not found');
     }
-    if (!user || user.organizationId !== args.organizationId) {
+    if (!user || user.organizationId !== args.organizationId || !user.isActive) {
       throw new Error('User not found in organization');
     }
+
+    const evidence = await courseCompletion(ctx, args.organizationId, args.courseId, args.userId);
+    if (!evidence.complete) throw new Error('Course not completed');
 
     const existing = await ctx.db
       .query('certificates')

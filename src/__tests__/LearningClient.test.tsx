@@ -107,6 +107,7 @@ jest.mock('@/convex/_generated/api', () => ({
       getCourseWithLessons: { _name: 'getCourseWithLessons' },
       getLessonProgress: { _name: 'getLessonProgress' },
       getQuizByLesson: { _name: 'getQuizByLesson' },
+      getQuizByLessonQuestionsPaginated: { _name: 'getQuizQuestionsPaginated' },
       getMyCertificates: { _name: 'getMyCertificates' },
       getMyCertificatesPaginated: { _name: 'getMyCertificates' },
       enrollInCourse: { _name: 'enrollInCourse' },
@@ -450,6 +451,7 @@ beforeEach(() => {
     quiz: { _id: 'quiz-1', lessonId: 'lesson-1' },
     questions: [{ _id: 'q1', text: 'What is React?' }],
   };
+  mockQueries.getQuizQuestionsPaginated = [];
   mockQueries.getMyCertificates = [{ _id: 'cert-1', title: 'React' }];
   mockMutations.enrollInCourse = jest.fn().mockResolvedValue({ success: true });
   mockMutations.createCourse = jest.fn().mockResolvedValue('course-2');
@@ -945,6 +947,32 @@ describe('LearningClient', () => {
     // the lesson gets marked complete via updateLessonProgress
     expect(mockMutations.updateLessonProgress).toHaveBeenCalledWith(
       expect.objectContaining({ lessonId: 'lesson-1', isCompleted: true }),
+    );
+  });
+
+  it('blocks partial paginated quiz submission and includes every loaded question once exhausted', async () => {
+    mockQueries.getQuizByLesson.isCapped = true;
+    mockQueries.getQuizQuestionsPaginated = [
+      { _id: 'q1', questionText: 'First' },
+      { _id: 'q2', questionText: 'Late question' },
+    ];
+    const { rerender } = render(<LearningClient />);
+    openPlayer();
+    fireEvent.click(screen.getByText('submit quiz'));
+    expect(mockMutations.submitQuizAttempt).not.toHaveBeenCalled();
+    mockEnrollmentStatus = 'Exhausted';
+    rerender(<LearningClient />);
+    fireEvent.click(screen.getByText('answer q1'));
+    fireEvent.click(screen.getByText('submit quiz'));
+    await waitFor(() =>
+      expect(mockMutations.submitQuizAttempt).toHaveBeenCalledWith({
+        organizationId: 'org-1',
+        quizId: 'quiz-1',
+        answers: [
+          { questionId: 'q1', userAnswer: 'A' },
+          { questionId: 'q2', userAnswer: '' },
+        ],
+      }),
     );
   });
 

@@ -189,6 +189,599 @@ describe('launch audit: security regressions and remaining unsafe characterizati
     expect(await t.run((ctx) => ctx.db.get(lessonId))).toMatchObject({ title: 'Allowed' });
   });
 
+  it('draft courses stay private across detail, lesson, quiz-list and personal-history reads', async () => {
+    const { t, orgId, courseId, employeeId, enrollmentId, lessonId } = await seedLearning();
+    await t.run(async (ctx) => {
+      await ctx.db.patch(courseId, { isPublished: false });
+      await ctx.db.patch(enrollmentId, { userId: employeeId });
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const args = { organizationId: orgId, courseId };
+    for (const fn of [api.learning.getCourse, api.learning.getCourseWithLessons]) {
+      await expect(learner.query(fn, args)).rejects.toThrow('Course not found');
+      expect(await admin.query(fn, args)).toBeTruthy();
+    }
+    for (const fn of [
+      api.learning.getCourseLessonsPaginated,
+      api.learning.getCourseQuizzesPaginated,
+    ]) {
+      const pagedArgs = { ...args, paginationOpts: { cursor: null, numItems: 10 } };
+      await expect(learner.query(fn, pagedArgs)).rejects.toThrow('Course not found');
+      expect(await admin.query(fn, pagedArgs)).toBeTruthy();
+    }
+    expect(
+      (await learner.query(api.learning.getMyEnrollments, { organizationId: orgId }))[0].course,
+    ).toBeNull();
+    expect(
+      (
+        await learner.query(api.learning.getMyEnrollmentsPaginated, {
+          organizationId: orgId,
+          paginationOpts: { cursor: null, numItems: 10 },
+        })
+      ).page[0].course,
+    ).toBeNull();
+    await expect(
+      learner.mutation(api.learning.updateLessonProgress, {
+        ...args,
+        lessonId,
+        isCompleted: true,
+      }),
+    ).rejects.toThrow('Course not found');
+    expect(await t.run((ctx) => ctx.db.query('lessonProgress').collect())).toHaveLength(0);
+    await t.run((ctx) => ctx.db.patch(courseId, { isPublished: true }));
+    expect(await learner.query(api.learning.getCourse, args)).toMatchObject({ _id: courseId });
+  });
+
+  it('quiz reads hide answer keys and explanations while server-side grading still works', async () => {
+    const { t, orgId, courseId, lessonId, employeeId, otherCourseId, otherOrgId } =
+      await seedLearning();
+    const quizId = await t.run(async (ctx) => {
+      const quizId = await ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        courseId,
+        lessonId,
+        title: 'Published quiz',
+        passingScore: 70,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert('quizQuestions', {
+        organizationId: orgId,
+        quizId,
+        questionText: 'Pick one',
+        questionType: 'multiple_choice',
+        options: ['A', 'B'],
+        correctAnswer: 'B',
+        explanation: 'Secret answer explanation',
+        points: 1,
+        order: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return quizId;
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const quizArgs = { organizationId: orgId, quizId };
+    const lessonArgs = { organizationId: orgId, lessonId };
+    const paginationOpts = { cursor: null, numItems: 10 };
+    const readQuestions = async () => [
+      (await learner.query(api.learning.getQuiz, quizArgs)).questions,
+      (await learner.query(api.learning.getQuizByLesson, lessonArgs))!.questions,
+      (await learner.query(api.learning.getQuizQuestionsPaginated, { ...quizArgs, paginationOpts }))
+        .page,
+      (
+        await learner.query(api.learning.getQuizByLessonQuestionsPaginated, {
+          ...lessonArgs,
+          paginationOpts,
+        })
+      ).page,
+    ];
+    for (const questions of await readQuestions()) {
+      expect(questions).toHaveLength(1);
+      expect(questions[0]).not.toHaveProperty('correctAnswer');
+      expect(questions[0]).not.toHaveProperty('explanation');
+      expect(questions[0]).toMatchObject({ questionText: 'Pick one', options: ['A', 'B'] });
+    }
+    expect((await admin.query(api.learning.getQuiz, quizArgs)).questions[0]).toMatchObject({
+      correctAnswer: 'B',
+    });
+    expect(
+      await learner.mutation(api.learning.submitQuizAttempt, {
+        ...quizArgs,
+        answers: [{ userAnswer: 'B' }],
+      }),
+    ).toMatchObject({ score: 100, passed: true });
+    await expect(t.query(api.learning.getQuiz, quizArgs)).rejects.toThrow('Not authenticated');
+    await expect(
+      t.withIdentity({ email: 'other-learner@example.test' }).query(api.learning.getQuiz, quizArgs),
+    ).rejects.toThrow('Access denied');
+    await t.run((ctx) => ctx.db.patch(employeeId, { isActive: false }));
+    await expect(learner.query(api.learning.getQuiz, quizArgs)).rejects.toThrow(
+      'Not authenticated',
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(employeeId, { isActive: true });
+      await ctx.db.patch(quizId, { isPublished: false });
+    });
+    await expect(readQuestions()).rejects.toThrow('Quiz not found');
+    expect(await learner.query(api.learning.getQuizByLesson, lessonArgs)).toBeNull();
+    expect(
+      (
+        await learner.query(api.learning.getCourseQuizzesPaginated, {
+          organizationId: orgId,
+          courseId,
+          paginationOpts,
+        })
+      ).page,
+    ).toHaveLength(0);
+    await expect(
+      learner.mutation(api.learning.submitQuizAttempt, {
+        ...quizArgs,
+        answers: [{ userAnswer: 'B' }],
+      }),
+    ).rejects.toThrow('Quiz not found');
+    expect(await t.run((ctx) => ctx.db.query('quizAttempts').collect())).toHaveLength(1);
+    await t.run((ctx) => ctx.db.patch(quizId, { isPublished: true, courseId: otherCourseId }));
+    await expect(learner.query(api.learning.getQuiz, quizArgs)).rejects.toThrow('Course not found');
+    await expect(admin.query(api.learning.getQuiz, quizArgs)).rejects.toThrow('Course not found');
+    await t.run(async (ctx) => {
+      await ctx.db.patch(quizId, { courseId });
+      await ctx.db.patch(lessonId, { organizationId: otherOrgId });
+    });
+    await expect(learner.query(api.learning.getQuiz, quizArgs)).rejects.toThrow('Lesson not found');
+  });
+
+  it('quiz grading covers 501 questions by ID, keeps legacy order, and rejects forged payloads atomically', async () => {
+    const { t, orgId } = await seedLearning();
+    const { quizId, questionIds } = await t.run(async (ctx) => {
+      const quizId = await ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        title: 'Large quiz',
+        passingScore: 100,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const questionIds = [];
+      for (let i = 0; i < 501; i++) {
+        questionIds.push(
+          await ctx.db.insert('quizQuestions', {
+            organizationId: orgId,
+            quizId,
+            questionText: `Question ${i}`,
+            questionType: 'short_answer',
+            correctAnswer: `Answer ${i}`,
+            points: i === 500 ? 500 : 1,
+            order: 501 - i,
+            createdAt: i,
+            updatedAt: i,
+          }),
+        );
+      }
+      return { quizId, questionIds };
+    });
+    const foreignQuestionId = await t.run(async (ctx) => {
+      const otherQuizId = await ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        title: 'Other quiz',
+        passingScore: 70,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return ctx.db.insert('quizQuestions', {
+        organizationId: orgId,
+        quizId: otherQuizId,
+        questionText: 'Other',
+        questionType: 'short_answer',
+        correctAnswer: 'A',
+        order: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const args = { organizationId: orgId, quizId };
+    const answers = questionIds.map((questionId, i) => ({ questionId, userAnswer: `Answer ${i}` }));
+    expect(
+      await learner.mutation(api.learning.submitQuizAttempt, {
+        ...args,
+        answers: [...answers].reverse(),
+      }),
+    ).toMatchObject({ score: 100, passed: true, attemptNumber: 1 });
+    expect(
+      await learner.mutation(api.learning.submitQuizAttempt, {
+        ...args,
+        answers: answers.slice(0, 500),
+      }),
+    ).toMatchObject({ score: 50, passed: false });
+    const read = await learner.query(api.learning.getQuiz, args);
+    expect(
+      await learner.mutation(api.learning.submitQuizAttempt, {
+        ...args,
+        answers: read.questions.map((q) => ({
+          userAnswer: `Answer ${q.questionText.split(' ')[1]}`,
+        })),
+      }),
+    ).toMatchObject({ score: 100, passed: true });
+    for (const payload of [
+      [answers[0], answers[0]],
+      [answers[0], { userAnswer: 'Answer 1' }],
+      [{ questionId: 'not-a-question', userAnswer: 'Answer 0' }],
+      [{ questionId: foreignQuestionId, userAnswer: 'A' }],
+      [{ userAnswer: 42 }],
+      { userAnswer: 'Answer 0' },
+    ]) {
+      await expect(
+        learner.mutation(api.learning.submitQuizAttempt, { ...args, answers: payload as any }),
+      ).rejects.toThrow();
+    }
+    expect(await t.run((ctx) => ctx.db.query('quizAttempts').collect())).toHaveLength(3);
+    await t.run((ctx) => ctx.db.patch(questionIds[0], { points: 0 }));
+    await expect(
+      learner.mutation(api.learning.submitQuizAttempt, { ...args, answers }),
+    ).rejects.toThrow('Invalid quiz points');
+  });
+
+  it('quiz submission refuses truncated question sets and counts attempts beyond 500', async () => {
+    const { t, orgId, employeeId } = await seedLearning();
+    const quizId = await t.run(async (ctx) => {
+      const quizId = await ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        title: 'Boundary quiz',
+        passingScore: 70,
+        isPublished: true,
+        maxAttempts: 501,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert('quizQuestions', {
+        organizationId: orgId,
+        quizId,
+        questionText: 'Q',
+        questionType: 'short_answer',
+        correctAnswer: 'A',
+        order: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      for (let i = 0; i < 501; i++) {
+        await ctx.db.insert('quizAttempts', {
+          organizationId: orgId,
+          userId: employeeId,
+          quizId,
+          score: 0,
+          passed: false,
+          answers: [],
+          startedAt: i,
+          attemptNumber: i + 1,
+          createdAt: i,
+        });
+      }
+      return quizId;
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const args = { organizationId: orgId, quizId, answers: [{ userAnswer: 'A' }] };
+    await expect(learner.mutation(api.learning.submitQuizAttempt, args)).rejects.toThrow(
+      'Maximum attempts',
+    );
+    await t.run((ctx) => ctx.db.patch(quizId, { maxAttempts: 502 }));
+    expect(await learner.mutation(api.learning.submitQuizAttempt, args)).toMatchObject({
+      attemptNumber: 502,
+    });
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 2000; i++) {
+        await ctx.db.insert('quizQuestions', {
+          organizationId: orgId,
+          quizId,
+          questionText: 'Q',
+          questionType: 'short_answer',
+          correctAnswer: 'A',
+          order: i + 2,
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+    await expect(learner.mutation(api.learning.submitQuizAttempt, args)).rejects.toThrow(
+      'Quiz exceeds grading limit',
+    );
+    expect(await t.run((ctx) => ctx.db.query('quizAttempts').collect())).toHaveLength(502);
+    await t.run(async (ctx) => {
+      const last = await ctx.db
+        .query('quizQuestions')
+        .withIndex('by_quiz', (q) => q.eq('organizationId', orgId).eq('quizId', quizId))
+        .order('desc')
+        .first();
+      await ctx.db.delete(last!._id);
+      await ctx.db.patch(quizId, { maxAttempts: undefined });
+    });
+    // Exactly 2000 is supported; missing answers still count against the full denominator.
+    expect(await learner.mutation(api.learning.submitQuizAttempt, args)).toMatchObject({
+      attemptNumber: 503,
+      score: 0,
+      passed: false,
+    });
+  });
+
+  it('completion and manual certificates require server quiz evidence, including lesson-only quizzes', async () => {
+    const { t, orgId, courseId, lessonId, enrollmentId, employeeId } = await seedLearning();
+    const quizId = await t.run(async (ctx) => {
+      await ctx.db.patch(enrollmentId, { userId: employeeId });
+      await ctx.db.patch(lessonId, { contentType: 'quiz' });
+      const quizId = await ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        lessonId,
+        title: 'Required quiz',
+        passingScore: 70,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert('quizQuestions', {
+        organizationId: orgId,
+        quizId,
+        questionText: 'Q',
+        questionType: 'short_answer',
+        correctAnswer: 'A',
+        order: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return quizId;
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const progressArgs = { organizationId: orgId, courseId, lessonId, isCompleted: true };
+    const certArgs = { organizationId: orgId, courseId, userId: employeeId };
+    await expect(learner.mutation(api.learning.updateLessonProgress, progressArgs)).rejects.toThrow(
+      'Quiz must be passed',
+    );
+    for (const caller of [learner, admin]) {
+      await expect(
+        caller.mutation(api.learning.updateEnrollmentStatus, {
+          enrollmentId,
+          status: 'completed',
+        }),
+      ).rejects.toThrow('Course not completed');
+    }
+    await expect(admin.mutation(api.learning.issueCertificate, certArgs)).rejects.toThrow(
+      'Course not completed',
+    );
+    expect(await t.run((ctx) => ctx.db.query('lessonProgress').collect())).toHaveLength(0);
+    expect(await t.run((ctx) => ctx.db.query('certificates').collect())).toHaveLength(0);
+    await admin.mutation(api.learning.submitQuizAttempt, {
+      organizationId: orgId,
+      quizId,
+      answers: [{ userAnswer: 'A' }],
+    });
+    await expect(learner.mutation(api.learning.updateLessonProgress, progressArgs)).rejects.toThrow(
+      'Quiz must be passed',
+    );
+    await learner.mutation(api.learning.submitQuizAttempt, {
+      organizationId: orgId,
+      quizId,
+      answers: [{ userAnswer: 'Wrong' }],
+    });
+    await expect(learner.mutation(api.learning.updateLessonProgress, progressArgs)).rejects.toThrow(
+      'Quiz must be passed',
+    );
+    await learner.mutation(api.learning.submitQuizAttempt, {
+      organizationId: orgId,
+      quizId,
+      answers: [{ userAnswer: 'A' }],
+    });
+    expect(await learner.mutation(api.learning.updateLessonProgress, progressArgs)).toMatchObject({
+      progress: 100,
+    });
+    await learner.mutation(api.learning.updateLessonProgress, progressArgs);
+    expect(await t.run((ctx) => ctx.db.query('certificates').collect())).toHaveLength(1);
+    expect(await t.run((ctx) => ctx.db.get(enrollmentId))).toMatchObject({
+      status: 'completed',
+      progress: 100,
+    });
+    const cert = await t.run((ctx) => ctx.db.query('certificates').first());
+    await t.run((ctx) => ctx.db.delete(cert!._id));
+    expect(await admin.mutation(api.learning.issueCertificate, certArgs)).toMatchObject({
+      success: true,
+    });
+    await expect(learner.mutation(api.learning.issueCertificate, certArgs)).rejects.toThrow(
+      'Only admins',
+    );
+    await learner.mutation(api.learning.updateLessonProgress, {
+      ...progressArgs,
+      isCompleted: false,
+    });
+    expect(await t.run((ctx) => ctx.db.get(enrollmentId))).toMatchObject({
+      status: 'in_progress',
+      progress: 0,
+    });
+    await expect(admin.mutation(api.learning.issueCertificate, certArgs)).rejects.toThrow(
+      'Course not completed',
+    );
+  });
+
+  it('completion rejects missing/expired enrollment, missing quiz, empty course and capped lesson evidence', async () => {
+    const { t, orgId, courseId, lessonId, employeeId, enrollmentId } = await seedLearning();
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    const args = { organizationId: orgId, courseId, lessonId, isCompleted: true };
+    await expect(learner.mutation(api.learning.updateLessonProgress, args)).rejects.toThrow(
+      'Active enrollment required',
+    );
+    await t.run((ctx) => ctx.db.patch(enrollmentId, { userId: employeeId, expiresAt: 1 }));
+    await expect(learner.mutation(api.learning.updateLessonProgress, args)).rejects.toThrow(
+      'Active enrollment required',
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(enrollmentId, { expiresAt: undefined });
+      await ctx.db.patch(lessonId, { contentType: 'quiz' });
+    });
+    await expect(learner.mutation(api.learning.updateLessonProgress, args)).rejects.toThrow(
+      'Quiz required',
+    );
+    await t.run((ctx) => ctx.db.patch(lessonId, { contentType: 'text' }));
+    await expect(
+      admin.mutation(api.learning.issueCertificate, {
+        organizationId: orgId,
+        courseId,
+        userId: employeeId,
+      }),
+    ).rejects.toThrow('Course not completed');
+    const emptyCourseId = await t.run(async (ctx) => {
+      const source = (await ctx.db.get(courseId))!;
+      const { _id, _creationTime, ...fields } = source;
+      const id = await ctx.db.insert('courses', { ...fields, title: 'Empty' });
+      await ctx.db.insert('enrollments', {
+        organizationId: orgId,
+        userId: employeeId,
+        courseId: id,
+        status: 'completed',
+        progress: 100,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return id;
+    });
+    await expect(
+      admin.mutation(api.learning.issueCertificate, {
+        organizationId: orgId,
+        courseId: emptyCourseId,
+        userId: employeeId,
+      }),
+    ).rejects.toThrow('Course not completed');
+    for (const timeSpentSeconds of [-1, NaN]) {
+      await expect(
+        learner.mutation(api.learning.updateLessonProgress, {
+          ...args,
+          timeSpentSeconds,
+        }),
+      ).rejects.toThrow('Invalid lesson progress');
+    }
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 2000; i++)
+        await ctx.db.insert('lessons', {
+          organizationId: orgId,
+          courseId,
+          title: 'Late lesson',
+          order: i + 2,
+          contentType: 'text',
+          createdAt: 1,
+          updatedAt: 1,
+        });
+    });
+    await expect(learner.mutation(api.learning.updateLessonProgress, args)).rejects.toThrow(
+      'Course exceeds completion limit',
+    );
+    expect(await t.run((ctx) => ctx.db.query('lessonProgress').collect())).toHaveLength(0);
+    await expect(
+      admin.mutation(api.learning.issueCertificate, {
+        organizationId: orgId,
+        courseId,
+        userId: employeeId,
+      }),
+    ).rejects.toThrow('Course exceeds completion limit');
+  });
+
+  it('duplicate progress and rounding cannot certify an unfinished course or bypass a course quiz', async () => {
+    const { t, orgId, courseId, lessonId, employeeId, enrollmentId } = await seedLearning();
+    const quizId = await t.run(async (ctx) => {
+      await ctx.db.patch(enrollmentId, { userId: employeeId });
+      for (let i = 0; i < 200; i++) {
+        const id =
+          i === 0
+            ? lessonId
+            : await ctx.db.insert('lessons', {
+                organizationId: orgId,
+                courseId,
+                title: 'Lesson',
+                order: i + 1,
+                contentType: 'text',
+                createdAt: 1,
+                updatedAt: 1,
+              });
+        if (i < 199)
+          await ctx.db.insert('lessonProgress', {
+            organizationId: orgId,
+            userId: employeeId,
+            courseId,
+            lessonId: id,
+            isCompleted: true,
+            createdAt: 1,
+            updatedAt: 1,
+          });
+      }
+      await ctx.db.insert('lessonProgress', {
+        organizationId: orgId,
+        userId: employeeId,
+        courseId,
+        lessonId,
+        isCompleted: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        courseId,
+        title: 'Course quiz',
+        passingScore: 70,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    expect(
+      await learner.mutation(api.learning.updateLessonProgress, {
+        organizationId: orgId,
+        courseId,
+        lessonId,
+        isCompleted: true,
+      }),
+    ).toMatchObject({ progress: 99 });
+    const last = await t.run((ctx) =>
+      ctx.db
+        .query('lessons')
+        .withIndex('by_course', (q) => q.eq('organizationId', orgId).eq('courseId', courseId))
+        .order('desc')
+        .first(),
+    );
+    expect(
+      await learner.mutation(api.learning.updateLessonProgress, {
+        organizationId: orgId,
+        courseId,
+        lessonId: last!._id,
+        isCompleted: true,
+      }),
+    ).toMatchObject({ progress: 99 });
+    expect(await t.run((ctx) => ctx.db.query('certificates').collect())).toHaveLength(0);
+    await t.run((ctx) =>
+      ctx.db.insert('quizAttempts', {
+        organizationId: orgId,
+        userId: employeeId,
+        quizId,
+        score: 100,
+        passed: true,
+        answers: [],
+        startedAt: 1,
+        completedAt: 1,
+        attemptNumber: 1,
+        createdAt: 1,
+      }),
+    );
+    expect(
+      await learner.mutation(api.learning.updateLessonProgress, {
+        organizationId: orgId,
+        courseId,
+        lessonId,
+        isCompleted: true,
+      }),
+    ).toMatchObject({ progress: 100 });
+  });
+
   it('enrollment updates require ownership or admin and validate progress', async () => {
     const { t, enrollmentId, employeeId } = await seedLearning();
     const caller = t.withIdentity({ email: 'learner@example.test' });
@@ -203,12 +796,19 @@ describe('launch audit: security regressions and remaining unsafe characterizati
         progress: 101,
       }),
     ).rejects.toThrow('Progress');
+    await expect(
+      caller.mutation(api.learning.updateEnrollmentStatus, {
+        enrollmentId,
+        status: 'in_progress',
+        progress: 25,
+      }),
+    ).rejects.toThrow('Progress must match server evidence');
     await caller.mutation(api.learning.updateEnrollmentStatus, {
       enrollmentId,
       status: 'in_progress',
-      progress: 25,
+      progress: 0,
     });
-    expect(await t.run((ctx) => ctx.db.get(enrollmentId))).toMatchObject({ progress: 25 });
+    expect(await t.run((ctx) => ctx.db.get(enrollmentId))).toMatchObject({ progress: 0 });
   });
 
   it('learning writes reject foreign parent records and foreign enrollment targets atomically', async () => {
