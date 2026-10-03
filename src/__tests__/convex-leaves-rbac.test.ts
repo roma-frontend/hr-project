@@ -321,17 +321,16 @@ describe('getAllLeaves RBAC', () => {
     expect(order).toHaveBeenCalledWith('desc');
   });
 
-  it('keeps the unauthenticated + organizationId server path', async () => {
-    // Used by server-side callers (e.g. chat routes) that pass an org directly.
+  it('keeps the unauthenticated + organizationId server path closed (IDOR)', async () => {
+    // Formerly a server-side shortcut that leaked org leaves to anon callers.
+    // Now closed: unauthenticated + orgId returns [] without touching the DB.
     mockGetAuthCaller.mockResolvedValue(null);
     const { ctx, withIndex } = makeTakeCtx();
 
-    await getAllLeavesHandler(ctx, { organizationId: ORG_B });
+    const result = await getAllLeavesHandler(ctx, { organizationId: ORG_B });
 
-    expect(withIndex).toHaveBeenCalledWith('by_org', expect.any(Function));
-    const eqMock = jest.fn();
-    withIndex.mock.calls[0][1]({ eq: eqMock });
-    expect(eqMock).toHaveBeenCalledWith('organizationId', ORG_B);
+    expect(result).toEqual([]);
+    expect(withIndex).not.toHaveBeenCalled();
   });
 
   it('returns an empty array for unauthenticated callers without an org', async () => {

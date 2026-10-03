@@ -110,12 +110,21 @@ async function approvedLeaveThisYear(
 describe('leaveAccrual.getLeavePolicies', () => {
   it('returns the default policies without touching the DB', async () => {
     const c = await seed();
-    const policies = await c.t.query(api.leaveAccrual.getLeavePolicies, {
+    const policies = await asAdmin(c).query(api.leaveAccrual.getLeavePolicies, {
       organizationId: c.organizationId,
     });
     expect(policies.paid).toBe(24);
     expect(policies.maternity).toBe(126);
     expect(policies.dailyAccrual.paid).toBeCloseTo(24 / 365);
+  });
+
+  it('rejects unauthenticated callers', async () => {
+    const c = await seed();
+    await expect(
+      c.t.query(api.leaveAccrual.getLeavePolicies, {
+        organizationId: c.organizationId,
+      }),
+    ).rejects.toThrow('Not authorized');
   });
 });
 
@@ -394,7 +403,7 @@ describe('leaveAccrual.getAccrualHistory', () => {
       year: 2025,
     });
 
-    const history = await c.t.query(api.leaveAccrual.getAccrualHistory, {
+    const history = await asAdmin(c).query(api.leaveAccrual.getAccrualHistory, {
       organizationId: c.organizationId,
     });
 
@@ -405,7 +414,7 @@ describe('leaveAccrual.getAccrualHistory', () => {
 
   it('returns an empty list when nothing has been accrued', async () => {
     const c = await seed();
-    const history = await c.t.query(api.leaveAccrual.getAccrualHistory, {
+    const history = await asAdmin(c).query(api.leaveAccrual.getAccrualHistory, {
       organizationId: c.organizationId,
     });
     expect(history).toEqual([]);
