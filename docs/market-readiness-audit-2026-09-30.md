@@ -186,6 +186,12 @@
 - **ACL:** `payroll/actions.processScheduledPayroll` теперь требует `auth + requireOrgAdmin` (internalQuery `checkPayrollAccess`); `shifts.upsertShift`/`applyTemplateWeek` проверяют `user.organizationId === caller.organizationId`; `attendance/ensureHrAssistantMembership` блокирует чужой `organizationId` кроме superadmin.
 - Проверено: `type-check:ci` (exit 0), `prettier --check` (all files), `audit-gate` (2 accepted, 0 violations), `check:locales` (23 namespaces OK). Full suite/build/E2E/deploy этим блоком не проверены; Gate B остается открытым.
 
+## Ход исправлений — 3 октября 2026, Gate B payroll/shifts DATA-01 (не развернуто)
+
+Исправлено локально, **не развернуто в production**:
+
+- **payroll/shifts caps:** `payroll/queries` 7 мест (`getDashboardStats`×2, `getPayrollRecords`, `getPayrollRuns`×2, `getPayrollRunById`, `getPayslips`, `getPayrollCalendar`×2, `getAuditLog`) и `shifts` 3 места (`listTemplates`, `getRoster`, `listSwapRequests`) переведены на `take(N+1)` + `slice(N)` + `isCapped> N` (void для backward-compat array returns; `getDashboardStats.isCapped` теперь корректен с `>`). CI: `cb4946e1` — `🏗 Build` success; `E2E Build for E2E` — Turbopack `next/font` `Noto_Sans_Armenian` transient failure (соседний `e2e0c335` прошел) — отдельный E2E next. `60f1f67e` — payroll/shifts caps push.
+
 ## Незакрытые задачи (осталось до Gate B)
 
 1. **`npm audit` high/critical — локально закрыто:** текущие overrides/lockfile устраняют `brace-expansion`/`webpack-dev-middleware`; 0 high/critical подтверждено 01.10.2026. Остались low/moderate и проверка CI после публикации изменений.
