@@ -5,7 +5,7 @@
  * with real happy-path flows (not just error paths).
  */
 
-import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 
 jest.mock('../../convex/_generated/server', () => ({
   mutation: ({ handler, args }: any) => ({ handler, args }),
@@ -18,6 +18,13 @@ jest.mock('../../convex/lib/getAuthCaller', () => ({
 
 jest.mock('../../convex/lib/auth', () => ({
   isSuperadmin: jest.fn(),
+}));
+
+jest.mock('../../convex/lib/orgAccess', () => ({
+  resolveOrgScope: jest.fn(),
+  resolveOrgStaff: jest.fn(),
+  assertOrgScope: jest.fn(),
+  assertOrgStaff: jest.fn(),
 }));
 
 jest.mock('../../convex/lib/entitlements', () => ({
@@ -34,6 +41,10 @@ let mockAssertModuleAccess: jest.Mock;
 let mockAssertQuota: jest.Mock;
 let mockIncrementUsage: jest.Mock;
 let mockDecrementUsage: jest.Mock;
+let mockResolveOrgScope: jest.Mock;
+let mockResolveOrgStaff: jest.Mock;
+let mockAssertOrgScope: jest.Mock;
+let mockAssertOrgStaff: jest.Mock;
 
 const ORG = 'org_1';
 const adminUser = {
@@ -164,20 +175,137 @@ function makeCtx(tableRows: Record<string, any[]> = {}) {
   };
 }
 
-beforeAll(() => {
-  jest.isolateModules(() => {
-    mockGetAuthCaller = jest.requireMock('../../convex/lib/getAuthCaller').getAuthCaller;
-    mockIsSuperadmin = jest.requireMock('../../convex/lib/auth').isSuperadmin;
-    mockAssertModuleAccess = jest.requireMock('../../convex/lib/entitlements').assertModuleAccess;
-    mockAssertQuota = jest.requireMock('../../convex/lib/entitlements').assertQuota;
-    mockIncrementUsage = jest.requireMock('../../convex/lib/entitlements').incrementUsage;
-    mockDecrementUsage = jest.requireMock('../../convex/lib/entitlements').decrementUsage;
-    docs = require('../../convex/documents');
-  });
-});
-
 beforeEach(() => {
   jest.clearAllMocks();
+  mockGetAuthCaller = jest.requireMock('../../convex/lib/getAuthCaller').getAuthCaller as jest.Mock;
+  mockIsSuperadmin = jest.requireMock('../../convex/lib/auth').isSuperadmin as jest.Mock;
+  mockAssertModuleAccess = jest.requireMock('../../convex/lib/entitlements')
+    .assertModuleAccess as jest.Mock;
+  mockAssertQuota = jest.requireMock('../../convex/lib/entitlements').assertQuota as jest.Mock;
+  mockIncrementUsage = jest.requireMock('../../convex/lib/entitlements')
+    .incrementUsage as jest.Mock;
+  mockDecrementUsage = jest.requireMock('../../convex/lib/entitlements')
+    .decrementUsage as jest.Mock;
+  mockResolveOrgScope = jest.requireMock('../../convex/lib/orgAccess').resolveOrgScope as jest.Mock;
+  mockResolveOrgStaff = jest.requireMock('../../convex/lib/orgAccess').resolveOrgStaff as jest.Mock;
+  mockAssertOrgScope = jest.requireMock('../../convex/lib/orgAccess').assertOrgScope as jest.Mock;
+  mockAssertOrgStaff = jest.requireMock('../../convex/lib/orgAccess').assertOrgStaff as jest.Mock;
+
+  // Default orgAccess implementations that delegate to getAuthCaller/isSuperadmin
+  mockResolveOrgScope.mockImplementation(async (ctx: any, requestedOrgId: any) => {
+    const caller = await mockGetAuthCaller(ctx);
+    if (!caller) return null;
+    const isSuper = mockIsSuperadmin(caller);
+    if (isSuper) {
+      return {
+        caller,
+        organizationId: requestedOrgId ?? caller.organizationId,
+        isStaff: true,
+        isAdmin: true,
+        isSuper: true,
+      };
+    }
+    if (!caller.organizationId) return null;
+    if (requestedOrgId && requestedOrgId !== caller.organizationId) return null;
+    return {
+      caller,
+      organizationId: caller.organizationId,
+      isStaff: caller.role === 'admin' || caller.role === 'supervisor',
+      isAdmin: caller.role === 'admin',
+      isSuper: false,
+    };
+  });
+  mockResolveOrgStaff.mockImplementation(async (ctx: any, requestedOrgId: any, opts: any = {}) => {
+    const caller = await mockGetAuthCaller(ctx);
+    if (!caller) return null;
+    const isSuper = mockIsSuperadmin(caller);
+    let scope: any;
+    if (isSuper) {
+      scope = {
+        caller,
+        organizationId: requestedOrgId ?? caller.organizationId,
+        isStaff: true,
+        isAdmin: true,
+        isSuper: true,
+      };
+    } else {
+      if (!caller.organizationId) return null;
+      if (requestedOrgId && requestedOrgId !== caller.organizationId) return null;
+      scope = {
+        caller,
+        organizationId: caller.organizationId,
+        isStaff: caller.role === 'admin' || caller.role === 'supervisor',
+        isAdmin: caller.role === 'admin',
+        isSuper: false,
+      };
+    }
+    const ok = opts?.adminOnly ? scope.isAdmin : scope.isStaff;
+    return ok ? scope : null;
+  });
+  mockAssertOrgScope.mockImplementation(async (ctx: any, requestedOrgId: any) => {
+    const caller = await mockGetAuthCaller(ctx);
+    if (!caller) throw new Error('Not authorized for this organization');
+    const isSuper = mockIsSuperadmin(caller);
+    if (isSuper) {
+      return {
+        caller,
+        organizationId: requestedOrgId ?? caller.organizationId,
+        isStaff: true,
+        isAdmin: true,
+        isSuper: true,
+      };
+    }
+    if (!caller.organizationId) throw new Error('Not authorized for this organization');
+    if (requestedOrgId && requestedOrgId !== caller.organizationId)
+      throw new Error('Not authorized for this organization');
+    return {
+      caller,
+      organizationId: caller.organizationId,
+      isStaff: caller.role === 'admin' || caller.role === 'supervisor',
+      isAdmin: caller.role === 'admin',
+      isSuper: false,
+    };
+  });
+  mockAssertOrgStaff.mockImplementation(async (ctx: any, requestedOrgId: any, opts: any = {}) => {
+    const caller = await mockGetAuthCaller(ctx);
+    if (!caller) throw new Error('Not authorized for this organization');
+    const isSuper = mockIsSuperadmin(caller);
+    let scope: any;
+    if (isSuper) {
+      scope = {
+        caller,
+        organizationId: requestedOrgId ?? caller.organizationId,
+        isStaff: true,
+        isAdmin: true,
+        isSuper: true,
+      };
+    } else {
+      if (!caller.organizationId) throw new Error('Not authorized for this organization');
+      if (requestedOrgId && requestedOrgId !== caller.organizationId)
+        throw new Error('Not authorized for this organization');
+      scope = {
+        caller,
+        organizationId: caller.organizationId,
+        isStaff: caller.role === 'admin' || caller.role === 'supervisor',
+        isAdmin: caller.role === 'admin',
+        isSuper: false,
+      };
+    }
+    const ok = opts?.adminOnly ? scope.isAdmin : scope.isStaff;
+    if (!ok)
+      throw new Error(
+        opts?.adminOnly
+          ? 'Not authorized: admin access required'
+          : 'Not authorized: staff access required',
+      );
+    return scope;
+  });
+
+  // Load fresh documents module after mocks are wired
+  jest.isolateModules(() => {
+    docs = require('../../convex/documents');
+  });
+
   mockGetAuthCaller.mockResolvedValue(adminUser);
   mockIsSuperadmin.mockReturnValue(false);
   mockAssertModuleAccess.mockResolvedValue(undefined);

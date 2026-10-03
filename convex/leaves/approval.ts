@@ -63,10 +63,13 @@ async function orgWideApprovers(
   organizationId: Id<'organizations'> | undefined,
 ): Promise<Doc<'users'>[]> {
   if (!organizationId) return [];
-  const admins = await ctx.db
+  const adminsRaw = await ctx.db
     .query('users')
     .withIndex('by_org_role', (q) => q.eq('organizationId', organizationId).eq('role', 'admin'))
-    .take(SMALL_LIST_CAP);
+    .take(SMALL_LIST_CAP + 1);
+  const isCappedAdmins = adminsRaw.length > SMALL_LIST_CAP;
+  void isCappedAdmins;
+  const admins = adminsRaw.slice(0, SMALL_LIST_CAP);
   return admins.filter(
     (u) =>
       u.isActive &&

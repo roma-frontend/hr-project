@@ -922,10 +922,13 @@ export const addExpenseToReport = mutation({
     });
 
     // Update report totals
-    const items = await ctx.db
+    const itemsRaw = await ctx.db
       .query('expenseReportItems')
       .withIndex('by_report', (q) => q.eq('reportId', reportId))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedItems = itemsRaw.length > SMALL_LIST_CAP;
+    void isCappedItems;
+    const items = itemsRaw.slice(0, SMALL_LIST_CAP);
 
     let totalAmount = 0;
     for (const item of items) {
@@ -953,10 +956,13 @@ export const removeExpenseFromReport = mutation({
     if (!report) throw new Error('Expense report not found');
     await assertCanAccessExpense(ctx, report);
 
-    const items = await ctx.db
+    const itemsRaw2 = await ctx.db
       .query('expenseReportItems')
       .withIndex('by_report', (q) => q.eq('reportId', reportId))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedItems2 = itemsRaw2.length > SMALL_LIST_CAP;
+    void isCappedItems2;
+    const items = itemsRaw2.slice(0, SMALL_LIST_CAP);
 
     const itemToRemove = items.find((i) => i.expenseId === expenseId);
     if (!itemToRemove) throw new Error('Expense not found in report');
@@ -964,10 +970,13 @@ export const removeExpenseFromReport = mutation({
     await ctx.db.delete(itemToRemove._id);
 
     // Update report totals
-    const remainingItems = await ctx.db
+    const remainingItemsRaw = await ctx.db
       .query('expenseReportItems')
       .withIndex('by_report', (q) => q.eq('reportId', reportId))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedRemaining = remainingItemsRaw.length > SMALL_LIST_CAP;
+    void isCappedRemaining;
+    const remainingItems = remainingItemsRaw.slice(0, SMALL_LIST_CAP);
 
     let totalAmount = 0;
     for (const item of remainingItems) {

@@ -1,6 +1,6 @@
 import { v } from 'convex/values';
 import { getAuthCaller } from './lib/getAuthCaller';
-import { query, mutation, type QueryCtx, type MutationCtx } from './_generated/server';
+import { query, mutation } from './_generated/server';
 import { MAX_PAGE_SIZE } from './pagination';
 import { isSuperadmin } from './lib/auth';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP } from './lib/limits';
@@ -11,6 +11,7 @@ import {
   decrementUsage,
   incrementUsage,
 } from './lib/entitlements';
+import { resolveOrgScope, resolveOrgStaff, assertOrgScope, assertOrgStaff } from './lib/orgAccess';
 
 // ─── Helper: Check permissions ───────────────────────────────────────────────
 
@@ -25,19 +26,6 @@ const documentCategoryValidator = v.union(
   v.literal('other'),
 );
 
-async function checkAccess(ctx: QueryCtx | MutationCtx, organizationId: Id<'organizations'>) {
-  const requester = await getAuthCaller(ctx);
-  if (!requester) throw new Error('Not authenticated');
-  const userIsSuperadmin = isSuperadmin(requester);
-  if (!userIsSuperadmin && requester.organizationId !== organizationId) {
-    throw new Error('Access denied');
-  }
-  // `canManage` (not `isSuperadmin`): admins of the organization manage its
-  // documents too. The old name said superadmin and meant "admin or above",
-  // which is how the admin-only gates below came to read as superadmin checks.
-  return { requester, canManage: userIsSuperadmin || requester.role === 'admin' };
-}
-
 // ─── DOCUMENTS ────────────────────────────────────────────────────────────────
 
 export const listDocuments = query({
@@ -48,21 +36,21 @@ export const listDocuments = query({
     includeUnpublished: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { canManage } = await checkAccess(ctx, args.organizationId);
+    const scope = await resolveOrgStaff(ctx, args.organizationId, { adminOnly: true });
+    if (!scope) return [];
 
     // The library (policies, forms, templates) is staff-only. Employees work
     // with the documents issued to them (issuedDocuments.listMine) instead.
-    if (!canManage) return [];
 
     const docsRaw = await ctx.db
       .query('documents')
-      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+      .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
       .take(MAX_PAGE_SIZE + 1);
     const isCappedDocs = docsRaw.length > MAX_PAGE_SIZE;
     void isCappedDocs;
     let docs = docsRaw.slice(0, MAX_PAGE_SIZE);
 
-    if (!args.includeUnpublished || !canManage) {
+    if (!args.includeUnpublished) {
       docs = docs.filter((d) => d.isPublished);
     }
 
@@ -92,10 +80,9 @@ export const getDocument = query({
     documentId: v.id('documents'),
   },
   handler: async (ctx, args) => {
-    const { canManage } = await checkAccess(ctx, args.organizationId);
-    if (!canManage) throw new Error('Document not found');
+    const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
     const doc = await ctx.db.get(args.documentId);
-    if (!doc || doc.organizationId !== args.organizationId) {
+    if (!doc || doc.organizationId !== scope.organizationId!) {
       throw new Error('Document not found');
     }
     const uploader = await ctx.db.get(doc.uploadedBy);
@@ -150,8 +137,7 @@ export const createDocument = mutation({
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'documents');
-    const { requester, canManage } = await checkAccess(ctx, args.organizationId);
-    if (!canManage) throw new Error('Only admins can create documents');
+    const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
 
     // Plan enforcement: each document consumes one slot of the `documents`
     // quota (the constructor sets the per-plan limit).
@@ -159,7 +145,7 @@ export const createDocument = mutation({
 
     const now = Date.now();
     const documentId = await ctx.db.insert('documents', {
-      organizationId: args.organizationId,
+      organizationId: scope.organizationId!,
       title: args.title,
       description: args.description,
       category: args.category,
@@ -167,7 +153,7 @@ export const createDocument = mutation({
       fileName: args.fileName,
       fileSize: args.fileSize,
       mimeType: args.mimeType,
-      uploadedBy: requester._id,
+      uploadedBy: scope.caller._id,
       isPublished: false,
       isMandatory: args.isMandatory ?? false,
       expiresAt: args.expiresAt,
@@ -176,7 +162,7 @@ export const createDocument = mutation({
       updatedAt: now,
     });
 
-    await incrementUsage(ctx, args.organizationId, 'documents', 'documents', 1);
+    await incrementUsage(ctx, scope.organizationId!, 'documents', 'documents', 1);
     return documentId;
   },
 });
@@ -200,8 +186,7 @@ export const updateDocument = mutation({
     await assertModuleAccess(ctx, 'documents');
     const doc = await ctx.db.get(args.documentId);
     if (!doc) throw new Error('Document not found');
-    const { canManage } = await checkAccess(ctx, doc.organizationId);
-    if (!canManage) throw new Error('Only admins can update documents');
+    const scope = await assertOrgStaff(ctx, doc.organizationId, { adminOnly: true });
 
     const patch: Partial<Doc<'documents'>> = { updatedAt: Date.now() };
     if (args.title !== undefined) patch.title = args.title;
@@ -231,13 +216,12 @@ export const deleteDocument = mutation({
     if (!doc) throw new Error('Document not found');
     // Same gate as create/update: this deletes the record *and* everyone's read
     // history, which any org member could previously do for any document.
-    const { canManage } = await checkAccess(ctx, doc.organizationId);
-    if (!canManage) throw new Error('Only admins can delete documents');
+    const scope = await assertOrgStaff(ctx, doc.organizationId, { adminOnly: true });
 
     const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_document', (q) =>
-        q.eq('organizationId', doc.organizationId).eq('documentId', doc._id),
+        q.eq('organizationId', scope.organizationId!).eq('documentId', doc._id),
       )
       .take(DEFAULT_LIST_CAP + 1);
     const isCappedViews = viewsRaw.length > DEFAULT_LIST_CAP;
@@ -247,7 +231,7 @@ export const deleteDocument = mutation({
 
     await ctx.db.delete(args.documentId);
     // A deleted document frees its quota slot.
-    await decrementUsage(ctx, doc.organizationId, 'documents', 'documents', 1);
+    await decrementUsage(ctx, scope.organizationId!, 'documents', 'documents', 1);
     return { success: true };
   },
 });
@@ -269,12 +253,10 @@ export const recordDocumentView = mutation({
     acknowledged: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { requester, canManage } = await checkAccess(ctx, args.organizationId);
-    // Viewing is tracked for library documents, which are staff-only now.
-    if (!canManage) throw new Error('Access denied');
+    const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
 
     const document = await ctx.db.get(args.documentId);
-    if (!document || document.organizationId !== args.organizationId) {
+    if (!document || document.organizationId !== scope.organizationId!) {
       throw new Error('Document not found');
     }
 
@@ -282,8 +264,8 @@ export const recordDocumentView = mutation({
       .query('documentViews')
       .withIndex('by_user_document', (q) =>
         q
-          .eq('organizationId', args.organizationId)
-          .eq('userId', requester._id)
+          .eq('organizationId', scope.organizationId!)
+          .eq('userId', scope.caller._id)
           .eq('documentId', args.documentId),
       )
       .first();
@@ -296,9 +278,9 @@ export const recordDocumentView = mutation({
       });
     } else {
       await ctx.db.insert('documentViews', {
-        organizationId: args.organizationId,
+        organizationId: scope.organizationId!,
         documentId: args.documentId,
-        userId: requester._id,
+        userId: scope.caller._id,
         viewedAt: now,
         acknowledged: args.acknowledged,
       });
@@ -313,11 +295,12 @@ export const getMyDocumentViews = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
-    const { requester } = await checkAccess(ctx, args.organizationId);
+    const scope = await resolveOrgScope(ctx, args.organizationId);
+    if (!scope) return [];
     const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_user', (q) =>
-        q.eq('organizationId', args.organizationId).eq('userId', requester._id),
+        q.eq('organizationId', scope.organizationId!).eq('userId', scope.caller._id),
       )
       .take(DEFAULT_LIST_CAP + 1);
     const isCappedMyViews = viewsRaw.length > DEFAULT_LIST_CAP;
@@ -337,12 +320,12 @@ export const getDocumentViews = query({
     documentId: v.id('documents'),
   },
   handler: async (ctx, args) => {
-    const { canManage } = await checkAccess(ctx, args.organizationId);
-    if (!canManage) return [];
+    const scope = await resolveOrgStaff(ctx, args.organizationId, { adminOnly: true });
+    if (!scope) return [];
     const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_document', (q) =>
-        q.eq('organizationId', args.organizationId).eq('documentId', args.documentId),
+        q.eq('organizationId', scope.organizationId!).eq('documentId', args.documentId),
       )
       .take(DEFAULT_LIST_CAP + 1);
     const isCappedViews = viewsRaw.length > DEFAULT_LIST_CAP;
@@ -367,12 +350,12 @@ export const getDocumentCategories = query({
     organizationId: v.id('organizations'),
   },
   handler: async (ctx, args) => {
-    const { canManage } = await checkAccess(ctx, args.organizationId);
+    const scope = await resolveOrgStaff(ctx, args.organizationId, { adminOnly: true });
     // Categories organize the staff-only library — nothing to list for others.
-    if (!canManage) return [];
+    if (!scope) return [];
     const catsRaw = await ctx.db
       .query('documentCategories')
-      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+      .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
       .order('asc')
       .take(SMALL_LIST_CAP + 1);
     const isCappedCats = catsRaw.length > SMALL_LIST_CAP;
@@ -392,12 +375,11 @@ export const createDocumentCategory = mutation({
   },
   handler: async (ctx, args) => {
     await assertModuleAccess(ctx, 'documents');
-    const { canManage } = await checkAccess(ctx, args.organizationId);
-    if (!canManage) throw new Error('Only admins can create categories');
+    const scope = await assertOrgStaff(ctx, args.organizationId, { adminOnly: true });
 
     const now = Date.now();
     return await ctx.db.insert('documentCategories', {
-      organizationId: args.organizationId,
+      organizationId: scope.organizationId!,
       name: args.name,
       description: args.description,
       icon: args.icon,

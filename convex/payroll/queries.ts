@@ -521,10 +521,13 @@ export const getMyPayslips = query({
     const requester = await requireUser(ctx, requesterId);
 
     // Employees/drivers can only see their own payslips
-    const payslips = await ctx.db
+    const payslipsRawSelf = await ctx.db
       .query('payslips')
       .withIndex('by_user', (q) => q.eq('userId', requesterId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedMyPayslips = payslipsRawSelf.length > DEFAULT_LIST_CAP;
+    void isCappedMyPayslips;
+    const payslips = payslipsRawSelf.slice(0, DEFAULT_LIST_CAP);
 
     // Enrich with record data
     const enriched = await Promise.all(
