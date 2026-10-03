@@ -37,15 +37,19 @@ export const getDashboardStats = query({
     const requesterId = await callerId(ctx);
     await requireOrgSupervisor(ctx, requesterId, organizationId);
 
-    const runs = await ctx.db
+    const runsRaw = await ctx.db
       .query('payrollRuns')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const runsIsCapped = runsRaw.length > DEFAULT_LIST_CAP;
+    const runs = runsRaw.slice(0, DEFAULT_LIST_CAP);
 
-    const records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const recordsIsCapped = recordsRaw.length > DEFAULT_LIST_CAP;
+    const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const totalGross = records.reduce((sum, r) => sum + r.grossSalary, 0);
     const totalNet = records.reduce((sum, r) => sum + r.netSalary, 0);
@@ -57,7 +61,7 @@ export const getDashboardStats = query({
     ).length;
 
     const recentRuns = runs.sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
-    const isCapped = runs.length >= DEFAULT_LIST_CAP || records.length >= DEFAULT_LIST_CAP;
+    const isCapped = runsIsCapped || recordsIsCapped;
 
     return {
       totalGross,
@@ -96,10 +100,13 @@ export const getPayrollRecords = query({
     const requesterId = await callerId(ctx);
     await requireOrgSupervisor(ctx, requesterId, organizationId);
 
-    let records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = recordsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    let records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     if (status) {
       records = records.filter((r) => r.status === status);
@@ -163,10 +170,13 @@ export const getPayrollRuns = query({
     const requesterId = await callerId(ctx);
     await requireOrgSupervisor(ctx, requesterId, organizationId);
 
-    let runs = await ctx.db
+    const runsRaw = await ctx.db
       .query('payrollRuns')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = runsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    let runs = runsRaw.slice(0, DEFAULT_LIST_CAP);
 
     if (status) {
       runs = runs.filter((r) => r.status === status);
@@ -176,10 +186,13 @@ export const getPayrollRuns = query({
       runs.map(async (run) => {
         const approvedByUser = run.approvedBy ? await ctx.db.get(run.approvedBy) : null;
 
-        const records = await ctx.db
+        const recordsRaw = await ctx.db
           .query('payrollRecords')
           .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', run._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        const isCappedInner = recordsRaw.length > DEFAULT_LIST_CAP;
+        void isCappedInner;
+        const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
         return {
           ...run,
@@ -207,10 +220,13 @@ export const getPayrollRunById = query({
     const requesterId = await callerId(ctx);
     await requireOrgSupervisor(ctx, requesterId, run.organizationId);
 
-    const records = await ctx.db
+    const recordsRaw = await ctx.db
       .query('payrollRecords')
       .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', run._id))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = recordsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    const records = recordsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const enrichedRecords = await Promise.all(
       records.map(async (record) => {
@@ -283,20 +299,26 @@ export const getPayslips = query({
       await requireOrgSupervisor(ctx, requesterId, organizationId);
     }
 
-    let payslips = [];
+    let payslipsRaw: any[] = [];
+    let payslips: any[] = [];
 
     if (organizationId) {
-      payslips = await ctx.db
+      payslipsRaw = await ctx.db
         .query('payslips')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
     } else if (userId) {
-      payslips = await ctx.db
+      payslipsRaw = await ctx.db
         .query('payslips')
         .withIndex('by_user', (q) => q.eq('userId', userId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
     } else {
       return [];
+    }
+    {
+      const isCapped = payslipsRaw.length > DEFAULT_LIST_CAP;
+      void isCapped;
+      payslips = payslipsRaw.slice(0, DEFAULT_LIST_CAP);
     }
 
     if (userId) {
@@ -403,10 +425,13 @@ export const getPayrollCalendar = query({
     const yearEnd = `${year}-12`;
 
     // Fetch all runs for the year
-    const runs = await ctx.db
+    const runsRaw = await ctx.db
       .query('payrollRuns')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = runsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    const runs = runsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const yearRuns = runs.filter((r) => r.period >= yearStart && r.period <= yearEnd);
 
@@ -423,14 +448,20 @@ export const getPayrollCalendar = query({
       const monthRuns = yearRuns.filter((r) => r.period === monthStr);
       const latestRun = monthRuns.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
       const firstRun = latestRun;
-      const allRecords = firstRun?._id
+      const allRecordsRaw = firstRun?._id
         ? await Promise.all([
             ctx.db
               .query('payrollRecords')
               .withIndex('by_payroll_run', (q) => q.eq('payrollRunId', firstRun._id))
-              .take(DEFAULT_LIST_CAP),
+              .take(DEFAULT_LIST_CAP + 1),
           ])
         : [];
+      {
+        const flatRaw = allRecordsRaw.flat();
+        const isCappedInner = flatRaw.length > DEFAULT_LIST_CAP;
+        void isCappedInner;
+      }
+      const allRecords = allRecordsRaw.map((arr) => arr.slice(0, DEFAULT_LIST_CAP));
 
       const records = allRecords.flat();
       const paidRecords = records.filter((r) => r.status === 'paid');
@@ -839,10 +870,13 @@ export const getAuditLog = query({
     const requesterId = await callerId(ctx);
     await requireOrgAdmin(ctx, requesterId, organizationId);
 
-    let logs = await ctx.db
+    const logsRaw = await ctx.db
       .query('payrollAuditLog')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = logsRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    let logs = logsRaw.slice(0, DEFAULT_LIST_CAP);
 
     if (payrollRunId) {
       logs = logs.filter((l) => l.payrollRunId === payrollRunId);

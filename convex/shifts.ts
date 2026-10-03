@@ -51,10 +51,13 @@ export const listTemplates = query({
     if (!caller) throw new Error('Not authenticated');
     await requireUser(ctx, caller._id);
     if (!caller.organizationId) return [];
-    return await ctx.db
+    const rows = await ctx.db
       .query('shiftTemplates')
       .withIndex('by_org', (q) => q.eq('organizationId', caller.organizationId!))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = rows.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    return rows.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
@@ -140,12 +143,15 @@ export const getRoster = query({
     const isSuperadmin = caller.role === 'superadmin';
 
     // Use date-indexed range query to avoid truncating large datasets before filtering
-    const inRange = await ctx.db
+    const inRangeRaw = await ctx.db
       .query('shifts')
       .withIndex('by_org_date', (q) =>
         q.eq('organizationId', orgId).gte('date', args.from).lte('date', args.to),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = inRangeRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    const inRange = inRangeRaw.slice(0, DEFAULT_LIST_CAP);
     const visible = inRange.filter((s) => {
       if (isManager || isSuperadmin) return true;
       return s.userId === caller._id && s.status === 'published';
@@ -528,10 +534,13 @@ export const listSwapRequests = query({
     const orgId = caller.organizationId;
     if (!orgId) return [];
 
-    const all = await ctx.db
+    const allRaw = await ctx.db
       .query('shiftSwapRequests')
       .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCapped = allRaw.length > DEFAULT_LIST_CAP;
+    void isCapped;
+    const all = allRaw.slice(0, DEFAULT_LIST_CAP);
 
     const isManager = caller.role === 'admin' || caller.role === 'supervisor';
     const mine = all.filter((s) => {
