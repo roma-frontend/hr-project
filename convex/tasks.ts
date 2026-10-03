@@ -775,11 +775,14 @@ export const getTasksForEmployee = query({
 
     const userIsSuperadmin = isSuperadmin(employee);
 
-    const tasks = await ctx.db
+    const _rawTasksForEmployee = await ctx.db
       .query('tasks')
       .withIndex('by_assigned_to', (q) => q.eq('assignedTo', args.userId))
       .order('desc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedTasksForEmployee = _rawTasksForEmployee.length > DEFAULT_LIST_CAP;
+    void _isCappedTasksForEmployee;
+    const tasks = _rawTasksForEmployee.slice(0, DEFAULT_LIST_CAP);
 
     // Exclude soft-deleted tasks
     const activeTasks = tasks.filter((t) => !t.deletedAt);
@@ -825,11 +828,14 @@ export const getTasksAssignedBy = query({
     const userIsSuperadmin = isSuperadmin(supervisor);
 
     // Tasks the supervisor assigned themselves…
-    const assignedBySelf = await ctx.db
+    const _rawAssignedBySelf = await ctx.db
       .query('tasks')
       .withIndex('by_assigned_by', (q) => q.eq('assignedBy', args.supervisorId))
       .order('desc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAssignedBySelf = _rawAssignedBySelf.length > DEFAULT_LIST_CAP;
+    void _isCappedAssignedBySelf;
+    const assignedBySelf = _rawAssignedBySelf.slice(0, DEFAULT_LIST_CAP);
 
     // …plus tasks created by anyone in their reporting subtree. Employees now
     // create their own tasks, and those must be checked along the reporting
@@ -845,15 +851,20 @@ export const getTasksAssignedBy = query({
         supervisor.organizationId,
       );
       if (subordinates.length > 0) {
-        const perPerson = await Promise.all(
+        const perPersonRaw = await Promise.all(
           subordinates.map((id) =>
             ctx.db
               .query('tasks')
               .withIndex('by_assigned_by', (q) => q.eq('assignedBy', id))
               .order('desc')
-              .take(SMALL_LIST_CAP),
+              .take(SMALL_LIST_CAP + 1),
           ),
         );
+        const perPerson = perPersonRaw.map((raw) => {
+          const _isCappedAssignedBySubordinate = raw.length > SMALL_LIST_CAP;
+          void _isCappedAssignedBySubordinate;
+          return raw.slice(0, SMALL_LIST_CAP);
+        });
         subtreeTasks = perPerson.flat();
       }
     }
@@ -913,14 +924,18 @@ async function fetchAllTasksForStaff(
     }
     return t.organizationId === requester.organizationId;
   };
+  const _rawOrgTasksByOrg = orgId
+    ? await ctx.db
+        .query('tasks')
+        .withIndex('by_org', (q) => q.eq('organizationId', orgId))
+        .order('desc')
+        .take(DEFAULT_LIST_CAP + 1)
+    : ([] as Doc<'tasks'>[]);
+  const _isCappedOrgTasks = _rawOrgTasksByOrg.length > DEFAULT_LIST_CAP;
+  void _isCappedOrgTasks;
+  const _slicedOrgTasksByOrg = _rawOrgTasksByOrg.slice(0, DEFAULT_LIST_CAP);
   const orgTasks = orgId
-    ? (
-        await ctx.db
-          .query('tasks')
-          .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      ).filter(inScope)
+    ? _slicedOrgTasksByOrg.filter(inScope)
     : userIsSuperadmin
       ? (await ctx.db.query('tasks').order('desc').take(DEFAULT_LIST_CAP)).filter(inScope)
       : [];
@@ -1152,24 +1167,28 @@ export const getDeletedTasks = query({
     const isStaff = caller.role === 'admin' || caller.role === 'supervisor' || isSuperadmin(caller);
 
     // Use by_deleted index to efficiently query only soft-deleted tasks
-    const deletedTasks = await ctx.db
+    const _rawDeletedTasks = await ctx.db
       .query('tasks')
       .withIndex('by_deleted', (q) => q.gt('deletedAt', 0))
       .order('desc')
-      .take(DEFAULT_LIST_CAP)
-      .then((tasks) => {
-        if (isStaff) {
-          return tasks.filter(
-            (task) => !caller.organizationId || task.organizationId === caller.organizationId,
-          );
-        }
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedDeletedTasks = _rawDeletedTasks.length > DEFAULT_LIST_CAP;
+    void _isCappedDeletedTasks;
+    const _slicedDeletedTasks = _rawDeletedTasks.slice(0, DEFAULT_LIST_CAP);
+    const deletedTasks = (() => {
+      const tasks = _slicedDeletedTasks;
+      if (isStaff) {
         return tasks.filter(
-          (task) =>
-            task.assignedTo === caller._id ||
-            task.assignedBy === caller._id ||
-            (task.assigneeIds ?? []).includes(caller._id),
+          (task) => !caller.organizationId || task.organizationId === caller.organizationId,
         );
-      });
+      }
+      return tasks.filter(
+        (task) =>
+          task.assignedTo === caller._id ||
+          task.assignedBy === caller._id ||
+          (task.assigneeIds ?? []).includes(caller._id),
+      );
+    })();
 
     return enrichTasksWithUserData(ctx, deletedTasks);
   },
@@ -1318,12 +1337,18 @@ export const getUsersForAssignment = query({
     let roster: Doc<'users'>[];
     const orgId = args.organizationId ?? requester.organizationId;
     if (orgId) {
-      roster = await ctx.db
+      const _rawRoster = await ctx.db
         .query('users')
         .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
+      const _isCappedUsersForAssignment = _rawRoster.length > DEFAULT_LIST_CAP;
+      void _isCappedUsersForAssignment;
+      roster = _rawRoster.slice(0, DEFAULT_LIST_CAP);
     } else if (isSuperadmin(requester)) {
-      roster = await ctx.db.query('users').take(DEFAULT_LIST_CAP);
+      const _rawRosterAll = await ctx.db.query('users').take(DEFAULT_LIST_CAP + 1);
+      const _isCappedUsersForAssignmentAll = _rawRosterAll.length > DEFAULT_LIST_CAP;
+      void _isCappedUsersForAssignmentAll;
+      roster = _rawRosterAll.slice(0, DEFAULT_LIST_CAP);
     } else {
       return [];
     }
@@ -1563,11 +1588,14 @@ export const getTaskComments = query({
     if (caller) {
       // No per-task ACL on comment listing — any team member in the org may read comments.
     }
-    const comments = await ctx.db
+    const _rawComments = await ctx.db
       .query('taskComments')
       .withIndex('by_task', (q) => q.eq('taskId', args.taskId))
       .order('asc')
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedTaskComments = _rawComments.length > DEFAULT_LIST_CAP;
+    void _isCappedTaskComments;
+    const comments = _rawComments.slice(0, DEFAULT_LIST_CAP);
 
     // Batch load all authors
     const authorIds = [...new Set(comments.map((c: Doc<'taskComments'>) => c.authorId))];
