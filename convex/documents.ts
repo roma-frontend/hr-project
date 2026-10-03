@@ -54,10 +54,13 @@ export const listDocuments = query({
     // with the documents issued to them (issuedDocuments.listMine) instead.
     if (!canManage) return [];
 
-    let docs = await ctx.db
+    const docsRaw = await ctx.db
       .query('documents')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(MAX_PAGE_SIZE);
+      .take(MAX_PAGE_SIZE + 1);
+    const isCappedDocs = docsRaw.length > MAX_PAGE_SIZE;
+    void isCappedDocs;
+    let docs = docsRaw.slice(0, MAX_PAGE_SIZE);
 
     if (!args.includeUnpublished || !canManage) {
       docs = docs.filter((d) => d.isPublished);
@@ -231,12 +234,15 @@ export const deleteDocument = mutation({
     const { canManage } = await checkAccess(ctx, doc.organizationId);
     if (!canManage) throw new Error('Only admins can delete documents');
 
-    const views = await ctx.db
+    const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_document', (q) =>
         q.eq('organizationId', doc.organizationId).eq('documentId', doc._id),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedViews = viewsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedViews;
+    const views = viewsRaw.slice(0, DEFAULT_LIST_CAP);
     for (const view of views) await ctx.db.delete(view._id);
 
     await ctx.db.delete(args.documentId);
@@ -308,12 +314,15 @@ export const getMyDocumentViews = query({
   },
   handler: async (ctx, args) => {
     const { requester } = await checkAccess(ctx, args.organizationId);
-    return await ctx.db
+    const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_user', (q) =>
         q.eq('organizationId', args.organizationId).eq('userId', requester._id),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedMyViews = viewsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedMyViews;
+    return viewsRaw.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
@@ -330,12 +339,15 @@ export const getDocumentViews = query({
   handler: async (ctx, args) => {
     const { canManage } = await checkAccess(ctx, args.organizationId);
     if (!canManage) return [];
-    const views = await ctx.db
+    const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_document', (q) =>
         q.eq('organizationId', args.organizationId).eq('documentId', args.documentId),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedViews = viewsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedViews;
+    const views = viewsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const enriched = await Promise.all(
       views.map(async (view) => {
@@ -358,11 +370,14 @@ export const getDocumentCategories = query({
     const { canManage } = await checkAccess(ctx, args.organizationId);
     // Categories organize the staff-only library — nothing to list for others.
     if (!canManage) return [];
-    return await ctx.db
+    const catsRaw = await ctx.db
       .query('documentCategories')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
       .order('asc')
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedCats = catsRaw.length > SMALL_LIST_CAP;
+    void isCappedCats;
+    return catsRaw.slice(0, SMALL_LIST_CAP);
   },
 });
 
@@ -418,15 +433,21 @@ export const getTeamDocumentOverview = query({
       return null;
     }
 
-    const docs = await ctx.db
+    const docsRaw = await ctx.db
       .query('documents')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedDocs = docsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedDocs;
+    const docs = docsRaw.slice(0, DEFAULT_LIST_CAP);
 
-    const views = await ctx.db
+    const viewsRaw = await ctx.db
       .query('documentViews')
       .withIndex('by_user', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedViews = viewsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedViews;
+    const views = viewsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const totalDocuments = docs.length;
     const publishedDocuments = docs.filter((d) => d.isPublished).length;

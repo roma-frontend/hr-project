@@ -30,11 +30,14 @@ export const getAllLeaves = query({
     const organizationId = args.organizationId;
     // If organizationId is provided directly (server-side calls), use it
     if (organizationId && !requesterId) {
-      const leaves = await ctx.db
+      const leavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedLeaves = leavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedLeaves;
+      const leaves = leavesRaw.slice(0, MAX_PAGE_SIZE);
 
       return enrichLeavesWithUserData(ctx, leaves);
     }
@@ -50,33 +53,48 @@ export const getAllLeaves = query({
 
     let leaves;
     if (isSuperadmin(requester)) {
-      leaves = await ctx.db.query('leaveRequests').order('desc').take(MAX_PAGE_SIZE);
+      const raw = await ctx.db
+        .query('leaveRequests')
+        .order('desc')
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'admin') {
       if (!requester.organizationId) return [];
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'supervisor') {
       if (!requester.organizationId) return [];
       // Pull the org queue then intersect with the supervisor's subtree —
       // the org index is the cheapest entry point, the in-memory filter
       // trims to the reporting line.
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       leaves = orgLeaves.filter((l) => visibleUserIds.has(l.userId));
     } else {
       // Employees/drivers: only their own requests — a client-supplied
       // organizationId must never widen this to the org queue.
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_user', (q) => q.eq('userId', requester._id))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     }
 
     return enrichLeavesWithUserData(ctx, leaves);
@@ -174,28 +192,37 @@ export const getLeavesForOrganization = query({
 
     let leaves;
     if (userIsSuperadmin || (isAdmin && sameOrg)) {
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (isSupervisor && sameOrg) {
       // Supervisor: same-org queue filtered to their reporting subtree.
       const visibleUserIds = await getVisibleUserIdsForCaller(ctx, requester);
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       leaves = orgLeaves.filter((l) => visibleUserIds.has(l.userId));
     } else if (!isSupervisor && !isAdmin) {
       // Employees/drivers: only their own requests — the calendar must not
       // expose the org queue through this query either.
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_user', (q) => q.eq('userId', requester._id))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else {
       // Staff querying a foreign organization: denied.
       return [];
@@ -230,38 +257,56 @@ export const getLeavesForDateRange = query({
     if (userIsSuperadmin) {
       // Superadmin: optionally scoped to a chosen org
       if (organizationId) {
-        leaves = await ctx.db
+        const raw = await ctx.db
           .query('leaveRequests')
           .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
           .order('desc')
-          .take(MAX_PAGE_SIZE);
+          .take(MAX_PAGE_SIZE + 1);
+        const isCapped = raw.length > MAX_PAGE_SIZE;
+        void isCapped;
+        leaves = raw.slice(0, MAX_PAGE_SIZE);
       } else {
-        leaves = await ctx.db.query('leaveRequests').order('desc').take(MAX_PAGE_SIZE);
+        const raw = await ctx.db
+          .query('leaveRequests')
+          .order('desc')
+          .take(MAX_PAGE_SIZE + 1);
+        const isCapped = raw.length > MAX_PAGE_SIZE;
+        void isCapped;
+        leaves = raw.slice(0, MAX_PAGE_SIZE);
       }
     } else if (isAdmin) {
       const orgId = organizationId ?? requester.organizationId;
       if (!orgId) return [];
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', orgId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (isSupervisor) {
       const orgId = organizationId ?? requester.organizationId;
       if (!orgId) return [];
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', orgId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       leaves = orgLeaves.filter((l) => visibleUserIds!.has(l.userId));
     } else {
       // Employee: only own leaves
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_user', (q) => q.eq('userId', requester._id))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     }
 
     // Filter to leaves that overlap the visible date range
@@ -280,11 +325,14 @@ export const getUserLeaves = query({
     const caller = await getAuthCaller(ctx);
     if (!caller) return [];
     if (!(await canAccessUser(ctx, caller._id, userId))) return [];
-    return await ctx.db
+    const raw = await ctx.db
       .query('leaveRequests')
       .withIndex('by_user', (q) => q.eq('userId', userId))
       .order('desc')
-      .take(MAX_PAGE_SIZE);
+      .take(MAX_PAGE_SIZE + 1);
+    const isCapped = raw.length > MAX_PAGE_SIZE;
+    void isCapped;
+    return raw.slice(0, MAX_PAGE_SIZE);
   },
 });
 
@@ -303,32 +351,41 @@ export const getPendingLeaves = query({
     // Supervisor sees pending leaves for their reporting subtree only.
     let leaves;
     if (isSuperadmin(requester)) {
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .filter((q) => q.eq(q.field('status'), 'pending'))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'admin') {
       if (!requester.organizationId) {
         throw new Error('User does not belong to an organization');
       }
-      leaves = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org_status', (q) =>
           q.eq('organizationId', requester.organizationId).eq('status', 'pending'),
         )
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      leaves = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'supervisor') {
       if (!requester.organizationId) {
         throw new Error('User does not belong to an organization');
       }
       const visibleUserIds = await getVisibleUserIdsForCaller(ctx, requester);
-      const orgPending = await ctx.db
+      const orgPendingRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org_status', (q) =>
           q.eq('organizationId', requester.organizationId).eq('status', 'pending'),
         )
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgPendingRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgPending = orgPendingRaw.slice(0, MAX_PAGE_SIZE);
       leaves = orgPending.filter((l) => visibleUserIds.has(l.userId));
     } else {
       // Employees have no review queue — empty list rather than the user's
@@ -355,31 +412,46 @@ export const getLeaveStats = query({
     // only get their own personal stats.
     let all;
     if (isSuperadmin(requester)) {
-      all = await ctx.db.query('leaveRequests').order('desc').take(MAX_PAGE_SIZE);
+      const raw = await ctx.db
+        .query('leaveRequests')
+        .order('desc')
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      all = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'admin') {
       if (!requester.organizationId) throw new Error('User does not belong to an organization');
-      all = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      all = raw.slice(0, MAX_PAGE_SIZE);
     } else if (requester.role === 'supervisor') {
       if (!requester.organizationId) throw new Error('User does not belong to an organization');
       const visibleUserIds = await getVisibleUserIdsForCaller(ctx, requester);
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       all = orgLeaves.filter((l) => visibleUserIds.has(l.userId));
     } else {
       // Employees/drivers: personal stats only — the org-wide review queue
       // (pending count) and onLeaveToday must not leak.
-      all = await ctx.db
+      const raw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_user', (q) => q.eq('userId', requester._id))
         .order('desc')
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCapped = raw.length > MAX_PAGE_SIZE;
+      void isCapped;
+      all = raw.slice(0, MAX_PAGE_SIZE);
     }
 
     const pending = all.filter((l) => l.status === 'pending').length;
@@ -419,7 +491,13 @@ export const getUnreadCount = query({
     // always 0 so org-wide numbers never leak.
     let unread: number;
     if (isSuperadmin(requester)) {
-      const allLeaves = await ctx.db.query('leaveRequests').order('desc').take(MAX_PAGE_SIZE);
+      const allLeavesRaw = await ctx.db
+        .query('leaveRequests')
+        .order('desc')
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedAll = allLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedAll;
+      const allLeaves = allLeavesRaw.slice(0, MAX_PAGE_SIZE);
       // Treat missing isRead as false (old records before field was added)
       unread = allLeaves.filter(
         (l) =>
@@ -428,10 +506,13 @@ export const getUnreadCount = query({
       ).length;
     } else if (requester.role === 'admin') {
       if (!requester.organizationId) throw new Error('User does not belong to an organization');
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       // Treat missing isRead as false (old records before field was added)
       unread = orgLeaves.filter(
         (l) =>
@@ -441,10 +522,13 @@ export const getUnreadCount = query({
     } else if (requester.role === 'supervisor') {
       if (!requester.organizationId) throw new Error('User does not belong to an organization');
       const visibleUserIds = await getVisibleUserIdsForCaller(ctx, requester);
-      const orgLeaves = await ctx.db
+      const orgLeavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId))
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedOrg = orgLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedOrg;
+      const orgLeaves = orgLeavesRaw.slice(0, MAX_PAGE_SIZE);
       unread = orgLeaves.filter(
         (l) =>
           visibleUserIds.has(l.userId) &&

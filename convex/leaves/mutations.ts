@@ -1046,18 +1046,24 @@ export const requestLeaveCancellation = mutation({
 
     // Notify HR so the cancellation request does not sit unnoticed — the same
     // roles that may decide it (admins approve/delete, supervisors may reject).
-    const adminRows = await ctx.db
+    const adminRowsRaw = await ctx.db
       .query('users')
       .withIndex('by_org_role', (q) =>
         q.eq('organizationId', requester.organizationId).eq('role', 'admin'),
       )
-      .take(DEFAULT_LIST_CAP);
-    const supervisorRows = await ctx.db
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedAdmins = adminRowsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedAdmins;
+    const adminRows = adminRowsRaw.slice(0, DEFAULT_LIST_CAP);
+    const supervisorRowsRaw = await ctx.db
       .query('users')
       .withIndex('by_org_role', (q) =>
         q.eq('organizationId', requester.organizationId).eq('role', 'supervisor'),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedSups = supervisorRowsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedSups;
+    const supervisorRows = supervisorRowsRaw.slice(0, DEFAULT_LIST_CAP);
     const recipients = [...adminRows, ...supervisorRows].filter(
       (user, index, all) => all.findIndex((u) => u._id === user._id) === index,
     );
@@ -1297,13 +1303,22 @@ export const markAllLeavesAsRead = mutation({
     // Superadmin can mark all as read
     let unreadLeaves;
     if (isSuperadmin(requester)) {
-      const allLeaves = await ctx.db.query('leaveRequests').order('desc').take(MAX_PAGE_SIZE);
+      const allLeavesRaw = await ctx.db
+        .query('leaveRequests')
+        .order('desc')
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedAll = allLeavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedAll;
+      const allLeaves = allLeavesRaw.slice(0, MAX_PAGE_SIZE);
       unreadLeaves = allLeaves.filter((l) => l.isRead === false || l.isRead === undefined);
     } else {
-      const leaves = await ctx.db
+      const leavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', requester.organizationId!))
-        .take(MAX_PAGE_SIZE);
+        .take(MAX_PAGE_SIZE + 1);
+      const isCappedLeaves = leavesRaw.length > MAX_PAGE_SIZE;
+      void isCappedLeaves;
+      const leaves = leavesRaw.slice(0, MAX_PAGE_SIZE);
       unreadLeaves = leaves.filter((l) => l.isRead === false || l.isRead === undefined);
     }
 
