@@ -104,10 +104,13 @@ export const listPlans = query({
     await assertModuleAccess(ctx, 'benefits');
     const scope = await resolveOrgScope(ctx, args.organizationId);
     if (!scope?.organizationId) return [];
-    return await ctx.db
+    const plansRaw = await ctx.db
       .query('benefitPlans')
       .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedPlans = plansRaw.length > SMALL_LIST_CAP;
+    void isCappedPlans;
+    return plansRaw.slice(0, SMALL_LIST_CAP);
   },
 });
 
@@ -245,11 +248,14 @@ export const listWallets = query({
     const scope = await resolveOrgStaff(ctx, undefined, { adminOnly: true });
     if (!scope?.organizationId) return [];
     const y = year ?? new Date().getFullYear();
-    return await ctx.db
+    const walletsRaw = await ctx.db
       .query('benefitWallets')
       .withIndex('by_org_user_year', (q) => q.eq('organizationId', scope.organizationId!))
-      .take(DEFAULT_LIST_CAP)
-      .then((rows) => rows.filter((r) => r.year === y));
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedWallets = walletsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedWallets;
+    const wallets = walletsRaw.slice(0, DEFAULT_LIST_CAP);
+    return wallets.filter((r) => r.year === y);
   },
 });
 
@@ -263,12 +269,15 @@ export const listMyEnrollments = query({
     await assertFeatureEnabled(ctx, 'benefits.module');
     const scope = await resolveOrgScope(ctx);
     if (!scope?.organizationId) return [];
-    return await ctx.db
+    const myEnrollmentsRaw = await ctx.db
       .query('benefitEnrollments')
       .withIndex('by_org_user', (q) =>
         q.eq('organizationId', scope.organizationId!).eq('userId', scope.caller._id),
       )
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const isCappedMyEnrollments = myEnrollmentsRaw.length > SMALL_LIST_CAP;
+    void isCappedMyEnrollments;
+    return myEnrollmentsRaw.slice(0, SMALL_LIST_CAP);
   },
 });
 
@@ -282,15 +291,21 @@ export const listEnrollmentsForOrg = query({
     if (planId) {
       const plan = await ctx.db.get(planId);
       if (!plan || !scopeOwnsRecord(scope, plan)) throw new Error('Plan not found');
-      return await ctx.db
+      const byPlanRaw = await ctx.db
         .query('benefitEnrollments')
         .withIndex('by_plan', (q) => q.eq('planId', planId))
-        .take(SMALL_LIST_CAP);
+        .take(SMALL_LIST_CAP + 1);
+      const isCappedByPlan = byPlanRaw.length > SMALL_LIST_CAP;
+      void isCappedByPlan;
+      return byPlanRaw.slice(0, SMALL_LIST_CAP);
     }
-    return await ctx.db
+    const enrollmentsRaw = await ctx.db
       .query('benefitEnrollments')
       .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedEnrollments = enrollmentsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedEnrollments;
+    return enrollmentsRaw.slice(0, DEFAULT_LIST_CAP);
   },
 });
 
@@ -433,15 +448,18 @@ export const listClaims = query({
     const scope = await resolveOrgScope(ctx, args.organizationId);
     if (!scope?.organizationId) return [];
 
-    let rows = args.planId
+    const rowsRaw = args.planId
       ? await ctx.db
           .query('benefitClaims')
           .withIndex('by_plan', (q) => q.eq('planId', args.planId!))
-          .take(DEFAULT_LIST_CAP)
+          .take(DEFAULT_LIST_CAP + 1)
       : await ctx.db
           .query('benefitClaims')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+    const isCappedClaims = rowsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedClaims;
+    let rows = rowsRaw.slice(0, DEFAULT_LIST_CAP);
 
     if (!scope.isStaff) {
       rows = rows.filter((r) => r.userId === scope.caller._id || r.createdBy === scope.caller._id);

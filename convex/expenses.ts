@@ -113,13 +113,20 @@ export const listExpenses = query({
 
     // Scope by org via by_org index when possible; the uncapped read is left
     // only for a superadmin explicitly asking across organizations.
-    let expenses = scope.organizationId
+    const expensesRaw = scope.organizationId
       ? await ctx.db
           .query('expenses')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('expenses').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('expenses')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const expensesCap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedExpenses = expensesRaw.length > expensesCap;
+    void isCappedExpenses;
+    let expenses = expensesRaw.slice(0, expensesCap);
 
     if (effectiveUserId) expenses = expenses.filter((e) => e.userId === effectiveUserId);
     if (category) expenses = expenses.filter((e) => e.category === category);
@@ -160,10 +167,13 @@ export const getUserExpenses = query({
     // Reading someone else's claims requires staff rights in their org.
     if (!scope.isStaff && userId !== scope.caller._id) return [];
 
-    const expenses = await ctx.db
+    const expensesRaw = await ctx.db
       .query('expenses')
       .withIndex('by_org_user', (q) => q.eq('organizationId', organizationId).eq('userId', userId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedUserExpenses = expensesRaw.length > DEFAULT_LIST_CAP;
+    void isCappedUserExpenses;
+    const expenses = expensesRaw.slice(0, DEFAULT_LIST_CAP);
 
     return expenses.sort((a, b) => b.expenseDate - a.expenseDate);
   },
@@ -209,13 +219,20 @@ export const listExpenseCategories = query({
     const scope = await resolveOrgScope(ctx, organizationId);
     if (!scope) return [];
 
-    let categories = scope.organizationId
+    const categoriesRaw = scope.organizationId
       ? await ctx.db
           .query('expenseCategories')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('expenseCategories').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('expenseCategories')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const categoriesCap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedCategories = categoriesRaw.length > categoriesCap;
+    void isCappedCategories;
+    let categories = categoriesRaw.slice(0, categoriesCap);
 
     if (activeOnly) categories = categories.filter((c) => c.isActive);
 
@@ -233,19 +250,27 @@ export const getExpensePolicy = query({
     if (!scope) return null;
 
     // Scope by org via by_org_active index when possible.
-    const policies = scope.organizationId
-      ? await ctx.db
-          .query('expensePolicies')
-          .withIndex('by_org_active', (q) =>
-            q.eq('organizationId', scope.organizationId!).eq('isActive', true),
-          )
-          .order('desc')
-          .take(SMALL_LIST_CAP)
-      : (await ctx.db.query('expensePolicies').order('desc').take(XLARGE_LIST_CAP)).filter(
-          (p) => p.isActive,
-        );
-
-    return policies[0] ?? null;
+    if (scope.organizationId) {
+      const policiesRaw = await ctx.db
+        .query('expensePolicies')
+        .withIndex('by_org_active', (q) =>
+          q.eq('organizationId', scope.organizationId!).eq('isActive', true),
+        )
+        .order('desc')
+        .take(SMALL_LIST_CAP + 1);
+      const isCappedPolicies = policiesRaw.length > SMALL_LIST_CAP;
+      void isCappedPolicies;
+      const policies = policiesRaw.slice(0, SMALL_LIST_CAP);
+      return policies[0] ?? null;
+    }
+    const policiesRawAll = await ctx.db
+      .query('expensePolicies')
+      .order('desc')
+      .take(XLARGE_LIST_CAP + 1);
+    const isCappedPoliciesAll = policiesRawAll.length > XLARGE_LIST_CAP;
+    void isCappedPoliciesAll;
+    const policiesAll = policiesRawAll.slice(0, XLARGE_LIST_CAP).filter((p) => p.isActive);
+    return policiesAll[0] ?? null;
   },
 });
 
@@ -263,13 +288,20 @@ export const listExpenseReports = query({
     // Non-staff only ever see their own reports.
     const effectiveUserId = scope.isStaff ? userId : scope.caller._id;
 
-    let reports = scope.organizationId
+    const reportsRaw = scope.organizationId
       ? await ctx.db
           .query('expenseReports')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('expenseReports').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('expenseReports')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const reportsCap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedReports = reportsRaw.length > reportsCap;
+    void isCappedReports;
+    let reports = reportsRaw.slice(0, reportsCap);
 
     if (effectiveUserId) reports = reports.filter((r) => r.userId === effectiveUserId);
     if (status) reports = reports.filter((r) => r.status === status);
@@ -305,10 +337,13 @@ export const getExpenseReportDetails = query({
     const scope = await resolveOrgScope(ctx, report.organizationId);
     if (!scope || !canAccessExpenseRecord(scope, report)) return null;
 
-    const items = await ctx.db
+    const itemsRaw = await ctx.db
       .query('expenseReportItems')
       .withIndex('by_report', (q) => q.eq('reportId', reportId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedReportItems = itemsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedReportItems;
+    const items = itemsRaw.slice(0, DEFAULT_LIST_CAP);
 
     const expenses = await Promise.all(
       items.map(async (item) => {
@@ -342,13 +377,20 @@ export const getExpenseSummary = query({
     const scope = await resolveOrgScope(ctx, organizationId);
     if (!scope) return null;
 
-    let expenses = scope.organizationId
+    const expensesRawSummary = scope.organizationId
       ? await ctx.db
           .query('expenses')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
           .order('desc')
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('expenses').order('desc').take(XLARGE_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1)
+      : await ctx.db
+          .query('expenses')
+          .order('desc')
+          .take(XLARGE_LIST_CAP + 1);
+    const summaryCap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const isCappedSummary = expensesRawSummary.length > summaryCap;
+    void isCappedSummary;
+    let expenses = expensesRawSummary.slice(0, summaryCap);
 
     // Org-wide totals are a staff view; an employee gets their own numbers.
     if (!scope.isStaff) expenses = expenses.filter((e) => e.userId === scope.caller._id);

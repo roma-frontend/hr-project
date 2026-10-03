@@ -419,12 +419,22 @@ export const getAssetQRData = query({
     assetId: v.id('assetCatalog'),
   },
   handler: async (ctx, args) => {
-    // QR stickers carry serial numbers / asset tags — staff only.
+    // QR stickers carry serial numbers / asset tags — staff only, org-gated.
     const staff = await getStaffCaller(ctx);
     if (!staff) return null;
+    if (
+      (staff as unknown as { role?: string }).role !== 'superadmin' &&
+      staff.organizationId !== args.organizationId
+    )
+      return null;
 
     const asset = await ctx.db.get(args.assetId);
     if (!asset) return null;
+    if (
+      (staff as unknown as { role?: string }).role !== 'superadmin' &&
+      asset.organizationId !== args.organizationId
+    )
+      return null;
 
     // Build a deep-link URL for the asset detail page.
     // When scanned from a mobile device this opens the asset card directly.
@@ -1872,9 +1882,21 @@ export const sendMovementForm = mutation({
     assignedBy: v.id('users'),
   },
   handler: async (ctx, args) => {
+    const caller = await getAuthCaller(ctx);
+    if (!caller) throw new Error('Not authenticated');
+    if (
+      (caller as unknown as { role?: string }).role !== 'superadmin' &&
+      caller.organizationId !== args.organizationId
+    )
+      throw new Error('Access denied');
     // Check if a movement form already exists for this assignment
     const assignment = await ctx.db.get(args.assignmentId);
     if (!assignment) throw new Error('Assignment not found');
+    if (
+      (caller as unknown as { role?: string }).role !== 'superadmin' &&
+      assignment.organizationId !== args.organizationId
+    )
+      throw new Error('Access denied');
 
     if (assignment.movementFormDocId) {
       // Already has a document — just resend notification (reminder)
