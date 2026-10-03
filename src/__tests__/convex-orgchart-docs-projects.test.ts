@@ -209,11 +209,11 @@ describe('documents', () => {
   });
 
   describe('getMyDocumentViews', () => {
-    it('throws when no auth', async () => {
+    it('returns [] when no auth (degrade, not throw)', async () => {
       const { getAuthCaller } = require('../../convex/lib/getAuthCaller');
       getAuthCaller.mockResolvedValue(null);
       const { ctx } = makeCtx();
-      await expect(documentsHandlers.getMyDocumentViews(ctx, {})).rejects.toThrow();
+      await expect(documentsHandlers.getMyDocumentViews(ctx, {})).resolves.toEqual([]);
     });
   });
 
