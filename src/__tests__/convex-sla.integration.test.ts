@@ -20,6 +20,9 @@ const modules = {
   './sla.ts': () => import('../../convex/sla'),
   './lib/limits.ts': () => import('../../convex/lib/limits'),
   './lib/userProfile.ts': () => import('../../convex/lib/userProfile'),
+  './lib/getAuthCaller.ts': () => import('../../convex/lib/getAuthCaller'),
+  './lib/orgAccess.ts': () => import('../../convex/lib/orgAccess'),
+  './lib/auth.ts': () => import('../../convex/lib/auth'),
 } as unknown as Record<string, () => Promise<unknown>>;
 
 type Ctx = Awaited<ReturnType<typeof seed>>;
@@ -114,6 +117,8 @@ const configArgs = (c: Ctx, overrides: Record<string, unknown> = {}) => ({
   notifyOnBreach: true,
   ...overrides,
 });
+
+const asAdmin = (c: Ctx) => c.t.withIdentity({ email: 'admin@acme.test' });
 
 // ── getSLAConfig ─────────────────────────────────────────────────────────────
 describe('getSLAConfig', () => {
@@ -460,7 +465,7 @@ describe('getSLAStats', () => {
       ctx.runMutation(api.sla.createSLAMetric, { leaveRequestId: pending.id }),
     );
 
-    const res = await c.t.run((ctx) => ctx.runQuery(api.sla.getSLAStats, {}));
+    const res = await asAdmin(c).query(api.sla.getSLAStats, {});
     expect(res.total).toBe(3);
     expect(res.pending).toBe(1);
     expect(res.onTime).toBe(1);
@@ -511,17 +516,15 @@ describe('getSLAStats', () => {
       } as never);
     });
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getSLAStats, { organizationId: c.organizationId }),
-    );
+    const res = await asAdmin(c).query(api.sla.getSLAStats, {
+      organizationId: c.organizationId,
+    });
     expect(res.total).toBe(1);
 
-    const ranged = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getSLAStats, {
-        startDate: Date.now() - 10 * HOUR,
-        endDate: Date.now() + 10 * HOUR,
-      }),
-    );
+    const ranged = await asAdmin(c).query(api.sla.getSLAStats, {
+      startDate: Date.now() - 10 * HOUR,
+      endDate: Date.now() + 10 * HOUR,
+    });
     expect(ranged.total).toBe(2);
   });
 
@@ -534,7 +537,7 @@ describe('getSLAStats', () => {
     const crit = await insertLeave(c, { createdAt: Date.now() - 30 * HOUR });
     await c.t.run((ctx) => ctx.runMutation(api.sla.createSLAMetric, { leaveRequestId: crit.id }));
 
-    const res = await c.t.run((ctx) => ctx.runQuery(api.sla.getSLAStats, {}));
+    const res = await asAdmin(c).query(api.sla.getSLAStats, {});
     expect(res.warningCount).toBe(2);
     expect(res.criticalCount).toBe(1);
   });
@@ -547,9 +550,9 @@ describe('getPendingWithSLA', () => {
     const { id } = await insertLeave(c, { createdAt: Date.now() - HOUR });
     await c.t.run((ctx) => ctx.runMutation(api.sla.createSLAMetric, { leaveRequestId: id }));
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getPendingWithSLA, { organizationId: c.organizationId }),
-    );
+    const res = await asAdmin(c).query(api.sla.getPendingWithSLA, {
+      organizationId: c.organizationId,
+    });
     expect(res).toHaveLength(1);
     const row = res[0]!;
     expect(row.userName).toBe('Employee');
@@ -575,9 +578,9 @@ describe('getPendingWithSLA', () => {
       ctx.runMutation(api.sla.createSLAMetric, { leaveRequestId: warning.id }),
     );
 
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getPendingWithSLA, { organizationId: c.organizationId }),
-    );
+    const res = await asAdmin(c).query(api.sla.getPendingWithSLA, {
+      organizationId: c.organizationId,
+    });
     const byLeave = new Map(res.map((r) => [r._id, r.sla.status]));
     expect(byLeave.get(breached.id)).toBe('breached');
     expect(byLeave.get(critical.id)).toBe('critical');
@@ -590,9 +593,9 @@ describe('getPendingWithSLA', () => {
     await c.t.run(async (ctx) => {
       await ctx.db.delete(c.employeeId);
     });
-    const res = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getPendingWithSLA, { organizationId: c.organizationId }),
-    );
+    const res = await asAdmin(c).query(api.sla.getPendingWithSLA, {
+      organizationId: c.organizationId,
+    });
     expect(res[0]?.userName).toBe('Unknown');
     expect(res[0]?.userEmail).toBe('');
   });
@@ -616,9 +619,10 @@ describe('getSLATrend', () => {
       if (metric) await ctx.db.patch(metric._id, { organizationId: c.organizationId });
     });
 
-    const trend = await c.t.run((ctx) =>
-      ctx.runQuery(api.sla.getSLATrend, { days: 7, organizationId: c.organizationId }),
-    );
+    const trend = await asAdmin(c).query(api.sla.getSLATrend, {
+      days: 7,
+      organizationId: c.organizationId,
+    });
     expect(Array.isArray(trend)).toBe(true);
     expect(trend.length).toBeGreaterThan(0);
     expect(trend[0]?.complianceRate).toBe(100);
@@ -649,7 +653,7 @@ describe('getSLATrend', () => {
     });
     await c.t.run((ctx) => ctx.runMutation(api.sla.updateSLAMetric, { leaveRequestId: old.id }));
 
-    const res = await c.t.run((ctx) => ctx.runQuery(api.sla.getSLATrend, { days: 7 }));
+    const res = await asAdmin(c).query(api.sla.getSLATrend, { days: 7 });
     expect(res).toHaveLength(2);
     const todayRow = res.find((d) => d.onTime === 1);
     const oldRow = res.find((d) => d.breached === 1);
@@ -661,7 +665,7 @@ describe('getSLATrend', () => {
     const c = await seed();
     const old = await insertLeave(c, { createdAt: Date.now() - 30 * 24 * HOUR });
     await c.t.run((ctx) => ctx.runMutation(api.sla.createSLAMetric, { leaveRequestId: old.id }));
-    const res = await c.t.run((ctx) => ctx.runQuery(api.sla.getSLATrend, { days: 7 }));
+    const res = await asAdmin(c).query(api.sla.getSLATrend, { days: 7 });
     expect(res).toEqual([]);
   });
 

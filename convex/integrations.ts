@@ -544,12 +544,15 @@ export const upsertEmployeeBatch = internalMutation({
     const notes: string[] = [];
 
     // Seat accounting is done once per batch, then tracked locally as we insert.
-    const activeUsers = await ctx.db
+    const activeUsersRaw = await ctx.db
       .query('users')
       .withIndex('by_org_active', (q) =>
         q.eq('organizationId', organizationId).eq('isActive', true),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedActiveUsers = activeUsersRaw.length > DEFAULT_LIST_CAP;
+    void isCappedActiveUsers;
+    const activeUsers = activeUsersRaw.slice(0, DEFAULT_LIST_CAP);
     let seatsUsed = activeUsers.length;
 
     // Read the org's travel allowance policy once — it is the same for every
@@ -716,12 +719,15 @@ export const deactivateMissingEmployees = internalMutation({
   handler: async (ctx, { organizationId, activeEmails }) => {
     const keep = new Set(activeEmails.map((e) => e.toLowerCase().trim()));
 
-    const orgUsers = await ctx.db
+    const orgUsersRaw = await ctx.db
       .query('users')
       .withIndex('by_org_active', (q) =>
         q.eq('organizationId', organizationId).eq('isActive', true),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedOrgUsers = orgUsersRaw.length > DEFAULT_LIST_CAP;
+    void isCappedOrgUsers;
+    const orgUsers = orgUsersRaw.slice(0, DEFAULT_LIST_CAP);
 
     let deactivated = 0;
     for (const user of orgUsers) {
@@ -2108,12 +2114,15 @@ export const imidUpsertUser = internalMutation({
     const org = await ctx.db.get(organizationId);
     if (!org || !org.isActive) throw new Error('Organization is inactive');
 
-    const activeUsers = await ctx.db
+    const activeUsersRaw2 = await ctx.db
       .query('users')
       .withIndex('by_org_active', (q) =>
         q.eq('organizationId', organizationId).eq('isActive', true),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedActiveUsers2 = activeUsersRaw2.length > DEFAULT_LIST_CAP;
+    void isCappedActiveUsers2;
+    const activeUsers = activeUsersRaw2.slice(0, DEFAULT_LIST_CAP);
 
     if (activeUsers.length >= org.employeeLimit) {
       throw new Error('Organization has reached its employee limit');
@@ -2871,12 +2880,15 @@ const DEFAULT_SYNC_CRON = '0 3 * * *';
 export const listEnabledConfigs = internalQuery({
   args: { provider: providerValidator },
   handler: async (ctx, { provider }) => {
-    const docs = await ctx.db
+    const docsRaw = await ctx.db
       .query('integrationConfigs')
       .withIndex('by_provider_enabled', (q) =>
         q.eq('provider', provider).eq('config.isEnabled', true),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedDocs = docsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedDocs;
+    const docs = docsRaw.slice(0, DEFAULT_LIST_CAP);
 
     return docs.map((d) => ({
       organizationId: d.organizationId,

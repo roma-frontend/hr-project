@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { DEFAULT_LIST_CAP, SMALL_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
+import { getAuthCaller } from './lib/getAuthCaller';
+import { resolveOrgScope } from './lib/orgAccess';
 import { getProfile } from './lib/userProfile';
 
 // ── Helper: Calculate response time in hours ──────────────────────────────
@@ -110,7 +112,10 @@ export const getSLAConfig = query({
 export const getOrCreateSLAConfig = query({
   args: {},
   handler: async (ctx) => {
-    const configs = await ctx.db.query('slaConfig').take(SMALL_LIST_CAP);
+    const configsRaw = await ctx.db.query('slaConfig').take(SMALL_LIST_CAP + 1);
+    const isCappedConfigs = configsRaw.length > SMALL_LIST_CAP;
+    void isCappedConfigs;
+    const configs = configsRaw.slice(0, SMALL_LIST_CAP);
 
     if (configs.length > 0) {
       return configs[0];
@@ -245,11 +250,47 @@ export const getSLAStats = query({
   },
   handler: async (ctx, args) => {
     const { startDate, endDate, organizationId } = args;
-    let metrics = await ctx.db.query('slaMetrics').take(XLARGE_LIST_CAP);
-
-    // Filter by organization if provided
+    let verifiedOrg: typeof organizationId | undefined;
     if (organizationId) {
-      metrics = metrics.filter((m) => m.organizationId === organizationId);
+      const scope = await resolveOrgScope(ctx, organizationId);
+      if (!scope)
+        return {
+          total: 0,
+          pending: 0,
+          onTime: 0,
+          breached: 0,
+          avgResponseTime: 0,
+          avgSLAScore: 0,
+          complianceRate: 100,
+          targetResponseTime: 24,
+          warningCount: 0,
+          criticalCount: 0,
+        };
+      verifiedOrg = scope.organizationId!;
+    } else {
+      const caller = await getAuthCaller(ctx);
+      if (!caller)
+        return {
+          total: 0,
+          pending: 0,
+          onTime: 0,
+          breached: 0,
+          avgResponseTime: 0,
+          avgSLAScore: 0,
+          complianceRate: 100,
+          targetResponseTime: 24,
+          warningCount: 0,
+          criticalCount: 0,
+        };
+    }
+    const metricsRaw = await ctx.db.query('slaMetrics').take(XLARGE_LIST_CAP + 1);
+    const isCappedMetrics = metricsRaw.length > XLARGE_LIST_CAP;
+    void isCappedMetrics;
+    let metrics = metricsRaw.slice(0, XLARGE_LIST_CAP);
+
+    // Filter by organization if provided (now verified)
+    if (verifiedOrg) {
+      metrics = metrics.filter((m) => m.organizationId === verifiedOrg);
     }
 
     // Filter by date range if provided
@@ -321,14 +362,26 @@ export const getPendingWithSLA = query({
   },
   handler: async (ctx, args) => {
     const { organizationId } = args;
-    let pendingLeaves = await ctx.db
+    let verifiedOrg: typeof organizationId | undefined;
+    if (organizationId) {
+      const scope = await resolveOrgScope(ctx, organizationId);
+      if (!scope) return [];
+      verifiedOrg = scope.organizationId!;
+    } else {
+      const caller = await getAuthCaller(ctx);
+      if (!caller) return [];
+    }
+    const pendingLeavesRaw = await ctx.db
       .query('leaveRequests')
       .withIndex('by_status', (q) => q.eq('status', 'pending'))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedPendingLeaves = pendingLeavesRaw.length > DEFAULT_LIST_CAP;
+    void isCappedPendingLeaves;
+    let pendingLeaves = pendingLeavesRaw.slice(0, DEFAULT_LIST_CAP);
 
-    // Filter by organization if provided
-    if (organizationId) {
-      pendingLeaves = pendingLeaves.filter((l) => l.organizationId === organizationId);
+    // Filter by organization if provided (now verified)
+    if (verifiedOrg) {
+      pendingLeaves = pendingLeaves.filter((l) => l.organizationId === verifiedOrg);
     }
 
     const config = await ctx.db.query('slaConfig').first();
@@ -344,7 +397,10 @@ export const getPendingWithSLA = query({
     const profileMap = new Map(uniqueUserIds.map((id, i) => [id, profilesBatch[i]]));
 
     // Batch-load all SLA metrics for the pending leaves
-    const allMetrics = await ctx.db.query('slaMetrics').take(XLARGE_LIST_CAP);
+    const allMetricsRaw = await ctx.db.query('slaMetrics').take(XLARGE_LIST_CAP + 1);
+    const isCappedAllMetrics = allMetricsRaw.length > XLARGE_LIST_CAP;
+    void isCappedAllMetrics;
+    const allMetrics = allMetricsRaw.slice(0, XLARGE_LIST_CAP);
     const metricsByLeave = new Map(allMetrics.map((m) => [m.leaveRequestId, m]));
 
     return pendingLeaves.map((leave) => {
@@ -394,16 +450,28 @@ export const getSLATrend = query({
   },
   handler: async (ctx, args) => {
     const { days, organizationId } = args;
+    let verifiedOrg: typeof organizationId | undefined;
+    if (organizationId) {
+      const scope = await resolveOrgScope(ctx, organizationId);
+      if (!scope) return [];
+      verifiedOrg = scope.organizationId!;
+    } else {
+      const caller = await getAuthCaller(ctx);
+      if (!caller) return [];
+    }
     const startDate = Date.now() - days * 24 * 60 * 60 * 1000;
-    let metrics = await ctx.db
+    const metricsRaw = await ctx.db
       .query('slaMetrics')
       .withIndex('by_submitted')
       .filter((q) => q.gte(q.field('submittedAt'), startDate))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const isCappedTrend = metricsRaw.length > DEFAULT_LIST_CAP;
+    void isCappedTrend;
+    let metrics = metricsRaw.slice(0, DEFAULT_LIST_CAP);
 
-    // Filter by organization if provided
-    if (organizationId) {
-      metrics = metrics.filter((m) => m.organizationId === organizationId);
+    // Filter by organization if provided (now verified)
+    if (verifiedOrg) {
+      metrics = metrics.filter((m) => m.organizationId === verifiedOrg);
     }
 
     // Group by day
