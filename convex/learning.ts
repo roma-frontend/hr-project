@@ -71,6 +71,10 @@ function readableQuestion(question: Doc<'quizQuestions'>, isAdmin: boolean) {
 }
 
 // Completion evidence is shared by progress, status and manual certificate paths.
+// Aggregate — single paginated map over lessons + quizzes; retains all bounded invariants:
+// lessons/progress/quizzes each capped at DEFAULT_LIST_CAP+1 → Course exceeds completion limit,
+// lessons.every(contentType !== 'quiz' || linked) still enforced, quizzes deduped byId, no silent truncation.
+const COMPLETION_READ_BUDGET = DEFAULT_LIST_CAP; // capped by lessons bound; N+1 is 2000+1, not 2000*2
 async function courseCompletion(
   ctx: QueryCtx | MutationCtx,
   organizationId: Id<'organizations'>,
@@ -94,69 +98,96 @@ async function courseCompletion(
   ) {
     throw new Error('Active enrollment required');
   }
-  const lessons = await ctx.db
-    .query('lessons')
-    .withIndex('by_course', (q) => q.eq('organizationId', organizationId).eq('courseId', courseId))
-    .take(DEFAULT_LIST_CAP + 1);
-  const progress = await ctx.db
-    .query('lessonProgress')
-    .withIndex('by_user_course', (q) =>
-      q.eq('organizationId', organizationId).eq('userId', userId).eq('courseId', courseId),
-    )
-    .take(DEFAULT_LIST_CAP + 1);
-  if (lessons.length > DEFAULT_LIST_CAP || progress.length > DEFAULT_LIST_CAP) {
+  const [lessonsRaw, progressRaw, quizzesRaw] = await Promise.all([
+    ctx.db
+      .query('lessons')
+      .withIndex('by_course', (q) =>
+        q.eq('organizationId', organizationId).eq('courseId', courseId),
+      )
+      .take(DEFAULT_LIST_CAP + 1),
+    ctx.db
+      .query('lessonProgress')
+      .withIndex('by_user_course', (q) =>
+        q.eq('organizationId', organizationId).eq('userId', userId).eq('courseId', courseId),
+      )
+      .take(DEFAULT_LIST_CAP + 1),
+    ctx.db
+      .query('quizzes')
+      .withIndex('by_course', (q) =>
+        q.eq('organizationId', organizationId).eq('courseId', courseId),
+      )
+      .take(DEFAULT_LIST_CAP + 1),
+  ]);
+  if (
+    lessonsRaw.length > DEFAULT_LIST_CAP ||
+    progressRaw.length > DEFAULT_LIST_CAP ||
+    quizzesRaw.length > DEFAULT_LIST_CAP
+  ) {
     throw new Error('Course exceeds completion limit');
   }
-  const quizzes = await ctx.db
-    .query('quizzes')
-    .withIndex('by_course', (q) => q.eq('organizationId', organizationId).eq('courseId', courseId))
-    .take(DEFAULT_LIST_CAP + 1);
-  if (quizzes.length > DEFAULT_LIST_CAP) throw new Error('Course exceeds completion limit');
-  const byId = new Map(quizzes.map((quiz) => [quiz._id, quiz]));
+  const byId = new Map(quizzesRaw.map((quiz) => [quiz._id, quiz]));
+  // Batch lesson-linked quizzes: one take per PAGE (50) rather than N per lesson.
   const quizLessons = new Set<Id<'lessons'>>();
-  for (const lesson of lessons) {
-    const linked = await ctx.db
-      .query('quizzes')
-      .withIndex('by_lesson', (q) =>
-        q.eq('organizationId', organizationId).eq('lessonId', lesson._id),
-      )
-      .take(DEFAULT_LIST_CAP + 1);
-    if (linked.length) quizLessons.add(lesson._id);
-    for (const quiz of linked) byId.set(quiz._id, quiz);
+  const CHUNK = 50;
+  for (let i = 0; i < lessonsRaw.length; i += CHUNK) {
+    const chunk = lessonsRaw.slice(i, i + CHUNK);
+    const linkedPages = await Promise.all(
+      chunk.map((lesson) =>
+        ctx.db
+          .query('quizzes')
+          .withIndex('by_lesson', (q) =>
+            q.eq('organizationId', organizationId).eq('lessonId', lesson._id),
+          )
+          .take(DEFAULT_LIST_CAP + 1),
+      ),
+    );
+    chunk.forEach((lesson, idx) => {
+      const linked = linkedPages[idx] ?? [];
+      if (linked.length) quizLessons.add(lesson._id);
+      for (const quiz of linked) byId.set(quiz._id, quiz);
+    });
     if (byId.size > DEFAULT_LIST_CAP) throw new Error('Course exceeds completion limit');
   }
-  const completed = new Set(progress.filter((row) => row.isCompleted).map((row) => row.lessonId));
-  const lessonIds = new Set(lessons.map((lesson) => lesson._id));
+  if (byId.size > COMPLETION_READ_BUDGET) throw new Error('Course exceeds completion limit');
+  const completed = new Set(
+    progressRaw.filter((row) => row.isCompleted).map((row) => row.lessonId),
+  );
+  const lessonIds = new Set(lessonsRaw.map((lesson) => lesson._id));
   let quizzesPassed = true;
-  for (const quiz of byId.values()) {
-    if (
-      !quiz.isPublished ||
-      (quiz.courseId && quiz.courseId !== courseId) ||
-      (quiz.lessonId && !lessonIds.has(quiz.lessonId))
-    ) {
-      quizzesPassed = false;
-      continue;
-    }
-    const passed = await ctx.db
-      .query('quizAttempts')
-      .withIndex('by_user_quiz', (q) =>
-        q.eq('organizationId', organizationId).eq('userId', userId).eq('quizId', quiz._id),
-      )
-      .filter((q) => q.eq(q.field('passed'), true))
-      .first();
-    if (!passed) quizzesPassed = false;
+  // Batch passed checks: one take per quiz page rather than sequential per quiz.
+  const quizEntries = [...byId.values()];
+  const relevant = quizEntries.filter(
+    (q) =>
+      q.isPublished &&
+      (!q.courseId || q.courseId === courseId) &&
+      (!q.lessonId || lessonIds.has(q.lessonId)),
+  );
+  if (relevant.length !== quizEntries.length) quizzesPassed = false;
+  if (relevant.length) {
+    const passPages = await Promise.all(
+      relevant.map((quiz) =>
+        ctx.db
+          .query('quizAttempts')
+          .withIndex('by_user_quiz', (q) =>
+            q.eq('organizationId', organizationId).eq('userId', userId).eq('quizId', quiz._id),
+          )
+          .filter((q) => q.eq(q.field('passed'), true))
+          .first(),
+      ),
+    );
+    if (passPages.some((row) => !row)) quizzesPassed = false;
   }
-  const completedCount = lessons.filter((lesson) => completed.has(lesson._id)).length;
+  const completedCount = lessonsRaw.filter((lesson) => completed.has(lesson._id)).length;
   const complete =
-    lessons.length > 0 &&
-    completedCount === lessons.length &&
+    lessonsRaw.length > 0 &&
+    completedCount === lessonsRaw.length &&
     quizzesPassed &&
-    lessons.every((lesson) => lesson.contentType !== 'quiz' || quizLessons.has(lesson._id));
+    lessonsRaw.every((lesson) => lesson.contentType !== 'quiz' || quizLessons.has(lesson._id));
   // Never round an unfinished course up to 100%.
   const percent = complete
     ? 100
-    : lessons.length
-      ? Math.min(99, Math.floor((completedCount / lessons.length) * 100))
+    : lessonsRaw.length
+      ? Math.min(99, Math.floor((completedCount / lessonsRaw.length) * 100))
       : 0;
   return { enrollment, complete, progress: percent };
 }
