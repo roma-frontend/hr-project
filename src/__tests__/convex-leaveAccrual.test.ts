@@ -156,7 +156,9 @@ function userDoc(overrides: Record<string, unknown> = {}) {
 
 describe('getLeavePolicies', () => {
   it('returns the default policies and daily accrual rates', async () => {
-    const result = (await getLeavePoliciesHandler({}, { organizationId: ORG_A })) as any;
+    mockGetAuthCaller.mockResolvedValue(makeCaller('admin'));
+    const { ctx } = makeCtx();
+    const result = (await getLeavePoliciesHandler(ctx, { organizationId: ORG_A })) as any;
     expect(result.paid).toBe(24);
     expect(result.sick).toBe(10);
     expect(result.family).toBe(5);
@@ -543,6 +545,7 @@ describe('getMyLeaveMoney', () => {
 
 describe('getAccrualHistory', () => {
   it('parses the details JSON of matching audit logs', async () => {
+    mockGetAuthCaller.mockResolvedValue(makeCaller('admin'));
     const { ctx, take } = makeCtx();
     take.mockResolvedValueOnce([
       { _id: 'log1', details: '{"year":2025,"employeeCount":3}' },
@@ -556,6 +559,7 @@ describe('getAccrualHistory', () => {
   });
 
   it('returns an empty list when there are no logs', async () => {
+    mockGetAuthCaller.mockResolvedValue(makeCaller('admin'));
     const { ctx, take } = makeCtx();
     take.mockResolvedValueOnce([]);
     const result = await getAccrualHistoryHandler(ctx, { organizationId: ORG_A });

@@ -8,6 +8,7 @@ import { assertModuleAccess } from './lib/entitlements';
 import { WORKING_DAYS_PER_MONTH, dailyRateFromSalary, valueLeaveDays } from './lib/leaveMoney';
 import { getTaxRule, toCountryCode, type CountryCode } from './lib/taxRules';
 import { resolvePensionExemption } from './lib/pension';
+import { resolveOrgScope, resolveOrgStaff } from './lib/orgAccess';
 
 /** Leave-balance keys present on the users document. */
 type BalanceField =
@@ -41,7 +42,9 @@ const DEFAULT_POLICIES = {
 // ── Get Org Leave Policies ────────────────────────────────────────────────
 export const getLeavePolicies = query({
   args: { organizationId: v.id('organizations') },
-  handler: async () => {
+  handler: async (ctx, { organizationId }) => {
+    const scope = await resolveOrgScope(ctx, organizationId);
+    if (!scope) throw new Error('Not authorized');
     // In future, these can come from org_settings
     return {
       ...DEFAULT_POLICIES,
@@ -354,11 +357,14 @@ export const getMyLeaveMoney = query({
 export const getAccrualHistory = query({
   args: { organizationId: v.id('organizations') },
   handler: async (ctx, { organizationId }) => {
+    const scope = await resolveOrgStaff(ctx, organizationId);
+    if (!scope) return [];
+    const scopedOrgId = scope.organizationId!;
     const logs = await ctx.db
       .query('auditLogs')
       .filter((q) =>
         q.and(
-          q.eq(q.field('organizationId'), organizationId),
+          q.eq(q.field('organizationId'), scopedOrgId),
           q.eq(q.field('action'), 'leave_bulk_accrual'),
         ),
       )
