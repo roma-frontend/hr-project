@@ -285,6 +285,7 @@ export default function LearningClient() {
       });
   };
   const submitQuizAttemptMutation = useMutation(api.learning.submitQuizAttempt);
+  const startQuizAttemptMutation = useMutation(api.learning.startQuizAttempt);
 
   // Paginated quiz questions — legacy getQuizByLesson kept for small quizzes.
   // When isCapped, the player pages through getQuizByLessonQuestionsPaginated.
@@ -636,14 +637,28 @@ export default function LearningClient() {
     setShowEditLesson(true);
   };
 
-  const handleStartQuiz = () => {
-    if (!quizDataResult) return;
+  const handleStartQuiz = async () => {
+    if (!quizDataForPlayer?.quiz || !effectiveOrgId) return;
+    try {
+      const res = await startQuizAttemptMutation({
+        organizationId: effectiveOrgId as Id<'organizations'>,
+        quizId: quizDataForPlayer.quiz._id as Id<'quizzes'>,
+      });
+      setQuizStartTime(res.startedAt);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to start quiz';
+      if (msg.includes('Maximum attempts') || msg.includes('already in progress')) {
+        toast.error(msg);
+        return;
+      }
+      // For untimed quizzes the server creates the attempt at submit time — still allow start locally.
+      setQuizStartTime(Date.now());
+    }
     setShowQuiz(true);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
     setQuizSubmitted(false);
     setQuizResult(null);
-    setQuizStartTime(Date.now());
   };
 
   const handleAnswerChange = (questionId: string, answer: string) => {
@@ -688,8 +703,13 @@ export default function LearningClient() {
       } else {
         toast.info(t('learning.quizFailed', 'You did not pass the quiz. Try again.'));
       }
-    } catch {
-      toast.error(t('learning.quizSubmitError', 'Failed to submit quiz'));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to submit quiz';
+      if (msg === 'Time limit exceeded')
+        toast.error(t('learning.timeLimitExceeded', 'Time limit exceeded'));
+      else if (msg === 'Quiz not started')
+        toast.error(t('learning.quizNotStarted', 'Please start the quiz first'));
+      else toast.error(msg || t('learning.quizSubmitError', 'Failed to submit quiz'));
     }
   };
 

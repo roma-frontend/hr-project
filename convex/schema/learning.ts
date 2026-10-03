@@ -127,8 +127,9 @@ export const learning = {
     score: v.number(), // percentage
     passed: v.boolean(),
     answers: v.any(), // array of {questionId, userAnswer, isCorrect}
-    startedAt: v.number(),
+    startedAt: v.number(), // authoritative start (server now at startQuizAttempt)
     completedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()), // authoritative deadline: startedAt + quizzes.timeLimitMinutes*60000
     attemptNumber: v.number(),
     createdAt: v.number(),
   })

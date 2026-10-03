@@ -1334,6 +1334,80 @@ export const createQuizQuestion = mutation({
   },
 });
 
+export const startQuizAttempt = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    quizId: v.id('quizzes'),
+  },
+  handler: async (ctx, args) => {
+    await assertModuleAccess(ctx, 'learning');
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    const quiz = await ctx.db.get(args.quizId);
+    if (!quiz || quiz.organizationId !== args.organizationId) throw new Error('Quiz not found');
+    await assertReadableQuiz(ctx, args.organizationId, quiz, isSuperadmin);
+    if (
+      quiz.timeLimitMinutes !== undefined &&
+      (!Number.isFinite(quiz.timeLimitMinutes) || quiz.timeLimitMinutes <= 0)
+    ) {
+      throw new Error('Invalid time limit');
+    }
+    if (
+      quiz.maxAttempts !== undefined &&
+      (!Number.isInteger(quiz.maxAttempts) || quiz.maxAttempts < 1)
+    ) {
+      throw new Error('Invalid maximum attempts');
+    }
+    if (quiz.timeLimitMinutes !== undefined) {
+      const unfinished = await ctx.db
+        .query('quizAttempts')
+        .withIndex('by_user_quiz', (q) =>
+          q
+            .eq('organizationId', args.organizationId)
+            .eq('userId', requesterId)
+            .eq('quizId', quiz._id),
+        )
+        .filter((q) => q.eq(q.field('completedAt'), undefined))
+        .order('desc')
+        .first();
+      if (unfinished) {
+        const deadline = unfinished.expiresAt ?? unfinished.startedAt + 24 * 60 * 60 * 1000;
+        if (Date.now() < deadline) throw new Error('Quiz already in progress');
+      }
+    }
+    const attemptCount = await ctx.db
+      .query('quizAttempts')
+      .withIndex('by_user_quiz', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', requesterId)
+          .eq('quizId', quiz._id),
+      )
+      .take(DEFAULT_LIST_CAP + 1);
+    if (attemptCount.length > DEFAULT_LIST_CAP) throw new Error('Quiz exceeds attempt limit');
+    if (quiz.maxAttempts !== undefined && attemptCount.length + 1 > quiz.maxAttempts) {
+      throw new Error(`Maximum attempts (${quiz.maxAttempts}) exceeded`);
+    }
+    const now = Date.now();
+    const expiresAt =
+      quiz.timeLimitMinutes !== undefined ? now + quiz.timeLimitMinutes * 60 * 1000 : undefined;
+    const attemptNumber = attemptCount.length + 1;
+    const id = await ctx.db.insert('quizAttempts', {
+      organizationId: args.organizationId,
+      userId: requesterId,
+      quizId: quiz._id,
+      score: 0,
+      passed: false,
+      answers: [],
+      startedAt: now,
+      completedAt: undefined,
+      expiresAt,
+      attemptNumber,
+      createdAt: now,
+    });
+    return { attemptId: id, attemptNumber, startedAt: now, expiresAt };
+  },
+});
+
 export const submitQuizAttempt = mutation({
   args: {
     organizationId: v.id('organizations'),
@@ -1392,43 +1466,73 @@ export const submitQuizAttempt = mutation({
     const score = Math.round((earnedPoints / totalPoints) * 100);
     const passed = score >= quiz.passingScore;
 
-    const attemptCount = await ctx.db
-      .query('quizAttempts')
-      .withIndex('by_user_quiz', (q) =>
-        q
-          .eq('organizationId', args.organizationId)
-          .eq('userId', requesterId)
-          .eq('quizId', quiz._id),
-      )
-      .take(DEFAULT_LIST_CAP + 1);
-
-    if (attemptCount.length > DEFAULT_LIST_CAP) throw new Error('Quiz exceeds attempt limit');
-    const attemptNumber = attemptCount.length + 1;
-    if (
-      quiz.maxAttempts !== undefined &&
-      (!Number.isInteger(quiz.maxAttempts) || quiz.maxAttempts < 1)
-    ) {
-      throw new Error('Invalid maximum attempts');
-    }
-    if (quiz.maxAttempts !== undefined && attemptNumber > quiz.maxAttempts) {
-      throw new Error(`Maximum attempts (${quiz.maxAttempts}) exceeded`);
-    }
-
+    // Authoritative time-limit: if a timed quiz was started, enforce its deadline; otherwise require a pre-started session.
     const now = Date.now();
-    await ctx.db.insert('quizAttempts', {
-      organizationId: args.organizationId,
-      userId: requesterId,
-      quizId: quiz._id,
+    let attemptToComplete: Doc<'quizAttempts'> | null = null;
+    if (quiz.timeLimitMinutes !== undefined) {
+      const pending = await ctx.db
+        .query('quizAttempts')
+        .withIndex('by_user_quiz', (q) =>
+          q
+            .eq('organizationId', args.organizationId)
+            .eq('userId', requesterId)
+            .eq('quizId', quiz._id),
+        )
+        .filter((q) => q.eq(q.field('completedAt'), undefined))
+        .order('desc')
+        .first();
+      if (!pending) throw new Error('Quiz not started');
+      const deadline = pending.expiresAt ?? pending.startedAt + quiz.timeLimitMinutes * 60 * 1000;
+      if (now > deadline) {
+        await ctx.db.patch(pending._id, { completedAt: now, score: 0, passed: false, answers: [] });
+        throw new Error('Time limit exceeded');
+      }
+      attemptToComplete = pending;
+    } else {
+      const attemptCount = await ctx.db
+        .query('quizAttempts')
+        .withIndex('by_user_quiz', (q) =>
+          q
+            .eq('organizationId', args.organizationId)
+            .eq('userId', requesterId)
+            .eq('quizId', quiz._id),
+        )
+        .take(DEFAULT_LIST_CAP + 1);
+      if (attemptCount.length > DEFAULT_LIST_CAP) throw new Error('Quiz exceeds attempt limit');
+      const attemptNumber = attemptCount.length + 1;
+      if (
+        quiz.maxAttempts !== undefined &&
+        (!Number.isInteger(quiz.maxAttempts) || quiz.maxAttempts < 1)
+      ) {
+        throw new Error('Invalid maximum attempts');
+      }
+      if (quiz.maxAttempts !== undefined && attemptNumber > quiz.maxAttempts) {
+        throw new Error(`Maximum attempts (${quiz.maxAttempts}) exceeded`);
+      }
+      // For untimed quizzes we create the attempt here with its results (backward compat: no explicit start required).
+      await ctx.db.insert('quizAttempts', {
+        organizationId: args.organizationId,
+        userId: requesterId,
+        quizId: quiz._id,
+        score,
+        passed,
+        answers: answerResults,
+        startedAt: now,
+        completedAt: now,
+        attemptNumber,
+        createdAt: now,
+      });
+      return { success: true, score, passed, attemptNumber };
+    }
+    // Complete the authoritative pending attempt for timed quizzes.
+    const patchAttemptNumber = attemptToComplete!.attemptNumber;
+    await ctx.db.patch(attemptToComplete!._id, {
       score,
       passed,
       answers: answerResults,
-      startedAt: now,
       completedAt: now,
-      attemptNumber,
-      createdAt: now,
     });
-
-    return { success: true, score, passed, attemptNumber };
+    return { success: true, score, passed, attemptNumber: patchAttemptNumber };
   },
 });
 

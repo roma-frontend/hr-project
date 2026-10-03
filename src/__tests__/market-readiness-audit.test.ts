@@ -507,6 +507,75 @@ describe('launch audit: security regressions and remaining unsafe characterizati
     });
   });
 
+  it('authoritative quiz start/time-limit enforces deadline and maxAttempts via start', async () => {
+    const { t, orgId, courseId, lessonId } = await seedLearning();
+    const quizId = await t.run(async (ctx) =>
+      ctx.db.insert('quizzes', {
+        organizationId: orgId,
+        lessonId,
+        title: 'Timed',
+        passingScore: 50,
+        timeLimitMinutes: 1,
+        maxAttempts: 1,
+        isPublished: true,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await t.run(async (ctx) =>
+      ctx.db.insert('quizQuestions', {
+        organizationId: orgId,
+        quizId,
+        questionText: 'Q',
+        questionType: 'short_answer',
+        correctAnswer: 'A',
+        order: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    await expect(
+      learner.mutation(api.learning.submitQuizAttempt, {
+        organizationId: orgId,
+        quizId,
+        answers: [{ userAnswer: 'A' }],
+      }),
+    ).rejects.toThrow('Quiz not started');
+    const started = await learner.mutation(api.learning.startQuizAttempt, {
+      organizationId: orgId,
+      quizId,
+    });
+    expect(started.attemptNumber).toBe(1);
+    expect(started.expiresAt).toBeGreaterThan(started.startedAt);
+    await expect(
+      learner.mutation(api.learning.startQuizAttempt, { organizationId: orgId, quizId }),
+    ).rejects.toThrow('already in progress');
+    const learnerId = await t.run(async (ctx) => {
+      const u = await ctx.db
+        .query('users')
+        .filter((q) => q.eq(q.field('email'), 'learner@example.test'))
+        .first();
+      return u!._id;
+    });
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query('quizAttempts')
+        .withIndex('by_user_quiz', (q) =>
+          q.eq('organizationId', orgId).eq('userId', learnerId).eq('quizId', quizId),
+        )
+        .first();
+      if (row) await ctx.db.patch(row._id, { expiresAt: 1 });
+    });
+    await expect(
+      learner.mutation(api.learning.submitQuizAttempt, {
+        organizationId: orgId,
+        quizId,
+        answers: [{ userAnswer: 'A' }],
+      }),
+    ).rejects.toThrow('Time limit exceeded');
+  });
+
   it('completion and manual certificates require server quiz evidence, including lesson-only quizzes', async () => {
     const { t, orgId, courseId, lessonId, enrollmentId, employeeId } = await seedLearning();
     const quizId = await t.run(async (ctx) => {
