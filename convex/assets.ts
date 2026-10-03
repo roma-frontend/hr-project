@@ -7,6 +7,7 @@ import { internal } from './_generated/api';
 import { notify } from './lib/notify';
 import { assertModuleAccess } from './lib/entitlements';
 import { getAuthCaller } from './lib/getAuthCaller';
+import { isSuperadmin } from './lib/auth';
 import type { QueryCtx } from './_generated/server';
 
 /**
@@ -1981,8 +1982,11 @@ export const checkActiveAssignmentsForEmployee = query({
   },
   handler: async (ctx, args) => {
     // Employees read only their own assigned assets; staff may inspect anyone's.
+    // Soft-filter org boundary: non-superadmin sees only their org; superadmin
+    // bypasses org check (also covers test mocks with no organizationId).
     const caller = await getAuthCaller(ctx);
     if (!caller) return [];
+    if (!isSuperadmin(caller) && caller.organizationId !== args.organizationId) return [];
     const staff = await getStaffCaller(ctx);
     if (!staff && caller._id !== args.employeeId) return [];
 

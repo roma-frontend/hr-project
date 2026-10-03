@@ -218,7 +218,43 @@ function makeChain() {
 }
 
 function makeCtx() {
-  const get = jest.fn().mockResolvedValue(null);
+  // Custom db.get mock that bypasses the org-frozen check in getAuthCaller.
+  // Adding organizationId to the superadmin mock causes every handler to do
+  // `db.get(ORG_A)` once; without bypass that consumes the test's queued
+  // mockResolvedValueOnce for the real asset lookup. This wrapper intercepts
+  // ORG ids and returns null/org doc without touching the queued values.
+  const orgIds = new Set([ORG_A, ORG_B]);
+  const queue: Array<{ kind: 'value' | 'fn'; val: any }> = [];
+  let defaultValue: any = null;
+  let defaultImpl: ((id: string) => any) | null = null;
+  const get: any = jest.fn((id: string) => {
+    if (orgIds.has(id)) return Promise.resolve(null);
+    if (queue.length) {
+      const e = queue.shift()!;
+      if (e.kind === 'fn') return Promise.resolve(e.val(id));
+      return Promise.resolve(e.val);
+    }
+    if (defaultImpl) return Promise.resolve(defaultImpl(id));
+    return Promise.resolve(defaultValue);
+  });
+  get.mockResolvedValueOnce = (v: any) => {
+    queue.push({ kind: 'value', val: v });
+    return get;
+  };
+  get.mockResolvedValue = (v: any) => {
+    defaultValue = v;
+    queue.length = 0;
+    defaultImpl = null;
+    return get;
+  };
+  get.mockImplementation = (fn: any) => {
+    defaultImpl = fn;
+    return get;
+  };
+  get.mockImplementationOnce = (fn: any) => {
+    queue.push({ kind: 'fn', val: fn });
+    return get;
+  };
   const insert = jest.fn().mockResolvedValue('new_id');
   const patch = jest.fn().mockResolvedValue(undefined);
   const remove = jest.fn().mockResolvedValue(undefined);
@@ -246,6 +282,7 @@ function makeCtx() {
     name: 'Admin',
     role: 'superadmin',
     isActive: true,
+    organizationId: ORG_A,
   });
   return {
     ctx: {

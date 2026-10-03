@@ -31,7 +31,7 @@ function analyticsLeave(leave: Doc<'leaveRequests'>) {
   };
 }
 function capped(total: number, cap: number) {
-  return total >= cap;
+  return total > cap;
 }
 import { DEFAULT_LIST_CAP, XLARGE_LIST_CAP } from './lib/limits';
 import { getProfile, type UserProfile } from './lib/userProfile';
@@ -55,23 +55,27 @@ export const getAnalyticsOverview = query({
         leaves: [],
       };
     organizationId = scope.organizationId;
-    let users, leaves;
+    let usersRaw, leavesRaw;
 
     if (organizationId) {
-      users = await ctx.db
+      usersRaw = await ctx.db
         .query('users')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
 
-      leaves = await ctx.db
+      leavesRaw = await ctx.db
         .query('leaveRequests')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
     } else {
       // Superadmin: full-table reads capped at XLARGE.
-      users = await ctx.db.query('users').take(XLARGE_LIST_CAP);
-      leaves = await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP);
+      usersRaw = await ctx.db.query('users').take(XLARGE_LIST_CAP + 1);
+      leavesRaw = await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP + 1);
     }
+    const _capOverview = organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const _isCappedOverview = usersRaw.length > _capOverview || leavesRaw.length > _capOverview;
+    const users = usersRaw.slice(0, _capOverview);
+    const leaves = leavesRaw.slice(0, _capOverview);
 
     // Exclude superadmin and system bot accounts from employee count
     const filteredUsers = users.filter(
@@ -119,7 +123,7 @@ export const getAnalyticsOverview = query({
       approvedLeaves,
       avgApprovalTime: Math.round(avgApprovalTime * 10) / 10,
       departments,
-      isCapped: capped(users.length, organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP),
+      isCapped: _isCappedOverview,
       users: filteredUsers.map((u) => ({
         ...analyticsUser(u),
         department: aoProfileMap.get(u._id)?.department ?? u.department,
@@ -135,12 +139,15 @@ export const getDepartmentStats = query({
   handler: async (ctx) => {
     const scope = await resolveOrgStaff(ctx);
     if (!scope) return [];
-    const usersInScope = scope.organizationId
+    const cap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const usersInScopeRaw = scope.organizationId
       ? await ctx.db
           .query('users')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
-          .take(DEFAULT_LIST_CAP)
-      : await ctx.db.query('users').take(XLARGE_LIST_CAP);
+          .take(cap + 1)
+      : await ctx.db.query('users').take(cap + 1);
+    const _isCappedDept = usersInScopeRaw.length > cap;
+    const usersInScope = usersInScopeRaw.slice(0, cap);
     let users = usersInScope;
 
     // Exclude superadmin from employee count
@@ -197,10 +204,7 @@ export const getDepartmentStats = query({
 
     return {
       data: Object.values(stats),
-      isCapped: capped(
-        usersInScope.length,
-        scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP,
-      ),
+      isCapped: _isCappedDept,
     };
   },
 });
@@ -212,19 +216,21 @@ export const getLeaveTrends = query({
     const scope = await resolveOrgStaff(ctx);
     if (!scope) return { data: [], isCapped: false };
     const cap = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
-    const leaves = scope.organizationId
+    const leavesRaw = scope.organizationId
       ? await ctx.db
           .query('leaveRequests')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
-          .take(cap)
-      : await ctx.db.query('leaveRequests').take(cap);
+          .take(cap + 1)
+      : await ctx.db.query('leaveRequests').take(cap + 1);
+    const _isCappedLT = leavesRaw.length > cap;
+    const leaves = leavesRaw.slice(0, cap);
 
     const now = Date.now();
     const sixMonthsAgo = now - 6 * 30 * 24 * 60 * 60 * 1000;
 
     const recentLeaves = leaves.filter((l) => l.createdAt >= sixMonthsAgo);
 
-    return { data: recentLeaves.map(analyticsLeave), isCapped: capped(leaves.length, cap) };
+    return { data: recentLeaves.map(analyticsLeave), isCapped: _isCappedLT };
   },
 });
 
@@ -242,10 +248,12 @@ export const getUserAnalytics = query({
     )
       return null;
 
-    const userLeaves = await ctx.db
+    const userLeavesRaw = await ctx.db
       .query('leaveRequests')
       .withIndex('by_user', (q) => q.eq('userId', userId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedUL = userLeavesRaw.length > DEFAULT_LIST_CAP;
+    const userLeaves = userLeavesRaw.slice(0, DEFAULT_LIST_CAP);
 
     const totalDaysTaken = userLeaves
       .filter((l) => l.status === 'approved')
@@ -269,7 +277,7 @@ export const getUserAnalytics = query({
       pendingDays,
       leavesByType,
       userLeaves: userLeaves.map(analyticsLeave),
-      isCapped: capped(userLeaves.length, DEFAULT_LIST_CAP),
+      isCapped: _isCappedUL,
       balances: {
         paid: user.paidLeaveBalance,
         sick: user.sickLeaveBalance,
@@ -285,16 +293,19 @@ export const getTeamCalendar = query({
   handler: async (ctx) => {
     const scope = await resolveOrgScope(ctx);
     if (!scope) return [];
-    const leaves = scope.organizationId
+    const capTC = scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+    const leavesRaw = scope.organizationId
       ? await ctx.db
           .query('leaveRequests')
           .withIndex('by_org', (q) => q.eq('organizationId', scope.organizationId!))
           .filter((q) => q.eq(q.field('status'), 'approved'))
-          .take(DEFAULT_LIST_CAP)
+          .take(capTC + 1)
       : await ctx.db
           .query('leaveRequests')
           .withIndex('by_status', (q) => q.eq('status', 'approved'))
-          .take(XLARGE_LIST_CAP);
+          .take(capTC + 1);
+    const _isCappedTC = leavesRaw.length > capTC;
+    const leaves = leavesRaw.slice(0, capTC);
 
     const now = Date.now();
     const thirtyDaysFromNow = now + 30 * 24 * 60 * 60 * 1000;
@@ -320,7 +331,7 @@ export const getTeamCalendar = query({
 
     return {
       data: enrichedLeaves,
-      isCapped: capped(leaves.length, scope.organizationId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP),
+      isCapped: _isCappedTC,
     };
   },
 });
@@ -355,25 +366,30 @@ export const getDashboardStats = query({
     }
 
     // Count employees
-    const users =
+    const capDS = isSuperadminUser && !orgId ? XLARGE_LIST_CAP : DEFAULT_LIST_CAP;
+    const usersRaw =
       isSuperadminUser && !orgId
-        ? await ctx.db.query('users').take(XLARGE_LIST_CAP)
+        ? await ctx.db.query('users').take(capDS + 1)
         : await ctx.db
             .query('users')
             .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
-            .take(DEFAULT_LIST_CAP);
+            .take(capDS + 1);
+    const isCappedUsers = usersRaw.length > capDS;
+    const users = usersRaw.slice(0, capDS);
     const totalEmployees = users.filter(
       (u) => u.role !== 'superadmin' && u.isActive !== false && !isSystemAccountEmail(u.email),
     ).length;
 
     // Get leaves scoped by org
-    const leaves =
+    const leavesRaw =
       isSuperadminUser && !orgId
-        ? await ctx.db.query('leaveRequests').take(XLARGE_LIST_CAP)
+        ? await ctx.db.query('leaveRequests').take(capDS + 1)
         : await ctx.db
             .query('leaveRequests')
             .withIndex('by_org', (q) => q.eq('organizationId', orgId!))
-            .take(DEFAULT_LIST_CAP);
+            .take(capDS + 1);
+    const isCappedLeaves = leavesRaw.length > capDS;
+    const leaves = leavesRaw.slice(0, capDS);
 
     const today = new Date().toISOString().slice(0, 10);
     const now = new Date();
@@ -409,9 +425,7 @@ export const getDashboardStats = query({
       }
     }
 
-    const isCapped =
-      capped(users.length, isSuperadminUser ? XLARGE_LIST_CAP : DEFAULT_LIST_CAP) ||
-      capped(leaves.length, isSuperadminUser ? XLARGE_LIST_CAP : DEFAULT_LIST_CAP);
+    const isCapped = isCappedUsers || isCappedLeaves;
     return {
       totalEmployees,
       pendingRequests,
@@ -523,13 +537,15 @@ export const getReportData = query({
       table: T,
     ) {
       const cap = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
-      const rows = orgId
+      const rowsRaw = orgId
         ? await ctx.db
             .query(table)
             .withIndex('by_org', (q) => q.eq('organizationId', orgId as never))
-            .take(cap)
-        : await ctx.db.query(table).take(cap);
-      if (capped(rows.length, cap)) reportIsCapped = true;
+            .take(cap + 1)
+        : await ctx.db.query(table).take(cap + 1);
+      if (rowsRaw.length > cap) reportIsCapped = true;
+      void reportIsCapped;
+      const rows = rowsRaw.slice(0, cap);
       return rows;
     }
 
@@ -623,7 +639,10 @@ export const getReportData = query({
 
       case 'performance': {
         // reviewAssignments has no by_org index — capped scan + field filter.
-        let assignments = await ctx.db.query('reviewAssignments').take(XLARGE_LIST_CAP);
+        const assignmentsRaw = await ctx.db.query('reviewAssignments').take(XLARGE_LIST_CAP + 1);
+        if (assignmentsRaw.length > XLARGE_LIST_CAP) reportIsCapped = true;
+        void reportIsCapped;
+        let assignments = assignmentsRaw.slice(0, XLARGE_LIST_CAP);
         if (orgId) assignments = assignments.filter((a) => a.organizationId === orgId);
         if (rangeStart) assignments = assignments.filter((a) => a.createdAt >= rangeStart);
         const rows = assignments.map((a) => ({ key: a.status, value: 1 }));
@@ -632,10 +651,13 @@ export const getReportData = query({
 
       case 'recruitment': {
         if (!orgId) return { series: [], total: 0, unit: 'count' as const };
-        let apps = await ctx.db
+        const appsRaw = await ctx.db
           .query('applications')
           .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        if (appsRaw.length > DEFAULT_LIST_CAP) reportIsCapped = true;
+        void reportIsCapped;
+        let apps = appsRaw.slice(0, DEFAULT_LIST_CAP);
         if (rangeStart) apps = apps.filter((a) => a.createdAt >= rangeStart);
         const rows = apps.map((a) => ({ key: a.stage, value: 1 }));
         return { ...tally(rows), unit: 'count' as const };
@@ -643,12 +665,16 @@ export const getReportData = query({
 
       case 'attendance': {
         // Worked hours from the timeTracking table (clock in/out sessions).
-        let sessions = orgId
+        const capAtt = orgId ? DEFAULT_LIST_CAP : XLARGE_LIST_CAP;
+        const sessionsRaw = orgId
           ? await ctx.db
               .query('timeTracking')
               .withIndex('by_org', (q) => q.eq('organizationId', orgId))
-              .take(DEFAULT_LIST_CAP)
-          : await ctx.db.query('timeTracking').take(XLARGE_LIST_CAP);
+              .take(capAtt + 1)
+          : await ctx.db.query('timeTracking').take(capAtt + 1);
+        if (sessionsRaw.length > capAtt) reportIsCapped = true;
+        void reportIsCapped;
+        let sessions = sessionsRaw.slice(0, capAtt);
         if (rangeStart) sessions = sessions.filter((s) => s.createdAt >= rangeStart);
 
         // Convert worked minutes → hours per session.

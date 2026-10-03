@@ -143,20 +143,26 @@ export const getSurveyResults = query({
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
 
-    const questions = await ctx.db
+    const questionsRaw = await ctx.db
       .query('surveyQuestions')
       .withIndex('by_survey_order', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedQ = questionsRaw.length > DEFAULT_LIST_CAP;
+    const questions = questionsRaw.slice(0, DEFAULT_LIST_CAP);
 
-    const responses = await ctx.db
+    const responsesRaw = await ctx.db
       .query('surveyResponses')
       .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedResp = responsesRaw.length > DEFAULT_LIST_CAP;
+    const responses = responsesRaw.slice(0, DEFAULT_LIST_CAP);
 
-    const answers = await ctx.db
+    const answersRaw = await ctx.db
       .query('surveyAnswers')
       .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAns = answersRaw.length > DEFAULT_LIST_CAP;
+    const answers = answersRaw.slice(0, DEFAULT_LIST_CAP);
 
     // Aggregate answers per question
     const questionResults = questions.map((question) => {
@@ -220,10 +226,8 @@ export const getSurveyResults = query({
       };
     });
 
-    const isCapped =
-      responses.length >= DEFAULT_LIST_CAP ||
-      answers.length >= DEFAULT_LIST_CAP ||
-      questions.length >= DEFAULT_LIST_CAP;
+    const isCapped = _isCappedResp || _isCappedAns || _isCappedQ;
+    void isCapped;
     return {
       survey,
       totalResponses: responses.length,
@@ -972,15 +976,19 @@ export const getSurveyResultsByDepartment = query({
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
 
-    const questions = await ctx.db
+    const questionsRawDept = await ctx.db
       .query('surveyQuestions')
       .withIndex('by_survey_order', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedQDept = questionsRawDept.length > DEFAULT_LIST_CAP;
+    const questions = questionsRawDept.slice(0, DEFAULT_LIST_CAP);
 
-    const responses = await ctx.db
+    const responsesRawDept = await ctx.db
       .query('surveyResponses')
       .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedRespDept = responsesRawDept.length > DEFAULT_LIST_CAP;
+    const responses = responsesRawDept.slice(0, DEFAULT_LIST_CAP);
 
     // Load respondent departments
     const respondentIds = responses
@@ -1011,10 +1019,12 @@ export const getSurveyResultsByDepartment = query({
     });
 
     // Load all answers for this survey upfront
-    const allAnswers = await ctx.db
+    const allAnswersRaw = await ctx.db
       .query('surveyAnswers')
       .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAnsDept = allAnswersRaw.length > DEFAULT_LIST_CAP;
+    const allAnswers = allAnswersRaw.slice(0, DEFAULT_LIST_CAP);
 
     // Aggregate per department per question
     const departmentResults = Object.entries(departmentGroups).map(([dept, deptResponses]) => {
@@ -1054,8 +1064,8 @@ export const getSurveyResultsByDepartment = query({
       };
     });
 
-    const deptIsCapped =
-      responses.length >= DEFAULT_LIST_CAP || allAnswers.length >= DEFAULT_LIST_CAP;
+    const deptIsCapped = _isCappedRespDept || _isCappedAnsDept;
+    void _isCappedQDept;
     return {
       survey,
       totalResponses: responses.length,
@@ -1081,11 +1091,13 @@ export const getSurveyTrends = query({
     const { organizationId, months = 6 } = args;
     const cutoffDate = Date.now() - months * 30 * 24 * 60 * 60 * 1000;
 
-    const surveys = await ctx.db
+    const surveysRawTrends = await ctx.db
       .query('surveys')
       .withIndex('by_org_created', (q) => q.eq('organizationId', organizationId))
       .filter((q) => q.gt(q.field('createdAt'), cutoffDate))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedTrends = surveysRawTrends.length > DEFAULT_LIST_CAP;
+    const surveys = surveysRawTrends.slice(0, DEFAULT_LIST_CAP);
 
     const trends = surveys.map((survey) => ({
       surveyId: survey._id,
@@ -1104,7 +1116,7 @@ export const getSurveyTrends = query({
       totalSurveys: trends.length,
       totalResponses,
       avgResponseRate,
-      isCapped: surveys.length >= DEFAULT_LIST_CAP,
+      isCapped: _isCappedTrends,
     };
   },
 });
@@ -1147,10 +1159,12 @@ export const getSurveyResponses = query({
       responses.map(async (resp) => {
         const user = resp.respondentId ? await ctx.db.get(resp.respondentId) : null;
         const profile = resp.respondentId ? await getProfile(ctx, resp.respondentId) : null;
-        const answers = await ctx.db
+        const answersRaw = await ctx.db
           .query('surveyAnswers')
           .withIndex('by_response', (q) => q.eq('responseId', resp._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        void (answersRaw.length > DEFAULT_LIST_CAP);
+        const answers = answersRaw.slice(0, DEFAULT_LIST_CAP);
 
         return {
           responseId: resp._id,
@@ -1201,24 +1215,30 @@ export const getSurveyExportData = query({
     const survey = await ctx.db.get(surveyId);
     if (!survey || survey.organizationId !== organizationId) return null;
 
-    const questions = await ctx.db
+    const questionsRawExp = await ctx.db
       .query('surveyQuestions')
       .withIndex('by_survey_order', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    void (questionsRawExp.length > DEFAULT_LIST_CAP);
+    const questions = questionsRawExp.slice(0, DEFAULT_LIST_CAP);
 
-    const responses = await ctx.db
+    const responsesRawExp = await ctx.db
       .query('surveyResponses')
       .withIndex('by_survey', (q) => q.eq('surveyId', surveyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedExp = responsesRawExp.length > DEFAULT_LIST_CAP;
+    const responses = responsesRawExp.slice(0, DEFAULT_LIST_CAP);
 
     const exportData = await Promise.all(
       responses.map(async (resp) => {
         const user = resp.respondentId ? await ctx.db.get(resp.respondentId) : null;
         const profile = resp.respondentId ? await getProfile(ctx, resp.respondentId) : null;
-        const answers = await ctx.db
+        const answersRaw = await ctx.db
           .query('surveyAnswers')
           .withIndex('by_response', (q) => q.eq('responseId', resp._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        void (answersRaw.length > DEFAULT_LIST_CAP);
+        const answers = answersRaw.slice(0, DEFAULT_LIST_CAP);
 
         const answerMap: Record<string, unknown> = {};
         answers.forEach((ans) => {
@@ -1246,7 +1266,7 @@ export const getSurveyExportData = query({
       survey: { title: survey.title, status: survey.status, isAnonymous: survey.isAnonymous },
       questions: questions.map((q) => q.text),
       exportData,
-      isCapped: responses.length >= DEFAULT_LIST_CAP,
+      isCapped: _isCappedExp,
     };
   },
 });
