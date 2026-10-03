@@ -117,6 +117,7 @@ jest.mock('@/convex/_generated/api', () => ({
       updateLesson: { _name: 'updateLesson' },
       deleteLesson: { _name: 'deleteLesson' },
       updateCourse: { _name: 'updateCourse' },
+      startQuizAttempt: { _name: 'startQuizAttempt' },
       submitQuizAttempt: { _name: 'submitQuizAttempt' },
     },
   },
@@ -460,6 +461,12 @@ beforeEach(() => {
   mockMutations.updateLesson = jest.fn().mockResolvedValue(undefined);
   mockMutations.deleteLesson = jest.fn().mockResolvedValue(undefined);
   mockMutations.updateCourse = jest.fn().mockResolvedValue(undefined);
+  mockMutations.startQuizAttempt = jest.fn().mockResolvedValue({
+    attemptId: 'att-1',
+    attemptNumber: 1,
+    startedAt: Date.now(),
+    expiresAt: null,
+  });
   mockMutations.submitQuizAttempt = jest.fn().mockResolvedValue({
     passed: true,
     score: 100,
@@ -996,8 +1003,9 @@ describe('LearningClient', () => {
     render(<LearningClient />);
     openPlayer();
     fireEvent.click(screen.getByText('start quiz'));
+    await waitFor(() => expect(screen.getByTestId('player-show-quiz')).toHaveTextContent('true'));
     fireEvent.click(screen.getByText('submit quiz'));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to submit quiz'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('q'));
   });
 
   it('retries the quiz after a failed attempt', async () => {
@@ -1007,13 +1015,16 @@ describe('LearningClient', () => {
     render(<LearningClient />);
     openPlayer();
     fireEvent.click(screen.getByText('start quiz'));
+    await waitFor(() => expect(screen.getByTestId('player-show-quiz')).toHaveTextContent('true'));
     fireEvent.click(screen.getByText('submit quiz'));
     await waitFor(() =>
       expect(screen.getByTestId('player-quiz-submitted')).toHaveTextContent('true'),
     );
     fireEvent.click(screen.getByText('retry quiz'));
-    expect(screen.getByTestId('player-show-quiz')).toHaveTextContent('true');
-    expect(screen.getByTestId('player-quiz-submitted')).toHaveTextContent('false');
+    await waitFor(() => expect(screen.getByTestId('player-show-quiz')).toHaveTextContent('true'));
+    await waitFor(() =>
+      expect(screen.getByTestId('player-quiz-submitted')).toHaveTextContent('false'),
+    );
     expect(screen.getByTestId('player-quiz-result')).toHaveTextContent('none');
   });
 

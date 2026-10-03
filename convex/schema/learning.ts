@@ -14,6 +14,7 @@ export const learning = {
     isPublished: v.optional(v.boolean()),
     isMandatory: v.optional(v.boolean()), // mandatory compliance training
     tags: v.optional(v.array(v.string())),
+    contentVersion: v.optional(v.number()), // bumped on create/update of course/lesson/quiz content
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -145,6 +146,8 @@ export const learning = {
     templateId: v.optional(v.string()), // certificate template used
     issuedAt: v.number(),
     expiresAt: v.optional(v.number()), // for certificates that expire
+    contentVersion: v.optional(v.number()), // course.contentVersion at issuance; null = pre-versioned
+    isOutdated: v.optional(v.boolean()), // true if course.contentVersion bumped after issuedAt
     metadata: v.optional(v.any()), // additional data (score, instructor, etc.)
     createdAt: v.number(),
   })

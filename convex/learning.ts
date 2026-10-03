@@ -430,6 +430,7 @@ export const createCourse = mutation({
       isPublished: false,
       isMandatory: args.isMandatory ?? false,
       tags: args.tags ?? [],
+      contentVersion: 1,
       createdAt: now,
       updatedAt: now,
     });
@@ -459,6 +460,14 @@ export const updateCourse = mutation({
     if (!isSuperadmin) throw new Error('Only admins can update courses');
 
     const patch: Partial<Doc<'courses'>> = { updatedAt: Date.now() };
+    const bumpsVersion =
+      args.title !== undefined ||
+      args.description !== undefined ||
+      args.category !== undefined ||
+      args.difficulty !== undefined ||
+      args.estimatedHours !== undefined ||
+      args.thumbnailUrl !== undefined ||
+      args.tags !== undefined;
     if (args.title !== undefined) patch.title = args.title;
     if (args.description !== undefined) patch.description = args.description;
     if (args.category !== undefined) patch.category = args.category;
@@ -468,6 +477,8 @@ export const updateCourse = mutation({
     if (args.isPublished !== undefined) patch.isPublished = args.isPublished;
     if (args.isMandatory !== undefined) patch.isMandatory = args.isMandatory;
     if (args.tags !== undefined) patch.tags = args.tags;
+    if (bumpsVersion) patch.contentVersion = (course.contentVersion ?? 1) + 1;
+    else if (course.contentVersion === undefined) patch.contentVersion = 1;
 
     await ctx.db.patch(args.courseId, patch);
     return { success: true };
@@ -580,6 +591,13 @@ export const updateLesson = mutation({
     if (!isSuperadmin) throw new Error('Only admins can update lessons');
 
     const patch: Partial<Doc<'lessons'>> = { updatedAt: Date.now() };
+    const bumpsCourse =
+      args.title !== undefined ||
+      args.description !== undefined ||
+      args.contentType !== undefined ||
+      args.videoUrl !== undefined ||
+      args.textContent !== undefined ||
+      args.durationMinutes !== undefined;
     if (args.title !== undefined) patch.title = args.title;
     if (args.description !== undefined) patch.description = args.description;
     if (args.order !== undefined) patch.order = args.order;
@@ -590,6 +608,14 @@ export const updateLesson = mutation({
     if (args.isPreview !== undefined) patch.isPreview = args.isPreview;
 
     await ctx.db.patch(args.lessonId, patch);
+    if (bumpsCourse) {
+      const course = await ctx.db.get(lesson.courseId);
+      if (course)
+        await ctx.db.patch(course._id, {
+          contentVersion: (course.contentVersion ?? 1) + 1,
+          updatedAt: Date.now(),
+        });
+    }
     return { success: true };
   },
 });
@@ -1075,6 +1101,8 @@ export const updateLessonProgress = mutation({
           .first();
 
         if (!existingCert) {
+          const course = await ctx.db.get(args.courseId);
+          const cv = course?.contentVersion ?? 1;
           const certId = `CERT-${args.organizationId}-${requesterId}-${args.courseId}-${now}`;
           await ctx.db.insert('certificates', {
             organizationId: args.organizationId,
@@ -1082,8 +1110,16 @@ export const updateLessonProgress = mutation({
             courseId: args.courseId,
             certificateId: certId,
             issuedAt: now,
+            contentVersion: cv,
+            isOutdated: false,
             createdAt: now,
           });
+        } else if (existingCert.contentVersion !== undefined) {
+          const course = await ctx.db.get(args.courseId);
+          const cv = course?.contentVersion ?? 1;
+          if (existingCert.contentVersion !== cv) {
+            await ctx.db.patch(existingCert._id, { isOutdated: true });
+          }
         }
       }
     }
@@ -1279,7 +1315,7 @@ export const createQuiz = mutation({
     }
 
     const now = Date.now();
-    return await ctx.db.insert('quizzes', {
+    const quizId = await ctx.db.insert('quizzes', {
       organizationId: args.organizationId,
       courseId: args.courseId,
       lessonId: args.lessonId,
@@ -1292,6 +1328,25 @@ export const createQuiz = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    if (args.courseId) {
+      const course = await ctx.db.get(args.courseId);
+      if (course)
+        await ctx.db.patch(course._id, {
+          contentVersion: (course.contentVersion ?? 1) + 1,
+          updatedAt: now,
+        });
+    } else if (args.lessonId) {
+      const lesson = await ctx.db.get(args.lessonId);
+      if (lesson) {
+        const course = await ctx.db.get(lesson.courseId);
+        if (course)
+          await ctx.db.patch(course._id, {
+            contentVersion: (course.contentVersion ?? 1) + 1,
+            updatedAt: now,
+          });
+      }
+    }
+    return quizId;
   },
 });
 
@@ -1318,7 +1373,7 @@ export const createQuizQuestion = mutation({
     if (!quiz || quiz.organizationId !== args.organizationId) throw new Error('Quiz not found');
 
     const now = Date.now();
-    return await ctx.db.insert('quizQuestions', {
+    const id = await ctx.db.insert('quizQuestions', {
       organizationId: args.organizationId,
       quizId: args.quizId,
       questionText: args.questionText,
@@ -1331,6 +1386,25 @@ export const createQuizQuestion = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    if (quiz.courseId) {
+      const course = await ctx.db.get(quiz.courseId);
+      if (course)
+        await ctx.db.patch(course._id, {
+          contentVersion: (course.contentVersion ?? 1) + 1,
+          updatedAt: now,
+        });
+    } else if (quiz.lessonId) {
+      const lesson = await ctx.db.get(quiz.lessonId);
+      if (lesson) {
+        const course = await ctx.db.get(lesson.courseId);
+        if (course)
+          await ctx.db.patch(course._id, {
+            contentVersion: (course.contentVersion ?? 1) + 1,
+            updatedAt: now,
+          });
+      }
+    }
+    return id;
   },
 });
 
@@ -1652,6 +1726,7 @@ export const issueCertificate = mutation({
 
     const certificateId = `CERT-${args.organizationId}-${args.userId}-${args.courseId}-${Date.now()}`;
     const now = Date.now();
+    const cv = course.contentVersion ?? 1;
 
     await ctx.db.insert('certificates', {
       organizationId: args.organizationId,
@@ -1661,6 +1736,8 @@ export const issueCertificate = mutation({
       templateId: args.templateId,
       issuedAt: now,
       expiresAt: args.expiresAt,
+      contentVersion: cv,
+      isOutdated: false,
       metadata: args.metadata as Record<string, unknown> | undefined,
       createdAt: now,
     });
