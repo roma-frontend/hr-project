@@ -103,7 +103,7 @@ export const listVacancies = query({
     if (!scope) return [];
     let vacancies;
     if (status) {
-      vacancies = await ctx.db
+      const _rawVacanciesStatus = await ctx.db
         .query('vacancies')
         .withIndex('by_org_status', (q) =>
           q
@@ -111,24 +111,31 @@ export const listVacancies = query({
             .eq('status', status as 'draft' | 'open' | 'paused' | 'closed'),
         )
         .order('desc')
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
+      const _isCappedVacanciesStatus = _rawVacanciesStatus.length > DEFAULT_LIST_CAP;
+      void _isCappedVacanciesStatus;
+      vacancies = _rawVacanciesStatus.slice(0, DEFAULT_LIST_CAP);
     } else {
-      vacancies = await ctx.db
+      const _rawVacanciesAll = await ctx.db
         .query('vacancies')
         .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
         .order('desc')
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
+      const _isCappedVacanciesAll = _rawVacanciesAll.length > DEFAULT_LIST_CAP;
+      void _isCappedVacanciesAll;
+      vacancies = _rawVacanciesAll.slice(0, DEFAULT_LIST_CAP);
     }
 
     const enriched = await Promise.all(
       vacancies.map(async (vac) => {
-        const apps = await liveApplications(
-          ctx,
-          await ctx.db
-            .query('applications')
-            .withIndex('by_vacancy', (q) => q.eq('vacancyId', vac._id))
-            .take(DEFAULT_LIST_CAP),
-        );
+        const _rawAppsByVacancy = await ctx.db
+          .query('applications')
+          .withIndex('by_vacancy', (q) => q.eq('vacancyId', vac._id))
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedAppsByVacancy = _rawAppsByVacancy.length > DEFAULT_LIST_CAP;
+        void _isCappedAppsByVacancy;
+        const _appsByVacancy = _rawAppsByVacancy.slice(0, DEFAULT_LIST_CAP);
+        const apps = await liveApplications(ctx, _appsByVacancy);
         const manager = await ctx.db.get(vac.hiringManagerId);
         return {
           ...vac,
@@ -177,7 +184,7 @@ export const listCandidatesByVacancy = query({
     if (!scope) return [];
     let apps;
     if (stage) {
-      apps = await ctx.db
+      const _rawAppsVacancyStage = await ctx.db
         .query('applications')
         .withIndex('by_vacancy_stage', (q) =>
           q
@@ -187,22 +194,31 @@ export const listCandidatesByVacancy = query({
               stage as 'applied' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected',
             ),
         )
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
+      const _isCappedAppsVacancyStage = _rawAppsVacancyStage.length > DEFAULT_LIST_CAP;
+      void _isCappedAppsVacancyStage;
+      apps = _rawAppsVacancyStage.slice(0, DEFAULT_LIST_CAP);
     } else {
-      apps = await ctx.db
+      const _rawAppsVacancy = await ctx.db
         .query('applications')
         .withIndex('by_vacancy', (q) => q.eq('vacancyId', vacancyId))
-        .take(DEFAULT_LIST_CAP);
+        .take(DEFAULT_LIST_CAP + 1);
+      const _isCappedAppsVacancy = _rawAppsVacancy.length > DEFAULT_LIST_CAP;
+      void _isCappedAppsVacancy;
+      apps = _rawAppsVacancy.slice(0, DEFAULT_LIST_CAP);
     }
     apps = await liveApplications(ctx, apps);
 
     const enriched = await Promise.all(
       apps.map(async (app) => {
         const profile = await ctx.db.get(app.candidateId);
-        const scorecards = await ctx.db
+        const _rawScorecardsByApp = await ctx.db
           .query('interviewScorecards')
           .withIndex('by_application', (q) => q.eq('applicationId', app._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedScorecardsByApp = _rawScorecardsByApp.length > DEFAULT_LIST_CAP;
+        void _isCappedScorecardsByApp;
+        const scorecards = _rawScorecardsByApp.slice(0, DEFAULT_LIST_CAP);
         const avgScore =
           scorecards.length > 0
             ? Math.round(
@@ -259,10 +275,13 @@ export const getCandidate = query({
     const profile = await ctx.db.get(app.candidateId);
     const vacancy = await ctx.db.get(app.vacancyId);
 
-    const interviews = await ctx.db
+    const _rawInterviews = await ctx.db
       .query('interviews')
       .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedInterviews = _rawInterviews.length > DEFAULT_LIST_CAP;
+    void _isCappedInterviews;
+    const interviews = _rawInterviews.slice(0, DEFAULT_LIST_CAP);
 
     const enrichedInterviews = await Promise.all(
       interviews.map(async (iv) => {
@@ -271,10 +290,13 @@ export const getCandidate = query({
       }),
     );
 
-    const scorecards = await ctx.db
+    const _rawScorecards = await ctx.db
       .query('interviewScorecards')
       .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedScorecards = _rawScorecards.length > DEFAULT_LIST_CAP;
+    void _isCappedScorecards;
+    const scorecards = _rawScorecards.slice(0, DEFAULT_LIST_CAP);
 
     const enrichedScorecards = await Promise.all(
       scorecards.map(async (sc) => {
@@ -283,10 +305,13 @@ export const getCandidate = query({
       }),
     );
 
-    const events = await ctx.db
+    const _rawEvents = await ctx.db
       .query('applicationEvents')
       .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedEvents = _rawEvents.length > DEFAULT_LIST_CAP;
+    void _isCappedEvents;
+    const events = _rawEvents.slice(0, DEFAULT_LIST_CAP);
 
     const enrichedEvents = await Promise.all(
       events.map(async (ev) => {
@@ -317,10 +342,13 @@ export const getMyInterviews = query({
     const scope = await resolveOrgScope(ctx, organizationId);
     if (!scope) return [];
     const userId = scope.caller._id;
-    const interviews = await ctx.db
+    const _rawInterviewsByInterviewer = await ctx.db
       .query('interviews')
       .withIndex('by_interviewer', (q) => q.eq('interviewerId', userId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedInterviewsByInterviewer = _rawInterviewsByInterviewer.length > DEFAULT_LIST_CAP;
+    void _isCappedInterviewsByInterviewer;
+    const interviews = _rawInterviewsByInterviewer.slice(0, DEFAULT_LIST_CAP);
 
     const upcoming = interviews.filter(
       (iv) =>
@@ -366,20 +394,24 @@ export const getPipelineStats = query({
         },
       };
     }
-    const openVacancies = await ctx.db
+    const _rawOpenVacancies = await ctx.db
       .query('vacancies')
       .withIndex('by_org_status', (q) =>
         q.eq('organizationId', organizationId).eq('status', 'open'),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedOpenVacancies = _rawOpenVacancies.length > DEFAULT_LIST_CAP;
+    void _isCappedOpenVacancies;
+    const openVacancies = _rawOpenVacancies.slice(0, DEFAULT_LIST_CAP);
 
-    const allApps = await liveApplications(
-      ctx,
-      await ctx.db
-        .query('applications')
-        .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
-        .take(DEFAULT_LIST_CAP),
-    );
+    const _rawAllAppsByOrg = await ctx.db
+      .query('applications')
+      .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAllAppsByOrg = _rawAllAppsByOrg.length > DEFAULT_LIST_CAP;
+    void _isCappedAllAppsByOrg;
+    const _allAppsByOrg = _rawAllAppsByOrg.slice(0, DEFAULT_LIST_CAP);
+    const allApps = await liveApplications(ctx, _allAppsByOrg);
 
     return {
       openVacancies: openVacancies.length,
@@ -507,22 +539,31 @@ async function purgeApplication(
   ctx: MutationCtx,
   applicationId: Id<'applications'>,
 ): Promise<void> {
-  const events = await ctx.db
+  const _rawPurgeEvents = await ctx.db
     .query('applicationEvents')
     .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-    .take(DEFAULT_LIST_CAP);
+    .take(DEFAULT_LIST_CAP + 1);
+  const _isCappedPurgeEvents = _rawPurgeEvents.length > DEFAULT_LIST_CAP;
+  void _isCappedPurgeEvents;
+  const events = _rawPurgeEvents.slice(0, DEFAULT_LIST_CAP);
   for (const ev of events) await ctx.db.delete(ev._id);
 
-  const interviews = await ctx.db
+  const _rawPurgeInterviews = await ctx.db
     .query('interviews')
     .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-    .take(DEFAULT_LIST_CAP);
+    .take(DEFAULT_LIST_CAP + 1);
+  const _isCappedPurgeInterviews = _rawPurgeInterviews.length > DEFAULT_LIST_CAP;
+  void _isCappedPurgeInterviews;
+  const interviews = _rawPurgeInterviews.slice(0, DEFAULT_LIST_CAP);
   for (const iv of interviews) await ctx.db.delete(iv._id);
 
-  const scorecards = await ctx.db
+  const _rawPurgeScorecards = await ctx.db
     .query('interviewScorecards')
     .withIndex('by_application', (q) => q.eq('applicationId', applicationId))
-    .take(DEFAULT_LIST_CAP);
+    .take(DEFAULT_LIST_CAP + 1);
+  const _isCappedPurgeScorecards = _rawPurgeScorecards.length > DEFAULT_LIST_CAP;
+  void _isCappedPurgeScorecards;
+  const scorecards = _rawPurgeScorecards.slice(0, DEFAULT_LIST_CAP);
   for (const sc of scorecards) await ctx.db.delete(sc._id);
 
   await ctx.db.delete(applicationId);
@@ -550,10 +591,13 @@ export const deleteVacancy = mutation({
     const scope = await assertOrgStaff(ctx, vac.organizationId, { adminOnly: true });
     if (!scopeOwnsRecord(scope, vac)) throw new Error('Not authorized for this vacancy');
 
-    const applications = await ctx.db
+    const _rawApplications = await ctx.db
       .query('applications')
       .withIndex('by_vacancy', (q) => q.eq('vacancyId', vacancyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedApplications = _rawApplications.length > DEFAULT_LIST_CAP;
+    void _isCappedApplications;
+    const applications = _rawApplications.slice(0, DEFAULT_LIST_CAP);
 
     const candidateIds = new Set(applications.map((a) => a.candidateId));
     for (const app of applications) await purgeApplication(ctx, app._id);
@@ -705,11 +749,14 @@ export const addCandidate = mutation({
     });
 
     // 🔔 Notify org admins about new candidate
-    const orgAdmins = await ctx.db
+    const _rawOrgAdmins = await ctx.db
       .query('users')
       .withIndex('by_org', (q) => q.eq('organizationId', organizationId))
       .filter((q) => q.or(q.eq(q.field('role'), 'admin'), q.eq(q.field('role'), 'superadmin')))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const _isCappedOrgAdmins = _rawOrgAdmins.length > SMALL_LIST_CAP;
+    void _isCappedOrgAdmins;
+    const orgAdmins = _rawOrgAdmins.slice(0, SMALL_LIST_CAP);
 
     for (const admin of orgAdmins) {
       if (admin._id === createdBy) continue; // don't notify self
@@ -1024,10 +1071,13 @@ export const scheduleInterview = mutation({
     if (args.duration <= 0) throw new Error('Interview duration must be positive');
 
     // Determine the round number (1, 2, 3…)
-    const existingInterviews = await ctx.db
+    const _rawExistingInterviews = await ctx.db
       .query('interviews')
       .withIndex('by_application', (q) => q.eq('applicationId', args.applicationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedExistingInterviews = _rawExistingInterviews.length > DEFAULT_LIST_CAP;
+    void _isCappedExistingInterviews;
+    const existingInterviews = _rawExistingInterviews.slice(0, DEFAULT_LIST_CAP);
     const maxRound = existingInterviews.reduce((max, iv) => Math.max(max, iv.round ?? 0), 0);
 
     const interviewId = await ctx.db.insert('interviews', {
@@ -1254,12 +1304,15 @@ export const listCvQueue = query({
     const scope = await resolveOrgStaff(ctx, args.organizationId);
     if (!scope) return [];
 
-    const pending = await ctx.db
+    const _rawPending = await ctx.db
       .query('applications')
       .withIndex('by_org_cvStatus', (q) =>
         q.eq('organizationId', args.organizationId).eq('cvStatus', 'pending'),
       )
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedPending = _rawPending.length > DEFAULT_LIST_CAP;
+    void _isCappedPending;
+    const pending = _rawPending.slice(0, DEFAULT_LIST_CAP);
 
     const enriched = await Promise.all(
       pending.map(async (app) => {
@@ -1325,11 +1378,14 @@ export const hireCandidate = mutation({
     });
 
     // Notify org admins
-    const orgAdmins = await ctx.db
+    const _rawOrgAdminsHire = await ctx.db
       .query('users')
       .withIndex('by_org', (q) => q.eq('organizationId', app.organizationId))
       .filter((q) => q.or(q.eq(q.field('role'), 'admin'), q.eq(q.field('role'), 'superadmin')))
-      .take(SMALL_LIST_CAP);
+      .take(SMALL_LIST_CAP + 1);
+    const _isCappedOrgAdminsHire = _rawOrgAdminsHire.length > SMALL_LIST_CAP;
+    void _isCappedOrgAdminsHire;
+    const orgAdmins = _rawOrgAdminsHire.slice(0, SMALL_LIST_CAP);
 
     const candidate = await ctx.db.get(app.candidateId);
     const vacancy = await ctx.db.get(app.vacancyId);
@@ -1417,11 +1473,14 @@ export const hireCandidate = mutation({
         });
 
         // Find a matching template by department
-        const templates = await ctx.db
+        const _rawTemplates = await ctx.db
           .query('onboardingTemplates')
           .withIndex('by_org', (q) => q.eq('organizationId', app.organizationId))
           .filter((q) => q.eq(q.field('isActive'), true))
-          .take(SMALL_LIST_CAP);
+          .take(SMALL_LIST_CAP + 1);
+        const _isCappedTemplates = _rawTemplates.length > SMALL_LIST_CAP;
+        void _isCappedTemplates;
+        const templates = _rawTemplates.slice(0, SMALL_LIST_CAP);
 
         let templateId: Id<'onboardingTemplates'> | undefined;
         if (department) {
@@ -1437,7 +1496,7 @@ export const hireCandidate = mutation({
 
         // Find a buddy (first available employee who isn't the manager or new hire).
         // Cap small: we only need the first match.
-        const employees = await ctx.db
+        const _rawEmployees = await ctx.db
           .query('users')
           .withIndex('by_org', (q) => q.eq('organizationId', app.organizationId))
           .filter((q) =>
@@ -1447,7 +1506,10 @@ export const hireCandidate = mutation({
               q.neq(q.field('role'), 'superadmin'),
             ),
           )
-          .take(SMALL_LIST_CAP);
+          .take(SMALL_LIST_CAP + 1);
+        const _isCappedEmployees = _rawEmployees.length > SMALL_LIST_CAP;
+        void _isCappedEmployees;
+        const employees = _rawEmployees.slice(0, SMALL_LIST_CAP);
 
         const buddyId = employees.length > 0 ? employees[0]!._id : undefined;
 
@@ -1488,10 +1550,13 @@ export const secureDeleteVacancy = mutation({
 
     // Deleting the posting used to leave its applications, events, interviews and
     // scorecards behind as unreachable rows of personal data.
-    const applications = await ctx.db
+    const _rawApplicationsSecure = await ctx.db
       .query('applications')
       .withIndex('by_vacancy', (q) => q.eq('vacancyId', vacancyId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedApplicationsSecure = _rawApplicationsSecure.length > DEFAULT_LIST_CAP;
+    void _isCappedApplicationsSecure;
+    const applications = _rawApplicationsSecure.slice(0, DEFAULT_LIST_CAP);
     const candidateIds = new Set(applications.map((a) => a.candidateId));
     for (const app of applications) await purgeApplication(ctx, app._id);
     for (const candidateId of candidateIds) await purgeOrphanCandidate(ctx, candidateId);
@@ -1536,10 +1601,13 @@ export const listAllCandidates = query({
     const scope = await resolveOrgStaff(ctx, args.organizationId);
     if (!scope) return [];
 
-    let profiles = await ctx.db
+    const _rawProfiles = await ctx.db
       .query('candidateProfiles')
       .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedProfiles = _rawProfiles.length > DEFAULT_LIST_CAP;
+    void _isCappedProfiles;
+    let profiles = _rawProfiles.slice(0, DEFAULT_LIST_CAP);
 
     // Client-side search by name/email
     if (args.search) {
@@ -1560,10 +1628,13 @@ export const listAllCandidates = query({
     const enriched = await Promise.all(
       profiles.map(async (profile) => {
         // All applications for this candidate
-        let apps = await ctx.db
+        const _rawAppsByCandidate = await ctx.db
           .query('applications')
           .withIndex('by_candidate', (q) => q.eq('candidateId', profile._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedAppsByCandidate = _rawAppsByCandidate.length > DEFAULT_LIST_CAP;
+        void _isCappedAppsByCandidate;
+        let apps = _rawAppsByCandidate.slice(0, DEFAULT_LIST_CAP);
 
         // Filter by stage if provided
         if (args.stage) {
@@ -1591,10 +1662,13 @@ export const listAllCandidates = query({
         let totalScore = 0;
         let scoreCount = 0;
         for (const app of apps) {
-          const scorecards = await ctx.db
+          const _rawScorecardsLoop = await ctx.db
             .query('interviewScorecards')
             .withIndex('by_application', (q) => q.eq('applicationId', app._id))
-            .take(DEFAULT_LIST_CAP);
+            .take(DEFAULT_LIST_CAP + 1);
+          const _isCappedScorecardsLoop = _rawScorecardsLoop.length > DEFAULT_LIST_CAP;
+          void _isCappedScorecardsLoop;
+          const scorecards = _rawScorecardsLoop.slice(0, DEFAULT_LIST_CAP);
           for (const sc of scorecards) {
             totalScore += sc.overallScore;
             scoreCount++;
@@ -1690,22 +1764,31 @@ export const getCandidateHistory = query({
     const scope = await resolveOrgStaff(ctx, profile.organizationId);
     if (!scope) return null;
 
-    const apps = await ctx.db
+    const _rawAppsHistory = await ctx.db
       .query('applications')
       .withIndex('by_candidate', (q) => q.eq('candidateId', args.candidateId))
-      .take(DEFAULT_LIST_CAP);
+      .take(DEFAULT_LIST_CAP + 1);
+    const _isCappedAppsHistory = _rawAppsHistory.length > DEFAULT_LIST_CAP;
+    void _isCappedAppsHistory;
+    const apps = _rawAppsHistory.slice(0, DEFAULT_LIST_CAP);
 
     const enriched = await Promise.all(
       apps.map(async (app) => {
         const vacancy = await ctx.db.get(app.vacancyId);
-        const interviews = await ctx.db
+        const _rawInterviewsHist = await ctx.db
           .query('interviews')
           .withIndex('by_application', (q) => q.eq('applicationId', app._id))
-          .take(DEFAULT_LIST_CAP);
-        const scorecards = await ctx.db
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedInterviewsHist = _rawInterviewsHist.length > DEFAULT_LIST_CAP;
+        void _isCappedInterviewsHist;
+        const interviews = _rawInterviewsHist.slice(0, DEFAULT_LIST_CAP);
+        const _rawScorecardsHist = await ctx.db
           .query('interviewScorecards')
           .withIndex('by_application', (q) => q.eq('applicationId', app._id))
-          .take(DEFAULT_LIST_CAP);
+          .take(DEFAULT_LIST_CAP + 1);
+        const _isCappedScorecardsHist = _rawScorecardsHist.length > DEFAULT_LIST_CAP;
+        void _isCappedScorecardsHist;
+        const scorecards = _rawScorecardsHist.slice(0, DEFAULT_LIST_CAP);
         return {
           _id: app._id,
           vacancyTitle: vacancy?.title ?? 'Unknown',
