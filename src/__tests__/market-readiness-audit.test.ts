@@ -673,6 +673,63 @@ describe('launch audit: security regressions and remaining unsafe characterizati
     );
   });
 
+  it('policy renewals sweep expiry and gate completion via enrollment expiry', async () => {
+    const { t, orgId, courseId } = await seedLearning();
+    const employeeId = (await t.run(async (ctx) => ctx.db.query('users').first()))!._id;
+    const targetEnrollmentId = await t.run(async (ctx) =>
+      ctx.db
+        .query('enrollments')
+        .withIndex('by_user_course', (q) =>
+          q.eq('organizationId', orgId).eq('userId', employeeId).eq('courseId', courseId),
+        )
+        .first()
+        .then((r) => r!._id),
+    );
+    const learner = t.withIdentity({ email: 'learner@example.test' });
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(targetEnrollmentId, { progress: 100, status: 'completed', expiresAt: 1 });
+      const course = await ctx.db.query('courses').first();
+      if (course) await ctx.db.patch(course._id, { contentVersion: 1 });
+    });
+    await expect(
+      admin.mutation(api.learning.sweepExpiredEnrollments, { organizationId: orgId }),
+    ).resolves.toMatchObject({
+      swept: expect.any(Number),
+    });
+    const enr = await t.run((ctx) => ctx.db.get(targetEnrollmentId));
+    expect(enr?.status).toBe('expired');
+    await expect(
+      learner.mutation(api.learning.updateLessonProgress, {
+        organizationId: orgId,
+        courseId,
+        lessonId: (await t.run((ctx) => ctx.db.query('lessons').first()))!._id,
+        isCompleted: true,
+      }),
+    ).rejects.toThrow('Active enrollment required');
+    await admin.mutation(api.learning.renewEnrollment, {
+      organizationId: orgId,
+      courseId,
+      userId: employeeId,
+    });
+    const enr2 = await t.run((ctx) => ctx.db.get(targetEnrollmentId));
+    expect(enr2?.status).toBe('in_progress');
+    expect(enr2?.expiresAt).toBeGreaterThan(Date.now());
+    await t.run((ctx) =>
+      ctx.db.patch(targetEnrollmentId, { status: 'in_progress', expiresAt: Date.now() + 1000000 }),
+    );
+    await expect(
+      learner.mutation(api.learning.sweepExpiredEnrollments, { organizationId: orgId }),
+    ).rejects.toThrow('Only admins');
+    await expect(
+      admin.mutation(api.learning.renewEnrollment, {
+        organizationId: orgId,
+        courseId,
+        userId: employeeId,
+      }),
+    ).rejects.toThrow('Only expired');
+  });
+
   it('completion rejects missing/expired enrollment, missing quiz, empty course and capped lesson evidence', async () => {
     const { t, orgId, courseId, lessonId, employeeId, enrollmentId } = await seedLearning();
     const learner = t.withIdentity({ email: 'learner@example.test' });

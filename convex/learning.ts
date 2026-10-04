@@ -913,6 +913,104 @@ export const bulkEnrollUsers = mutation({
   },
 });
 
+export const renewEnrollment = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    courseId: v.id('courses'),
+    userId: v.id('users'),
+    extendsDays: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can renew enrollments');
+    const enrollment = await ctx.db
+      .query('enrollments')
+      .withIndex('by_user_course', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', args.userId)
+          .eq('courseId', args.courseId),
+      )
+      .first();
+    if (!enrollment) throw new Error('Enrollment not found');
+    const isExpired =
+      enrollment.status === 'expired' ||
+      (enrollment.expiresAt !== undefined && enrollment.expiresAt <= Date.now());
+    if (!isExpired) throw new Error('Only expired enrollments can be renewed');
+    const days = args.extendsDays ?? 30;
+    if (!Number.isFinite(days) || days < 1 || days > 365) throw new Error('Invalid renewal window');
+    const now = Date.now();
+    await ctx.db.patch(enrollment._id, {
+      status: 'in_progress',
+      progress: 0,
+      expiresAt: now + days * 24 * 60 * 60 * 1000,
+      completedAt: undefined,
+      updatedAt: now,
+    });
+    // Mark prior certificate as outdated on renew if version still matches.
+    const cert = await ctx.db
+      .query('certificates')
+      .withIndex('by_user_course', (q) =>
+        q
+          .eq('organizationId', args.organizationId)
+          .eq('userId', args.userId)
+          .eq('courseId', args.courseId),
+      )
+      .first();
+    if (cert && !cert.isOutdated) await ctx.db.patch(cert._id, { isOutdated: true });
+    return { success: true, expiresAt: now + days * 24 * 60 * 60 * 1000 };
+  },
+});
+
+export const sweepExpiredEnrollments = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can sweep expiries');
+    const cap = args.limit ?? 50;
+    if (!Number.isInteger(cap) || cap < 1 || cap > 200) throw new Error('Invalid sweep limit');
+    const now = Date.now();
+    const rows = await ctx.db
+      .query('enrollments')
+      .withIndex('by_org', (q) => q.eq('organizationId', args.organizationId))
+      .take(cap + 1);
+    const slice = rows.slice(0, cap);
+    let swept = 0;
+    for (const row of slice) {
+      if (
+        row.expiresAt !== undefined &&
+        row.expiresAt <= now &&
+        row.status !== 'expired' &&
+        row.status !== 'completed'
+      ) {
+        await ctx.db.patch(row._id, { status: 'expired', updatedAt: now });
+        swept++;
+      } else if (
+        row.status === 'completed' &&
+        row.expiresAt !== undefined &&
+        row.expiresAt <= now
+      ) {
+        await ctx.db.patch(row._id, { status: 'expired', updatedAt: now });
+        const cert = await ctx.db
+          .query('certificates')
+          .withIndex('by_user_course', (q) =>
+            q
+              .eq('organizationId', args.organizationId)
+              .eq('userId', row.userId)
+              .eq('courseId', row.courseId),
+          )
+          .first();
+        if (cert && !cert.isOutdated) await ctx.db.patch(cert._id, { isOutdated: true });
+        swept++;
+      }
+    }
+    return { swept, isCapped: rows.length > cap };
+  },
+});
+
 export const updateEnrollmentStatus = mutation({
   args: {
     enrollmentId: v.id('enrollments'),
@@ -1758,6 +1856,11 @@ export const issueCertificate = mutation({
     const certificateId = `CERT-${args.organizationId}-${args.userId}-${args.courseId}-${Date.now()}`;
     const now = Date.now();
     const cv = course.contentVersion ?? 1;
+    const baseExpiresAt =
+      args.expiresAt ??
+      (evidence.enrollment?.expiresAt && evidence.enrollment.expiresAt > now
+        ? evidence.enrollment.expiresAt
+        : undefined);
 
     await ctx.db.insert('certificates', {
       organizationId: args.organizationId,
@@ -1766,7 +1869,7 @@ export const issueCertificate = mutation({
       certificateId,
       templateId: args.templateId,
       issuedAt: now,
-      expiresAt: args.expiresAt,
+      expiresAt: baseExpiresAt,
       contentVersion: cv,
       isOutdated: false,
       metadata: args.metadata as Record<string, unknown> | undefined,
