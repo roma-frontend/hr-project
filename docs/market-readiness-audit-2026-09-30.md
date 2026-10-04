@@ -53,6 +53,40 @@
 - **Redis/CSP:** `src/lib/redis.ts` комментарий исправлен с sliding→fixed-window; `src/proxy.ts` CSP уже чист в production.
 - **Проверено:** `market-readiness-audit` + `convex-employeeNotes` 33 теста прошли.
 
+## Ход исправлений — 3 октября 2026, Gate C authoritative quiz start / time-limit (развернуто)
+
+Развернуто в production (`b16975d0`, `68ee9676`, `f41b6aa6` `Deploy success`):
+
+- `quizAttempts` `+ expiresAt?` (`v.optional`) + `quizzes.timeLimitMinutes` `optional` — authoritative `startedAt`/`expiresAt` от сервера (`startedAt + timeLimit*60000`), `startQuizAttempt` (`already in progress`/`maxAttempts`), `submitQuizAttempt` `deadline` (`Quiz not started`/`Time limit exceeded` + `patch` pending) + `LearningClient handleStartQuiz` + gating `authoritative quiz start` 1/35 (`market-readiness-audit`) + `LearningClient` `retries` `await waitFor` fix 47/47 — `b16975d0`→`68ee9676`.
+
+## Ход исправлений — 3 октября 2026, Gate D content versioning (развернуто)
+
+Развернуто в production (`68ee9676`, `f41b6aa6` `Deploy success`):
+
+- `courses.contentVersion?` `certificates contentVersion?/isOutdated?` (`v.optional`) + bump `updateCourse/lesson/quiz` + `issueCertificate`/`updateLessonProgress` capture `cv`/`isOutdated` marking.
+
+## Ход исправлений — 3 октября 2026, aggregate courseCompletion (развернуто)
+
+Развернуто в production (`97e66a1a`, `f224f2dc` `Deploy success`):
+
+- `Promise.all` `lessons/progress/quizzes` + `CHUNK=50` batched `by_lesson` + batched `quizAttempts` (`COMPLETION_READ_BUDGET=DEFAULT_LIST_CAP`) — `97e66a1a` `Deploy Production success`, `market-readiness-audit` `35/35`.
+
+## Ход исправлений — 3 октября 2026, renewals / expiry sweep (развернуто)
+
+Развернуто в production (`f224f2dc`, `f41b6aa6` `Deploy success`):
+
+- `renewEnrollment` (admin: `expired`→`in_progress` + `expiresAt` bump + `cert isOutdated:true`) + `sweepExpiredEnrollments` (`cap 50` `isCapped`) + `issueCertificate` `enrollment.expiresAt` propagation + `market-readiness-audit` `policy renewals` 1/36 → `36/36` — `f224f2dc` `Deploy success`.
+
+## Ход исправлений — 4 октября 2026, revoke / certificates visibility / renew UI (развернуто)
+
+Развернуто в production (`f41b6aa6`, `4a46c084`, `cd307dfc` `Deploy success`):
+
+- `certificates isRevoked?/revokedAt?/revokedBy?` (`v.optional`) + `revokeCertificate` admin-only idempotent (`isRevoked` → `alreadyRevoked:true`) + `market-readiness-audit` `revokes outdated` 1/37 → `37/37` — `f41b6aa6` `Deploy success`.
+- `getEnrollmentDetails hasCertificate = cert && !cert.isRevoked` + `CertificatesTab` `Revoked`/`Outdated` badge — `4a46c084` `Deploy success`.
+- `MyCourses` `isAdmin`+`onRenew` (admin: `expired` `Renew`), `LearningClient` `renewEnrollment`/`sweepExpiredEnrollments` (`Sweep expired`) — `cd307dfc` `Deploy success`.
+
+**Итог CODE-Gates:** `DATA-01` idle уже закрыт ранее (`recruitment` `29` bare + `sla`/`integrations`/`signatures` `take(N+1)` ), `scrollbar-gutter: stable` в `src/app/globals.css:315,326,681` — без скачка `mx-auto` без скроллбара; `w-screen` в `src` — 0. CODE-Gates `C-F` + `aggregate` + `visibility/renew UI` — технически complete, `Deploy Production success` на `main`.
+
 ## Ход исправлений — 30 сентября 2026, пятый блок (продолжение)
 
 Исправлено локально, **не развернуто в production**:
