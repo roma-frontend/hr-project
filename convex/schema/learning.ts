@@ -148,6 +148,9 @@ export const learning = {
     expiresAt: v.optional(v.number()), // for certificates that expire
     contentVersion: v.optional(v.number()), // course.contentVersion at issuance; null = pre-versioned
     isOutdated: v.optional(v.boolean()), // true if course.contentVersion bumped after issuedAt
+    isRevoked: v.optional(v.boolean()), // true if admin revoked the certificate
+    revokedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.id('users')),
     metadata: v.optional(v.any()), // additional data (score, instructor, etc.)
     createdAt: v.number(),
   })

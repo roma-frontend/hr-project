@@ -1766,6 +1766,27 @@ export const getMyCertificates = query({
 });
 
 /** Cursor-based personal certificate history; legacy array API stays compatible. */
+export const revokeCertificate = mutation({
+  args: {
+    organizationId: v.id('organizations'),
+    certificateId: v.id('certificates'),
+  },
+  handler: async (ctx, args) => {
+    const { requesterId, isSuperadmin } = await checkAccess(ctx, args.organizationId);
+    if (!isSuperadmin) throw new Error('Only admins can revoke certificates');
+    const cert = await ctx.db.get(args.certificateId);
+    if (!cert || cert.organizationId !== args.organizationId)
+      throw new Error('Certificate not found');
+    if (cert.isRevoked) return { success: true, alreadyRevoked: true };
+    await ctx.db.patch(cert._id, {
+      isRevoked: true,
+      revokedAt: Date.now(),
+      revokedBy: requesterId,
+    });
+    return { success: true };
+  },
+});
+
 export const getMyCertificatesPaginated = query({
   args: {
     organizationId: v.id('organizations'),

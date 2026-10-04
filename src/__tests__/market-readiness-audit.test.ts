@@ -730,6 +730,77 @@ describe('launch audit: security regressions and remaining unsafe characterizati
     ).rejects.toThrow('Only expired');
   });
 
+  it('revokes outdated certificates when content version drifts', async () => {
+    const { t, orgId, courseId, enrollmentId, lessonId, employeeId } = await seedLearning();
+    const targetCourseId = courseId;
+    const targetUserId = employeeId;
+    const admin = t.withIdentity({ email: 'audit-admin@example.test' });
+    await t.run(async (ctx) => {
+      await ctx.db.patch(enrollmentId, {
+        userId: targetUserId,
+        status: 'completed',
+        progress: 100,
+        expiresAt: undefined,
+      });
+      const lp = await ctx.db
+        .query('lessonProgress')
+        .withIndex('by_user_lesson', (q) =>
+          q.eq('organizationId', orgId).eq('userId', targetUserId).eq('lessonId', lessonId),
+        )
+        .first();
+      if (lp)
+        await ctx.db.patch(lp._id, {
+          isCompleted: true,
+          completedAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      else
+        await ctx.db.insert('lessonProgress', {
+          organizationId: orgId,
+          userId: targetUserId,
+          courseId: targetCourseId,
+          lessonId,
+          isCompleted: true,
+          completedAt: Date.now(),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+    });
+    // seedLearning progress is synthetic; completion proof requires lessonProgress evidence
+    const certRes = await admin.mutation(api.learning.issueCertificate, {
+      organizationId: orgId,
+      userId: targetUserId,
+      courseId: targetCourseId,
+    });
+    expect(certRes.success).toBe(true);
+    const certId = await t.run(async (ctx) =>
+      ctx.db
+        .query('certificates')
+        .withIndex('by_user_course', (q) =>
+          q.eq('organizationId', orgId).eq('userId', targetUserId).eq('courseId', targetCourseId),
+        )
+        .first()
+        .then((r) => r!._id),
+    );
+    await t.run(async (ctx) => {
+      const c = await ctx.db.get(targetCourseId);
+      if (c)
+        await ctx.db.patch(c._id, {
+          contentVersion: (c.contentVersion ?? 1) + 10,
+          updatedAt: Date.now(),
+        });
+    });
+    await expect(
+      admin.mutation(api.learning.revokeCertificate, {
+        organizationId: orgId,
+        certificateId: certId,
+      }),
+    ).resolves.toMatchObject({ success: true });
+    const revoked = await t.run((ctx) => ctx.db.get(certId));
+    expect(revoked?.isRevoked).toBe(true);
+    expect(revoked?.revokedBy).toBeDefined();
+  });
+
   it('completion rejects missing/expired enrollment, missing quiz, empty course and capped lesson evidence', async () => {
     const { t, orgId, courseId, lessonId, employeeId, enrollmentId } = await seedLearning();
     const learner = t.withIdentity({ email: 'learner@example.test' });
