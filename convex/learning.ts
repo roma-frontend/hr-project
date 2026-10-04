@@ -2039,7 +2039,7 @@ export const getEnrollmentDetails = query({
           )
           .first();
         return {
-          hasCertificate: certificate !== null,
+          hasCertificate: certificate !== null && !certificate.isRevoked,
           _id: enrollment._id,
           userId: enrollment.userId,
           courseId: enrollment.courseId,

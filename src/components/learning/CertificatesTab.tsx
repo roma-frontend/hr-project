@@ -20,6 +20,8 @@ type Certificate = {
   templateId?: string;
   issuedAt: number;
   expiresAt?: number;
+  isOutdated?: boolean;
+  isRevoked?: boolean;
   courseTitle: string;
 };
 
@@ -54,8 +56,21 @@ function CertificateCard({ cert }: { cert: Certificate }) {
     printWindow.document.close();
   };
 
+  const badge = cert.isRevoked
+    ? { label: 'Revoked', className: 'bg-destructive text-destructive-foreground' }
+    : cert.isOutdated
+      ? { label: 'Outdated', className: 'bg-amber-500 text-white' }
+      : null;
+
   return (
     <div className="space-y-3">
+      {badge && (
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badge.className}`}
+        >
+          {badge.label}
+        </span>
+      )}
       <CertificateRenderer
         templateId={cert.templateId}
         userName={user?.name ?? 'Employee'}
