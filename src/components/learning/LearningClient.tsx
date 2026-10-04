@@ -259,6 +259,8 @@ export default function LearningClient() {
   const deleteLessonMutation = useMutation(api.learning.deleteLesson);
   const updateCourseMutation = useMutation(api.learning.updateCourse);
   const issueCertificateMutation = useMutation(api.learning.issueCertificate);
+  const renewEnrollmentMutation = useMutation(api.learning.renewEnrollment);
+  const sweepExpiredMutation = useMutation(api.learning.sweepExpiredEnrollments);
 
   const handleEditCourse = (updates: {
     title: string;
@@ -914,8 +916,35 @@ export default function LearningClient() {
 
         {/* My Courses Tab */}
         <TabsContent value="my-courses" className="space-y-6">
+          {isAdmin && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  effectiveOrgId &&
+                  sweepExpiredMutation({ organizationId: effectiveOrgId as Id<'organizations'> })
+                    .then((r) => toast.success(`Swept ${r.swept} expiries`))
+                    .catch((e) => toast.error(e instanceof Error ? e.message : 'Sweep failed'))
+                }
+              >
+                Sweep expired
+              </Button>
+            </div>
+          )}
           <MyCourses
             myEnrollments={myEnrollmentStatus === 'LoadingFirstPage' ? undefined : myEnrollments}
+            isAdmin={isAdmin}
+            onRenew={(enrollment) =>
+              effectiveOrgId &&
+              renewEnrollmentMutation({
+                organizationId: effectiveOrgId as Id<'organizations'>,
+                courseId: enrollment.courseId,
+                userId: enrollment.userId,
+              })
+                .then(() => toast.success('Enrollment renewed'))
+                .catch((e) => toast.error(e instanceof Error ? e.message : 'Renew failed'))
+            }
             onOpenCourse={(course) => {
               const enrollment = myEnrollments.find((e) => e.courseId === course._id);
               setSelectedCourse({

@@ -56,6 +56,8 @@ interface MyCoursesProps {
   myEnrollments: EnrollmentWithCourse[] | undefined;
   onOpenCourse: (course: NonNullable<EnrollmentWithCourse['course']>) => void;
   onGoToCatalog: () => void;
+  isAdmin?: boolean;
+  onRenew?: (enrollment: EnrollmentWithCourse) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -67,7 +69,13 @@ const statusColors: Record<string, string> = {
     'bg-(--danger-quiet) text-(--danger-text) dark:bg-(--danger-solid) dark:text-(--danger-text)',
 };
 
-export function MyCourses({ myEnrollments, onOpenCourse, onGoToCatalog }: MyCoursesProps) {
+export function MyCourses({
+  myEnrollments,
+  onOpenCourse,
+  onGoToCatalog,
+  isAdmin,
+  onRenew,
+}: MyCoursesProps) {
   const { t } = useTranslation();
 
   if (!myEnrollments) return <ShieldLoader size="md" />;
@@ -121,18 +129,25 @@ export function MyCourses({ myEnrollments, onOpenCourse, onGoToCatalog }: MyCour
                     {t('learning.progress', 'Progress')}
                   </p>
                 </div>
-                <Button
-                  variant="outline"
-                  disabled={!enrollment.course}
-                  onClick={() => enrollment.course && onOpenCourse(enrollment.course)}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  {enrollment.progress === 0
-                    ? t('learning.startCourse', 'Start Course')
-                    : enrollment.progress === 100
-                      ? t('learning.review', 'Review')
-                      : t('learning.continueCourse', 'Continue')}
-                </Button>
+                <div className="flex gap-2">
+                  {enrollment.status === 'expired' && isAdmin && onRenew && (
+                    <Button variant="outline" size="sm" onClick={() => onRenew(enrollment)}>
+                      {t('learning.renew', 'Renew')}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    disabled={!enrollment.course}
+                    onClick={() => enrollment.course && onOpenCourse(enrollment.course)}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    {enrollment.progress === 0
+                      ? t('learning.startCourse', 'Start Course')
+                      : enrollment.progress === 100
+                        ? t('learning.review', 'Review')
+                        : t('learning.continueCourse', 'Continue')}
+                  </Button>
+                </div>
               </div>
             </div>
             <Progress value={enrollment.progress ?? 0} className="mt-4 h-2" />
