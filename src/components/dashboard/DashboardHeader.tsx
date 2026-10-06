@@ -58,7 +58,7 @@ export function DashboardHeader({ selectedOrganization, userRole }: DashboardHea
           aria-hidden="true"
         />
 
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative flex flex-wrap flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* left — title cluster */}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
