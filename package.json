@@ -36,7 +36,10 @@
     "@grpc/grpc-js": "^1.14.5",
     "exceljs": {
       "uuid": "^11.1.1"
-    }
+    },
+    "proxy-addr": "2.0.8",
+    "sharp": "^0.35.5",
+    "source-map-js": "^1.2.2"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": [
