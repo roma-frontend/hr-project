@@ -13,7 +13,7 @@ function getStripe(): Stripe | null {
     return null;
   }
   return new Stripe(key, {
-    apiVersion: '2026-02-25.clover',
+    apiVersion: '2026-09-30.endive',
   });
 }
 

@@ -9,7 +9,7 @@ import { sendTelegramNotification } from '@/lib/telegram';
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  return new Stripe(key, { apiVersion: '2026-02-25.clover' });
+  return new Stripe(key, { apiVersion: '2026-09-30.endive' });
 }
 
 // Safe Resend initialization
