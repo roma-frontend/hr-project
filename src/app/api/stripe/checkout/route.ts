@@ -22,7 +22,7 @@ async function verifyAdmin(req: NextRequest): Promise<boolean> {
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  return new Stripe(key, { apiVersion: '2026-02-25.clover' });
+  return new Stripe(key, { apiVersion: '2026-09-30.endive' });
 }
 
 function normalizeSeats(value: unknown): number {
@@ -86,7 +86,6 @@ export const POST = withCsrfProtection(async (req: NextRequest) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      payment_method_types: ['card'],
       line_items: [
         {
           price: PLANS[plan].priceId,

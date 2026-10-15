@@ -29,6 +29,14 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+    ignore:
+      # These majors are known incompatible with current indirect peers.
+      # Until @storybook/nextjs upgrades its bundled @babel/preset-env peer,
+      # solo bumping either preset to 8.x breaks npm ci (ERESOLVE: @babel/core ^7 vs ^8).
+      - dependency-name: "@babel/preset-env"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@babel/preset-typescript"
+        update-types: ["version-update:semver-major"]
     # Bump these in lockfile + manifest even when they are ranges.
     allow:
       - dependency-type: 'direct'
