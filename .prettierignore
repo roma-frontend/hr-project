@@ -49,3 +49,20 @@ scripts/sync-stripe-data.ts
 scripts/view-stripe-transactions.ts
 tests/payrollCalculator.test.ts
 tests/performance/load-test.js
+
+# Vercel project link (machine-local, gitignored) -- JSON compact, not prettier
+.vercel/
+
+# AI assistant local configs -- gitignored, not enforced on CI
+.claude/
+CLAUDE.md
+.agents/
+
+# Local Python venv report -- gitignored artifacts
+venv_report/
+
+# Local one-off script -- gitignored via scripts/* allowlist
+scripts/setup-superadmin.ts
+
+# CI-generated error JSON -- gitignored pattern may not match on Linux runner
+eslint-ci-errors.json

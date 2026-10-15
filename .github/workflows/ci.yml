@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -36,7 +36,7 @@ jobs:
         # ~4 GB old-space ceiling on the runner ("Ineffective mark-compacts near
         # heap limit" → exit 134). Raise the ceiling explicitly.
         env:
-          NODE_OPTIONS: --max-old-space-size=6144
+          NODE_OPTIONS: --max-old-space-size=8192
       - name: Prettier check
         run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}" --ignore-path .prettierignore
       - name: Locale parity (EN is the reference)
@@ -47,8 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -60,8 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -89,7 +89,7 @@ jobs:
             console.log(s);
           "
       - name: Upload LCOV report to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -126,9 +126,9 @@ jobs:
       # Must come first: this job runs a repo script (compare-coverage.mjs), and
       # actions/checkout cleans the workspace, which would delete the coverage
       # artifacts if it ran after the downloads below.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Download base branch coverage from main
-        uses: dawidd6/action-download-artifact@v21
+        uses: dawidd6/action-download-artifact@v27
         continue-on-error: true
         with:
           branch: main
@@ -193,7 +193,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Download coverage report from unit-tests
         uses: actions/download-artifact@v8
         with:
@@ -256,8 +256,8 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -286,7 +286,7 @@ jobs:
       actions: read
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
@@ -301,8 +301,8 @@ jobs:
     timeout-minutes: 15
     needs: [lint, type-check, unit-tests]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -321,7 +321,7 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL || 'https://build-placeholder.convex.cloud' }}
           AUTH_GOOGLE_ID: build-placeholder
           AUTH_GOOGLE_SECRET: build-placeholder
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
@@ -338,13 +338,13 @@ jobs:
     timeout-minutes: 30
     needs: [build]
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci --prefer-offline --no-audit
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -429,8 +429,8 @@ jobs:
       # The CLI-based deploy (vercel pull/build/deploy) was disabled due to
       # persistent "Could not retrieve Project Settings" errors with the token.
       # Convex schema + Sentry sourcemaps still run here after E2E tests pass.
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -438,7 +438,7 @@ jobs:
       - run: npx convex deploy
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-      - uses: getsentry/action-release@v1
+      - uses: getsentry/action-release@v3
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
