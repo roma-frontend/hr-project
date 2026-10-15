@@ -274,7 +274,7 @@ jobs:
         # failures retry once rather than silently passing.
         with:
           fail-on-severity: critical
-          retry-on-snapshot-warning: true
+          retry-on-snapshot-warnings: true
           comment-summary-in-pr: always
 
   codeql:
